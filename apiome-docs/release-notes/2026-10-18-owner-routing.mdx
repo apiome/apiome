@@ -1,0 +1,22 @@
+---
+slug: owner-routing
+title: Findings reach the team that owns them
+description: Lint, drift, gate, shadow-API and sync findings now notify the owner team.
+authors: [apiome]
+---
+
+When something goes wrong on a project, catalog item, MCP endpoint or connector, the
+[owner team](/workspace/teams#ownership) now hears about it — not the whole workspace, and not nobody.
+
+{/* truncate */}
+
+- **Seven new notifications** in the bell and on the notifications page: lint findings, breaking
+  changes, verification drift, blocked deploy gates, MCP trust drift, shadow APIs and failed connector
+  syncs. Each says the team and the entity, and opens the finding.
+- **The team's chat channel** gets one message per finding — a Slack message for Slack, the event as
+  JSON for anything else — and a channel that asks to slow down (`Retry-After`) is respected.
+- **At most once an hour** per finding type and entity, so a gate checked in a loop stays quiet.
+- **Nothing is dropped.** Findings on something with no confirmed owner wait in the **Unowned
+  findings** report until it gets one.
+- **Your switches still apply**: each new type can be switched off in
+  [Preferences → Notifications](/workspace/notifications#choose-what-you-see).

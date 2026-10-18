@@ -791,8 +791,15 @@ def notify_repository_breaking_change(
     breaking_change_count: Optional[int] = None,
     source_commit_sha: Optional[str] = None,
     window_seconds: int = DEFAULT_THROTTLE_WINDOW_SECONDS,
+    actor_id: Optional[str] = None,
+    already_notified: Sequence[str] = (),
 ) -> DispatchResult:
     """Notify that a sync introduced a breaking change.
+
+    Besides the tenant's channels, the change is routed to the project's confirmed owner team
+    (CDG-2.3, ``owner_breaking_change``): an inbox row per member — minus ``actor_id`` and anyone in
+    ``already_notified`` (a requester the sync path told itself) — and one post to the team's chat
+    channel. A project with no confirmed owner lands in the Unowned findings report.
 
     Called by the sync path once it has classified the version it created; every field
     beyond the repository is optional so a caller that knows less still produces a routable,
@@ -813,9 +820,12 @@ def notify_repository_breaking_change(
         breaking_change_count: How many changes classified as breaking, when known.
         source_commit_sha: The remote commit that was synced, when known.
         window_seconds: The throttle window; defaults to one hour.
+        actor_id: Whoever triggered the sync, when a person did; not notified as an owner.
+        already_notified: Users the caller already notified about this change.
 
     Returns:
-        A :class:`DispatchResult` describing what was delivered, or why nothing was.
+        A :class:`DispatchResult` describing what was delivered to the tenant's channels, or why
+        nothing was. Owner routing is reported separately (and never raises).
     """
     payload = build_breaking_change_notification(
         repository_id=repository_id,
@@ -830,7 +840,7 @@ def notify_repository_breaking_change(
         breaking_change_count=breaking_change_count,
         source_commit_sha=source_commit_sha,
     )
-    return dispatch_repository_event(
+    result = dispatch_repository_event(
         db,
         tenant_id=tenant_id,
         repository_id=repository_id,
@@ -838,6 +848,64 @@ def notify_repository_breaking_change(
         payload=payload,
         window_seconds=window_seconds,
     )
+    if project_id:
+        _route_breaking_change_to_owner(
+            db,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_id=version_id,
+            payload=payload,
+            actor_id=actor_id,
+            already_notified=already_notified,
+        )
+    return result
+
+
+def _route_breaking_change_to_owner(
+    db: Any,
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_id: Optional[str],
+    payload: Mapping[str, Any],
+    actor_id: Optional[str],
+    already_notified: Sequence[str],
+) -> None:
+    """Route a classified breaking change to the project's owner team (CDG-2.3); never raises."""
+    from .owner_routing import (
+        TYPE_OWNER_BREAKING_CHANGE,
+        OwnerFinding,
+        entity_kind_of,
+        entity_link,
+        route_owner_finding_safely,
+    )
+
+    try:
+        kind = entity_kind_of(db, tenant_id, "project", project_id) or "project"
+        details = {
+            key: payload[key]
+            for key in ("repositoryId", "repositoryFullName", "branch", "path", "maxSeverity",
+                        "breakingChangeCount", "changeReportId")
+            if payload.get(key) is not None
+        }
+        route_owner_finding_safely(
+            db,
+            OwnerFinding(
+                tenant_id=tenant_id,
+                entity_kind="project",
+                entity_id=project_id,
+                finding_type=TYPE_OWNER_BREAKING_CHANGE,
+                summary=str(payload.get("summary") or "A refresh introduced a breaking change"),
+                link=entity_link(kind, project_id) or payload.get("reviewHref"),
+                finding_id=payload.get("changeReportId"),
+                details=details,
+                actor_id=actor_id,
+                already_notified=tuple(already_notified),
+                version_id=version_id,
+            ),
+        )
+    except Exception:  # noqa: BLE001 - owner routing never fails the sync path
+        logger.warning("owner routing of a breaking change failed", exc_info=True)
 
 
 def notify_repository_repeated_failures(

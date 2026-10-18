@@ -82,7 +82,8 @@ def _row(remote_id: str, **fields: Any) -> Dict[str, Any]:
 def test_new_shadow_apis_reach_every_channel_once(slots, catalog):
     db = _ChannelDb([HOOK, SLACK])
     outcome = notifications.notify_new_shadow_apis(db, CONNECTOR, [_row("billing"), _row("metrics")])
-    assert outcome == {"shadow": 2, "delivered": ["d1", "d2"], "suppressed": None}
+    without_owner = {k: v for k, v in outcome.items() if k != "owner"}
+    assert without_owner == {"shadow": 2, "delivered": ["d1", "d2"], "suppressed": None}
     hook, slack = db.deliveries
     assert hook["event"] == SHADOW_EVENT_TYPE and hook["payload"]["count"] == 2
     assert hook["payload"]["reportHref"] == "/ade/dashboard/connectors/shadow?connector=c1"

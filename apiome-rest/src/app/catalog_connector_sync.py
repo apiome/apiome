@@ -562,6 +562,60 @@ def _default_owner_recorder(
 owner_recorder: Callable[..., List[str]] = _default_owner_recorder
 
 
+def _default_owner_router(db: Any, finding: Any) -> Any:
+    """Route through :func:`app.owner_routing.route_owner_finding_safely` (lazy import)."""
+    from .owner_routing import route_owner_finding_safely
+
+    return route_owner_finding_safely(db, finding)
+
+
+#: The router :func:`_route_sync_failure` calls; tests replace it.
+owner_router: Callable[..., Any] = _default_owner_router
+
+
+def _route_sync_failure(
+    db: Any, connector: Mapping[str, Any], result: "ConnectorSyncResult", run_id: str, actor_id: Optional[str]
+) -> None:
+    """Tell the connector's owner team that a sync failed (CDG-2.3, ``owner_sync_failed``).
+
+    The message carries the error class, the provider's HTTP status and the already-redacted error
+    text — never a credential. With no confirmed owner the failure lands in the Unowned findings
+    report. Never raises.
+    """
+    from .owner_routing import TYPE_OWNER_SYNC_FAILED, OwnerFinding, entity_link
+
+    try:
+        connector_id = str(connector["id"])
+        name = connector.get("name") or "A connector"
+        cause = result.error_class or "error"
+        owner_router(
+            db,
+            OwnerFinding(
+                tenant_id=str(connector["tenant_id"]),
+                entity_kind="connector",
+                entity_id=connector_id,
+                finding_type=TYPE_OWNER_SYNC_FAILED,
+                summary=f"{name} failed to sync ({cause})",
+                link=entity_link("connector", connector_id, tab="runs"),
+                finding_id=str(run_id),
+                entity_name=connector.get("name"),
+                details={
+                    key: value
+                    for key, value in {
+                        "connector_kind": connector.get("kind"),
+                        "error_class": result.error_class,
+                        "http_status": result.http_status,
+                        "error_message": result.error_message,
+                    }.items()
+                    if value is not None
+                },
+                actor_id=actor_id,
+            ),
+        )
+    except Exception:  # noqa: BLE001 - a notification must never fail the sync
+        _logger.warning("owner routing of a connector sync failure failed", exc_info=True)
+
+
 def _record_owner_suggestions(
     connector: Mapping[str, Any],
     candidates: Sequence[RefreshCandidate],
@@ -887,6 +941,8 @@ def run_connector_sync(
     record_quota_usage(db, tenant_id, METRIC_POLLS, pulls)
     record_quota_usage(db, tenant_id, METRIC_FILES_DEFERRED, int(summary["deferred"]))
     _audit(db, connector, result, actor_id)
+    if result.status == "failed":
+        _route_sync_failure(db, connector, result, run_id, actor_id)
     if new_rows and only is None:
         # CDG-1.6: APIs seen for the first time that match nothing in the catalog (best-effort).
         from .shadow_api_notifications import notify_new_shadow_apis

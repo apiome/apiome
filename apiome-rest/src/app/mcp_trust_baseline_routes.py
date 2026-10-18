@@ -40,6 +40,7 @@ from .mcp_trust_manifest import (
     diff_trust_manifests,
     shadow_report,
 )
+from .owner_routing import route_mcp_endpoint_problem
 
 logger = logging.getLogger(__name__)
 
@@ -362,6 +363,25 @@ async def get_trust_drift(
     notified: List[str] = []
     if notify and drift.has_regression:
         notified = notify_trust_drift(tenant_id=tenant_id, endpoint=endpoint, report=report)
+        # CDG-2.3: the endpoint's owner team hears about it too (or the Unowned report does),
+        # behind the same kill switch as the webhook alert.
+        if settings.mcp_trust_drift_notify_enabled:
+            route_mcp_endpoint_problem(
+                db,
+                tenant_id=tenant_id,
+                endpoint=endpoint,
+                summary=(
+                    f"{endpoint.get('name') or 'An MCP endpoint'} drifted from its trust baseline "
+                    f"({len(report.get('changes') or [])} change(s), "
+                    f"{report.get('alert_severity') or 'unknown'} severity)"
+                ),
+                details={
+                    "alert_severity": report.get("alert_severity"),
+                    "gate_status": (report.get("gate") or {}).get("status"),
+                    "change_count": len(report.get("changes") or []),
+                },
+                finding_id=report.get("current_fingerprint"),
+            )
 
     return {"drift": report, "notified": notified}
 

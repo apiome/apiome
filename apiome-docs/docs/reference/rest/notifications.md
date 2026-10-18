@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.233.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.234.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `notifications` · 3 operations
 
@@ -31,7 +31,7 @@ Operation id: `list_notifications_v1_tenants__tenant_slug__notifications_get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `unread` | query | boolean | no | Only unread notifications. |
-| `type` | query | enum `"mention"`, `"review_requested"`, `"review_decision"`, `"thread_resolved"`, `"version_published"` or null | no | Only this event type. |
+| `type` | query | enum `"mention"`, `"review_requested"`, `"review_decision"`, `"thread_resolved"`, `"version_published"`, `"owner_finding"`, … or null | no | Only this event type. |
 | `limit` | query | integer | no | Page size. |
 | `offset` | query | integer | no | Notifications to skip. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |

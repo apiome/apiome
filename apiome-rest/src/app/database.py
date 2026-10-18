@@ -16099,8 +16099,51 @@ class Database:
             conn.rollback()
             raise e
 
+    @staticmethod
+    def _insert_direct_delivery(
+        cursor: Any,
+        *,
+        tenant_id: str,
+        team_id: Optional[str],
+        target_url: str,
+        event_type: str,
+        payload: Dict[str, Any],
+    ) -> str:
+        """Queue a delivery to a URL that is not a subscription, on the caller's cursor (CDG-2.3).
+
+        Used for a team's chat channel: the row joins the transaction that writes the inbox rows for
+        the same event, so both commit or neither does. The webhook worker sends it like any other
+        delivery (retries, dead-letter), unsigned, through the SSRF guard.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant.
+            team_id: The team the delivery is for.
+            target_url: The http(s) destination.
+            event_type: The ``X-Apiome-Event`` value.
+            payload: The JSON body (Slack-shaped for a Slack channel).
+
+        Returns:
+            The new delivery event id.
+        """
+        cursor.execute(
+            """
+            INSERT INTO apiome.push_webhook_delivery_events
+              (tenant_id, subscription_id, target_url, team_id, event_type, payload, status,
+               attempt_count, next_retry_at)
+            VALUES (%s::uuid, NULL, %s, %s::uuid, %s, %s::jsonb, 'pending', 0, CURRENT_TIMESTAMP)
+            RETURNING id::text AS id
+            """,
+            (tenant_id, target_url, team_id, event_type, Json(payload)),
+        )
+        return str(cursor.fetchone()["id"])
+
     def get_next_due_push_webhook_delivery(self) -> Optional[Dict[str, Any]]:
-        """Atomically claim and return one due event joined with subscription URL and ciphertext, or None."""
+        """Atomically claim and return one due event joined with subscription URL and ciphertext, or None.
+
+        A direct-URL delivery (CDG-2.3 team chat, no subscription) comes back with ``target_url`` set,
+        ``subscription_url`` equal to it, ``subscription_active`` true and no signing secret.
+        """
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
@@ -16109,10 +16152,11 @@ class Database:
                     WITH next_event AS (
                         SELECT e.id
                         FROM apiome.push_webhook_delivery_events e
-                        INNER JOIN apiome.push_webhook_subscriptions s
+                        LEFT JOIN apiome.push_webhook_subscriptions s
                           ON s.id = e.subscription_id
                          AND s.deleted_at IS NULL
-                        WHERE e.status IN ('pending', 'retrying')
+                        WHERE (s.id IS NOT NULL OR (e.subscription_id IS NULL AND e.target_url IS NOT NULL))
+                          AND e.status IN ('pending', 'retrying')
                           AND e.next_retry_at IS NOT NULL
                           AND e.next_retry_at <= CURRENT_TIMESTAMP
                           AND e.attempt_count < %s
@@ -16134,7 +16178,8 @@ class Database:
                           e.payload,
                           e.status AS event_status,
                           e.attempt_count,
-                          e.next_retry_at
+                          e.next_retry_at,
+                          e.target_url
                     )
                     SELECT
                       ce.event_id,
@@ -16145,11 +16190,12 @@ class Database:
                       ce.event_status,
                       ce.attempt_count,
                       ce.next_retry_at,
-                      s.url AS subscription_url,
-                      s.active AS subscription_active,
+                      ce.target_url,
+                      COALESCE(s.url, ce.target_url) AS subscription_url,
+                      COALESCE(s.active, TRUE) AS subscription_active,
                       s.signing_secret_encrypted
                     FROM claimed_event ce
-                    INNER JOIN apiome.push_webhook_subscriptions s
+                    LEFT JOIN apiome.push_webhook_subscriptions s
                       ON s.id = ce.subscription_id
                      AND s.deleted_at IS NULL
                     """,

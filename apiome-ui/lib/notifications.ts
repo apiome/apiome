@@ -27,11 +27,26 @@
    ------------------------------------------------------------------------- */
 
 /**
- * The five events COL-3.1 writes rows for, in the order the UI lists them.
+ * The findings CDG-2.3 (#5962) routes to an entity's owner team, in the order the UI lists
+ * them. Each row says what happened in its own `summary` and links with its own `link`.
+ */
+export const OWNER_NOTIFICATION_TYPES = [
+  'owner_finding',
+  'owner_breaking_change',
+  'owner_verification_drift',
+  'owner_gate_blocked',
+  'owner_trust_drift',
+  'owner_shadow_api',
+  'owner_sync_failed',
+] as const;
+
+/**
+ * Every event apiome-rest writes rows for, in the order the UI lists them.
  *
- * The order is deliberate — the two that ask the reader to *do* something come first —
- * and it is the order of the preference switches and the page's filter chips, so the
- * reader meets the same five in the same sequence everywhere.
+ * The order is deliberate — the two that ask the reader to *do* something come first, then
+ * the collaboration events (COL-3.1), then the owner findings (CDG-2.3) — and it is the order
+ * of the preference switches and the page's filter chips, so the reader meets the same types
+ * in the same sequence everywhere.
  */
 export const NOTIFICATION_TYPES = [
   'mention',
@@ -39,10 +54,24 @@ export const NOTIFICATION_TYPES = [
   'review_decision',
   'thread_resolved',
   'version_published',
+  ...OWNER_NOTIFICATION_TYPES,
 ] as const;
 
-/** One of the five event types. */
+/** One of the event types. */
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/** One of the owner-finding types. */
+export type OwnerNotificationType = (typeof OWNER_NOTIFICATION_TYPES)[number];
+
+/**
+ * Whether a type is an owner finding (CDG-2.3).
+ *
+ * @param type - A notification type.
+ * @returns True for the `owner_*` types.
+ */
+export function isOwnerNotificationType(type: NotificationType): type is OwnerNotificationType {
+  return (OWNER_NOTIFICATION_TYPES as readonly string[]).includes(type);
+}
 
 /** The plural noun each type is filtered and switched by. */
 export const NOTIFICATION_TYPE_LABELS: Readonly<Record<NotificationType, string>> = {
@@ -51,6 +80,13 @@ export const NOTIFICATION_TYPE_LABELS: Readonly<Record<NotificationType, string>
   review_decision: 'Review decisions',
   thread_resolved: 'Resolved threads',
   version_published: 'Publishes',
+  owner_finding: 'Lint findings',
+  owner_breaking_change: 'Breaking changes',
+  owner_verification_drift: 'Verification drift',
+  owner_gate_blocked: 'Blocked deploy gates',
+  owner_trust_drift: 'MCP trust drift',
+  owner_shadow_api: 'Shadow APIs',
+  owner_sync_failed: 'Failed connector syncs',
 };
 
 /**
@@ -65,6 +101,13 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Readonly<Record<NotificationType, s
   review_decision: 'When a reviewer answers a review you requested.',
   thread_resolved: 'When a thread you took part in is resolved.',
   version_published: 'When a version you collaborated on is published.',
+  owner_finding: 'When something your team owns gets a new error-level lint finding.',
+  owner_breaking_change: 'When a refresh brings a breaking change to something your team owns.',
+  owner_verification_drift: 'When verification finds drift on something your team owns.',
+  owner_gate_blocked: 'When the deploy gate fails for a project your team owns.',
+  owner_trust_drift: 'When an MCP endpoint your team owns drifts from its trust baseline.',
+  owner_shadow_api: 'When a connector your team owns finds APIs the catalog does not describe.',
+  owner_sync_failed: 'When a connector your team owns fails to sync.',
 };
 
 /**
@@ -112,6 +155,20 @@ export interface NotificationPayload {
   round?: number;
   /** `approve` or `request_changes` — `review_decision`. */
   decision?: string;
+  /** The kind of entity an owner finding is about (`project`, `catalog_item`, …) — `owner_*`. */
+  entity_kind?: string;
+  /** That entity's id — `owner_*`. */
+  entity_id?: string;
+  /** That entity's display name, when the producer had it — `owner_*`. */
+  entity_name?: string;
+  /** What happened, in one sentence — `owner_*`. */
+  summary?: string;
+  /** Relative app path to the finding — `owner_*`. */
+  link?: string;
+  /** The producer's id for the finding (a report, a run) — `owner_*`. */
+  finding_id?: string;
+  /** The owner team the finding was routed to — `owner_*`. */
+  team?: { id?: string; slug?: string; name?: string };
 }
 
 /** One row of the caller's inbox, as `GET …/notifications` returns it. */
@@ -256,6 +313,10 @@ export function notificationActor(row: Readonly<NotificationRow>): string {
  * @returns The sentence, with no trailing punctuation.
  */
 export function notificationSentence(row: Readonly<NotificationRow>): string {
+  if (isOwnerNotificationType(row.type)) {
+    // An owner finding carries its own sentence; the actor is usually a sweep, not a person.
+    return row.payload.summary?.trim() || OWNER_FALLBACK_SENTENCES[row.type];
+  }
   const actor = notificationActor(row);
   switch (row.type) {
     case 'mention':
@@ -283,13 +344,44 @@ export function notificationSentence(row: Readonly<NotificationRow>): string {
   }
 }
 
+/** What an owner finding says when its payload carries no `summary`. */
+const OWNER_FALLBACK_SENTENCES: Readonly<Record<OwnerNotificationType, string>> = {
+  owner_finding: 'New error-level lint findings',
+  owner_breaking_change: 'A refresh introduced a breaking change',
+  owner_verification_drift: 'Verification found drift',
+  owner_gate_blocked: 'The deploy gate failed',
+  owner_trust_drift: 'An MCP endpoint drifted from its trust baseline',
+  owner_shadow_api: 'A connector found shadow APIs',
+  owner_sync_failed: 'A connector sync failed',
+};
+
+/** How an owner finding names the kind of entity when it carries no name. */
+const ENTITY_KIND_LABELS: Readonly<Record<string, string>> = {
+  project: 'Project',
+  catalog_item: 'Catalog item',
+  mcp_endpoint: 'MCP endpoint',
+  consumer: 'Consumer',
+  connector: 'Connector',
+};
+
 /**
  * The quiet second line: the project, and the version when the row names one.
+ *
+ * For an owner finding it is the team it was routed to and the entity: `Payments · Orders API`.
  *
  * @param row - The notification.
  * @returns `Payments · 1.2.0`, `Payments`, or an empty string when neither resolved.
  */
 export function notificationContext(row: Readonly<NotificationRow>): string {
+  if (isOwnerNotificationType(row.type)) {
+    const team = row.payload.team?.name?.trim() || row.payload.team?.slug?.trim() || '';
+    const entity =
+      row.payload.entity_name?.trim() ||
+      row.payload.project_name?.trim() ||
+      ENTITY_KIND_LABELS[row.payload.entity_kind ?? ''] ||
+      '';
+    return [team, entity].filter(Boolean).join(' · ');
+  }
   const project = row.payload.project_name?.trim() || row.payload.project_slug?.trim() || '';
   const version = row.payload.version_label?.trim() || '';
   // A publish already says the version in its sentence; repeating it here is noise.
@@ -346,6 +438,7 @@ export const VERSIONS_THREAD_PARAM = 'thread';
  * | `mention`, `thread_resolved` | the project's Discussion tab, that thread highlighted |
  * | `review_requested`, `review_decision` | `/ade/reviews/{id}` |
  * | `version_published` | the project's version timeline |
+ * | `owner_*` | the finding's own `link` — an `/ade/` path only |
  *
  * @param row - The notification.
  * @returns The href, or `null` when the row has lost the id its destination needs — a
@@ -372,8 +465,24 @@ export function notificationHref(row: Readonly<NotificationRow>): string | null 
       return `${VERSIONS_ROUTE}?${new URLSearchParams({ projectId: row.project_id }).toString()}`;
     }
     default:
+      if (isOwnerNotificationType(row.type)) return ownerFindingHref(row.payload.link);
       return null;
   }
+}
+
+/**
+ * The deep link an owner finding carries, when it is safe to follow.
+ *
+ * Only a same-origin app path is accepted: a payload is data, and a link that left the app
+ * (`https://…`, `//host`, `javascript:`) would make the notification centre an open redirect.
+ *
+ * @param link - The payload's `link`.
+ * @returns The path, or `null`.
+ */
+export function ownerFindingHref(link: string | undefined): string | null {
+  const path = link?.trim();
+  if (!path || !path.startsWith('/ade/') || path.includes('\\')) return null;
+  return path;
 }
 
 /* -------------------------------------------------------------------------

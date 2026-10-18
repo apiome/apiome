@@ -811,6 +811,12 @@
       "data": "fixture:hive-a11y/notifications-filtered.html"
     },
     {
+      "id": "notifications-owner-finding",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"notifications-filters\"]",
+      "data": "fixture:hive-a11y/notifications-owner-finding.html"
+    },
+    {
       "id": "help",
       "route": "/ade/dashboard/help",
       "waitFor": "[data-testid=\"page-header\"]",

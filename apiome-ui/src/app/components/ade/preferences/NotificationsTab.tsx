@@ -33,8 +33,10 @@ import SwitchRow from './SwitchRow';
  * changes their mind. Switching a type back on brings its history back with it, which the
  * copy below promises in as many words.
  *
- * Email (COL-3.3) and chat delivery (COL-3.4) are still not here, and the tab still says
- * so rather than implying that these five switches govern them.
+ * Email (COL-3.3) and personal chat delivery (COL-3.4) are still not here, and the tab says
+ * so rather than implying that these switches govern them. Owner findings (CDG-2.3) also post
+ * to the owner team's chat channel; that is the team's setting, not the reader's, so the tab
+ * says these switches leave it alone.
  */
 
 /** What the switches govern, said once above them. */
@@ -42,13 +44,15 @@ const INTRO =
   'Choose what the bell and the notification centre show you. Nothing is discarded — ' +
   'turn a type back on and its history comes back.';
 
-/** The delivery channels that are still not built, named so the tab does not imply them. */
-const NOT_YET = 'Email digests and chat delivery are not available yet.';
+/** The delivery channels these switches do not govern, named so the tab does not imply them. */
+const NOT_YET =
+  'Email digests and personal chat delivery are not available yet. Findings about what your ' +
+  'team owns also post to the team’s chat channel, which these switches do not change.';
 
 /**
  * The Notifications tab.
  *
- * @returns Five switches, one per event type, over the reader's device-local preferences.
+ * @returns One switch per event type, over the reader's device-local preferences.
  */
 export default function NotificationsTab() {
   const { preferences, setPreference } = useNotificationPreferences();

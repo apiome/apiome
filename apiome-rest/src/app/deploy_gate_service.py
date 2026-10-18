@@ -45,6 +45,7 @@ from .deploy_gate import (
     SIGNAL_CONSUMERS,
     SIGNAL_LINT,
     SIGNAL_VERIFICATION,
+    STATUS_FAIL,
     STATUS_NOT_CONFIGURED,
     STATUS_UNKNOWN,
     DeployGatePolicyOut,
@@ -855,4 +856,52 @@ def _raise(exc: Exception) -> Callable[[], GateSignal]:
         raise exc
 
     return _thunk
+
+
+def route_blocked_gate(report: Any, *, tenant_id: str, actor_id: Optional[str] = None) -> None:
+    """Route a failing deploy gate to the project's owner team (CDG-2.3, ``owner_gate_blocked``).
+
+    The gate is evaluated on read, so the same failure is seen by every pipeline that asks; the
+    owner throttle (one event per team, project and type per hour) is what keeps that to one
+    notification. Only ``fail`` routes — ``warn`` lets a deploy through. A project with no
+    confirmed owner lands in the Unowned findings report. Never raises.
+
+    Args:
+        report: The :class:`~app.deploy_gate.DeployGateReport` just built.
+        tenant_id: The tenant.
+        actor_id: Whoever asked (a pipeline's key owner); not notified about their own read.
+    """
+    if getattr(report, "status", None) != STATUS_FAIL:
+        return
+    from .owner_routing import (
+        TYPE_OWNER_GATE_BLOCKED,
+        OwnerFinding,
+        entity_kind_of,
+        entity_link,
+        route_owner_finding_safely,
+    )
+
+    try:
+        project_id = str(report.project_id)
+        kind = entity_kind_of(db, tenant_id, "project", project_id) or "project"
+        failing = [signal.signal for signal in report.signals if signal.status == STATUS_FAIL]
+        label = report.version_label or report.revision_id
+        route_owner_finding_safely(
+            db,
+            OwnerFinding(
+                tenant_id=tenant_id,
+                entity_kind="project",
+                entity_id=project_id,
+                finding_type=TYPE_OWNER_GATE_BLOCKED,
+                summary=f"Deploy gate failed for {report.project_slug or 'a project'} {label}: {report.summary}",
+                link=entity_link(kind, project_id),
+                finding_id=str(report.revision_id),
+                entity_name=report.project_slug,
+                details={"failing_signals": failing, "version_label": report.version_label},
+                actor_id=actor_id,
+                version_id=str(report.revision_id),
+            ),
+        )
+    except Exception:  # noqa: BLE001 - routing never changes a gate verdict
+        logger.warning("owner routing of a failed deploy gate failed", exc_info=True)
 

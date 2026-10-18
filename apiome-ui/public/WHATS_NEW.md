@@ -112,6 +112,7 @@ We continue to improve the platform based on your feedback with improvements and
   - **Shadow APIs** (Govern): what your connected gateways serve that the catalog does not describe, with possible matches, drift and undeployed APIs — link, import or ignore each with a reason
   - **Connectors** (Bring in): add a gateway with a dry run that shows what it would sync before anything is saved, then see each connector's items, runs and settings; Git refreshes and connector runs share one **Recent runs** ledger
   - **Teams**: group workspace members into named teams with a contact e-mail, chat, on-call and documentation links, each member a lead or a member; **Roles** has a new **Teams** row (Owner and Admin manage teams, Editor and Viewer can view them)
+  - **Owner findings**: lint regressions, breaking changes, verification drift, failing deploy gates, MCP trust drift, shadow APIs and failed connector syncs now reach the owner team in the notification centre (one switch per type in **Preferences → Notifications**) and its chat channel
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

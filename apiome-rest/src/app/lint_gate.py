@@ -457,6 +457,9 @@ def _notify_gate_outcomes(gate: GateEvaluation, *, tenant_id: str) -> None:
     except Exception:  # noqa: BLE001 - notifications never break gating
         _logger.warning("lint.regression.detected notification failed", exc_info=True)
 
+    if gate.regressions:
+        _route_regressions_to_owner(gate, tenant_id=tenant_id)
+
     try:
         coverage_gate = gate.evaluation.gate_results.get("required_coverage") or {}
         ci_outcomes = default_ci_outcomes(gate.policy_version.get("ci_outcomes"))
@@ -478,6 +481,57 @@ def _notify_gate_outcomes(gate: GateEvaluation, *, tenant_id: str) -> None:
             )
     except Exception:  # noqa: BLE001 - notifications never break gating
         _logger.warning("lint.coverage.failed notification failed", exc_info=True)
+
+
+def _route_regressions_to_owner(gate: GateEvaluation, *, tenant_id: str) -> None:
+    """Route new error-level findings to the owner team of the project or MCP endpoint (CDG-2.3).
+
+    The entity is the catalog item / project a revision belongs to, or the MCP endpoint a snapshot
+    belongs to. With no confirmed owner the regression lands in the Unowned findings report. Never
+    raises; throttled per (team, entity) so re-reading the gate does not notify again.
+    """
+    from .owner_routing import (
+        TYPE_OWNER_FINDING,
+        OwnerFinding,
+        entity_kind_of,
+        entity_link,
+        route_owner_finding_safely,
+    )
+
+    try:
+        if gate.subject_type == SUBJECT_MCP_ENDPOINT_VERSION:
+            rows = db.execute_query(
+                "SELECT endpoint_id::text AS endpoint_id FROM apiome.mcp_endpoint_versions WHERE id::text = %s",
+                (str(gate.subject_id),),
+            )
+            kind, entity_id = "mcp_endpoint", (rows[0]["endpoint_id"] if rows else None)
+        else:
+            kind, entity_id = "project", gate.project_id
+        if not entity_id:
+            return
+        stored = entity_kind_of(db, tenant_id, kind, str(entity_id)) or kind
+        count = len(gate.regressions)
+        rules = sorted({str(f.get("rule_id") or f.get("code") or "") for f in gate.regressions} - {""})
+        route_owner_finding_safely(
+            db,
+            OwnerFinding(
+                tenant_id=tenant_id,
+                entity_kind=kind,
+                entity_id=str(entity_id),
+                finding_type=TYPE_OWNER_FINDING,
+                summary=f"{count} new error-level lint finding{'s' if count != 1 else ''}",
+                link=entity_link(stored, str(entity_id), tab="lint"),
+                finding_id=str(gate.evaluation_id) if gate.evaluation_id else None,
+                details={
+                    "regression_count": count,
+                    "rules": rules[:10],
+                    "fingerprints": [f["source_fingerprint"] for f in gate.regressions][:20],
+                },
+                version_id=str(gate.subject_id) if gate.subject_type == SUBJECT_CATALOG_REVISION else None,
+            ),
+        )
+    except Exception:  # noqa: BLE001 - routing never breaks gating
+        _logger.warning("owner routing of lint regressions failed", exc_info=True)
 
 
 def _links(gate: GateEvaluation) -> Dict[str, Optional[str]]:

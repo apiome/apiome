@@ -1,6 +1,6 @@
 ---
 title: Notifications
-description: The bell and the notifications page — mentions, reviews, resolved threads and publishes.
+description: The bell and the notifications page — collaboration events and findings your team owns.
 sidebar_position: 8
 tags: [notifications, collaboration, reviews]
 ---
@@ -9,8 +9,9 @@ tags: [notifications, collaboration, reviews]
 
 Apiome tells you when something concerns you: somebody **mentions** you in a comment, asks for your
 **review**, answers a review you requested, **resolves** a thread you took part in, or **publishes**
-a version you collaborated on. Notifications belong to you and to the current workspace — switching
-workspace shows that workspace's inbox.
+a version you collaborated on. It also tells you about **findings on what your team owns** (see
+[Owner findings](#owner-findings)). Notifications belong to you and to the current workspace —
+switching workspace shows that workspace's inbox.
 
 | Type | You get one when… | Reads like |
 | --- | --- | --- |
@@ -49,7 +50,8 @@ next fifty.
 
 - **Unread only** shows only what you have not read; its count is your unread total.
 - **All types** or one type — **Mentions**, **Review requests**, **Review decisions**, **Resolved
-  threads**, **Publishes** — each with its unread count. Click a selected type again to clear it.
+  threads**, **Publishes**, and the seven [owner finding](#owner-findings) types — each with its
+  unread count. Click a selected type again to clear it.
 
 The two combine: *Unread only* with *Mentions* lists the mentions you still have to read.
 
@@ -64,6 +66,40 @@ The two combine: *Unread only* with *Mentions* lists the mentions you still have
 **Refresh** reads the inbox again. A notification whose project or version was deleted keeps its
 sentence but is no longer a link.
 
+## Owner findings
+
+When something goes wrong on a project, catalog item, MCP endpoint or connector that has an
+[owner team](./teams.mdx#ownership), every member of that team gets a notification, and the team's
+**chat channel** (its `chat_url`) gets one message:
+
+| Type | You get one when… | Reads like |
+| --- | --- | --- |
+| **Lint findings** | a lint gate finds new error-level findings | *3 new error-level lint findings* |
+| **Breaking changes** | a refresh introduces a breaking change | *A refresh of acme/payments introduced 2 breaking changes* |
+| **Verification drift** | a verification schedule finds drift | *Nightly prod check found drift (2 operations)* |
+| **Blocked deploy gates** | the deploy gate fails | *Deploy gate failed for orders-service 1.9.0: …* |
+| **MCP trust drift** | an MCP endpoint drifts from its trust baseline | *Tools drifted from its trust baseline (…)* |
+| **Shadow APIs** | a connector finds APIs the catalog does not describe | *2 new shadow APIs on Prod Kong* |
+| **Failed connector syncs** | a connector sync fails | *Prod Kong failed to sync (auth)* |
+
+The second line names the team and the entity — *Payments · Payments API* — and clicking the row
+opens the finding: the item's **Lint** tab, the project's versions, the connector's **Runs**, or the
+shadow-API report.
+
+<Screenshot id="notifications-owner-finding" alt="The Notifications page listing owner findings for the Payments team: a breaking change, new lint findings, verification drift, a failed sync and a failed deploy gate" />
+
+- **Only confirmed owners hear about it.** A suggested owner never does. You are not told about
+  something you did yourself, and a member already notified by the event (as its requester, say) is
+  not notified twice.
+- **Once an hour at most.** The same kind of finding on the same entity reaches a team at most once
+  an hour, so a gate checked in a loop does not flood anyone.
+- **Nothing is dropped.** A finding on an entity with no confirmed owner goes to the **Unowned
+  findings** report — `GET /v1/tenants/{tenant}/unowned-findings` (needs `teams:view`) — with how
+  many times it happened. Give the entity an owner and the next one reaches the team.
+- **Chat messages** are Slack messages for a Slack incoming webhook, the structured event for any
+  other URL. They are retried like any webhook, and a channel answering *429* or *503* with
+  `Retry-After` is not tried again before it asked.
+
 ## Choose what you see
 
 **Click “Change what you see”** on the notifications page, or open
@@ -75,8 +111,9 @@ is deleted: turn the type back on and its history returns. With every type off, 
 
 <Screenshot id="preferences-notifications" alt="The Preferences pane's Notifications tab with Publishes switched off, over the notifications page" />
 
-The switches are kept in this browser, so they apply on this device only. Notifications are in-app:
-email digests and chat delivery are not available yet.
+The switches are kept in this browser, so they apply on this device only — each owner finding type
+has its own switch too. They do not change what your team's chat channel receives. Email digests
+and personal chat delivery are not available yet.
 
 ## With the API
 

@@ -1,6 +1,6 @@
 ---
 title: "Owners"
-description: "REST endpoints tagged owners: 5 operations."
+description: "REST endpoints tagged owners: 6 operations."
 sidebar_position: 48
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.233.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.234.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `owners` · 5 operations
+Tag: `owners` · 6 operations
 
 ## `GET /v1/tenants/{tenant_slug}/owners/{kind}/{entity_id}` {#get-entity-owner-v1-tenants-tenant-slug-owners-kind-entity-id-get}
 
@@ -164,6 +164,34 @@ Request body for assign one owner to many entities.
 | 200 | Successful response for assign one owner to many entities. | `application/json` [`BulkAssignResponse`](#schema-bulkassignresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/unowned-findings` {#get-unowned-findings-v1-tenants-tenant-slug-unowned-findings-get}
+
+**List unowned findings**
+
+Findings that reached no team because their entity has no confirmed owner — never dropped, kept here, newest first. One row per entity and finding type, with `occurrences` and the latest `payload`. Assigning an owner (`PUT /v1/tenants/{tenant}/owners/{kind}/{id}`) routes the next occurrence to the team and clears the row.
+
+Requires `teams:view`.
+
+Operation id: `get_unowned_findings_v1_tenants__tenant_slug__unowned_findings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `type` | query | enum `"owner_finding"`, `"owner_breaking_change"`, `"owner_verification_drift"`, `"owner_gate_blocked"`, `"owner_trust_drift"`, `"owner_shadow_api"`, … or null | no | Query parameter: type. |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list unowned findings. | `application/json` [`UnownedFindingsResponse`](#schema-unownedfindingsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `BulkAssignInput` {#schema-bulkassigninput}
@@ -218,3 +246,12 @@ An entity's owner and suggestions.
 | `entity_id` | string | yes | Entity ID. |
 | `owner` | `OwnerRecord` or null | no | The confirmed owner, if any. |
 | `suggestions` | array of `OwnerRecord` | no | Suggested owners with their source; none of them receives findings. |
+
+### `UnownedFindingsResponse` {#schema-unownedfindingsresponse}
+
+A page of the report.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `items` | array of `UnownedFinding` | no | Items. |
+| `total` | integer | yes | Total. |

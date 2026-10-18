@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.370.0] - 2026-10-18
+
+### Added
+- **Owner routing of findings (#5962, CDG-2.3)**: findings now reach the entity's **confirmed** owner team (CDG-2.2)
+  — one inbox row per team member, minus the actor and anyone the producer already notified, plus one message to the
+  team's `chat_url` (a Slack message for a Slack incoming webhook, the structured event otherwise) — written in one
+  transaction and throttled to one event per (team, entity, type) per hour. Seven inbox types: `owner_finding`
+  (new error-level lint findings from the lint gate, on the project or the MCP endpoint), `owner_breaking_change`
+  (`notify_repository_breaking_change`, which also takes `actor_id` / `already_notified`), `owner_verification_drift`
+  (scheduled verification drift, on the project its `versionRef` names), `owner_gate_blocked` (a `fail` from
+  `GET /v1/projects/{tenant}/{project}/gate`), `owner_trust_drift` (MCP trust drift on `?notify=true`; also the entry
+  point for probe failures), `owner_shadow_api` (new shadow APIs, on the connector) and `owner_sync_failed` (a failed
+  connector sync, with the redacted error). Payloads carry `entity_kind`, `entity_id`, `entity_name`, `team`,
+  `summary`, `finding_id` and a relative `link`. `GET …/notifications?type=` accepts the new types.
+- **Unowned findings report (#5962)**: `GET /v1/tenants/{tenant}/unowned-findings` (`teams:view`; `type`, `limit`,
+  `offset`) lists findings whose entity has no confirmed owner — one row per entity and type with `occurrences`,
+  `first_seen_at`, `last_seen_at` and the latest `payload`. Nothing is dropped; routing clears a row once the entity's
+  owner receives that type.
+
+### Changed
+- **Webhook deliveries honour `Retry-After` (#5962)**: a `429` or `503` with `Retry-After` (seconds or HTTP date,
+  capped at one hour) delays the next attempt at least that long instead of the fixed 10/60/300 s backoff.
+- **Direct-URL deliveries (#5962)**: a delivery may target a team's chat URL instead of a subscription; it is sent
+  unsigned through the SSRF guard with the same retries and dead-letter handling.
+
+The OpenAPI version moves to 1.234.0.
+
 ## [1.369.0] - 2026-10-18
 
 ### Added

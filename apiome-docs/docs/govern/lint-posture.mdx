@@ -70,6 +70,15 @@ view, share its URL.
 
 <Screenshot id="lint-posture-finding" alt="A finding's drawer: evidence, links with owner and ticket, and its remediation history" />
 
+## Findings reach the owner team
+
+When a lint gate finds **new error-level findings** on a project, catalog item or MCP endpoint, the
+entity's confirmed [owner team](../workspace/teams.mdx#ownership) is told: each member gets a
+**Lint findings** notification that opens the item's **Lint** tab, and the team's chat channel gets
+one message. It happens at most once an hour per item, and an item with no confirmed owner is listed
+in the **Unowned findings** report instead. See
+[Notifications → Owner findings](../workspace/notifications.mdx#owner-findings).
+
 ## Act on findings
 
 Tick the findings to act on (or press <Kbd keys="x"/> on a row). The bar that appears offers:
