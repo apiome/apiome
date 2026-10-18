@@ -263,6 +263,54 @@ class FakeConnectorStore:
             finished_at=_now(),
         )
 
+    def _ledger(self, tenant_id, connector_id, source):
+        rows = [
+            {
+                **r,
+                "connector_name": (self.connectors.get(r.get("connector_id") or "") or {}).get("name"),
+                "connector_kind": (self.connectors.get(r.get("connector_id") or "") or {}).get("kind"),
+            }
+            for r in self.runs.values()
+            if r["tenant_id"] == tenant_id
+            and (connector_id is None or r.get("connector_id") == connector_id)
+            and (source is None or r.get("refresh_source") == source)
+        ]
+        rows.sort(key=lambda r: r["_seq"], reverse=True)
+        return rows
+
+    def list_refresh_runs(self, db, tenant_id, *, connector_id, source, limit, offset):
+        return self._ledger(tenant_id, connector_id, source)[offset : offset + limit]
+
+    def count_refresh_runs(self, db, tenant_id, *, connector_id, source):
+        return len(self._ledger(tenant_id, connector_id, source))
+
+    def add_git_run(self, tenant_id: str, **fields: Any) -> Dict[str, Any]:
+        """A Git refresh job on the shared ledger (the sync engine never writes these)."""
+        row = {
+            "id": str(uuid.uuid4()),
+            "tenant_id": tenant_id,
+            "refresh_source": "git",
+            "connector_id": None,
+            "repository_id": str(uuid.uuid4()),
+            "repository_full_name": "acme/specs",
+            "branch": "main",
+            "path": "openapi.yaml",
+            "status": "succeeded",
+            "refresh_reason": "newer-content",
+            "error_class": None,
+            "http_status": None,
+            "error_message": None,
+            "pull_count": 1,
+            "run_summary": None,
+            "created_at": _now(),
+            "started_at": _now(),
+            "finished_at": _now(),
+            "_seq": next(self._clock),
+            **fields,
+        }
+        self.runs[row["id"]] = row
+        return row
+
     def list_runs(self, db, tenant_id, connector_id, *, limit, offset):
         rows = [r for r in self.runs.values() if r["tenant_id"] == tenant_id and r["connector_id"] == connector_id]
         rows.sort(key=lambda r: r["_seq"], reverse=True)

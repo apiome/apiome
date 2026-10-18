@@ -1145,6 +1145,30 @@
       "route": "/ade/dashboard/connectors/shadow",
       "waitFor": "[data-testid=\"shadow-link-dialog\"]",
       "data": "fixture:hive-a11y/shadow-apis-link.html"
+    },
+    {
+      "id": "connectors",
+      "route": "/ade/dashboard/connectors",
+      "waitFor": "[data-testid=\"connectors-table\"]",
+      "data": "fixture:hive-a11y/connectors.html"
+    },
+    {
+      "id": "connector-add",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-dry-run-result\"]",
+      "data": "fixture:hive-a11y/connector-add.html"
+    },
+    {
+      "id": "connector-detail",
+      "route": "/ade/dashboard/connectors/c1",
+      "waitFor": "[data-testid=\"connector-items\"]",
+      "data": "fixture:hive-a11y/connector-detail.html"
+    },
+    {
+      "id": "connector-runs",
+      "route": "/ade/dashboard/connectors/c1",
+      "waitFor": "[data-testid=\"refresh-runs-ledger\"]",
+      "data": "fixture:hive-a11y/connector-runs.html"
     }
   ]
 }

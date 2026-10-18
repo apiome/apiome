@@ -5,19 +5,27 @@ sidebar_position: 1.5
 tags: [connectors, catalog, import, refresh]
 ---
 
+<Route path="/ade/dashboard/connectors" />
+
 A **connector** points Apiome at somewhere your APIs already live — an API gateway, a schema
 registry, a URL — and keeps the [Catalog](./catalog.mdx) in step with it. Each API the connector
 finds becomes a catalog item, and each new revision of that API becomes a new revision of the item.
 
 Connectors are refreshed by the same engine as [Repositories](./repositories.mdx): one cadence,
-one quota, one audit trail.
+one quota, one audit trail. **Go to Bring in → Connectors** to see them.
+
+<Screenshot id="connectors" alt="Connectors: one connector with its kind, health, last run and schedule, a Sync now button, and Add connector in the header" />
+
+The list shows each connector's **kind**, **Health** (**active**, **failing** or **paused**), **Last
+run** and **Schedule**. Switch between **List** and **Grid**. **Sync now** runs one sync and reports
+what it imported. **Govern → [Shadow APIs](../govern/shadow-apis.mdx)** shows what your connectors
+found that the catalog does not describe.
 
 :::note
-Connectors are registered through the REST API for now; there is no screen to manage them yet. **Govern → [Shadow APIs](../govern/shadow-apis.mdx)** shows what they found that the catalog does not describe. Each kind needs
-a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway) and
-[Azure API Management](#azure-api-management) and [Apigee](#apigee) sync today; the URL and registry sources
-follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
-`GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
+Each kind needs a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway),
+[Azure API Management](#azure-api-management) and [Apigee](#apigee) sync today; the URL and registry
+sources follow. A kind your deployment cannot sync yet is shown as **Not available on this
+deployment** when you add a connector.
 :::
 
 ## Source kinds
@@ -38,9 +46,81 @@ A connector has a **name**, an optional **base URL** (the control-plane or admin
 environment), a **refresh interval** and a **conflict policy** (`hold-for-review`, `overwrite` or
 `new-branch`, the same choices as a repository).
 
-## Register a connector
+## Add a connector
 
-1. **Create it:** `POST /v1/tenants/{tenant}/connectors` with `kind`, `name` and, when the kind has
+1. **Go to Bring in → Connectors** and click **Add connector**.
+2. **Kind:** choose where your APIs live, for example **Kong Gateway (Admin API)**, and click
+   **Continue**.
+3. **Credentials:** enter what the kind needs, such as an admin token. Apiome never shows a stored
+   credential again.
+4. **Scope:** enter the **Base URL** when the kind has one, and the kind's coordinates (workspace,
+   region, organization and environments, …). A required field you leave empty is named under the
+   form, and **Continue** stays disabled until it is filled.
+5. **Dry run:** click **Run the dry run**. Apiome asks the provider once what the connector would
+   sync and shows how many APIs it found, with the first few by name. **Nothing is stored yet.**
+
+   <Screenshot id="connector-add" alt="Add a connector, Dry run step: 3 APIs found, with the first one listed by name and environment, and Continue enabled" />
+
+   If the provider refuses, the dry run shows its reason, for example *The dry run failed (auth,
+   HTTP 401): invalid credentials*, and you cannot continue until a dry run succeeds. Going back and
+   changing any credential or scope field clears the dry run, so the one you save is always of the
+   current settings.
+6. **Schedule:** give the connector a **Name**, choose how often it syncs under **Refresh** (or keep
+   the deployment default), and choose what happens **When a synced API was edited in Apiome**: the
+   same conflict policies as a [repository](./repositories.mdx). Click **Save connector**.
+
+Apiome registers the connector, stores its credential and opens the connector's page.
+
+You need the **Imports** permission: **View** to read connectors, **Create** to add one (and run a
+dry run), **Edit** to change, sync or set credentials, and **Delete** to remove one.
+
+## A connector's page
+
+The header shows the connector's health, its last run and whether a credential is stored. **Sync
+now** runs a sync; the tabs below fill in as soon as it finishes, without a reload.
+
+<Screenshot id="connector-detail" alt="A connector's Items tab: two APIs, one imported with an Open in the catalog link, one discovered and not imported yet" />
+
+- **Items** lists every API the connector has seen, with its environment, revision and
+  [status](#what-a-sync-does). **Open in the catalog** opens the catalog item an imported API became.
+- **Runs** lists this connector's runs, newest first, with their outcome, for example *Imported 2 of
+  3* or *Failed: auth (HTTP 401)*.
+
+  <Screenshot id="connector-runs" alt="A connector's Runs tab: a Connector run that imported 2 of 3, next to a Git refresh, each with a source badge" />
+
+- **Settings** changes the name, base URL, scope, refresh and conflict policy, replaces the
+  credential, pauses or resumes scheduled syncs, and deletes the connector. Deleting stops its
+  syncs and destroys its credential; the catalog items it imported stay.
+
+The same runs table, unfiltered, is at the bottom of **Bring in → Repositories** as **Recent runs**.
+Git refreshes and connector runs are listed together, newest first, each with a **Git** or
+**Connector** badge.
+
+## With the CLI
+
+```bash
+apiome connectors add --kind kong-admin --name "Prod gateway" \
+  --base-url https://kong-admin.example.com --scope '{"workspace": "default"}' \
+  --credentials-file kong-token.json
+apiome connectors list
+apiome connectors sync <id> --wait
+apiome connectors items <id> --status imported
+apiome connectors runs <id>
+apiome connectors remove <id> --yes
+```
+
+`add` runs the dry run first and saves nothing if it fails. The credential comes from a JSON file
+(or `-` for standard input), never from the command line. `sync --wait` exits `0` when the run
+succeeded and `7` when it failed, so a pipeline can gate on it. Every command takes `--format json`.
+See the [`apiome connectors` reference](../reference/cli/connectors.md).
+
+## Register with the API
+
+1. **Check it (optional):** `POST /v1/tenants/{tenant}/connectors/dry-run` with the same `kind`,
+   `baseUrl` and `scope` you will create, plus the `credentials`. It returns `itemCount`, a sample
+   of up to 20 `items` and any `findings`, and stores nothing. A refused dry run is a `422` with
+   `detail.code` `connector-check-failed` and the provider's reason in `detail.message`.
+2. **Create it:** `POST /v1/tenants/{tenant}/connectors` with `kind`, `name` and, when the kind has
    one, `baseUrl` and `scope`. For example:
 
    ```json
@@ -53,12 +133,9 @@ environment), a **refresh interval** and a **conflict policy** (`hold-for-review
    }
    ```
 
-2. **Store its credential:** `PUT /v1/tenants/{tenant}/connectors/{id}/credentials` with the fields
+3. **Store its credential:** `PUT /v1/tenants/{tenant}/connectors/{id}/credentials` with the fields
    the kind needs, for example `{"credentials": {"token": "…"}}`.
-3. **Sync it:** `POST /v1/tenants/{tenant}/connectors/{id}/sync`. The response is the finished run.
-
-You need the **Imports** permission: **View** to read connectors, **Create** to register one,
-**Edit** to change, sync or set credentials, and **Delete** to remove one.
+4. **Sync it:** `POST /v1/tenants/{tenant}/connectors/{id}/sync`. The response is the finished run.
 
 ## Credentials
 
@@ -121,8 +198,10 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 
 ## Runs and failures
 
-`GET …/connectors/{id}/runs` lists runs, newest first, with their **status**, **trigger**
-(`manual` or `scheduled`), counts and, for a failure, **`errorClass`** and **`httpStatus`**.
+A connector's **Runs** tab, and `GET …/connectors/{id}/runs`, list runs, newest first, with their
+**status**, **trigger** (`manual` or `scheduled`), counts and, for a failure, **`errorClass`** and
+**`httpStatus`**. `GET /v1/tenants/{tenant}/refresh-runs` lists every connector run and Git refresh
+together, each with its **`source`** (`connector` or `git`); `?connector=` and `?source=` filter it.
 
 A run that could not fetch anything is a **failed** run, never a success with zero changes. For
 example, if a run fetches 0 of 12 APIs because the gateway refused the credential, it fails with
@@ -477,10 +556,12 @@ repository audit export lists connector runs next to Git refreshes.
 | --- | --- |
 | `GET /v1/tenants/{tenant}/connectors` | List connectors, the kinds, and the kinds that can sync |
 | `POST /v1/tenants/{tenant}/connectors` | Register a connector |
+| `POST /v1/tenants/{tenant}/connectors/dry-run` | Ask the provider once what a connector would sync; stores nothing |
 | `GET` / `PATCH` / `DELETE …/connectors/{id}` | Read, change or delete one |
 | `POST …/connectors/{id}/sync` | Sync now and return the run |
 | `GET …/connectors/{id}/items` | The inventory (`?status=` filters it), with each item's `deployment` |
 | `GET …/connectors/{id}/runs` | The runs, newest first |
+| `GET /v1/tenants/{tenant}/refresh-runs` | Connector runs and Git refreshes together (`?connector=`, `?source=git\|connector`) |
 | `PUT …/connectors/{id}/credentials` | Store or replace the credential |
 | `POST …/connectors/{id}/items/{itemId}/link` · `ignore` · `unignore` · `import` | Act on one inventory item (see [Shadow APIs](../govern/shadow-apis.mdx)) |
 

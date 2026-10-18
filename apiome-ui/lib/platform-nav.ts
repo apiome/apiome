@@ -146,7 +146,7 @@ export type PlatformNavGroupId = (typeof PLATFORM_NAV_GROUP_IDS)[number];
  *   reached by drilling into a project — but **not** the sunset timeline,
  *   which lives under `/versions/` yet is its own nav entry.
  */
-export type PlatformNavMatch = 'exact' | 'subtree' | 'projects';
+export type PlatformNavMatch = 'exact' | 'subtree' | 'projects' | 'connectors';
 
 /** A destination in the rail, a menu, or the command palette. */
 export interface PlatformNavItem {
@@ -290,6 +290,15 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         icon: 'git-branch',
         requiresTenant: true,
         match: 'subtree',
+      },
+      {
+        // CDG-1.7: gateways and registries whose APIs sync into the catalog.
+        id: 'connectors',
+        label: 'Connectors',
+        href: `${DASHBOARD_HREF}/connectors`,
+        icon: 'plug',
+        requiresTenant: true,
+        match: 'connectors',
       },
       {
         id: 'mcp',
@@ -439,6 +448,9 @@ const ALL_MODEL_ITEMS: readonly PlatformNavItem[] = [
   ...PLATFORM_USER_MENU_ITEMS,
 ];
 
+/** The shadow-API report, which lives under the Connectors path but is a Govern destination. */
+const PLATFORM_NAV_SHADOW_APIS_HREF = `${DASHBOARD_HREF}/connectors/shadow`;
+
 /** href → active-state rule, derived from the model so the two cannot drift. */
 const MATCH_BY_HREF: ReadonlyMap<string, PlatformNavMatch> = new Map(
   ALL_MODEL_ITEMS.map((item) => [item.href, item.match ?? 'exact'])
@@ -472,6 +484,13 @@ export function isPlatformNavHrefActive(href: string, pathname: string | null | 
       if (pathname === href) return true;
       if (pathname === PLATFORM_NAV_SUNSET_TIMELINE_HREF) return false;
       return matchesSubtree(PLATFORM_NAV_VERSIONS_HREF, pathname);
+    case 'connectors':
+      // Connectors owns its add and detail pages, but not the shadow-API report, which is its own
+      // entry under Govern.
+      if (pathname === PLATFORM_NAV_SHADOW_APIS_HREF || pathname.startsWith(`${PLATFORM_NAV_SHADOW_APIS_HREF}/`)) {
+        return false;
+      }
+      return matchesSubtree(href, pathname);
     case 'exact':
     default:
       return pathname === href;

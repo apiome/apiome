@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from urllib.parse import quote
 from uuid import UUID
 
 V1 = "/v1"
@@ -789,3 +790,43 @@ def json_export(tenant_slug: str, project_slug: str, version_slug: str) -> str:
 def shadow_report(tenant_slug: str) -> str:
     """GET the shadow-API report: gateway inventory against the catalog (CDG-1.6)."""
     return f"{V1}/tenants/{tenant_slug}/shadow-report"
+
+
+def connectors(tenant_slug: str) -> str:
+    """GET / POST the tenant's catalog connectors (CDG-1.1, CDG-1.7)."""
+    return f"{V1}/tenants/{tenant_slug}/connectors"
+
+
+def connector(tenant_slug: str, connector_id: str) -> str:
+    """GET / PATCH / DELETE one connector."""
+    return f"{connectors(tenant_slug)}/{quote(connector_id, safe='')}"
+
+
+def connector_dry_run(tenant_slug: str) -> str:
+    """POST a connector dry run: ask the provider once, store nothing (CDG-1.7)."""
+    return f"{connectors(tenant_slug)}/dry-run"
+
+
+def connector_credentials(tenant_slug: str, connector_id: str) -> str:
+    """PUT a connector's credential (replaced as a whole, never returned)."""
+    return f"{connector(tenant_slug, connector_id)}/credentials"
+
+
+def connector_sync(tenant_slug: str, connector_id: str) -> str:
+    """POST to sync a connector now; answers with the finished run."""
+    return f"{connector(tenant_slug, connector_id)}/sync"
+
+
+def connector_items(tenant_slug: str, connector_id: str) -> str:
+    """GET a connector's inventory (the remote APIs it has seen)."""
+    return f"{connector(tenant_slug, connector_id)}/items"
+
+
+def connector_runs(tenant_slug: str, connector_id: str) -> str:
+    """GET a connector's own sync runs, newest first."""
+    return f"{connector(tenant_slug, connector_id)}/runs"
+
+
+def refresh_runs(tenant_slug: str) -> str:
+    """GET the refresh ledger: Git refresh jobs and connector runs, interleaved (CDG-1.7)."""
+    return f"{V1}/tenants/{tenant_slug}/refresh-runs"

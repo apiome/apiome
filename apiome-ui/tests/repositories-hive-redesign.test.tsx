@@ -244,6 +244,54 @@ const REFRESH_SIGNALS = [
   },
 ];
 
+/** The shared refresh ledger (CDG-1.7): a connector run and a Git refresh, interleaved. */
+const LEDGER_RUNS = [
+  {
+    id: 'run-connector',
+    source: 'connector',
+    status: 'succeeded',
+    reason: null,
+    trigger: 'scheduled',
+    connectorId: 'c1',
+    connectorName: 'Prod Kong',
+    connectorKind: 'kong-admin',
+    repositoryId: null,
+    repositoryName: null,
+    branch: null,
+    path: null,
+    errorClass: null,
+    httpStatus: null,
+    errorMessage: null,
+    pullCount: 3,
+    summary: { imported: 1, candidates: 3 },
+    createdAt: '2026-10-18T09:00:00Z',
+    startedAt: '2026-10-18T09:00:00Z',
+    finishedAt: '2026-10-18T09:00:04Z',
+  },
+  {
+    id: 'run-git',
+    source: 'git',
+    status: 'succeeded',
+    reason: 'webhook',
+    trigger: null,
+    connectorId: null,
+    connectorName: null,
+    connectorKind: null,
+    repositoryId: 'r1',
+    repositoryName: 'acme/payments-api',
+    branch: 'main',
+    path: 'openapi.yaml',
+    errorClass: null,
+    httpStatus: null,
+    errorMessage: null,
+    pullCount: 1,
+    summary: {},
+    createdAt: '2026-10-18T08:00:00Z',
+    startedAt: '2026-10-18T08:00:00Z',
+    finishedAt: '2026-10-18T08:00:02Z',
+  },
+];
+
 // ---------------------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------------------
@@ -276,6 +324,7 @@ function mockRoutes({ repositories = ALL, signals = REFRESH_SIGNALS, remove }: R
         ? reply({ error: remove.error ?? 'Refused' }, false, remove.error ?? 'Refused')
         : reply({ success: true });
     }
+    if (url.startsWith('/api/refresh-runs')) return reply({ runs: LEDGER_RUNS, total: LEDGER_RUNS.length });
     if (url.includes('refresh-activity')) {
       return signals === null
         ? reply({ success: false, error: 'no refresh activity' }, false, 'Server error')
@@ -428,6 +477,18 @@ describe('the refresh activity panel', () => {
   });
 });
 
+describe('the refresh ledger (CDG-1.7)', () => {
+  it('interleaves every Git refresh and connector run behind a source badge', async () => {
+    const { fetchMock } = await renderRepositories();
+    const connector = await screen.findByTestId('refresh-run-run-connector');
+    const git = screen.getByTestId('refresh-run-run-git');
+    expect(within(connector).getByTestId('refresh-run-source')).toHaveTextContent('Connector');
+    expect(within(git).getByTestId('refresh-run-source')).toHaveTextContent('Git');
+    const ledgerCall = fetchMock.mock.calls.map(([url]) => String(url)).find((url) => url.startsWith('/api/refresh-runs'));
+    expect(ledgerCall).toBe('/api/refresh-runs?limit=10');
+  });
+});
+
 describe('the cards view', () => {
   it('draws one card per repository, the whole card a single link', async () => {
     await renderRepositories();
@@ -523,7 +584,7 @@ describe('the table view', () => {
     await screen.findByText('payments-specs');
     await showTable();
 
-    const headers = screen
+    const headers = within(screen.getByTestId('repositories-table'))
       .getAllByRole('columnheader')
       .map((header) => header.textContent?.trim());
     expect(headers).toEqual([
@@ -799,6 +860,7 @@ describe('the browser fixtures', () => {
   it('renders every surface the browser spec mounts (and writes the fixtures on request)', async () => {
     await renderRepositories();
     await screen.findByText('payments-specs');
+    await screen.findByTestId('refresh-run-run-git');
 
     write('cards', page().outerHTML);
 
@@ -809,6 +871,7 @@ describe('the browser fixtures', () => {
   it('renders the empty state (and writes its fixture on request)', async () => {
     await renderRepositories({ repositories: [], signals: [] });
     await screen.findByText('No repositories yet');
+    await screen.findByTestId('refresh-run-run-git');
     write('empty', page().outerHTML);
   });
 });

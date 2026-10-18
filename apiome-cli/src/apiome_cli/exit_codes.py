@@ -151,3 +151,9 @@ EXIT_CHECK_PENDING = 8
 #: fetching either side of the comparison — no verdict, so neither ``0`` nor ``6``. Another
 #: per-command use of 8.
 EXIT_COMPAT_UNAVAILABLE = 8
+
+#: ``apiome connectors sync --wait`` (CDG-1.7): the sync **ran and failed** — the provider refused
+#: or the import broke; the run is printed with its error class. Distinct from :data:`EXIT_ERROR`
+#: (Apiome could not be reached) and :data:`EXIT_USAGE` (a rejected request) so a pipeline can
+#: gate on the run's outcome. Another per-command use of 7.
+EXIT_SYNC_FAILED = 7

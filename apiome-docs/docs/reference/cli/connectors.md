@@ -1,6 +1,6 @@
 ---
 title: "apiome connectors"
-description: "Catalog connectors: compare what your gateways serve with the catalog."
+description: "Catalog connectors: sync gateway APIs into the catalog and compare what they serve."
 sidebar_position: 8
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,119 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome connectors {#connectors}
 
-Catalog connectors: compare what your gateways serve with the catalog.
+Catalog connectors: sync gateway APIs into the catalog and compare what they serve.
 
 ```text
 apiome connectors [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`shadow-report`](#connectors-shadow-report).
+Subcommands: [`add`](#connectors-add), [`items`](#connectors-items), [`list`](#connectors-list), [`remove`](#connectors-remove), [`runs`](#connectors-runs), [`shadow-report`](#connectors-shadow-report), [`show`](#connectors-show), [`sync`](#connectors-sync).
+
+## apiome connectors add {#connectors-add}
+
+Register a connector (POST …/connectors), after a dry run of it.
+
+The dry run calls the provider once and prints how many APIs it would sync; nothing is stored until it answers. A refused dry run prints the provider's reason and exits 2. The credential, when given, is stored encrypted after the connector is created and is never printed.
+
+```text
+apiome connectors add [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--kind` | text |  | yes | Connector kind: kong-konnect, kong-admin, aws-apigateway, azure-apim, apigee, url, schema-registry, mcp-registry. |
+| `--name` | text |  | yes | A name unique in the workspace. |
+| `--base-url` | text |  |  | The provider's URL, for kinds that take one. |
+| `--scope` | text |  |  | What to sync, as a JSON object or @file (for example '{"region": "eu"}'). |
+| `--credentials-file` | text |  |  | JSON object of the kind's credential fields, or - for stdin. Never echoed. |
+| `--refresh-interval` | integer range |  |  | Seconds between scheduled syncs (default: the deployment's). |
+| `--conflict-policy` | text | `hold-for-review` |  | When a synced API changed in Apiome: overwrite, hold-for-review, new-branch. |
+| `--dry-run` / `--no-dry-run` | flag | `--dry-run` |  | Ask the provider once before saving; a failing dry run saves nothing. |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome connectors items {#connectors-items}
+
+List a connector's inventory and the catalog item each imported API became.
+
+```text
+apiome connectors items [OPTIONS] CONNECTOR_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `CONNECTOR_ID` | text | yes | Connector id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--status` | text |  |  | Only discovered, imported, ignored or missing APIs. |
+| `--limit` | integer range | `50` |  | At most this many APIs. |
+| `--offset` | integer range | `0` |  | Skip this many APIs. |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome connectors list {#connectors-list}
+
+List the workspace's connectors with their health and last run (GET …/connectors).
+
+```text
+apiome connectors list [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome connectors remove {#connectors-remove}
+
+Delete a connector (DELETE …/connectors/{id}).
+
+Scheduled syncs stop and the stored credential is destroyed; the catalog items it imported stay. Asks first unless ``--yes`` is passed (required when not interactive).
+
+```text
+apiome connectors remove [OPTIONS] CONNECTOR_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `CONNECTOR_ID` | text | yes | Connector id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Do not ask for confirmation. |
+
+## apiome connectors runs {#connectors-runs}
+
+List refresh runs, newest first: Git refreshes and connector syncs interleaved.
+
+```text
+apiome connectors runs [OPTIONS] [CONNECTOR_ID]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `CONNECTOR_ID` | text |  | Only this connector's runs (default: every Git and connector run). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--source` | text |  |  | Only git or connector runs. |
+| `--limit` | integer range | `25` |  | At most this many runs. |
+| `--offset` | integer range | `0` |  | Skip this many runs. |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
 
 ## apiome connectors shadow-report {#connectors-shadow-report}
 
@@ -38,3 +144,47 @@ apiome connectors shadow-report [OPTIONS]
 | `--environment` | text |  |  | Only gateway APIs found in this environment. |
 | `--format` | text | `table` |  | Output: table (default) or json (the API response). |
 | `--fail-on` | text |  |  | Comma-separated categories that fail the command (exit 6) when they have a row: shadow, possible-matches, undeployed, drift. |
+
+## apiome connectors show {#connectors-show}
+
+Show one connector (GET …/connectors/{id}); never its credential.
+
+```text
+apiome connectors show [OPTIONS] CONNECTOR_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `CONNECTOR_ID` | text | yes | Connector id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome connectors sync {#connectors-sync}
+
+Sync a connector now (POST …/sync) and print the finished run.
+
+A provider failure is a ``failed`` run, not an HTTP error: without ``--wait`` the command exits 0 once the run is recorded; with ``--wait`` it exits 7. A sync already running is refused (exit 2) unless ``--wait`` is passed.
+
+```text
+apiome connectors sync [OPTIONS] CONNECTOR_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `CONNECTOR_ID` | text | yes | Connector id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--wait` | flag |  |  | Exit with the run's outcome (0 succeeded, 7 failed); if a sync is already running, wait for it instead of refusing. |
+| `--timeout` | float range | `600.0` |  | With --wait: seconds to wait for a running sync. |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |

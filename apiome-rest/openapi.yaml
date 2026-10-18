@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.230.0
+  version: 1.231.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -8591,6 +8591,201 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for create connectorresponse422.
+  /v1/tenants/{tenant_slug}/connectors/dry-run:
+    post:
+      tags:
+      - connectors
+      summary: Dry Run Connector Route
+      description: 'Ask the provider once what a connector would sync, storing nothing
+        (``imports:create``).
+
+
+        The add-connector flow calls this before saving: the kind, base URL, scope
+        and credentials are
+
+        checked exactly as on create, then the source lists its inventory and the
+        answer is the item
+
+        count, a sample of up to 20 items and the source''s findings. The credentials
+        are used for this
+
+        call only — never stored, logged or returned. A provider refusal is a 422
+
+        ``connector-check-failed`` whose ``reason`` is the error class (``auth``,
+        ``not-found``, …) and whose
+
+        message is the provider''s; a kind with no source on this deployment is a
+        409.'
+      operationId: dry_run_connector_route_v1_tenants__tenant_slug__connectors_dry_run_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Dry Run Connector Routeauthorization schema.
+          - type: 'null'
+            description: Dry Run Connector Routeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Dry Run Connector Route Xapikey schema.
+          - type: 'null'
+            description: Dry Run Connector Route Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorDryRunRequest'
+              description: Request body for dry run connector routerequest.
+        description: Request body for dry run connector route.
+      responses:
+        '200':
+          description: Successful response for dry run connector route.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDryRunOut'
+                description: Response payload for dry run connector routeresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for dry run connector routeresponse422.
+  /v1/tenants/{tenant_slug}/refresh-runs:
+    get:
+      tags:
+      - connectors
+      summary: List Refresh Runs
+      description: 'The refresh ledger: Git refresh jobs and connector runs, interleaved
+        newest first (``imports:view``).
+
+
+        Each run says its ``source`` — ``git`` (with the repository, branch and path)
+        or ``connector`` (with
+
+        the connector''s name and kind) — so one list can badge both. ``connector``
+        narrows it to one
+
+        connector (a 404 for an unknown one).'
+      operationId: list_refresh_runs_v1_tenants__tenant_slug__refresh_runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: connector
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+            description: List Refresh Runsconnector schema.
+          - type: 'null'
+            description: List Refresh Runsconnector schema.
+          description: Only this connector's runs.
+          title: Connector
+        description: Only this connector's runs.
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Refresh Runssource schema.
+          - type: 'null'
+            description: List Refresh Runssource schema.
+          description: git | connector (both when omitted).
+          title: Source
+        description: git | connector (both when omitted).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+          description: Offset schema.
+        description: Number of rows to skip before returning results.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Refresh Runsauthorization schema.
+          - type: 'null'
+            description: List Refresh Runsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Refresh Runs Xapikey schema.
+          - type: 'null'
+            description: List Refresh Runs Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list refresh runs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshRunPage'
+                description: Response payload for list refresh runsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list refresh runsresponse422.
   /v1/tenants/{tenant_slug}/connectors/{connector_id}:
     get:
       tags:
@@ -73645,7 +73840,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         completed_at:
           anyOf:
           - type: string
@@ -75110,7 +75305,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75283,7 +75478,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75724,13 +75919,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -76525,6 +76720,141 @@ components:
       title: ConnectorCredentialsPut
       description: '``PUT /v1/tenants/{t}/connectors/{id}/credentials``: replaces
         the whole credential.'
+    ConnectorDryRunItem:
+      properties:
+        remoteId:
+          type: string
+          title: Remoteid
+          description: Remote ID.
+          example: example
+        name:
+          anyOf:
+          - type: string
+            description: Connector Dry Run schema.
+          - type: 'null'
+            description: Connector Dry Run schema.
+          title: Name
+          description: Human-readable name.
+        environment:
+          anyOf:
+          - type: string
+            description: Connector Dry Run schema.
+          - type: 'null'
+            description: Connector Dry Run schema.
+          title: Environment
+          description: Environment.
+        revision:
+          anyOf:
+          - type: string
+            description: Connector Dry Run schema.
+          - type: 'null'
+            description: Connector Dry Run schema.
+          title: Revision
+          description: Revision.
+      type: object
+      required:
+      - remoteId
+      title: ConnectorDryRunItem
+      description: One API the dry run found.
+    ConnectorDryRunOut:
+      properties:
+        itemCount:
+          type: integer
+          title: Itemcount
+          description: Number of item.
+          example: 1
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorDryRunItem'
+          type: array
+          title: Items
+          description: Items.
+          maxItems: 100
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when more APIs exist than the sample lists.
+          example: false
+        findings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Findings
+          description: Findings.
+          maxItems: 1000
+      type: object
+      required:
+      - itemCount
+      - items
+      - truncated
+      title: ConnectorDryRunOut
+      description: 'The dry run''s answer: how many APIs the connector would sync,
+        and a sample of them.'
+    ConnectorDryRunRequest:
+      properties:
+        kind:
+          type: string
+          enum:
+          - kong-konnect
+          - kong-admin
+          - aws-apigateway
+          - azure-apim
+          - apigee
+          - url
+          - schema-registry
+          - mcp-registry
+          title: Kind
+          description: Kind.
+          example: kong-konnect
+        baseUrl:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: Request body for connector dry run.
+          - type: 'null'
+            description: Request body for connector dry run.
+          title: Baseurl
+          description: Base URL.
+        scope:
+          additionalProperties: true
+          type: object
+          title: Scope
+          description: 'Kind-specific coordinates; never secrets. `kong-konnect`:
+            `{"region": "us"|"eu"|"au"|"me"|"in"|"sg", "controlPlanes": ["<control
+            plane id>", …]}` (no control planes = every control plane the token can
+            read). `kong-admin`: `{"workspace": "…", "environment": "…"}`, both optional.
+            `aws-apigateway`: `{"roleArn": "arn:aws:iam::<account>:role/…", "externalId":
+            "…", "regions": ["eu-west-1", …]}` (no base URL, no credential: Apiome
+            assumes the role). `azure-apim`: `{"tenantId": "<guid>", "clientId": "<guid>",
+            "subscriptionId": "<guid>", "resourceGroup": "…", "serviceName": "…",
+            "authMethod": "client-secret"|"federated", "includeNonCurrentRevisions":
+            false}` (no base URL; the client secret goes in `PUT …/credentials` as
+            `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
+            ["test", …]}` (environments optional; the service-account key or workload-identity
+            configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            Kinds with a source check their scope on every write, and some dry-run
+            it.'
+        credentials:
+          anyOf:
+          - additionalProperties:
+              type: string
+              format: password
+              writeOnly: true
+            type: object
+            description: Request body for connector dry run.
+          - type: 'null'
+            description: Request body for connector dry run.
+          title: Credentials
+          description: The credential fields the kind needs, used for this call only
+            and never stored or returned.
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: ConnectorDryRunRequest
+      description: '``POST /v1/tenants/{t}/connectors/dry-run``: what a connector
+        would be, nothing stored.'
     ConnectorItemIgnore:
       properties:
         reason:
@@ -77978,7 +78308,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 21e2d08a-f4b1-4fd3-b661-c12051e643ee
+          example: 5116f344-5796-426f-8726-e4ce53265561
         method:
           type: string
           title: Method
@@ -80121,7 +80451,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         envelope:
           additionalProperties: true
           type: object
@@ -81501,7 +81831,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         browse_url:
           anyOf:
           - type: string
@@ -109660,6 +109990,195 @@ components:
       - hasMore
       title: RefreshHistoryPaginationOut
       description: Offset pagination metadata for the refresh-history list.
+    RefreshRunOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        source:
+          type: string
+          title: Source
+          description: '`git` (a repository file refresh) or `connector` (a connector
+            sync).'
+          example: human
+        status:
+          type: string
+          title: Status
+          description: Status.
+          example: active
+        reason:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Reason
+          description: 'Git: why the file was refreshed.'
+        trigger:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Trigger
+          description: 'Connector: `manual` or `scheduled`.'
+        connectorId:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Connectorid
+          description: Connector ID.
+        connectorName:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Connectorname
+          description: Connector Name.
+        connectorKind:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Connectorkind
+          description: Connector Kind.
+        repositoryId:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Repositoryid
+          description: Repository ID.
+        repositoryName:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Repositoryname
+          description: Repository Name.
+        branch:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Branch
+          description: Branch.
+        path:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Path
+          description: Path.
+        errorClass:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Errorclass
+          description: Error Class.
+        httpStatus:
+          anyOf:
+          - type: integer
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Httpstatus
+          description: HTTP Status.
+        errorMessage:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Errormessage
+          description: Error Message.
+        pullCount:
+          type: integer
+          title: Pullcount
+          default: 0
+          description: Number of pull.
+          example: 1
+        summary:
+          additionalProperties: true
+          type: object
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        createdAt:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Createdat
+          description: Created At.
+        startedAt:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Startedat
+          description: Started At.
+        finishedAt:
+          anyOf:
+          - type: string
+            description: Response payload for refresh run.
+          - type: 'null'
+            description: Response payload for refresh run.
+          title: Finishedat
+          description: Finished At.
+      type: object
+      required:
+      - id
+      - source
+      - status
+      title: RefreshRunOut
+      description: 'One row of the unified refresh ledger: a Git refresh job or a
+        connector run (CDG-1.7).'
+    RefreshRunPage:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/RefreshRunOut'
+          type: array
+          title: Runs
+          description: Runs.
+          maxItems: 1000
+        total:
+          type: integer
+          title: Total
+          description: Total.
+          example: 1
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+      type: object
+      required:
+      - runs
+      - total
+      - limit
+      - offset
+      title: RefreshRunPage
+      description: '``GET /v1/tenants/{t}/refresh-runs``.'
     RefreshStatus:
       type: string
       enum:
@@ -113195,7 +113714,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
       additionalProperties: false
       type: object
       required:
@@ -122623,7 +123142,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         detected_by:
           anyOf:
           - type: string
@@ -128202,13 +128721,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T17:07:32Z'
+          example: '2026-10-18T17:41:42Z'
         outcome:
           anyOf:
           - type: string

@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.367.0] - 2026-10-18
+
+### Added
+- **Connector dry run (#5958, CDG-1.7)**: `POST /v1/tenants/{tenant}/connectors/dry-run` (`imports:create`) takes a
+  connector's `kind`, `baseUrl`, `scope` and, optionally, `credentials`, validates them exactly like a create, and
+  asks the provider once for its inventory. It returns `itemCount`, a sample of up to 20 `items` (`remoteId`, `name`,
+  `environment`, `revision`), `truncated` and the inventory `findings`; nothing is stored. A provider refusal is a
+  `422` with `detail.code: "connector-check-failed"`, the error class as `detail.reason`, and the provider's message
+  with any credential value redacted. A kind with no source on the deployment is a `409`
+  (`connector-kind-unsupported`); a credential for a kind that takes none (`aws-apigateway`) is refused.
+- **Refresh-runs ledger (#5958)**: `GET /v1/tenants/{tenant}/refresh-runs` (`imports:view`) lists Git refresh jobs
+  and connector runs together, newest first, each with its `source` (`git` | `connector`), status, outcome fields
+  (`errorClass`, `httpStatus`, `errorMessage`, `pullCount`, `summary`) and either its connector (`connectorId`,
+  `connectorName`, `connectorKind`) or its repository (`repositoryId`, `repositoryName`, `branch`, `path`).
+  `?connector=` (404 for an unknown connector), `?source=`, `?limit=` and `?offset=` filter and page it.
+
+The OpenAPI version moves to 1.231.0.
+
 ## [1.366.0] - 2026-10-18
 
 ### Added
