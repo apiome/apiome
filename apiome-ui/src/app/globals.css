@@ -34850,3 +34850,285 @@ a.shd-name:hover,
   gap: var(--space-1);
   min-inline-size: 0;
 }
+
+/* ============================================================================
+   Connectors — /ade/dashboard/connectors, /new, /[id] (CDG-1.7, #5958)
+   The list (table or grid), the add wizard's steps, the detail tabs and the
+   shared refresh ledger (also on Repositories).
+   ========================================================================== */
+
+.cnx-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cnx-section-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cnx-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.cnx-name {
+  display: block;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cnx-meta {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.cnx-mono {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cnx-link {
+  font-weight: 600;
+  color: var(--accent-fg);
+  text-underline-offset: 0.2em;
+}
+
+.cnx-link:hover {
+  text-decoration: underline;
+}
+
+.cnx-table-wrap {
+  min-inline-size: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.cnx-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.cnx-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.cnx-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.cnx-table tr:last-child td {
+  border-block-end: 0;
+}
+
+.cnx-actions {
+  white-space: nowrap;
+  text-align: end;
+}
+
+.cnx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-3);
+}
+
+.cnx-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--card-pad);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.cnx-card__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cnx-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.cnx-ledger__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cnx-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  max-inline-size: var(--page-narrow);
+}
+
+.cnx-step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cnx-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-2);
+}
+
+.cnx-kind {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  cursor: pointer;
+}
+
+.cnx-kind[data-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.cnx-kind[data-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cnx-kind__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.cnx-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cnx-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
+.cnx-dry-run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.cnx-dry-run__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cnx-glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  stroke: var(--ok);
+}
+
+.cnx-sample {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cnx-policies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.cnx-legend {
+  margin-block-end: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cnx-wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  max-inline-size: var(--page-narrow);
+}
+
+.cnx-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cnx-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-inline-size: var(--page-narrow);
+}
+
+.cnx-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--card-pad);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.cnx-panel--danger {
+  border-color: var(--danger);
+}
+
+.cnx-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

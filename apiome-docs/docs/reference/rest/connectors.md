@@ -1,6 +1,6 @@
 ---
 title: "Connectors"
-description: "REST endpoints tagged connectors: 14 operations."
+description: "REST endpoints tagged connectors: 16 operations."
 sidebar_position: 17
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.230.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.231.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `connectors` · 14 operations
+Tag: `connectors` · 16 operations
 
 ## `GET /v1/tenants/{tenant_slug}/connectors` {#list-connectors-v1-tenants-tenant-slug-connectors-get}
 
@@ -69,6 +69,42 @@ Request body for create connector.
 | Status | Description | Body |
 | --- | --- | --- |
 | 201 | Successful response for create connector. | `application/json` [`ConnectorOut`](#schema-connectorout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/connectors/dry-run` {#dry-run-connector-route-v1-tenants-tenant-slug-connectors-dry-run-post}
+
+**Dry Run Connector Route**
+
+Ask the provider once what a connector would sync, storing nothing (``imports:create``).
+
+The add-connector flow calls this before saving: the kind, base URL, scope and credentials are
+checked exactly as on create, then the source lists its inventory and the answer is the item
+count, a sample of up to 20 items and the source's findings. The credentials are used for this
+call only — never stored, logged or returned. A provider refusal is a 422
+``connector-check-failed`` whose ``reason`` is the error class (``auth``, ``not-found``, …) and whose
+message is the provider's; a kind with no source on this deployment is a 409.
+
+Operation id: `dry_run_connector_route_v1_tenants__tenant_slug__connectors_dry_run_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for dry run connector route.
+
+- `application/json` — [`ConnectorDryRunRequest`](#schema-connectordryrunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for dry run connector route. | `application/json` [`ConnectorDryRunOut`](#schema-connectordryrunout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/connectors/{connector_id}` {#get-connector-v1-tenants-tenant-slug-connectors-connector-id-get}
@@ -402,6 +438,37 @@ Operation id: `sync_connector_v1_tenants__tenant_slug__connectors__connector_id_
 | 200 | Successful response for sync connector. | `application/json` [`ConnectorRunOut`](#schema-connectorrunout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/refresh-runs` {#list-refresh-runs-v1-tenants-tenant-slug-refresh-runs-get}
+
+**List Refresh Runs**
+
+The refresh ledger: Git refresh jobs and connector runs, interleaved newest first (``imports:view``).
+
+Each run says its ``source`` — ``git`` (with the repository, branch and path) or ``connector`` (with
+the connector's name and kind) — so one list can badge both. ``connector`` narrows it to one
+connector (a 404 for an unknown one).
+
+Operation id: `list_refresh_runs_v1_tenants__tenant_slug__refresh_runs_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `connector` | query | string (uuid) or null | no | Only this connector's runs. |
+| `source` | query | string or null | no | git \| connector (both when omitted). |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list refresh runs. | `application/json` [`RefreshRunPage`](#schema-refreshrunpage) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/shadow-report` {#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get}
 
 **Get Shadow Report**
@@ -468,6 +535,28 @@ What ``PUT …/credentials`` returns: that a credential is stored, never what it
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `credentials` | map of string (password) | yes | The secret fields the connector's kind needs (for example `{"token": "…"}` or `{"accessKeyId": "…", "secretAccessKey": "…"}`). Sealed on arrival and never returned. |
+
+### `ConnectorDryRunOut` {#schema-connectordryrunout}
+
+The dry run's answer: how many APIs the connector would sync, and a sample of them.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `itemCount` | integer | yes | Number of item. |
+| `items` | array of `ConnectorDryRunItem` | yes | Items. |
+| `truncated` | boolean | yes | True when more APIs exist than the sample lists. |
+| `findings` | array of object | no | Findings. |
+
+### `ConnectorDryRunRequest` {#schema-connectordryrunrequest}
+
+``POST /v1/tenants/{t}/connectors/dry-run``: what a connector would be, nothing stored.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | enum `"kong-konnect"`, `"kong-admin"`, `"aws-apigateway"`, `"azure-apim"`, `"apigee"`, `"url"`, … | yes | Kind. |
+| `baseUrl` | string or null | no | Base URL. |
+| `scope` | object | no | Kind-specific coordinates; never secrets. `kong-konnect`: `{"region": "us"\|"eu"\|"au"\|"me"\|"in"\|"sg", "controlPlanes": ["<control plane id>", …]}` (no control planes = every control plane the token can read). `kong-admin`: `{"workspace": "…", "environment": "…"}`, both optional. `aws-apigateway`: `{"roleArn": "arn:aws:iam::<account>:role/…", "externalId": "…", "regions": ["eu-west-1", …]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{"tenantId": "<guid>", "clientId": "<guid>", "subscriptionId": "<guid>", "resourceGroup": "…", "serviceName": "…", "authMethod": "client-secret"\|"federated", "includeNonCurrentRevisions": false}` (no base URL; the client secret goes in `PUT …/credentials` as `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments": ["test", …]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`). Kinds with a source check their scope on every write, and some dry-run it. |
+| `credentials` | map of string (password) or null | no | The credential fields the kind needs, used for this call only and never stored or returned. |
 
 ### `ConnectorItemIgnore` {#schema-connectoritemignore}
 
@@ -602,6 +691,17 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `RefreshRunPage` {#schema-refreshrunpage}
+
+``GET /v1/tenants/{t}/refresh-runs``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `runs` | array of `RefreshRunOut` | yes | Runs. |
+| `total` | integer | yes | Total. |
+| `limit` | integer | yes | Limit. |
+| `offset` | integer | yes | Offset. |
 
 ### `ShadowReport` {#schema-shadowreport}
 

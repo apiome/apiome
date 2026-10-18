@@ -66,16 +66,19 @@ import {
  * @param props.onSelect Choose it.
  * @returns The choice row.
  */
-function PolicyOption({
+export function ConflictPolicyOption({
   policy,
   selected,
   disabled,
   onSelect,
+  name = 'repository-conflict-policy',
 }: {
   policy: ConflictPolicy;
   selected: boolean;
   disabled: boolean;
   onSelect: (policy: ConflictPolicy) => void;
+  /** The radio group's name; the connector forms (CDG-1.7) reuse this option with their own. */
+  name?: string;
 }) {
   const copy = POLICY_COPY[policy];
   const mark = POLICY_TONE_BADGE[copy.tone];
@@ -87,7 +90,7 @@ function PolicyOption({
     >
       <input
         type="radio"
-        name="repository-conflict-policy"
+        name={name}
         value={policy}
         checked={selected}
         disabled={disabled}
@@ -251,7 +254,7 @@ export function RepositoryConflictPolicy({
         <fieldset className="flex flex-col gap-2" disabled={saving}>
           <legend className="repo-det-caps">Repository policy</legend>
           {CONFLICT_POLICIES.map((policy) => (
-            <PolicyOption
+            <ConflictPolicyOption
               key={policy}
               policy={policy}
               selected={data.policy === policy}

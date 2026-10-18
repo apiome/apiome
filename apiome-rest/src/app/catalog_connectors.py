@@ -297,6 +297,81 @@ class ConnectorItemOut(BaseModel):
     )
 
 
+class ConnectorDryRunRequest(BaseModel):
+    """``POST /v1/tenants/{t}/connectors/dry-run``: what a connector would be, nothing stored."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    kind: Literal[
+        "kong-konnect",
+        "kong-admin",
+        "aws-apigateway",
+        "azure-apim",
+        "apigee",
+        "url",
+        "schema-registry",
+        "mcp-registry",
+    ]
+    base_url: Optional[str] = Field(default=None, alias="baseUrl", max_length=BASE_URL_MAX_CHARS)
+    scope: Dict[str, Any] = Field(default_factory=dict, description=SCOPE_DESCRIPTION)
+    credentials: Optional[Dict[str, SecretStr]] = Field(
+        default=None,
+        description="The credential fields the kind needs, used for this call only and never stored or returned.",
+    )
+
+
+class ConnectorDryRunItem(BaseModel):
+    """One API the dry run found."""
+
+    remote_id: str = Field(serialization_alias="remoteId")
+    name: Optional[str] = None
+    environment: Optional[str] = None
+    revision: Optional[str] = None
+
+
+class ConnectorDryRunOut(BaseModel):
+    """The dry run's answer: how many APIs the connector would sync, and a sample of them."""
+
+    item_count: int = Field(serialization_alias="itemCount")
+    items: List[ConnectorDryRunItem]
+    truncated: bool = Field(description="True when more APIs exist than the sample lists.")
+    findings: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class RefreshRunOut(BaseModel):
+    """One row of the unified refresh ledger: a Git refresh job or a connector run (CDG-1.7)."""
+
+    id: str
+    source: str = Field(description="`git` (a repository file refresh) or `connector` (a connector sync).")
+    status: str
+    reason: Optional[str] = Field(default=None, description="Git: why the file was refreshed.")
+    trigger: Optional[str] = Field(default=None, description="Connector: `manual` or `scheduled`.")
+    connector_id: Optional[str] = Field(default=None, serialization_alias="connectorId")
+    connector_name: Optional[str] = Field(default=None, serialization_alias="connectorName")
+    connector_kind: Optional[str] = Field(default=None, serialization_alias="connectorKind")
+    repository_id: Optional[str] = Field(default=None, serialization_alias="repositoryId")
+    repository_name: Optional[str] = Field(default=None, serialization_alias="repositoryName")
+    branch: Optional[str] = None
+    path: Optional[str] = None
+    error_class: Optional[str] = Field(default=None, serialization_alias="errorClass")
+    http_status: Optional[int] = Field(default=None, serialization_alias="httpStatus")
+    error_message: Optional[str] = Field(default=None, serialization_alias="errorMessage")
+    pull_count: int = Field(default=0, serialization_alias="pullCount")
+    summary: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+    started_at: Optional[str] = Field(default=None, serialization_alias="startedAt")
+    finished_at: Optional[str] = Field(default=None, serialization_alias="finishedAt")
+
+
+class RefreshRunPage(BaseModel):
+    """``GET /v1/tenants/{t}/refresh-runs``."""
+
+    runs: List[RefreshRunOut]
+    total: int
+    limit: int
+    offset: int
+
+
 class ConnectorItemIgnore(BaseModel):
     """``POST …/connectors/{id}/items/{itemId}/ignore``."""
 

@@ -76,6 +76,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 from . import catalog_connector_store as store
 from .catalog_connectors import (
+    CODE_CHECK_FAILED,
     CODE_KIND_UNSUPPORTED,
     CODE_SYNC_RUNNING,
     ITEM_IGNORED,
@@ -112,6 +113,7 @@ __all__ = [
     "syncable_kinds",
     "unregister_connector_source",
     "check_connector_connection",
+    "dry_run_connector",
     "connector_accepts_credentials",
     "validate_connector_scope",
 ]
@@ -440,6 +442,64 @@ def import_document_as_catalog_item(
             actor_id=actor_id or connector.get("created_by"),
         )
     return project_id
+
+
+#: At most this many inventory entries are returned by a dry run (``itemCount`` counts all).
+DRY_RUN_SAMPLE_MAX = 20
+
+
+def dry_run_connector(connector: Mapping[str, Any], credentials: Optional[Dict[str, str]]) -> Dict[str, Any]:
+    """List a connector's inventory once, without storing anything (CDG-1.7 "dry run").
+
+    The add-connector wizard calls this before the connector exists: the source is built from the
+    submitted kind, scope, base URL and credentials, asked for its candidates, and discarded. No run,
+    inventory row, credential or audit row is written.
+
+    Blocking (it calls the provider); routes call it via ``asyncio.to_thread``.
+
+    Args:
+        connector: A connector-shaped mapping (``kind``, ``scope``, ``base_url``, ``tenant_id``, ``id``).
+        credentials: The credential fields as submitted, or ``None``.
+
+    Returns:
+        ``{itemCount, items, findings, truncated}`` — ``items`` holds at most :data:`DRY_RUN_SAMPLE_MAX`
+        ``{remoteId, name, environment, revision}`` entries.
+
+    Raises:
+        ConnectorError: ``connector-kind-unsupported`` when the kind has no source;
+            ``connector-check-failed`` when the provider refuses, with ``reason`` set to the error class
+            and the provider's message (credentials redacted).
+    """
+    factory = source_factory_for(str(connector.get("kind")))
+    if factory is None:
+        raise ConnectorError(
+            CODE_KIND_UNSUPPORTED, f"Connectors of kind {connector.get('kind')!r} cannot sync on this deployment yet."
+        )
+    try:
+        source = factory(connector, credentials)
+        candidates = list(source.list_candidates())
+    except RefreshSourceError as exc:
+        status = f", HTTP {exc.http_status}" if exc.http_status else ""
+        raise ConnectorError(
+            CODE_CHECK_FAILED,
+            _redact(f"The dry run failed ({exc.error_class}{status}): {exc}", credentials),
+            reason=exc.error_class,
+        ) from exc
+    findings = [dict(f) for f in (getattr(source, "findings", None) or [])]
+    return {
+        "itemCount": len(candidates),
+        "items": [
+            {
+                "remoteId": c.remote_id,
+                "name": c.name,
+                "environment": c.environment,
+                "revision": c.revision,
+            }
+            for c in candidates[:DRY_RUN_SAMPLE_MAX]
+        ],
+        "truncated": len(candidates) > DRY_RUN_SAMPLE_MAX,
+        "findings": findings[:FINDINGS_MAX],
+    }
 
 
 def _note_unchanged(summary: Dict[str, Any], source: Any, candidate: RefreshCandidate, reason_code: str) -> None:

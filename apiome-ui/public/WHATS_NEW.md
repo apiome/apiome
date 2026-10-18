@@ -110,6 +110,7 @@ We continue to improve the platform based on your feedback with improvements and
   - A locked-out user's two-factor can be reset by an administrator, or by a workspace owner for a member of their workspace only; the reset is audited and the user is prompted to set it up again
 - Governance:
   - **Shadow APIs** (Govern): what your connected gateways serve that the catalog does not describe, with possible matches, drift and undeployed APIs — link, import or ignore each with a reason
+  - **Connectors** (Bring in): add a gateway with a dry run that shows what it would sync before anything is saved, then see each connector's items, runs and settings; Git refreshes and connector runs share one **Recent runs** ledger
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

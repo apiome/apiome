@@ -10,11 +10,18 @@ POST   /v1/tenants/{t}/connectors/{id}/sync
 GET    /v1/tenants/{t}/connectors/{id}/items
 GET    /v1/tenants/{t}/connectors/{id}/runs
 PUT    /v1/tenants/{t}/connectors/{id}/credentials
+POST   /v1/tenants/{t}/connectors/dry-run
+GET    /v1/tenants/{t}/refresh-runs
 POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/link
 POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/ignore
 POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/unignore
 POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/import
 ```
+
+**Dry run and the ledger** (CDG-1.7): ``POST …/connectors/dry-run`` asks the provider for the
+inventory a connector *would* sync, with credentials used for that call only — nothing is stored.
+``GET …/refresh-runs`` is the one ledger of Git refresh jobs and connector runs, interleaved, each
+labelled with its source.
 
 **Item actions** (CDG-1.6) are what a person does with a shadow-API report row: link it to a
 catalog item or Project, ignore it with a reason (kept, and the row reappears when the gateway
@@ -62,6 +69,7 @@ from .auth import validate_authentication
 from .catalog_connector_sync import (
     check_connector_connection,
     connector_accepts_credentials,
+    dry_run_connector,
     run_connector_sync,
     syncable_kinds,
     validate_connector_scope,
@@ -80,6 +88,8 @@ from .catalog_connectors import (
     ConnectorCreate,
     ConnectorCredentialsOut,
     ConnectorCredentialsPut,
+    ConnectorDryRunOut,
+    ConnectorDryRunRequest,
     ConnectorError,
     ConnectorItemIgnore,
     ConnectorItemLink,
@@ -90,6 +100,8 @@ from .catalog_connectors import (
     ConnectorRunOut,
     ConnectorRunPage,
     ConnectorUpdate,
+    RefreshRunOut,
+    RefreshRunPage,
     connector_base_url_from_settings,
     validate_credentials,
     validate_name,
@@ -253,6 +265,111 @@ async def list_connectors(
         connectors=[_connector_out(r) for r in rows],
         kinds=list(KINDS),
         syncable_kinds=syncable_kinds(),
+    )
+
+
+@router.post(_BASE + "/dry-run", response_model=ConnectorDryRunOut, response_model_by_alias=True)
+async def dry_run_connector_route(
+    tenant_slug: str,
+    body: ConnectorDryRunRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConnectorDryRunOut:
+    """Ask the provider once what a connector would sync, storing nothing (``imports:create``).
+
+    The add-connector flow calls this before saving: the kind, base URL, scope and credentials are
+    checked exactly as on create, then the source lists its inventory and the answer is the item
+    count, a sample of up to 20 items and the source's findings. The credentials are used for this
+    call only — never stored, logged or returned. A provider refusal is a 422
+    ``connector-check-failed`` whose ``reason`` is the error class (``auth``, ``not-found``, …) and whose
+    message is the provider's; a kind with no source on this deployment is a 409.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target="connectors")
+    try:
+        scope = validate_scope(body.scope)
+        base_url = connector_base_url_from_settings(body.base_url) if body.base_url else None
+        validate_connector_scope(body.kind, scope, base_url)
+        credentials = validate_credentials(body.credentials) if body.credentials else None
+        if credentials and not connector_accepts_credentials(body.kind):
+            raise ConnectorError(
+                CODE_CREDENTIALS_REFUSED, f"Connectors of kind {body.kind!r} take no stored credential."
+            )
+        result = await asyncio.to_thread(
+            dry_run_connector,
+            {"id": "dry-run", "tenant_id": tenant_id, "kind": body.kind, "name": "dry run", "base_url": base_url,
+             "scope": scope},
+            credentials,
+        )
+    except ConnectorError as exc:
+        raise _refusal(exc) from exc
+    return ConnectorDryRunOut(**{
+        "item_count": result["itemCount"],
+        "items": [
+            {"remote_id": i["remoteId"], "name": i.get("name"), "environment": i.get("environment"),
+             "revision": i.get("revision")}
+            for i in result["items"]
+        ],
+        "truncated": result["truncated"],
+        "findings": result["findings"],
+    })
+
+
+@router.get("/{tenant_slug}/refresh-runs", response_model=RefreshRunPage, response_model_by_alias=True)
+async def list_refresh_runs(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    connector: Optional[UUID] = Query(None, description="Only this connector's runs."),
+    source: Optional[str] = Query(None, description="git | connector (both when omitted)."),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> RefreshRunPage:
+    """The refresh ledger: Git refresh jobs and connector runs, interleaved newest first (``imports:view``).
+
+    Each run says its ``source`` — ``git`` (with the repository, branch and path) or ``connector`` (with
+    the connector's name and kind) — so one list can badge both. ``connector`` narrows it to one
+    connector (a 404 for an unknown one).
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target="refresh-runs")
+    source_f = (source or "").strip() or None
+    if source_f is not None and source_f not in ("git", "connector"):
+        raise HTTPException(status_code=400, detail="Invalid source: expected git or connector")
+    connector_id = str(connector) if connector else None
+    if connector is not None:
+        _require_connector(tenant_id, connector)
+    rows = store.list_refresh_runs(
+        db, tenant_id, connector_id=connector_id, source=source_f, limit=limit, offset=offset
+    )
+    total = store.count_refresh_runs(db, tenant_id, connector_id=connector_id, source=source_f)
+    return RefreshRunPage(runs=[_ledger_out(r) for r in rows], total=total, limit=limit, offset=offset)
+
+
+def _ledger_out(row: Mapping[str, Any]) -> RefreshRunOut:
+    """Project one ledger row (Git job or connector run)."""
+    summary = row.get("run_summary") if isinstance(row.get("run_summary"), dict) else {}
+    return RefreshRunOut(
+        id=str(row["id"]),
+        source=str(row.get("refresh_source") or "git"),
+        status=str(row.get("status")),
+        reason=row.get("refresh_reason"),
+        trigger=summary.get("trigger"),
+        connector_id=_text(row.get("connector_id")),
+        connector_name=row.get("connector_name"),
+        connector_kind=row.get("connector_kind"),
+        repository_id=_text(row.get("repository_id")),
+        repository_name=row.get("repository_full_name"),
+        branch=row.get("branch"),
+        path=row.get("path"),
+        error_class=row.get("error_class"),
+        http_status=row.get("http_status"),
+        error_message=row.get("error_message"),
+        pull_count=int(row.get("pull_count") or 0),
+        summary=summary,
+        created_at=_iso(row.get("created_at")),
+        started_at=_iso(row.get("started_at") or row.get("created_at")),
+        finished_at=_iso(row.get("finished_at")),
     )
 
 

@@ -95,6 +95,15 @@ const ADDITIONAL: A11yRoute[] = [
   { id: 'linked-accounts', mockup: null, subject: { kind: 'spec', file: 'hive-linked-accounts.spec.ts' } },
   { id: 'project-discussion', mockup: null, subject: { kind: 'fixtures', dir: 'project-discussion' } },
   { id: 'mock-correlation', mockup: null, subject: { kind: 'fixtures', dir: 'hive-mock-correlation' } },
+  {
+    id: 'connectors',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['connectors.html', 'connector-add.html', 'connector-detail.html', 'connector-runs.html'],
+    },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

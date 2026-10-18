@@ -207,6 +207,13 @@ export const STATUS_TONE: Readonly<Record<string, StatusTone>> = {
   internal: 'violet',
 
   // ---- Health / jobs -------------------------------------------------------
+  // CDG-1.7: a catalog connector is `active`, `paused` (skipped by the sweep) or `failing` (its
+  // last run failed); an inventory item is also `ignored` (by a person) or `missing` (gone from
+  // the gateway, kept in the catalog).
+  failing: 'danger',
+  paused: 'neutral',
+  ignored: 'neutral',
+  missing: 'warn',
   healthy: 'ok',
   ok: 'ok',
   completed: 'ok',

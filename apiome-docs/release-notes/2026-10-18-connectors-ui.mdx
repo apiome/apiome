@@ -1,0 +1,21 @@
+---
+slug: connectors-ui
+title: Manage connectors in Apiome
+description: Add, sync and inspect connectors from Bring in or the CLI.
+authors: [apiome]
+---
+
+**[Connectors](/bring-in/connectors)** (Bring in) now have their own pages, so you no longer need the
+REST API to connect a gateway to the catalog.
+
+{/* truncate */}
+
+- **Check before you save.** The add wizard runs a dry run: Apiome asks the provider once and shows
+  how many APIs it would sync. Nothing is stored until it answers, and a refusal shows the
+  provider's reason.
+- **Items, Runs, Settings.** A connector's page lists every API it found, with a link to its catalog
+  item, and its runs, and lets you change, pause or delete it.
+- **One runs ledger.** Git refreshes and connector runs are listed together, each with a **Git** or
+  **Connector** badge, under **Recent runs** on Repositories.
+- **From the command line.** `apiome connectors list|add|show|sync|runs|items|remove`;
+  `sync --wait` exits with the run's outcome.

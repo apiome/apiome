@@ -34,6 +34,7 @@ from .refresh_source import RefreshCandidate
 
 __all__ = [
     "count_items",
+    "count_refresh_runs",
     "count_runs",
     "create_connector",
     "finish_run",
@@ -43,6 +44,7 @@ __all__ = [
     "list_due_connectors",
     "list_item_rows",
     "list_items",
+    "list_refresh_runs",
     "list_runs",
     "mark_item_imported",
     "mark_missing_items",
@@ -568,5 +570,64 @@ def count_runs(db: Any, tenant_id: str, connector_id: str) -> int:
         WHERE tenant_id = %s::uuid AND connector_id = %s::uuid AND refresh_source = 'connector'
         """,
         (tenant_id, connector_id),
+    )
+    return int(rows[0]["n"]) if rows else 0
+
+
+# ---------------------------------------------------------------------------------------
+# The unified refresh-run ledger (CDG-1.7)
+# ---------------------------------------------------------------------------------------
+
+_LEDGER_FILTER = """
+    WHERE j.tenant_id = %s::uuid
+      AND (%s::uuid IS NULL OR j.connector_id = %s::uuid)
+      AND (%s::text IS NULL OR j.refresh_source = %s)
+"""
+
+
+def list_refresh_runs(
+    db: Any,
+    tenant_id: str,
+    *,
+    connector_id: Optional[str],
+    source: Optional[str],
+    limit: int,
+    offset: int,
+) -> List[Dict[str, Any]]:
+    """Git refresh jobs and connector runs of a tenant, interleaved newest first (CDG-1.7).
+
+    Both live on ``tenant_repository_refresh_jobs`` (``refresh_source`` says which); each row carries
+    the repository or the connector it belongs to, so one ledger can show both with a source badge.
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        connector_id: Only this connector's runs (implies ``source = 'connector'``).
+        source: ``git`` or ``connector``, or ``None`` for both.
+        limit: Page size.
+        offset: Page start.
+    """
+    return db.execute_query(
+        f"""
+        SELECT j.id, j.refresh_source, j.status, j.refresh_reason, j.error_class, j.http_status,
+               j.error_message, j.pull_count, j.run_summary, j.created_at, j.started_at, j.finished_at,
+               j.connector_id, c.name AS connector_name, c.kind AS connector_kind,
+               j.repository_id, r.repository_full_name, j.branch, j.path
+        FROM apiome.tenant_repository_refresh_jobs j
+        LEFT JOIN apiome.catalog_connectors c ON c.id = j.connector_id
+        LEFT JOIN apiome.tenant_repositories r ON r.id = j.repository_id
+        {_LEDGER_FILTER}
+        ORDER BY j.created_at DESC, j.id DESC
+        LIMIT %s OFFSET %s
+        """,
+        (tenant_id, connector_id, connector_id, source, source, int(limit), int(offset)),
+    )
+
+
+def count_refresh_runs(db: Any, tenant_id: str, *, connector_id: Optional[str], source: Optional[str]) -> int:
+    """How many rows :func:`list_refresh_runs` would page through."""
+    rows = db.execute_query(
+        f"SELECT count(*) AS n FROM apiome.tenant_repository_refresh_jobs j {_LEDGER_FILTER}",
+        (tenant_id, connector_id, connector_id, source, source),
     )
     return int(rows[0]["n"]) if rows else 0

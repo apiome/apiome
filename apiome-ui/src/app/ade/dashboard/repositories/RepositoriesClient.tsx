@@ -7,6 +7,7 @@ import { LayoutGrid, List, Plus, RefreshCw } from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { RefreshRunsLedger } from '@/app/components/ade/connectors/RefreshRunsLedger';
 import type { ShortcutBinding } from '@lib/shortcuts';
 
 import PageHeader from '@/app/components/shell/PageHeader';
@@ -525,6 +526,9 @@ export default function RepositoriesClient() {
                 )}
               </Card>
             )}
+
+            {/* CDG-1.7: the shared refresh ledger — Git refreshes and connector runs, interleaved. */}
+            <RefreshRunsLedger limit={10} />
           </>
         )}
       </PageBody>
