@@ -84,7 +84,7 @@ describe('platform-nav model — shape', () => {
       build: ['projects', 'primitives'],
       'bring-in': ['catalog', 'repositories', 'mcp'],
       ship: ['published', 'sunset-timeline', 'export-studio', 'sdk-settings'],
-      govern: ['style-guides', 'lint-workspace', 'audit'],
+      govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'audit'],
       workspace: ['members', 'roles', 'api-keys', 'tenants'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
@@ -107,6 +107,7 @@ describe('platform-nav model — shape', () => {
       'SDK settings',
       'Style guides',
       'Lint posture',
+      'Shadow APIs',
       'Access audit',
       'Members',
       'Roles',
@@ -271,6 +272,7 @@ describe('platform-nav model — workspace gating', () => {
     'sdk-settings',
     'style-guides',
     'lint-workspace',
+    'shadow-apis',
     'audit',
     'members',
     'roles',

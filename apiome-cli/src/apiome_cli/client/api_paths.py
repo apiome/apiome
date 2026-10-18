@@ -784,3 +784,8 @@ def arazzo_export(tenant_slug: str, project_slug: str, version_slug: str) -> str
 
 def json_export(tenant_slug: str, project_slug: str, version_slug: str) -> str:
     return f"{V1}/json/{tenant_slug}/{project_slug}/{version_slug}"
+
+
+def shadow_report(tenant_slug: str) -> str:
+    """GET the shadow-API report: gateway inventory against the catalog (CDG-1.6)."""
+    return f"{V1}/tenants/{tenant_slug}/shadow-report"

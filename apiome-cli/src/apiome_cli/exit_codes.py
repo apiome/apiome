@@ -85,6 +85,11 @@ EXIT_SNAPSHOT_DOWNLOADED = 6
 #: failure verdict. Another per-command use of 6.
 EXIT_BREAKING_CHANGES = 6
 
+#: ``apiome connectors shadow-report --fail-on`` (CDG-1.6): at least one report category named in
+#: ``--fail-on`` (``shadow``, ``possible-matches``, ``undeployed``, ``drift``) has a row. Only the
+#: named categories count; an unnamed one never fails the command. Another per-command use of 6.
+EXIT_SHADOW_FOUND = 6
+
 #: ``apiome versions delete`` (CLI 4.9): the version is **published or frozen** and ``--force``
 #: was not passed, or version tags still point at it and neither ``--detach-tags`` nor
 #: ``--force`` was passed; nothing was changed. Another per-command use of 6.

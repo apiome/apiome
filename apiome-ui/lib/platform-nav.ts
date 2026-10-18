@@ -361,6 +361,14 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         match: 'subtree',
       },
       {
+        // CDG-1.6: what connected gateways serve that the catalog does not describe.
+        id: 'shadow-apis',
+        label: 'Shadow APIs',
+        href: `${DASHBOARD_HREF}/connectors/shadow`,
+        icon: 'radar',
+        requiresTenant: true,
+      },
+      {
         id: 'audit',
         label: 'Access audit',
         href: `${DASHBOARD_HREF}/audit`,

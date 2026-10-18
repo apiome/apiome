@@ -148,7 +148,7 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5954](https://github.com/apiome/apiome/issues/5954) CDG-1.3 AWS API Gateway connector
 - [x] [#5955](https://github.com/apiome/apiome/issues/5955) CDG-1.4 Azure API Management connector
 - [ ] [#5956](https://github.com/apiome/apiome/issues/5956) CDG-1.5 Apigee connector
-- [ ] [#5957](https://github.com/apiome/apiome/issues/5957) CDG-1.6 Shadow-API report
+- [x] [#5957](https://github.com/apiome/apiome/issues/5957) CDG-1.6 Shadow-API report
 - [ ] [#5958](https://github.com/apiome/apiome/issues/5958) CDG-1.7 Connectors UI and CLI
 - [ ] [#5959](https://github.com/apiome/apiome/issues/5959) CDG-EPIC-2 Ownership and routing
 - [ ] [#5960](https://github.com/apiome/apiome/issues/5960) CDG-2.1 Teams model and RBAC resource

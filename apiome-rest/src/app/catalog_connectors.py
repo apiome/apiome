@@ -31,6 +31,7 @@ import re
 import socket
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence, Tuple
+from uuid import UUID
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
@@ -279,6 +280,35 @@ class ConnectorItemOut(BaseModel):
             "`protocols`, `hosts`, `paths`, `updatedAt` and `suggestedOwners` (from "
             "`owner:<team-slug>` tags; suggestions only, never confirmed owners)."
         ),
+    )
+    ignored_reason: Optional[str] = Field(
+        default=None,
+        serialization_alias="ignoredReason",
+        description="Why the item was ignored in the shadow-API report (CDG-1.6).",
+    )
+    ignored_at: Optional[str] = Field(default=None, serialization_alias="ignoredAt")
+    linked_at: Optional[str] = Field(
+        default=None,
+        serialization_alias="linkedAt",
+        description="When a person linked the item to a catalog item or Project; null for a sync import.",
+    )
+
+
+class ConnectorItemIgnore(BaseModel):
+    """``POST …/connectors/{id}/items/{itemId}/ignore``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=1000, description="Why this API is not described in the catalog.")
+
+
+class ConnectorItemLink(BaseModel):
+    """``POST …/connectors/{id}/items/{itemId}/link``."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    catalog_item_id: UUID = Field(
+        alias="catalogItemId", description="The catalog item or Project this API is (a project id of the tenant)."
     )
 
 

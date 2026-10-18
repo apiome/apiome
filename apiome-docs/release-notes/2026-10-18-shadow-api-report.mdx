@@ -1,0 +1,21 @@
+---
+slug: shadow-api-report
+title: Find the APIs nobody has described
+description: The shadow-API report compares your gateways with the catalog.
+authors: [apiome]
+---
+
+**[Shadow APIs](/govern/shadow-apis)** (Govern) compares what your connected gateways serve with
+what the catalog describes, so APIs that run but that nobody has documented come to light.
+
+{/* truncate */}
+
+- **Shadow, possible matches, drift, undeployed.** Each gateway API lands in one section; a
+  possible match shows how it matched and how confident the match is.
+- **You decide.** Nothing is linked automatically. **Link to item**, **Import** it now, or
+  **Ignore** it with a reason. An ignored API comes back if its gateway serves it somewhere else.
+- **No false all-clear.** A connector whose last sync failed is shown as *stale since* its last good
+  sync.
+- **CI gate and alerts.** `apiome connectors shadow-report --fail-on shadow,drift` fails a pipeline
+  only for the categories you name, and a new shadow API raises a
+  `catalog.connector.shadow_api_detected` event on your webhook channels.

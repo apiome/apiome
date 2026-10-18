@@ -1,7 +1,7 @@
 ---
 title: "apiome contract"
 description: "Compile and inspect executable contract suites for a version."
-sidebar_position: 8
+sidebar_position: 9
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
