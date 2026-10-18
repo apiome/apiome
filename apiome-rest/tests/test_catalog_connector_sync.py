@@ -632,3 +632,12 @@ def test_an_ownership_failure_never_fails_the_sync(store, db, importer, connecto
     result = _run(db, connector, importer)
     assert result.status == "succeeded"
     assert result.summary["ownerSuggestionsFailed"] == 1
+
+
+def test_a_sync_rederives_the_tenants_deployed_on_edges(store, db, importer, connector):
+    """CDG-3.1: the run's items feed the catalog graph's `deployed_on` family afterwards."""
+    calls = []
+    db.refresh_graph = lambda tenant_id, families, *, trigger: calls.append((tenant_id, families, trigger))
+    FakeGatewaySource.inventory = [_api("orders")]
+    _run(db, connector, importer)
+    assert calls == [(str(connector["tenant_id"]), ("deployed_on",), "connector_sync")]

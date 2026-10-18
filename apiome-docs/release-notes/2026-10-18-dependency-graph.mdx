@@ -1,0 +1,19 @@
+---
+slug: dependency-graph
+title: A graph of what depends on what
+description: Apiome now records edges between consumers, APIs, gateways, repositories and sources.
+authors: [apiome]
+---
+
+Apiome now keeps a [dependency graph](/govern/dependency-graph): an edge for every relationship it
+already knows about.
+
+{/* truncate */}
+
+- **Consumers → APIs**, one edge per field or operation a consumer's contract declares.
+- **Conversions, identity links, MCP sources, gateway deployments and repositories**, each as its
+  own kind of edge.
+- **Stale before gone.** When the record behind an edge disappears, the edge is kept and marked
+  stale for 30 days, so a dependency that vanished is visible first.
+- **Read it over REST** with `GET /v1/graph/{tenant}/entities/{kind}/{id}/edges`, in either
+  direction, filtered by edge kind and provenance, at most 500 edges a page.

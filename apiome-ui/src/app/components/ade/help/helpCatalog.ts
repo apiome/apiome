@@ -663,6 +663,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['undeployed', 'drift', 'possible match', 'connector', 'gateway', 'ignore'],
   },
   {
+    id: 'dependency-graph',
+    title: 'Dependency graph',
+    summary: 'How Apiome records which APIs, consumers and sources depend on each other.',
+    page: 'apiome-docs/docs/govern/dependency-graph.mdx',
+    section: 'reference',
+    keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships'],
+  },
+  {
     id: 'reviews',
     title: 'Reviews and the approval gate',
     summary: 'Review a draft version, approve or request changes, and require approvals before publishing.',

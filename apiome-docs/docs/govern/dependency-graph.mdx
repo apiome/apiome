@@ -1,0 +1,92 @@
+---
+title: Dependency graph
+description: How Apiome records which APIs, consumers and sources depend on each other.
+sidebar_position: 1.5
+tags: [governance, catalog, consumers, api]
+---
+
+The **dependency graph** records how the things in your workspace relate: which consumers depend
+on which fields of an API, which catalog item a Project was converted from, which gateway serves an
+API, which repository a draft lives in. Each relationship is an **edge** between two **nodes**.
+
+The graph has no screen yet. You read it through the REST API (see [Reading edges](#reading-edges)),
+and later features (impact views, scorecards) build on it.
+
+## Edges
+
+An edge goes *from* one node *to* another and has a kind:
+
+| Edge kind | From → to | Where it comes from |
+| --- | --- | --- |
+| `consumes` | consumer → Project or catalog item | The consumer's current [contract](../reference/rest/consumer-contracts.md). One edge per field or operation the contract declares, carrying that JSON Pointer. |
+| `converted_from` | Project → catalog item | Converting a catalog item into a Project |
+| `identity_of` | Project or catalog item → identity group | Linking APIs that are the same API in different formats |
+| `built_from` | MCP endpoint → MCP source | Linking a source artifact to an MCP endpoint |
+| `deployed_on` | catalog item → connector | A [connector](../bring-in/connectors.mdx) sync that found the API on a gateway |
+| `served_by` | Project or catalog item → repository | A repository import, or a draft bound to a repository branch |
+
+Node kinds are `project`, `catalog_item`, `consumer`, `connector`, `mcp_endpoint`, `mcp_source`,
+`repository` and `identity_group`. A Project that is not yet publishable is a `catalog_item`.
+
+## Provenance
+
+Every edge says how Apiome knows about it:
+
+| Provenance | Meaning |
+| --- | --- |
+| `derived` | Apiome worked it out from records it already has: contracts, conversions, links, syncs. All the edges above are derived. |
+| `declared` | Someone stated it, for example in an API's own metadata. Reserved for a later release. |
+| `runtime` | Seen in traffic. Reserved for a later release. |
+
+The same two nodes can be joined by edges of different provenance. Each edge also names the record
+it came from (`source_ref`, such as `consumer_contract:<id>`).
+
+## How edges appear and go stale
+
+Edges follow their records:
+
+- **When the record changes.** Saving a consumer contract, converting an item, binding a draft or
+  removing a repository updates that kind of edge in the same save. Identity links, MCP sources and
+  connector syncs update their edges right after they finish.
+- **Every night.** A repair pass re-derives every edge kind for every workspace. It catches anything
+  a save missed.
+
+When the record behind an edge goes away (a consumer is retired, a contract revision drops a field,
+a source is retired), the edge is **not deleted at once**. It becomes **stale**: it keeps the time
+it was last seen and is reported with `stale: true`. Stale edges are removed after **30 days**. If
+the record comes back first, the edge is current again.
+
+Re-deriving is safe to repeat: running it again over the same records leaves the same edges.
+
+### Consumers and impact
+
+A consumer's `consumes` edges are exactly the pointers its current contract declares. The consumers
+that a change to an API can affect are the ones with a current `consumes` edge whose pointer
+overlaps a changed pointer, the same set the consumer impact check reports when a version is compared or published.
+
+## Reading edges
+
+```http
+GET /v1/graph/{tenant}/entities/{kind}/{id}/edges
+```
+
+| Parameter | Meaning |
+| --- | --- |
+| `direction` | `out` (edges from the entity, the default) or `in` (edges to it) |
+| `kind` | Only these edge kinds. Repeat it for several. |
+| `provenance` | Only these provenances. Repeat it for several. |
+| `limit` | 1–500, default 100 |
+| `offset` | Edges to skip, for the next page |
+
+The response lists the edges, current ones first and stale ones last, with `total` (how many
+match) and `truncated` (`true` when there are more than this page holds). It needs the
+`projects:view` permission.
+
+For example, to list the consumers of a Project:
+
+```http
+GET /v1/graph/{tenant}/entities/project/{project-id}/edges?direction=in&kind=consumes
+X-API-Key: <your-api-key>
+```
+
+The full reference is on [Graph](../reference/rest/graph.md).
