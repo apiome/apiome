@@ -1,0 +1,947 @@
+{
+  "adapter": "aws-apigateway",
+  "canonical": {
+    "channels": [],
+    "description": "Exported production REST API: eight operations, a Lambda authorizer, request validation, CORS, usage-plan API keys and a WAF-fronted regional endpoint.",
+    "extras": {
+      "aws_apigateway": {
+        "authorizers": [
+          {
+            "authType": "custom",
+            "authorizerResultTtlInSeconds": 60,
+            "authorizerUri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorizer:live/invocations",
+            "enableSimpleResponses": false,
+            "identitySource": "method.request.header.Authorization, context.identity.sourceIp",
+            "name": "lambda-authorizer",
+            "type": "request"
+          }
+        ],
+        "default_request_validator": null,
+        "extensions": [
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/components/pathItems/cors/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-authorizer",
+            "pointer": "/components/securitySchemes/lambda-authorizer/x-amazon-apigateway-authorizer",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-authtype",
+            "pointer": "/components/securitySchemes/lambda-authorizer/x-amazon-apigateway-authtype",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1authorizations/post/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-request-validator",
+            "pointer": "/paths/~1authorizations/post/x-amazon-apigateway-request-validator",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1authorizations~1{authorizationId}/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1authorizations~1{authorizationId}~1captures/post/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-request-validator",
+            "pointer": "/paths/~1authorizations~1{authorizationId}~1captures/post/x-amazon-apigateway-request-validator",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1health/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1webhooks/post/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-api-key-source",
+            "pointer": "/x-amazon-apigateway-api-key-source",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-endpoint-configuration",
+            "pointer": "/x-amazon-apigateway-endpoint-configuration",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-gateway-responses",
+            "pointer": "/x-amazon-apigateway-gateway-responses",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-minimum-compression-size",
+            "pointer": "/x-amazon-apigateway-minimum-compression-size",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-request-validators",
+            "pointer": "/x-amazon-apigateway-request-validators",
+            "status": "interpreted"
+          }
+        ],
+        "flavor": "rest",
+        "integrations": {
+          "aws-service": 1,
+          "lambda-proxy": 3,
+          "mock": 1
+        },
+        "provenance": "declared",
+        "request_validators": {
+          "full": {
+            "validateRequestBody": true,
+            "validateRequestParameters": true
+          }
+        },
+        "server_extensions": {},
+        "settings": {
+          "x-amazon-apigateway-api-key-source": "HEADER",
+          "x-amazon-apigateway-endpoint-configuration": {
+            "types": [
+              "REGIONAL"
+            ]
+          },
+          "x-amazon-apigateway-gateway-responses": {
+            "ACCESS_DENIED": {
+              "responseTemplates": {
+                "application/json": "{\"message\":\"Forbidden\"}"
+              },
+              "statusCode": 403
+            },
+            "DEFAULT_4XX": {
+              "responseParameters": {
+                "gatewayresponse.header.Access-Control-Allow-Origin": "'https://checkout.example.com'"
+              }
+            }
+          },
+          "x-amazon-apigateway-minimum-compression-size": 4096
+        }
+      }
+    },
+    "format": "aws-apigateway",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "payments-public-api",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com/{basePath}",
+        "variables": [
+          {
+            "default": "v3",
+            "description": null,
+            "enum": null,
+            "extras": {},
+            "name": "basePath"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "never",
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-read:live/invocations"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "provenance": "declared",
+                "type": "aws_proxy",
+                "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-read:live/invocations"
+              },
+              "security": [
+                {
+                  "authType": "custom",
+                  "authorizer": {
+                    "authorizerResultTtlInSeconds": 60,
+                    "authorizerUri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorizer:live/invocations",
+                    "enableSimpleResponses": false,
+                    "identitySource": "method.request.header.Authorization, context.identity.sourceIp",
+                    "type": "request"
+                  },
+                  "in": "header",
+                  "name": "lambda-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/authorizations/{authorizationId}",
+            "key": "GET /authorizations/{authorizationId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Found",
+                "extras": {},
+                "headers": [],
+                "key": "GET /authorizations/{authorizationId}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unknown",
+                "extras": {},
+                "headers": [],
+                "key": "GET /authorizations/{authorizationId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "GET /authorizations/{authorizationId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /authorizations/{authorizationId}#path.authorizationId",
+                "location": "path",
+                "name": "authorizationId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "requestTemplates": {
+                    "application/json": "{\"statusCode\": 200}"
+                  },
+                  "responses": {
+                    "default": {
+                      "responseTemplates": {
+                        "application/json": "{\"status\":\"ok\"}"
+                      },
+                      "statusCode": "200"
+                    }
+                  },
+                  "type": "mock"
+                }
+              },
+              "backend": {
+                "kind": "mock",
+                "provenance": "declared",
+                "type": "mock"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/health",
+            "key": "GET /health",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "OK",
+                "extras": {},
+                "headers": [],
+                "key": "GET /health#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /health",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "http_method": "OPTIONS",
+            "http_path": "/authorizations",
+            "key": "OPTIONS /authorizations",
+            "kind": "request_response",
+            "messages": [],
+            "name": "OPTIONS /authorizations",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Authorize a payment",
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "contentHandling": "CONVERT_TO_TEXT",
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "never",
+                  "timeoutInMillis": 10000,
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorize:live/invocations"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "provenance": "declared",
+                "timeoutInMillis": 10000,
+                "type": "aws_proxy",
+                "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorize:live/invocations"
+              },
+              "security": [
+                {
+                  "authType": "custom",
+                  "authorizer": {
+                    "authorizerResultTtlInSeconds": 60,
+                    "authorizerUri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorizer:live/invocations",
+                    "enableSimpleResponses": false,
+                    "identitySource": "method.request.header.Authorization, context.identity.sourceIp",
+                    "type": "request"
+                  },
+                  "in": "header",
+                  "name": "lambda-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ],
+              "summary": "Authorize a payment",
+              "validation": {
+                "defined": true,
+                "provenance": "declared",
+                "validateRequestBody": true,
+                "validateRequestParameters": true,
+                "validator": "full"
+              }
+            },
+            "http_method": "POST",
+            "http_path": "/authorizations",
+            "key": "POST /authorizations",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "AuthorizationRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Approved or declined",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations#response.201",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "AuthorizationResponse",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              },
+              {
+                "content_types": [],
+                "description": "Invalid request",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations#response.400",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "400"
+              },
+              {
+                "content_types": [],
+                "description": "Unauthorized",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations#response.401",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "401"
+              },
+              {
+                "content_types": [],
+                "description": "Rate limited",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations#response.429",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "429"
+              }
+            ],
+            "name": "POST /authorizations",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "never",
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-capture:live/invocations"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "provenance": "declared",
+                "type": "aws_proxy",
+                "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-capture:live/invocations"
+              },
+              "security": [
+                {
+                  "authType": "custom",
+                  "authorizer": {
+                    "authorizerResultTtlInSeconds": 60,
+                    "authorizerUri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:payments-authorizer:live/invocations",
+                    "enableSimpleResponses": false,
+                    "identitySource": "method.request.header.Authorization, context.identity.sourceIp",
+                    "type": "request"
+                  },
+                  "in": "header",
+                  "name": "lambda-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ],
+              "validation": {
+                "defined": true,
+                "provenance": "declared",
+                "validateRequestBody": true,
+                "validateRequestParameters": true,
+                "validator": "full"
+              }
+            },
+            "http_method": "POST",
+            "http_path": "/authorizations/{authorizationId}/captures",
+            "key": "POST /authorizations/{authorizationId}/captures",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations/{authorizationId}/captures#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "CaptureRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": "Captured",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations/{authorizationId}/captures#response.201",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              },
+              {
+                "content_types": [],
+                "description": "Already captured",
+                "extras": {},
+                "headers": [],
+                "key": "POST /authorizations/{authorizationId}/captures#response.409",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "409"
+              }
+            ],
+            "name": "POST /authorizations/{authorizationId}/captures",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "POST /authorizations/{authorizationId}/captures#header.Idempotency-Key",
+                "location": "header",
+                "name": "Idempotency-Key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "POST /authorizations/{authorizationId}/captures#path.authorizationId",
+                "location": "path",
+                "name": "authorizationId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Receive a network webhook",
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "credentials": "arn:aws:iam::000000000000:role/apigw-webhooks",
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "never",
+                  "requestParameters": {
+                    "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'"
+                  },
+                  "requestTemplates": {
+                    "application/json": "Action=SendMessage&MessageBody=$util.urlEncode($input.body)"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "204"
+                    }
+                  },
+                  "type": "aws",
+                  "uri": "arn:aws:apigateway:eu-west-1:sqs:path/000000000000/payment-webhooks"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "aws-service",
+                "provenance": "declared",
+                "service": "sqs",
+                "type": "aws",
+                "uri": "arn:aws:apigateway:eu-west-1:sqs:path/000000000000/payment-webhooks"
+              },
+              "summary": "Receive a network webhook"
+            },
+            "http_method": "POST",
+            "http_path": "/webhooks",
+            "key": "POST /webhooks",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Accepted",
+                "extras": {},
+                "headers": [],
+                "key": "POST /webhooks#response.204",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
+            "name": "POST /webhooks",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "payments-public-api",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "AUTOMATIC",
+                "MANUAL"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.captureMode",
+            "name": "captureMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.card",
+            "name": "card",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^MER-[0-9]{6}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.merchantId",
+            "name": "merchantId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "AuthorizationRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "AuthorizationRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationResponse.authorizationId",
+            "name": "authorizationId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationResponse.networkCode",
+            "name": "networkCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "APPROVED",
+                "DECLINED",
+                "REFERRAL"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationResponse.result",
+            "name": "result",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "AuthorizationResponse",
+        "key_type": null,
+        "kind": "record",
+        "name": "AuthorizationResponse",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "CaptureRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "CaptureRequest.finalCapture",
+            "name": "finalCapture",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "CaptureRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "CaptureRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "2026-08-15T08:12:04Z"
+  },
+  "corpus_path": "aws-apigateway/05-real-world-payments-rest-api.json",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 1,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "aws-apigateway"
+  },
+  "fingerprint": "sha256:9f915c817d87c2b5608d05898a9b9a42c0b2ce18896525d82f95a45d7b3efb3d",
+  "lint": {
+    "findings": 36,
+    "grade": "F",
+    "report_fingerprint": "3e71a4640a012a328f5d9b01170728786244c32774a5c2c15b6033f130d205c4",
+    "score": 43,
+    "severity_counts": {
+      "error": 0,
+      "info": 29,
+      "warning": 7
+    }
+  },
+  "snapshot_version": 1
+}

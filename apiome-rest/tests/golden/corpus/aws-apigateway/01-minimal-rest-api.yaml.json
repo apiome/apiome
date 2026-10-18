@@ -1,0 +1,128 @@
+{
+  "adapter": "aws-apigateway",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "aws_apigateway": {
+        "authorizers": [],
+        "default_request_validator": null,
+        "extensions": [
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1ping/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          }
+        ],
+        "flavor": "rest",
+        "integrations": {
+          "mock": 1
+        },
+        "provenance": "declared",
+        "request_validators": {},
+        "server_extensions": {},
+        "settings": {}
+      }
+    },
+    "format": "aws-apigateway",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ping",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "GET",
+                  "passthroughBehavior": "when_no_match",
+                  "requestTemplates": {
+                    "application/json": "{\"statusCode\": 200}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "type": "mock"
+                }
+              },
+              "backend": {
+                "httpMethod": "GET",
+                "kind": "mock",
+                "provenance": "declared",
+                "type": "mock"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/ping",
+            "key": "GET /ping",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /ping#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "ping",
+    "types": [],
+    "version": "1.0"
+  },
+  "corpus_path": "aws-apigateway/01-minimal-rest-api.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "aws-apigateway"
+  },
+  "fingerprint": "sha256:e6c792d970e3dd72e4a13ed560837df9cea94f576df1cd6c1b6dba1011185e39",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "ced2a777ba39a4e7baafc8a18b0dcdd7de618a58735c1e921c8350734c86cd76",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

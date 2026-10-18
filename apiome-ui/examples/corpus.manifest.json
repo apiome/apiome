@@ -57,7 +57,7 @@
       "marker": "`protocol \u2026 {` or `namespace \u2026;` + `record` declarations in `.avdl`"
     },
     "aws-apigateway": {
-      "label": "AWS API Gateway (pending #5455)",
+      "label": "AWS API Gateway",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "OpenAPI document carrying `x-amazon-apigateway-*` extensions"
@@ -3239,7 +3239,7 @@
     {
       "path": "aws-apigateway/01-minimal-rest-api.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3247,8 +3247,7 @@
       },
       "features": [
         "rest-api",
-        "mock-integration",
-        "pending-adapter"
+        "mock-integration"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3259,7 +3258,7 @@
     {
       "path": "aws-apigateway/02-typical-rest-api-export.json",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3272,8 +3271,7 @@
         "vpc-link",
         "custom-authorizer",
         "request-validator",
-        "cors-mock",
-        "pending-adapter"
+        "cors-mock"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3284,7 +3282,7 @@
     {
       "path": "aws-apigateway/03-composition-stage-variables-and-refs.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3294,8 +3292,7 @@
         "stage-variables",
         "shared-parameters",
         "server-variables",
-        "binary-media-types",
-        "pending-adapter"
+        "binary-media-types"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3306,7 +3303,7 @@
     {
       "path": "aws-apigateway/04-stress-extension-coverage.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3320,8 +3317,7 @@
         "resource-policy",
         "cognito-authorizer",
         "token-authorizer",
-        "unknown-extension",
-        "pending-adapter"
+        "unknown-extension"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3333,7 +3329,7 @@
     {
       "path": "aws-apigateway/05-real-world-payments-rest-api.json",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3345,8 +3341,7 @@
         "sqs-integration",
         "cors",
         "regional-endpoint",
-        "request-validator",
-        "pending-adapter"
+        "request-validator"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3357,7 +3352,7 @@
     {
       "path": "aws-apigateway/06-typical-http-api-export.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3369,8 +3364,7 @@
         "payload-format-2.0",
         "default-route",
         "cors-extension",
-        "vpc-link",
-        "pending-adapter"
+        "vpc-link"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3381,7 +3375,7 @@
     {
       "path": "aws-apigateway/07-split-set/api.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3391,8 +3385,7 @@
         "relative-ref",
         "split-definition",
         "aws-proxy",
-        "vpc-link",
-        "pending-adapter"
+        "vpc-link"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3404,7 +3397,7 @@
     {
       "path": "aws-apigateway/07-split-set/components.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "valid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3412,8 +3405,7 @@
       },
       "features": [
         "schema-half",
-        "shared-parameters",
-        "pending-adapter"
+        "shared-parameters"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3426,7 +3418,7 @@
     {
       "path": "aws-apigateway/negative/01-syntactic-bad-yaml.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3435,8 +3427,7 @@
       "features": [
         "negative",
         "syntactic",
-        "bad-indentation",
-        "pending-adapter"
+        "bad-indentation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3448,7 +3439,7 @@
     {
       "path": "aws-apigateway/negative/02-semantic-integration-without-type.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3457,8 +3448,7 @@
       "features": [
         "negative",
         "semantic",
-        "integration-without-type",
-        "pending-adapter"
+        "integration-without-type"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3470,7 +3460,7 @@
     {
       "path": "aws-apigateway/negative/03-truncated-mid-integration.json",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3479,8 +3469,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-uri",
-        "pending-adapter"
+        "mid-uri"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3492,7 +3481,7 @@
     {
       "path": "aws-apigateway/negative/04-wrong-format-plain-openapi.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3502,8 +3491,7 @@
         "negative",
         "wrong-format",
         "openapi",
-        "greedy-detection",
-        "pending-adapter"
+        "greedy-detection"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3516,7 +3504,7 @@
     {
       "path": "aws-apigateway/negative/05-encoding-utf16.yaml",
       "format": "aws-apigateway",
-      "adapter_key": null,
+      "adapter_key": "aws-apigateway",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "aws-apigateway",
@@ -3525,8 +3513,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

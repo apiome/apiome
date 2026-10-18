@@ -18,6 +18,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Avro IDL (`.avdl`) import and export
     - Swagger 1.2 import
     - Postman Collection v2.0 import
+    - AWS API Gateway (REST and HTTP API exports) import
     - Protobuf editions 2023/2024 normalization parity
     - RELAX NG import
     - DTD import

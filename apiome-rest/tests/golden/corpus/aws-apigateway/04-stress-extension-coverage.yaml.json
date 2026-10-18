@@ -1,0 +1,556 @@
+{
+  "adapter": "aws-apigateway",
+  "canonical": {
+    "channels": [],
+    "description": "Every x-amazon-apigateway-* extension the REST flavour admits, including one this adapter has never seen. An unknown extension must be preserved, not dropped.\n",
+    "extras": {
+      "aws_apigateway": {
+        "authorizers": [
+          {
+            "authType": "cognito_user_pools",
+            "identitySource": "method.request.header.Authorization",
+            "name": "jwt-authorizer",
+            "providerARNs": [
+              "arn:aws:cognito-idp:us-east-1:000000000000:userpool/us-east-1_ABCDEFGHI"
+            ],
+            "type": "cognito_user_pools"
+          },
+          {
+            "authType": "custom",
+            "authorizerResultTtlInSeconds": 3600,
+            "authorizerUri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:token-auth/invocations",
+            "identityValidationExpression": "^Bearer [-0-9a-zA-Z._]+$",
+            "name": "token-authorizer",
+            "type": "token"
+          }
+        ],
+        "default_request_validator": null,
+        "extensions": [
+          {
+            "name": "x-amazon-apigateway-authorizer",
+            "pointer": "/components/securitySchemes/jwt-authorizer/x-amazon-apigateway-authorizer",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-authtype",
+            "pointer": "/components/securitySchemes/jwt-authorizer/x-amazon-apigateway-authtype",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-authorizer",
+            "pointer": "/components/securitySchemes/token-authorizer/x-amazon-apigateway-authorizer",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-authtype",
+            "pointer": "/components/securitySchemes/token-authorizer/x-amazon-apigateway-authtype",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1aws-service/post/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-any-method",
+            "pointer": "/paths/~1lambda-proxy/x-amazon-apigateway-any-method",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1throttled/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-request-validator",
+            "pointer": "/paths/~1throttled/get/x-amazon-apigateway-request-validator",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-example-unknown-extension",
+            "pointer": "/paths/~1throttled/get/x-example-unknown-extension",
+            "status": "unknown"
+          },
+          {
+            "name": "x-amazon-apigateway-any-method",
+            "pointer": "/paths/~1{proxy+}/x-amazon-apigateway-any-method",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-api-key-source",
+            "pointer": "/x-amazon-apigateway-api-key-source",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-binary-media-types",
+            "pointer": "/x-amazon-apigateway-binary-media-types",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-endpoint-configuration",
+            "pointer": "/x-amazon-apigateway-endpoint-configuration",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-gateway-responses",
+            "pointer": "/x-amazon-apigateway-gateway-responses",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-minimum-compression-size",
+            "pointer": "/x-amazon-apigateway-minimum-compression-size",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-policy",
+            "pointer": "/x-amazon-apigateway-policy",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-request-validators",
+            "pointer": "/x-amazon-apigateway-request-validators",
+            "status": "interpreted"
+          }
+        ],
+        "flavor": "rest",
+        "integrations": {
+          "aws-service": 1,
+          "http-proxy": 1,
+          "lambda-proxy": 1,
+          "mock": 1
+        },
+        "provenance": "declared",
+        "request_validators": {
+          "params-only": {
+            "validateRequestBody": false,
+            "validateRequestParameters": true
+          }
+        },
+        "server_extensions": {},
+        "settings": {
+          "x-amazon-apigateway-api-key-source": "HEADER",
+          "x-amazon-apigateway-binary-media-types": [
+            "*/*"
+          ],
+          "x-amazon-apigateway-endpoint-configuration": {
+            "vpcEndpointIds": [
+              "vpce-0abc123def4567890"
+            ]
+          },
+          "x-amazon-apigateway-gateway-responses": {
+            "THROTTLED": {
+              "responseTemplates": {
+                "application/json": "{\"message\": \"Too many requests\"}"
+              },
+              "statusCode": 429
+            },
+            "UNAUTHORIZED": {
+              "responseParameters": {
+                "gatewayresponse.header.WWW-Authenticate": "'Bearer'"
+              },
+              "responseTemplates": {
+                "application/json": "{\"message\": $context.error.messageString}"
+              },
+              "statusCode": 401
+            }
+          },
+          "x-amazon-apigateway-minimum-compression-size": 1024,
+          "x-amazon-apigateway-policy": {
+            "Statement": [
+              {
+                "Action": "execute-api:Invoke",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Resource": "arn:aws:execute-api:us-east-1:000000000000:k1l2m3n4o5/*"
+              },
+              {
+                "Action": "execute-api:Invoke",
+                "Condition": {
+                  "NotIpAddress": {
+                    "aws:SourceIp": "203.0.113.0/24"
+                  }
+                },
+                "Effect": "Deny",
+                "Principal": "*",
+                "Resource": "arn:aws:execute-api:us-east-1:000000000000:k1l2m3n4o5/*"
+              }
+            ],
+            "Version": "2012-10-17"
+          }
+        }
+      }
+    },
+    "format": "aws-apigateway",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "stress-api",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://k1l2m3n4o5.execute-api.us-east-1.amazonaws.com/prod",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "when_no_match",
+                  "payloadFormatVersion": "1.0",
+                  "timeoutInMillis": 15000,
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:catch-all/invocations"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "payloadFormatVersion": "1.0",
+                "provenance": "declared",
+                "timeoutInMillis": 15000,
+                "type": "aws_proxy",
+                "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:catch-all/invocations"
+              },
+              "security": [
+                {
+                  "authType": "cognito_user_pools",
+                  "authorizer": {
+                    "identitySource": "method.request.header.Authorization",
+                    "providerARNs": [
+                      "arn:aws:cognito-idp:us-east-1:000000000000:userpool/us-east-1_ABCDEFGHI"
+                    ],
+                    "type": "cognito_user_pools"
+                  },
+                  "in": "header",
+                  "name": "jwt-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/lambda-proxy",
+            "key": "ANY /lambda-proxy",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "proxied",
+                "extras": {},
+                "headers": [],
+                "key": "ANY /lambda-proxy#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "ANY /lambda-proxy",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "connectionType": "INTERNET",
+                  "httpMethod": "ANY",
+                  "passthroughBehavior": "when_no_match",
+                  "requestParameters": {
+                    "integration.request.path.proxy": "method.request.path.proxy"
+                  },
+                  "type": "http_proxy",
+                  "uri": "https://legacy.internal.example.com/{proxy}"
+                }
+              },
+              "backend": {
+                "connectionType": "INTERNET",
+                "httpMethod": "ANY",
+                "kind": "http-proxy",
+                "provenance": "declared",
+                "type": "http_proxy",
+                "uri": "https://legacy.internal.example.com/{proxy}"
+              },
+              "security": [
+                {
+                  "authType": "cognito_user_pools",
+                  "authorizer": {
+                    "identitySource": "method.request.header.Authorization",
+                    "providerARNs": [
+                      "arn:aws:cognito-idp:us-east-1:000000000000:userpool/us-east-1_ABCDEFGHI"
+                    ],
+                    "type": "cognito_user_pools"
+                  },
+                  "in": "header",
+                  "name": "jwt-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/{proxy+}",
+            "key": "ANY /{proxy+}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "greedy proxy",
+                "extras": {},
+                "headers": [],
+                "key": "ANY /{proxy+}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "ANY /{proxy+}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "ANY /{proxy+}#path.proxy",
+                "location": "path",
+                "name": "proxy",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "extensions": {
+                  "x-example-unknown-extension": {
+                    "note": "Not an AWS extension at all. FMT-7.1 requires an unknown extension to be preserved in extras and reported, never silently dropped.\n",
+                    "owner": "platform-team"
+                  }
+                },
+                "integration": {
+                  "requestTemplates": {
+                    "application/json": "{\"statusCode\": 200}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "type": "mock"
+                }
+              },
+              "backend": {
+                "kind": "mock",
+                "provenance": "declared",
+                "type": "mock"
+              },
+              "security": [
+                {
+                  "authType": "cognito_user_pools",
+                  "authorizer": {
+                    "identitySource": "method.request.header.Authorization",
+                    "providerARNs": [
+                      "arn:aws:cognito-idp:us-east-1:000000000000:userpool/us-east-1_ABCDEFGHI"
+                    ],
+                    "type": "cognito_user_pools"
+                  },
+                  "in": "header",
+                  "name": "jwt-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ],
+              "validation": {
+                "defined": true,
+                "provenance": "declared",
+                "validateRequestBody": false,
+                "validateRequestParameters": true,
+                "validator": "params-only"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/throttled",
+            "key": "GET /throttled",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /throttled#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /throttled",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "credentials": "arn:aws:iam::000000000000:role/apigw-sqs",
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "never",
+                  "requestParameters": {
+                    "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'"
+                  },
+                  "requestTemplates": {
+                    "application/json": "Action=SendMessage&MessageBody=$input.body"
+                  },
+                  "responses": {
+                    "2\\d{2}": {
+                      "responseTemplates": {
+                        "application/json": "{\"queued\": true}"
+                      },
+                      "statusCode": "200"
+                    },
+                    "default": {
+                      "statusCode": "500"
+                    }
+                  },
+                  "type": "aws",
+                  "uri": "arn:aws:apigateway:us-east-1:sqs:path/000000000000/orders-queue"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "aws-service",
+                "provenance": "declared",
+                "service": "sqs",
+                "type": "aws",
+                "uri": "arn:aws:apigateway:us-east-1:sqs:path/000000000000/orders-queue"
+              },
+              "security": [
+                {
+                  "authType": "cognito_user_pools",
+                  "authorizer": {
+                    "identitySource": "method.request.header.Authorization",
+                    "providerARNs": [
+                      "arn:aws:cognito-idp:us-east-1:000000000000:userpool/us-east-1_ABCDEFGHI"
+                    ],
+                    "type": "cognito_user_pools"
+                  },
+                  "in": "header",
+                  "name": "jwt-authorizer",
+                  "parameterName": "Authorization",
+                  "provenance": "declared",
+                  "scheme": "authorization",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/aws-service",
+            "key": "POST /aws-service",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "POST /aws-service#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "POST /aws-service",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "stress-api",
+    "types": [],
+    "version": "2026-08-19T12:00:00Z"
+  },
+  "corpus_path": "aws-apigateway/04-stress-extension-coverage.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "aws-apigateway"
+  },
+  "fingerprint": "sha256:d6b4c04c20f80e8a00268e9f4ae38383883afddd5099c0d6406e74df4b9b5073",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "73531b76e8850d4119bee396e70d467f7581bc8f1d70878750e0743aaae44610",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

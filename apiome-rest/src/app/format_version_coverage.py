@@ -291,6 +291,27 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="3.1.0",
     ),
+    "aws-apigateway": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="REST API export (GetExport, OpenAPI 3.0 or Swagger 2.0, extensions=apigateway)",
+                format_key="aws-apigateway",
+                support=VersionSupport.FULL,
+                note="The base document is read by the OpenAPI path at its own version; the "
+                "`x-amazon-apigateway-*` extensions are interpreted on top. API Gateway versions "
+                "its extensions by adding keys, never by renaming them, so one reader covers every "
+                "export.",
+            ),
+            FormatVersion(
+                version="HTTP API export (ExportApi, OpenAPI 3.0, includeExtensions=true)",
+                format_key="aws-apigateway",
+                support=VersionSupport.FULL,
+                note="The v2 flavour: JWT authorizers, payload format 2.0, `$default` routes and "
+                "the top-level `x-amazon-apigateway-cors` object.",
+            ),
+        ],
+        writes=[],
+    ),
     "avro": VersionCoverage(
         reads=[
             FormatVersion(

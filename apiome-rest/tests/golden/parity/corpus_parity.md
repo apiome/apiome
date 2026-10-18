@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 51
+- **Formats gated:** 52
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -19,6 +19,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `asn1` | ASN.1 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 6 | `asn1` |
 | `asyncapi` | AsyncAPI | event | 9 | 5 | 0 | 0 | 14 | 6/6 | 7 | `asyncapi` |
 | `avro` | Avro | data_schema | 14 | 11 | 0 | 0 | 25 | 6/6 | 12 | `avro` |
+| `aws-apigateway` | AWS API Gateway | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 7 | — |
 | `capnproto` | Cap'n Proto | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `capnproto` |
 | `cddl` | CDDL | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `cddl` |
 | `cloudevents` | CloudEvents | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 5 | `cloudevents` |
@@ -77,6 +78,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `asn1` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `asyncapi` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `avro` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `aws-apigateway` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `capnproto` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cloudevents` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -141,4 +143,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`apigee`, `aws-apigateway`, `azure-apim`, `cics-bms`, `consul`, `cue`, `dhall`, `dicom`, `edifact`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hl7v3`, `hoppscotch`, `idoc`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `nacha`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `sepa`, `shacl`, `soapui`, `sparkplug`, `swift-mt`, `thunder-client`, `tradacoms`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`apigee`, `azure-apim`, `cics-bms`, `consul`, `cue`, `dhall`, `dicom`, `edifact`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hl7v3`, `hoppscotch`, `idoc`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `nacha`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `sepa`, `shacl`, `soapui`, `sparkplug`, `swift-mt`, `thunder-client`, `tradacoms`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`

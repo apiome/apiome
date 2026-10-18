@@ -24,7 +24,7 @@ The corpus holds **1421 files** across **103 format directories**. Every file ha
 | `apigee/` | Apigee proxy bundle (pending #5457) | rest | zip with `apiproxy/` members and an `APIProxy` manifest, or a `ProxyEndpoint`/`TargetEndpoint` root | 15 |
 | `arazzo/` | Arazzo workflows | rest | top-level `arazzo:` version | 11 |
 | `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
-| `aws-apigateway/` | AWS API Gateway (pending #5455) | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
+| `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
 | `azure-apim/` | Azure API Management (pending #5456) | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
 | `consul/` | Consul service definitions (pending #5459) | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
 | `discovery/` | Google API Discovery | rest | `kind: discovery#restDescription` / `discoveryVersion` | 11 |
@@ -374,23 +374,23 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`06-imports-set/parcel.avsc`** — Fileset member reached by `import schema`; on its own it is a plain .avsc the shipped avro adapter already claims.
 
-### `aws-apigateway/` — AWS API Gateway (pending #5455)
+### `aws-apigateway/` — AWS API Gateway
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-rest-api.yaml` | minimal | `aws-apigateway` ≥ 0.9 | valid | `rest-api`, `mock-integration`, `pending-adapter` |
-| `02-typical-rest-api-export.json` | typical | `aws-apigateway` ≥ 0.9 | valid | `rest-api`, `aws-proxy`, `http-proxy`, `vpc-link`, `custom-authorizer`, `request-validator`, `cors-mock`, `pending-adapter` |
-| `03-composition-stage-variables-and-refs.yaml` | composition | `aws-apigateway` ≥ 0.9 | valid | `stage-variables`, `shared-parameters`, `server-variables`, `binary-media-types`, `pending-adapter` |
-| `04-stress-extension-coverage.yaml` ⚠ | stress | `aws-apigateway` ≥ 0.9 | valid | `any-method`, `greedy-proxy`, `aws-service-integration`, `gateway-responses`, `resource-policy`, `cognito-authorizer`, `token-authorizer`, `unknown-extension`, `pending-adapter` |
-| `05-real-world-payments-rest-api.json` | real-world | `aws-apigateway` ≥ 0.9 | valid | `lambda-authorizer`, `idempotency-header`, `sqs-integration`, `cors`, `regional-endpoint`, `request-validator`, `pending-adapter` |
-| `06-typical-http-api-export.yaml` | typical | `aws-apigateway` ≥ 0.9 | valid | `http-api`, `jwt-authorizer`, `payload-format-2.0`, `default-route`, `cors-extension`, `vpc-link`, `pending-adapter` |
-| `07-split-set/api.yaml` | multi-file (root) | `aws-apigateway` ≥ 0.9 | valid | `relative-ref`, `split-definition`, `aws-proxy`, `vpc-link`, `pending-adapter` |
-| `07-split-set/components.yaml` ⚠ | multi-file (member) | `aws-apigateway` (no guarantee) | valid | `schema-half`, `shared-parameters`, `pending-adapter` |
-| `negative/01-syntactic-bad-yaml.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation`, `pending-adapter` |
-| `negative/02-semantic-integration-without-type.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `semantic`, `integration-without-type`, `pending-adapter` |
-| `negative/03-truncated-mid-integration.json` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `truncated`, `mid-uri`, `pending-adapter` |
-| `negative/04-wrong-format-plain-openapi.yaml` ⚠ | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `wrong-format`, `openapi`, `greedy-detection`, `pending-adapter` |
-| `negative/05-encoding-utf16.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
+| `01-minimal-rest-api.yaml` | minimal | `aws-apigateway` ≥ 0.9 | valid | `rest-api`, `mock-integration` |
+| `02-typical-rest-api-export.json` | typical | `aws-apigateway` ≥ 0.9 | valid | `rest-api`, `aws-proxy`, `http-proxy`, `vpc-link`, `custom-authorizer`, `request-validator`, `cors-mock` |
+| `03-composition-stage-variables-and-refs.yaml` | composition | `aws-apigateway` ≥ 0.9 | valid | `stage-variables`, `shared-parameters`, `server-variables`, `binary-media-types` |
+| `04-stress-extension-coverage.yaml` ⚠ | stress | `aws-apigateway` ≥ 0.9 | valid | `any-method`, `greedy-proxy`, `aws-service-integration`, `gateway-responses`, `resource-policy`, `cognito-authorizer`, `token-authorizer`, `unknown-extension` |
+| `05-real-world-payments-rest-api.json` | real-world | `aws-apigateway` ≥ 0.9 | valid | `lambda-authorizer`, `idempotency-header`, `sqs-integration`, `cors`, `regional-endpoint`, `request-validator` |
+| `06-typical-http-api-export.yaml` | typical | `aws-apigateway` ≥ 0.9 | valid | `http-api`, `jwt-authorizer`, `payload-format-2.0`, `default-route`, `cors-extension`, `vpc-link` |
+| `07-split-set/api.yaml` | multi-file (root) | `aws-apigateway` ≥ 0.9 | valid | `relative-ref`, `split-definition`, `aws-proxy`, `vpc-link` |
+| `07-split-set/components.yaml` ⚠ | multi-file (member) | `aws-apigateway` (no guarantee) | valid | `schema-half`, `shared-parameters` |
+| `negative/01-syntactic-bad-yaml.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation` |
+| `negative/02-semantic-integration-without-type.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `semantic`, `integration-without-type` |
+| `negative/03-truncated-mid-integration.json` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `truncated`, `mid-uri` |
+| `negative/04-wrong-format-plain-openapi.yaml` ⚠ | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `wrong-format`, `openapi`, `greedy-detection` |
+| `negative/05-encoding-utf16.yaml` | — | `aws-apigateway` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 
 > ⚠ **`04-stress-extension-coverage.yaml`** — Carries x-example-unknown-extension: FMT-7.1 requires unknown extensions preserved in extras and reported, never dropped.
 

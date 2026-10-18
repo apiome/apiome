@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.360.0] - 2026-10-17
+
+### Added
+- **AWS API Gateway import (#5455, FMT-7.1)**: a new `aws-apigateway` import source reads an exported REST API
+  (`GetExport`, OpenAPI 3.0 or Swagger 2.0 with `extensions=apigateway`) or HTTP API (`ExportApi` with
+  `includeExtensions`). The base document is parsed and normalized by the OpenAPI path; the extensions are then
+  interpreted, each result labelled `provenance: "declared"`:
+  - `x-amazon-apigateway-integration` → `operation.extras.backend` (kind `lambda-proxy` / `aws-proxy` /
+    `aws-service` / `http-proxy` / `http` / `mock`, URI, connection, stage variables), with the verbatim
+    integration under `extras.aws_apigateway`;
+  - `x-amazon-apigateway-authorizer` / `-authtype` / `-auth` / `-api-key-required` → `operation.extras.security`
+    (the shape `canonical_security` reads: `authorization`, `bearer`, `awsSigv4`, `apiKey`, …);
+  - `x-amazon-apigateway-request-validator(s)` → `operation.extras.validation`;
+  - `x-amazon-apigateway-cors` → `api.extras.cors`, and a mock `OPTIONS` integration's `Access-Control-Allow-*`
+    headers → that operation's `extras.cors`;
+  - `x-amazon-apigateway-any-method` → an `ANY` operation.
+
+  Documented extensions without a canonical construct and unknown extensions are preserved verbatim and reported
+  (`extras.aws_apigateway.extensions`, coverage-ledger rows `aws#extension.*` / `aws#unknown-extension.*`). An
+  integration with no or an unknown `type` is `INPUT_SEMANTIC_INVALID`. A split export whose schemas live in a
+  sibling file imports as one API: cross-file components are hoisted (`openapi_fileset_bundle`).
+- Detection is not greedy: only an OpenAPI/Swagger document with an AWS extension at the root, a server, a path
+  item, an operation or a security scheme is claimed. The `openapi` adapter steps down to 0.8 for such documents,
+  so the two are never reported as ambiguous; a plain OpenAPI document still routes to `openapi`.
+- The `aws-apigateway` corpus (7 valid entries, 5 negatives) is now live: goldens, round-trip matrix row,
+  version-coverage declaration and parity report.
+
+The OpenAPI version moves to 1.224.0.
+
 ## [1.359.0] - 2026-10-17
 
 ### Added
