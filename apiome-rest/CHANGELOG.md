@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.362.0] - 2026-10-18
+
+### Added
+- **Azure API Management import (#5456, FMT-7.2)**: a new `azure-apim` import source reads an APIM API from a policy
+  document (`<policies>`, or a `<policies-composition>` of scoped documents), an ARM template of
+  `Microsoft.ApiManagement/service/…` resources, or an APIM-exported OpenAPI definition with its policy files (a
+  fileset; members are scoped by name: `policy.xml`, `operations/{operationId}.xml`, `products/{name}.xml`,
+  `global.xml`). The definition is normalized by the OpenAPI path (an ARM template's operations are first written
+  as the OpenAPI document APIM exports); the policies are then composed per operation, `<base />` expanding to the
+  parent scope at its position, and interpreted:
+  - `validate-jwt` / `validate-azure-ad-token` / `check-header` → `operation.extras.security`;
+  - `rate-limit` / `rate-limit-by-key` / `quota` / `quota-by-key` → `extras.rate_limits`;
+  - `set-backend-service` and the `authentication-*` policies → `extras.backend` (an API-scope backend URL is also
+    added as a server named `backend`);
+  - `rewrite-uri` / `set-method` / `set-query-parameter` → `extras.rewrite`; `cors` → `extras.cors`;
+    `ip-filter` → `extras.access`.
+
+  Every record carries `provenance: "declared"` and `derivedFrom` (`definition` or `policy`, with `policyScope`).
+  Unmapped policies are kept verbatim in `extras.azure_apim.unmapped` and reported on the coverage ledger
+  (`apim#policy.*`, `apim#unknown-policy.*`). An undeclared `{{named value}}`, or a `backend-id` missing from the
+  declared backends, is `INPUT_REFERENCE_UNRESOLVED`; a policy without pipeline sections is
+  `INPUT_SEMANTIC_INVALID`. Credentials in policies (`password`, `client-secret`) are never stored.
+- Detection: the `openapi` adapter steps down to 0.7 for a definition carrying APIM's `Ocp-Apim-Subscription-Key`
+  scheme or an `azure-api.net` server, which `azure-apim` claims at 0.9.
+- The `azure-apim` corpus (8 valid entries, 6 negatives) is now live: goldens, round-trip matrix row,
+  version-coverage declaration and parity report.
+
+The OpenAPI version moves to 1.226.0.
+
 ## [1.361.0] - 2026-10-17
 
 ### Added

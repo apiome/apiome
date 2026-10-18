@@ -1,0 +1,453 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "access": [
+        {
+          "action": "allow",
+          "addressRanges": [
+            {
+              "from": "203.0.113.0",
+              "to": "203.0.113.255"
+            }
+          ],
+          "addresses": [
+            "198.51.100.14"
+          ],
+          "derivedFrom": "policy",
+          "kind": "ip-filter",
+          "policyScope": "api",
+          "provenance": "declared"
+        }
+      ],
+      "azure_apim": {
+        "apiPolicy": {
+          "access": [
+            {
+              "action": "allow",
+              "addressRanges": [
+                {
+                  "from": "203.0.113.0",
+                  "to": "203.0.113.255"
+                }
+              ],
+              "addresses": [
+                "198.51.100.14"
+              ],
+              "derivedFrom": "policy",
+              "kind": "ip-filter",
+              "policyScope": "api",
+              "provenance": "declared"
+            }
+          ],
+          "backend": {
+            "backendId": "lab-backend",
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "resolved": false
+          },
+          "inheritsFromParentScope": [
+            "inbound",
+            "outbound",
+            "on-error"
+          ],
+          "rate_limits": [
+            {
+              "byKey": false,
+              "calls": 120,
+              "derivedFrom": "policy",
+              "kind": "rate-limit",
+              "policy": "rate-limit",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 60
+            },
+            {
+              "byKey": true,
+              "calls": 20,
+              "counterKey": "@(context.Request.IpAddress)",
+              "derivedFrom": "policy",
+              "incrementCondition": "@(context.Response.StatusCode != 429)",
+              "kind": "rate-limit",
+              "policy": "rate-limit-by-key",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 1
+            },
+            {
+              "bandwidthKilobytes": 10240,
+              "byKey": false,
+              "calls": 1000000,
+              "derivedFrom": "policy",
+              "kind": "quota",
+              "policy": "quota",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 2592000
+            }
+          ],
+          "rewrite": {
+            "derivedFrom": "policy",
+            "method": "POST",
+            "policyScope": "api",
+            "provenance": "declared",
+            "queryParameters": [
+              {
+                "existsAction": "override",
+                "name": "api-version",
+                "values": [
+                  "2026-08-01"
+                ]
+              }
+            ],
+            "uriTemplate": "/internal/v3{path}"
+          },
+          "security": [
+            {
+              "audiences": [
+                "lab-api"
+              ],
+              "derivedFrom": "policy",
+              "in": "header",
+              "issuers": [
+                "https://login.example.com/"
+              ],
+              "name": "validate-jwt",
+              "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+              "parameterName": "Authorization",
+              "policyScope": "api",
+              "provenance": "declared",
+              "requiredClaims": [
+                {
+                  "match": "all",
+                  "name": "roles",
+                  "values": [
+                    "lab.operator"
+                  ]
+                }
+              ],
+              "scheme": "openIdConnect",
+              "scopes": [
+                "lab.operator"
+              ]
+            },
+            {
+              "derivedFrom": "policy",
+              "failedStatus": 400,
+              "in": "header",
+              "name": "check-header",
+              "parameterName": "X-Api-Version",
+              "policyScope": "api",
+              "provenance": "declared",
+              "scheme": "headerCheck",
+              "scopes": [],
+              "valueCount": 1
+            }
+          ]
+        },
+        "apis": [],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "check-header": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "ip-filter": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "quota": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rate-limit": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rate-limit-by-key": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rewrite-uri": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "set-method": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "set-query-parameter": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "validate-jwt": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "retry"
+              ],
+              "inbound": [
+                "base",
+                "validate-jwt",
+                "check-header",
+                "ip-filter",
+                "validate-content",
+                "rate-limit",
+                "rate-limit-by-key",
+                "quota",
+                "set-backend-service",
+                "rewrite-uri",
+                "set-method",
+                "set-header",
+                "set-query-parameter",
+                "set-variable",
+                "choose",
+                "cache-lookup",
+                "send-request",
+                "example-unknown-policy"
+              ],
+              "on-error": [
+                "base",
+                "set-header"
+              ],
+              "outbound": [
+                "base",
+                "cache-store",
+                "set-header",
+                "json-to-xml"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": null,
+        "shape": "policy",
+        "unattachedOperations": {},
+        "unmapped": [
+          {
+            "name": "retry",
+            "scope": "api",
+            "section": "backend",
+            "status": "preserved",
+            "xml": "<retry condition=\"@(context.Response.StatusCode == 503)\" count=\"3\" interval=\"2\" max-interval=\"10\" delta=\"1\" first-fast-retry=\"true\">\n      <forward-request timeout=\"20\" />\n    </retry>"
+          },
+          {
+            "name": "cache-lookup",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\" downstream-caching-type=\"private\" must-revalidate=\"true\">\n      <vary-by-header>Accept</vary-by-header>\n      <vary-by-query-parameter>assay</vary-by-query-parameter>\n    </cache-lookup>"
+          },
+          {
+            "name": "choose",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<choose>\n      <when condition=\"@(context.Request.Headers.GetValueOrDefault(&quot;X-Debug&quot;,&quot;&quot;) == &quot;1&quot;)\">\n        <trace source=\"lab-api\" severity=\"verbose\">\n          <message>@(\"Debug request from \" + context.Request.IpAddress)</message>\n        </trace>\n      </when>\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;tenant&quot;) == &quot;blocked&quot;)\">\n        <return-response>\n          <set-status code=\"403\" reason=\"Forbidden\" />\n          <set-body>{\"message\":\"Tenant is blocked\"}</set-body>\n        </return-response>\n      </when>\n      <otherwise>\n        <set-header name=\"X-Tenant\" exists-action=\"override\">\n          <value>@((string)context.Variables[\"tenant\"])</value>\n        </set-header>\n      </otherwise>\n    </choose>"
+          },
+          {
+            "name": "example-unknown-policy",
+            "scope": "api",
+            "section": "inbound",
+            "status": "unknown",
+            "xml": "<example-unknown-policy mode=\"observe\" owner=\"platform-team\">\n      <note>Vendor-specific policy injected by an internal deployment pipeline.</note>\n    </example-unknown-policy>"
+          },
+          {
+            "name": "return-response",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<return-response>\n          <set-status code=\"403\" reason=\"Forbidden\" />\n          <set-body>{\"message\":\"Tenant is blocked\"}</set-body>\n        </return-response>"
+          },
+          {
+            "name": "send-request",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<send-request mode=\"new\" response-variable-name=\"entitlement\" timeout=\"5\" ignore-error=\"true\">\n      <set-url>https://entitlements.internal.example.com/check</set-url>\n      <set-method>POST</set-method>\n      <set-body>@{ return \"{\\\"sub\\\":\\\"\" + context.Request.Headers.GetValueOrDefault(\"X-Sub\",\"\") + \"\\\"}\"; }</set-body>\n    </send-request>"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Correlation-Id\" exists-action=\"skip\">\n      <value>@(context.RequestId.ToString())</value>\n    </set-header>"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Tenant\" exists-action=\"override\">\n          <value>@((string)context.Variables[\"tenant\"])</value>\n        </set-header>"
+          },
+          {
+            "name": "set-variable",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-variable name=\"tenant\" value=\"@(context.Subscription?.Name ?? &quot;anonymous&quot;)\" />"
+          },
+          {
+            "name": "trace",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<trace source=\"lab-api\" severity=\"verbose\">\n          <message>@(\"Debug request from \" + context.Request.IpAddress)</message>\n        </trace>"
+          },
+          {
+            "name": "validate-content",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<validate-content unspecified-content-type-action=\"prevent\" max-size=\"102400\" size-exceeded-action=\"prevent\" errors-variable-name=\"validationErrors\">\n      <content type=\"application/json\" validate-as=\"json\" action=\"prevent\" />\n    </validate-content>"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "on-error",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Error-Source\" exists-action=\"override\">\n      <value>@(context.LastError.Source)</value>\n    </set-header>"
+          },
+          {
+            "name": "cache-store",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<cache-store duration=\"120\" />"
+          },
+          {
+            "name": "json-to-xml",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<json-to-xml apply=\"content-type-json\" consider-accept-header=\"true\" />"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Backend\" exists-action=\"delete\" />"
+          }
+        ],
+        "unresolvedBackends": [
+          "lab-backend"
+        ],
+        "versionSets": []
+      },
+      "rate_limits": [
+        {
+          "byKey": false,
+          "calls": 120,
+          "derivedFrom": "policy",
+          "kind": "rate-limit",
+          "policy": "rate-limit",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 60
+        },
+        {
+          "byKey": true,
+          "calls": 20,
+          "counterKey": "@(context.Request.IpAddress)",
+          "derivedFrom": "policy",
+          "incrementCondition": "@(context.Response.StatusCode != 429)",
+          "kind": "rate-limit",
+          "policy": "rate-limit-by-key",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 1
+        },
+        {
+          "bandwidthKilobytes": 10240,
+          "byKey": false,
+          "calls": 1000000,
+          "derivedFrom": "policy",
+          "kind": "quota",
+          "policy": "quota",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 2592000
+        }
+      ]
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Azure API Management policy",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Azure API Management policy",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "azure-apim/04-stress-policy-vocabulary.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:22b6ca47e09493dcf36cd2f764c4393cdf62d4fcc499bfdb946aa903e5a8af78",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "7012e3699cece4a3b9a7d02167b91bec1e122399141b2a3218fc6b793ea8613c",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

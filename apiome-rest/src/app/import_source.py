@@ -1211,6 +1211,10 @@ def load_builtin_import_sources() -> None:
     # it normalizes through the OpenAPI normalizer and interprets the AWS extensions itself.
     from . import aws_apigateway_import_source as _aws_apigateway  # noqa: F401
 
+    # ``azure_apim_import_source`` (FMT-7.2) self-registers the ``azure-apim`` adapter: policy XML,
+    # ARM templates of APIM resources, and APIM-exported definitions with their policies.
+    from . import azure_apim_import_source as _azure_apim  # noqa: F401
+
 
 # ===========================================================================
 # Shared canonical fingerprint + diff

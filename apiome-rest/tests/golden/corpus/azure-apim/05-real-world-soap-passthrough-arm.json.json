@@ -1,0 +1,490 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": "WSDL-derived pass-through API in front of a mainframe billing service.",
+    "extras": {
+      "access": [
+        {
+          "action": "allow",
+          "addressRanges": [
+            {
+              "from": "10.20.0.0",
+              "to": "10.20.255.255"
+            }
+          ],
+          "addresses": [],
+          "derivedFrom": "policy",
+          "kind": "ip-filter",
+          "policyScope": "api",
+          "provenance": "declared"
+        }
+      ],
+      "azure_apim": {
+        "apiPolicy": {
+          "access": [
+            {
+              "action": "allow",
+              "addressRanges": [
+                {
+                  "from": "10.20.0.0",
+                  "to": "10.20.255.255"
+                }
+              ],
+              "addresses": [],
+              "derivedFrom": "policy",
+              "kind": "ip-filter",
+              "policyScope": "api",
+              "provenance": "declared"
+            }
+          ],
+          "backend": {
+            "authentication": {
+              "thumbprint": "0000000000000000000000000000000000000000",
+              "type": "certificate"
+            },
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uri": "https://billing.legacy.internal.example.com/BillingService.svc"
+          },
+          "inheritsFromParentScope": [
+            "inbound",
+            "outbound",
+            "on-error"
+          ]
+        },
+        "apis": [
+          {
+            "apiRevision": "1",
+            "apiType": "soap",
+            "displayName": "Legacy Billing (SOAP)",
+            "isCurrent": true,
+            "name": "legacy-billing-soap",
+            "operationCount": 2,
+            "path": "legacy/billing",
+            "protocols": [
+              "https"
+            ],
+            "serviceUrl": "https://billing.legacy.internal.example.com/BillingService.svc",
+            "subscriptionRequired": true
+          }
+        ],
+        "backends": [
+          {
+            "id": "legacy-billing-backend",
+            "protocol": "http",
+            "url": "https://billing.legacy.internal.example.com/BillingService.svc"
+          }
+        ],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "authentication-certificate": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "ip-filter": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "name": "legacy-billing-soap",
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "forward-request"
+              ],
+              "inbound": [
+                "base",
+                "ip-filter",
+                "set-backend-service",
+                "authentication-certificate",
+                "set-header"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base",
+                "xml-to-json"
+              ]
+            }
+          }
+        ],
+        "products": [
+          {
+            "apis": [
+              "legacy-billing-soap"
+            ],
+            "approvalRequired": true,
+            "displayName": "Internal only",
+            "name": "internal-only",
+            "state": "published",
+            "subscriptionRequired": true
+          }
+        ],
+        "provenance": "declared",
+        "service": "example-apim",
+        "shape": "arm-template",
+        "unattachedOperations": {},
+        "unmapped": [
+          {
+            "name": "forward-request",
+            "scope": "api",
+            "section": "backend",
+            "status": "preserved",
+            "xml": "<forward-request timeout=\"60\" />"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Gateway\" exists-action=\"override\"><value>apim</value></set-header>"
+          },
+          {
+            "name": "xml-to-json",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<xml-to-json kind=\"direct\" apply=\"content-type-xml\" consider-accept-header=\"true\" />"
+          }
+        ],
+        "unresolvedBackends": [],
+        "versionSets": []
+      }
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Legacy Billing (SOAP)",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://example-apim.azure-api.net/legacy/billing",
+        "variables": []
+      },
+      {
+        "description": "Backend service the APIM gateway forwards to.",
+        "extras": {},
+        "name": "backend",
+        "protocol": null,
+        "url": "https://billing.legacy.internal.example.com/BillingService.svc",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "SOAP action http://example.com/billing/GetInvoice",
+            "extras": {
+              "access": [
+                {
+                  "action": "allow",
+                  "addressRanges": [
+                    {
+                      "from": "10.20.0.0",
+                      "to": "10.20.255.255"
+                    }
+                  ],
+                  "addresses": [],
+                  "derivedFrom": "policy",
+                  "kind": "ip-filter",
+                  "policyScope": "api",
+                  "provenance": "declared"
+                }
+              ],
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "authentication": {
+                  "thumbprint": "0000000000000000000000000000000000000000",
+                  "type": "certificate"
+                },
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://billing.legacy.internal.example.com/BillingService.svc"
+              },
+              "operationId": "GetInvoice",
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "GetInvoice"
+            },
+            "http_method": "POST",
+            "http_path": "/?soapAction=http://example.com/billing/GetInvoice",
+            "key": "POST /?soapAction=http://example.com/billing/GetInvoice",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/xml"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /?soapAction=http://example.com/billing/GetInvoice#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/xml"
+                ],
+                "description": "",
+                "extras": {},
+                "headers": [],
+                "key": "POST /?soapAction=http://example.com/billing/GetInvoice#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "SOAP fault",
+                "extras": {},
+                "headers": [],
+                "key": "POST /?soapAction=http://example.com/billing/GetInvoice#response.500",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "500"
+              }
+            ],
+            "name": "GetInvoice",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": "\"http://example.com/billing/GetInvoice\"",
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "POST /?soapAction=http://example.com/billing/GetInvoice#header.SOAPAction",
+                "location": "header",
+                "name": "SOAPAction",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "SOAP action http://example.com/billing/ListInvoices",
+            "extras": {
+              "access": [
+                {
+                  "action": "allow",
+                  "addressRanges": [
+                    {
+                      "from": "10.20.0.0",
+                      "to": "10.20.255.255"
+                    }
+                  ],
+                  "addresses": [],
+                  "derivedFrom": "policy",
+                  "kind": "ip-filter",
+                  "policyScope": "api",
+                  "provenance": "declared"
+                }
+              ],
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "authentication": {
+                  "thumbprint": "0000000000000000000000000000000000000000",
+                  "type": "certificate"
+                },
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://billing.legacy.internal.example.com/BillingService.svc"
+              },
+              "operationId": "ListInvoices",
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "ListInvoices"
+            },
+            "http_method": "POST",
+            "http_path": "/?soapAction=http://example.com/billing/ListInvoices",
+            "key": "POST /?soapAction=http://example.com/billing/ListInvoices",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/xml"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /?soapAction=http://example.com/billing/ListInvoices#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/xml"
+                ],
+                "description": "",
+                "extras": {},
+                "headers": [],
+                "key": "POST /?soapAction=http://example.com/billing/ListInvoices#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "ListInvoices",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": "\"http://example.com/billing/ListInvoices\"",
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "POST /?soapAction=http://example.com/billing/ListInvoices#header.SOAPAction",
+                "location": "header",
+                "name": "SOAPAction",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Legacy Billing (SOAP)",
+    "types": [],
+    "version": "1"
+  },
+  "corpus_path": "azure-apim/05-real-world-soap-passthrough-arm.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:84788604836eafd8494b7531c5afe2c01545db3abf8af2ce9ce71371fdc7a129",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

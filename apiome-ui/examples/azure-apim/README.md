@@ -3,8 +3,8 @@
 Fixtures for **FMT-7.2** ([#5456](https://github.com/apiome/apiome/issues/5456)). APIM carries an API
 definition **plus** a separate XML **policy** document per API and per operation, expressing rate
 limits, IP filters, JWT validation, rewrites and backend selection — semantics that exist nowhere else
-and that Apiome could normalize and govern. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+and that Apiome could normalize and govern. Entries are read by the `azure-apim` adapter
+(`apiome-rest/src/app/azure_apim_import_source.py`).
 
 **Detection markers.** `<policies>` root with `inbound`/`backend`/`outbound`/`on-error` sections for a
 policy document; ARM resources of type `Microsoft.ApiManagement/service/apis` (and

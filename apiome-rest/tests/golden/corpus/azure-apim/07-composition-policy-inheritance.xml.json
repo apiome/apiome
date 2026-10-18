@@ -1,0 +1,430 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "access": [
+        {
+          "action": "allow",
+          "addressRanges": [
+            {
+              "from": "10.0.0.0",
+              "to": "10.255.255.255"
+            }
+          ],
+          "addresses": [],
+          "derivedFrom": "policy",
+          "kind": "ip-filter",
+          "policyScope": "product",
+          "provenance": "declared"
+        }
+      ],
+      "azure_apim": {
+        "apiPolicy": {
+          "access": [
+            {
+              "action": "allow",
+              "addressRanges": [
+                {
+                  "from": "10.0.0.0",
+                  "to": "10.255.255.255"
+                }
+              ],
+              "addresses": [],
+              "derivedFrom": "policy",
+              "kind": "ip-filter",
+              "policyScope": "product",
+              "provenance": "declared"
+            }
+          ],
+          "backend": {
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uri": "https://orders.internal.example.com/v2"
+          },
+          "inheritsFromParentScope": [
+            "on-error"
+          ],
+          "rate_limits": [
+            {
+              "byKey": false,
+              "calls": 10000,
+              "derivedFrom": "policy",
+              "kind": "rate-limit",
+              "policy": "rate-limit",
+              "policyScope": "global",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 60
+            },
+            {
+              "byKey": true,
+              "calls": 500000,
+              "counterKey": "@(context.Subscription.Id)",
+              "derivedFrom": "policy",
+              "kind": "quota",
+              "policy": "quota-by-key",
+              "policyScope": "product",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 86400
+            }
+          ],
+          "security": [
+            {
+              "derivedFrom": "policy",
+              "failedStatus": 401,
+              "in": "header",
+              "name": "validate-jwt",
+              "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+              "parameterName": "Authorization",
+              "policyScope": "api",
+              "provenance": "declared",
+              "requiredClaims": [
+                {
+                  "match": "any",
+                  "name": "aud",
+                  "values": [
+                    "orders-api"
+                  ]
+                }
+              ],
+              "scheme": "openIdConnect",
+              "scopes": []
+            }
+          ]
+        },
+        "apis": [],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "ip-filter": {
+            "count": 1,
+            "scopes": [
+              "product"
+            ]
+          },
+          "quota-by-key": {
+            "count": 1,
+            "scopes": [
+              "product"
+            ]
+          },
+          "rate-limit": {
+            "count": 1,
+            "scopes": [
+              "global"
+            ]
+          },
+          "rewrite-uri": {
+            "count": 1,
+            "scopes": [
+              "operation"
+            ]
+          },
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "validate-jwt": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "scope": "global",
+            "sections": {
+              "backend": [
+                "forward-request"
+              ],
+              "inbound": [
+                "set-header",
+                "rate-limit"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "set-header"
+              ]
+            }
+          },
+          {
+            "name": "internal-only",
+            "scope": "product",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "ip-filter",
+                "quota-by-key"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base"
+              ]
+            }
+          },
+          {
+            "name": "orders-api",
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "validate-jwt",
+                "set-backend-service"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base",
+                "set-header"
+              ]
+            }
+          },
+          {
+            "api": "orders-api",
+            "operation": "get-order",
+            "scope": "operation",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "cache-lookup",
+                "base",
+                "rewrite-uri"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base",
+                "cache-store"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": null,
+        "shape": "policy-composition",
+        "unattachedOperations": {
+          "orders-api/get-order": {
+            "access": [
+              {
+                "action": "allow",
+                "addressRanges": [
+                  {
+                    "from": "10.0.0.0",
+                    "to": "10.255.255.255"
+                  }
+                ],
+                "addresses": [],
+                "derivedFrom": "policy",
+                "kind": "ip-filter",
+                "policyScope": "product",
+                "provenance": "declared"
+              }
+            ],
+            "backend": {
+              "derivedFrom": "policy",
+              "kind": "http",
+              "policyScope": "api",
+              "provenance": "declared",
+              "uri": "https://orders.internal.example.com/v2"
+            },
+            "rate_limits": [
+              {
+                "byKey": false,
+                "calls": 10000,
+                "derivedFrom": "policy",
+                "kind": "rate-limit",
+                "policy": "rate-limit",
+                "policyScope": "global",
+                "provenance": "declared",
+                "renewalPeriodSeconds": 60
+              },
+              {
+                "byKey": true,
+                "calls": 500000,
+                "counterKey": "@(context.Subscription.Id)",
+                "derivedFrom": "policy",
+                "kind": "quota",
+                "policy": "quota-by-key",
+                "policyScope": "product",
+                "provenance": "declared",
+                "renewalPeriodSeconds": 86400
+              }
+            ],
+            "rewrite": {
+              "derivedFrom": "policy",
+              "policyScope": "operation",
+              "provenance": "declared",
+              "uriTemplate": "/v2/orders/{orderId}"
+            },
+            "security": [
+              {
+                "derivedFrom": "policy",
+                "failedStatus": 401,
+                "in": "header",
+                "name": "validate-jwt",
+                "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+                "parameterName": "Authorization",
+                "policyScope": "api",
+                "provenance": "declared",
+                "requiredClaims": [
+                  {
+                    "match": "any",
+                    "name": "aud",
+                    "values": [
+                      "orders-api"
+                    ]
+                  }
+                ],
+                "scheme": "openIdConnect",
+                "scopes": []
+              }
+            ]
+          }
+        },
+        "unmapped": [
+          {
+            "name": "forward-request",
+            "scope": "global",
+            "section": "backend",
+            "status": "preserved",
+            "xml": "<forward-request timeout=\"60\" />"
+          },
+          {
+            "name": "set-header",
+            "scope": "global",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Correlation-Id\" exists-action=\"skip\">\n          <value>@(context.RequestId.ToString())</value>\n        </set-header>"
+          },
+          {
+            "name": "set-header",
+            "scope": "global",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Powered-By\" exists-action=\"delete\" />"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Api\" exists-action=\"override\"><value>orders</value></set-header>"
+          },
+          {
+            "name": "cache-lookup",
+            "operation": "get-order",
+            "scope": "operation",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\">\n          <vary-by-header>Accept</vary-by-header>\n        </cache-lookup>"
+          },
+          {
+            "name": "cache-store",
+            "operation": "get-order",
+            "scope": "operation",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<cache-store duration=\"60\" />"
+          }
+        ],
+        "unresolvedBackends": [],
+        "versionSets": []
+      },
+      "rate_limits": [
+        {
+          "byKey": false,
+          "calls": 10000,
+          "derivedFrom": "policy",
+          "kind": "rate-limit",
+          "policy": "rate-limit",
+          "policyScope": "global",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 60
+        },
+        {
+          "byKey": true,
+          "calls": 500000,
+          "counterKey": "@(context.Subscription.Id)",
+          "derivedFrom": "policy",
+          "kind": "quota",
+          "policy": "quota-by-key",
+          "policyScope": "product",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 86400
+        }
+      ]
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Azure API Management policy composition",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Backend service the APIM gateway forwards to.",
+        "extras": {},
+        "name": "backend",
+        "protocol": null,
+        "url": "https://orders.internal.example.com/v2",
+        "variables": []
+      }
+    ],
+    "services": [],
+    "title": "Azure API Management policy composition",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "azure-apim/07-composition-policy-inheritance.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 1,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:68a1bcb75531522683f25ed05f1f726940c5775918af9be8de7b4ff8027c4fa2",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "15206629af540e8a87d471dffc1a80ab2deadea295a3e7f6a582d28fe421a644",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

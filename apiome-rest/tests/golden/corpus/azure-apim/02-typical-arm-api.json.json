@@ -1,0 +1,486 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": "Order management for the storefront.",
+    "extras": {
+      "azure_apim": {
+        "apiPolicy": {
+          "backend": {
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uri": "https://orders.internal.example.com/v2"
+          },
+          "inheritsFromParentScope": [
+            "inbound",
+            "backend",
+            "outbound",
+            "on-error"
+          ],
+          "rate_limits": [
+            {
+              "byKey": true,
+              "calls": 600,
+              "counterKey": "@(context.Subscription.Id)",
+              "derivedFrom": "policy",
+              "kind": "rate-limit",
+              "policy": "rate-limit-by-key",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 60
+            }
+          ]
+        },
+        "apis": [
+          {
+            "apiRevision": "3",
+            "apiVersion": "v2",
+            "apiVersionSetId": "orders-version-set",
+            "displayName": "Orders API",
+            "isCurrent": true,
+            "name": "orders-api",
+            "operationCount": 2,
+            "path": "orders",
+            "protocols": [
+              "https"
+            ],
+            "serviceUrl": "https://orders.internal.example.com/v2",
+            "subscriptionRequired": true
+          }
+        ],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "rate-limit-by-key": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rewrite-uri": {
+            "count": 1,
+            "scopes": [
+              "operation"
+            ]
+          },
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "name": "orders-api",
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "set-backend-service",
+                "rate-limit-by-key"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base"
+              ]
+            }
+          },
+          {
+            "api": "orders-api",
+            "operation": "get-order",
+            "scope": "operation",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "cache-lookup",
+                "rewrite-uri"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base",
+                "cache-store"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": "example-apim",
+        "shape": "arm-template",
+        "unattachedOperations": {},
+        "unmapped": [
+          {
+            "name": "cache-lookup",
+            "operation": "get-order",
+            "scope": "operation",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\" downstream-caching-type=\"none\" />"
+          },
+          {
+            "name": "cache-store",
+            "operation": "get-order",
+            "scope": "operation",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<cache-store duration=\"60\" />"
+          }
+        ],
+        "unresolvedBackends": [],
+        "versionSets": []
+      },
+      "rate_limits": [
+        {
+          "byKey": true,
+          "calls": 600,
+          "counterKey": "@(context.Subscription.Id)",
+          "derivedFrom": "policy",
+          "kind": "rate-limit",
+          "policy": "rate-limit-by-key",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 60
+        }
+      ]
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://example-apim.azure-api.net/orders",
+        "variables": []
+      },
+      {
+        "description": "Backend service the APIM gateway forwards to.",
+        "extras": {},
+        "name": "backend",
+        "protocol": null,
+        "url": "https://orders.internal.example.com/v2",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List orders",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://orders.internal.example.com/v2"
+              },
+              "operationId": "list-orders",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 600,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                }
+              ],
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "List orders"
+            },
+            "http_method": "GET",
+            "http_path": "/orders",
+            "key": "GET /orders",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Matching orders",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unauthorized",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders#response.401",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "401"
+              }
+            ],
+            "name": "list-orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": 25,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /orders#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "integer",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get order",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "api",
+                  "operation"
+                ],
+                "unmapped": [
+                  {
+                    "name": "cache-lookup",
+                    "scope": "operation",
+                    "section": "inbound",
+                    "status": "preserved",
+                    "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\" downstream-caching-type=\"none\" />"
+                  },
+                  {
+                    "name": "cache-store",
+                    "scope": "operation",
+                    "section": "outbound",
+                    "status": "preserved",
+                    "xml": "<cache-store duration=\"60\" />"
+                  }
+                ]
+              },
+              "backend": {
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://orders.internal.example.com/v2"
+              },
+              "operationId": "get-order",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 600,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                }
+              ],
+              "rewrite": {
+                "derivedFrom": "policy",
+                "policyScope": "operation",
+                "provenance": "declared",
+                "uriTemplate": "/v2/orders/{orderId}"
+              },
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "Get order"
+            },
+            "http_method": "GET",
+            "http_path": "/orders/{orderId}",
+            "key": "GET /orders/{orderId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "One order",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders/{orderId}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unknown order",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders/{orderId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "get-order",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Order identifier",
+                "extras": {},
+                "key": "GET /orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Orders API",
+    "types": [],
+    "version": "v2"
+  },
+  "corpus_path": "azure-apim/02-typical-arm-api.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:fe9ede29d7b33418a17eac976e59830d0a51d7dfb68e3253ed0416d0b2f36119",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

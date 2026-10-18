@@ -1,0 +1,116 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "azure_apim": {
+        "apiPolicy": {
+          "backend": {
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uri": "https://orders.internal.example.com"
+          },
+          "inheritsFromParentScope": [
+            "inbound",
+            "backend",
+            "outbound",
+            "on-error"
+          ]
+        },
+        "apis": [],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "set-backend-service"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": null,
+        "shape": "policy",
+        "unattachedOperations": {},
+        "unmapped": [],
+        "unresolvedBackends": [],
+        "versionSets": []
+      }
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Azure API Management policy",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Backend service the APIM gateway forwards to.",
+        "extras": {},
+        "name": "backend",
+        "protocol": null,
+        "url": "https://orders.internal.example.com",
+        "variables": []
+      }
+    ],
+    "services": [],
+    "title": "Azure API Management policy",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "azure-apim/01-minimal-policy.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 1,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:56a861e9f60b7f5192bd15c430abfe3ee8ba5a1f2935c2360ec8a11d1d8ef71f",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "7012e3699cece4a3b9a7d02167b91bec1e122399141b2a3218fc6b793ea8613c",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

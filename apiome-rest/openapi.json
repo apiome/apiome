@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.225.0",
+    "version": "1.226.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -98231,7 +98231,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "completed_at": {
             "anyOf": [
@@ -100155,7 +100155,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "comment_count": {
             "type": "integer",
@@ -100383,7 +100383,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "comment_count": {
             "type": "integer",
@@ -100914,14 +100914,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -103801,7 +103801,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "628e62b3-5da7-478c-8a70-134ca7c16f72"
+            "example": "17f5c986-2976-4be8-80f0-d404bebfdd2c"
           },
           "method": {
             "type": "string",
@@ -106328,7 +106328,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -108064,7 +108064,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "browse_url": {
             "anyOf": [
@@ -148231,7 +148231,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           }
         },
         "additionalProperties": false,
@@ -159553,7 +159553,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "detected_by": {
             "anyOf": [
@@ -166770,14 +166770,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T04:55:03Z"
+            "example": "2026-10-18T05:28:43Z"
           },
           "outcome": {
             "anyOf": [

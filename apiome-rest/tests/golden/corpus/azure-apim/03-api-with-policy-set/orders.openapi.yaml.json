@@ -1,0 +1,982 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": "The definition half of an APIM export; the policy half is policy.xml.",
+    "extras": {
+      "azure_apim": {
+        "apiPolicy": {
+          "backend": {
+            "derivedFrom": "policy",
+            "kind": "http",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uri": "https://orders.internal.example.com/v2"
+          },
+          "cors": {
+            "allowCredentials": true,
+            "allowHeaders": [
+              "content-type",
+              "authorization",
+              "ocp-apim-subscription-key"
+            ],
+            "allowMethods": [
+              "GET",
+              "POST",
+              "OPTIONS"
+            ],
+            "allowOrigins": [
+              "https://app.example.com"
+            ],
+            "derivedFrom": "policy",
+            "exposeHeaders": [
+              "x-request-id"
+            ],
+            "maxAge": 600,
+            "policyScope": "api",
+            "provenance": "declared",
+            "source": "cors-policy"
+          },
+          "inheritsFromParentScope": [
+            "inbound",
+            "outbound",
+            "on-error"
+          ],
+          "rate_limits": [
+            {
+              "byKey": true,
+              "calls": 1000,
+              "counterKey": "@(context.Subscription?.Id ?? context.Request.IpAddress)",
+              "derivedFrom": "policy",
+              "kind": "rate-limit",
+              "policy": "rate-limit-by-key",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 60
+            },
+            {
+              "bandwidthKilobytes": 4096,
+              "byKey": true,
+              "calls": 100000,
+              "counterKey": "@(context.Subscription.Id)",
+              "derivedFrom": "policy",
+              "kind": "quota",
+              "policy": "quota-by-key",
+              "policyScope": "api",
+              "provenance": "declared",
+              "renewalPeriodSeconds": 86400
+            }
+          ],
+          "rewrite": {
+            "copyUnmatchedParams": true,
+            "derivedFrom": "policy",
+            "policyScope": "api",
+            "provenance": "declared",
+            "uriTemplate": "/v2{path}"
+          },
+          "security": [
+            {
+              "derivedFrom": "policy",
+              "failedStatus": 401,
+              "in": "header",
+              "name": "validate-jwt",
+              "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+              "parameterName": "Authorization",
+              "policyScope": "api",
+              "provenance": "declared",
+              "requiredClaims": [
+                {
+                  "match": "any",
+                  "name": "aud",
+                  "values": [
+                    "orders-api"
+                  ]
+                },
+                {
+                  "match": "any",
+                  "name": "scp",
+                  "values": [
+                    "orders.read",
+                    "orders.write"
+                  ]
+                }
+              ],
+              "scheme": "openIdConnect",
+              "scopes": [
+                "orders.read",
+                "orders.write"
+              ]
+            }
+          ]
+        },
+        "apis": [],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "cors": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "quota-by-key": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rate-limit-by-key": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "rewrite-uri": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "set-backend-service": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          },
+          "validate-jwt": {
+            "count": 1,
+            "scopes": [
+              "api"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "scope": "api",
+            "sections": {
+              "backend": [
+                "forward-request"
+              ],
+              "inbound": [
+                "base",
+                "cors",
+                "validate-jwt",
+                "rate-limit-by-key",
+                "quota-by-key",
+                "set-backend-service",
+                "rewrite-uri",
+                "set-header"
+              ],
+              "on-error": [
+                "base",
+                "return-response"
+              ],
+              "outbound": [
+                "base",
+                "set-header"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": null,
+        "shape": "definition+policy",
+        "unattachedOperations": {},
+        "unmapped": [
+          {
+            "name": "forward-request",
+            "scope": "api",
+            "section": "backend",
+            "status": "preserved",
+            "xml": "<forward-request timeout=\"30\" />"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Forwarded-Tenant\" exists-action=\"override\">\n      <value>@(context.Subscription?.Name ?? \"unknown\")</value>\n    </set-header>"
+          },
+          {
+            "name": "return-response",
+            "scope": "api",
+            "section": "on-error",
+            "status": "preserved",
+            "xml": "<return-response>\n      <set-status code=\"500\" reason=\"Internal Server Error\" />\n      <set-body>@{ return \"{\\\"message\\\":\\\"Unexpected error\\\"}\"; }</set-body>\n    </return-response>"
+          },
+          {
+            "name": "set-header",
+            "scope": "api",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<set-header name=\"X-Powered-By\" exists-action=\"delete\" />"
+          }
+        ],
+        "unresolvedBackends": [],
+        "versionSets": []
+      },
+      "cors": {
+        "allowCredentials": true,
+        "allowHeaders": [
+          "content-type",
+          "authorization",
+          "ocp-apim-subscription-key"
+        ],
+        "allowMethods": [
+          "GET",
+          "POST",
+          "OPTIONS"
+        ],
+        "allowOrigins": [
+          "https://app.example.com"
+        ],
+        "derivedFrom": "policy",
+        "exposeHeaders": [
+          "x-request-id"
+        ],
+        "maxAge": 600,
+        "policyScope": "api",
+        "provenance": "declared",
+        "source": "cors-policy"
+      },
+      "rate_limits": [
+        {
+          "byKey": true,
+          "calls": 1000,
+          "counterKey": "@(context.Subscription?.Id ?? context.Request.IpAddress)",
+          "derivedFrom": "policy",
+          "kind": "rate-limit",
+          "policy": "rate-limit-by-key",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 60
+        },
+        {
+          "bandwidthKilobytes": 4096,
+          "byKey": true,
+          "calls": 100000,
+          "counterKey": "@(context.Subscription.Id)",
+          "derivedFrom": "policy",
+          "kind": "quota",
+          "policy": "quota-by-key",
+          "policyScope": "api",
+          "provenance": "declared",
+          "renewalPeriodSeconds": 86400
+        }
+      ]
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://example-apim.azure-api.net/orders",
+        "variables": []
+      },
+      {
+        "description": "Backend service the APIM gateway forwards to.",
+        "extras": {},
+        "name": "backend",
+        "protocol": null,
+        "url": "https://orders.internal.example.com/v2",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List orders",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://orders.internal.example.com/v2"
+              },
+              "cors": {
+                "allowCredentials": true,
+                "allowHeaders": [
+                  "content-type",
+                  "authorization",
+                  "ocp-apim-subscription-key"
+                ],
+                "allowMethods": [
+                  "GET",
+                  "POST",
+                  "OPTIONS"
+                ],
+                "allowOrigins": [
+                  "https://app.example.com"
+                ],
+                "derivedFrom": "policy",
+                "exposeHeaders": [
+                  "x-request-id"
+                ],
+                "maxAge": 600,
+                "policyScope": "api",
+                "provenance": "declared",
+                "source": "cors-policy"
+              },
+              "operationId": "list-orders",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 1000,
+                  "counterKey": "@(context.Subscription?.Id ?? context.Request.IpAddress)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                },
+                {
+                  "bandwidthKilobytes": 4096,
+                  "byKey": true,
+                  "calls": 100000,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "quota",
+                  "policy": "quota-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 86400
+                }
+              ],
+              "rewrite": {
+                "copyUnmatchedParams": true,
+                "derivedFrom": "policy",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uriTemplate": "/v2{path}"
+              },
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "policy",
+                  "failedStatus": 401,
+                  "in": "header",
+                  "name": "validate-jwt",
+                  "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+                  "parameterName": "Authorization",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "requiredClaims": [
+                    {
+                      "match": "any",
+                      "name": "aud",
+                      "values": [
+                        "orders-api"
+                      ]
+                    },
+                    {
+                      "match": "any",
+                      "name": "scp",
+                      "values": [
+                        "orders.read",
+                        "orders.write"
+                      ]
+                    }
+                  ],
+                  "scheme": "openIdConnect",
+                  "scopes": [
+                    "orders.read",
+                    "orders.write"
+                  ]
+                }
+              ],
+              "summary": "List orders"
+            },
+            "http_method": "GET",
+            "http_path": "/orders",
+            "key": "GET /orders",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Matching orders",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Order",
+                    "nullable": false
+                  },
+                  "name": null,
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unauthorized",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders#response.401",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "401"
+              }
+            ],
+            "name": "list-orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": 25,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /orders#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "integer",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get order",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://orders.internal.example.com/v2"
+              },
+              "cors": {
+                "allowCredentials": true,
+                "allowHeaders": [
+                  "content-type",
+                  "authorization",
+                  "ocp-apim-subscription-key"
+                ],
+                "allowMethods": [
+                  "GET",
+                  "POST",
+                  "OPTIONS"
+                ],
+                "allowOrigins": [
+                  "https://app.example.com"
+                ],
+                "derivedFrom": "policy",
+                "exposeHeaders": [
+                  "x-request-id"
+                ],
+                "maxAge": 600,
+                "policyScope": "api",
+                "provenance": "declared",
+                "source": "cors-policy"
+              },
+              "operationId": "get-order",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 1000,
+                  "counterKey": "@(context.Subscription?.Id ?? context.Request.IpAddress)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                },
+                {
+                  "bandwidthKilobytes": 4096,
+                  "byKey": true,
+                  "calls": 100000,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "quota",
+                  "policy": "quota-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 86400
+                }
+              ],
+              "rewrite": {
+                "copyUnmatchedParams": true,
+                "derivedFrom": "policy",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uriTemplate": "/v2{path}"
+              },
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "policy",
+                  "failedStatus": 401,
+                  "in": "header",
+                  "name": "validate-jwt",
+                  "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+                  "parameterName": "Authorization",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "requiredClaims": [
+                    {
+                      "match": "any",
+                      "name": "aud",
+                      "values": [
+                        "orders-api"
+                      ]
+                    },
+                    {
+                      "match": "any",
+                      "name": "scp",
+                      "values": [
+                        "orders.read",
+                        "orders.write"
+                      ]
+                    }
+                  ],
+                  "scheme": "openIdConnect",
+                  "scopes": [
+                    "orders.read",
+                    "orders.write"
+                  ]
+                }
+              ],
+              "summary": "Get order"
+            },
+            "http_method": "GET",
+            "http_path": "/orders/{orderId}",
+            "key": "GET /orders/{orderId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "One order",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders/{orderId}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unknown order",
+                "extras": {},
+                "headers": [],
+                "key": "GET /orders/{orderId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "get-order",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Create an order",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "api"
+                ]
+              },
+              "backend": {
+                "derivedFrom": "policy",
+                "kind": "http",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uri": "https://orders.internal.example.com/v2"
+              },
+              "cors": {
+                "allowCredentials": true,
+                "allowHeaders": [
+                  "content-type",
+                  "authorization",
+                  "ocp-apim-subscription-key"
+                ],
+                "allowMethods": [
+                  "GET",
+                  "POST",
+                  "OPTIONS"
+                ],
+                "allowOrigins": [
+                  "https://app.example.com"
+                ],
+                "derivedFrom": "policy",
+                "exposeHeaders": [
+                  "x-request-id"
+                ],
+                "maxAge": 600,
+                "policyScope": "api",
+                "provenance": "declared",
+                "source": "cors-policy"
+              },
+              "operationId": "create-order",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 1000,
+                  "counterKey": "@(context.Subscription?.Id ?? context.Request.IpAddress)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                },
+                {
+                  "bandwidthKilobytes": 4096,
+                  "byKey": true,
+                  "calls": 100000,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "quota",
+                  "policy": "quota-by-key",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 86400
+                }
+              ],
+              "rewrite": {
+                "copyUnmatchedParams": true,
+                "derivedFrom": "policy",
+                "policyScope": "api",
+                "provenance": "declared",
+                "uriTemplate": "/v2{path}"
+              },
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "policy",
+                  "failedStatus": 401,
+                  "in": "header",
+                  "name": "validate-jwt",
+                  "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration",
+                  "parameterName": "Authorization",
+                  "policyScope": "api",
+                  "provenance": "declared",
+                  "requiredClaims": [
+                    {
+                      "match": "any",
+                      "name": "aud",
+                      "values": [
+                        "orders-api"
+                      ]
+                    },
+                    {
+                      "match": "any",
+                      "name": "scp",
+                      "values": [
+                        "orders.read",
+                        "orders.write"
+                      ]
+                    }
+                  ],
+                  "scheme": "openIdConnect",
+                  "scopes": [
+                    "orders.read",
+                    "orders.write"
+                  ]
+                }
+              ],
+              "summary": "Create an order"
+            },
+            "http_method": "POST",
+            "http_path": "/orders",
+            "key": "POST /orders",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /orders#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "NewOrder",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": "Created",
+                "extras": {},
+                "headers": [],
+                "key": "POST /orders#response.201",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              }
+            ],
+            "name": "create-order",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Orders API",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "NewOrder.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NewOrder",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrder",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.orderId",
+            "name": "orderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Order",
+        "key_type": null,
+        "kind": "record",
+        "name": "Order",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "v2"
+  },
+  "corpus_path": "azure-apim/03-api-with-policy-set/orders.openapi.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 2,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:29e93664cb50725be9ee049b25d4731dc2a3b8912f15a49998ac8e235af63c78",
+  "lint": {
+    "findings": 14,
+    "grade": "C",
+    "report_fingerprint": "3d545153091550b9faef0225905e8ec7393e7168a29c2f0cf3bc292749758f7b",
+    "score": 77,
+    "severity_counts": {
+      "error": 0,
+      "info": 11,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

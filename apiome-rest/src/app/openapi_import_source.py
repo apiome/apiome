@@ -55,6 +55,7 @@ from . import (
     swagger2_normalizer,  # noqa: F401
 )
 from .aws_apigateway_extensions import has_aws_extensions
+from .azure_apim_arm import has_apim_markers
 from .canonical_model import ApiParadigm, CanonicalApi
 from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
@@ -142,6 +143,16 @@ class OpenApiImportSource(ImportSource, register=True):
                 format=self._version_format(document),
                 reason="OpenAPI document with `x-amazon-apigateway-*` extensions "
                 "(the aws-apigateway adapter interprets them)",
+            )
+
+        # FMT-7.2: likewise for a definition APIM exported (its subscription-key scheme or an
+        # azure-api.net gateway): the azure-apim adapter claims it at 0.9 and reads its policies.
+        if has_apim_markers(document):
+            return DetectionResult(
+                confidence=0.7,
+                format=self._version_format(document),
+                reason="OpenAPI definition exported by Azure API Management "
+                "(the azure-apim adapter reads it with its policies)",
             )
 
         version = document.get("openapi")

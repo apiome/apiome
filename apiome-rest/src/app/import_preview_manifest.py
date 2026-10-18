@@ -242,6 +242,11 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # validators, every extension site). Rendered by ``_aws_apigateway_capability_rows``;
         # the interpreted constructs themselves ride in ``backend``/``security``/``validation``.
         "aws_apigateway",
+        # FMT-7.2: the Azure API Management report (shape, APIs, products, backends, every policy
+        # document's sections, mapped counts and the verbatim unmapped policies). Rendered by
+        # ``_azure_apim_capability_rows``; the interpreted constructs ride in ``security``,
+        # ``rate_limits``, ``backend``, ``rewrite``, ``cors`` and ``access``.
+        "azure_apim",
         # FMT-5.1: the ODCS projection record (declared api version, contract status and
         # identity, the schema objects, declared limits, the composed file set). Our own
         # bookkeeping about the read — the contract's *own* governance blocks live under
@@ -1096,6 +1101,7 @@ def _document_scope_rows(
     ledger.extend(_gateway_capability_rows(api))
     ledger.extend(_wit_capability_rows(api))
     ledger.extend(_aws_apigateway_capability_rows(api))
+    ledger.extend(_azure_apim_capability_rows(api))
     ledger.extend(_relaxng_capability_rows(api))
     ledger.extend(_dtd_capability_rows(api))
     ledger.extend(_cddl_capability_rows(api))
@@ -1394,6 +1400,108 @@ def _aws_apigateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
             CoverageClass.PARTIALLY_MAPPED,
             f"Unrecognised extension {name} at {shown} is not interpreted; preserved verbatim in "
             "extras and reported here, never dropped.",
+        )
+    return rows
+
+
+#: Where each mapped APIM policy lands in the canonical model (FMT-7.2), for the ledger detail.
+_APIM_POLICY_TARGETS = {
+    "validate-jwt": "canonical security",
+    "validate-azure-ad-token": "canonical security",
+    "check-header": "canonical security (header check)",
+    "authentication-certificate": "the backend's authentication",
+    "authentication-basic": "the backend's authentication",
+    "authentication-managed-identity": "the backend's authentication",
+    "rate-limit": "rate-limit metadata",
+    "rate-limit-by-key": "rate-limit metadata",
+    "quota": "rate-limit metadata (quota)",
+    "quota-by-key": "rate-limit metadata (quota)",
+    "set-backend-service": "the backend (and, at API scope, a server named backend)",
+    "rewrite-uri": "the request rewrite (path provenance)",
+    "set-method": "the request rewrite",
+    "set-query-parameter": "the request rewrite",
+    "cors": "CORS metadata",
+    "ip-filter": "the access posture",
+}
+
+
+def _azure_apim_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-7.2 Azure API Management report as document-scoped ledger rows.
+
+    The definition and every mapped policy are ``mapped``: the definition through the OpenAPI
+    path, each policy into a canonical security, rate-limit, backend, rewrite, CORS or access
+    record labelled ``derivedFrom: "policy"``. A policy the canonical model has no construct for
+    (``preserved``: a documented APIM policy; ``unknown``: anything else) is ``partially-mapped``
+    — kept verbatim in ``extras.azure_apim.unmapped`` and listed here, so it is never silently
+    dropped. An unresolved backend id and a ``<base />`` whose parent scope was not supplied are
+    ``partially-mapped`` too: the fact is recorded, its target is not known.
+    """
+    report = api.extras.get("azure_apim") if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict):
+        return []
+    rows: List[CoverageEntry] = []
+
+    def _row(construct: str, coverage: CoverageClass, detail: str) -> None:
+        status, reason = STATUS_FOR_COVERAGE[coverage]
+        rows.append(
+            CoverageEntry(
+                source_construct=construct,
+                coverage=coverage,
+                status=status,
+                reason=reason,
+                detail=detail,
+                document_scoped=True,
+            )
+        )
+
+    if report.get("shape") in ("definition", "definition+policy", "arm-template"):
+        _row(
+            "apim#definition",
+            CoverageClass.MAPPED,
+            "Paths, parameters and schemas from the API definition, normalized as OpenAPI "
+            "(derivedFrom: definition).",
+        )
+    for name, entry in sorted((report.get("mapped") or {}).items()):
+        if not isinstance(entry, dict):
+            continue
+        scopes = ", ".join(entry.get("scopes") or []) or "unknown"
+        _row(
+            f"apim#policy.{name}",
+            CoverageClass.MAPPED,
+            f"{entry.get('count', 0)} {name} element(s) at {scopes} scope; recorded as "
+            f"{_APIM_POLICY_TARGETS.get(name, 'canonical metadata')} (declared, derivedFrom: policy).",
+        )
+    by_name: Dict[Tuple[str, str], List[str]] = {}
+    for item in report.get("unmapped") or []:
+        if isinstance(item, dict) and item.get("name"):
+            where = f"{item.get('scope')}/{item.get('section')}"
+            if item.get("operation"):
+                where = f"{where} ({item['operation']})"
+            by_name.setdefault((str(item.get("status")), str(item["name"])), []).append(where)
+    for (status, name), sites in sorted(by_name.items()):
+        shown = ", ".join(sites[:3]) + (f" and {len(sites) - 3} more" if len(sites) > 3 else "")
+        prefix = "apim#unknown-policy" if status == "unknown" else "apim#policy"
+        label = "Unrecognised policy" if status == "unknown" else "Policy"
+        _row(
+            f"{prefix}.{name}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"{label} <{name}> at {shown} has no canonical construct; preserved verbatim in "
+            "extras.azure_apim.unmapped and reported here, never dropped.",
+        )
+    for backend_id in report.get("unresolvedBackends") or []:
+        _row(
+            f"apim#backend.{backend_id}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"set-backend-service names backend {backend_id!r}, which the input does not declare; "
+            "the backend id is recorded, its URL is unknown.",
+        )
+    inherits = (report.get("apiPolicy") or {}).get("inheritsFromParentScope") or []
+    if inherits:
+        _row(
+            "apim#base",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"<base /> in {', '.join(inherits)} inherits from a parent scope (product or global) the "
+            "input does not carry; the local policies are interpreted, the inherited ones are unknown.",
         )
     return rows
 
