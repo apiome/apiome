@@ -4,7 +4,8 @@
  * The headline metadata a catalog item carries off its latest imported revision (MFI-7.1/7.2) is
  * its **source format** (e.g. `openapi-3.1`, `grpc`, `graphql`), its **protocol / paradigm** (the
  * canonical `ApiParadigm`: REST / RPC / event / graph / data-schema / agent) and the **source
- * material** it came from (an uploaded file, a URL, pasted text, or a live discovery endpoint).
+ * material** it came from (an uploaded file, a URL, pasted text, a live discovery endpoint, or a
+ * catalog connector sync).
  *
  * This module is the single, data-driven lookup behind the catalog pills — modeled on
  * `project-domain-categories.ts`: a flat registry of entries plus pure resolver functions, so the
@@ -538,7 +539,7 @@ export function resolveCatalogProtocol(protocol: string | null | undefined): Cat
 // ==================== Source material ====================
 
 /** The input kind a catalog item was imported from (mirrors the REST `InputKind` enum). */
-export type CatalogSourceKind = 'file' | 'url' | 'paste' | 'discovery';
+export type CatalogSourceKind = 'file' | 'url' | 'paste' | 'discovery' | 'connector';
 
 /** Display metadata for a source kind: a fallback label and the icon for its input kind. */
 export interface CatalogSourceKindMeta {
@@ -548,12 +549,16 @@ export interface CatalogSourceKindMeta {
   icon: LucideIcon;
 }
 
-/** Per-kind icon + fallback label. The discovery kind is the live-introspection case. */
+/**
+ * Per-kind icon + fallback label. The discovery kind is the live-introspection case; the connector
+ * kind is a catalog connector sync (CDG-1.1, #5952).
+ */
 export const CATALOG_SOURCE_KIND_META: Readonly<Record<CatalogSourceKind, CatalogSourceKindMeta>> = {
   file: { kind: 'file', fallbackLabel: 'Uploaded file', icon: Upload },
   url: { kind: 'url', fallbackLabel: 'Source URL', icon: Link2 },
   paste: { kind: 'paste', fallbackLabel: 'Pasted content', icon: ClipboardPaste },
   discovery: { kind: 'discovery', fallbackLabel: 'Live discovery', icon: Radar },
+  connector: { kind: 'connector', fallbackLabel: 'Catalog connector', icon: Plug },
 };
 
 /** A resolved source-material descriptor: an input kind and a human label to show on the badge. */
@@ -573,6 +578,7 @@ function normalizeSourceKind(value: string | null | undefined): CatalogSourceKin
   if (key === 'url' || key === 'uri' || key === 'link') return 'url';
   if (key === 'paste' || key === 'clipboard' || key === 'pasted' || key === 'inline') return 'paste';
   if (key === 'discovery' || key === 'livediscovery' || key === 'live' || key === 'endpoint') return 'discovery';
+  if (key === 'connector') return 'connector';
   return undefined;
 }
 
@@ -629,9 +635,9 @@ export function resolveCatalogSource(
     kind = /^https?:\/\//i.test(rawLabel) ? 'url' : 'file';
   }
 
-  // Discovery without a label still renders (it is meaningful on its own).
+  // Discovery and connector syncs without a label still render (each is meaningful on its own).
   if (!rawLabel) {
-    if (kind === 'discovery') {
+    if (kind === 'discovery' || kind === 'connector') {
       const meta = CATALOG_SOURCE_KIND_META[kind];
       return { kind, label: meta.fallbackLabel, title: meta.fallbackLabel };
     }

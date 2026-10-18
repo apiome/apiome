@@ -25,6 +25,7 @@ import {
   FileUp,
   Globe,
   Info,
+  Plug,
   Radar,
   Radio,
   Server,
@@ -77,6 +78,7 @@ const GLYPH: Readonly<Record<string, React.ComponentType<{ className?: string }>
   url: Globe,
   paste: ClipboardPaste,
   discovery: Radar,
+  connector: Plug,
 };
 
 /** The tone a chip in the Source snapshot resolves to, in `Badge`'s vocabulary. */

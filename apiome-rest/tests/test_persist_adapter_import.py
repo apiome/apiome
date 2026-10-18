@@ -686,3 +686,36 @@ def test_non_arazzo_import_writes_no_workflows(monkeypatch) -> None:
 
     assert fake.persisted_workflows is None
     assert fake.scan_index_call is None
+
+
+def test_records_the_connector_source_descriptor(monkeypatch) -> None:
+    """CDG-1.1: a connector sync re-labels the intake 'connector' and records where it came from."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["connector_source"] = {
+        "inputKind": "connector",
+        "connectorId": "c-1",
+        "connectorKind": "kong-konnect",
+        "connectorName": "Prod gateway",
+        "remoteId": "svc-42",
+        "remoteRevision": "r7",
+    }
+
+    persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
+
+    meta = fake.source_format_call["format_metadata"]
+    assert meta["inputKind"] == "connector"
+    assert (meta["connectorId"], meta["remoteId"], meta["remoteRevision"]) == ("c-1", "svc-42", "r7")
+    assert meta["sourceContent"] == "x"
+
+
+def test_ignores_a_connector_source_that_is_not_an_object(monkeypatch) -> None:
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["connector_source"] = "connector"
+
+    persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
+
+    assert fake.source_format_call["format_metadata"]["inputKind"] == "file"

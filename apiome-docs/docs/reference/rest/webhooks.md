@@ -1,7 +1,7 @@
 ---
 title: "Webhooks"
 description: "REST endpoints tagged webhooks: 6 operations."
-sidebar_position: 82
+sidebar_position: 83
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.221.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.222.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `webhooks` · 6 operations
 
@@ -210,7 +210,7 @@ Create a push webhook subscription (#2587). Plaintext signing secret is write-on
 | `url` | string | yes | HTTPS webhook URL (validated server-side). |
 | `signingSecret` | string | yes | Shared secret for signing deliveries; never returned after create. |
 | `active` | boolean | no | Whether deliveries are enabled. |
-| `minSeverity` | enum `"docs-only"`, `"non-breaking"`, `"breaking"` or null | no | Publish-event severity threshold (CTG-3.3): deliver version.published events only when the classified max severity meets this level. Omit/null to receive every publish event (default; other event types are never filtered). |
+| `minSeverity` | enum `"breaking"`, `"non-breaking"`, `"docs-only"` or null | no | Publish-event severity threshold (CTG-3.3): deliver version.published events only when the classified max severity meets this level. Omit/null to receive every publish event (default; other event types are never filtered). |
 
 ### `PushWebhookSubscriptionResponse` {#schema-pushwebhooksubscriptionresponse}
 
@@ -222,7 +222,7 @@ Push webhook subscription — signing secret is never included; only signingSecr
 | `url` | string | yes | URL. |
 | `active` | boolean | yes | Active. |
 | `signingSecretRef` | string | yes | Signing Secret Ref. |
-| `minSeverity` | enum `"docs-only"`, `"non-breaking"`, `"breaking"` or null | no | Min Severity. |
+| `minSeverity` | enum `"breaking"`, `"non-breaking"`, `"docs-only"` or null | no | Min Severity. |
 | `createdAt` | string (date-time) or null | no | Created At. |
 | `updatedAt` | string (date-time) or null | no | Updated At. |
 
@@ -235,4 +235,4 @@ Update URL, active flag, severity filter, and/or rotate signing secret (#2587, #
 | `url` | string or null | no | New HTTPS URL (must remain unique per tenant). |
 | `signingSecret` | string or null | no | Signing Secret. |
 | `active` | boolean or null | no | Active. |
-| `minSeverity` | enum `"docs-only"`, `"non-breaking"`, `"breaking"` or null | no | Publish-event severity threshold (CTG-3.3). Pass an explicit null to clear the filter (deliver every publish event); omit to leave unchanged. |
+| `minSeverity` | enum `"breaking"`, `"non-breaking"`, `"docs-only"` or null | no | Publish-event severity threshold (CTG-3.3). Pass an explicit null to clear the filter (deliver every publish event); omit to leave unchanged. |

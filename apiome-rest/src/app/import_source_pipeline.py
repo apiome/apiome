@@ -76,7 +76,12 @@ from .canonical_model import CanonicalApi
 from .config import settings
 from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
-from .import_routing import ImportRoutingDecision, ImportTarget, decide_import_routing
+from .import_routing import (
+    ImportRoutingDecision,
+    ImportTarget,
+    decide_import_routing,
+    force_catalog_routing,
+)
 from .import_source import (
     DetectionInput,
     ImportSource,
@@ -1234,6 +1239,11 @@ def persist_adapter_import(
         from .git_intake import git_provenance_metadata
 
         format_metadata.update(git_provenance_metadata(git_source))
+    # CDG-1.1: a connector sync records where the document came from — the connector, the
+    # remote API and its revision — and re-labels the intake kind 'connector'.
+    connector_source = payload.get("connector_source")
+    if isinstance(connector_source, dict):
+        format_metadata.update(connector_source)
     db.set_version_source_format(
         version_record_id,
         tenant_id,
@@ -1828,6 +1838,16 @@ async def run_adapter_import_job(
     requested_target = options.get("import_target") if isinstance(options, dict) else None
     phase_started = time.monotonic()
     routing = decide_import_routing(adapter, model, requested_target=requested_target)
+    # CDG-1.1: a catalog connector sync always lands a catalog item, OpenAPI included. The key
+    # is set only by the connector engine on its internal payload, never from a request body.
+    if isinstance(payload.get("connector_source"), dict):
+        routing = force_catalog_routing(
+            routing,
+            reason=(
+                f"{model.format or model.paradigm.value} synced by a catalog connector "
+                "→ non-publishable catalog item; convert it to make a Project."
+            ),
+        )
     if artifacts is not None:
         artifacts.routing = routing
     state.event(

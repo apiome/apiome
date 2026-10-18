@@ -366,6 +366,41 @@ describe('the Provenance pane', () => {
     expect(rail).toHaveTextContent('Ada Lovelace');
   });
 
+  it('shows the connector, remote API and remote revision of a connector-synced item (CDG-1.1)', async () => {
+    mockSearch = 'tab=provenance';
+    await renderDetail({
+      ...ITEM,
+      formatMetadata: { ...ITEM.formatMetadata, inputKind: 'connector', sourceLabel: 'orders.json' },
+      source: {
+        kind: 'connector',
+        label: 'orders.json',
+        uri: null,
+        hasContent: true,
+        downloadable: true,
+        connector: {
+          connectorId: 'c0ffee00-0000-4000-8000-000000000001',
+          connectorKind: 'kong-konnect',
+          connectorName: 'Prod gateway',
+          remoteId: 'svc-42',
+          remoteName: 'Orders',
+          remoteRevision: 'r7',
+        },
+      },
+    });
+    const intake = screen.getByTestId('catalog-detail-stage-intake');
+    expect(intake).toHaveTextContent('Synced by a connector');
+    const block = within(intake).getByTestId('catalog-detail-connector-source');
+    expect(block).toHaveTextContent('ConnectorProd gateway (kong-konnect)');
+    expect(block).toHaveTextContent('Remote APIOrders · svc-42');
+    expect(block).toHaveTextContent('Remote revisionr7');
+  });
+
+  it('draws no connector block for an uploaded item', async () => {
+    mockSearch = 'tab=provenance';
+    await renderDetail();
+    expect(screen.queryByTestId('catalog-detail-connector-source')).not.toBeInTheDocument();
+  });
+
   it('says which facts were never recorded rather than leaving the step blank', async () => {
     mockSearch = 'tab=provenance';
     await renderDetail({ ...ITEM, sourceFormat: null, protocol: null, toolVersions: null });

@@ -43,6 +43,7 @@ import {
   catalogSourceChips,
   catalogSourceHeadline,
   catalogSourceKindView,
+  catalogConnectorRows,
   catalogSurfaceCountLine,
   catalogSurfaceTileFoot,
   catalogToolVersions,
@@ -357,6 +358,7 @@ describe('the Overview pane', () => {
     expect(catalogSourceKindView('url').label).toBe('Fetched from URL');
     expect(catalogSourceKindView('paste').label).toBe('Pasted content');
     expect(catalogSourceKindView('discovery').label).toBe('Discovered endpoint');
+    expect(catalogSourceKindView('connector')).toEqual({ label: 'Synced by a connector', icon: 'connector' });
     expect(catalogSourceKindView(null).label).toBe('Unknown intake');
   });
 
@@ -493,5 +495,45 @@ describe('the Provenance pane', () => {
     expect(catalogDetailTimestamp(undefined)).toBe('—');
     expect(catalogDetailTimestamp('not a date')).toBe('not a date');
     expect(catalogDetailTimestamp('2026-08-15T09:41:00Z')).not.toBe('—');
+  });
+});
+
+describe('the connector block (CDG-1.1)', () => {
+  const connector = {
+    connectorId: 'c-1',
+    connectorKind: 'kong-konnect',
+    connectorName: 'Prod gateway',
+    remoteId: 'svc-42',
+    remoteName: 'Orders',
+    remoteRevision: 'r7',
+  };
+
+  it('names the connector, the remote API and the revision', () => {
+    expect(catalogConnectorRows(connector)).toEqual([
+      { term: 'Connector', value: 'Prod gateway (kong-konnect)', mono: false },
+      { term: 'Remote API', value: 'Orders · svc-42', mono: false },
+      { term: 'Remote revision', value: 'r7', mono: true },
+    ]);
+  });
+
+  it('falls back to ids and says when the remote reported no revision', () => {
+    expect(
+      catalogConnectorRows({
+        ...connector,
+        connectorName: null,
+        connectorKind: null,
+        remoteName: null,
+        remoteRevision: null,
+      })
+    ).toEqual([
+      { term: 'Connector', value: 'c-1', mono: true },
+      { term: 'Remote API', value: 'svc-42', mono: true },
+      { term: 'Remote revision', value: 'Not reported by the remote', mono: false },
+    ]);
+  });
+
+  it('is empty for any other intake', () => {
+    expect(catalogConnectorRows(null)).toEqual([]);
+    expect(catalogConnectorRows(undefined)).toEqual([]);
   });
 });

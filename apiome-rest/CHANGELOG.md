@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.358.0] - 2026-10-17
+
+### Added
+- **Catalog connectors and the refresh-source protocol (#5952, CDG-1.1)**: the repository auto-refresh engine now
+  syncs two kinds of source through one `app.refresh_source.RefreshSource` protocol (`list_candidates`, `fetch`,
+  `freshness_key`, `describe`). Git branches are the first implementation, with no behaviour change (goldens on the
+  enqueued job and the RAR-4.1 executor output). Catalog connectors are the second:
+  - `GET|POST /v1/tenants/{t}/connectors`, `GET|PATCH|DELETE …/connectors/{id}`, `POST …/connectors/{id}/sync`,
+    `GET …/connectors/{id}/items`, `GET …/connectors/{id}/runs`, `PUT …/connectors/{id}/credentials`, on the
+    existing `imports` permissions.
+  - Kinds `kong-konnect`, `kong-admin`, `aws-apigateway`, `azure-apim`, `apigee`, `url`, `schema-registry`,
+    `mcp-registry`. A kind syncs only once a source is registered for it (`syncableKinds`); a sync of any other
+    kind is a 409 `connector-kind-unsupported`.
+  - Credentials are sealed with the MCP credential envelope, replaced as a whole, and never returned, logged or
+    audited (503 `connector-encryption-unconfigured` without `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`).
+  - Base URLs pass the SSRF rule: a private-range URL is a 422 `connector-base-url-refused` with
+    `reason: "private-address"`, unless `APIOME_CONNECTOR_PRIVATE_NETWORK_ALLOWLIST` (CIDRs) covers it.
+  - A sync imports each new remote revision as a **catalog item** revision (OpenAPI included) with the source
+    descriptor `{inputKind: "connector", connectorId, remoteId, remoteRevision}` in its format metadata, marks APIs
+    gone from the inventory `missing` (never deleted), and records a failed run with `errorClass` and `httpStatus`
+    when nothing could be fetched.
+  - Runs are rows of `tenant_repository_refresh_jobs` (`refreshSource: "connector"`). Their pulls count against the
+    tenant polling quota and the quota telemetry, and they are audited as `repository.connector.*`, which the
+    repository audit export includes. Scheduled syncs run in the refresh sweep's tick.
+- `GET /v1/catalog/{t}/{id}`: `source.kind` can be `connector`, and `source.connector` carries the connector,
+  remote API and remote revision.
+
+The OpenAPI version moves to 1.222.0.
+
 ## [1.357.0] - 2026-10-17
 
 ### Added

@@ -1,0 +1,30 @@
+---
+slug: connectors
+title: Connectors keep the catalog in step with your gateways
+description: Register gateways and registries; their APIs sync into the catalog.
+authors: [apiome]
+---
+
+A **connector** registers somewhere your APIs already live, such as Kong, Amazon API Gateway,
+Azure API Management, Apigee, a schema registry or a URL. Each API it finds becomes a
+[catalog](/bring-in/catalog) item, and each new revision becomes a new revision of that item. See
+[Connectors](/bring-in/connectors).
+
+{/* truncate */}
+
+- **One refresh engine.** Connectors and [repositories](/bring-in/repositories) refresh through
+  the same engine. They share one cadence, the workspace's polling quota (shown on **Quota & rate
+  limits**) and the repository audit export.
+- **Nothing is deleted.** An API that leaves the inventory is marked **missing**, and its catalog
+  item stays.
+- **Failures say why.** If a sync fetches nothing because the gateway refused the credential, the
+  run fails and records the provider's error class and HTTP status. It is never reported as a
+  success with zero changes.
+- **Credentials are write-only and base URLs are checked.** A credential is encrypted on arrival
+  and never shown again. A base URL that resolves to a private address is refused unless an
+  operator allows its range.
+- **Provenance names the connector.** A synced item's **Provenance** tab shows which connector
+  synced it, the remote API and the remote revision.
+- **REST only for now.** Connectors are managed through `/v1/tenants/{tenant}/connectors`. This
+  release adds the registry and the sync engine; the gateway sources follow, and each connector
+  shows whether its kind can sync yet.

@@ -143,7 +143,7 @@ Gateway connectors, ownership, dependency graph, registries.
 
 - [ ] [#5950](https://github.com/apiome/apiome/issues/5950) CDG Roadmap — Catalog Discovery Graph
 - [ ] [#5951](https://github.com/apiome/apiome/issues/5951) CDG-EPIC-1 Gateway and cloud connectors (absorbs RAR-EPIC-6 #3511)
-- [ ] [#5952](https://github.com/apiome/apiome/issues/5952) CDG-1.1 Refresh-source protocol and connector registry
+- [x] [#5952](https://github.com/apiome/apiome/issues/5952) CDG-1.1 Refresh-source protocol and connector registry
 - [ ] [#5953](https://github.com/apiome/apiome/issues/5953) CDG-1.2 Kong connector (Konnect control planes and Admin API)
 - [ ] [#5954](https://github.com/apiome/apiome/issues/5954) CDG-1.3 AWS API Gateway connector
 - [ ] [#5955](https://github.com/apiome/apiome/issues/5955) CDG-1.4 Azure API Management connector

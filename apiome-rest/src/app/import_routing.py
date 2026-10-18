@@ -34,7 +34,7 @@ mints a catalog item.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Dict
 
@@ -162,6 +162,28 @@ class ImportRoutingDecision:
                 "channels": self.channel_count,
             },
         }
+
+
+def force_catalog_routing(decision: ImportRoutingDecision, *, reason: str) -> ImportRoutingDecision:
+    """Re-route a decision to a non-publishable catalog item, keeping its counts.
+
+    Used only by catalog connector syncs (CDG-1.1, #5952): what a connector pulls from a gateway
+    or registry is an inventory entry, so it lands in the catalog even when it is OpenAPI, and
+    becomes a Project only when someone converts it. Ordinary imports never reach this.
+
+    Args:
+        decision: The decision :func:`decide_import_routing` made.
+        reason: Why the import was re-routed (recorded as the routing reason).
+
+    Returns:
+        The same decision with ``target=CATALOG`` and ``publishable=False``.
+    """
+    return replace(
+        decision,
+        target=ImportTarget.CATALOG,
+        publishable=False,
+        reason=reason,
+    )
 
 
 def decide_import_routing(

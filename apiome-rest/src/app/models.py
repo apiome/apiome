@@ -2738,10 +2738,27 @@ class CatalogNormalizedSummary(BaseModel):
         from_attributes = True
 
 
+class CatalogConnectorSource(BaseModel):
+    """Where a connector-synced catalog revision came from (CDG-1.1, #5952).
+
+    The connector that synced it, the remote API's id and name at the provider, and the remote
+    revision imported. Shown on the catalog Provenance tab.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
+    connector_id: str = Field(serialization_alias="connectorId")
+    connector_kind: Optional[str] = Field(None, serialization_alias="connectorKind")
+    connector_name: Optional[str] = Field(None, serialization_alias="connectorName")
+    remote_id: Optional[str] = Field(None, serialization_alias="remoteId")
+    remote_name: Optional[str] = Field(None, serialization_alias="remoteName")
+    remote_revision: Optional[str] = Field(None, serialization_alias="remoteRevision")
+
+
 class CatalogSourceDescriptor(BaseModel):
     """The source-material descriptor for a catalog item (MFI-23.9): where the import came from.
 
-    Mirrors the UI's ``resolveCatalogSource`` — an input kind (file/url/paste/discovery), a display
+    Mirrors the UI's ``resolveCatalogSource`` — an input kind (file/url/paste/discovery/connector), a display
     label, an optional source URL, and whether a raw source is retrievable. ``downloadable`` is the
     single signal the detail view needs to enable its view/download affordance (true when inline
     content was captured *or* a source URL is recorded); ``hasContent`` distinguishes "stream the
@@ -2753,6 +2770,13 @@ class CatalogSourceDescriptor(BaseModel):
     uri: Optional[str] = None
     has_content: bool = Field(False, serialization_alias="hasContent")
     downloadable: bool = False
+    connector: Optional[CatalogConnectorSource] = Field(
+        None,
+        description=(
+            "Set when the revision was synced by a catalog connector (kind `connector`): the "
+            "connector, the remote API and the remote revision (CDG-1.1)."
+        ),
+    )
 
     class Config:
         from_attributes = True

@@ -60,8 +60,8 @@ import logging
 from typing import Any, Dict, NamedTuple, Optional
 
 from .database import Database
+from .refresh_source import GitBranchRefreshSource, decide_refresh
 from .repository_file_scan import scan_repository_branch_into_index
-from .repository_refresh_comparator import evaluate_refresh
 
 _logger = logging.getLogger(__name__)
 
@@ -121,36 +121,16 @@ def enqueue_stale_files_for_branch(
         A :class:`BranchEnqueueResult` with the enqueued, skipped, and deferred
         counts.
     """
-    repository_id = str(repo_row["id"])
-    tenant_id = str(repo_row["tenant_id"])
-
-    # Reindex the branch so the candidate query sees current remote signals. On a
-    # large monorepo the walk is bounded (REPO-2.5): a pass that runs out of its
-    # wall-clock budget stores a resume cursor and comes back incomplete, so this
-    # tick evaluates the portion indexed so far and the next tick continues.
-    scan = scan_repository_branch_into_index(db, repo_row, branch)
-    if not scan.completed:
-        _logger.info(
-            "repository refresh evaluating a partially indexed branch (scan resumes next tick) "
-            "repository_id=%s branch=%s files_so_far=%s",
-            repository_id,
-            branch,
-            scan.total_files,
-        )
+    # The Git branch is the first RefreshSource (CDG-1.1): listing its candidates reindexes
+    # the branch so the candidate query sees current remote signals, and fetching one yields
+    # the spec-faithful re-import job to enqueue.
+    source = GitBranchRefreshSource(db, repo_row, branch, path_filter=path_filter)
 
     enqueued = 0
     skipped = 0
     deferred = 0
-    for cand in db.list_repository_refresh_candidates(repository_id, branch):
-        if path_filter is not None and str(cand.get("path")) != path_filter:
-            continue
-
-        decision = evaluate_refresh(
-            remote_committed_at=cand.get("remote_committed_at"),
-            last_imported_committed_at=cand.get("last_imported_committed_at"),
-            remote_checksum=cand.get("remote_blob_sha"),
-            last_imported_checksum=cand.get("last_imported_blob_sha"),
-        )
+    for cand in source.list_candidates():
+        decision = decide_refresh(source, cand)
         if not decision.should_refresh:
             # Up-to-date / stale-guarded: honors the freshness gate (RAR-2.2).
             skipped += 1
@@ -162,24 +142,7 @@ def enqueue_stale_files_for_branch(
             deferred += 1
             continue
 
-        job = db.enqueue_repository_refresh_job(
-            tenant_id=tenant_id,
-            repository_id=repository_id,
-            branch=branch,
-            path=str(cand["path"]),
-            import_spec_id=cand.get("import_spec_id"),
-            project_id=cand.get("project_id"),
-            source_kind=cand.get("source_kind"),
-            format_override=cand.get("format_override"),
-            content_type=cand.get("content_type"),
-            options_json=cand.get("options_json"),
-            spec_schema_version=int(cand.get("spec_schema_version") or 1),
-            created_by=cand.get("created_by"),
-            remote_commit_sha=cand.get("remote_commit_sha"),
-            remote_committed_at=cand.get("remote_committed_at"),
-            remote_blob_sha=cand.get("remote_blob_sha"),
-            refresh_reason=decision.reason.value,
-        )
+        job = db.enqueue_repository_refresh_job(**source.fetch(cand).fields)
         if job is not None:
             enqueued += 1
         else:
