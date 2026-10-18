@@ -858,3 +858,8 @@ def entity_owner(tenant_slug: str, kind: str, entity_id: str) -> str:
 def graph_dependencies(tenant_slug: str, kind: str, entity: str) -> str:
     """GET / PUT an entity's declared dependencies (CDG-3.2); ``entity`` is an id or a slug."""
     return f"{V1}/graph/{tenant_slug}/entities/{quote(kind, safe='')}/{quote(entity, safe='')}/dependencies"
+
+
+def graph_blast_radius(tenant_slug: str) -> str:
+    """POST a blast-radius question (CDG-3.3)."""
+    return f"{V1}/graph/{tenant_slug}/blast-radius"

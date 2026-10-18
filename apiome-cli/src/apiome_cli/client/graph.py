@@ -83,3 +83,70 @@ def dependency_rows(body: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+_METHODS = ("GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE")
+
+#: The evidence sections of a blast-radius answer, in display order, with their labels.
+EVIDENCE_SECTIONS = (
+    ("verification_runs", "Verification runs"),
+    ("consumer_contracts", "Consumer contracts"),
+    ("deploy_gate_evaluations", "Deploy-gate evaluations"),
+    ("sdk_regen_targets", "SDK regeneration targets"),
+    ("agent_toolset_tools", "Agent toolset tools"),
+    ("mock_fixture_packs", "Mock fixture packs and scenarios"),
+    ("sunset_consumers", "Consumers on deprecated versions"),
+)
+
+
+def _escape(token: str) -> str:
+    return token.replace("~", "~0").replace("/", "~1")
+
+
+def operation_pointer(operation: str) -> str:
+    """``"GET /pets/{id}"`` → ``/paths/~1pets~1{id}/get``.
+
+    Raises:
+        ValueError: The value is not ``METHOD /path``.
+    """
+    method, _, path = (operation or "").strip().partition(" ")
+    path = path.strip()
+    if method.upper() not in _METHODS or not path.startswith("/"):
+        raise ValueError(f"'{operation}' is not an operation; use METHOD /path, e.g. \"GET /pets/{{id}}\"")
+    return f"/paths/{_escape(path)}/{method.lower()}"
+
+
+def schema_pointer(name: str) -> str:
+    """``Pet`` → ``/components/schemas/Pet``.
+
+    Raises:
+        ValueError: The name is empty.
+    """
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a schema name is required")
+    return f"/components/schemas/{_escape(name)}"
+
+
+def impact_rows(body: dict[str, Any]) -> list[dict[str, Any]]:
+    """One table row per affected entity, direct first."""
+    rows = []
+    for entity in [*(body.get("direct") or []), *(body.get("transitive") or [])]:
+        owner = entity.get("owner") or {}
+        rows.append(
+            {
+                "depth": entity.get("depth"),
+                "kind": entity.get("kind") or "",
+                "name": entity.get("slug") or entity.get("name") or entity.get("id") or "",
+                "edge": entity.get("edge_kind") or "",
+                "provenance": entity.get("provenance") or "",
+                "owner": owner.get("slug") or "",
+            }
+        )
+    return rows
+
+
+def evidence_rows(body: dict[str, Any]) -> list[dict[str, Any]]:
+    """One table row per evidence section, with its count."""
+    evidence = body.get("invalidated_evidence") or {}
+    return [{"evidence": label, "count": len(evidence.get(key) or [])} for key, label in EVIDENCE_SECTIONS]
