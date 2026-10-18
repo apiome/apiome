@@ -1,7 +1,7 @@
 ---
 title: "apiome help"
 description: "Show concise usage, or --help for a subcommand."
-sidebar_position: 15
+sidebar_position: 16
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

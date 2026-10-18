@@ -506,6 +506,7 @@ def run_connector_sync(
     actor_id: Optional[str] = None,
     importer: Optional[Importer] = None,
     max_pulls: Optional[int] = None,
+    only_remote_ids: Optional[Sequence[str]] = None,
 ) -> ConnectorSyncResult:
     """Run one sync of one connector (see the module docstring for the steps).
 
@@ -519,6 +520,10 @@ def run_connector_sync(
             :func:`import_document_as_catalog_item`.
         max_pulls: Fetch at most this many documents; the rest are deferred to a later run
             (the scheduled sweep passes the tenant's remaining quota). ``None`` is unbounded.
+        only_remote_ids: Import only these remote ids, now (CDG-1.6 "Import" on a shadow-report
+            row). The whole inventory is still listed and recorded, but only these candidates are
+            fetched, and they skip the ignore, ``should_import`` and newer-than gates: a person
+            asked for them.
 
     Returns:
         The :class:`ConnectorSyncResult`.
@@ -558,6 +563,10 @@ def run_connector_sync(
     # Candidates this run brought up to date (imported, or re-anchored on identical content).
     settled = 0
     failures: List[tuple] = []
+    new_rows: List[Dict[str, Any]] = []
+    only = set(only_remote_ids) if only_remote_ids is not None else None
+    if only is not None:
+        summary["requested"] = sorted(only)
     credentials: Optional[Dict[str, str]] = None
     result: ConnectorSyncResult
 
@@ -579,22 +588,27 @@ def run_connector_sync(
         rows: Dict[str, Dict[str, Any]] = {}
         for candidate in candidates:
             rows[candidate.remote_id] = store.upsert_seen_item(db, connector_id, candidate)
+            if rows[candidate.remote_id].get("inserted"):
+                new_rows.append(rows[candidate.remote_id])
         summary["missing"] = store.mark_missing_items(db, connector_id, rows.keys())
         if hasattr(source, "attach_inventory"):
             source.attach_inventory(rows)
 
         for candidate in candidates:
             row = rows[candidate.remote_id]
-            if row.get("status") == ITEM_IGNORED:
+            forced = only is not None
+            if forced and candidate.remote_id not in only:
+                continue
+            if not forced and row.get("status") == ITEM_IGNORED:
                 summary["ignored"] += 1
                 continue
             should_import = getattr(source, "should_import", None)
-            if callable(should_import) and not should_import(candidate):
+            if not forced and callable(should_import) and not should_import(candidate):
                 # Recorded (``discovered``) but not imported: the source says so (CDG-1.4).
                 summary["discovered"] = int(summary.get("discovered", 0)) + 1
                 continue
-            decision = decide_refresh(source, candidate)
-            if not decision.should_refresh:
+            decision = None if forced else decide_refresh(source, candidate)
+            if decision is not None and not decision.should_refresh:
                 summary["unchanged"] += 1
                 _note_unchanged(summary, source, candidate, decision.reason.value)
                 continue
@@ -708,6 +722,11 @@ def run_connector_sync(
     record_quota_usage(db, tenant_id, METRIC_POLLS, pulls)
     record_quota_usage(db, tenant_id, METRIC_FILES_DEFERRED, int(summary["deferred"]))
     _audit(db, connector, result, actor_id)
+    if new_rows and only is None:
+        # CDG-1.6: APIs seen for the first time that match nothing in the catalog (best-effort).
+        from .shadow_api_notifications import notify_new_shadow_apis
+
+        notify_new_shadow_apis(db, connector, new_rows)
     _logger.info(
         "connector sync finished connector_id=%s run_id=%s status=%s pulls=%s imported=%s "
         "missing=%s error_class=%s http_status=%s",

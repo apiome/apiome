@@ -34667,3 +34667,186 @@ tr:focus-within .pub-url__glyph {
 .agx-chart--bars {
   block-size: 8rem;
 }
+
+/* ============================================================================
+   Shadow-API report — /ade/dashboard/connectors/shadow (CDG-1.6, #5957)
+   Filters (two selects + the section chips), a stale-inventory alert per
+   failing connector, and one section table with row actions.
+   ========================================================================== */
+
+.shd-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.shd-filters__selects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.shd-filters__selects > * {
+  min-inline-size: 14rem;
+}
+
+.shd-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.shd-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.shd-section__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.shd-section__desc,
+.shd-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.shd-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.shd-empty__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.shd-empty__body {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.shd-table-wrap {
+  min-inline-size: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.shd-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.shd-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.shd-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.shd-table tr:last-child td {
+  border-block-end: 0;
+}
+
+.shd-name {
+  display: block;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+a.shd-name,
+.shd-match__name {
+  color: var(--accent-fg);
+  text-underline-offset: 0.2em;
+}
+
+a.shd-name:hover,
+.shd-match__name:hover {
+  text-decoration: underline;
+}
+
+.shd-meta {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.shd-mono {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.shd-match {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shd-actions {
+  white-space: nowrap;
+  text-align: end;
+}
+
+.shd-actions > * + * {
+  margin-inline-start: var(--space-1);
+}
+
+.shd-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.shd-candidate {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.shd-candidate:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.shd-candidate__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}

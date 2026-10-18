@@ -1133,6 +1133,18 @@
       "tags": [
         "legacy"
       ]
+    },
+    {
+      "id": "shadow-apis",
+      "route": "/ade/dashboard/connectors/shadow",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "fixture:hive-a11y/shadow-apis.html"
+    },
+    {
+      "id": "shadow-apis-link",
+      "route": "/ade/dashboard/connectors/shadow",
+      "waitFor": "[data-testid=\"shadow-link-dialog\"]",
+      "data": "fixture:hive-a11y/shadow-apis-link.html"
     }
   ]
 }

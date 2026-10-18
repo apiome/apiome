@@ -183,6 +183,7 @@ class FakeConnectorStore:
             "deployment": dict(candidate.deployment or {}),
             "last_seen_at": _now(),
         }
+        inserted = existing is None
         if existing is None:
             existing = {
                 "id": str(uuid.uuid4()),
@@ -200,7 +201,7 @@ class FakeConnectorStore:
             if existing["status"] != ITEM_IGNORED:
                 existing["status"] = ITEM_IMPORTED if existing["project_id"] else ITEM_DISCOVERED
         existing.update(seen)
-        return dict(existing)
+        return {**existing, "inserted": inserted}
 
     def mark_missing_items(self, db, connector_id, seen_remote_ids: Iterable[str]):
         seen = set(seen_remote_ids)

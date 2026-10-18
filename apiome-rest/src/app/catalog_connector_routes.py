@@ -10,7 +10,16 @@ POST   /v1/tenants/{t}/connectors/{id}/sync
 GET    /v1/tenants/{t}/connectors/{id}/items
 GET    /v1/tenants/{t}/connectors/{id}/runs
 PUT    /v1/tenants/{t}/connectors/{id}/credentials
+POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/link
+POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/ignore
+POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/unignore
+POST   /v1/tenants/{t}/connectors/{id}/items/{itemId}/import
 ```
+
+**Item actions** (CDG-1.6) are what a person does with a shadow-API report row: link it to a
+catalog item or Project, ignore it with a reason (kept, and the row reappears when the gateway
+serves it on another host), stop ignoring it, or import it now. Nothing is linked without one of
+these calls.
 
 **Scoped by the authenticated tenant.** As on every ``/v1/tenants/{t}`` surface, the tenant in
 the URL is informational; the caller's tenant scopes every read and write, so another tenant's
@@ -48,6 +57,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from . import catalog_connector_store as store
+from . import shadow_api_store
 from .auth import validate_authentication
 from .catalog_connector_sync import (
     check_connector_connection,
@@ -71,6 +81,8 @@ from .catalog_connectors import (
     ConnectorCredentialsOut,
     ConnectorCredentialsPut,
     ConnectorError,
+    ConnectorItemIgnore,
+    ConnectorItemLink,
     ConnectorItemOut,
     ConnectorItemPage,
     ConnectorListResponse,
@@ -93,6 +105,9 @@ __all__ = [
     "AUDIT_CREATE",
     "AUDIT_CREDENTIALS",
     "AUDIT_DELETE",
+    "AUDIT_ITEM_IGNORED",
+    "AUDIT_ITEM_LINKED",
+    "AUDIT_ITEM_UNIGNORED",
     "AUDIT_UPDATE",
     "router",
 ]
@@ -104,6 +119,9 @@ AUDIT_CREATE = "repository.connector.created"
 AUDIT_UPDATE = "repository.connector.updated"
 AUDIT_DELETE = "repository.connector.deleted"
 AUDIT_CREDENTIALS = "repository.connector.credentials_replaced"
+AUDIT_ITEM_LINKED = "repository.connector.item_linked"
+AUDIT_ITEM_IGNORED = "repository.connector.item_ignored"
+AUDIT_ITEM_UNIGNORED = "repository.connector.item_unignored"
 
 _BASE = "/{tenant_slug}/connectors"
 
@@ -179,6 +197,9 @@ def _item_out(row: Mapping[str, Any]) -> ConnectorItemOut:
         first_seen_at=_iso(row.get("first_seen_at")),
         last_seen_at=_iso(row.get("last_seen_at")),
         deployment=dict(row.get("deployment") or {}),
+        ignored_reason=row.get("ignored_reason"),
+        ignored_at=_iso(row.get("ignored_at")),
+        linked_at=_iso(row.get("linked_at")),
     )
 
 
@@ -507,3 +528,158 @@ async def put_connector_credentials(
         fields=fields,
         replaced_at=_iso(row.get("replaced_at")),
     )
+
+
+# ---------------------------------------------------------------------------------------
+# Item actions (CDG-1.6: the shadow-API report's "Link to item" / "Ignore" / "Import")
+# ---------------------------------------------------------------------------------------
+
+
+def _require_item(tenant_id: str, connector_id: UUID, item_id: UUID) -> Dict[str, Any]:
+    """The connector's inventory row, or a 404."""
+    row = shadow_api_store.get_item(db, tenant_id, str(connector_id), str(item_id))
+    if row is None:
+        raise _refusal(ConnectorError(CODE_NOT_FOUND, "Connector item not found."))
+    return row
+
+
+def _reload_item(tenant_id: str, connector_id: UUID, item_id: UUID) -> ConnectorItemOut:
+    return _item_out(_require_item(tenant_id, connector_id, item_id))
+
+
+@router.post(
+    _BASE + "/{connector_id}/items/{item_id}/link", response_model=ConnectorItemOut, response_model_by_alias=True
+)
+async def link_connector_item(
+    tenant_slug: str,
+    connector_id: UUID,
+    item_id: UUID,
+    body: ConnectorItemLink,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConnectorItemOut:
+    """Link an inventory row to a catalog item or Project (``imports:edit``).
+
+    The row becomes ``imported``, and the gateway's current revision becomes its freshness anchor,
+    so drift is measured from now. The target must be a live catalog item or Project of the tenant
+    (404 otherwise). Linking is always a person's decision: the shadow-API report only suggests.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
+    _require_connector(tenant_id, connector_id)
+    item = _require_item(tenant_id, connector_id, item_id)
+    target = db.get_project_by_id(str(body.catalog_item_id), tenant_id)
+    if not target or target.get("deleted_at"):
+        raise _refusal(ConnectorError(CODE_NOT_FOUND, "Catalog item or Project not found."))
+    shadow_api_store.link_item(db, str(item_id), project_id=str(body.catalog_item_id), actor_id=actor_id)
+    _audit(
+        tenant_id,
+        AUDIT_ITEM_LINKED,
+        actor_id,
+        {
+            "connectorId": str(connector_id),
+            "itemId": str(item_id),
+            "remoteId": item.get("remote_id"),
+            "catalogItemId": str(body.catalog_item_id),
+            "previousCatalogItemId": _text(item.get("project_id")),
+        },
+    )
+    return _reload_item(tenant_id, connector_id, item_id)
+
+
+@router.post(
+    _BASE + "/{connector_id}/items/{item_id}/ignore", response_model=ConnectorItemOut, response_model_by_alias=True
+)
+async def ignore_connector_item(
+    tenant_slug: str,
+    connector_id: UUID,
+    item_id: UUID,
+    body: ConnectorItemIgnore,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConnectorItemOut:
+    """Ignore an inventory row, with a reason (``imports:edit``).
+
+    An ignored row is never fetched by a sync and leaves the report's Shadow and Possible-matches
+    sections. Its reason is kept, with the hosts and base path it had: when the gateway serves it
+    somewhere else, the report shows it again with the reason beside it.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
+    _require_connector(tenant_id, connector_id)
+    item = _require_item(tenant_id, connector_id, item_id)
+    reason = body.reason.strip()
+    if not reason:
+        raise _refusal(ConnectorError(CODE_INVALID, "A reason is required to ignore an API."))
+    shadow_api_store.ignore_item(db, str(item_id), reason=reason, actor_id=actor_id)
+    _audit(
+        tenant_id,
+        AUDIT_ITEM_IGNORED,
+        actor_id,
+        {"connectorId": str(connector_id), "itemId": str(item_id), "remoteId": item.get("remote_id"), "reason": reason},
+    )
+    return _reload_item(tenant_id, connector_id, item_id)
+
+
+@router.post(
+    _BASE + "/{connector_id}/items/{item_id}/unignore", response_model=ConnectorItemOut, response_model_by_alias=True
+)
+async def unignore_connector_item(
+    tenant_slug: str,
+    connector_id: UUID,
+    item_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConnectorItemOut:
+    """Stop ignoring an inventory row (``imports:edit``); its reason is cleared."""
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
+    _require_connector(tenant_id, connector_id)
+    item = _require_item(tenant_id, connector_id, item_id)
+    shadow_api_store.unignore_item(db, str(item_id))
+    _audit(
+        tenant_id,
+        AUDIT_ITEM_UNIGNORED,
+        actor_id,
+        {"connectorId": str(connector_id), "itemId": str(item_id), "remoteId": item.get("remote_id")},
+    )
+    return _reload_item(tenant_id, connector_id, item_id)
+
+
+@router.post(
+    _BASE + "/{connector_id}/items/{item_id}/import", response_model=ConnectorRunOut, response_model_by_alias=True
+)
+async def import_connector_item(
+    tenant_slug: str,
+    connector_id: UUID,
+    item_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConnectorRunOut:
+    """Import one inventory row now (``imports:edit``) and return the finished run.
+
+    The connector syncs with only this API selected: its inventory is listed as usual, and this
+    API is fetched and imported even when it is ignored, not newer than its last import, or a
+    revision the connector would not import by default. A kind with no source on this deployment,
+    or a sync already running, is a 409.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
+    connector = _require_connector(tenant_id, connector_id)
+    item = _require_item(tenant_id, connector_id, item_id)
+    try:
+        result = await asyncio.to_thread(
+            run_connector_sync,
+            db,
+            connector,
+            trigger=TRIGGER_MANUAL,
+            actor_id=actor_id,
+            only_remote_ids=[str(item["remote_id"])],
+        )
+    except ConnectorError as exc:
+        raise _refusal(exc) from exc
+    rows = store.list_runs(db, tenant_id, str(connector_id), limit=1, offset=0)
+    run = next((r for r in rows if str(r["id"]) == result.run_id), None)
+    if run is None:
+        raise HTTPException(status_code=500, detail="The run finished but could not be read back.")
+    return _run_out(run)

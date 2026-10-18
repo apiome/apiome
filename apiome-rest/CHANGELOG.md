@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.364.0] - 2026-10-18
+
+### Added
+- **Shadow-API report (#5957, CDG-1.6)**: `GET /v1/tenants/{t}/shadow-report?connector=&environment=` (`imports:view`)
+  compares connector inventory with the catalog (`app.shadow_api_report`):
+  - **shadow** — gateway APIs with no catalog item and no plausible match;
+  - **possibleMatches** — with the best match's `tier` (`remote-id` 1.0, `host` 0.9 with base path / 0.7 host only,
+    `title` up to 0.5), `confidence`, `reason` and up to three alternatives; nothing is linked automatically;
+  - **undeployed** — catalog items and published Projects with an HTTP server that no connected gateway serves;
+  - **drift** — linked APIs whose deployed revision the catalog does not have (RAR-2.2 comparator; a gateway with no
+    revision signal is never reported);
+  - **ignored** — with their reasons. An ignored item whose hosts or base path change reappears with its reason.
+  - A `failing` connector is listed under `stale` with the time of its last successful run.
+- Connector item actions (`imports:edit`, audited as `repository.connector.item_*`):
+  `POST /v1/tenants/{t}/connectors/{id}/items/{itemId}/link` (`{"catalogItemId"}`), `…/ignore` (`{"reason"}`, kept
+  with a snapshot of the hosts and base path), `…/unignore`, and `…/import` (syncs just that item, past the ignore,
+  `should_import` and newer-than gates, and returns the run). `ConnectorItemOut` gains `ignoredReason`, `ignoredAt`
+  and `linkedAt`.
+- `catalog.connector.shadow_api_detected`: a sync that sees an API for the first time that matches nothing in the
+  catalog notifies the tenant's push-webhook channels (Slack-shaped for Slack), at most once per connector per hour.
+  Owner-team routing follows with CDG-2.3.
+- V283: ignore/link columns on `catalog_connector_items` and `catalog_connector_notification_throttle`.
+
+The OpenAPI version moves to 1.228.0.
+
 ## [1.363.0] - 2026-10-18
 
 ### Added

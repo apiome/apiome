@@ -1,7 +1,7 @@
 ---
 title: "apiome diff"
 description: "Diff a local OpenAPI file against a published project version."
-sidebar_position: 10
+sidebar_position: 11
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

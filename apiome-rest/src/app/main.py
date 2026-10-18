@@ -16,12 +16,10 @@ from .access_routes import router as access_router
 from .agent_key_routes import router as agent_key_router
 from .agent_toolset_routes import router as agent_toolset_router
 from .agent_usage_routes import router as agent_usage_router
+from .api_check_suite_routes import router as api_check_suite_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
-from .signup_policy_routes import router as signup_policy_router
-from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
-from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
@@ -33,22 +31,18 @@ from .change_report_template_routes import router as change_report_template_rout
 from .classes_routes import router as classes_router
 from .classified_diff_routes import router as classified_diff_router
 from .comment_routes import router as comment_router
-from .draft_binding_routes import router as draft_binding_router
-from .provider_check_routes import router as provider_check_router
-from .spec_sync_routes import router as spec_sync_router
-from .api_check_suite_routes import router as api_check_suite_router
-from .notification_routes import router as notification_router
-from .review_routes import router as review_router
-from .consumer_contract_routes import router as consumer_contract_router
 from .compatibility_routes import router as compatibility_router
 from .config import settings
-from .contract_suite_routes import router as contract_suite_router
+from .consumer_contract_routes import router as consumer_contract_router
+from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
+from .contract_suite_routes import router as contract_suite_router
 from .data_routes import router as data_router
 from .database import Database, db
 from .deploy_gate_routes import router as deploy_gate_router
 from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
 from .domains_routes import router as domains_router
+from .draft_binding_routes import router as draft_binding_router
 from .draft_lock_routes import router as draft_lock_router
 from .export_job_routes import router as export_job_router
 from .export_mock_routes import router as export_mock_router
@@ -60,6 +54,7 @@ from .identity_routes import router as identity_router
 from .import_sources_routes import router as import_sources_router
 from .jsonschema_generator import generate_class_jsonschema_spec, generate_jsonschema_spec
 from .license_routes import router as license_router
+from .linked_account_token_crypto import validate_linked_account_token_keys
 from .lint_routes import decisions_router as lint_decisions_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
@@ -69,7 +64,6 @@ from .mcp_badge_routes import router as mcp_badge_router
 from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 from .mcp_catalog_routes import mcp_endpoints_router
 from .mcp_collection_routes import router as mcp_collection_router
-from .linked_account_token_crypto import validate_linked_account_token_keys
 from .mcp_credential_crypto import validate_credential_encryption_keys
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_feed_routes import router as mcp_feed_router
@@ -83,11 +77,11 @@ from .mcp_trust_baseline_routes import router as mcp_trust_baseline_router
 from .migration_plans_routes import router as migration_plans_router
 from .mock_routes import data_router as mock_data_router
 from .mock_routes import router as mock_router
+from .notification_routes import router as notification_router
 from .observability import ObservabilityMiddleware, build_error_envelope
 from .onboarding_routes import router as onboarding_router
 from .openapi_enrichment import enrich_openapi_spec
 from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
-from .spec_snapshot import build_live_spec
 from .ops_routes import health_router, ops_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -95,30 +89,23 @@ from .primitives_routes import router as primitives_router
 from .project_tags_routes import router as project_tags_router
 from .projects_routes import router as projects_router
 from .properties_routes import router as properties_router
+from .provider_check_routes import router as provider_check_router
 from .provider_verification_routes import router as provider_verification_router
 from .public_types_routes import router as public_types_router
 from .push_webhook_crypto import validate_webhook_signing_key
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
 from .quality_policy_routes import router as quality_policy_router
-from .verification_policy_routes import router as verification_policy_router
-from .scrub_policy_routes import router as scrub_policy_router
-from .consumption_index_routes import router as consumption_index_router
-from .scoped_catalog_routes import router as scoped_catalog_router
-from .workspace_custom_action_routes import router as workspace_custom_action_router
-from .workspace_property_routes import router as workspace_property_router
-from .workspace_summary_routes import router as workspace_summary_router
 from .rate_limit import RateLimitMiddleware
 from .registry_audit_routes import router as registry_audit_router
 from .repository_webhook_routes import router as repository_webhook_router
-from .slate_agent_outputs_routes import router as slate_agent_outputs_router
-from .slate_cache_routes import router as slate_cache_router
-from .slate_domains_routes import router as slate_domains_router
-from .slate_functions_routes import router as slate_functions_router
-from .slate_git_preview_routes import router as slate_git_preview_router
-from .slate_insights_routes import router as slate_insights_router
-from .slate_routes import router as slate_router
-from .slate_security_routes import router as slate_security_router
+from .review_routes import router as review_router
+from .schema_suite_routes import router as schema_suite_router
+from .schema_synthesis_routes import router as schema_synthesis_router
+from .schema_targets_routes import router as schema_targets_router
+from .schema_validation_routes import router as schema_validation_router
+from .scoped_catalog_routes import router as scoped_catalog_router
+from .scrub_policy_routes import router as scrub_policy_router
 from .sdk_generation_settings_routes import router as sdk_generation_settings_router
 from .sdk_generation_settings_routes import (
     tenant_router as sdk_generation_settings_tenant_router,
@@ -127,32 +114,46 @@ from .sdk_git_delivery_routes import router as sdk_git_delivery_router
 from .sdk_kit_routes import router as sdk_kit_router
 from .sdk_publish_routes import router as sdk_publish_router
 from .sdk_publish_routes import tenant_router as sdk_publish_tenant_router
-from .sdk_registry_credentials import validate_registry_credential_keys
 from .sdk_regen_routes import router as sdk_regen_router
+from .sdk_registry_credentials import validate_registry_credential_keys
+from .shadow_api_routes import router as shadow_api_router
+from .signup_policy_routes import router as signup_policy_router
+from .slate_agent_outputs_routes import router as slate_agent_outputs_router
+from .slate_cache_routes import router as slate_cache_router
+from .slate_domains_routes import router as slate_domains_router
+from .slate_functions_routes import router as slate_functions_router
+from .slate_git_preview_routes import router as slate_git_preview_router
+from .slate_insights_routes import router as slate_insights_router
+from .slate_routes import router as slate_router
+from .slate_security_routes import router as slate_security_router
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
-from .schema_suite_routes import router as schema_suite_router
-from .schema_synthesis_routes import router as schema_synthesis_router
-from .schema_targets_routes import router as schema_targets_router
-from .schema_validation_routes import router as schema_validation_router
 from .spec_import_routes import router as spec_import_router
+from .spec_snapshot import build_live_spec
+from .spec_sync_routes import router as spec_sync_router
 from .style_guide_routes import router as style_guide_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
+from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
+from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .type_namespaces_routes import router as type_namespaces_router
 from .upstream_credential_routes import router as upstream_credential_router
 from .upstream_credentials import validate_upstream_credential_keys
+from .verification_evidence_routes import router as verification_evidence_router
+from .verification_policy_routes import router as verification_policy_router
+from .verification_schedule_routes import router as verification_schedule_router
+from .verification_target_routes import router as verification_target_router
 from .version_change_report_routes import router as version_change_report_router
 from .version_changelog_routes import router as version_changelog_router
 from .version_merge_routes import router as version_merge_router
 from .version_tags_routes import router as version_tags_router
-from .verification_evidence_routes import router as verification_evidence_router
-from .verification_schedule_routes import router as verification_schedule_router
-from .verification_target_routes import router as verification_target_router
 from .versions_routes import router as versions_router
 from .workflow_audit_routes import router as workflow_audit_router
+from .workspace_custom_action_routes import router as workspace_custom_action_router
+from .workspace_property_routes import router as workspace_property_router
+from .workspace_summary_routes import router as workspace_summary_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -165,7 +166,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.227.0",
+    version="1.228.0",
 )
 
 
@@ -335,6 +336,7 @@ app.include_router(sdk_regen_router)
 app.include_router(catalog_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.
 app.include_router(catalog_connector_router)
+app.include_router(shadow_api_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(contract_suite_router)

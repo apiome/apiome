@@ -13,7 +13,7 @@ Connectors are refreshed by the same engine as [Repositories](./repositories.mdx
 one quota, one audit trail.
 
 :::note
-Connectors are managed through the REST API for now; there is no screen for them yet. Each kind needs
+Connectors are registered through the REST API for now; there is no screen to manage them yet. **Govern → [Shadow APIs](../govern/shadow-apis.mdx)** shows what they found that the catalog does not describe. Each kind needs
 a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway) and
 [Azure API Management](#azure-api-management) sync today; the other gateway and URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
 `GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
@@ -104,7 +104,7 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 | --- | --- |
 | **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design) |
 | **imported** | Imported; `catalogItemId` is its catalog item |
-| **ignored** | Never fetched |
+| **ignored** | Never fetched. Ignored from [Shadow APIs](../govern/shadow-apis.mdx), with a reason |
 | **missing** | No longer in the inventory |
 
 ## What never changes on a refresh
@@ -411,6 +411,7 @@ repository audit export lists connector runs next to Git refreshes.
 | `GET …/connectors/{id}/items` | The inventory (`?status=` filters it), with each item's `deployment` |
 | `GET …/connectors/{id}/runs` | The runs, newest first |
 | `PUT …/connectors/{id}/credentials` | Store or replace the credential |
+| `POST …/connectors/{id}/items/{itemId}/link` · `ignore` · `unignore` · `import` | Act on one inventory item (see [Shadow APIs](../govern/shadow-apis.mdx)) |
 
 See the [API reference](../reference/api-reference.md) for the request and response shapes.
 
@@ -419,3 +420,4 @@ See the [API reference](../reference/api-reference.md) for the request and respo
 - [Catalog](./catalog.mdx): where synced APIs land, and the **Provenance** tab that names their
   connector.
 - [Repositories](./repositories.mdx): the Git side of the same refresh engine.
+- [Shadow APIs](../govern/shadow-apis.mdx): what your connectors serve that the catalog does not describe.

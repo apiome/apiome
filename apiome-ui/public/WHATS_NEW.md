@@ -61,6 +61,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome schema json <tenant>/<project>/<version>` downloads a published version's JSON Schema — the whole bundle or one class with `--class`, ready to pipe into a code generator; same `--format`, `--output` and `--expect-sha256` flags as `schema arazzo`, JSON by default
   - `apiome schema diff <tenant>/<project> <v1> <v2>` shows which paths, classes and properties changed between two published versions — a summary, a unified diff, JSON or SARIF; add `--exit-code` for a one-line CI check that fails when your pinned version has moved
   - `apiome browse open <tenant>/<project>/<version>` opens that page of the browse app in your browser — a tenant, a project, a version or a compare page; `--print-url` prints the link instead, for CI or SSH
+  - `apiome connectors shadow-report` prints the shadow-API report; `--fail-on shadow,drift` fails a CI job (exit 6) only for the categories you name
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:
@@ -106,6 +107,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Two-factor sign-in now locks for 15 minutes after 10 wrong codes in a row, and says so
   - Accounts that sign in with GitHub, GitLab, Microsoft or Google can now turn two-factor on, and are asked for their code after signing in with the provider
   - A locked-out user's two-factor can be reset by an administrator, or by a workspace owner for a member of their workspace only; the reset is audited and the user is prompted to set it up again
+- Governance:
+  - **Shadow APIs** (Govern): what your connected gateways serve that the catalog does not describe, with possible matches, drift and undeployed APIs — link, import or ignore each with a reason
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

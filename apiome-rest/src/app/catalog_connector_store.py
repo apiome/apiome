@@ -69,7 +69,8 @@ _CONNECTOR_COLUMNS = """
 _ITEM_COLUMNS = """
     i.id, i.connector_id, i.remote_id, i.remote_name, i.environment, i.hosts, i.base_path,
     i.remote_revision, i.remote_updated_at, i.imported_revision, i.imported_remote_updated_at,
-    i.imported_sha256, i.status, i.project_id, i.first_seen_at, i.last_seen_at, i.deployment
+    i.imported_sha256, i.status, i.project_id, i.first_seen_at, i.last_seen_at, i.deployment,
+    i.ignored_reason, i.ignored_at, i.linked_at
 """
 
 _RUN_COLUMNS = """
@@ -377,7 +378,8 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
 
     A ``missing`` row that reappears returns to ``imported`` when it has a catalog item and to
     ``discovered`` otherwise; ``ignored`` stays ignored. ``deployment`` (V282) is replaced with
-    what the latest sync saw.
+    what the latest sync saw. The returned row's ``inserted`` is true when this sync saw the API
+    for the first time (CDG-1.6 notifies new shadow APIs).
     """
     return _first(
         db.execute_query(
@@ -400,7 +402,7 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
                     WHEN i.project_id IS NOT NULL THEN %s
                     ELSE %s
                   END
-            RETURNING {_ITEM_COLUMNS}
+            RETURNING {_ITEM_COLUMNS}, (i.xmax = 0) AS inserted
             """,
             (
                 connector_id,
