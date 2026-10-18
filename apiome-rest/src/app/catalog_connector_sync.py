@@ -34,11 +34,12 @@ credential value has the value redacted before it is stored.
 
 **Sources** are registered per kind with :func:`register_connector_source`, optionally with a
 scope validator the routes run on every write (:func:`validate_connector_scope`). The Kong
-sources (``kong-konnect``, ``kong-admin``; CDG-1.2) and the AWS API Gateway source
-(``aws-apigateway``; CDG-1.3) and the Azure API Management source (``azure-apim``; CDG-1.4)
-register themselves from :mod:`app.kong_connector_source`, :mod:`app.aws_apigateway_connector_source`
-and :mod:`app.azure_apim_connector_source`, imported at the bottom of this module; the other
-gateway sources are CDG-1.5–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
+sources (``kong-konnect``, ``kong-admin``; CDG-1.2), the AWS API Gateway source (``aws-apigateway``;
+CDG-1.3), the Azure API Management source (``azure-apim``; CDG-1.4) and the Apigee source (``apigee``;
+CDG-1.5) register themselves from their modules (:mod:`app.kong_connector_source`,
+:mod:`app.aws_apigateway_connector_source`, :mod:`app.azure_apim_connector_source`,
+:mod:`app.apigee_connector_source`), imported at the bottom of this module; the remaining gateway source
+is CDG-1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
 is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
 
 **Findings.** A source may expose ``findings`` (a list of credential-free dicts with a ``code``)
@@ -52,6 +53,11 @@ way, as ``discovered`` items, unless the connector opts in) and may finish an im
 ``after_import(db, candidate, project_id)`` (Azure API Management turns the API's products into tags
 on the catalog item). A failing ``after_import`` never fails the import: it is counted on the run
 summary as ``postImportFailed``.
+
+**Shared catalog items** (CDG-1.5). Candidates whose ``deployment.catalogKey`` is the same are
+one API found in several places (an Apigee proxy deployed to ``test`` and ``prod``): they are
+separate inventory rows, each with its own environment and remote revision, but they import into
+one catalog item. A revision another row already imported is linked, not imported twice.
 
 **Change reports.** When a sync adds a revision to a catalog item that already had one, the
 default importer writes a change report between the two revisions
@@ -389,6 +395,10 @@ def import_document_as_catalog_item(
                 parent_version_id = str(parent["id"]) if parent else None
 
     revision = document.revision or candidate.revision
+    if existing_project_id and db.get_version_by_version_id(existing_project_id, revision_label(revision), tenant_id):
+        # CDG-1.5: another environment of the same API already imported this revision into the
+        # shared catalog item, so this row only needs linking to it.
+        return existing_project_id
     payload: Dict[str, Any] = {
         "tenant_id": tenant_id,
         "user_id": actor_id or connector.get("created_by"),
@@ -639,6 +649,21 @@ def run_connector_sync(
                 settled += 1
                 _after_import(db, source, candidate, str(row["project_id"]), summary)
                 continue
+            catalog_key = (candidate.deployment or {}).get("catalogKey")
+            if catalog_key and not row.get("project_id"):
+                # CDG-1.5: rows that are one API in several environments share one catalog item.
+                sibling = next(
+                    (
+                        other
+                        for other in rows.values()
+                        if other is not row
+                        and other.get("project_id")
+                        and (other.get("deployment") or {}).get("catalogKey") == catalog_key
+                    ),
+                    None,
+                )
+                if sibling is not None:
+                    row = {**row, "project_id": sibling["project_id"]}
             try:
                 project_id = importer(connector, candidate, document, row, actor_id)
             except Exception as exc:  # noqa: BLE001 - one bad document must not end the run
@@ -653,6 +678,7 @@ def run_connector_sync(
                 remote_updated_at=candidate.updated_at,
                 content_sha256=digest,
             )
+            rows[candidate.remote_id] = {**rows[candidate.remote_id], "project_id": project_id}
             summary["imported"] += 1
             settled += 1
             _after_import(db, source, candidate, project_id, summary)
@@ -792,4 +818,9 @@ def process_connector_refresh_sweep(db: Any) -> int:
 
 
 # Built-in sources register themselves on import (they subclass ConnectorRefreshSource above).
-from . import aws_apigateway_connector_source, azure_apim_connector_source, kong_connector_source  # noqa: E402,F401
+from . import (  # noqa: E402,F401
+    apigee_connector_source,
+    aws_apigateway_connector_source,
+    azure_apim_connector_source,
+    kong_connector_source,
+)

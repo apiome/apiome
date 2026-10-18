@@ -326,12 +326,12 @@ def test_runs_count_pulls_against_the_quota_window_and_are_audited(store, db, im
 
 
 def test_a_kind_without_a_source_cannot_sync_and_opens_no_run(store, db, importer):
-    other = store.add_connector(TENANT, kind="apigee")
+    other = store.add_connector(TENANT, kind="mcp-registry")
     with pytest.raises(ConnectorError) as info:
         _run(db, other, importer)
     assert info.value.code == CODE_KIND_UNSUPPORTED
     assert store.runs == {}
-    assert "apigee" not in syncable_kinds() and "kong-admin" in syncable_kinds()
+    assert "mcp-registry" not in syncable_kinds() and "kong-admin" in syncable_kinds()
 
 
 def test_one_run_at_a_time(store, db, importer, connector):
@@ -354,7 +354,7 @@ def test_sweep_syncs_due_connectors_and_skips_paused_and_unsupported(store, db, 
     monkeypatch.setattr("app.repository_refresh_quota.load_tenant_refresh_quota_tracker", lambda d: None)
     due = store.add_connector(TENANT, name="due")
     paused = store.add_connector(TENANT, name="paused", status="paused")
-    other = store.add_connector(TENANT, name="apigee", kind="apigee")
+    other = store.add_connector(TENANT, name="registry", kind="mcp-registry")
     FakeGatewaySource.inventory = [_api("orders")]
     assert process_connector_refresh_sweep(db) == 1
     synced = {r["connector_id"] for r in store.runs.values()}
@@ -441,6 +441,7 @@ def test_default_importer_adds_a_revision_to_a_live_catalog_item_only(monkeypatc
     }
     monkeypatch.setattr("app.import_source_pipeline.run_adapter_import_job", _fake_run)
     monkeypatch.setattr("app.database.db.get_project_by_id", lambda pid, tid: projects.get(pid))
+    monkeypatch.setattr("app.database.db.get_version_by_version_id", lambda pid, label, tid: None)
     connector = {"id": "c1", "tenant_id": TENANT, "kind": "kong-admin", "name": "P", "created_by": ACTOR}
     document = FetchedDocument(content=b"{}", filename="o.json")
     import_document_as_catalog_item(connector, _api("o"), document, {"project_id": "proj-1"}, ACTOR)
@@ -499,7 +500,8 @@ def test_default_importer_writes_a_change_report_when_it_adds_a_revision(monkeyp
     document = FetchedDocument(content=b"{}", filename="o.json", revision="r2")
     row = {"project_id": "proj-1", "imported_revision": "r1"}
     assert import_document_as_catalog_item(connector, _api("o", "r2"), document, row, None) == "proj-1"
-    assert looked_up == [("proj-1", "r1", TENANT)]
+    # The parent revision, then whether the new revision is already there (CDG-1.5).
+    assert looked_up == [("proj-1", "r1", TENANT), ("proj-1", "r2", TENANT)]
     assert reports == [
         {
             "tenant_id": TENANT,
@@ -514,3 +516,27 @@ def test_default_importer_writes_a_change_report_when_it_adds_a_revision(monkeyp
     reports.clear()
     import_document_as_catalog_item(connector, _api("o", "r2"), document, {}, ACTOR)
     assert reports == []
+
+
+
+def test_default_importer_links_a_revision_another_environment_already_imported(monkeypatch):
+    """CDG-1.5: one API in two environments shares a catalog item; a revision is imported once."""
+    ran: List[Any] = []
+
+    async def _fake_run(adapter, payload, **kwargs):
+        ran.append(payload)
+        return _completed("proj-1")
+
+    monkeypatch.setattr("app.import_source_pipeline.run_adapter_import_job", _fake_run)
+    monkeypatch.setattr(
+        "app.database.db.get_project_by_id", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
+    )
+    monkeypatch.setattr(
+        "app.database.db.get_version_by_version_id", lambda pid, label, tid: {"id": "v"} if label == "5" else None
+    )
+    connector = {"id": "c1", "tenant_id": TENANT, "kind": "apigee", "name": "P", "created_by": ACTOR}
+    document = FetchedDocument(content=b"PK", filename="o.zip", revision="5")
+    assert import_document_as_catalog_item(connector, _api("o", "5"), document, {"project_id": "proj-1"}, ACTOR) == (
+        "proj-1"
+    )
+    assert ran == []

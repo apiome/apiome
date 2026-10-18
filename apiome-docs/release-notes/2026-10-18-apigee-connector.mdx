@@ -1,0 +1,19 @@
+---
+slug: apigee-connector
+title: Sync Apigee proxies into the catalog
+description: An apigee connector keeps every deployed Apigee proxy in the catalog.
+authors: [apiome]
+---
+
+[Apigee connectors](/bring-in/connectors#apigee) now sync. Point one at an Apigee organization and
+every proxy becomes a catalog item, with each environment's deployed revision.
+
+{/* truncate */}
+
+- **Read-only access.** A service-account key or a workload identity federation configuration with
+  the **Apigee Read-only Admin** role is all it needs.
+- **One item per proxy.** A proxy deployed to `test` and `prod` at different revisions is one item
+  holding both revisions, each environment recorded with its own revision.
+- **Bundles, policies and conditions.** Each revision's bundle is imported like an uploaded one, so
+  flows, targets, security and quota policies and declared conditions are all there.
+- **Clear failures.** A missing permission or OAuth scope is named in the run's error.

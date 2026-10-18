@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.229.0
+  version: 1.230.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -73645,7 +73645,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         completed_at:
           anyOf:
           - type: string
@@ -75110,7 +75110,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75283,7 +75283,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75724,13 +75724,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -76431,8 +76431,11 @@ components:
             "subscriptionId": "<guid>", "resourceGroup": "…", "serviceName": "…",
             "authMethod": "client-secret"|"federated", "includeNonCurrentRevisions":
             false}` (no base URL; the client secret goes in `PUT …/credentials` as
-            `{"clientSecret": "…"}`). Kinds with a source check their scope on every
-            write, and some dry-run it.'
+            `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
+            ["test", …]}` (environments optional; the service-account key or workload-identity
+            configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            Kinds with a source check their scope on every write, and some dry-run
+            it.'
         refreshIntervalSeconds:
           anyOf:
           - type: integer
@@ -77020,8 +77023,11 @@ components:
             "subscriptionId": "<guid>", "resourceGroup": "…", "serviceName": "…",
             "authMethod": "client-secret"|"federated", "includeNonCurrentRevisions":
             false}` (no base URL; the client secret goes in `PUT …/credentials` as
-            `{"clientSecret": "…"}`). Kinds with a source check their scope on every
-            write, and some dry-run it.'
+            `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
+            ["test", …]}` (environments optional; the service-account key or workload-identity
+            configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            Kinds with a source check their scope on every write, and some dry-run
+            it.'
         refreshIntervalSeconds:
           anyOf:
           - type: integer
@@ -77972,7 +77978,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: ec64d564-7b86-488f-84ac-571021ad7ef1
+          example: 21e2d08a-f4b1-4fd3-b661-c12051e643ee
         method:
           type: string
           title: Method
@@ -80115,7 +80121,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         envelope:
           additionalProperties: true
           type: object
@@ -81495,7 +81501,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         browse_url:
           anyOf:
           - type: string
@@ -113189,7 +113195,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
       additionalProperties: false
       type: object
       required:
@@ -122617,7 +122623,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         detected_by:
           anyOf:
           - type: string
@@ -128196,13 +128202,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T16:58:39Z'
+          example: '2026-10-18T17:07:32Z'
         outcome:
           anyOf:
           - type: string
