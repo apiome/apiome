@@ -34,10 +34,6 @@ from .comment_routes import router as comment_router
 from .compatibility_routes import router as compatibility_router
 from .config import settings
 from .consumer_contract_routes import router as consumer_contract_router
-from .team_routes import router as team_router
-from .entity_owner_routes import router as entity_owner_router
-from .unowned_findings_routes import router as unowned_findings_router
-from .ownership_policy_routes import router as ownership_policy_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
@@ -48,12 +44,14 @@ from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
 from .domains_routes import router as domains_router
 from .draft_binding_routes import router as draft_binding_router
 from .draft_lock_routes import router as draft_lock_router
+from .entity_owner_routes import router as entity_owner_router
 from .export_job_routes import router as export_job_router
 from .export_mock_routes import router as export_mock_router
 from .export_routes import router as export_router
 from .export_routes import tenant_router as export_tenant_router
 from .format_matrix_routes import router as format_matrix_router
 from .git_import_routes import router as git_import_router
+from .graph_routes import router as graph_router
 from .identity_routes import router as identity_router
 from .import_sources_routes import router as import_sources_router
 from .jsonschema_generator import generate_class_jsonschema_spec, generate_jsonschema_spec
@@ -87,6 +85,7 @@ from .onboarding_routes import router as onboarding_router
 from .openapi_enrichment import enrich_openapi_spec
 from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
 from .ops_routes import health_router, ops_router
+from .ownership_policy_routes import router as ownership_policy_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
 from .primitives_routes import router as primitives_router
@@ -137,12 +136,14 @@ from .spec_import_routes import router as spec_import_router
 from .spec_snapshot import build_live_spec
 from .spec_sync_routes import router as spec_sync_router
 from .style_guide_routes import router as style_guide_router
+from .team_routes import router as team_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
 from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
 from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .type_namespaces_routes import router as type_namespaces_router
+from .unowned_findings_routes import router as unowned_findings_router
 from .upstream_credential_routes import router as upstream_credential_router
 from .upstream_credentials import validate_upstream_credential_keys
 from .verification_evidence_routes import router as verification_evidence_router
@@ -170,7 +171,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.236.0",
+    version="1.237.0",
 )
 
 
@@ -370,6 +371,7 @@ app.include_router(team_router)
 app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)
 app.include_router(ownership_policy_router)
+app.include_router(graph_router)
 app.include_router(comment_router)
 app.include_router(review_router)
 app.include_router(draft_binding_router)
@@ -524,6 +526,7 @@ _repository_refresh_task: asyncio.Task | None = None
 _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
+_catalog_graph_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
@@ -764,6 +767,34 @@ async def startup_event():
             except Exception:
                 log.exception("mcp catalog digest sweep")
 
+    async def _catalog_graph_sweep() -> None:
+        """Nightly re-derivation of every catalog graph edge family for every tenant (CDG-3.1).
+
+        Repairs what the producers' in-transaction hooks missed and stamps/purges stale edges. Runs
+        on a dedicated DB connection, which holds the sweep's advisory lock so replicas don't overlap.
+        """
+        from .catalog_graph import SWEEP_INTERVAL_SECONDS
+
+        log = logging.getLogger(__name__)
+        while True:
+            await asyncio.sleep(SWEEP_INTERVAL_SECONDS)
+            try:
+
+                def _run_graph() -> None:
+                    thread_db = Database()
+                    try:
+                        from .catalog_graph import sweep
+
+                        sweep(thread_db)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_graph)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("catalog graph sweep")
+
     async def _lint_waiver_expiry_sweep() -> None:
         """Periodically notify soon-expiring lint waivers (CLX-4.2, #4860).
 
@@ -978,6 +1009,8 @@ async def startup_event():
     _mcp_discovery_task = asyncio.create_task(_mcp_discovery_sweep())
     global _mcp_catalog_digest_task
     _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
+    global _catalog_graph_task
+    _catalog_graph_task = asyncio.create_task(_catalog_graph_sweep())
     global _lint_waiver_expiry_task
     _lint_waiver_expiry_task = asyncio.create_task(_lint_waiver_expiry_sweep())
     global _verification_schedule_task
@@ -1047,6 +1080,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _mcp_catalog_digest_task = None
+    global _catalog_graph_task
+    if _catalog_graph_task is not None:
+        _catalog_graph_task.cancel()
+        try:
+            await _catalog_graph_task
+        except asyncio.CancelledError:
+            pass
+        _catalog_graph_task = None
     global _lint_waiver_expiry_task
     if _lint_waiver_expiry_task is not None:
         _lint_waiver_expiry_task.cancel()

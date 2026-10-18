@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.373.0] - 2026-10-18
+
+### Added
+- **Catalog graph edge store (#5966, CDG-3.1)**: apiome-db V288 adds `catalog_edges` — `from`/`to` nodes, `edge_kind`,
+  an optional JSON `pointer`, `provenance` (`declared`, `derived`, `runtime`), `source_ref`, `first_seen_at`,
+  `last_seen_at`, `stale_since` and `evidence`, unique per `(tenant, from, to, edge_kind, pointer, provenance,
+  source_ref)` and indexed both ways plus by pointer. `app.catalog_graph.materialize` derives edges idempotently from
+  consumer contracts (`consumes`, one per pointer), conversions (`converted_from`), identity groups (`identity_of`),
+  MCP sources (`built_from`), connector items (`deployed_on`) and repository imports/bindings (`served_by`). Producers
+  re-derive their family inside their own transaction (under a savepoint) or right after it; a nightly sweep repairs
+  every family for every tenant. An edge whose source is gone keeps its `last_seen_at`, gains `stale_since` and is
+  purged after 30 days.
+- **Graph read (#5966)**: `GET /v1/graph/{tenant}/entities/{kind}/{id}/edges?direction=in|out&kind=&provenance=`
+  (`projects:view`), paged with `limit` (1–500, default 100) and `offset`, returning `edges` (each with `stale`),
+  `total` and `truncated`.
+
+### Changed
+- Retiring a consumer (`DELETE …/consumers/{consumer}`) now runs in one transaction with its graph update.
+
+The OpenAPI version moves to 1.237.0.
+
 ## [1.372.0] - 2026-10-18
 
 ### Added

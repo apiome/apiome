@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.236.0
+  version: 1.237.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -17062,6 +17062,142 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listownershipdriftresponse422.
+  /v1/graph/{tenant_slug}/entities/{kind}/{entity_id}/edges:
+    get:
+      tags:
+      - graph
+      summary: List an entity's graph edges
+      description: 'The entity''s edges in the catalog dependency graph. `direction`
+        is `out` (edges from the entity, the default) or `in` (edges to it); `kind`
+        and `provenance` filter and may repeat. `limit` is 1–500 (default 100); `truncated`
+        is true when more edges match. Stale edges come last with `stale: true`.
+
+
+        Requires `projects:view`.'
+      operationId: get_entity_edges_v1_graph__tenant_slug__entities__kind___entity_id__edges_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+          description: Kind schema.
+        description: Path parameter identifying the kind segment.
+      - name: entity_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Entity Id
+          description: Entity Id schema.
+        description: Path parameter identifying the entity id segment.
+      - name: direction
+        in: query
+        required: false
+        schema:
+          type: string
+          description: '`out` or `in`.'
+          default: out
+          title: Direction
+        description: '`out` or `in`.'
+      - name: kind
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Listanentitysgraphedgeskind schema.
+          - type: 'null'
+            description: Listanentitysgraphedgeskind schema.
+          description: Edge kinds to keep.
+          title: Kind
+        description: Edge kinds to keep.
+      - name: provenance
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Listanentitysgraphedgesprovenance schema.
+          - type: 'null'
+            description: Listanentitysgraphedgesprovenance schema.
+          description: Provenances to keep.
+          title: Provenance
+        description: Provenances to keep.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+          description: Offset schema.
+        description: Number of rows to skip before returning results.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listanentitysgraphedgesauthorization schema.
+          - type: 'null'
+            description: Listanentitysgraphedgesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listanentitysgraphedges Xapikey schema.
+          - type: 'null'
+            description: Listanentitysgraphedges Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list an entity's graph edges.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphEdgePage'
+                description: Response payload for listanentitysgraphedgesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listanentitysgraphedgesresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads:
     get:
       tags:
@@ -75231,7 +75367,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         completed_at:
           anyOf:
           - type: string
@@ -76696,7 +76832,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -76869,7 +77005,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -77310,13 +77446,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -79707,7 +79843,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 459919a9-6b41-437d-a912-715da3e04f06
+          example: 6d7cc82e-ca16-4774-9817-fd761147f45f
         method:
           type: string
           title: Method
@@ -81850,7 +81986,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         envelope:
           additionalProperties: true
           type: object
@@ -83230,7 +83366,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         browse_url:
           anyOf:
           - type: string
@@ -89518,6 +89654,143 @@ components:
       - expectedPolicyVersion
       title: GrantCapabilityRequest
       description: Grant one runtime capability to a function.
+    GraphEdge:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        from_kind:
+          type: string
+          title: From Kind
+          description: The source node's kind.
+          example: example
+        from_id:
+          type: string
+          title: From Id
+          description: From ID.
+          example: from_01h2xcejqtf3fz5y5j0v8k9m2p
+        to_kind:
+          type: string
+          title: To Kind
+          description: The target node's kind.
+          example: example
+        to_id:
+          type: string
+          title: To Id
+          description: To ID.
+          example: to_01h2xcejqtf3fz5y5j0v8k9m2p
+        edge_kind:
+          type: string
+          title: Edge Kind
+          description: '`consumes`, `converted_from`, `identity_of`, `built_from`,
+            `deployed_on`, …'
+          example: example
+        pointer:
+          anyOf:
+          - type: string
+            description: Graph Edge schema.
+          - type: 'null'
+            description: Graph Edge schema.
+          title: Pointer
+          description: The JSON pointer a `consumes` edge depends on.
+        provenance:
+          type: string
+          title: Provenance
+          description: '`declared`, `derived` or `runtime`.'
+          example: example
+        source_ref:
+          type: string
+          title: Source Ref
+          description: The row the edge was derived from, e.g. `consumer_contract:<id>`.
+          example: example
+        evidence:
+          additionalProperties: true
+          type: object
+          title: Evidence
+          description: Evidence.
+        first_seen_at:
+          anyOf:
+          - type: string
+            description: Graph Edge schema.
+          - type: 'null'
+            description: Graph Edge schema.
+          title: First Seen At
+          description: First Seen At timestamp (ISO 8601).
+        last_seen_at:
+          anyOf:
+          - type: string
+            description: Graph Edge schema.
+          - type: 'null'
+            description: Graph Edge schema.
+          title: Last Seen At
+          description: Last Seen At timestamp (ISO 8601).
+        stale_since:
+          anyOf:
+          - type: string
+            description: Graph Edge schema.
+          - type: 'null'
+            description: Graph Edge schema.
+          title: Stale Since
+          description: Stale Since.
+        stale:
+          type: boolean
+          title: Stale
+          description: True when the edge's source is gone; purged 30 days after `stale_since`.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - from_kind
+      - from_id
+      - to_kind
+      - to_id
+      - edge_kind
+      - provenance
+      - source_ref
+      - stale
+      title: GraphEdge
+      description: One edge.
+    GraphEdgePage:
+      properties:
+        edges:
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+          type: array
+          title: Edges
+          description: Edges.
+          maxItems: 1000
+        total:
+          type: integer
+          title: Total
+          description: How many edges match the filters.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when more edges match than this page holds.
+          example: false
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+      additionalProperties: false
+      type: object
+      required:
+      - total
+      - truncated
+      - limit
+      - offset
+      title: GraphEdgePage
+      description: One page of an entity's edges.
     HTTPValidationError:
       properties:
         detail:
@@ -115575,7 +115848,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
       additionalProperties: false
       type: object
       required:
@@ -125071,7 +125344,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         detected_by:
           anyOf:
           - type: string
@@ -131148,13 +131421,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T21:50:45Z'
+          example: '2026-10-18T22:16:40Z'
         outcome:
           anyOf:
           - type: string

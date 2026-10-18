@@ -521,6 +521,55 @@ class Database:
             conn.autocommit = prev_autocommit
 
     @staticmethod
+    def _materialize_graph(cursor: Any, tenant_id: Optional[str], families: Sequence[str]) -> None:
+        """Re-derive catalog-graph edge families inside the caller's transaction (CDG-3.1, #5966).
+
+        A producer that writes a graph source row (a consumer contract, a conversion, a repository
+        binding) calls this before it commits, so its edges change with it. The work runs under a
+        savepoint: a graph fault is logged and rolled back to the savepoint and never fails the
+        producer's own write — the nightly sweep repairs what it missed.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant whose edges to re-derive.
+            families: The edge families the write affects (``consumes``, ``served_by``, …).
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return
+        from .catalog_graph import materialize_on_cursor
+
+        cursor.execute("SAVEPOINT catalog_graph")
+        try:
+            materialize_on_cursor(cursor, str(tenant_id), families)
+            cursor.execute("RELEASE SAVEPOINT catalog_graph")
+        except Exception:
+            cursor.execute("ROLLBACK TO SAVEPOINT catalog_graph")
+            _logger.warning(
+                "catalog graph materialize failed tenant_id=%s families=%s", tenant_id, families, exc_info=True
+            )
+
+    def refresh_graph(self, tenant_id: Optional[str], families: Sequence[str], *, trigger: str) -> None:
+        """Re-derive edge families in a transaction of their own, never raising (CDG-3.1).
+
+        For producers whose writes are single auto-committed statements (identity links, MCP
+        sources) and for the connector sync, which spans many writes: their edges follow right
+        after the write rather than inside it.
+
+        Args:
+            tenant_id: The tenant.
+            families: The edge families.
+            trigger: Why, for the log.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return
+        try:
+            from .catalog_graph import materialize
+
+            materialize(self, str(tenant_id), trigger, families)
+        except Exception:
+            _logger.warning("catalog graph refresh failed tenant_id=%s trigger=%s", tenant_id, trigger, exc_info=True)
+
+    @staticmethod
     def _insert_notifications(
         cursor: Any,
         *,
@@ -14359,6 +14408,8 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(query, params)
                 result = cursor.fetchone()
+                # CDG-3.1: the converted project's `converted_from` edge.
+                self._materialize_graph(cursor, tenant_id, ("converted_from",))
                 conn.commit()
                 return result
         except Exception as e:
@@ -14742,7 +14793,17 @@ class Database:
                 (group_id, tenant_id),
             )
 
-    def link_identity_projects(
+    def link_identity_projects(self, *, tenant_id: str, **kwargs: Any) -> Optional[str]:
+        """Link two projects into the same identity group; return the resulting group id.
+
+        See :meth:`_link_identity_projects_once`. Afterwards the tenant's ``identity_of`` edges are
+        re-derived (CDG-3.1); the link's own statements commit one by one, so the edges follow them.
+        """
+        group_id = self._link_identity_projects_once(tenant_id=tenant_id, **kwargs)
+        self.refresh_graph(tenant_id, ("identity_of",), trigger="identity_link")
+        return group_id
+
+    def _link_identity_projects_once(
         self,
         *,
         tenant_id: str,
@@ -14799,7 +14860,15 @@ class Database:
             )
         return group_id
 
-    def unlink_identity_projects(
+    def unlink_identity_projects(self, *, tenant_id: str, **kwargs: Any) -> None:
+        """Remove a project from a shared identity group, then re-derive ``identity_of`` edges.
+
+        See :meth:`_unlink_identity_projects_once` (CDG-3.1).
+        """
+        self._unlink_identity_projects_once(tenant_id=tenant_id, **kwargs)
+        self.refresh_graph(tenant_id, ("identity_of",), trigger="identity_unlink")
+
+    def _unlink_identity_projects_once(
         self,
         *,
         tenant_id: str,
@@ -14843,7 +14912,7 @@ class Database:
                 continue
             before_a = self.get_identity_group_id_for_project(tenant_id, source_id)
             before_b = self.get_identity_group_id_for_project(tenant_id, target_id)
-            self.link_identity_projects(
+            self._link_identity_projects_once(
                 tenant_id=tenant_id,
                 project_id_a=source_id,
                 project_id_b=target_id,
@@ -14854,6 +14923,9 @@ class Database:
             after_b = self.get_identity_group_id_for_project(tenant_id, target_id)
             if (not before_a and after_a) or (not before_b and after_b):
                 seeded += 1
+        if seeded:
+            # CDG-3.1: one re-derivation for the whole back-fill, not one per pair.
+            self.refresh_graph(tenant_id, ("identity_of",), trigger="identity_seed")
         return seeded
 
     def get_project_identity_profile(
@@ -20504,6 +20576,8 @@ class Database:
             self._release_bindings_for_repository(
                 cursor, tenant_id=tenant_id, repository_id=repository_id
             )
+            # CDG-3.1: specs and bindings that pointed at this repository stop serving.
+            self._materialize_graph(cursor, tenant_id, ("served_by",))
             return True
 
         return bool(self._guarded_tx(work))
@@ -23740,7 +23814,17 @@ class Database:
         retired_at, created_at, updated_at
     """
 
-    def create_mcp_endpoint_source(
+    def create_mcp_endpoint_source(self, *, tenant_id: str, **kwargs: Any) -> Optional[Dict[str, Any]]:
+        """Link a source artifact to an MCP endpoint, then re-derive ``built_from`` edges.
+
+        See :meth:`_create_mcp_endpoint_source_once` (CDG-3.1).
+        """
+        row = self._create_mcp_endpoint_source_once(tenant_id=tenant_id, **kwargs)
+        if row:
+            self.refresh_graph(tenant_id, ("built_from",), trigger="mcp_source_link")
+        return row
+
+    def _create_mcp_endpoint_source_once(
         self,
         *,
         tenant_id: str,
@@ -23880,10 +23964,13 @@ class Database:
             UPDATE apiome.mcp_endpoint_sources
             SET retired_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s::uuid AND endpoint_id = %s::uuid AND retired_at IS NULL
-            RETURNING id
+            RETURNING id, tenant_id::text AS tenant_id
             """,
             (source_id, endpoint_id),
         )
+        if rows:
+            # CDG-3.1: a retired source no longer backs a `built_from` edge.
+            self.refresh_graph(rows[0].get("tenant_id"), ("built_from",), trigger="mcp_source_retire")
         return bool(rows)
 
     # --- MCP declared manifests (FMT-1.7, #5418) ---------------------------------------------
@@ -30537,21 +30624,29 @@ class Database:
         """
         if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
             return False
-        affected = self._execute_write(
-            """
-            UPDATE apiome.consumer
-            SET deleted_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP,
-                updated_by = %s::uuid
-            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
-            """,
-            (
-                deleted_by if deleted_by and is_uuid_string(str(deleted_by)) else None,
-                consumer_id,
-                tenant_id,
-            ),
-        )
-        return affected > 0
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.consumer
+                SET deleted_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = %s::uuid
+                WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+                """,
+                (
+                    deleted_by if deleted_by and is_uuid_string(str(deleted_by)) else None,
+                    consumer_id,
+                    tenant_id,
+                ),
+            )
+            if not cursor.rowcount:
+                return None
+            # CDG-3.1: a retired consumer's `consumes` edges go stale with it.
+            self._materialize_graph(cursor, tenant_id, ("consumes",))
+            return True
+
+        return bool(self._guarded_tx(work))
 
     def insert_consumer_contract(
         self,
@@ -30661,6 +30756,9 @@ class Database:
                 )
                 cursor.execute(query, params)
                 row = cursor.fetchone()
+                if row:
+                    # CDG-3.1: the consumer's `consumes` edges follow its current contract.
+                    self._materialize_graph(cursor, tenant_id, ("consumes",))
             conn.commit()
             return row
         except Exception:
@@ -37189,6 +37287,8 @@ class Database:
                     "source_digest": source_digest,
                 },
             )
+            # CDG-3.1: the project's `served_by` repository edge.
+            self._materialize_graph(cursor, tenant_id, ("served_by",))
             return {"binding_id": binding_id, "released_binding_id": released_id}
 
         return self._guarded_tx(work)
@@ -37260,6 +37360,7 @@ class Database:
                     "candidates_superseded": superseded,
                 },
             )
+            self._materialize_graph(cursor, tenant_id, ("served_by",))
             return True
 
         return bool(self._guarded_tx(work))

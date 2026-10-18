@@ -948,6 +948,10 @@ def run_connector_sync(
         from .shadow_api_notifications import notify_new_shadow_apis
 
         notify_new_shadow_apis(db, connector, new_rows)
+    # CDG-3.1: re-derive this tenant's `deployed_on` edges from the items the run just recorded.
+    refresh_graph = getattr(db, "refresh_graph", None)
+    if callable(refresh_graph):
+        refresh_graph(tenant_id, ("deployed_on",), trigger="connector_sync")
     _logger.info(
         "connector sync finished connector_id=%s run_id=%s status=%s pulls=%s imported=%s "
         "missing=%s error_class=%s http_status=%s",
