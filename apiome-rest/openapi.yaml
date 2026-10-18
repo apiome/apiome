@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.231.0
+  version: 1.232.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -15749,6 +15749,440 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for importa pactfileintoaconsumercontractresponse422.
+  /v1/tenants/{tenant_slug}/teams:
+    get:
+      tags:
+      - teams
+      summary: List teams
+      description: 'Every live team of the tenant, by name, with its owner links and
+        member count. Deleted teams are not listed.
+
+
+        Requires `teams:view`.'
+      operationId: list_tenant_teams_v1_tenants__tenant_slug__teams_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listteamsauthorization schema.
+          - type: 'null'
+            description: Listteamsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listteams Xapikey schema.
+          - type: 'null'
+            description: Listteams Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list teams.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamListResponse'
+                description: Response payload for listteamsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listteamsresponse422.
+    post:
+      tags:
+      - teams
+      summary: Create a team
+      description: 'Create a team. The `slug` is derived from `name` when omitted
+        and cannot be changed afterwards — gateway tags (`owner:<slug>`) and the `x-apiome-owner`
+        extension name teams by it. `chat_url`, `oncall_url` and `docs_url` must be
+        absolute http(s) URLs.
+
+
+        Audited as `team.create`. Requires `teams:create`.'
+      operationId: create_tenant_team_v1_tenants__tenant_slug__teams_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createateamauthorization schema.
+          - type: 'null'
+            description: Createateamauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createateam Xapikey schema.
+          - type: 'null'
+            description: Createateam Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamInput'
+              description: Request body for createateamrequest.
+        description: Request body for create a team.
+      responses:
+        '201':
+          description: Successful response for create a team.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamRecord'
+                description: Response payload for createateamresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for createateamresponse422.
+  /v1/tenants/{tenant_slug}/teams/{team_slug}:
+    get:
+      tags:
+      - teams
+      summary: Read a team
+      description: 'One live team with its members, leads first.
+
+
+        Requires `teams:view`.'
+      operationId: read_tenant_team_v1_tenants__tenant_slug__teams__team_slug__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: team_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Slug
+          description: Team Slug schema.
+        description: Path parameter identifying the team slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readateamauthorization schema.
+          - type: 'null'
+            description: Readateamauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readateam Xapikey schema.
+          - type: 'null'
+            description: Readateam Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a team.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamRecord'
+                description: Response payload for readateamresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readateamresponse422.
+    patch:
+      tags:
+      - teams
+      summary: Update a team
+      description: 'Change a team''s name, description or owner links. Omitted fields
+        are left alone; `null` clears an optional field. The slug is not updatable.
+
+
+        Audited as `team.update` with each changed field''s old and new value. Requires
+        `teams:edit`.'
+      operationId: patch_tenant_team_v1_tenants__tenant_slug__teams__team_slug__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: team_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Slug
+          description: Team Slug schema.
+        description: Path parameter identifying the team slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateateamauthorization schema.
+          - type: 'null'
+            description: Updateateamauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateateam Xapikey schema.
+          - type: 'null'
+            description: Updateateam Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamPatch'
+              description: Request body for updateateamrequest.
+        description: Request body for update a team.
+      responses:
+        '200':
+          description: Successful response for update a team.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamRecord'
+                description: Response payload for updateateamresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for updateateamresponse422.
+    delete:
+      tags:
+      - teams
+      summary: Delete a team
+      description: 'Soft-delete a team: it disappears from reads and its slug becomes
+        free. A team that still owns entities is refused with **409** `team-owns-entities`
+        and the `owned_count`, unless `reassign_to` names another live team to take
+        them over.
+
+
+        Audited as `team.delete`. Requires `teams:delete`.'
+      operationId: delete_tenant_team_v1_tenants__tenant_slug__teams__team_slug__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: team_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Slug
+          description: Team Slug schema.
+        description: Path parameter identifying the team slug segment.
+      - name: reassign_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Deleteateamreassignto schema.
+          - type: 'null'
+            description: Deleteateamreassignto schema.
+          description: Slug of the live team that takes over the deleted team's entities.
+          title: Reassign To
+        description: Slug of the live team that takes over the deleted team's entities.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteateamauthorization schema.
+          - type: 'null'
+            description: Deleteateamauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteateam Xapikey schema.
+          - type: 'null'
+            description: Deleteateam Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for delete a team.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDeleteResponse'
+                description: Response payload for deleteateamresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteateamresponse422.
+  /v1/tenants/{tenant_slug}/teams/{team_slug}/members:
+    put:
+      tags:
+      - teams
+      summary: Replace a team's members
+      description: 'Set the team''s complete membership; anyone not listed is removed,
+        and an empty list empties the team. Each member is a `user_id` with a `role`
+        of `lead` or `member`. Every user must be a member of the tenant — otherwise
+        **422** `team-member-not-in-tenant` names them and nothing changes. A user
+        who later leaves the tenant leaves every team automatically.
+
+
+        Audited as `team.members.replace` with who was added, removed or changed role.
+        Requires `teams:edit`.'
+      operationId: put_tenant_team_members_v1_tenants__tenant_slug__teams__team_slug__members_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: team_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Slug
+          description: Team Slug schema.
+        description: Path parameter identifying the team slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceateamsmembersauthorization schema.
+          - type: 'null'
+            description: Replaceateamsmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceateamsmembers Xapikey schema.
+          - type: 'null'
+            description: Replaceateamsmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamMembersInput'
+              description: Request body for replaceateamsmembersrequest.
+        description: Request body for replace a team's members.
+      responses:
+        '200':
+          description: Successful response for replace a team's members.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamRecord'
+                description: Response payload for replaceateamsmembersresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for replaceateamsmembersresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads:
     get:
       tags:
@@ -73840,7 +74274,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         completed_at:
           anyOf:
           - type: string
@@ -75305,7 +75739,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75478,7 +75912,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -75919,13 +76353,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -78308,7 +78742,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 5116f344-5796-426f-8726-e4ce53265561
+          example: f5a82262-a660-4f5b-81ed-1999885f0246
         method:
           type: string
           title: Method
@@ -80451,7 +80885,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         envelope:
           additionalProperties: true
           type: object
@@ -81831,7 +82265,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         browse_url:
           anyOf:
           - type: string
@@ -113714,7 +114148,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
       additionalProperties: false
       type: object
       required:
@@ -123142,7 +123576,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         detected_by:
           anyOf:
           - type: string
@@ -124614,6 +125048,380 @@ components:
         — a
 
         truthful "we cannot point to where this landed" rather than a guess.'
+    TeamDeleteResponse:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: The deleted team's slug (now free for reuse).
+          example: pet-store
+        owned_count:
+          type: integer
+          title: Owned Count
+          description: How many entities the team owned when it was deleted.
+          example: 1
+        reassigned_to:
+          anyOf:
+          - type: string
+            description: Response payload for team delete.
+          - type: 'null'
+            description: Response payload for team delete.
+          title: Reassigned To
+          description: The team that took over those entities, when any moved.
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - owned_count
+      title: TeamDeleteResponse
+      description: What a delete did.
+    TeamInput:
+      properties:
+        slug:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Slug
+          description: URL-safe identifier.
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Description
+          description: Free-text description.
+        contact_email:
+          anyOf:
+          - type: string
+            maxLength: 320
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Contact Email
+          description: Contact Email.
+        chat_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Chat Url
+          description: Chat URL.
+        oncall_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Oncall Url
+          description: Oncall URL.
+        docs_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Input schema.
+          - type: 'null'
+            description: Team Input schema.
+          title: Docs Url
+          description: Docs URL.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: TeamInput
+      description: "A team to create.\n\nAttributes:\n    slug: The handle; derived\
+        \ from ``name`` when omitted. Not editable afterwards.\n    name: The display\
+        \ name.\n    description: Free text about what the team does.\n    contact_email:\
+        \ A shared mailbox.\n    chat_url: Link to the team's chat channel.\n    oncall_url:\
+        \ Link to the team's on-call schedule.\n    docs_url: Link to the team's documentation."
+    TeamListResponse:
+      properties:
+        teams:
+          items:
+            $ref: '#/components/schemas/TeamRecord'
+          type: array
+          title: Teams
+          description: The teams, by name.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many teams were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: TeamListResponse
+      description: Every live team of the tenant.
+    TeamMember:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+          description: User ID.
+          example: user_01h2xcejqtf3fz5y5j0v8k9m2p
+        role:
+          type: string
+          enum:
+          - lead
+          - member
+          title: Role
+          description: Role.
+          example: lead
+        email:
+          anyOf:
+          - type: string
+            description: Team Member schema.
+          - type: 'null'
+            description: Team Member schema.
+          title: Email
+          description: Email.
+        name:
+          anyOf:
+          - type: string
+            description: Team Member schema.
+          - type: 'null'
+            description: Team Member schema.
+          title: Name
+          description: Human-readable name.
+        added_at:
+          anyOf:
+          - type: string
+            description: Team Member schema.
+          - type: 'null'
+            description: Team Member schema.
+          title: Added At
+          description: Added At timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - user_id
+      - role
+      title: TeamMember
+      description: One member of a team, as a read returns it.
+    TeamMemberInput:
+      properties:
+        user_id:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: User Id
+          description: User ID.
+          example: user_01h2xcejqtf3fz5y5j0v8k9m2p
+        role:
+          type: string
+          enum:
+          - lead
+          - member
+          title: Role
+          default: member
+          description: Role.
+          example: member
+      additionalProperties: false
+      type: object
+      required:
+      - user_id
+      title: TeamMemberInput
+      description: One member in a membership write.
+    TeamMembersInput:
+      properties:
+        members:
+          items:
+            $ref: '#/components/schemas/TeamMemberInput'
+          type: array
+          maxItems: 500
+          title: Members
+          description: Members.
+      additionalProperties: false
+      type: object
+      title: TeamMembersInput
+      description: The complete membership of a team; it replaces whatever was there.
+    TeamPatch:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Name
+          description: Human-readable name.
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Description
+          description: Free-text description.
+        contact_email:
+          anyOf:
+          - type: string
+            maxLength: 320
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Contact Email
+          description: Contact Email.
+        chat_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Chat Url
+          description: Chat URL.
+        oncall_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Oncall Url
+          description: Oncall URL.
+        docs_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Team Patch schema.
+          - type: 'null'
+            description: Team Patch schema.
+          title: Docs Url
+          description: Docs URL.
+      additionalProperties: false
+      type: object
+      title: TeamPatch
+      description: 'A partial update. Omitted fields are left alone; ``null`` clears
+        an optional field.
+
+
+        The slug is deliberately absent: it is the handle tags and extensions name.'
+    TeamRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Description
+          description: Free-text description.
+        contact_email:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Contact Email
+          description: Contact Email.
+        chat_url:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Chat Url
+          description: Chat URL.
+        oncall_url:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Oncall Url
+          description: Oncall URL.
+        docs_url:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Docs Url
+          description: Docs URL.
+        member_count:
+          type: integer
+          title: Member Count
+          description: How many members the team has.
+          default: 0
+          example: 1
+        created_by:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Created By
+          description: Created By.
+        created_at:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        members:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/TeamMember'
+            type: array
+            description: Team schema.
+          - type: 'null'
+            description: Team schema.
+          title: Members
+          description: The members, leads first; present on single-team reads and
+            member writes.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      title: TeamRecord
+      description: A stored team.
     TenantInfoResponse:
       properties:
         slug:
@@ -128721,13 +129529,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T17:41:42Z'
+          example: '2026-10-18T18:38:11Z'
         outcome:
           anyOf:
           - type: string

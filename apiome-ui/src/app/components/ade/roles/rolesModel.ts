@@ -60,6 +60,7 @@ export const RESOURCES: readonly PermissionResource[] = [
   { key: 'verification_targets', label: 'Verification targets' },
   { key: 'verification_evidence', label: 'Verification evidence' },
   { key: 'consumer_contracts', label: 'Consumer contracts' },
+  { key: 'teams', label: 'Teams' },
 ];
 
 /** The five actions, in the order the guard and the mockup both read them. */
@@ -71,7 +72,7 @@ export const ACTIONS: readonly PermissionAction[] = [
   { key: 'publish', label: 'Publish' },
 ];
 
-/** How many cells a complete matrix has — 14 resources × 5 actions. */
+/** How many cells a complete matrix has — 15 resources × 5 actions. */
 export const TOTAL_CELLS = RESOURCES.length * ACTIONS.length;
 
 /**
@@ -213,7 +214,7 @@ export function describeDirty(count: number): string {
  * The matrix header's count.
  *
  * @param grid The draft grid.
- * @returns e.g. `"23 of 65 cells on"`.
+ * @returns e.g. `"23 of 75 cells on"`.
  */
 export function describeCellsOn(grid: PermissionGrid): string {
   return `${grid.size} of ${TOTAL_CELLS} cells on`;

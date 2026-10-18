@@ -39,8 +39,8 @@ it; the editor says so above the description.
 
 Rows are resources — **Projects**, **Versions**, **Classes**, **Properties**, **Paths**,
 **Primitives / Types**, **Imports**, **Members**, **API keys**, **Billing**, **Lint findings**,
-**Verification targets**, **Verification evidence** and **Consumer contracts** — each with the key
-the server checks under it (`projects`, `api_keys`, …). Columns are the five actions. Each cell is a
+**Verification targets**, **Verification evidence**, **Consumer contracts** and **Teams** — each
+with the key the server checks under it (`projects`, `api_keys`, …). Columns are the five actions. Each cell is a
 `resource:action` permission (for example `versions:publish`), checked on every REST route.
 
 - **Click a cell** to grant or remove one permission.
@@ -48,7 +48,11 @@ the server checks under it (`projects`, `api_keys`, …). Columns are the five a
   row is fully granted, a dash when it is partly granted, and is empty when nothing is.
 - **“Grant view on all”** ticks **View** on every resource; **“Clear all”** empties the matrix.
 
-The line above the matrix counts what is on — *24 of 70 cells on*.
+The line above the matrix counts what is on — *23 of 75 cells on*.
+
+**Teams** (`teams`) controls [teams](./teams.mdx) and their members. The built-in **Owner** and
+**Admin** roles hold all of it; **Editor** and **Viewer** can only view teams. Custom roles do not
+get it automatically — grant it on each custom role that should manage teams.
 
 ## Edit a role
 
@@ -120,4 +124,5 @@ There is no CLI command for roles.
 ## Where next
 
 - [Members & seats](./members.mdx)
+- [Teams](./teams.mdx)
 - [API keys](./api-keys.mdx)

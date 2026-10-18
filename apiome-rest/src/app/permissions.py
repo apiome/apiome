@@ -43,6 +43,7 @@ class Resource:
     VERIFICATION_TARGETS = "verification_targets"
     VERIFICATION_EVIDENCE = "verification_evidence"
     CONSUMER_CONTRACTS = "consumer_contracts"
+    TEAMS = "teams"
 
 
 class Action:
@@ -72,6 +73,7 @@ RESOURCES = frozenset(
         Resource.VERIFICATION_TARGETS,
         Resource.VERIFICATION_EVIDENCE,
         Resource.CONSUMER_CONTRACTS,
+        Resource.TEAMS,
     }
 )
 

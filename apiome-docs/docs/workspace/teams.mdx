@@ -1,0 +1,106 @@
+---
+title: Teams
+description: Named groups of members with owner links, the owners of catalog entities.
+sidebar_position: 2.5
+tags: [workspace, teams, ownership, permissions]
+---
+
+A **team** is a named group of workspace members — *Payments*, *Platform*, *Identity* — and the
+links people use to reach it: a contact e-mail, a chat channel, an on-call schedule and its
+documentation. Teams are the owners Apiome routes work to: ownership of catalog entities and
+routing findings to their owner build on them. A team is the only kind of group in a workspace.
+
+Teams are managed over the [REST API](../reference/rest/teams.md) today; the Teams screen and the
+`apiome teams` command come later.
+
+## What a team holds
+
+| Field | What it is |
+| --- | --- |
+| `slug` | The team's handle, for example `payments`: lowercase letters, digits and hyphens. Made from the name when you leave it out. **It cannot be changed** — gateway tags such as `owner:payments` and the `x-apiome-owner` extension refer to it |
+| `name` | What people read, for example *Payments* |
+| `description` | What the team does (optional) |
+| `contact_email` | A shared mailbox (optional) |
+| `chat_url`, `oncall_url`, `docs_url` | Links to the team's chat channel, on-call schedule and documentation (optional; each must start with `http://` or `https://`) |
+
+Each slug is unique among the workspace's teams. Once a team is deleted, its slug is free to use
+again.
+
+## Members
+
+Each member is a **lead** or a **member**. Everyone on a team must already be a member of the
+workspace — invite them on [Members & seats](./members.mdx) first.
+
+Setting the members always sends the **whole list**: anyone left out is removed, and an empty list
+empties the team. If someone on the list is not in the workspace, nothing changes and the reply
+names them.
+
+When someone leaves the workspace, they leave every team they were on at the same moment.
+
+## Delete a team
+
+Deleting a team removes it from every list, and its slug is free again. Its history stays in the
+access audit.
+
+A team that still **owns** entities cannot simply be deleted: the request is refused with how many
+entities it owns. Name another team with `reassign_to` and those entities move to it as the team is
+deleted.
+
+## Permissions
+
+Teams have their own row in the [permission matrix](./roles.mdx#the-permission-matrix), **Teams**
+(`teams`):
+
+| Role | Teams permissions |
+| --- | --- |
+| **Owner**, **Admin** | View, create, edit (including members) and delete |
+| **Editor**, **Viewer** | View |
+
+A team decides who is told about — and paged for — what it owns, so changing teams is kept with
+the people who run the workspace. Give a custom role `teams:edit` to let it manage membership.
+
+Every change is recorded in the workspace's
+[access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get) as
+`team.create`, `team.update` (each changed field, old and new), `team.members.replace` (who was
+added, removed or changed role) or `team.delete`.
+
+## With the API
+
+See the [Teams API reference](../reference/rest/teams.md):
+
+| Call | Does | Needs |
+| --- | --- | --- |
+| `GET /v1/tenants/{tenant}/teams` | Every team, with its links and member count | `teams:view` |
+| `POST /v1/tenants/{tenant}/teams` | Create a team | `teams:create` |
+| `GET /v1/tenants/{tenant}/teams/{slug}` | One team and its members, leads first | `teams:view` |
+| `PATCH /v1/tenants/{tenant}/teams/{slug}` | Change the name, description or links; `null` clears one | `teams:edit` |
+| `PUT /v1/tenants/{tenant}/teams/{slug}/members` | Replace the members (`[{"user_id", "role"}]`) | `teams:edit` |
+| `DELETE /v1/tenants/{tenant}/teams/{slug}` | Delete; add `?reassign_to=<slug>` when it owns entities | `teams:delete` |
+
+For example, to create a team and make yourself its lead:
+
+```bash
+curl -X POST "$APIOME/v1/tenants/acme/teams" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name": "Payments", "chat_url": "https://chat.example.com/c/payments"}'
+
+curl -X PUT "$APIOME/v1/tenants/acme/teams/payments/members" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"members": [{"user_id": "<your user id>", "role": "lead"}]}'
+```
+
+What a refusal means:
+
+| Status | `detail.code` | Why |
+| --- | --- | --- |
+| 400 | `team-invalid` | A malformed slug, a blank name, a link that is not http(s), a bad e-mail, or a user listed twice |
+| 400 | `team-reassign-invalid` | `reassign_to` names the team being deleted, or no team |
+| 404 | `team-not-found` | No team has that slug |
+| 409 | `team-slug-taken` | Another team already has that slug |
+| 409 | `team-owns-entities` | The team owns entities; `detail.owned_count` says how many |
+| 422 | `team-member-not-in-tenant` | Someone on the list is not a workspace member |
+
+## Where next
+
+- [Roles & permissions](./roles.mdx)
+- [Members & seats](./members.mdx)

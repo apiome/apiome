@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.368.0] - 2026-10-18
+
+### Added
+- **Teams (#5960, CDG-2.1)**: `GET|POST /v1/tenants/{tenant}/teams`, `GET|PATCH|DELETE /v1/tenants/{tenant}/teams/{slug}`
+  and `PUT /v1/tenants/{tenant}/teams/{slug}/members`. A team has a `slug` (derived from `name` when omitted, not
+  editable), `name`, `description`, `contact_email` and `chat_url` / `oncall_url` / `docs_url` (absolute http(s)
+  URLs); reads carry `member_count`, and single-team reads and member writes carry `members` (`user_id`, `role`
+  `lead|member`, `email`, `name`, `added_at`), leads first. `PUT …/members` replaces the whole membership; every user
+  must be a tenant member (`422 team-member-not-in-tenant`, naming them; nothing changes). Deletes are soft and free
+  the slug; a team that owns entities is refused with `409 team-owns-entities` and `detail.owned_count` unless
+  `?reassign_to=<slug>` names another team, which takes them over in the same transaction. Other refusals:
+  `400 team-invalid`, `400 team-reassign-invalid`, `404 team-not-found`, `409 team-slug-taken`. Every write is
+  appended to the access audit in its own transaction as `team.create`, `team.update` (changed fields, old and new),
+  `team.members.replace` (added / removed / role changed) or `team.delete`.
+- **`teams` RBAC resource (#5960)**: apiome-db V284 adds the `teams` and `team_members` tables and the `teams`
+  resource — Owner and Admin get view/create/edit/delete, Editor and Viewer get view. Custom roles are not changed;
+  grant `teams:*` explicitly. A user removed from a tenant leaves every team of that tenant in the same transaction
+  (database trigger), and a team member who is not a tenant member is refused by the database as well as the API.
+
+The OpenAPI version moves to 1.232.0.
+
 ## [1.367.0] - 2026-10-18
 
 ### Added
