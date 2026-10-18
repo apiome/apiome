@@ -8,6 +8,9 @@
 
 import {
   parseEntityOwner,
+  type OwnerGate,
+  type OwnershipDrift,
+  type OwnershipPolicy,
   type EntityOwner,
   type OwnerEntityKind,
   type Team,
@@ -105,4 +108,53 @@ export async function assignOwner(
   });
   const body = await readJson<{ count?: number }>(response, 'Could not assign the owner');
   return typeof body.count === 'number' ? body.count : entities.length;
+}
+
+/**
+ * The tenant's ownership policy (CDG-2.5).
+ *
+ * @returns The policy.
+ */
+export async function fetchOwnershipPolicy(): Promise<OwnershipPolicy> {
+  return readJson<OwnershipPolicy>(await fetch('/api/ownership-policy'), 'Could not load the ownership policy');
+}
+
+/**
+ * Change the ownership policy.
+ *
+ * @param change - The catch-all team slug (`null` clears it) and/or the publish gate.
+ * @returns The policy after the change.
+ */
+export async function saveOwnershipPolicy(change: {
+  unowned_findings_team?: string | null;
+  require_owner_to_publish?: boolean;
+}): Promise<OwnershipPolicy> {
+  const response = await fetch('/api/ownership-policy', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(change),
+  });
+  return readJson<OwnershipPolicy>(response, 'Could not save the ownership policy');
+}
+
+/**
+ * The owner gate's verdict for a project, before publishing.
+ *
+ * @param projectId - The project.
+ * @returns The verdict.
+ */
+export async function fetchOwnerGate(projectId: string): Promise<OwnerGate> {
+  return readJson<OwnerGate>(
+    await fetch(`/api/ownership-policy/publish-gate?project=${encodeURIComponent(projectId)}`),
+    'Could not check the owner gate'
+  );
+}
+
+/**
+ * The ownership drift report.
+ *
+ * @returns The report.
+ */
+export async function fetchOwnershipDrift(): Promise<OwnershipDrift> {
+  return readJson<OwnershipDrift>(await fetch('/api/ownership-drift'), 'Could not load ownership drift');
 }

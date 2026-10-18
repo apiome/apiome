@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Check,
   History,
+  UsersRound,
   KeyRound,
   Lock,
   Network,
@@ -33,6 +34,7 @@ import TenantMcpSettingsPanel from '@/app/ade/dashboard/tenants/TenantMcpSetting
 
 import TenantMcpKeysSection from './TenantMcpKeysSection';
 import TenantMembersSection from './TenantMembersSection';
+import TenantOwnershipPolicySection from './TenantOwnershipPolicySection';
 import {
   TENANT_MANAGE_SECTIONS,
   TENANT_MANAGE_SECTION_LABELS,
@@ -116,6 +118,7 @@ const SECTION_ICONS: Readonly<Record<TenantManageSection, React.ElementType>> = 
   license: BadgeCheck,
   mcp: Network,
   keys: KeyRound,
+  ownership: UsersRound,
   history: History,
 };
 
@@ -325,6 +328,11 @@ export default function TenantManageDrawer({
                       policyRevision={policyRevision}
                     />
                   )}
+              </TabsContent>
+
+              <TabsContent value="ownership" forceMount className={PANEL_CLASS}>
+                {visited.has('ownership') &&
+                  gated('ownership', <TenantOwnershipPolicySection isAdmin={tenant.isAdmin} />)}
               </TabsContent>
 
               <TabsContent value="history" forceMount className={PANEL_CLASS}>

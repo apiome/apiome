@@ -1,0 +1,22 @@
+---
+slug: ownership-policy
+title: Nothing unowned slips through
+description: A catch-all team, a require-an-owner publish gate and an ownership drift report.
+authors: [apiome]
+---
+
+Two workspace settings and a report keep [ownership](/workspace/teams#ownership) from quietly
+decaying.
+
+{/* truncate */}
+
+- **A catch-all team.** Findings on anything without a confirmed owner still land in the Unowned
+  findings report, and now also reach the team you choose — set it in the tenant's
+  [Ownership settings](/workspace/tenants#ownership).
+- **Require an owner to publish.** Turn it on and a project needs a confirmed owner team before a
+  version can be published (reason `no-owner`). The publish dialog always shows the gate — **Off**,
+  **Met** or **Blocked** — so nobody is surprised.
+- **Ownership drift.** Under **Workspace → Teams**: entities whose owner team was deleted or has no
+  members, and suggested owners nobody confirmed in 30 days.
+- **Facts for scorecards.** Every entity's owner read carries `owner.present` and
+  `owner.contactable`.

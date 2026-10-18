@@ -1,6 +1,6 @@
 ---
 title: "Owners"
-description: "REST endpoints tagged owners: 6 operations."
+description: "REST endpoints tagged owners: 10 operations."
 sidebar_position: 48
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.235.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.236.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `owners` · 6 operations
+Tag: `owners` · 10 operations
 
 ## `GET /v1/tenants/{tenant_slug}/owners/{kind}/{entity_id}` {#get-entity-owner-v1-tenants-tenant-slug-owners-kind-entity-id-get}
 
@@ -164,6 +164,113 @@ Request body for assign one owner to many entities.
 | 200 | Successful response for assign one owner to many entities. | `application/json` [`BulkAssignResponse`](#schema-bulkassignresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/ownership-drift` {#get-ownership-drift-v1-tenants-tenant-slug-ownership-drift-get}
+
+**List ownership drift**
+
+Entities whose confirmed owner team was deleted (`deleted_team`) or has no members (`empty_team`), and suggested owners nobody confirmed in 30 days (`stale_suggestion`). At most 200 rows per reason; `counts` has the totals.
+
+Requires `teams:view`.
+
+Operation id: `get_ownership_drift_v1_tenants__tenant_slug__ownership_drift_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list ownership drift. | `application/json` [`DriftResponse`](#schema-driftresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/ownership-policy` {#get-ownership-policy-v1-tenants-tenant-slug-ownership-policy-get}
+
+**Read the ownership policy**
+
+The catch-all team for findings on entities with no confirmed owner, and whether a project needs a confirmed owner to publish.
+
+Requires `teams:view`.
+
+Operation id: `get_ownership_policy_v1_tenants__tenant_slug__ownership_policy_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the ownership policy. | `application/json` [`OwnershipPolicy`](#schema-ownershippolicy) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/ownership-policy` {#put-ownership-policy-v1-tenants-tenant-slug-ownership-policy-put}
+
+**Change the ownership policy**
+
+Set `unowned_findings_team` (a team slug, or `null` for none) and/or `require_owner_to_publish`. Omitted fields are left alone.
+
+Audited as `ownership_policy.update`. Requires `teams:edit`.
+
+Operation id: `put_ownership_policy_v1_tenants__tenant_slug__ownership_policy_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for change the ownership policy.
+
+- `application/json` — [`OwnershipPolicyInput`](#schema-ownershippolicyinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for change the ownership policy. | `application/json` [`OwnershipPolicy`](#schema-ownershippolicy) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/ownership-policy/publish-gate` {#get-owner-publish-gate-v1-tenants-tenant-slug-ownership-policy-publish-gate-get}
+
+**Preview the owner gate for a project**
+
+What the owner gate will say when a version of `project` is published: `disabled` (the gate is off), `satisfied` (the project has a confirmed owner) or `blocked` (reason `no-owner`).
+
+Requires `versions:view`.
+
+Operation id: `get_owner_publish_gate_v1_tenants__tenant_slug__ownership_policy_publish_gate_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project` | query | string | yes | The project's id. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview the owner gate for a project. | `application/json` [`OwnerGateResponse`](#schema-ownergateresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/unowned-findings` {#get-unowned-findings-v1-tenants-tenant-slug-unowned-findings-get}
 
 **List unowned findings**
@@ -212,6 +319,16 @@ The owners of every entity a bulk assignment touched.
 | `results` | array of [`OwnersResponse`](#schema-ownersresponse) | no | Results. |
 | `count` | integer | yes | Number of count. |
 
+### `DriftResponse` {#schema-driftresponse}
+
+The ownership drift report.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `items` | array of `DriftItem` | no | Items. |
+| `counts` | map of integer | no | Rows per reason (before the per-reason cap). |
+| `stale_after_days` | integer | yes | Stale After Days. |
+
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
 Validation error response emitted when request data fails schema checks.
@@ -236,6 +353,17 @@ Confirm a suggestion. ``team`` may be omitted when there is exactly one suggesti
 | --- | --- | --- | --- |
 | `team` | string or null | no | Team. |
 
+### `OwnerGateResponse` {#schema-ownergateresponse}
+
+The owner gate's verdict for one project.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `status` | string | yes | `disabled`, `satisfied` or `blocked`. |
+| `message` | string | yes | Message. |
+| `reason` | string or null | no | `no-owner` when blocked. |
+| `team` | map of string or null or null | no | Team. |
+
 ### `OwnersResponse` {#schema-ownersresponse}
 
 An entity's owner and suggestions.
@@ -246,6 +374,25 @@ An entity's owner and suggestions.
 | `entity_id` | string | yes | Entity ID. |
 | `owner` | `OwnerRecord` or null | no | The confirmed owner, if any. |
 | `suggestions` | array of `OwnerRecord` | no | Suggested owners with their source; none of them receives findings. |
+| `facts` | map of boolean or null | no | `owner.present` (a confirmed, live owner team) and `owner.contactable` (it has an on-call or chat link) — the facts GVM-1.x ladders read (CDG-2.5). |
+
+### `OwnershipPolicy` {#schema-ownershippolicy}
+
+The tenant's ownership policy.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `unowned_findings_team` | `PolicyTeam` or null | no | Catch-all team for findings on entities with no confirmed owner; null when none. |
+| `require_owner_to_publish` | boolean | yes | When true, a version of a project with no confirmed owner cannot be published. |
+
+### `OwnershipPolicyInput` {#schema-ownershippolicyinput}
+
+A policy change. Omitted fields are left alone; ``unowned_findings_team: null`` clears it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `unowned_findings_team` | string or null | no | A team slug. |
+| `require_owner_to_publish` | boolean or null | no | Require Owner To Publish. |
 
 ### `UnownedFindingsResponse` {#schema-unownedfindingsresponse}
 

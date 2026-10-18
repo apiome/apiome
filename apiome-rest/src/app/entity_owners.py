@@ -211,6 +211,13 @@ class OwnersResponse(BaseModel):
         default_factory=list,
         description="Suggested owners with their source; none of them receives findings.",
     )
+    facts: Optional[Dict[str, bool]] = Field(
+        default=None,
+        description=(
+            "`owner.present` (a confirmed, live owner team) and `owner.contactable` (it has an "
+            "on-call or chat link) — the facts GVM-1.x ladders read (CDG-2.5)."
+        ),
+    )
 
 
 class OwnerAssignInput(BaseModel):

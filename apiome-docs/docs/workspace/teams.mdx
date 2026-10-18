@@ -130,7 +130,43 @@ Lint regressions, breaking changes on refresh, verification drift, failing deplo
 drift, shadow APIs and failed connector syncs reach the **confirmed** owner team: a notification for
 each member and one message to the team's `chat_url`. See
 [Notifications → Owner findings](./notifications.mdx#owner-findings). Without a confirmed owner the
-finding goes to the **Unowned findings** report instead.
+finding goes to the **Unowned findings** report — and, when the workspace has a **catch-all team**
+(set in the tenant's [Ownership settings](./tenants.mdx#ownership)), to that team as well; its
+notifications say they came because nobody owns the entity.
+
+### Ownership policy
+
+Two workspace settings, changed in the tenant's [Ownership settings](./tenants.mdx#ownership) and
+shown read-only under the Teams list:
+
+- the **catch-all team** for findings on unowned entities;
+- **Require an owner to publish** — a version of a project with no confirmed owner is refused with
+  reason `no-owner` (see [Publish a version](../ship/publish-a-version.md)).
+
+### Ownership drift
+
+Under the Teams list, **Ownership drift** lists ownership that has quietly stopped working:
+
+| Reason | Means |
+| --- | --- |
+| **Owner team deleted** | The confirmed owner is a deleted team, so findings reach nobody |
+| **Owner team has no members** | The owner team is empty, so its notifications reach nobody |
+| **Suggestion never confirmed** | A suggested owner nobody confirmed in 30 days, on an entity with no owner |
+
+Each row names the entity (linked to its page) and the team. Fix it by assigning another owner,
+adding members, or confirming the suggestion.
+
+<Screenshot id="ownership-drift" alt="Ownership drift under the Teams list: one entity whose owner team was deleted, one whose team is empty, and two old suggestions" />
+
+### Ownership facts
+
+`GET /v1/tenants/{tenant}/owners/{kind}/{id}` returns two facts about the entity, the ones
+scorecard ladders read:
+
+| Fact | True when |
+| --- | --- |
+| `owner.present` | The entity has a confirmed owner team that has not been deleted |
+| `owner.contactable` | That team has an on-call link or a chat link |
 
 The catalog, project, MCP endpoint and consumer lists show each entity's owner as
 `owner: {team, status, source}`: the confirmed owner, or else its first suggestion with
@@ -165,6 +201,8 @@ See the [Teams API reference](../reference/rest/teams.md):
 | `GET /v1/tenants/{tenant}/teams/{slug}` | One team and its members, leads first | `teams:view` |
 | `PATCH /v1/tenants/{tenant}/teams/{slug}` | Change the name, description or links; `null` clears one | `teams:edit` |
 | `PUT /v1/tenants/{tenant}/teams/{slug}/members` | Replace the members (`[{"user_id", "role"}]`) | `teams:edit` |
+| `GET` / `PUT /v1/tenants/{tenant}/ownership-policy` | Read or change the catch-all team and *Require an owner to publish* | `teams:view` / `teams:edit` |
+| `GET /v1/tenants/{tenant}/ownership-drift` | The Ownership drift report | `teams:view` |
 | `GET /v1/tenants/{tenant}/teams/{slug}/activity` | What it owns, your open findings for it, and the findings routed to it in the last 30 days | `teams:view` |
 | `DELETE /v1/tenants/{tenant}/teams/{slug}` | Delete; add `?reassign_to=<slug>` when it owns entities | `teams:delete` |
 

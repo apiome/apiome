@@ -66,8 +66,10 @@ class _Db:
         owner: Optional[Dict[str, Any]] = None,
         publishable: bool = True,
         claim: bool = True,
+        catch_all: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.owner = owner
+        self.catch_all = catch_all
         self.publishable = publishable
         self.claim = claim
         self.queries: List[str] = []
@@ -79,6 +81,8 @@ class _Db:
         self.queries.append(" ".join(sql.split()))
         if "FROM apiome.projects WHERE id" in sql:
             return [{"publishable": self.publishable}]
+        if "unowned_findings_team_id" in sql:
+            return [self.catch_all] if self.catch_all else []
         if "FROM apiome.entity_owners eo" in sql:
             assert "eo.status = 'confirmed'" in sql
             return [self.owner] if self.owner else []
@@ -280,3 +284,44 @@ def test_a_verification_version_ref_resolves_to_its_project() -> None:
     assert project_id_for_version_ref(db, _TENANT, "project/petstore/1.0.0") == _PROJECT
     assert project_id_for_version_ref(db, _TENANT, "project/unknown/1.0.0") is None
     assert project_id_for_version_ref(db, _TENANT, "nonsense") is None
+
+
+# ---------------------------------------------------------------------------------------------
+# catch-all team (CDG-2.5)
+# ---------------------------------------------------------------------------------------------
+
+
+def _catch_all() -> Dict[str, Any]:
+    return {"team_id": "55555555-5555-4555-8555-555555555555", "slug": "platform", "name": "Platform",
+            "chat_url": None, "members": [_LEAD, _REQUESTER]}
+
+
+def test_an_unowned_finding_also_reaches_the_catch_all_team() -> None:
+    from app.owner_routing import OUTCOME_CATCH_ALL
+
+    db = _Db(owner=None, catch_all=_catch_all())
+    outcome = route_owner_finding(db, _finding())
+    assert outcome.status == OUTCOME_CATCH_ALL and outcome.team_slug == "platform"
+    # The report row is still written: the entity still has no owner.
+    statements = db.cursors[0].statements
+    assert "INSERT INTO apiome.unowned_findings" in statements[0]
+    assert "INSERT INTO apiome.owner_notification_throttle" in statements[1]
+    assert not any("DELETE FROM apiome.unowned_findings" in s for s in statements)
+    # The requester was already notified, so only the lead is.
+    assert [d.user_id for d in db.drafts] == [_LEAD]
+    assert db.drafts[0].payload["catch_all"] is True
+    assert db.drafts[0].payload["team"]["slug"] == "platform"
+
+
+def test_the_catch_all_team_is_throttled_too() -> None:
+    db = _Db(owner=None, catch_all=_catch_all(), claim=False)
+    outcome = route_owner_finding(db, _finding())
+    assert outcome.status == OUTCOME_UNOWNED and outcome.team_slug == "platform"
+    assert db.drafts == []
+
+
+def test_an_owned_finding_never_reaches_the_catch_all_team() -> None:
+    db = _Db(owner=_owner(None), catch_all=_catch_all())
+    route_owner_finding(db, _finding())
+    assert {d.payload["team"]["slug"] for d in db.drafts} == {"payments"}
+    assert not any("unowned_findings_team_id" in q for q in db.queries)

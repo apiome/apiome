@@ -41,6 +41,7 @@ from .entity_owners import (
     OwnerValidationError,
     kind_spec,
 )
+from .ownership_policy import owner_facts
 from .permissions import Action, enforce_permission
 
 __all__ = ["router"]
@@ -121,10 +122,13 @@ async def get_entity_owner(
     """
     _guard(auth_data, kind, Action.VIEW, entity_id)
     _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
     try:
-        return read_owners(_tenant_id(auth_data), kind, entity_id)
+        response = read_owners(tenant_id, kind, entity_id)
     except OwnerValidationError as exc:
         raise _http_error(exc) from exc
+    # CDG-2.5: the owner.* facts GVM-1.x ladders read, from one shared function.
+    return response.model_copy(update={"facts": owner_facts(tenant_id, kind, entity_id)})
 
 
 @router.put(

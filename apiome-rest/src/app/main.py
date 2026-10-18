@@ -37,6 +37,7 @@ from .consumer_contract_routes import router as consumer_contract_router
 from .team_routes import router as team_router
 from .entity_owner_routes import router as entity_owner_router
 from .unowned_findings_routes import router as unowned_findings_router
+from .ownership_policy_routes import router as ownership_policy_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
@@ -169,7 +170,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.235.0",
+    version="1.236.0",
 )
 
 
@@ -368,6 +369,7 @@ app.include_router(consumer_contract_router)
 app.include_router(team_router)
 app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)
+app.include_router(ownership_policy_router)
 app.include_router(comment_router)
 app.include_router(review_router)
 app.include_router(draft_binding_router)

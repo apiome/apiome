@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.372.0] - 2026-10-18
+
+### Added
+- **Ownership policy (#5964, CDG-2.5)**: `GET|PUT /v1/tenants/{tenant}/ownership-policy` (`teams:view` / `teams:edit`,
+  audited as `ownership_policy.update`) reads and sets `unowned_findings_team` (a catch-all team slug, or `null`) and
+  `require_owner_to_publish` (apiome-db V287). With a catch-all team, a finding on an entity with no confirmed owner is
+  still recorded in the Unowned findings report and is also delivered to that team (inbox rows marked
+  `catch_all: true`, its chat channel, the same throttle); a deleted catch-all team receives nothing.
+- **Owner publish gate (#5964)**: with `require_owner_to_publish` on, `POST …/publish` refuses a version of a project with
+  no confirmed, live owner team — `422` with `reason: "no-owner"` and an `ownerGate` object — after the COL-2.3 approval
+  gate; force-publish still bypasses it. The precheck outcome always carries the verdict (`disabled`, `satisfied`,
+  `blocked`). `GET /v1/tenants/{tenant}/ownership-policy/publish-gate?project=<id>` (`versions:view`) previews it for the
+  publish dialog.
+- **Ownership drift (#5964)**: `GET /v1/tenants/{tenant}/ownership-drift` (`teams:view`) lists entities whose confirmed
+  owner team was deleted (`deleted_team`) or has no members (`empty_team`), and suggestions nobody confirmed in 30 days
+  (`stale_suggestion`), at most 200 per reason with `counts` totals.
+- **Owner facts (#5964)**: `GET /v1/tenants/{tenant}/owners/{kind}/{id}` carries `facts: {"owner.present",
+  "owner.contactable"}` for GVM-1.x ladders (CDG-5.4 will read the same `owner_facts()` function).
+
+The OpenAPI version moves to 1.236.0.
+
 ## [1.371.0] - 2026-10-18
 
 ### Added
