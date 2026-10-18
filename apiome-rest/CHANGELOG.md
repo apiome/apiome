@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.366.0] - 2026-10-18
+
+### Added
+- **Apigee connector (#5956, CDG-1.5)**: connectors of kind `apigee` now sync. Scope `{organization, environments?}`
+  (all environments when omitted); the credential goes in `PUT …/credentials` as `{"credentialJson": "…"}` — a
+  service-account key (`type: service_account`) or a workload identity federation configuration
+  (`type: external_account`), turned into a `cloud-platform` access token by `google-auth`.
+  - Inventory: `GET https://apigee.googleapis.com/v1/organizations/{org}/apis`, `…/environments/{env}/deployments`
+    and, for a proxy deployed nowhere, `…/apis/{api}/revisions`. Each environment a proxy is deployed to is an
+    inventory row (environment, deployed revision as `remote_revision`, deployment start as the update time); all of a
+    proxy's rows share **one** catalog item, and a revision two environments run is imported once. A proxy deployed
+    nowhere is `discovered` only.
+  - Definitions: `…/apis/{api}/revisions/{rev}?format=bundle` is imported by the FMT-7.3 `apigee` adapter through
+    archive intake, so a bundle's declared conditions are on the item.
+  - Failures name the cause: a refused credential (`invalid_grant` …), a missing IAM permission
+    (`Missing permission apigee.deployments.list`) or a token without the `cloud-platform` OAuth scope
+    (`ACCESS_TOKEN_SCOPE_INSUFFICIENT`).
+- Sync engine: candidates with the same `deployment.catalogKey` share one catalog item, and the default importer links
+  a revision label the shared item already has instead of importing it again.
+- Dependency: `google-auth`.
+
+The OpenAPI version moves to 1.230.0.
+
 ## [1.365.0] - 2026-10-18
 
 ### Added

@@ -1,0 +1,17 @@
+{
+  "deployments": [
+    {
+      "environment": "test",
+      "apiProxy": "orders-v2",
+      "revision": "5",
+      "deployStartTime": "1760600000000",
+      "proxyDeploymentType": "STANDARD"
+    },
+    {
+      "environment": "test",
+      "apiProxy": "store-v1",
+      "revision": "1",
+      "deployStartTime": "1760500000000"
+    }
+  ]
+}

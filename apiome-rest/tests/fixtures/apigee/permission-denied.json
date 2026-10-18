@@ -1,0 +1,18 @@
+{
+  "error": {
+    "code": 403,
+    "message": "Permission 'apigee.deployments.list' denied on resource '//apigee.googleapis.com/organizations/acme-prod/environments/prod' (or it may not exist).",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "IAM_PERMISSION_DENIED",
+        "domain": "apigee.googleapis.com",
+        "metadata": {
+          "permission": "apigee.deployments.list",
+          "resource": "organizations/acme-prod/environments/prod"
+        }
+      }
+    ]
+  }
+}
