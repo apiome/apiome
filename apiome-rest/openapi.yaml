@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.234.0
+  version: 1.235.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -4061,6 +4061,21 @@ paths:
           title: Include Deleted
         description: When true, include soft-deleted projects (active projects listed
           first).
+      - name: team
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: List Projectsteam schema.
+          - type: 'null'
+            description: List Projectsteam schema.
+          description: Only projects whose owner (confirmed, else suggested) is this
+            team slug (CDG-2.4).
+          title: Team
+        description: Only projects whose owner (confirmed, else suggested) is this
+          team slug (CDG-2.4).
       - name: authorization
         in: header
         required: false
@@ -7225,7 +7240,8 @@ paths:
         \ Include rows with deleted_at set (for trash / restore flows).\n    identity_group_id:\
         \ Restrict to one cross-format identity group (MFI-6.4).\n    protocol: Paradigm\
         \ facet values.\n    format_: Source-format facet values.\n    domain: Domain\
-        \ facet values.\n    tag: Tag facet values.\n    auth_data: Authentication\
+        \ facet values.\n    tag: Tag facet values.\n    team: Owner team slug; filtered\
+        \ in SQL, on the owner each item shows (CDG-2.4).\n    auth_data: Authentication\
         \ data (injected by dependency).\n\nReturns:\n    List of catalog items for\
         \ the tenant (active first when include_deleted is set)."
       operationId: list_catalog_items_v1_catalog__tenant_slug__get
@@ -7323,6 +7339,21 @@ paths:
           description: Tag facet, repeatable ('uncategorized' = untagged items).
           title: Tag
         description: Tag facet, repeatable ('uncategorized' = untagged items).
+      - name: team
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: List Catalog Itemsteam schema.
+          - type: 'null'
+            description: List Catalog Itemsteam schema.
+          description: Only items whose owner (confirmed, else suggested) is this
+            team slug (CDG-2.4).
+          title: Team
+        description: Only items whose owner (confirmed, else suggested) is this team
+          slug (CDG-2.4).
       - name: authorization
         in: header
         required: false
@@ -14914,6 +14945,21 @@ paths:
           title: Project Ref
           description: Project Ref schema.
         description: Path parameter identifying the project ref segment.
+      - name: team
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Listaprojectsconsumersteam schema.
+          - type: 'null'
+            description: Listaprojectsconsumersteam schema.
+          description: Only consumers whose owner (confirmed, else suggested) is this
+            team slug (CDG-2.4).
+          title: Team
+        description: Only consumers whose owner (confirmed, else suggested) is this
+          team slug (CDG-2.4).
       - name: authorization
         in: header
         required: false
@@ -16103,6 +16149,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for deleteateamresponse422.
+  /v1/tenants/{tenant_slug}/teams/{team_slug}/activity:
+    get:
+      tags:
+      - teams
+      summary: Read a team's ownership and routed findings
+      description: 'What the team owns (confirmed owners only, by kind), how many
+        entities suggest it, how many owner-finding notifications routed to it the
+        caller has not read, and the findings routed to it in the last 30 days — one
+        row per event, however many members it reached.
+
+
+        Requires `teams:view`.'
+      operationId: read_tenant_team_activity_v1_tenants__tenant_slug__teams__team_slug__activity_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: team_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Slug
+          description: Team Slug schema.
+        description: Path parameter identifying the team slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readateamsownershipandroutedfindingsauthorization schema.
+          - type: 'null'
+            description: Readateamsownershipandroutedfindingsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readateamsownershipandroutedfindings Xapikey schema.
+          - type: 'null'
+            description: Readateamsownershipandroutedfindings Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a team's ownership and routed
+            findings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamActivityResponse'
+                description: Response payload for readateamsownershipandroutedfindingsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readateamsownershipandroutedfindingsresponse422.
   /v1/tenants/{tenant_slug}/teams/{team_slug}/members:
     put:
       tags:
@@ -57892,6 +58009,21 @@ paths:
           title: Tenant Slug
           description: Tenant Slug schema.
         description: URL-safe tenant slug that scopes the request.
+      - name: team
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Browse MCP Endpointsteam schema.
+          - type: 'null'
+            description: Browse MCP Endpointsteam schema.
+          description: Only endpoints whose owner (confirmed, else suggested) is this
+            team slug (CDG-2.4).
+          title: Team
+        description: Only endpoints whose owner (confirmed, else suggested) is this
+          team slug (CDG-2.4).
       - name: authorization
         in: header
         required: false
@@ -74841,7 +74973,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         completed_at:
           anyOf:
           - type: string
@@ -76306,7 +76438,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -76479,7 +76611,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -76920,13 +77052,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -79317,7 +79449,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: de2a80ec-c271-4576-94c5-4eb5a6e5d2c0
+          example: 1eb2adba-9bdb-4fe2-aa2e-549488bfb9f4
         method:
           type: string
           title: Method
@@ -81460,7 +81592,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         envelope:
           additionalProperties: true
           type: object
@@ -82840,7 +82972,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         browse_url:
           anyOf:
           - type: string
@@ -94733,6 +94865,12 @@ components:
             description: Response payload for mcp browse endpoint.
           title: Last Known Good At
           description: Last Known Good At timestamp (ISO 8601).
+        owner:
+          anyOf:
+          - $ref: '#/components/schemas/EntityOwnerRef'
+          - type: 'null'
+            description: Response payload for mcp browse endpoint.
+          description: Owner.
       type: object
       required:
       - id
@@ -105901,6 +106039,37 @@ components:
       type: object
       title: OperationUpdateRequest
       description: Partial update payload for an operation.
+    OwnedEntity:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: '`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.'
+          example: example
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        source:
+          type: string
+          title: Source
+          description: 'How the ownership was set: `manual`, `gateway_tag`, …'
+          example: human
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - id
+      - name
+      - source
+      title: OwnedEntity
+      description: An entity the team is the confirmed owner of.
     OwnerAssignInput:
       properties:
         team:
@@ -114940,7 +115109,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
       additionalProperties: false
       type: object
       required:
@@ -115494,6 +115663,74 @@ components:
       title: RoleWriteRequest
       description: Create/update payload for a role (name, description, full permission
         grid).
+    RoutedEvent:
+      properties:
+        type:
+          type: string
+          title: Type
+          description: Type.
+          example: example
+        entity_kind:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Entity Kind
+          description: Entity Kind.
+        entity_id:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Entity Id
+          description: Entity ID.
+        entity_name:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Entity Name
+          description: Entity Name.
+        summary:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        link:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Link
+          description: Link.
+        created_at:
+          anyOf:
+          - type: string
+            description: Routed Event schema.
+          - type: 'null'
+            description: Routed Event schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        recipients:
+          type: integer
+          title: Recipients
+          description: How many members it reached.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - recipients
+      title: RoutedEvent
+      description: One finding routed to the team (one event, however many members
+        it reached).
     RuntimeBody:
       properties:
         key:
@@ -124368,7 +124605,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         detected_by:
           anyOf:
           - type: string
@@ -125840,6 +126077,52 @@ components:
         — a
 
         truthful "we cannot point to where this landed" rather than a guess.'
+    TeamActivityResponse:
+      properties:
+        team_id:
+          type: string
+          title: Team Id
+          description: Team ID.
+          example: team_01h2xcejqtf3fz5y5j0v8k9m2p
+        owned:
+          items:
+            $ref: '#/components/schemas/OwnedEntity'
+          type: array
+          title: Owned
+          description: Confirmed ownership, by kind then name.
+          maxItems: 1000
+        owned_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Owned Counts
+          description: Owned entities per kind.
+        suggested_count:
+          type: integer
+          title: Suggested Count
+          description: Entities that suggest this team as owner.
+          example: 1
+        open_findings:
+          type: integer
+          title: Open Findings
+          description: The caller's unread owner-finding notifications routed to this
+            team.
+          example: 1
+        events:
+          items:
+            $ref: '#/components/schemas/RoutedEvent'
+          type: array
+          title: Events
+          description: Findings routed to the team in the last 30 days, newest first.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - team_id
+      - suggested_count
+      - open_findings
+      title: TeamActivityResponse
+      description: A team page's ownership and routing picture (CDG-2.4).
     TeamDeleteResponse:
       properties:
         slug:
@@ -130399,13 +130682,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T19:55:09Z'
+          example: '2026-10-18T20:44:00Z'
         outcome:
           anyOf:
           - type: string

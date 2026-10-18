@@ -7,6 +7,8 @@
  * render — kept free of React so they can be unit-tested directly.
  */
 
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
+
 /** Badge variants available from the shared UI Badge component. */
 export type McpBadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'outline';
 
@@ -75,6 +77,8 @@ export interface McpBrowseEndpoint {
   freshness: string;
   /** Last successful discovery snapshot time, when known (36.2). */
   last_known_good_at: string | null;
+  /** The owner team: confirmed, else suggested; null when none (CDG-2.4). Optional for fixtures. */
+  owner?: EntityOwner | null;
 }
 
 /** A host bucket: every cataloged endpoint that shares one host. */
@@ -254,6 +258,7 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     complexity_band: asString(r.complexity_band) ?? 'unknown',
     freshness: r.quarantined === true ? 'quarantined' : asString(r.freshness) ?? 'fresh',
     last_known_good_at: asString(r.last_known_good_at),
+    owner: parseEntityOwner(r.owner),
   };
 }
 

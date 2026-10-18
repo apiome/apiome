@@ -70,6 +70,11 @@ async def list_projects(
         False,
         description="When true, include soft-deleted projects (active projects listed first).",
     ),
+    team: Optional[str] = Query(
+        None,
+        max_length=128,
+        description="Only projects whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[ProjectSchema]:
     """
@@ -88,7 +93,7 @@ async def list_projects(
         List of projects for the tenant
     """
     projects = db.get_projects_for_tenant(
-        auth_data['tenant_id'], include_deleted=include_deleted
+        auth_data['tenant_id'], include_deleted=include_deleted, team=team
     )
 
     return [ProjectSchema(**p) for p in projects]

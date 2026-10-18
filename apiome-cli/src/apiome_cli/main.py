@@ -35,6 +35,7 @@ from apiome_cli.commands import (
     schemas,
     spec,
     tags,
+    teams,
     types,
     verify,
     versions,
@@ -92,6 +93,7 @@ app.add_typer(contract.app, name="contract")
 app.add_typer(verify.app, name="verify")
 app.add_typer(checks.app, name="checks")
 app.add_typer(connectors.app, name="connectors")
+app.add_typer(teams.app, name="teams")
 app.command("diff")(diff.diff)
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")

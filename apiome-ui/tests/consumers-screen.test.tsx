@@ -21,6 +21,14 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
+/* The owner filter (CDG-2.4) keeps `?team=` in the URL. */
+const mockReplace = jest.fn();
+let mockSearch = new URLSearchParams();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
+  useSearchParams: () => mockSearch,
+}));
+
 import ConsumersClient from '../src/app/ade/dashboard/projects/[projectId]/consumers/ConsumersClient';
 import type {
   ConsumerContract,
@@ -135,6 +143,12 @@ const CATALOGUE = {
 // ---------------------------------------------------------------------------------------
 
 let calls: { url: string; method: string; body: unknown }[] = [];
+
+/** The tenant's teams (CDG-2.4). */
+const TEAMS = [
+  { id: 't1', slug: 'payments', name: 'Payments', member_count: 2 },
+  { id: 't2', slug: 'platform', name: 'Platform', member_count: 1 },
+];
 let listResponse: { ok: boolean; rows: ConsumerSummary[]; error?: string } = {
   ok: true,
   rows: [BILLING, CHECKOUT],
@@ -160,6 +174,26 @@ function mockFetch() {
     const method = init?.method || 'GET';
     calls.push({ url, method, body: init?.body ? JSON.parse(init.body as string) : null });
 
+    if (url.startsWith('/api/teams')) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ teams: TEAMS, count: TEAMS.length }),
+      } as Response);
+    }
+    if (url.startsWith('/api/owners/') && method === 'POST') {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            kind: 'consumer',
+            entity_id: 'c2',
+            owner: { team: TEAMS[0], status: 'confirmed', source: 'gateway_tag' },
+            suggestions: [],
+          }),
+      } as Response);
+    }
     if (url.includes('/api/access/permissions/me')) {
       return jsonResponse({ success: true, data: permissions });
     }
@@ -188,6 +222,8 @@ function mockFetch() {
 
 beforeEach(() => {
   calls = [];
+  mockSearch = new URLSearchParams();
+  mockReplace.mockClear();
   listResponse = { ok: true, rows: [BILLING, CHECKOUT] };
   permissions = { is_admin: true, permissions: [] };
   writeResponse = { ok: true };
@@ -616,5 +652,54 @@ describe('the declared-surface drawer', () => {
 
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/declared nothing yet/)).toBeInTheDocument();
+  });
+});
+
+describe('owner teams (CDG-2.4)', () => {
+  const owned = (status: 'confirmed' | 'suggested'): ConsumerSummary => ({
+    ...CHECKOUT,
+    owner: { team: { id: 't1', slug: 'payments', name: 'Payments' }, status, source: 'gateway_tag' },
+  });
+
+  it('shows the owner team beside the free-text contact', async () => {
+    listResponse = { ok: true, rows: [BILLING, owned('confirmed')] };
+    await renderPage();
+    expect(screen.getByRole('columnheader', { name: 'Owner' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Contact/ })).toBeInTheDocument();
+    expect(screen.getByTestId('consumer-owner-c2')).toHaveTextContent('Payments');
+    expect(screen.getByTestId('consumer-owner-c1')).toHaveTextContent('No owner');
+  });
+
+  it('confirms a suggested owner and updates the row without reading the list again', async () => {
+    const user = userEvent.setup();
+    listResponse = { ok: true, rows: [BILLING, owned('suggested')] };
+    await renderPage();
+    const cell = screen.getByTestId('consumer-owner-c2');
+    expect(cell).toHaveTextContent('Suggested · Gateway tag');
+    const reads = calls.filter((call) => call.url.startsWith('/api/consumers') && call.method === 'GET').length;
+
+    await user.click(screen.getByTestId('consumer-owner-c2-confirm'));
+
+    await waitFor(() => expect(screen.getByTestId('consumer-owner-c2')).toHaveAttribute('data-status', 'confirmed'));
+    expect(screen.getByTestId('consumer-owner-c2')).not.toHaveTextContent('Suggested');
+    const confirm = calls.find((call) => call.url === '/api/owners/consumer/c2/confirm');
+    expect(confirm?.body).toEqual({ team: 'payments' });
+    expect(
+      calls.filter((call) => call.url.startsWith('/api/consumers') && call.method === 'GET').length
+    ).toBe(reads);
+  });
+
+  it('asks apiome-rest for one team’s consumers when ?team= is set', async () => {
+    mockSearch = new URLSearchParams('team=payments');
+    await renderPage();
+    expect(calls.some((call) => call.url === '/api/consumers/pets?team=payments')).toBe(true);
+  });
+
+  it('puts the chosen team in the URL', async () => {
+    const user = userEvent.setup();
+    await renderPage();
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Platform' })).toBeInTheDocument());
+    await user.selectOptions(screen.getByTestId('consumers-owner-filter'), 'platform');
+    expect(mockReplace).toHaveBeenCalledWith('?team=platform', { scroll: false });
   });
 });

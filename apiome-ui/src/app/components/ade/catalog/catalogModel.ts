@@ -24,6 +24,7 @@
  *   registry the facets are derived from.
  */
 
+import type { EntityOwner } from '@lib/owners';
 import type { DataTableSortState } from '@/app/components/ui/DataTable';
 import {
   destructiveConfirm,
@@ -96,6 +97,8 @@ export interface CatalogItem {
   domain?: string | null;
   /** Free-form tags, lower-cased and alphabetical (MFI-6.3). */
   tags?: readonly string[];
+  /** The owner team: confirmed, else suggested; null when none (CDG-2.2/2.4). */
+  owner?: EntityOwner | null;
 }
 
 /** The quality history of every item on screen, keyed by item id. */

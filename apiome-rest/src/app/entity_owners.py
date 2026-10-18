@@ -50,6 +50,7 @@ __all__ = [
     "codeowners_for_path",
     "kind_spec",
     "owner_envelope_join",
+    "owner_team_filter",
     "owner_ref_from_value",
     "parse_codeowners",
     "spec_owner_suggestions",
@@ -295,6 +296,26 @@ def owner_envelope_join(kinds: Sequence[str], id_expr: str, tenant_expr: str) ->
                 LIMIT 1
             ) own ON TRUE
     """
+
+
+def owner_team_filter(team: Optional[str]) -> Tuple[str, List[str]]:
+    """The ``WHERE`` clause narrowing a list read to one owner team (CDG-2.4, ``?team=``).
+
+    It filters on the owner the envelope shows — the confirmed owner, else the first suggestion —
+    so a list filtered by a team shows exactly the rows whose Owner column names it. Use it in a
+    read that joins :func:`owner_envelope_join` (alias ``own``).
+
+    Args:
+        team: A team slug, or ``None`` / blank for no filter.
+
+    Returns:
+        ``(sql, params)``: ``("AND own.entity_owner->'team'->>'slug' = %s", [slug])`` or
+        ``("", [])``.
+    """
+    slug = (team or "").strip().lower()
+    if not slug:
+        return "", []
+    return "AND own.entity_owner->'team'->>'slug' = %s", [slug]
 
 
 # ---------------------------------------------------------------------------------------------

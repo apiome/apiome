@@ -20,7 +20,7 @@ see them all. The header sums them up — for example *2 projects · avg quality
 - **Sort** with **Sorted by name ↑**.
 - **Switch views** with **Cards** (the default) and **Table**.
 
-<Screenshot id="projects-table" alt="The Projects page in Table view: columns for project, description, quality trend, versions, status and creator" />
+<Screenshot id="projects-table" alt="The Projects page in Table view: columns for project, description, quality trend, versions, owner, status and creator, with the Owner filter in the toolbar" />
 
 The table shows **Project**, **Description**, **Quality trend**, **Versions**, **Status**, **Created
 by** and **Updated**. **Portfolio quality trend** under the list plots average quality across
@@ -71,9 +71,20 @@ consumer contract.
 
 A project can have an owner team. CODEOWNERS rules for the spec's path and the document's own
 `x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
-confirms it. The projects list carries each project's `owner`. Owners are set over the API for
-now — see [Teams → Ownership](../workspace/teams.mdx#ownership). Consumers can have an owner team
-too.
+confirms it.
+
+**In a list**, the **Owner** column (on cards, a line under the summary) names the team. A
+*suggested* owner carries a **Suggested** badge saying where it came from — *Gateway tag*,
+*CODEOWNERS*, *Spec* — and a **“Confirm”** button: **click “Confirm”** to make it the owner; the
+row updates in place. The team's name opens its [team page](../workspace/teams.mdx#team-pages).
+
+**Owner** in the toolbar shows one team's projects (kept in the address as `?team=`). In **Table**
+view, tick projects and use **Assign owner** in the bar at the bottom of the page to give them all
+the same owner.
+
+On a project's **Consumers**, the **Owner** column is the consumer's owner team and **Contact** is
+the free-text owner it was registered with; **Owner** in the toolbar filters by team there too. See
+[Teams → Ownership](../workspace/teams.mdx#ownership).
 
 ## With the CLI or the API
 

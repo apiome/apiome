@@ -236,7 +236,7 @@ def test_browse_route_scoped_to_token_tenant():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.browse_mcp_endpoints.return_value = []
         client.get("/v1/mcp/some-other-slug/browse")
-        mdb.browse_mcp_endpoints.assert_called_once_with("t1")
+        mdb.browse_mcp_endpoints.assert_called_once_with("t1", team=None)
 
 
 def test_browse_route_empty():

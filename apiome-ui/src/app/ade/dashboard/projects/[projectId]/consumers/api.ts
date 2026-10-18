@@ -7,6 +7,7 @@
  * caller can `try`/`catch` one way for every write.
  */
 
+import { withTeamParam } from '@lib/owners';
 import type {
   AvailableSurface,
   Consumer,
@@ -72,10 +73,12 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
  * The project's consumers with their current contracts.
  *
  * @param projectRef Project slug or id.
+ * @param team Only consumers this team owns (CDG-2.4), filtered by apiome-rest; `null` for all.
  * @returns The list.
  */
-export function fetchConsumers(projectRef: string): Promise<ConsumerListResponse> {
-  return call<ConsumerListResponse>(`/${encodeURIComponent(projectRef)}`);
+export function fetchConsumers(projectRef: string, team: string | null = null): Promise<ConsumerListResponse> {
+  const query = withTeamParam(new URLSearchParams(), team).toString();
+  return call<ConsumerListResponse>(`/${encodeURIComponent(projectRef)}${query ? `?${query}` : ''}`);
 }
 
 /**

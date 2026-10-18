@@ -30,6 +30,8 @@
  * @see `./projectsModel.ts` — the facets, the scores and the sort bridging.
  */
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { Ellipsis, Pencil, Trash2, TrendingUp, Undo2, Users } from 'lucide-react';
@@ -132,6 +134,8 @@ export interface ProjectsTableProps {
   toolbar?: React.ReactNode;
   /** What to draw when nothing matched. */
   empty?: React.ReactNode;
+  /** A row's owner changed in place (a suggestion confirmed from the list, CDG-2.4). */
+  onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -160,6 +164,7 @@ export default function ProjectsTable({
   busy = false,
   toolbar,
   empty,
+  onOwnerChange,
 }: ProjectsTableProps) {
   const columns = React.useMemo<DataTableColumn<Project>[]>(
     () => [
@@ -234,6 +239,21 @@ export default function ProjectsTable({
           </span>
         ),
         skeletonWidth: '2.5rem',
+      },
+      {
+        id: 'owner',
+        header: 'Owner',
+        cell: (project) => (
+          <OwnerCell
+            owner={parseEntityOwner(project.owner)}
+            kind="project"
+            entityId={project.id}
+            testId={`projects-owner-${project.id}`}
+            readOnly={Boolean(project.deleted_at)}
+            onChange={(owner) => onOwnerChange?.(project.id, owner)}
+          />
+        ),
+        skeletonWidth: '6rem',
       },
       {
         id: 'status',
@@ -390,7 +410,18 @@ export default function ProjectsTable({
         skeletonWidth: '4rem',
       },
     ],
-    [busy, historyById, onDelete, onEdit, onOpen, onOpenTrend, onPermanentDelete, onRestore, reviewsByProjectId]
+    [
+      busy,
+      historyById,
+      onDelete,
+      onEdit,
+      onOpen,
+      onOpenTrend,
+      onOwnerChange,
+      onPermanentDelete,
+      onRestore,
+      reviewsByProjectId,
+    ]
   );
 
   return (

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.371.0] - 2026-10-18
+
+### Added
+- **Owner filter on the lists (#5963, CDG-2.4)**: `GET /v1/catalog/{tenant}`, `GET /v1/projects/{tenant}`,
+  `GET /v1/mcp/{tenant}/browse` and `GET /v1/tenants/{tenant}/projects/{project}/consumers` take `?team=<slug>` and
+  return only the entities whose owner — confirmed, else suggested, as each row's `owner` shows it — is that team.
+  The filter is part of each read's one SQL statement.
+- **`owner` on MCP browse (#5963)**: every endpoint in `GET /v1/mcp/{tenant}/browse` carries
+  `owner: {team, status, source}`, as the other lists do.
+- **Team activity (#5963)**: `GET /v1/tenants/{tenant}/teams/{slug}/activity` (`teams:view`) returns `owned` (confirmed
+  ownership: `kind`, `id`, `name`, `source`), `owned_counts` by kind, `suggested_count`, `open_findings` — the caller's
+  unread owner-finding notifications routed to the team, the rows their bell counts — and `events`, the findings
+  routed to the team in the last 30 days, one per event (`type`, entity, `summary`, `link`, `created_at`,
+  `recipients`).
+
+The OpenAPI version moves to 1.235.0.
+
 ## [1.370.0] - 2026-10-18
 
 ### Added

@@ -288,11 +288,12 @@ describe('the page frame', () => {
     ).toBeInTheDocument();
   });
 
-  it('draws the six columns the mockup names, and no others', async () => {
+  it('draws the six columns the mockup names plus Owner (CDG-2.4), and no others', async () => {
     await renderPublished();
     const headers = screen.getAllByRole('columnheader').map((cell) => cell.textContent?.trim());
     expect(headers).toEqual([
       'Project / Version',
+      'Owner',
       'Visibility',
       'Access URL',
       'Mock',

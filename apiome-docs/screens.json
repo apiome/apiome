@@ -219,6 +219,16 @@
       "scrollTo": "[data-testid=\"catalog-cards-bulk-bar\"]"
     },
     {
+      "id": "catalog-owner-filter",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-table\"]",
+      "data": "fixture:hive-a11y/catalog-owner-filter.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/owners/OwnerCell.tsx",
+        "apiome-ui/src/app/components/ade/owners/OwnerFilter.tsx"
+      ]
+    },
+    {
       "id": "catalog-bulk-convert",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
@@ -683,6 +693,18 @@
       "route": "/ade/dashboard/roles",
       "waitFor": ".rol-matrix",
       "data": "fixture:hive-a11y/roles.html"
+    },
+    {
+      "id": "teams",
+      "route": "/ade/dashboard/teams",
+      "waitFor": "[data-testid=\"teams-table\"]",
+      "data": "fixture:hive-a11y/teams.html"
+    },
+    {
+      "id": "team-detail",
+      "route": "/ade/dashboard/teams/payments",
+      "waitFor": "[data-testid=\"team-detail\"]",
+      "data": "fixture:hive-a11y/team-detail.html"
     },
     {
       "id": "roles-builtin",

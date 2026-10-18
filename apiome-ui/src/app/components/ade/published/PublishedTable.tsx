@@ -35,6 +35,8 @@
  * @see `./publishedModel.ts` — every rule these cells draw.
  */
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { Check, Copy, Globe, KeyRound, Lock } from 'lucide-react';
@@ -102,6 +104,8 @@ export interface PublishedTableProps {
   empty?: React.ReactNode;
   /** The table's accessible name. */
   caption?: string;
+  /** A project's owner changed in place (a suggestion confirmed from the list, CDG-2.4). */
+  onOwnerChange?: (projectId: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -127,6 +131,7 @@ export function PublishedTable({
   footer,
   empty,
   caption = 'Published versions',
+  onOwnerChange,
 }: PublishedTableProps) {
   const columns = React.useMemo<DataTableColumn<PublishedVersion>[]>(
     () => [
@@ -137,6 +142,20 @@ export function PublishedTable({
         headerClassName: 'pub-col-version',
         cell: (version) => <VersionCell version={version} />,
         skeletonWidth: '11rem',
+      },
+      {
+        id: 'owner',
+        header: 'Owner',
+        cell: (version) => (
+          <OwnerCell
+            owner={parseEntityOwner(version.owner)}
+            kind="project"
+            entityId={version.project_id}
+            testId={`published-owner-${version.id}`}
+            onChange={(owner) => onOwnerChange?.(version.project_id, owner)}
+          />
+        ),
+        skeletonWidth: '6rem',
       },
       {
         id: 'visibility',
@@ -248,6 +267,7 @@ export function PublishedTable({
       mockUsageByVersion,
       onCopyAccessUrl,
       onMockChanged,
+      onOwnerChange,
       onRowAction,
       onToggleVisibility,
     ]

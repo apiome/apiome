@@ -1,5 +1,7 @@
 'use client';
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import { Ellipsis, FileJson, Pencil, SquareStack, Trash2 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -79,6 +81,8 @@ export interface ConsumersTableProps {
   canEdit: boolean;
   /** Whether the viewer may retire a consumer (`consumer_contracts:delete`). */
   canDelete: boolean;
+  /** A consumer's owner team changed in place (a suggestion confirmed from the list, CDG-2.4). */
+  onOwnerChange?: (consumerId: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -132,6 +136,7 @@ export default function ConsumersTable({
   onRetire,
   canEdit,
   canDelete,
+  onOwnerChange,
 }: ConsumersTableProps) {
   const columns: ReadonlyArray<DataTableColumn<ConsumerSummary>> = React.useMemo(
     () => [
@@ -148,8 +153,25 @@ export default function ConsumersTable({
         ),
       },
       {
-        id: 'owner',
+        id: 'team',
         header: 'Owner',
+        skeletonWidth: '7rem',
+        cell: (row) => (
+          <OwnerCell
+            owner={parseEntityOwner(row.owner)}
+            kind="consumer"
+            entityId={row.consumer.id}
+            testId={`consumer-owner-${row.consumer.id}`}
+            readOnly={!canEdit}
+            onChange={(owner) => onOwnerChange?.(row.consumer.id, owner)}
+          />
+        ),
+      },
+      {
+        // The free-text owner a consumer was registered with (CTG-4.1) — a person, a channel —
+        // now labelled for what it is beside the team that owns the consumer (CDG-2.4).
+        id: 'owner',
+        header: 'Contact',
         sortable: true,
         skeletonWidth: '8rem',
         cell: (row) =>
@@ -245,7 +267,7 @@ export default function ConsumersTable({
         ),
       },
     ],
-    [canDelete, canEdit, onDeclare, onEdit, onImport, onOpen, onRetire],
+    [canDelete, canEdit, onDeclare, onEdit, onImport, onOpen, onOwnerChange, onRetire],
   );
 
   return (

@@ -222,6 +222,11 @@ async def list_catalog_items(
     format_: Optional[List[str]] = _FORMAT_QUERY,
     domain: Optional[List[str]] = _DOMAIN_QUERY,
     tag: Optional[List[str]] = _TAG_QUERY,
+    team: Optional[str] = Query(
+        None,
+        max_length=128,
+        description="Only items whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[CatalogItemSchema]:
     """
@@ -249,6 +254,7 @@ async def list_catalog_items(
         format_: Source-format facet values.
         domain: Domain facet values.
         tag: Tag facet values.
+        team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
@@ -259,6 +265,7 @@ async def list_catalog_items(
         tenant_id,
         include_deleted=include_deleted,
         identity_group_id=identity_group_id,
+        team=team,
     )
     tags_by_item = db.get_artifact_tags_for_projects(
         tenant_id, [str(item["id"]) for item in items]

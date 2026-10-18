@@ -1,7 +1,9 @@
 'use client';
 
+import { AssignOwnerControl, OwnerFilter, assignOwner, useTeams } from '@/app/components/ade/owners';
+import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LayoutGrid, List, Plus, TriangleAlert, Trash2, Undo2, Upload } from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -123,8 +125,20 @@ type ProjectsView = 'cards' | 'table';
  */
 export default function ProjectsClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useAuthSession();
   const { confirm, alert } = useDialog();
+
+  // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
+  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  const { teams, loading: teamsLoading } = useTeams();
+  const setTeamFilter = React.useCallback(
+    (team: string | null) => {
+      const next = withTeamParam(new URLSearchParams(searchParams.toString()), team);
+      router.replace(next.toString() ? `?${next.toString()}` : '?', { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)
     ?.current_tenant_id;
@@ -161,12 +175,16 @@ export default function ProjectsClient() {
     }
     setLoading(true);
     try {
-      const response = await fetch(`/api/projects${showDeleted ? '?include_deleted=true' : ''}`);
+      const params = new URLSearchParams();
+      if (showDeleted) params.set('include_deleted', 'true');
+      withTeamParam(params, teamFilter);
+      const response = await fetch(`/api/projects${params.toString() ? `?${params.toString()}` : ''}`);
       if (!response.ok) throw new Error(`Failed to load projects: ${response.statusText}`);
       const data = await response.json();
       if (!data.success || !data.projects) throw new Error(data.error || 'Failed to load projects');
       // Catalog items (non-OpenAPI imports, `publishable=false`) never list here (#4587):
       // they live in Dashboard → Catalog until converted to OpenAPI, which mints a project.
+      // `owner` arrives in its wire shape (CDG-2.2); the owner cell validates it as it draws.
       setProjects((data.projects as Project[]).filter(isProjectPublishable));
       setLoadError(null);
     } catch (error) {
@@ -175,11 +193,40 @@ export default function ProjectsClient() {
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId, showDeleted]);
+  }, [currentTenantId, showDeleted, teamFilter]);
 
   React.useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  /** A suggestion confirmed from the list: update that row in place, no re-read (CDG-2.4). */
+  const updateOwner = React.useCallback((id: string, owner: EntityOwner | null) => {
+    setProjects((current) => current.map((project) => (project.id === id ? { ...project, owner } : project)));
+  }, []);
+
+  const [assigning, setAssigning] = React.useState(false);
+  /** Bulk "Assign owner": one all-or-nothing call, then re-read so filters and counts agree. */
+  const assignSelectedOwner = React.useCallback(
+    async (team: string) => {
+      setAssigning(true);
+      try {
+        await assignOwner(
+          team,
+          selectedIds.map((id) => ({ kind: 'project' as const, id }))
+        );
+        setSelectedIds([]);
+        await loadProjects();
+      } catch (error) {
+        await alert({
+          message: error instanceof Error ? error.message : 'Could not assign the owner.',
+          variant: 'error',
+        });
+      } finally {
+        setAssigning(false);
+      }
+    },
+    [selectedIds, alert, loadProjects]
+  );
 
   // Every open review of the workspace (COL-2.4, #4520), collapsed to one summary per project.
   // One read for the whole list: apiome-rest addresses reviews per project, so a card-per-call
@@ -604,6 +651,13 @@ export default function ProjectsClient() {
           {PROJECT_FACET_LABELS[entry]}
         </DataTableFilterChip>
       ))}
+      <OwnerFilter
+        teams={teams}
+        loading={teamsLoading}
+        value={teamFilter}
+        onChange={setTeamFilter}
+        testId="projects-owner-filter"
+      />
       <DataTableToolbarSpacer />
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
@@ -718,6 +772,9 @@ export default function ProjectsClient() {
           Delete {bulk.deletable.length}
         </DataTableBulkAction>
       ) : null}
+      {selectedIds.length > 0 ? (
+        <AssignOwnerControl teams={teams} busy={assigning} onAssign={assignSelectedOwner} />
+      ) : null}
       {bulk.restorable.length > 0 ? (
         <DataTableBulkAction
           disabled={busy}
@@ -807,6 +864,7 @@ export default function ProjectsClient() {
                 busy={busy}
                 toolbar={toolbar}
                 empty={emptyState}
+                onOwnerChange={updateOwner}
               />
             ) : (
               <Card className="prj-cards-panel" data-testid="projects-cards">
@@ -837,6 +895,7 @@ export default function ProjectsClient() {
                         onDelete={(target) => void handleDelete(target)}
                         onRestore={(target) => void handleRestore(target)}
                         onPermanentDelete={(target) => void handlePermanentDelete(target)}
+                        onOwnerChange={updateOwner}
                       />
                     ))}
                     <ProjectCreateTile onCreate={openCreate} />

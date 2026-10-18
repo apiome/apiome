@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.234.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.235.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -41,6 +41,7 @@ Args:
     format_: Source-format facet values.
     domain: Domain facet values.
     tag: Tag facet values.
+    team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
@@ -59,6 +60,7 @@ Operation id: `list_catalog_items_v1_catalog__tenant_slug__get`
 | `format` | query | array of string or null | no | Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3). |
 | `domain` | query | array of string or null | no | Domain facet, repeatable (a domain id from GET /v1/projects/domains, or 'uncategorized'). |
 | `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
+| `team` | query | string or null | no | Only items whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

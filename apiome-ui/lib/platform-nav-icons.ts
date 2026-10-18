@@ -52,6 +52,7 @@ import {
   Sunset,
   Upload,
   Users,
+  UsersRound,
 } from 'lucide-react';
 import { DEFAULT_PLATFORM_NAV_ICON } from './platform-nav';
 
@@ -84,6 +85,7 @@ export const PLATFORM_NAV_ICONS: Readonly<Record<string, LucideIcon>> = {
   sunset: Sunset,
   upload: Upload,
   users: Users,
+  'users-round': UsersRound,
 };
 
 /**

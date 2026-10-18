@@ -305,6 +305,11 @@ def _spec_index(tenant_id: str, tenant_slug: str, version_row: Dict[str, Any]) -
 async def list_project_consumers(
     tenant_slug: str,
     project_ref: str,
+    team: Optional[str] = Query(
+        default=None,
+        max_length=128,
+        description="Only consumers whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ConsumerListResponse:
     """List the project's consumers with their current contracts.
@@ -325,7 +330,7 @@ async def list_project_consumers(
     tenant_id = _tenant_id(auth_data)
     try:
         project = resolve_project(tenant_id, project_ref)
-        summaries = list_consumer_summaries(tenant_id, str(project["id"]))
+        summaries = list_consumer_summaries(tenant_id, str(project["id"]), team=team)
     except ConsumerValidationError as exc:
         raise _http_error(exc) from exc
     return ConsumerListResponse(consumers=summaries, count=len(summaries))

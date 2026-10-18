@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import { getTenantById } from '@lib/db/helper';
 import { isProjectPublishable, type PublishableProjectLike } from '@/app/utils/catalog-publishable';
 import { getJwtSigningSecret } from '@lib/rest-auth';
+import { TEAM_PARAM, withTeamParam } from '@lib/owners';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -124,7 +125,11 @@ export async function GET(request: NextRequest) {
     const includeDeletedParam = request.nextUrl.searchParams.get('include_deleted');
     const includeDeleted =
       includeDeletedParam === 'true' || includeDeletedParam === '1';
-    const querySuffix = includeDeleted ? '?include_deleted=true' : '';
+    const upstream = new URLSearchParams();
+    if (includeDeleted) upstream.set('include_deleted', 'true');
+    // CDG-2.4: the owner filter is applied in REST's SQL, never here.
+    withTeamParam(upstream, request.nextUrl.searchParams.get(TEAM_PARAM));
+    const querySuffix = upstream.toString() ? `?${upstream.toString()}` : '';
 
     // Catalog/Projects boundary (#4587): catalog items (publishable=false, MFI-23.1) are excluded
     // from this list by default, so every Projects-surface consumer — the Projects page and the

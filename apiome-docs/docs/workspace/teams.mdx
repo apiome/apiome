@@ -10,8 +10,28 @@ links people use to reach it: a contact e-mail, a chat channel, an on-call sched
 documentation. Teams are the [owners](#ownership) of projects, catalog items, MCP endpoints,
 consumers and connectors. A team is the only kind of group in a workspace.
 
-Teams are managed over the [REST API](../reference/rest/teams.md) today; the Teams screen and the
-`apiome teams` command come later.
+**Go to Workspace → Teams** to see them. Teams are created and changed with the
+[`apiome teams`](../reference/cli/teams.md) command or the [REST API](../reference/rest/teams.md).
+
+## Team pages
+
+**Teams** lists every team with its handle, how many members it has and its links. **Click a team's
+name** to open its page.
+
+<Screenshot id="teams" alt="The Teams page: Payments and Platform, each with its handle, member count and contact, chat and on-call links" />
+
+A team's page shows, top to bottom:
+
+- **Open findings for you** — your unread [owner findings](./notifications.mdx#owner-findings) for
+  this team, the same ones your bell counts; click it to open your notifications. **Owned**,
+  **Suggested** and **Members** count the rest, and the team's links sit beside them.
+- **Members**, leads first.
+- **What it owns**, grouped by kind — projects, catalog items, MCP servers, consumers and
+  connectors — each with how it became the owner (*Assigned*, *Gateway tag*, *CODEOWNERS*, …).
+- **Findings routed in the last 30 days**, newest first, one row per finding however many members
+  it reached.
+
+<Screenshot id="team-detail" alt="The Payments team page: 3 open findings, its members with the lead marked, what it owns by kind, and two routed findings" />
 
 ## What a team holds
 
@@ -74,6 +94,19 @@ does the suggestion.
 
 ### Confirm or assign an owner
 
+On **Catalog**, **Projects**, **MCP servers**, **Published** and a project's **Consumers**:
+
+- the **Owner** column (or, on cards, the line under the summary) shows each entity's owner, and a
+  suggestion's **Suggested** badge says where it came from;
+- **click “Confirm”** next to a suggestion to make it the owner — the row updates without reloading;
+- **Owner** in the toolbar narrows the list to one team; the choice is kept in the address
+  (`?team=payments`), so a filtered list can be shared;
+- on **Catalog** and **Projects**, tick rows and use **Assign owner** in the bar at the bottom of
+  the page: choose a team and **click “Assign owner”** to make it the owner of every selected item.
+
+From the command line, `apiome teams assign <kind> <id> --team <slug>` assigns one owner; an unknown
+team is refused with a non-zero exit. Over the API:
+
 - **Confirm a suggestion:** `POST /v1/tenants/{tenant}/owners/{kind}/{id}/confirm`, with
   `{"team": "payments"}` — or `{}` when only one team is suggested. The owner keeps its source and
   records who confirmed it.
@@ -132,6 +165,7 @@ See the [Teams API reference](../reference/rest/teams.md):
 | `GET /v1/tenants/{tenant}/teams/{slug}` | One team and its members, leads first | `teams:view` |
 | `PATCH /v1/tenants/{tenant}/teams/{slug}` | Change the name, description or links; `null` clears one | `teams:edit` |
 | `PUT /v1/tenants/{tenant}/teams/{slug}/members` | Replace the members (`[{"user_id", "role"}]`) | `teams:edit` |
+| `GET /v1/tenants/{tenant}/teams/{slug}/activity` | What it owns, your open findings for it, and the findings routed to it in the last 30 days | `teams:view` |
 | `DELETE /v1/tenants/{tenant}/teams/{slug}` | Delete; add `?reassign_to=<slug>` when it owns entities | `teams:delete` |
 
 For example, to create a team and make yourself its lead:
@@ -161,3 +195,4 @@ What a refusal means:
 
 - [Roles & permissions](./roles.mdx)
 - [Members & seats](./members.mdx)
+- [`apiome teams`](../reference/cli/teams.md)

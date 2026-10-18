@@ -5,6 +5,8 @@
  * shapes so a proxy or older payload still renders and filters correctly.
  */
 
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
+
 export interface NormalizedCatalogListItem {
   id: string;
   tenant_id: string;
@@ -28,6 +30,8 @@ export interface NormalizedCatalogListItem {
   formatMetadata?: Record<string, unknown> | null;
   identityGroupId?: string | null;
   conversion?: unknown;
+  /** The owner team (CDG-2.4). */
+  owner?: EntityOwner | null;
   /** Categorization (MFI-6.3): auto-derived paradigm, manual domain, free-form tags. */
   paradigm?: string | null;
   domain?: string | null;
@@ -55,5 +59,7 @@ export function normalizeCatalogListItem(raw: Record<string, unknown>): Normaliz
       pick<string | null>(raw, 'identityGroupId', 'identity_group_id') ?? base.identityGroupId,
     // An older API without MFI-6.3 sends no tags; an empty list keeps every reader simple.
     tags: Array.isArray(raw.tags) ? (raw.tags as unknown[]).filter((t): t is string => typeof t === 'string') : [],
+    // CDG-2.4: the owner team, validated once here so every reader gets the typed shape.
+    owner: parseEntityOwner(raw.owner),
   };
 }

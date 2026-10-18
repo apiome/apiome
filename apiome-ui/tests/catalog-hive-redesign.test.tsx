@@ -390,7 +390,7 @@ describe('the two views draw one list', () => {
     expect(rowPill!.classList.contains(hue!)).toBe(true);
   });
 
-  it('draws the table’s nine columns in the mockup’s order', async () => {
+  it('draws the table’s ten columns in the mockup’s order, with Owner after Source (CDG-2.4)', async () => {
     await renderCatalog();
     await screen.findByText('Ledger Graph');
     await showTable();
@@ -403,6 +403,7 @@ describe('the two views draw one list', () => {
       'Format',
       'Protocol',
       'Source',
+      'Owner',
       'Quality',
       'Grade',
       'Status',

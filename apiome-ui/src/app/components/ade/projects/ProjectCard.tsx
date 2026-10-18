@@ -27,6 +27,8 @@
  * @see `./projectsModel.ts` — every figure and every string on this card.
  */
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { Ellipsis, Pencil, Plus, Trash2, Undo2, Users } from 'lucide-react';
@@ -83,6 +85,8 @@ export interface ProjectCardProps {
   onPermanentDelete: (project: Project) => void;
   /** True while a write is in flight — every verb on the card goes inert. */
   busy?: boolean;
+  /** The project's owner changed in place (a suggestion confirmed on the card, CDG-2.4). */
+  onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -101,6 +105,7 @@ export default function ProjectCard({
   onRestore,
   onPermanentDelete,
   busy = false,
+  onOwnerChange,
 }: ProjectCardProps) {
   const lifecycle = projectLifecycle(project);
   const isDeleted = lifecycle === 'deleted';
@@ -153,6 +158,18 @@ export default function ProjectCard({
         </div>
 
         <p className="prj-card__summary">{projectSummaryText(project)}</p>
+        {project.owner ? (
+          <div className="prj-card__owner prj-card__above">
+            <OwnerCell
+              owner={parseEntityOwner(project.owner)}
+              kind="project"
+              entityId={project.id}
+              testId={`project-card-owner-${project.id}`}
+              readOnly={isDeleted}
+              onChange={(owner) => onOwnerChange?.(project.id, owner)}
+            />
+          </div>
+        ) : null}
 
         <div className="prj-card__meter">
           {scores.isEmpty ? (

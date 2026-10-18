@@ -12,6 +12,7 @@ import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
 import { getTenantById } from '@lib/db/helper';
 import { getJwtSigningSecret } from '@lib/rest-auth';
+import { TEAM_PARAM, withTeamParam } from '@lib/owners';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -122,6 +123,8 @@ export async function GET(request: NextRequest) {
     const params = new URLSearchParams();
     if (includeDeleted) params.set('include_deleted', 'true');
     if (identityGroupId) params.set('identityGroupId', identityGroupId);
+    // CDG-2.4: the owner filter is applied in REST's SQL, never here.
+    withTeamParam(params, request.nextUrl.searchParams.get(TEAM_PARAM));
     const querySuffix = params.toString() ? `?${params.toString()}` : '';
 
     // Build REST API URL

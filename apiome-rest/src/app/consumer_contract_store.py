@@ -212,7 +212,9 @@ def get_consumer(tenant_id: str, project_id: str, consumer_ref: str) -> Consumer
     return consumer_record_from_row(row)
 
 
-def list_consumer_summaries(tenant_id: str, project_id: str) -> List[ConsumerSummary]:
+def list_consumer_summaries(
+    tenant_id: str, project_id: str, *, team: Optional[str] = None
+) -> List[ConsumerSummary]:
     """Every live consumer in a project with its current contract.
 
     Two reads, not N+1: the consumers, then every current contract in the project, joined in
@@ -221,11 +223,14 @@ def list_consumer_summaries(tenant_id: str, project_id: str) -> List[ConsumerSum
     Args:
         tenant_id: The caller's tenant.
         project_id: The project.
+        team: Only consumers whose owner team is this slug (CDG-2.4); ``None`` for all.
 
     Returns:
         The summaries, newest consumer first, each with its current contract or ``None``.
     """
-    rows = db.list_consumers(project_id, tenant_id)
+    rows = db.list_consumers(project_id, tenant_id, team=team) if team else db.list_consumers(
+        project_id, tenant_id
+    )
     contracts_by_consumer: Dict[str, ConsumerContractRecord] = {}
     for row in db.list_current_consumer_contracts(project_id, tenant_id):
         record = contract_record_from_row(row)

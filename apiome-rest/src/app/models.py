@@ -12021,6 +12021,8 @@ class McpBrowseEndpointOut(BaseModel):
     # Freshness (V2-MCP-36.2 / MCAT-22.2): cadence/backoff/quarantine/failure staleness for cards.
     freshness: str = "fresh"
     last_known_good_at: Optional[str] = None
+    # Owner team (CDG-2.4, #5963): confirmed, else suggested; null when none.
+    owner: Optional[EntityOwnerRef] = None
 
 
 class McpBrowseHostGroup(BaseModel):
@@ -12123,6 +12125,7 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
             )
         ),
         last_known_good_at=last_known_good_at,
+        owner=owner_ref_from_value(row.get("entity_owner")),
     )
 
 
