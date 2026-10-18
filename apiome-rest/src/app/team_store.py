@@ -49,13 +49,35 @@ from .teams import (
 )
 
 __all__ = [
+    "ACTIVITY_DAYS",
     "create_team",
     "delete_team",
     "get_team",
     "list_teams",
     "replace_team_members",
+    "team_activity",
     "update_team",
 ]
+
+#: How far back a team page's routed-event history reaches (CDG-2.4).
+ACTIVITY_DAYS = 30
+
+#: Most owned entities and events one activity read returns.
+_ACTIVITY_LIMIT = 200
+
+#: The display name of each kind of owned entity, read in the same statement as the owner rows.
+_OWNED_ENTITY_NAME_SQL = """
+    COALESCE(
+        CASE eo.entity_kind
+            WHEN 'project' THEN (SELECT p.name FROM apiome.projects p WHERE p.id = eo.entity_id)
+            WHEN 'catalog_item' THEN (SELECT p.name FROM apiome.projects p WHERE p.id = eo.entity_id)
+            WHEN 'mcp_endpoint' THEN (SELECT m.name FROM apiome.mcp_endpoints m WHERE m.id = eo.entity_id)
+            WHEN 'consumer' THEN (SELECT c.name FROM apiome.consumer c WHERE c.id = eo.entity_id)
+            WHEN 'connector' THEN (SELECT k.name FROM apiome.catalog_connectors k WHERE k.id = eo.entity_id)
+        END,
+        eo.entity_id::text
+    )
+"""
 
 #: The team columns every read selects, with the live member count beside them.
 _TEAM_COLUMNS = """
@@ -593,3 +615,113 @@ def replace_team_members(
         return _record(row, listed)
 
     return _run(work)
+
+
+def team_activity(tenant_id: str, slug: str, viewer_id: Optional[str]) -> Dict[str, Any]:
+    """What a team page shows beyond the team itself (CDG-2.4, #5963).
+
+    * **owned** — every entity the team is the *confirmed* owner of, with its kind and name;
+      ``owned_counts`` tallies them by kind and ``suggested_count`` says how many suggestions
+      name the team.
+    * **open_findings** — the viewer's unread owner-finding inbox rows routed to this team. It is
+      exactly the number the viewer's bell shows for those rows, so it is 0 for a non-member.
+    * **events** — the last :data:`ACTIVITY_DAYS` days of routed findings, one per event: a finding
+      reaches every member as a separate inbox row, so rows of one type about one entity within the
+      same minute are one event.
+
+    Args:
+        tenant_id: The caller's tenant.
+        slug: The team's slug.
+        viewer_id: The signed-in user, whose unread rows are counted.
+
+    Returns:
+        ``{team_id, owned, owned_counts, suggested_count, open_findings, events}``.
+
+    Raises:
+        TeamValidationError: ``team-not-found`` for an unknown slug.
+    """
+    from .notifications import OWNER_NOTIFICATION_TYPES
+
+    team = get_team(tenant_id, slug)
+    owned_rows = db.execute_query(
+        f"""
+        SELECT eo.entity_kind, eo.entity_id::text AS entity_id, eo.source,
+               {_OWNED_ENTITY_NAME_SQL} AS name
+        FROM apiome.entity_owners eo
+        WHERE eo.tenant_id = %s::uuid AND eo.team_id = %s::uuid AND eo.status = 'confirmed'
+        ORDER BY eo.entity_kind, lower({_OWNED_ENTITY_NAME_SQL})
+        LIMIT %s
+        """,
+        (tenant_id, team.id, _ACTIVITY_LIMIT),
+    )
+    suggested = db.execute_query(
+        """
+        SELECT count(*)::int AS n FROM apiome.entity_owners
+        WHERE tenant_id = %s::uuid AND team_id = %s::uuid AND status = 'suggested'
+        """,
+        (tenant_id, team.id),
+    )
+    open_findings = 0
+    if is_uuid_string(viewer_id or ""):
+        counted = db.execute_query(
+            """
+            SELECT count(*)::int AS n FROM apiome.notifications
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND read_at IS NULL
+              AND type = ANY(%s::text[]) AND payload->'team'->>'id' = %s
+            """,
+            (tenant_id, viewer_id, list(OWNER_NOTIFICATION_TYPES), team.id),
+        )
+        open_findings = int(counted[0]["n"]) if counted else 0
+    events = db.execute_query(
+        """
+        SELECT type,
+               payload->>'entity_kind' AS entity_kind,
+               payload->>'entity_id' AS entity_id,
+               max(payload->>'entity_name') AS entity_name,
+               max(payload->>'summary') AS summary,
+               max(payload->>'link') AS link,
+               max(created_at) AS created_at,
+               count(*)::int AS recipients
+        FROM apiome.notifications
+        WHERE tenant_id = %s::uuid AND type = ANY(%s::text[])
+          AND payload->'team'->>'id' = %s
+          AND created_at >= CURRENT_TIMESTAMP - make_interval(days => %s)
+        GROUP BY type, payload->>'entity_kind', payload->>'entity_id', date_trunc('minute', created_at)
+        ORDER BY max(created_at) DESC
+        LIMIT %s
+        """,
+        (tenant_id, list(OWNER_NOTIFICATION_TYPES), team.id, ACTIVITY_DAYS, _ACTIVITY_LIMIT),
+    )
+
+    counts: Dict[str, int] = {}
+    owned = []
+    for row in owned_rows:
+        counts[row["entity_kind"]] = counts.get(row["entity_kind"], 0) + 1
+        owned.append(
+            {
+                "kind": row["entity_kind"],
+                "id": row["entity_id"],
+                "name": row["name"],
+                "source": row["source"],
+            }
+        )
+    return {
+        "team_id": team.id,
+        "owned": owned,
+        "owned_counts": counts,
+        "suggested_count": int(suggested[0]["n"]) if suggested else 0,
+        "open_findings": open_findings,
+        "events": [
+            {
+                "type": row["type"],
+                "entity_kind": row.get("entity_kind"),
+                "entity_id": row.get("entity_id"),
+                "entity_name": row.get("entity_name"),
+                "summary": row.get("summary"),
+                "link": row.get("link"),
+                "created_at": _iso(row.get("created_at")),
+                "recipients": int(row.get("recipients") or 0),
+            }
+            for row in events
+        ],
+    }

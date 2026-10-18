@@ -49,12 +49,13 @@ export function tenantUrl(slug: string, path: string): string {
  * with REST's message under `error`.
  *
  * @param url - The REST URL to call.
- * @param init - Method, the authenticated user, and an optional JSON body.
+ * @param init - Method, the authenticated user, an optional JSON body, and the message to show when
+ *   apiome-rest cannot be reached (other proxies — teams, owners — reuse this forwarder).
  * @returns The response to hand back to the browser.
  */
 export async function forwardConnectorRequest(
   url: string,
-  init: { method: string; user: SessionUser; body?: unknown }
+  init: { method: string; user: SessionUser; body?: unknown; unavailable?: string }
 ): Promise<NextResponse> {
   try {
     const rest = await fetch(url, {
@@ -80,7 +81,11 @@ export async function forwardConnectorRequest(
     );
   } catch {
     return NextResponse.json(
-      { success: false, error: 'The connector API is unavailable (apiome-rest not reachable). Try again shortly.' },
+      {
+        success: false,
+        error:
+          init.unavailable ?? 'The connector API is unavailable (apiome-rest not reachable). Try again shortly.',
+      },
       { status: 503 }
     );
   }

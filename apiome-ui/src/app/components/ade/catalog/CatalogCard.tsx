@@ -28,6 +28,8 @@
  * @see `./catalogModel.ts` — every figure and every string on this card.
  */
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import type { EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import {
@@ -108,6 +110,8 @@ export interface CatalogCardProps extends CatalogItemHandlers {
    * surface that offers no bulk verbs has nothing to select for.
    */
   onSelectedChange?: (item: CatalogItem, selected: boolean) => void;
+  /** The item's owner changed in place (a suggestion confirmed on the card, CDG-2.4). */
+  onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -131,6 +135,7 @@ export default function CatalogCard({
   busy = false,
   selected = false,
   onSelectedChange,
+  onOwnerChange,
 }: CatalogCardProps) {
   const lifecycle = catalogLifecycle(item);
   const isDeleted = lifecycle === 'deleted';
@@ -181,6 +186,18 @@ export default function CatalogCard({
         </div>
 
         <p className="cat-card__summary">{catalogSummaryText(item)}</p>
+        {item.owner ? (
+          <div className="cat-card__owner cat-card__above">
+            <OwnerCell
+              owner={item.owner}
+              kind="catalog_item"
+              entityId={item.id}
+              testId={`catalog-card-owner-${item.id}`}
+              readOnly={isDeleted}
+              onChange={(owner) => onOwnerChange?.(item.id, owner)}
+            />
+          </div>
+        ) : null}
 
         {/* The mockup's dashed `fmt-slot`: what this item *is*, above what it scores. */}
         <div className="cat-card__formats" data-testid="catalog-card-formats">

@@ -20,6 +20,7 @@
  *   and are unchanged; this module only bridges them to `DataTable`'s sort state.
  */
 
+import type { EntityOwner } from '@lib/owners';
 import type { DataTableSortState } from '@/app/components/ui/DataTable';
 import {
   destructiveConfirm,
@@ -71,6 +72,8 @@ export interface Project {
   qualityGrade?: string | null;
   /** Live version count from the server summary (0 = empty project). */
   versionsCount?: number;
+  /** The owner team: confirmed, else suggested; null when none (CDG-2.2/2.4). */
+  owner?: EntityOwner | null;
 }
 
 /** The quality history of every project on screen, keyed by project id. */

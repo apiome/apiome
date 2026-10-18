@@ -830,3 +830,26 @@ def connector_runs(tenant_slug: str, connector_id: str) -> str:
 def refresh_runs(tenant_slug: str) -> str:
     """GET the refresh ledger: Git refresh jobs and connector runs, interleaved (CDG-1.7)."""
     return f"{V1}/tenants/{tenant_slug}/refresh-runs"
+
+
+def teams(tenant_slug: str) -> str:
+    """GET / POST the tenant's teams (CDG-2.1, CDG-2.4)."""
+    return f"{V1}/tenants/{tenant_slug}/teams"
+
+
+def team(tenant_slug: str, team_slug: str) -> str:
+    """GET / PATCH / DELETE one team, by slug."""
+    return f"{teams(tenant_slug)}/{quote(team_slug, safe='')}"
+
+
+def team_members(tenant_slug: str, team_slug: str) -> str:
+    """PUT a team's complete membership (replaces every member)."""
+    return f"{team(tenant_slug, team_slug)}/members"
+
+
+def entity_owner(tenant_slug: str, kind: str, entity_id: str) -> str:
+    """GET / PUT / DELETE the owner team of one catalog entity (CDG-2.2)."""
+    return (
+        f"{V1}/tenants/{tenant_slug}/owners/{quote(kind, safe='')}/"
+        f"{quote(entity_id, safe='')}"
+    )

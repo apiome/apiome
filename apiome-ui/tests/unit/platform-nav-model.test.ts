@@ -85,7 +85,7 @@ describe('platform-nav model — shape', () => {
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
       ship: ['published', 'sunset-timeline', 'export-studio', 'sdk-settings'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'audit'],
-      workspace: ['members', 'roles', 'api-keys', 'tenants'],
+      workspace: ['members', 'roles', 'teams', 'api-keys', 'tenants'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
       'profile',
@@ -112,6 +112,7 @@ describe('platform-nav model — shape', () => {
       'Access audit',
       'Members',
       'Roles',
+      'Teams',
       'API keys',
       'Tenants',
       'Profile',
@@ -203,6 +204,8 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/connectors/shadow', 'shadow-apis'],
     ['/ade/dashboard/members', 'members'],
     ['/ade/dashboard/roles', 'roles'],
+    ['/ade/dashboard/teams', 'teams'],
+    ['/ade/dashboard/teams/payments', 'teams'],
     ['/ade/dashboard/api-keys', 'api-keys'],
     ['/ade/dashboard/tenants', 'tenants'],
     ['/ade/dashboard/profile', 'profile'],
@@ -282,6 +285,7 @@ describe('platform-nav model — workspace gating', () => {
     'audit',
     'members',
     'roles',
+    'teams',
     'api-keys',
   ];
 

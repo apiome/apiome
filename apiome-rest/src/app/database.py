@@ -37,7 +37,7 @@ from .lint_evidence import (
     mcp_evidence_run,
     native_evidence_run,
 )
-from .entity_owners import owner_envelope_join
+from .entity_owners import owner_envelope_join, owner_team_filter
 from .mcp_facets import (
     COMPLEXITY_MODERATE_MAX_PROPERTIES,
     COMPLEXITY_SIMPLE_MAX_PROPERTIES,
@@ -3474,7 +3474,7 @@ class Database:
     _PROJECT_OWNER_LATERAL = owner_envelope_join(("project", "catalog_item"), "p.id", "p.tenant_id")
 
     def get_projects_for_tenant(
-        self, tenant_id: str, *, include_deleted: bool = False
+        self, tenant_id: str, *, include_deleted: bool = False, team: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get all projects for a tenant.
 
@@ -3486,6 +3486,7 @@ class Database:
         no revision has been scored yet). Empty projects (``versions_count = 0``) have no scores.
         """
         deleted_filter = "" if include_deleted else "AND p.deleted_at IS NULL"
+        team_clause, team_params = owner_team_filter(team)
         order_clause = (
             "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
             if include_deleted
@@ -3503,10 +3504,10 @@ class Database:
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._PROJECT_VERSIONS_SUMMARY_LATERAL}
             {self._PROJECT_OWNER_LATERAL}
-            WHERE p.tenant_id = %s {deleted_filter}
+            WHERE p.tenant_id = %s {deleted_filter} {team_clause}
             {order_clause}
         """
-        return self.execute_query(query, (tenant_id,))
+        return self.execute_query(query, (tenant_id, *team_params))
 
     # The columns a catalog item projects off its latest live revision (MFI-7.1/7.2): the captured
     # lint score/grade plus what *kind* of API it is and the format provenance. Shared by the list
@@ -3579,6 +3580,7 @@ class Database:
         *,
         include_deleted: bool = False,
         identity_group_id: Optional[str] = None,
+        team: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List a tenant's catalog items (MFI-23.1): the ``publishable = false`` slice of projects.
 
@@ -3596,6 +3598,7 @@ class Database:
         identity_filter = (
             "AND aim.group_id = %s::uuid" if identity_group_id else ""
         )
+        team_clause, team_params = owner_team_filter(team)
         order_clause = (
             "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
             if include_deleted
@@ -3619,13 +3622,13 @@ class Database:
             {self._CATALOG_CONVERSION_LATERAL}
             {self._CATALOG_IDENTITY_JOIN}
             {self._PROJECT_OWNER_LATERAL}
-            WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter}
+            WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter} {team_clause}
             {order_clause}
         """
         params: tuple[Any, ...] = (tenant_id,)
         if identity_group_id:
             params = (tenant_id, identity_group_id)
-        return self.execute_query(query, params)
+        return self.execute_query(query, (*params, *team_params))
 
     def get_catalog_item_by_id(
         self, item_id: str, tenant_id: str, *, include_deleted: bool = False
@@ -20530,7 +20533,7 @@ class Database:
         """
         return self.execute_query(q, (tenant_id,))
 
-    def browse_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def browse_mcp_endpoints(self, tenant_id: str, *, team: Optional[str] = None) -> List[Dict[str, Any]]:
         """List a tenant's live endpoints enriched for the private browse view (MCAT-9.1).
 
         Each row is a catalog endpoint joined to its *current* version snapshot's quality
@@ -20553,6 +20556,7 @@ class Database:
         Returns:
             One dict per live endpoint with its score/grade, capability counts, and facet fields.
         """
+        team_clause, team_params = owner_team_filter(team)
         q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.description, e.category, e.visibility, e.published, e.enabled,
@@ -20571,18 +20575,20 @@ class Database:
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
-                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count
+                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count,
+                   own.entity_owner
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
             LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
             CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            {owner_envelope_join(("mcp_endpoint",), "e.id", "e.tenant_id")}
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL {team_clause}
             GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
-                     cv.protocol_version, cv.discovered_at, mtp.max_tool_props
+                     cv.protocol_version, cv.discovered_at, mtp.max_tool_props, own.entity_owner
             ORDER BY e.name ASC
         """
-        return self.execute_query(q, (tenant_id,))
+        return self.execute_query(q, (tenant_id, *team_params))
 
     def list_mcp_duplicate_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
         """Live endpoints in a tenant with fields needed for duplicate detection (MCAT-22.1).
@@ -30296,7 +30302,12 @@ class Database:
     """
 
     def list_consumers(
-        self, project_id: str, tenant_id: str, *, include_deleted: bool = False
+        self,
+        project_id: str,
+        tenant_id: str,
+        *,
+        include_deleted: bool = False,
+        team: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """A project's consumers, newest first (CTG-4.1, #4479).
 
@@ -30312,15 +30323,16 @@ class Database:
         if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
             return []
         clause = "" if include_deleted else " AND deleted_at IS NULL"
+        team_clause, team_params = owner_team_filter(team)
         return self.execute_query(
             f"""
             SELECT {self._CONSUMER_COLUMNS}, own.entity_owner
             FROM apiome.consumer
             {owner_envelope_join(("consumer",), "consumer.id", "consumer.tenant_id")}
-            WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause}
+            WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause} {team_clause}
             ORDER BY created_at DESC, slug
             """,
-            (project_id, tenant_id),
+            (project_id, tenant_id, *team_params),
         )
 
     def get_consumer_by_slug(

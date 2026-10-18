@@ -276,6 +276,11 @@ def _require_actor(auth_data: Dict[str, Any]) -> str:
 )
 async def browse_mcp_endpoints(
     tenant_slug: str,
+    team: Optional[str] = Query(
+        default=None,
+        max_length=128,
+        description="Only endpoints whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpBrowseResponse:
     """Private browse: the caller's cataloged endpoints grouped by host (V2-MCP-23.1 / MCAT-9.1).
@@ -289,7 +294,7 @@ async def browse_mcp_endpoints(
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.browse_mcp_endpoints(tenant_id)
+    rows = db.browse_mcp_endpoints(tenant_id, team=team)
     return group_mcp_browse_endpoints(rows)
 
 

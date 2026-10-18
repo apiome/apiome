@@ -1,6 +1,6 @@
 ---
 title: "Teams"
-description: "REST endpoints tagged teams: 6 operations."
+description: "REST endpoints tagged teams: 7 operations."
 sidebar_position: 75
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.234.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.235.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `teams` · 6 operations
+Tag: `teams` · 7 operations
 
 ## `GET /v1/tenants/{tenant_slug}/teams` {#list-tenant-teams-v1-tenants-tenant-slug-teams-get}
 
@@ -154,6 +154,32 @@ Operation id: `delete_tenant_team_v1_tenants__tenant_slug__teams__team_slug__del
 | 200 | Successful response for delete a team. | `application/json` [`TeamDeleteResponse`](#schema-teamdeleteresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/teams/{team_slug}/activity` {#read-tenant-team-activity-v1-tenants-tenant-slug-teams-team-slug-activity-get}
+
+**Read a team's ownership and routed findings**
+
+What the team owns (confirmed owners only, by kind), how many entities suggest it, how many owner-finding notifications routed to it the caller has not read, and the findings routed to it in the last 30 days — one row per event, however many members it reached.
+
+Requires `teams:view`.
+
+Operation id: `read_tenant_team_activity_v1_tenants__tenant_slug__teams__team_slug__activity_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `team_slug` | path | string | yes | Path parameter identifying the team slug segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a team's ownership and routed findings. | `application/json` [`TeamActivityResponse`](#schema-teamactivityresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `PUT /v1/tenants/{tenant_slug}/teams/{team_slug}/members` {#put-tenant-team-members-v1-tenants-tenant-slug-teams-team-slug-members-put}
 
 **Replace a team's members**
@@ -195,6 +221,19 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `TeamActivityResponse` {#schema-teamactivityresponse}
+
+A team page's ownership and routing picture (CDG-2.4).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `team_id` | string | yes | Team ID. |
+| `owned` | array of `OwnedEntity` | no | Confirmed ownership, by kind then name. |
+| `owned_counts` | map of integer | no | Owned entities per kind. |
+| `suggested_count` | integer | yes | Entities that suggest this team as owner. |
+| `open_findings` | integer | yes | The caller's unread owner-finding notifications routed to this team. |
+| `events` | array of `RoutedEvent` | no | Findings routed to the team in the last 30 days, newest first. |
 
 ### `TeamDeleteResponse` {#schema-teamdeleteresponse}
 

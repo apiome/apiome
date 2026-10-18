@@ -30,6 +30,7 @@ from .team_store import (
     get_team,
     list_teams,
     replace_team_members,
+    team_activity,
     update_team,
 )
 from .teams import (
@@ -64,6 +65,49 @@ class TeamListResponse(BaseModel):
 
     teams: List[TeamRecord] = Field(default_factory=list, description="The teams, by name.")
     count: int = Field(description="How many teams were returned.")
+
+
+class OwnedEntity(BaseModel):
+    """An entity the team is the confirmed owner of."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(description="`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.")
+    id: str
+    name: str
+    source: str = Field(description="How the ownership was set: `manual`, `gateway_tag`, …")
+
+
+class RoutedEvent(BaseModel):
+    """One finding routed to the team (one event, however many members it reached)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str
+    entity_kind: Optional[str] = None
+    entity_id: Optional[str] = None
+    entity_name: Optional[str] = None
+    summary: Optional[str] = None
+    link: Optional[str] = None
+    created_at: Optional[str] = None
+    recipients: int = Field(description="How many members it reached.")
+
+
+class TeamActivityResponse(BaseModel):
+    """A team page's ownership and routing picture (CDG-2.4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    team_id: str
+    owned: List[OwnedEntity] = Field(default_factory=list, description="Confirmed ownership, by kind then name.")
+    owned_counts: Dict[str, int] = Field(default_factory=dict, description="Owned entities per kind.")
+    suggested_count: int = Field(description="Entities that suggest this team as owner.")
+    open_findings: int = Field(
+        description="The caller's unread owner-finding notifications routed to this team."
+    )
+    events: List[RoutedEvent] = Field(
+        default_factory=list, description="Findings routed to the team in the last 30 days, newest first."
+    )
 
 
 class TeamDeleteResponse(BaseModel):
@@ -214,6 +258,43 @@ async def read_tenant_team(
     _ = tenant_slug
     try:
         return get_team(_tenant_id(auth_data), team_slug)
+    except TeamValidationError as exc:
+        raise _http_error(exc) from exc
+
+
+@router.get(
+    "/{tenant_slug}/teams/{team_slug}/activity",
+    response_model=TeamActivityResponse,
+    summary="Read a team's ownership and routed findings",
+    description=(
+        "What the team owns (confirmed owners only, by kind), how many entities suggest it, how "
+        "many owner-finding notifications routed to it the caller has not read, and the findings "
+        "routed to it in the last 30 days — one row per event, however many members it reached."
+        "\n\nRequires `teams:view`."
+    ),
+)
+async def read_tenant_team_activity(
+    tenant_slug: str,
+    team_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> TeamActivityResponse:
+    """Read a team's ownership and routing picture.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        team_slug: The team's slug.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The activity.
+
+    Raises:
+        HTTPException: 404 for an unknown team, 403 without ``teams:view``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.TEAMS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        return TeamActivityResponse(**team_activity(_tenant_id(auth_data), team_slug, user_id))
     except TeamValidationError as exc:
         raise _http_error(exc) from exc
 

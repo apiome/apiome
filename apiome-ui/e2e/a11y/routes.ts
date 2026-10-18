@@ -104,6 +104,12 @@ const ADDITIONAL: A11yRoute[] = [
       files: ['connectors.html', 'connector-add.html', 'connector-detail.html', 'connector-runs.html'],
     },
   },
+  {
+    // CDG-2.4 (#5963): the teams list and a team page, dumped by `tests/teams-pages.test.tsx`.
+    id: 'teams',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['teams.html', 'team-detail.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

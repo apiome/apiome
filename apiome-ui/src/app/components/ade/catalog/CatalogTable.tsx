@@ -33,6 +33,8 @@
  * @see `./catalogModel.ts` — the facets, the scores, the row verbs and the sort bridging.
  */
 
+import { OwnerCell } from '@/app/components/ade/owners';
+import type { EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { Undo2 } from 'lucide-react';
@@ -116,6 +118,8 @@ export interface CatalogTableProps extends CatalogItemHandlers {
   toolbar?: React.ReactNode;
   /** What to draw when nothing matched. */
   empty?: React.ReactNode;
+  /** A row's owner changed in place (a suggestion confirmed from the list, CDG-2.4). */
+  onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
 }
 
 /**
@@ -147,6 +151,7 @@ export default function CatalogTable({
   busy = false,
   toolbar,
   empty,
+  onOwnerChange,
 }: CatalogTableProps) {
   const columns = React.useMemo<DataTableColumn<CatalogItem>[]>(
     () => [
@@ -196,6 +201,21 @@ export default function CatalogTable({
           const source = catalogItemSource(item);
           return source ? <SourceBadge source={source} /> : <CatalogDash />;
         },
+        skeletonWidth: '6rem',
+      },
+      {
+        id: 'owner',
+        header: 'Owner',
+        cell: (item) => (
+          <OwnerCell
+            owner={item.owner ?? null}
+            kind="catalog_item"
+            entityId={item.id}
+            testId={`catalog-owner-${item.id}`}
+            readOnly={Boolean(item.deleted_at)}
+            onChange={(owner) => onOwnerChange?.(item.id, owner)}
+          />
+        ),
         skeletonWidth: '6rem',
       },
       {
@@ -322,6 +342,7 @@ export default function CatalogTable({
       onPermanentDelete,
       onRestore,
       onCategorize,
+      onOwnerChange,
     ]
   );
 

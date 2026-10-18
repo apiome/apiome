@@ -39,6 +39,9 @@
  *    three are inside the table's card now.
  */
 
+import { useRouter, useSearchParams } from 'next/navigation';
+import { OwnerFilter, useTeams } from '@/app/components/ade/owners';
+import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { KeyRound } from 'lucide-react';
@@ -131,6 +134,19 @@ export default function PublishedVersions({
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
 
+  // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied in the read's SQL.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  const { teams, loading: teamsLoading } = useTeams();
+  const setTeamFilter = React.useCallback(
+    (team: string | null) => {
+      const next = withTeamParam(new URLSearchParams(searchParams.toString()), team);
+      router.replace(next.toString() ? `?${next.toString()}` : '?', { scroll: false });
+    },
+    [router, searchParams]
+  );
+
   const [apiKeys, setApiKeys] = React.useState<PublishedApiKeySummary[]>([]);
   const [changingVisibility, setChangingVisibility] = React.useState<string | null>(null);
   const [visibilityError, setVisibilityError] = React.useState<string | null>(null);
@@ -148,7 +164,7 @@ export default function PublishedVersions({
     }
     setLoading(true);
     try {
-      const payload = JSON.parse(await getPublishedVersionsForTenant(currentTenantId)) as {
+      const payload = JSON.parse(await getPublishedVersionsForTenant(currentTenantId, teamFilter)) as {
         success?: boolean;
         versions?: PublishedVersion[];
         error?: string;
@@ -167,7 +183,14 @@ export default function PublishedVersions({
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId]);
+  }, [currentTenantId, teamFilter]);
+
+  /** A suggestion confirmed from the list: every version of that project updates in place. */
+  const updateOwner = React.useCallback((projectId: string, owner: EntityOwner | null) => {
+    setVersions((current) =>
+      current.map((version) => (version.project_id === projectId ? { ...version, owner } : version))
+    );
+  }, []);
 
   React.useEffect(() => {
     void loadPublishedVersions();
@@ -410,6 +433,13 @@ export default function PublishedVersions({
         aria-label="Search published versions"
         data-testid="published-search"
       />
+      <OwnerFilter
+        teams={teams}
+        loading={teamsLoading}
+        value={teamFilter}
+        onChange={setTeamFilter}
+        testId="published-owner-filter"
+      />
     </DataTableToolbar>
   );
 
@@ -511,6 +541,7 @@ export default function PublishedVersions({
               toolbar={toolbar}
               footer={footer}
               empty={empty}
+              onOwnerChange={updateOwner}
             />
           </>
         )}

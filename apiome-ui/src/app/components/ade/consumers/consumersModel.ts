@@ -104,6 +104,8 @@ export interface Consumer {
 export interface ConsumerSummary {
   consumer: Consumer;
   contract: ConsumerContract | null;
+  /** The consumer's owner team, in its wire shape (CDG-2.2/2.4); `consumer.owner` is free text. */
+  owner?: unknown;
 }
 
 /** One field the picker may offer. */

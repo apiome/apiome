@@ -113,6 +113,7 @@ We continue to improve the platform based on your feedback with improvements and
   - **Connectors** (Bring in): add a gateway with a dry run that shows what it would sync before anything is saved, then see each connector's items, runs and settings; Git refreshes and connector runs share one **Recent runs** ledger
   - **Teams**: group workspace members into named teams with a contact e-mail, chat, on-call and documentation links, each member a lead or a member; **Roles** has a new **Teams** row (Owner and Admin manage teams, Editor and Viewer can view them)
   - **Owner findings**: lint regressions, breaking changes, verification drift, failing deploy gates, MCP trust drift, shadow APIs and failed connector syncs now reach the owner team in the notification centre (one switch per type in **Preferences → Notifications**) and its chat channel
+  - **Ownership in the lists**: Catalog, Projects, MCP servers, Published and Consumers show each entity's owner team, with a **Suggested** badge and one-click **Confirm**; filter any of them by team, assign one owner to many items from the Catalog and Projects bulk bar, and see each team's members, what it owns and its recent findings under **Workspace → Teams**
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

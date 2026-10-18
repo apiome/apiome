@@ -75,6 +75,8 @@ export interface PublishedVersion {
   mock_enabled: boolean;
   /** Revision JSON (#507, #748): `lifecycle`, `deprecated`, `sunsetAt`, `successorRevisionId`. */
   metadata?: Record<string, unknown> | null;
+  /** The project's owner team, in its wire shape (CDG-2.4); validated where it is drawn. */
+  owner?: unknown;
 }
 
 /** An API key as `getApiKeysForTenant` summarises it — enough to answer "is there a live one?". */

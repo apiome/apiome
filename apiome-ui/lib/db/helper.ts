@@ -1,5 +1,6 @@
 'use server';
 
+import { sanitizeTeamParam } from '@lib/owners';
 import { generateOpenApiSpec } from '@/app/utils/openapi';
 import { STUDIO_EXPORT_OPENAPI_VERSION } from '@/app/utils/openapi-versions';
 import { generatePathsForOpenAPI, type PathInfo } from '../utils/openapi-paths-generator';
@@ -1308,10 +1309,15 @@ export async function unpublishVersion(versionRecordId: string, userId: string) 
  * "you have not published anything yet" — the one sentence guaranteed to be wrong at that
  * moment. The screen now draws the read's failure as the table's error state, with a retry.
  *
+ * Each row carries its project's `owner` (CDG-2.4): the confirmed owner team, else the first
+ * suggestion, in the shape apiome-rest's list envelopes use — a published version is owned by the
+ * project it belongs to. `team` narrows the read, in SQL, to projects that team owns.
+ *
  * @param tenantId The workspace's id.
+ * @param team A team slug to filter by, or `null` / omitted for every owner.
  * @returns `{"success": true, "versions": [...]}`, or `{"success": false, "error": "..."}`.
  */
-export async function getPublishedVersionsForTenant(tenantId: string) {
+export async function getPublishedVersionsForTenant(tenantId: string, team: string | null = null) {
   try {
     const result = await connectionPool.query(
       `SELECT 
@@ -1332,18 +1338,34 @@ export async function getPublishedVersionsForTenant(tenantId: string) {
         t.name as tenant_name,
         t.slug as tenant_slug,
         u.name as creator_name,
-        u.email as creator_email
+        u.email as creator_email,
+        own.owner
        FROM apiome.versions v
        JOIN apiome.projects p ON v.project_id = p.id
        JOIN apiome.tenants t ON p.tenant_id = t.id
        LEFT JOIN apiome.users u ON v.creator_id = u.id
+       -- The project's owner (CDG-2.4), shaped as apiome-rest's owner_envelope_join shapes it.
+       LEFT JOIN LATERAL (
+         SELECT jsonb_build_object(
+                  'team', jsonb_build_object('id', ot.id::text, 'slug', ot.slug, 'name', ot.name),
+                  'status', eo.status,
+                  'source', eo.source
+                ) AS owner
+         FROM apiome.entity_owners eo
+         JOIN apiome.teams ot ON ot.id = eo.team_id AND ot.deleted_at IS NULL
+         WHERE eo.tenant_id = p.tenant_id AND eo.entity_id = p.id
+           AND eo.entity_kind IN ('project', 'catalog_item')
+         ORDER BY (eo.status = 'confirmed') DESC, eo.created_at, eo.id
+         LIMIT 1
+       ) own ON TRUE
        WHERE p.tenant_id = $1 
          AND v.published = true 
          AND v.deleted_at IS NULL
          AND p.deleted_at IS NULL
          AND t.deleted_at IS NULL
+         AND ($2::text IS NULL OR own.owner->'team'->>'slug' = $2::text)
        ORDER BY v.published_at DESC, v.created_at DESC`,
-      [tenantId]
+      [tenantId, sanitizeTeamParam(team)]
     );
 
     return JSON.stringify({ success: true, versions: result.rows });

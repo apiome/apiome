@@ -52,7 +52,10 @@
 import * as React from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
+import { OwnerCell, OwnerFilter, useTeams } from '@/app/components/ade/owners';
+import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -119,6 +122,19 @@ export default function McpCatalogClient() {
   const currentTenantId = sessionUser?.current_tenant_id;
   const currentUserId = sessionUser?.user_id;
 
+  // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  const { teams, loading: teamsLoading } = useTeams();
+  const setTeamFilter = React.useCallback(
+    (team: string | null) => {
+      const next = withTeamParam(new URLSearchParams(searchParams.toString()), team);
+      router.replace(next.toString() ? `?${next.toString()}` : '?', { scroll: false });
+    },
+    [router, searchParams]
+  );
+
   const [groups, setGroups] = React.useState<McpBrowseHostGroup[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -157,7 +173,8 @@ export default function McpCatalogClient() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/mcp/browse', { credentials: 'include' });
+      const query = withTeamParam(new URLSearchParams(), teamFilter).toString();
+      const res = await fetch(`/api/mcp/browse${query ? `?${query}` : ''}`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(
@@ -180,11 +197,21 @@ export default function McpCatalogClient() {
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId]);
+  }, [currentTenantId, teamFilter]);
 
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  /** A suggestion confirmed under a card: update that endpoint in place, no re-read (CDG-2.4). */
+  const updateOwner = React.useCallback((id: string, owner: EntityOwner | null) => {
+    setGroups((current) =>
+      current.map((group) => ({
+        ...group,
+        endpoints: group.endpoints.map((endpoint) => (endpoint.id === id ? { ...endpoint, owner } : endpoint)),
+      }))
+    );
+  }, []);
 
   // Facets reflect the full catalog, so every available value stays selectable as filters compose.
   const facets = React.useMemo(() => mcpCatalogFacets(groups), [groups]);
@@ -281,15 +308,36 @@ export default function McpCatalogClient() {
         capabilityCount={group.capability_count}
       >
         <div className={density === 'grid' ? 'mcp-grid' : 'mcp-list'}>
-          {group.endpoints.map((endpoint) => (
-            <McpCatalogCard
-              key={endpoint.id}
-              endpoint={endpoint}
-              href={`/ade/dashboard/mcp/${endpoint.id}`}
-              density={density}
-              changed={changedIds.has(endpoint.id)}
-            />
-          ))}
+          {group.endpoints.map((endpoint) =>
+            endpoint.owner ? (
+              // The card is one link; the owner (a link and a button) sits under it, never inside.
+              <div key={endpoint.id} className="mcp-owned">
+                <McpCatalogCard
+                  endpoint={endpoint}
+                  href={`/ade/dashboard/mcp/${endpoint.id}`}
+                  density={density}
+                  changed={changedIds.has(endpoint.id)}
+                />
+                <div className="mcp-owned__owner">
+                  <OwnerCell
+                    owner={endpoint.owner}
+                    kind="mcp_endpoint"
+                    entityId={endpoint.id}
+                    testId={`mcp-owner-${endpoint.id}`}
+                    onChange={(owner) => updateOwner(endpoint.id, owner)}
+                  />
+                </div>
+              </div>
+            ) : (
+              <McpCatalogCard
+                key={endpoint.id}
+                endpoint={endpoint}
+                href={`/ade/dashboard/mcp/${endpoint.id}`}
+                density={density}
+                changed={changedIds.has(endpoint.id)}
+              />
+            )
+          )}
         </div>
       </McpHostSection>
     ));
@@ -358,6 +406,15 @@ export default function McpCatalogClient() {
                   filters={filters}
                   onFiltersChange={setFilters}
                 />
+                <div className="mcp-owner-filter">
+                  <OwnerFilter
+                    teams={teams}
+                    loading={teamsLoading}
+                    value={teamFilter}
+                    onChange={setTeamFilter}
+                    testId="mcp-owner-filter"
+                  />
+                </div>
 
                 <div className="mcp-strips">
                   <McpSavedSearchesPanel

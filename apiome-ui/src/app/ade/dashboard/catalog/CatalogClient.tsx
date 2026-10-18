@@ -1,5 +1,7 @@
 'use client';
 
+import { AssignOwnerControl, OwnerFilter, assignOwner, useTeams } from '@/app/components/ade/owners';
+import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -193,6 +195,16 @@ export default function CatalogClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const identityGroupFilter = searchParams.get('identityGroupId');
+  // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
+  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  const { teams, loading: teamsLoading } = useTeams();
+  const setTeamFilter = React.useCallback(
+    (team: string | null) => {
+      const next = withTeamParam(new URLSearchParams(searchParams.toString()), team);
+      router.replace(next.toString() ? `?${next.toString()}` : '?', { scroll: false });
+    },
+    [router, searchParams]
+  );
   const { data: session } = useAuthSession();
   const { confirm, alert } = useDialog();
 
@@ -246,6 +258,7 @@ export default function CatalogClient() {
       const params = new URLSearchParams();
       if (showDeleted) params.set('include_deleted', 'true');
       if (identityGroupFilter) params.set('identityGroupId', identityGroupFilter);
+      withTeamParam(params, teamFilter);
       const qs = params.toString() ? `?${params.toString()}` : '';
       const response = await fetch(`/api/catalog${qs}`);
       if (!response.ok) throw new Error(`Failed to load the catalog: ${response.statusText}`);
@@ -265,7 +278,36 @@ export default function CatalogClient() {
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId, identityGroupFilter, showDeleted]);
+  }, [currentTenantId, identityGroupFilter, showDeleted, teamFilter]);
+
+  /** A suggestion confirmed from the list: update that row in place, no re-read (CDG-2.4). */
+  const updateOwner = React.useCallback((id: string, owner: EntityOwner | null) => {
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, owner } : item)));
+  }, []);
+
+  const [assigning, setAssigning] = React.useState(false);
+  /** Bulk "Assign owner": one all-or-nothing call, then re-read so filters and counts agree. */
+  const assignSelectedOwner = React.useCallback(
+    async (team: string) => {
+      setAssigning(true);
+      try {
+        await assignOwner(
+          team,
+          selectedIds.map((id) => ({ kind: 'catalog_item' as const, id }))
+        );
+        setSelectedIds([]);
+        await loadCatalog();
+      } catch (error) {
+        await alert({
+          message: error instanceof Error ? error.message : 'Could not assign the owner.',
+          variant: 'error',
+        });
+      } finally {
+        setAssigning(false);
+      }
+    },
+    [selectedIds, alert, loadCatalog]
+  );
 
   React.useEffect(() => {
     void loadCatalog();
@@ -766,6 +808,14 @@ export default function CatalogClient() {
           </DataTableFilterChip>
         ) : null}
 
+        <OwnerFilter
+          teams={teams}
+          loading={teamsLoading}
+          value={teamFilter}
+          onChange={setTeamFilter}
+          testId="catalog-owner-filter"
+        />
+
         <DataTableToolbarSpacer />
 
         <DropdownMenu.Root>
@@ -896,6 +946,9 @@ export default function CatalogClient() {
           Delete {bulk.deletable.length}
         </DataTableBulkAction>
       ) : null}
+      {selectedIds.length > 0 ? (
+        <AssignOwnerControl teams={teams} busy={assigning} onAssign={assignSelectedOwner} />
+      ) : null}
       {bulk.restorable.length > 0 ? (
         <DataTableBulkAction
           disabled={busy}
@@ -1003,6 +1056,7 @@ export default function CatalogClient() {
                 busy={busy}
                 toolbar={toolbar}
                 empty={emptyState}
+                onOwnerChange={updateOwner}
                 {...handlers}
               />
             ) : (
@@ -1065,6 +1119,7 @@ export default function CatalogClient() {
                         <div className="cat-grid cat-grid--grouped">
                           {group.items.map((item) => (
                             <CatalogCard
+                              onOwnerChange={updateOwner}
                               key={item.id}
                               item={item}
                               qualityHistory={historyById[item.id] ?? []}
@@ -1082,6 +1137,7 @@ export default function CatalogClient() {
                     <div className="cat-grid">
                       {visible.map((item) => (
                         <CatalogCard
+                          onOwnerChange={updateOwner}
                           key={item.id}
                           item={item}
                           qualityHistory={historyById[item.id] ?? []}

@@ -405,6 +405,16 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         requiresTenant: true,
       },
       {
+        // CDG-2.4: the groups that own catalog entities and receive their findings.
+        id: 'teams',
+        label: 'Teams',
+        href: `${DASHBOARD_HREF}/teams`,
+        icon: 'users-round',
+        requiresTenant: true,
+        // A team page (`/teams/[slug]`) still lights the Teams entry.
+        match: 'subtree',
+      },
+      {
         id: 'api-keys',
         label: 'API keys',
         href: `${DASHBOARD_HREF}/api-keys`,

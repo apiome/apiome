@@ -1,5 +1,8 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
+import { OwnerFilter, useTeams } from '@/app/components/ade/owners';
+import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import { FileJson, Plus } from 'lucide-react';
 import { toast } from '../../../../../components/ui/toast';
@@ -111,6 +114,19 @@ export interface ConsumersClientProps {
  * @returns The header, the list, and the four overlays.
  */
 export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
+  // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  const { teams, loading: teamsLoading } = useTeams();
+  const setTeamFilter = React.useCallback(
+    (team: string | null) => {
+      const next = withTeamParam(new URLSearchParams(searchParams.toString()), team);
+      router.replace(next.toString() ? `?${next.toString()}` : '?', { scroll: false });
+    },
+    [router, searchParams]
+  );
+
   const [rows, setRows] = React.useState<ConsumerSummary[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
@@ -149,18 +165,23 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
     setLoading(true);
     setLoadError(null);
     try {
-      const data = await fetchConsumers(projectRef);
+      const data = await fetchConsumers(projectRef, teamFilter);
       setRows(data.consumers);
     } catch (error) {
       setLoadError(describeFailure(error, "Couldn't load this project's consumers"));
     } finally {
       setLoading(false);
     }
-  }, [projectRef]);
+  }, [projectRef, teamFilter]);
 
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  /** A suggestion confirmed from the list: update that row in place, no re-read (CDG-2.4). */
+  const updateOwner = React.useCallback((consumerId: string, owner: EntityOwner | null) => {
+    setRows((current) => current.map((row) => (row.consumer.id === consumerId ? { ...row, owner } : row)));
+  }, []);
 
   React.useEffect(() => {
     fetch('/api/access/permissions/me')
@@ -304,6 +325,13 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
           {CONSUMER_FACET_LABELS[entry]}
         </DataTableFilterChip>
       ))}
+      <OwnerFilter
+        teams={teams}
+        loading={teamsLoading}
+        value={teamFilter}
+        onChange={setTeamFilter}
+        testId="consumers-owner-filter"
+      />
       <DataTableToolbarSpacer />
     </DataTableToolbar>
   );
@@ -362,6 +390,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
           onRetire={retire}
           canEdit={can('edit')}
           canDelete={can('delete')}
+          onOwnerChange={updateOwner}
         />
       </PageBody>
 

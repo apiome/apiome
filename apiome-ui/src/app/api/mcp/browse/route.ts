@@ -6,10 +6,11 @@
  * so the dashboard renders an empty state rather than erroring.
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
+import { TEAM_PARAM, withTeamParam } from '@lib/owners';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ interface SessionUser {
 
 const EMPTY_BROWSE = { success: true, host_count: 0, endpoint_count: 0, groups: [] };
 
-export async function GET() {
+export async function GET(request?: NextRequest) {
   const session = await getAuthSession();
   const user = session?.user as SessionUser | undefined;
   if (!user?.user_id) {
@@ -39,7 +40,11 @@ export async function GET() {
     return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 400 });
   }
 
-  const url = `${REST_API_BASE_URL}/mcp/${encodeURIComponent(tenantSlug)}/browse`;
+  // CDG-2.4: the owner filter is applied in REST's SQL, never here.
+  const query = withTeamParam(new URLSearchParams(), request?.nextUrl.searchParams.get(TEAM_PARAM) ?? null);
+  const url = `${REST_API_BASE_URL}/mcp/${encodeURIComponent(tenantSlug)}/browse${
+    query.toString() ? `?${query.toString()}` : ''
+  }`;
   try {
     const rest = await fetch(url, {
       method: 'GET',

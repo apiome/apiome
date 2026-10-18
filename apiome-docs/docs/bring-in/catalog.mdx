@@ -177,8 +177,20 @@ it never creates a project.
 
 Each item can have an owner team. Connectors, CODEOWNERS files and the document's own
 `x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
-confirms it. The catalog list carries each item's `owner` (`status` is `confirmed` or `suggested`).
-Owners are set over the API for now — see [Teams → Ownership](../workspace/teams.mdx#ownership).
+confirms it.
+
+**In a list**, the **Owner** column (on cards, a line under the summary) names the team. A
+*suggested* owner carries a **Suggested** badge saying where it came from — *Gateway tag*,
+*CODEOWNERS*, *Spec* — and a **“Confirm”** button: **click “Confirm”** to make it the owner; the
+row updates in place. The team's name opens its [team page](../workspace/teams.mdx#team-pages).
+
+**Owner** in the second toolbar row shows only the items one team owns (or is suggested for); the
+choice is kept in the address as `?team=`.
+
+<Screenshot id="catalog-owner-filter" alt="The catalog table filtered to the Payments team: one owned item and two suggested owners with Confirm buttons" />
+
+To give several items an owner at once, tick them and use **Assign owner** in the bulk bar (below).
+See [Teams → Ownership](../workspace/teams.mdx#ownership).
 
 ## Delete and restore
 
@@ -192,7 +204,8 @@ back. **Permanently delete** asks you to type the item's slug, then **“Delete 
    selection is kept when you switch between Cards and Table.
 2. A bar appears at the bottom of the page: **“Convert N…”**, **“Delete N”** and
    **“Undelete N”**, each counting the items it applies to (Convert and Delete reach live
-   items; Undelete reaches deleted ones).
+   items; Undelete reaches deleted ones), and **Assign owner**: choose a team, then **click
+   “Assign owner”** to make it the owner of every selected item.
 3. **Click the × on the bar** to clear the selection.
 
 <Screenshot id="catalog-bulk-selection" alt="Three catalog cards ticked, with the bulk bar offering Convert 3… and Delete 3" />
