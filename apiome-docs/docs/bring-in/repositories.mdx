@@ -52,7 +52,9 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 - **Files** — every file Apiome indexed on the branch. **Hide non-importable** narrows the list to
   specifications; a file's menu has **View details**, **Import…**, **Open on provider** and **Copy
   path**.
-- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
+- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
+  repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
+  are refreshed by the same engine on the same cadence vocabulary.
 - **Imports** — the import history.
 - **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
   conflict (**Hold for review**, **Overwrite** or **New branch**), and **Remove repository**.
@@ -93,7 +95,8 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 
 Repositories are polled within an hourly quota. **Quota & rate limits** shows how much of it this
 workspace uses — polls, repositories and files deferred, and content scanned — over **7d**, **30d**
-or **90d**.
+or **90d**. [Connectors](./connectors.mdx) share the same quota: every document a connector
+fetches counts as a poll, and connector syncs deferred by the quota count as deferrals.
 
 <Screenshot id="repositories-telemetry" alt="Quota & rate limits: polling quota, polls, deferrals and bytes scanned" />
 
@@ -117,8 +120,11 @@ change it.
 - REST: `GET` / `POST /v1/tenants/{tenant}/repositories`, `GET …/repositories/{repo}/files`,
   `POST …/repositories/{repo}/refresh`, `GET …/repository-quota-telemetry`,
   `GET …/repository-webhook-ip-allowlist` — see the [API reference](../reference/api-reference.md).
+  The repository audit export (`GET …/repository-audit-export`) also lists connector changes and
+  runs (`repository.connector.*`).
 
 ## Where next
 
 - [Import wizard](./import-wizard.mdx)
+- [Connectors](./connectors.mdx)
 - [Versions](../build/versions.mdx)

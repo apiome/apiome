@@ -690,3 +690,43 @@ async def test_pipeline_bare_single_type_json_schema_imports_as_one_type(monkeyp
     assert final.state == "completed"
     assert list(captured["definitions"].keys()) == ["Widget"]
     assert final.summary["types_import"]["imported"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Catalog connector syncs always land in the catalog (CDG-1.1, #5952)
+# ---------------------------------------------------------------------------
+
+
+def test_force_catalog_routing_keeps_the_counts() -> None:
+    from app.import_routing import force_catalog_routing
+
+    model = _model(paradigm=ApiParadigm.REST, fmt="openapi-3.1", operations=4, types=6)
+    decision = decide_import_routing(_StubAdapter("openapi", ApiParadigm.REST, model), model)
+    forced = force_catalog_routing(decision, reason="synced")
+    assert (forced.target, forced.publishable, forced.reason) == (ImportTarget.CATALOG, False, "synced")
+    assert (forced.operation_count, forced.type_count) == (4, 6)
+    assert decision.publishable is True  # the original decision is untouched
+
+
+async def test_pipeline_routes_a_connector_openapi_import_to_the_catalog() -> None:
+    model = _model(paradigm=ApiParadigm.REST, fmt="openapi-3.1", operations=4, types=6)
+    adapter = _StubAdapter("openapi", ApiParadigm.REST, model)
+    payload = _payload()
+    payload["connector_source"] = {"inputKind": "connector", "connectorId": "c-1", "remoteId": "svc"}
+
+    final = await run_adapter_import_job(adapter, payload)
+
+    assert final.state == "completed"
+    assert final.summary["routing"]["target"] == "catalog"
+    assert final.summary["routing"]["publishable"] is False
+    assert "catalog connector" in final.summary["routing"]["reason"]
+
+
+async def test_pipeline_ignores_a_connector_key_that_is_not_an_object() -> None:
+    model = _model(paradigm=ApiParadigm.REST, fmt="openapi-3.1", operations=1, types=1)
+    payload = _payload()
+    payload["connector_source"] = "yes"
+
+    final = await run_adapter_import_job(_StubAdapter("openapi", ApiParadigm.REST, model), payload)
+
+    assert final.summary["routing"]["target"] == "project"

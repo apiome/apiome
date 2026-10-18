@@ -628,6 +628,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Catalog connectors (CDG-1.1, #5952). A connector base URL that resolves to a private,
+    # loopback or link-local address is refused unless one of these CIDRs (comma-separated,
+    # e.g. ``10.20.0.0/16,192.168.4.7``) contains every address it resolves to. This is the
+    # operator's allowlist for a gateway admin API that only listens inside the network.
+    connector_private_network_allowlist: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "APIOME_CONNECTOR_PRIVATE_NETWORK_ALLOWLIST",
+            "connector_private_network_allowlist",
+        ),
+    )
+
     # Remote $ref resolution (MFI-29.4, #4391). An import resolves external `$ref` URLs
     # only when it explicitly asks for it (``SpecImportOptions.resolve_remote_refs``,
     # default false) — these settings bound what that opt-in may do and let an operator

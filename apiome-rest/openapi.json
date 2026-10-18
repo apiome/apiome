@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.221.0",
+    "version": "1.222.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -11079,6 +11079,969 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for recordaprivacysafecataloganalysismetricresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "List Connectors",
+        "description": "List the tenant's catalog connectors (``imports:view``).\n\nAlso returns every connector kind and the kinds this deployment can sync.",
+        "operationId": "list_connectors_v1_tenants__tenant_slug__connectors_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connectorsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connectorsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connectors Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connectors Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list connectors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorListResponse",
+                  "description": "Response payload for list connectorsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list connectorsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Create Connector",
+        "description": "Register a catalog connector (``imports:create``).\n\nThe base URL, when given, must pass the SSRF rule: a private-range URL is a 422 with\n``detail.reason = \"private-address\"`` unless the operator allowlisted the range. Credentials\nare not accepted here; store them with ``PUT \u2026/credentials``.",
+        "operationId": "create_connector_v1_tenants__tenant_slug__connectors_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Connectorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Connectorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Connector Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Connector Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorCreate",
+                "description": "Request body for create connectorrequest."
+              }
+            }
+          },
+          "description": "Request body for create connector."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create connector.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorOut",
+                  "description": "Response payload for create connectorresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create connectorresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors/{connector_id}": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Get Connector",
+        "description": "Read one connector (``imports:view``). ``hasCredentials`` says whether one is stored.",
+        "operationId": "get_connector_v1_tenants__tenant_slug__connectors__connector_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Connectorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Connectorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Connector Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Connector Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get connector.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorOut",
+                  "description": "Response payload for get connectorresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get connectorresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Update Connector",
+        "description": "Update a connector (``imports:edit``). The kind cannot change.\n\n``status`` takes ``active`` or ``paused``; ``failing`` is set by runs only. Setting\n``baseUrl`` re-runs the SSRF check.",
+        "operationId": "update_connector_v1_tenants__tenant_slug__connectors__connector_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Connectorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Connectorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Connector Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Connector Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorUpdate",
+                "description": "Request body for update connectorrequest."
+              }
+            }
+          },
+          "description": "Request body for update connector."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update connector.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorOut",
+                  "description": "Response payload for update connectorresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for update connectorresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Delete Connector",
+        "description": "Delete a connector (``imports:delete``).\n\nThe connector stops syncing and its credential is destroyed. Its inventory, its runs and the\ncatalog items it imported are kept.",
+        "operationId": "delete_connector_v1_tenants__tenant_slug__connectors__connector_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Connectorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Connectorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Connector Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Connector Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete connector."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete connectorresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors/{connector_id}/sync": {
+      "post": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Sync Connector",
+        "description": "Sync a connector now (``imports:edit``) and return the finished run.\n\nA manual sync runs even when the connector is paused and is not limited by the tenant quota\n(like Git \"Refresh now\"), but its pulls still count against it. A provider failure is not an\nHTTP error: the run comes back ``failed`` with ``errorClass`` and ``httpStatus``. A kind with\nno source on this deployment, or a sync already running, is a 409.",
+        "operationId": "sync_connector_v1_tenants__tenant_slug__connectors__connector_id__sync_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Sync Connectorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Sync Connectorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Sync Connector Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Sync Connector Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for sync connector.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorRunOut",
+                  "description": "Response payload for sync connectorresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for sync connectorresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors/{connector_id}/items": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "List Connector Items",
+        "description": "List the remote APIs a connector has seen (``imports:view``).\n\n``catalogItemId`` links an imported API to its catalog item. An API that left the inventory\nis ``missing``; it is never deleted.",
+        "operationId": "list_connector_items_v1_tenants__tenant_slug__connectors__connector_id__items_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connector Itemsstatus schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connector Itemsstatus schema."
+                }
+              ],
+              "description": "discovered | imported | ignored | missing",
+              "title": "Status"
+            },
+            "description": "discovered | imported | ignored | missing"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset",
+              "description": "Offset schema."
+            },
+            "description": "Number of rows to skip before returning results."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connector Itemsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connector Itemsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connector Items Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connector Items Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list connector items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorItemPage",
+                  "description": "Response payload for list connector itemsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list connector itemsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors/{connector_id}/runs": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "List Connector Runs",
+        "description": "List a connector's sync runs, newest first (``imports:view``).\n\nRuns are rows of the same refresh ledger Git refresh jobs use (``refreshSource:\n\"connector\"``), and their pulls count against the same tenant quota.",
+        "operationId": "list_connector_runs_v1_tenants__tenant_slug__connectors__connector_id__runs_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset",
+              "description": "Offset schema."
+            },
+            "description": "Number of rows to skip before returning results."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connector Runsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connector Runsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Connector Runs Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Connector Runs Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list connector runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorRunPage",
+                  "description": "Response payload for list connector runsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list connector runsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/connectors/{connector_id}/credentials": {
+      "put": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Put Connector Credentials",
+        "description": "Store or replace a connector's credential (``imports:edit``).\n\nThe fields are sealed on arrival and the previous credential, if any, is replaced as a whole;\nthere is no partial edit. The response names the stored fields and never their values. A 503\nmeans this deployment has no credential encryption key (``APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS``).",
+        "operationId": "put_connector_credentials_v1_tenants__tenant_slug__connectors__connector_id__credentials_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connector Id",
+              "description": "Connector Id schema."
+            },
+            "description": "Path parameter identifying the connector id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Connector Credentialsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Connector Credentialsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Connector Credentials Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Connector Credentials Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorCredentialsPut",
+                "description": "Request body for put connector credentialsrequest."
+              }
+            }
+          },
+          "description": "Request body for put connector credentials."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put connector credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorCredentialsOut",
+                  "description": "Response payload for put connector credentialsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put connector credentialsresponse422."
                 }
               }
             }
@@ -22648,7 +23611,7 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
           },
           "502": {
             "content": {
@@ -94858,6 +95821,92 @@
         "title": "CatalogCategoriesUpdate",
         "description": "``PUT /v1/catalog/{tenant}/{item}/categories`` (MFI-6.3): set an item's manual categories.\n\nBoth fields are replaced outright: ``domain`` null (or ``\"none\"``) clears the domain, and\n``tags`` is the item's whole tag set."
       },
+      "CatalogConnectorSource": {
+        "properties": {
+          "connectorId": {
+            "type": "string",
+            "title": "Connectorid",
+            "description": "Connector ID.",
+            "example": "example"
+          },
+          "connectorKind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Connector Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Connector Source schema."
+              }
+            ],
+            "title": "Connectorkind",
+            "description": "Connector Kind."
+          },
+          "connectorName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Connector Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Connector Source schema."
+              }
+            ],
+            "title": "Connectorname",
+            "description": "Connector Name."
+          },
+          "remoteId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Connector Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Connector Source schema."
+              }
+            ],
+            "title": "Remoteid",
+            "description": "Remote ID."
+          },
+          "remoteName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Connector Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Connector Source schema."
+              }
+            ],
+            "title": "Remotename",
+            "description": "Remote Name."
+          },
+          "remoteRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Connector Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Connector Source schema."
+              }
+            ],
+            "title": "Remoterevision",
+            "description": "Remote Revision."
+          }
+        },
+        "type": "object",
+        "required": [
+          "connectorId"
+        ],
+        "title": "CatalogConnectorSource",
+        "description": "Where a connector-synced catalog revision came from (CDG-1.1, #5952).\n\nThe connector that synced it, the remote API's id and name at the provider, and the remote\nrevision imported. Shown on the catalog Provenance tab."
+      },
       "CatalogConversionHistoryResponse": {
         "properties": {
           "itemId": {
@@ -96239,11 +97288,23 @@
             "default": false,
             "description": "Downloadable.",
             "example": false
+          },
+          "connector": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogConnectorSource"
+              },
+              {
+                "type": "null",
+                "description": "Catalog Source Descriptor schema."
+              }
+            ],
+            "description": "Set when the revision was synced by a catalog connector (kind `connector`): the connector, the remote API and the remote revision (CDG-1.1)."
           }
         },
         "type": "object",
         "title": "CatalogSourceDescriptor",
-        "description": "The source-material descriptor for a catalog item (MFI-23.9): where the import came from.\n\nMirrors the UI's ``resolveCatalogSource`` \u2014 an input kind (file/url/paste/discovery), a display\nlabel, an optional source URL, and whether a raw source is retrievable. ``downloadable`` is the\nsingle signal the detail view needs to enable its view/download affordance (true when inline\ncontent was captured *or* a source URL is recorded); ``hasContent`` distinguishes \"stream the\ncaptured bytes\" from \"open the URL\"."
+        "description": "The source-material descriptor for a catalog item (MFI-23.9): where the import came from.\n\nMirrors the UI's ``resolveCatalogSource`` \u2014 an input kind (file/url/paste/discovery/connector), a display\nlabel, an optional source URL, and whether a raw source is retrievable. ``downloadable`` is the\nsingle signal the detail view needs to enable its view/download affordance (true when inline\ncontent was captured *or* a source URL is recorded); ``hasContent`` distinguishes \"stream the\ncaptured bytes\" from \"open the URL\"."
       },
       "CertificateBody": {
         "properties": {
@@ -97170,7 +98231,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "completed_at": {
             "anyOf": [
@@ -99094,7 +100155,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99322,7 +100383,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99853,14 +100914,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -100708,6 +101769,855 @@
         ],
         "title": "ConnectionListResponse",
         "description": "ConnectionListResponse schema."
+      },
+      "ConnectorCreate": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "kong-konnect",
+              "kong-admin",
+              "aws-apigateway",
+              "azure-apim",
+              "apigee",
+              "url",
+              "schema-registry",
+              "mcp-registry"
+            ],
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "kong-konnect"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "description": "Connector Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Create schema."
+              }
+            ],
+            "title": "Baseurl",
+            "description": "Base URL."
+          },
+          "scope": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Scope",
+            "description": "Scope."
+          },
+          "refreshIntervalSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0,
+                "description": "Connector Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Create schema."
+              }
+            ],
+            "title": "Refreshintervalseconds",
+            "description": "Refresh Interval Seconds."
+          },
+          "conflictPolicy": {
+            "type": "string",
+            "enum": [
+              "overwrite",
+              "hold-for-review",
+              "new-branch"
+            ],
+            "title": "Conflictpolicy",
+            "default": "hold-for-review",
+            "description": "Conflict Policy.",
+            "example": "hold-for-review"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused"
+            ],
+            "title": "Status",
+            "default": "active",
+            "description": "Status.",
+            "example": "active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "title": "ConnectorCreate",
+        "description": "``POST /v1/tenants/{t}/connectors``."
+      },
+      "ConnectorCredentialsOut": {
+        "properties": {
+          "connectorId": {
+            "type": "string",
+            "title": "Connectorid",
+            "description": "Connector ID.",
+            "example": "example"
+          },
+          "hasCredentials": {
+            "type": "boolean",
+            "title": "Hascredentials",
+            "description": "Has Credentials.",
+            "example": false
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields",
+            "description": "The names of the stored fields, never their values.",
+            "maxItems": 1000
+          },
+          "replacedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector credentials."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector credentials."
+              }
+            ],
+            "title": "Replacedat",
+            "description": "Replaced At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "connectorId",
+          "hasCredentials",
+          "fields"
+        ],
+        "title": "ConnectorCredentialsOut",
+        "description": "What ``PUT \u2026/credentials`` returns: that a credential is stored, never what it is."
+      },
+      "ConnectorCredentialsPut": {
+        "properties": {
+          "credentials": {
+            "additionalProperties": {
+              "type": "string",
+              "format": "password",
+              "writeOnly": true
+            },
+            "type": "object",
+            "title": "Credentials",
+            "description": "The secret fields the connector's kind needs (for example `{\"token\": \"\u2026\"}` or `{\"accessKeyId\": \"\u2026\", \"secretAccessKey\": \"\u2026\"}`). Sealed on arrival and never returned."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "title": "ConnectorCredentialsPut",
+        "description": "``PUT /v1/tenants/{t}/connectors/{id}/credentials``: replaces the whole credential."
+      },
+      "ConnectorItemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "remoteId": {
+            "type": "string",
+            "title": "Remoteid",
+            "description": "Remote ID.",
+            "example": "example"
+          },
+          "remoteName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Remotename",
+            "description": "Remote Name."
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Environment",
+            "description": "Environment."
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hosts",
+            "description": "Hosts.",
+            "maxItems": 1000
+          },
+          "basePath": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Basepath",
+            "description": "Base Path."
+          },
+          "remoteRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Remoterevision",
+            "description": "Remote Revision."
+          },
+          "remoteUpdatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Remoteupdatedat",
+            "description": "Remote Updated At."
+          },
+          "importedRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Importedrevision",
+            "description": "Imported Revision."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "catalogItemId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Catalogitemid",
+            "description": "Catalog Item ID."
+          },
+          "firstSeenAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Firstseenat",
+            "description": "First Seen At."
+          },
+          "lastSeenAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Lastseenat",
+            "description": "Last Seen At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "remoteId",
+          "status"
+        ],
+        "title": "ConnectorItemOut",
+        "description": "One remote API in a connector's inventory."
+      },
+      "ConnectorItemPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectorItemOut"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Limit.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset.",
+            "example": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ConnectorItemPage",
+        "description": "``GET /v1/tenants/{t}/connectors/{id}/items``."
+      },
+      "ConnectorListResponse": {
+        "properties": {
+          "connectors": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectorOut"
+            },
+            "type": "array",
+            "title": "Connectors",
+            "description": "Connectors.",
+            "maxItems": 1000
+          },
+          "kinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kinds",
+            "description": "Kinds.",
+            "maxItems": 1000
+          },
+          "syncableKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Syncablekinds",
+            "description": "Syncable Kinds.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "connectors",
+          "kinds",
+          "syncableKinds"
+        ],
+        "title": "ConnectorListResponse",
+        "description": "``GET /v1/tenants/{t}/connectors``."
+      },
+      "ConnectorOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Baseurl",
+            "description": "Base URL."
+          },
+          "scope": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Scope",
+            "description": "Scope."
+          },
+          "refreshIntervalSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Refreshintervalseconds",
+            "description": "Refresh Interval Seconds."
+          },
+          "conflictPolicy": {
+            "type": "string",
+            "title": "Conflictpolicy",
+            "description": "Conflict Policy.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "hasCredentials": {
+            "type": "boolean",
+            "title": "Hascredentials",
+            "description": "Has Credentials.",
+            "example": false
+          },
+          "syncable": {
+            "type": "boolean",
+            "title": "Syncable",
+            "description": "Whether this deployment has a source for the kind, so a sync can run.",
+            "example": false
+          },
+          "lastRunAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Lastrunat",
+            "description": "Last Run At."
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Createdby",
+            "description": "Created By."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "conflictPolicy",
+          "status",
+          "hasCredentials",
+          "syncable"
+        ],
+        "title": "ConnectorOut",
+        "description": "A connector, described. Never carries a credential."
+      },
+      "ConnectorRunOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "connectorId": {
+            "type": "string",
+            "title": "Connectorid",
+            "description": "Connector ID.",
+            "example": "example"
+          },
+          "refreshSource": {
+            "type": "string",
+            "title": "Refreshsource",
+            "description": "Refresh Source.",
+            "example": "example"
+          },
+          "trigger": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Trigger",
+            "description": "Trigger."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "errorClass": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Errorclass",
+            "description": "Error Class."
+          },
+          "httpStatus": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Httpstatus",
+            "description": "HTTP Status."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          },
+          "pullCount": {
+            "type": "integer",
+            "title": "Pullcount",
+            "default": 0,
+            "description": "Number of pull.",
+            "example": 1
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Createdby",
+            "description": "Created By."
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Startedat",
+            "description": "Started At."
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector run."
+              }
+            ],
+            "title": "Finishedat",
+            "description": "Finished At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "connectorId",
+          "refreshSource",
+          "status"
+        ],
+        "title": "ConnectorRunOut",
+        "description": "One sync run of a connector (a row of the shared refresh ledger)."
+      },
+      "ConnectorRunPage": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectorRunOut"
+            },
+            "type": "array",
+            "title": "Runs",
+            "description": "Runs.",
+            "maxItems": 1000
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Limit.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset.",
+            "example": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ConnectorRunPage",
+        "description": "``GET /v1/tenants/{t}/connectors/{id}/runs``: newest first."
+      },
+      "ConnectorUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Baseurl",
+            "description": "Base URL."
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Scope",
+            "description": "Scope."
+          },
+          "refreshIntervalSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0,
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Refreshintervalseconds",
+            "description": "Refresh Interval Seconds."
+          },
+          "conflictPolicy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "overwrite",
+                  "hold-for-review",
+                  "new-branch"
+                ],
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Conflictpolicy",
+            "description": "Conflict Policy."
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "paused"
+                ],
+                "description": "Connector Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Connector Update schema."
+              }
+            ],
+            "title": "Status",
+            "description": "Status."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ConnectorUpdate",
+        "description": "``PATCH /v1/tenants/{t}/connectors/{id}``. The kind cannot change."
       },
       "ConsumerChangeImpact": {
         "properties": {
@@ -101885,7 +103795,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "cc46ea84-7af3-4f17-8d22-f167cc2134b7"
+            "example": "28ea6d42-0e61-4aec-b2f6-b6634a382a2f"
           },
           "method": {
             "type": "string",
@@ -104412,7 +106322,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -106148,7 +108058,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "browse_url": {
             "anyOf": [
@@ -140146,9 +142056,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Request body for push webhook subscription create."
               },
@@ -140200,9 +142110,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Response payload for push webhook subscription."
               },
@@ -140305,9 +142215,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Request body for push webhook subscription update."
               },
@@ -146315,7 +148225,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           }
         },
         "additionalProperties": false,
@@ -157637,7 +159547,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164854,14 +166764,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T19:29:58Z"
+            "example": "2026-10-18T03:30:26Z"
           },
           "outcome": {
             "anyOf": [

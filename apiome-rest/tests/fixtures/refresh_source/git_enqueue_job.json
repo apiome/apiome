@@ -1,0 +1,23 @@
+{
+  "branch": "main",
+  "content_type": "application/json",
+  "created_by": "user-1",
+  "format_override": "swagger",
+  "import_spec_id": "spec-1",
+  "options_json": {
+    "classPrefix": "Api",
+    "selectedSchemas": [
+      "Pet"
+    ]
+  },
+  "path": "api/openapi.json",
+  "project_id": "proj-1",
+  "refresh_reason": "newer-content",
+  "remote_blob_sha": "blob-new",
+  "remote_commit_sha": "bbb",
+  "remote_committed_at": "2026-02-01 00:00:00+00:00",
+  "repository_id": "repo-1",
+  "source_kind": "openapi-3",
+  "spec_schema_version": 1,
+  "tenant_id": "t1"
+}

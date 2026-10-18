@@ -411,13 +411,14 @@ export const CATALOG_PROTOCOL_OPTIONS: readonly CatalogFilterOption[] = [
   { value: 'agent', label: 'Agent' },
 ] as const;
 
-/** The Source select — the four input kinds an import can have come through. */
+/** The Source select — the five input kinds an import can have come through. */
 export const CATALOG_SOURCE_OPTIONS: readonly CatalogFilterOption[] = [
   { value: CATALOG_FILTER_ANY, label: 'All sources' },
   { value: 'file', label: 'Uploaded file' },
   { value: 'url', label: 'Source URL' },
   { value: 'paste', label: 'Pasted content' },
   { value: 'discovery', label: 'Live discovery' },
+  { value: 'connector', label: 'Catalog connector' },
 ] as const;
 
 /** The value the Grade select uses for "has no score at all". */

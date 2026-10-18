@@ -18112,12 +18112,17 @@ class Database:
         Args:
             window_seconds: Length of the rolling window, in seconds.
 
+        A catalog connector run (CDG-1.1, #5952) shares this ledger and counts the
+        documents it pulled (``pull_count``) rather than one, so connector pulls and Git
+        refresh jobs come out of the same per-tenant budget.
+
         Returns:
             Mapping of tenant id to the number of refresh jobs enqueued in the
             window. Tenants with no jobs in the window are absent.
         """
         q = """
-            SELECT tenant_id, COUNT(*) AS jobs
+            SELECT tenant_id,
+                   SUM(CASE WHEN refresh_source = 'connector' THEN pull_count ELSE 1 END) AS jobs
             FROM apiome.tenant_repository_refresh_jobs
             WHERE created_at >= now() - make_interval(secs => %s)
             GROUP BY tenant_id

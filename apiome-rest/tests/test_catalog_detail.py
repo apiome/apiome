@@ -92,8 +92,41 @@ def test_source_empty_when_nothing_recorded():
     src = derive_catalog_source(None, None)
     assert src == {
         "kind": None, "label": None, "uri": None,
-        "has_content": False, "downloadable": False,
+        "has_content": False, "downloadable": False, "connector": None,
     }
+
+
+def test_source_reports_a_connector_sync():
+    """A connector-synced revision (CDG-1.1) is kind 'connector' with its sync descriptor."""
+    src = derive_catalog_source(
+        {
+            "inputKind": "connector",
+            "sourceLabel": "orders.json",
+            "sourceContent": "{}",
+            "connectorId": "c-1",
+            "connectorKind": "kong-konnect",
+            "connectorName": "Prod gateway",
+            "remoteId": "svc-42",
+            "remoteName": "Orders",
+            "remoteRevision": "r7",
+        },
+        None,
+    )
+    assert src["kind"] == "connector"
+    assert src["connector"] == {
+        "connector_id": "c-1",
+        "connector_kind": "kong-konnect",
+        "connector_name": "Prod gateway",
+        "remote_id": "svc-42",
+        "remote_name": "Orders",
+        "remote_revision": "r7",
+    }
+
+
+def test_source_connector_descriptor_needs_the_connector_kind_and_id():
+    """Connector keys without inputKind 'connector', or without an id, are not a connector source."""
+    assert derive_catalog_source({"inputKind": "file", "connectorId": "c-1"}, None)["connector"] is None
+    assert derive_catalog_source({"inputKind": "connector"}, None)["connector"] is None
 
 
 # ---------------------------------------------------------------------------

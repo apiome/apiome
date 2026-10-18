@@ -34,6 +34,7 @@ import {
   Fingerprint,
   Globe,
   Library,
+  Plug,
   Radar,
   ScanSearch,
   User,
@@ -51,6 +52,7 @@ import { formatRelativeTimestamp } from '@/app/utils/catalog-detail-insights';
 import {
   CATALOG_PROVENANCE_STEPS,
   PROVENANCE_ABSENT,
+  catalogConnectorRows,
   catalogDetailTimestamp,
   catalogFingerprint,
   catalogFingerprintShort,
@@ -69,6 +71,7 @@ const GLYPH: Readonly<Record<string, React.ComponentType<{ className?: string }>
   url: Globe,
   paste: ClipboardPaste,
   discovery: Radar,
+  connector: Plug,
   detection: ScanSearch,
   normalization: Wrench,
   record: Library,
@@ -170,6 +173,7 @@ export function CatalogItemProvenance({
   const fingerprint = catalogFingerprint(formatMetadata);
   const routingNote = catalogRoutingNote(formatMetadata, sourceFormat);
   const publishableRow = catalogPublishableRow(publishable);
+  const connectorRows = catalogConnectorRows(source?.connector);
 
   return (
     <Card data-testid="catalog-detail-provenance">
@@ -219,6 +223,16 @@ export function CatalogItemProvenance({
                 <p className="cid-micro mono cid-step__uri" title={source.uri}>
                   {source.uri}
                 </p>
+              ) : null}
+              {connectorRows.length > 0 ? (
+                <dl className="cid-kv" data-testid="catalog-detail-connector-source">
+                  {connectorRows.map((row) => (
+                    <React.Fragment key={row.term}>
+                      <dt>{row.term}</dt>
+                      <dd className={row.mono ? 'mono' : undefined}>{row.value}</dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
               ) : null}
             </ProvenanceStep>
 

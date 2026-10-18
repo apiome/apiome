@@ -1,0 +1,149 @@
+---
+title: Connectors
+description: Register API gateways and registries whose APIs sync into the catalog.
+sidebar_position: 1.5
+tags: [connectors, catalog, import, refresh]
+---
+
+A **connector** points Apiome at somewhere your APIs already live — an API gateway, a schema
+registry, a URL — and keeps the [Catalog](./catalog.mdx) in step with it. Each API the connector
+finds becomes a catalog item, and each new revision of that API becomes a new revision of the item.
+
+Connectors are refreshed by the same engine as [Repositories](./repositories.mdx): one cadence,
+one quota, one audit trail.
+
+:::note
+Connectors are managed through the REST API for now; there is no screen for them yet. Each kind needs
+a source before it can sync. This release adds the registry and the sync engine; the gateway and
+URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
+`GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
+:::
+
+## Source kinds
+
+| Kind | Where the APIs come from |
+| --- | --- |
+| `kong-konnect` | Kong Konnect control planes |
+| `kong-admin` | A Kong Gateway Admin API |
+| `aws-apigateway` | Amazon API Gateway, by region and account |
+| `azure-apim` | Azure API Management, by resource group |
+| `apigee` | Apigee, by organization and environment |
+| `url` | A specification published at a URL |
+| `schema-registry` | A schema registry |
+| `mcp-registry` | An MCP server registry |
+
+A connector has a **name**, an optional **base URL** (the control-plane or admin address), a
+**scope** (the kind's coordinates: control-plane ids, region and account, resource group, org and
+environment), a **refresh interval** and a **conflict policy** (`hold-for-review`, `overwrite` or
+`new-branch`, the same choices as a repository).
+
+## Register a connector
+
+1. **Create it:** `POST /v1/tenants/{tenant}/connectors` with `kind`, `name` and, when the kind has
+   one, `baseUrl` and `scope`. For example:
+
+   ```json
+   {
+     "kind": "kong-admin",
+     "name": "Prod gateway",
+     "baseUrl": "https://kong-admin.example.com",
+     "scope": { "workspace": "default" },
+     "refreshIntervalSeconds": 3600
+   }
+   ```
+
+2. **Store its credential:** `PUT /v1/tenants/{tenant}/connectors/{id}/credentials` with the fields
+   the kind needs, for example `{"credentials": {"token": "…"}}`.
+3. **Sync it:** `POST /v1/tenants/{tenant}/connectors/{id}/sync`. The response is the finished run.
+
+You need the **Imports** permission: **View** to read connectors, **Create** to register one,
+**Edit** to change, sync or set credentials, and **Delete** to remove one.
+
+## Credentials
+
+A credential is **write-only**. Apiome encrypts it as soon as it arrives. No response, log line or
+audit entry ever contains it, and the API only reports **`hasCredentials`** and the names of the
+stored fields. To change a credential, **send the whole credential again**; there is no partial edit.
+Deleting a connector destroys its credential.
+
+Secrets do not belong in **scope**: a scope key that looks like one (`token`, `password`, `apiKey`,
+`clientSecret`, …) is refused.
+
+## Base URLs and private networks
+
+Apiome calls the base URL itself, so it must be `http` or `https`, carry no `user:password@`, and
+resolve only to public addresses. A URL that resolves to a private, loopback or link-local address
+is refused with the reason **`private-address`**. For a gateway that only listens inside your
+network, an operator can allow its range with `APIOME_CONNECTOR_PRIVATE_NETWORK_ALLOWLIST`, a
+comma-separated list of CIDRs such as `10.20.0.0/16`.
+
+## What a sync does
+
+Each sync is a **run**:
+
+1. It **lists the connector's inventory**: every API the source can see.
+2. It **records what it saw** under `GET …/connectors/{id}/items`, with each API's environment,
+   hosts, base path and remote revision.
+3. It **skips what has not changed.** An API whose remote revision or update time is not newer than
+   the last import is not fetched.
+4. It **fetches and imports the rest** into the catalog. The document always becomes a **catalog
+   item**, even when it is OpenAPI. To make it a Project, [convert it](./convert-to-openapi.md).
+
+| Item status | Meaning |
+| --- | --- |
+| **discovered** | Seen in the inventory, not imported yet |
+| **imported** | Imported; `catalogItemId` is its catalog item |
+| **ignored** | Never fetched |
+| **missing** | No longer in the inventory |
+
+## What never changes on a refresh
+
+- **Nothing is deleted.** An API that disappears from the inventory becomes **missing**. Its
+  catalog item, and every revision of it, stays in the catalog.
+- **Ignored APIs stay ignored**, even when they leave and come back.
+- **A converted item is not written to.** Once a catalog item has been converted, the next sync
+  creates a new catalog item instead of changing the old one.
+
+## Runs and failures
+
+`GET …/connectors/{id}/runs` lists runs, newest first, with their **status**, **trigger**
+(`manual` or `scheduled`), counts and, for a failure, **`errorClass`** and **`httpStatus`**.
+
+A run that could not fetch anything is a **failed** run, never a success with zero changes. For
+example, if a run fetches 0 of 12 APIs because the gateway refused the credential, it fails with
+`errorClass: "auth"` and `httpStatus: 401`. The connector's **status** then turns **failing**
+until a run succeeds. The error classes are `auth`, `not-found`, `rate-limited`, `unavailable`,
+`credentials-unreadable`, `import-failed` and `unexpected`.
+
+Set **status** to **paused** to stop scheduled syncs; a manual sync still runs. Scheduled syncs
+stop with every other refresh when `APIOME_REFRESH_ENABLED` is off.
+
+## Quota and audit
+
+Every document a connector fetches counts against the workspace's repository polling quota, the
+same budget Git refreshes use. Fetches show under **Polls** on
+[Quota & rate limits](./repositories.mdx#quota--rate-limits). A scheduled sync that runs out of
+quota defers the rest to a later run, and a manual sync is never held back by the quota.
+
+Every connector change and run is written to the audit trail as `repository.connector.*`, so the
+repository audit export lists connector runs next to Git refreshes.
+
+## API
+
+| Method and path | What it does |
+| --- | --- |
+| `GET /v1/tenants/{tenant}/connectors` | List connectors, the kinds, and the kinds that can sync |
+| `POST /v1/tenants/{tenant}/connectors` | Register a connector |
+| `GET` / `PATCH` / `DELETE …/connectors/{id}` | Read, change or delete one |
+| `POST …/connectors/{id}/sync` | Sync now and return the run |
+| `GET …/connectors/{id}/items` | The inventory (`?status=` filters it) |
+| `GET …/connectors/{id}/runs` | The runs, newest first |
+| `PUT …/connectors/{id}/credentials` | Store or replace the credential |
+
+See the [API reference](../reference/api-reference.md) for the request and response shapes.
+
+## Where next
+
+- [Catalog](./catalog.mdx): where synced APIs land, and the **Provenance** tab that names their
+  connector.
+- [Repositories](./repositories.mdx): the Git side of the same refresh engine.

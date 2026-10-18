@@ -89,7 +89,7 @@ def _normalize_token(value: str) -> str:
 
 
 def _normalize_kind(value: Optional[str]) -> Optional[str]:
-    """Normalise a raw input-kind token to file / url / paste / discovery, or None."""
+    """Normalise a raw input-kind token to file / url / paste / discovery / connector, or None."""
     if not value:
         return None
     key = _normalize_token(value)
@@ -101,7 +101,38 @@ def _normalize_kind(value: Optional[str]) -> Optional[str]:
         return "paste"
     if key in ("discovery", "livediscovery", "live", "endpoint"):
         return "discovery"
+    if key == "connector":
+        return "connector"
     return None
+
+
+#: ``format_metadata`` keys a connector sync records (CDG-1.1), by descriptor field.
+_CONNECTOR_KEYS: Tuple[Tuple[str, str], ...] = (
+    ("connector_id", "connectorId"),
+    ("connector_kind", "connectorKind"),
+    ("connector_name", "connectorName"),
+    ("remote_id", "remoteId"),
+    ("remote_name", "remoteName"),
+    ("remote_revision", "remoteRevision"),
+)
+
+
+def derive_connector_source(format_metadata: Any) -> Optional[Dict[str, Optional[str]]]:
+    """The connector a catalog revision was synced from (CDG-1.1), or None for any other intake.
+
+    Args:
+        format_metadata: The latest revision's ``format_metadata`` bag, or None.
+
+    Returns:
+        ``{connector_id, connector_kind, connector_name, remote_id, remote_name,
+        remote_revision}`` when the revision records ``inputKind: "connector"`` and a connector
+        id; otherwise None.
+    """
+    fmd = _as_bag(format_metadata)
+    if not fmd or _normalize_kind(_first_str(fmd, _KIND_KEYS)) != "connector":
+        return None
+    out = {field: _first_str(fmd, (key,)) for field, key in _CONNECTOR_KEYS}
+    return out if out["connector_id"] else None
 
 
 def _looks_like_url(value: Optional[str]) -> bool:
@@ -158,7 +189,8 @@ def derive_catalog_source(format_metadata: Any, metadata: Any) -> Dict[str, Any]
         metadata: The project's generic ``metadata`` bag, or None.
 
     Returns:
-        A descriptor dict ``{kind, label, uri, has_content, downloadable}``. ``downloadable`` is True
+        A descriptor dict ``{kind, label, uri, has_content, downloadable, connector}``;
+        ``connector`` is the CDG-1.1 sync descriptor, or None for any other intake. ``downloadable`` is True
         when a raw source is retrievable via the /source endpoint (inline content *or* a URL).
     """
     fmd = _as_bag(format_metadata)
@@ -185,6 +217,7 @@ def derive_catalog_source(format_metadata: Any, metadata: Any) -> Dict[str, Any]
         "uri": uri,
         "has_content": has_content,
         "downloadable": downloadable,
+        "connector": derive_connector_source(format_metadata),
     }
 
 

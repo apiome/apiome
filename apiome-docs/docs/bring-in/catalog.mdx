@@ -122,6 +122,11 @@ On **Provenance**, an item imported before the import recorded its fingerprint a
 shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
 marked *Derived from the format*.
 
+An item synced by a [connector](./connectors.mdx) shows **Synced by a connector** on the
+**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
+**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
+connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
+
 <Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
 
 <Screenshot id="catalog-item-lint" alt="The Lint & score tab: requirement counts, the lint score and findings" />

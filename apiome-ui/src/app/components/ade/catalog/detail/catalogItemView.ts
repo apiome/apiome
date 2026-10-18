@@ -45,13 +45,25 @@ import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
 // The item
 // ---------------------------------------------------------------------------------------
 
+/** The connector a synced revision came from (CDG-1.1, #5952), as REST returns it. */
+export interface CatalogConnectorSource {
+  connectorId: string;
+  connectorKind: string | null;
+  connectorName: string | null;
+  remoteId: string | null;
+  remoteName: string | null;
+  remoteRevision: string | null;
+}
+
 /** Where the item was imported from, plus whether the raw source is retrievable. */
 export interface CatalogSourceDescriptor {
-  kind: 'file' | 'url' | 'paste' | 'discovery' | null;
+  kind: 'file' | 'url' | 'paste' | 'discovery' | 'connector' | null;
   label: string | null;
   uri: string | null;
   hasContent: boolean;
   downloadable: boolean;
+  /** Set when the revision was synced by a catalog connector; absent for every other intake. */
+  connector?: CatalogConnectorSource | null;
 }
 
 /** The normalized-content counts the import recorded (each `null` until captured). */
@@ -464,13 +476,63 @@ export interface CatalogSourceKindView {
   icon: string;
 }
 
-const SOURCE_KIND_VIEW: Readonly<Record<'file' | 'url' | 'paste' | 'discovery' | 'unknown', CatalogSourceKindView>> = {
+const SOURCE_KIND_VIEW: Readonly<
+  Record<'file' | 'url' | 'paste' | 'discovery' | 'connector' | 'unknown', CatalogSourceKindView>
+> = {
   file: { label: 'File upload', icon: 'file' },
   url: { label: 'Fetched from URL', icon: 'url' },
   paste: { label: 'Pasted content', icon: 'paste' },
   discovery: { label: 'Discovered endpoint', icon: 'discovery' },
+  connector: { label: 'Synced by a connector', icon: 'connector' },
   unknown: { label: 'Unknown intake', icon: 'file' },
 };
+
+/** One row of the connector block on the intake step. */
+export interface CatalogConnectorRow {
+  /** The row's term: "Connector", "Remote API", "Remote revision". */
+  term: string;
+  /** What it says. */
+  value: string;
+  /** True when the value is an identifier, drawn in the mono face. */
+  mono: boolean;
+}
+
+/**
+ * The connector block the Provenance intake step draws for a connector-synced revision: which
+ * connector synced it, the remote API it came from, and the remote revision imported.
+ *
+ * @param connector The descriptor's `connector`, or nothing for any other intake.
+ * @returns The rows to draw, or an empty list when the revision was not synced by a connector.
+ */
+export function catalogConnectorRows(
+  connector: CatalogConnectorSource | null | undefined
+): CatalogConnectorRow[] {
+  if (!connector?.connectorId) return [];
+  const rows: CatalogConnectorRow[] = [];
+  const name = connector.connectorName?.trim() || connector.connectorId;
+  rows.push({
+    term: 'Connector',
+    value: connector.connectorKind ? `${name} (${connector.connectorKind})` : name,
+    mono: !connector.connectorName,
+  });
+  const remoteName = connector.remoteName?.trim();
+  if (remoteName || connector.remoteId) {
+    rows.push({
+      term: 'Remote API',
+      value:
+        remoteName && connector.remoteId && remoteName !== connector.remoteId
+          ? `${remoteName} · ${connector.remoteId}`
+          : (remoteName ?? connector.remoteId ?? ''),
+      mono: !remoteName,
+    });
+  }
+  rows.push({
+    term: 'Remote revision',
+    value: connector.remoteRevision?.trim() || PROVENANCE_ABSENT.remoteRevision,
+    mono: Boolean(connector.remoteRevision?.trim()),
+  });
+  return rows;
+}
 
 /**
  * How to speak and draw one intake kind.
@@ -684,6 +746,7 @@ export const PROVENANCE_ABSENT = {
   normalization: 'Tool versions were not recorded for this import.',
   record: 'Not recorded',
   fingerprint: 'Not recorded',
+  remoteRevision: 'Not reported by the remote',
 } as const;
 
 // ---------------------------------------------------------------------------------------

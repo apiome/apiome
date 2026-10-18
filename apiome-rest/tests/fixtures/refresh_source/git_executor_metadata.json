@@ -1,0 +1,47 @@
+{
+  "existing_project_id": "proj-1",
+  "options": {
+    "apply_naming_convention": false,
+    "archive_root": null,
+    "auto_layout": false,
+    "class_naming_convention": null,
+    "create_relationships": false,
+    "dry_run": false,
+    "git_source": null,
+    "import_target": null,
+    "incremental_mode": false,
+    "input_kind": null,
+    "property_naming_convention": null,
+    "resolve_remote_refs": false,
+    "selected_schemas": [],
+    "skip_duplicate_versions": false
+  },
+  "project": {
+    "description": null,
+    "name": "Petstore",
+    "project_id": null,
+    "slug": "petstore"
+  },
+  "refresh_provenance": {
+    "parent_version_id": "ver-1",
+    "source_commit_sha": "bbb",
+    "source_committed_at": "2026-02-01T00:00:00Z"
+  },
+  "repository_import_spec": {
+    "content_type": "application/json",
+    "format_override": "swagger",
+    "options": {
+      "classPrefix": "Api",
+      "selectedSchemas": [
+        "Pet"
+      ]
+    },
+    "source_kind": "openapi-3",
+    "spec_schema_version": 1
+  },
+  "source_kind": "repository_auto_import",
+  "version": {
+    "description": null,
+    "version_id": "1.1.0"
+  }
+}

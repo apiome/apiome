@@ -300,6 +300,19 @@ describe('catalog-format-registry — source material', () => {
     expect(s).toEqual({ kind: 'discovery', label: 'Live discovery', title: 'Live discovery' });
   });
 
+  test('a connector sync resolves to the connector kind, with or without a label', () => {
+    expect(resolveCatalogSource({ inputKind: 'connector', sourceLabel: 'orders.json' }, null)).toEqual({
+      kind: 'connector',
+      label: 'orders.json',
+      title: 'orders.json',
+    });
+    expect(resolveCatalogSource({ inputKind: 'connector' }, null)).toEqual({
+      kind: 'connector',
+      label: 'Catalog connector',
+      title: 'Catalog connector',
+    });
+  });
+
   test('returns undefined when there is no source material', () => {
     expect(resolveCatalogSource(null, null)).toBeUndefined();
     expect(resolveCatalogSource({}, {})).toBeUndefined();
