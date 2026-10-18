@@ -412,7 +412,7 @@ describe('the drawer is React-owned, not a hidden div', () => {
    ------------------------------------------------------------------------- */
 
 describe('the five sections', () => {
-  it('lists all five in the mockup’s order', async () => {
+  it('lists all six in order, Ownership (CDG-2.5) before the history', async () => {
     await renderPage();
     const drawer = await openDrawer('Acme Corp');
 
@@ -421,6 +421,7 @@ describe('the five sections', () => {
       'License & plan',
       'MCP settings',
       'Per-key capabilities',
+      'Ownership',
       'Policy history',
     ]);
   });
@@ -1063,6 +1064,19 @@ describe('the docs fixtures', () => {
         });
       }
       if (url.includes('/api/tenants/mcp-keys')) return respond(DOCS_MCP_KEYS);
+      // CDG-2.5: the Ownership section reads the policy and the teams.
+      if (url === '/api/ownership-policy') {
+        return { status: 200, ok: true, json: async () => ({
+          unowned_findings_team: { id: 't-2', slug: 'platform', name: 'Platform', deleted: false, member_count: 5 },
+          require_owner_to_publish: true,
+        }) };
+      }
+      if (url === '/api/teams') {
+        return { status: 200, ok: true, json: async () => ({ teams: [
+          { id: 't-1', slug: 'payments', name: 'Payments', member_count: 3 },
+          { id: 't-2', slug: 'platform', name: 'Platform', member_count: 5 },
+        ], count: 2 }) };
+      }
       return { status: 404, ok: false, json: async () => ({ success: false, error: `Unhandled ${method} ${url}` }) };
     }) as unknown as typeof fetch;
   });
@@ -1088,6 +1102,14 @@ describe('the docs fixtures', () => {
     selectTab(drawer, /Per-key capabilities/);
     await within(drawer).findByText(/tools enabled for calls/);
     writeA11yFixture('tenants-drawer-keys', bodyMarkup());
+
+    selectTab(drawer, /Ownership/);
+    const catchAll = await within(drawer).findByTestId('tenant-catch-all');
+    await waitFor(() => expect(catchAll).toHaveValue('platform'));
+    // outerHTML keeps attributes, not live values: mark the chosen team and the switch.
+    within(drawer).getByRole('option', { name: 'Platform' }).setAttribute('selected', '');
+    within(drawer).getByLabelText('Require an owner to publish').setAttribute('checked', '');
+    writeA11yFixture('tenant-ownership-policy', bodyMarkup());
 
     selectTab(drawer, /Policy history/);
     const [newest] = await within(drawer).findAllByRole('button', { name: /Toggle details for the change on/ });

@@ -241,3 +241,47 @@ export function teamLinks(team: Pick<Team, 'contact_email' | 'chat_url' | 'oncal
   if (team.docs_url) links.push(['Docs', team.docs_url]);
   return links;
 }
+
+/* -------------------------------------------------------------------------
+   Policy, gate and drift (CDG-2.5)
+   ------------------------------------------------------------------------- */
+
+/** The tenant's ownership policy, as `GET …/ownership-policy` returns it. */
+export interface OwnershipPolicy {
+  /** The catch-all team for findings on entities with no confirmed owner, or null. */
+  unowned_findings_team: (OwnerTeam & { deleted?: boolean; member_count?: number }) | null;
+  /** Whether a project needs a confirmed owner to publish. */
+  require_owner_to_publish: boolean;
+}
+
+/** The owner gate's verdict for one project. */
+export interface OwnerGate {
+  status: 'disabled' | 'satisfied' | 'blocked';
+  message: string;
+  reason?: string | null;
+  team?: { slug?: string | null; name?: string | null } | null;
+}
+
+/** One row of the ownership drift report. */
+export interface DriftItem {
+  reason: 'deleted_team' | 'empty_team' | 'stale_suggestion';
+  entity_kind: OwnerEntityKind;
+  entity_id: string;
+  entity_name?: string | null;
+  team: { slug?: string | null; name?: string | null };
+  since?: string | null;
+}
+
+/** The ownership drift report. */
+export interface OwnershipDrift {
+  items: DriftItem[];
+  counts: Partial<Record<DriftItem['reason'], number>>;
+  stale_after_days: number;
+}
+
+/** How each drift reason is named on the Teams page. */
+export const DRIFT_REASON_LABELS: Readonly<Record<DriftItem['reason'], string>> = {
+  deleted_team: 'Owner team deleted',
+  empty_team: 'Owner team has no members',
+  stale_suggestion: 'Suggestion never confirmed',
+};

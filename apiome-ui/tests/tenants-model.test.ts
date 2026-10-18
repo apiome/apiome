@@ -453,13 +453,13 @@ describe('suggestTenantSlug', () => {
 });
 
 describe('the drawer’s sections', () => {
-  it('lists the five sections in the mockup’s order', () => {
-    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'license', 'mcp', 'keys', 'history']);
+  it('lists the mockup’s five sections, with Ownership (CDG-2.5) before the history', () => {
+    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'license', 'mcp', 'keys', 'ownership', 'history']);
   });
 
   it('needs the current tenant for everything but members', () => {
     expect(tenantSectionNeedsCurrent('members')).toBe(false);
-    for (const section of ['license', 'mcp', 'keys', 'history'] as const) {
+    for (const section of ['license', 'mcp', 'keys', 'ownership', 'history'] as const) {
       expect(tenantSectionNeedsCurrent(section)).toBe(true);
     }
   });

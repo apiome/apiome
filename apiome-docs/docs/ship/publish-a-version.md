@@ -12,7 +12,10 @@ Publishing enforces server-side **publish gates** — it will refuse a version t
 
 - the reconstructed document is valid OpenAPI,
 - every class is documented (has a description),
-- there are no un-acknowledged breaking changes.
+- there are no un-acknowledged breaking changes,
+- when the workspace **requires an owner to publish**, the project has a confirmed
+  [owner team](../workspace/teams.mdx#ownership) — otherwise publish is refused with reason
+  `no-owner` (the `422` carries `reason: "no-owner"` and an `ownerGate` object).
 
 You choose a **visibility** when publishing: `public` (anyone can browse it) or `private` (only
 in-scope API keys can reach it).
@@ -24,7 +27,10 @@ in-scope API keys can reach it).
 1. Open **Versions** at `/ade/dashboard/versions` and select the version.
 2. Choose **Publish**, pick **public** or **private**, and add a revision note.
 3. If a gate fails, the UI reports which one — fix it (usually a missing description or an
-   unacknowledged breaking change) and publish again.
+   unacknowledged breaking change) and publish again. The **Owner team** card under **Publish
+   gates** always says where the owner gate stands: **Off** (publishing does not require an owner),
+   **Met** (it names the owner team) or **Blocked** — assign or confirm an owner on the project,
+   or force-publish with a reason.
 4. Published versions are listed on [Published](./published.mdx) (`/ade/dashboard/published`).
 
 ## With the REST API

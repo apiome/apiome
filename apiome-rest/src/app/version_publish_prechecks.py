@@ -42,6 +42,7 @@ class PublishPrecheckOutcome:
         breaking_publish_guardrail: CTG-3.4 semver guardrail payload when assessed.
         approval_gate: COL-2.3 approval-policy verdict when assessed.
         check_suite_gate: GNC-3.1 API change check suite verdict when assessed.
+        owner_gate: CDG-2.5 "require an owner to publish" verdict when assessed.
     """
 
     lint_error_count: Optional[int] = None
@@ -53,6 +54,7 @@ class PublishPrecheckOutcome:
     breaking_publish_guardrail: Optional[Dict[str, Any]] = None
     approval_gate: Optional[Dict[str, Any]] = None
     check_suite_gate: Optional[Dict[str, Any]] = None
+    owner_gate: Optional[Dict[str, Any]] = None
 
 
 def enforce_publish_prechecks(
@@ -78,8 +80,10 @@ def enforce_publish_prechecks(
     is refused, and under ``warn`` it is only reported on the outcome.
     Since GNC-3.1 (#4740) a suite policy with ``requiredForPublish`` refuses a draft whose
     current content has no passing API change check suite evaluation.
-    Since COL-2.3 (#4519) the tenant's approval policy is applied last: a draft that has not
+    Since COL-2.3 (#4519) the tenant's approval policy is applied: a draft that has not
     collected the required review approvals is refused with the same 422 contract.
+    Since CDG-2.5 (#5964) the owner gate is applied last: with ``require_owner_to_publish`` on, a
+    project with no confirmed owner team is refused with reason ``no-owner``.
 
     Returns:
         The observed :class:`PublishPrecheckOutcome`.
@@ -232,12 +236,45 @@ def enforce_publish_prechecks(
         version=existing,
     )
 
-    return _with_approval_gate(
+    outcome = _with_approval_gate(
         outcome,
         tenant_id=tenant_id,
         project_id=project_id,
         version=existing,
     )
+
+    return _with_owner_gate(outcome, tenant_id=tenant_id, project_id=project_id)
+
+
+def _with_owner_gate(
+    outcome: PublishPrecheckOutcome, *, tenant_id: str, project_id: str
+) -> PublishPrecheckOutcome:
+    """Attach the CDG-2.5 owner-gate verdict and refuse publish when the project has no owner.
+
+    Runs after the COL-2.3 approval gate. The verdict is always attached — ``disabled`` included —
+    so the publish response never implies a check ran that did not.
+
+    Raises:
+        HTTPException: 422 with ``reason: no-owner`` when ``require_owner_to_publish`` is on and the
+            project has no confirmed owner team.
+    """
+    from .ownership_policy import assess_owner_gate
+
+    assessment = assess_owner_gate(tenant_id=tenant_id, project_id=project_id)
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"{assessment.message()} Assign or confirm an owner team, turn off "
+                    "\"Require an owner to publish\", or force-publish with a reason."
+                ),
+                "reason": payload["reason"],
+                "ownerGate": payload,
+            },
+        )
+    return replace(outcome, owner_gate=payload)
 
 
 def _with_approval_gate(

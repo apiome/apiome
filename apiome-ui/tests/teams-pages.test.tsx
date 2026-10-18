@@ -36,7 +36,7 @@ jest.mock('@lib/auth/session-client', () => ({
 
 import TeamsClient from '../src/app/ade/dashboard/teams/TeamsClient';
 import TeamDetailClient from '../src/app/ade/dashboard/teams/[slug]/TeamDetailClient';
-import type { Team, TeamActivity } from '../lib/owners';
+import type { OwnershipDrift, OwnershipPolicy, Team, TeamActivity } from '../lib/owners';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const PAYMENTS: Team = {
@@ -102,13 +102,33 @@ const ACTIVITY: TeamActivity = {
 
 let teamsResponse: { ok: boolean; body: unknown } = { ok: true, body: { teams: [PAYMENTS, PLATFORM], count: 2 } };
 
+const POLICY: OwnershipPolicy = {
+  unowned_findings_team: { id: 't-2', slug: 'platform', name: 'Platform', deleted: false, member_count: 5 },
+  require_owner_to_publish: true,
+};
+
+const DRIFT: OwnershipDrift = {
+  items: [
+    { reason: 'deleted_team', entity_kind: 'project', entity_id: 'p-9', entity_name: 'Legacy Billing', team: { slug: 'billing-old', name: 'Billing (old)' }, since: '2026-09-01T00:00:00Z' },
+    { reason: 'empty_team', entity_kind: 'connector', entity_id: 'n-2', entity_name: 'Staging Kong', team: { slug: 'gateway', name: 'Gateway' }, since: '2026-10-01T00:00:00Z' },
+    { reason: 'stale_suggestion', entity_kind: 'catalog_item', entity_id: 'c-7', entity_name: 'Search events', team: { slug: 'search', name: 'Search' }, since: '2026-08-15T00:00:00Z' },
+    { reason: 'stale_suggestion', entity_kind: 'consumer', entity_id: 'k-3', entity_name: 'Mobile app', team: { slug: 'payments', name: 'Payments' }, since: '2026-08-20T00:00:00Z' },
+  ],
+  counts: { deleted_team: 1, empty_team: 1, stale_suggestion: 2 },
+  stale_after_days: 30,
+};
+let drift: OwnershipDrift = DRIFT;
+
 beforeEach(() => {
+  drift = DRIFT;
   teamsResponse = { ok: true, body: { teams: [PAYMENTS, PLATFORM], count: 2 } };
   global.fetch = jest.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     const reply = (ok: boolean, body: unknown) =>
       ({ ok, status: ok ? 200 : 500, json: async () => body }) as Response;
     if (url === '/api/teams') return reply(teamsResponse.ok, teamsResponse.body);
+    if (url === '/api/ownership-policy') return reply(true, POLICY);
+    if (url === '/api/ownership-drift') return reply(true, drift);
     if (url === '/api/teams/payments') return reply(true, PAYMENTS);
     if (url === '/api/teams/payments/activity') return reply(true, ACTIVITY);
     return reply(false, { error: 'not found' });
@@ -142,6 +162,37 @@ describe('the teams list', () => {
     render(<TeamsClient />);
     expect(await screen.findByText('The teams could not be read')).toBeInTheDocument();
     expect(screen.getByText('Permission denied: teams:view is required')).toBeInTheDocument();
+  });
+});
+
+describe('the ownership policy and drift (CDG-2.5)', () => {
+  test('summarises the policy and links to where it is changed', async () => {
+    render(<TeamsClient />);
+    const policy = await screen.findByTestId('teams-ownership-policy');
+    expect(policy).toHaveTextContent('Catch-all team: Platform');
+    expect(policy).toHaveTextContent('Require an owner to publish: on');
+    expect(within(policy).getByRole('link')).toHaveAttribute('href', '/ade/dashboard/tenants');
+  });
+
+  test('lists drift by reason, linking each entity that has a page', async () => {
+    const { container } = render(<TeamsClient />);
+    const report = await screen.findByTestId('ownership-drift');
+    expect(within(report).getByTestId('ownership-drift-deleted_team')).toHaveTextContent('Owner team deleted');
+    expect(within(report).getByRole('link', { name: 'Legacy Billing' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/versions?projectId=p-9'
+    );
+    expect(within(report).getByTestId('ownership-drift-stale_suggestion')).toHaveTextContent('2');
+    // A consumer has no page of its own.
+    expect(within(report).getByText('Mobile app').tagName).toBe('SPAN');
+    expect(await axe(container)).toHaveNoViolations();
+    writeA11yFixture('ownership-drift', (document.querySelector('.page') ?? container.firstElementChild)!.outerHTML);
+  });
+
+  test('says when there is no drift', async () => {
+    drift = { items: [], counts: {}, stale_after_days: 30 };
+    render(<TeamsClient />);
+    expect(await screen.findByText(/No drift/)).toBeInTheDocument();
   });
 });
 

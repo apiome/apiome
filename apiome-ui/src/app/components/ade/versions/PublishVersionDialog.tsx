@@ -63,6 +63,7 @@ import { PublishGuideViolationsPanel } from '@/app/components/ade/dashboard/Publ
 import { BreakingPublishGuardrailPanel } from '@/app/components/ade/dashboard/BreakingPublishGuardrailPanel';
 import VerificationPolicyDecisionPanel from '@/app/components/ade/dashboard/VerificationPolicyDecisionPanel';
 import { ReviewStatusPanel } from '@/app/components/ade/reviews/ReviewStatusPanel';
+import { OwnerGatePanel } from '@/app/components/ade/owners/OwnerGatePanel';
 import type { ReviewStatusRow } from '@lib/review-status';
 import type { BreakingPublishGuardrail } from '@/app/utils/breaking-publish-guardrail';
 import type { VersionLintReport } from '@/app/utils/version-lint-report';
@@ -364,6 +365,8 @@ export default function PublishVersionDialog({
                     enabled={open}
                     onDecisionChange={onDecisionChange}
                   />
+                  {/* CDG-2.5: the owner gate always says where it stands, off included. */}
+                  <OwnerGatePanel projectId={version.project_id} enabled={open} />
                 </>
               ) : null}
             </aside>

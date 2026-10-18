@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.235.0",
+    "version": "1.236.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22113,6 +22113,375 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for listunownedfindingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/ownership-policy": {
+      "get": {
+        "tags": [
+          "owners"
+        ],
+        "summary": "Read the ownership policy",
+        "description": "The catch-all team for findings on entities with no confirmed owner, and whether a project needs a confirmed owner to publish.\n\nRequires `teams:view`.",
+        "operationId": "get_ownership_policy_v1_tenants__tenant_slug__ownership_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheownershippolicyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheownershippolicyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheownershippolicy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheownershippolicy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the ownership policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipPolicy",
+                  "description": "Response payload for readtheownershippolicyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readtheownershippolicyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "owners"
+        ],
+        "summary": "Change the ownership policy",
+        "description": "Set `unowned_findings_team` (a team slug, or `null` for none) and/or `require_owner_to_publish`. Omitted fields are left alone.\n\nAudited as `ownership_policy.update`. Requires `teams:edit`.",
+        "operationId": "put_ownership_policy_v1_tenants__tenant_slug__ownership_policy_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changetheownershippolicyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changetheownershippolicyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changetheownershippolicy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changetheownershippolicy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnershipPolicyInput",
+                "description": "Request body for changetheownershippolicyrequest."
+              }
+            }
+          },
+          "description": "Request body for change the ownership policy."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change the ownership policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipPolicy",
+                  "description": "Response payload for changetheownershippolicyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for changetheownershippolicyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/ownership-policy/publish-gate": {
+      "get": {
+        "tags": [
+          "owners"
+        ],
+        "summary": "Preview the owner gate for a project",
+        "description": "What the owner gate will say when a version of `project` is published: `disabled` (the gate is off), `satisfied` (the project has a confirmed owner) or `blocked` (reason `no-owner`).\n\nRequires `versions:view`.",
+        "operationId": "get_owner_publish_gate_v1_tenants__tenant_slug__ownership_policy_publish_gate_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The project's id.",
+              "title": "Project"
+            },
+            "description": "The project's id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Previewtheownergateforaprojectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Previewtheownergateforaprojectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Previewtheownergateforaproject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Previewtheownergateforaproject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for preview the owner gate for a project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerGateResponse",
+                  "description": "Response payload for previewtheownergateforaprojectresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for previewtheownergateforaprojectresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/ownership-drift": {
+      "get": {
+        "tags": [
+          "owners"
+        ],
+        "summary": "List ownership drift",
+        "description": "Entities whose confirmed owner team was deleted (`deleted_team`) or has no members (`empty_team`), and suggested owners nobody confirmed in 30 days (`stale_suggestion`). At most 200 rows per reason; `counts` has the totals.\n\nRequires `teams:view`.",
+        "operationId": "get_ownership_drift_v1_tenants__tenant_slug__ownership_drift_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listownershipdriftauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listownershipdriftauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listownershipdrift Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listownershipdrift Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list ownership drift.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftResponse",
+                  "description": "Response payload for listownershipdriftresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listownershipdriftresponse422."
                 }
               }
             }
@@ -100666,7 +101035,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "completed_at": {
             "anyOf": [
@@ -102590,7 +102959,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "comment_count": {
             "type": "integer",
@@ -102818,7 +103187,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "comment_count": {
             "type": "integer",
@@ -103349,14 +103718,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -106495,7 +106864,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "1eb2adba-9bdb-4fe2-aa2e-549488bfb9f4"
+            "example": "459919a9-6b41-437d-a912-715da3e04f06"
           },
           "method": {
             "type": "string",
@@ -109022,7 +109391,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -110758,7 +111127,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "browse_url": {
             "anyOf": [
@@ -111000,6 +111369,115 @@
         ],
         "title": "DriftFinding",
         "description": "One way the deployment disagreed with its contract, located as precisely as possible."
+      },
+      "DriftItem": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "`deleted_team`, `empty_team` or `stale_suggestion`.",
+            "example": "example"
+          },
+          "entity_kind": {
+            "type": "string",
+            "title": "Entity Kind",
+            "description": "Entity Kind.",
+            "example": "example"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id",
+            "description": "Entity ID.",
+            "example": "entity_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "entity_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Drift schema."
+              },
+              {
+                "type": "null",
+                "description": "Drift schema."
+              }
+            ],
+            "title": "Entity Name",
+            "description": "Entity Name."
+          },
+          "team": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Team",
+            "description": "Team."
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Drift schema."
+              },
+              {
+                "type": "null",
+                "description": "Drift schema."
+              }
+            ],
+            "title": "Since",
+            "description": "Since."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "entity_kind",
+          "entity_id",
+          "team"
+        ],
+        "title": "DriftItem",
+        "description": "One entity whose ownership has drifted."
+      },
+      "DriftResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DriftItem"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Rows per reason (before the per-reason cap)."
+          },
+          "stale_after_days": {
+            "type": "integer",
+            "title": "Stale After Days",
+            "description": "Stale After Days.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stale_after_days"
+        ],
+        "title": "DriftResponse",
+        "description": "The ownership drift report."
       },
       "DroppedPointBody": {
         "properties": {
@@ -139870,6 +140348,68 @@
         "title": "OwnerConfirmInput",
         "description": "Confirm a suggestion. ``team`` may be omitted when there is exactly one suggestion."
       },
+      "OwnerGateResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`disabled`, `satisfied` or `blocked`.",
+            "example": "active"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message.",
+            "example": "Example validation message."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for owner gate."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for owner gate."
+              }
+            ],
+            "title": "Reason",
+            "description": "`no-owner` when blocked."
+          },
+          "team": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object",
+                "description": "Response payload for owner gate."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for owner gate."
+              }
+            ],
+            "title": "Team",
+            "description": "Team."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "OwnerGateResponse",
+        "description": "The owner gate's verdict for one project."
+      },
       "OwnerRecord": {
         "properties": {
           "team": {
@@ -140023,6 +140563,23 @@
             "title": "Suggestions",
             "description": "Suggested owners with their source; none of them receives findings.",
             "maxItems": 1000
+          },
+          "facts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object",
+                "description": "Response payload for owners."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for owners."
+              }
+            ],
+            "title": "Facts",
+            "description": "`owner.present` (a confirmed, live owner team) and `owner.contactable` (it has an on-call or chat link) \u2014 the facts GVM-1.x ladders read (CDG-2.5)."
           }
         },
         "additionalProperties": false,
@@ -140033,6 +140590,72 @@
         ],
         "title": "OwnersResponse",
         "description": "An entity's owner and suggestions."
+      },
+      "OwnershipPolicy": {
+        "properties": {
+          "unowned_findings_team": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyTeam"
+              },
+              {
+                "type": "null",
+                "description": "Ownership Policy schema."
+              }
+            ],
+            "description": "Catch-all team for findings on entities with no confirmed owner; null when none."
+          },
+          "require_owner_to_publish": {
+            "type": "boolean",
+            "title": "Require Owner To Publish",
+            "description": "When true, a version of a project with no confirmed owner cannot be published.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "require_owner_to_publish"
+        ],
+        "title": "OwnershipPolicy",
+        "description": "The tenant's ownership policy."
+      },
+      "OwnershipPolicyInput": {
+        "properties": {
+          "unowned_findings_team": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Ownership Policy Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Ownership Policy Input schema."
+              }
+            ],
+            "title": "Unowned Findings Team",
+            "description": "A team slug."
+          },
+          "require_owner_to_publish": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Ownership Policy Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Ownership Policy Input schema."
+              }
+            ],
+            "title": "Require Owner To Publish",
+            "description": "Require Owner To Publish."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "OwnershipPolicyInput",
+        "description": "A policy change. Omitted fields are left alone; ``unowned_findings_team: null`` clears it."
       },
       "PactImportRequest": {
         "properties": {
@@ -140781,6 +141404,51 @@
         ],
         "title": "PlatformOverrideRequest",
         "description": "A platform-admin override action to record against a tenant's audit ledger."
+      },
+      "PolicyTeam": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted",
+            "description": "True when the team was deleted: it receives nothing.",
+            "default": false,
+            "example": false
+          },
+          "member_count": {
+            "type": "integer",
+            "title": "Member Count",
+            "default": 0,
+            "description": "Number of member.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ],
+        "title": "PolicyTeam",
+        "description": "The catch-all team."
       },
       "PreservationClaimBody": {
         "properties": {
@@ -151570,7 +152238,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           }
         },
         "additionalProperties": false,
@@ -163823,7 +164491,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "detected_by": {
             "anyOf": [
@@ -171757,14 +172425,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T20:44:00Z"
+            "example": "2026-10-18T21:50:45Z"
           },
           "outcome": {
             "anyOf": [

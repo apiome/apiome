@@ -46,6 +46,7 @@ from .revision_deprecation import is_uuid_string
 
 __all__ = [
     "FINDING_TYPES",
+    "OUTCOME_CATCH_ALL",
     "OUTCOME_ROUTED",
     "OUTCOME_SKIPPED",
     "OUTCOME_THROTTLED",
@@ -63,6 +64,7 @@ __all__ = [
     "OwnerRecipients",
     "OwnerTeam",
     "RoutingOutcome",
+    "catch_all_recipients",
     "entity_kind_of",
     "list_unowned_findings",
     "project_id_for_version_ref",
@@ -84,6 +86,8 @@ OUTCOME_ROUTED = "routed"
 OUTCOME_THROTTLED = "throttled"
 OUTCOME_UNOWNED = "unowned"
 OUTCOME_SKIPPED = "skipped"
+#: No owner; recorded as unowned and delivered to the tenant's catch-all team (CDG-2.5).
+OUTCOME_CATCH_ALL = "catch_all"
 
 #: Kinds stored on a ``projects`` row; a caller may name either and the row decides.
 _PROJECT_KINDS = ("project", "catalog_item")
@@ -326,8 +330,140 @@ def _chat_body(finding: OwnerFinding, team: OwnerTeam, payload: Mapping[str, Any
     return event
 
 
-def _record_unowned(db: Any, finding: OwnerFinding, kind: str) -> RoutingOutcome:
-    """Add (or count again) the finding in the Unowned findings report."""
+def catch_all_recipients(
+    db: Any, tenant_id: str, *, exclude: Iterable[Optional[str]] = ()
+) -> Optional[OwnerRecipients]:
+    """The tenant's catch-all team (CDG-2.5, ``tenants.unowned_findings_team_id``), if one is set.
+
+    A soft-deleted catch-all team receives nothing (the drift report shows it instead).
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        exclude: Ids not to notify.
+
+    Returns:
+        The team and its members, or ``None`` when no live catch-all team is set.
+    """
+    if not is_uuid_string(tenant_id or ""):
+        return None
+    rows = db.execute_query(
+        """
+        SELECT t.id::text AS team_id, t.slug, t.name, t.chat_url,
+               COALESCE(array_agg(m.user_id::text ORDER BY (m.role = 'lead') DESC, m.created_at)
+                        FILTER (WHERE m.user_id IS NOT NULL), ARRAY[]::text[]) AS members
+        FROM apiome.tenants tn
+        JOIN apiome.teams t ON t.id = tn.unowned_findings_team_id AND t.deleted_at IS NULL
+        LEFT JOIN apiome.team_members m ON m.team_id = t.id
+        WHERE tn.id = %s::uuid
+        GROUP BY t.id, t.slug, t.name, t.chat_url
+        """,
+        (tenant_id,),
+    )
+    if not rows:
+        return None
+    row = rows[0]
+    team = OwnerTeam(
+        id=str(row["team_id"]), slug=row["slug"], name=row["name"], chat_url=row.get("chat_url")
+    )
+    return OwnerRecipients(team=team, user_ids=recipients(row.get("members") or [], exclude=exclude))
+
+
+def _delivery_plan(
+    finding: OwnerFinding, kind: str, owner: OwnerRecipients, *, catch_all: bool
+) -> tuple[list[NotificationDraft], Optional[Dict[str, Any]]]:
+    """The inbox drafts and the chat body for delivering a finding to one team.
+
+    Args:
+        finding: The finding.
+        kind: The stored entity kind.
+        owner: The team and the members to notify.
+        catch_all: True when the team is the tenant's catch-all team, not the entity's owner; the
+            payload says so (``catch_all: true``) so the reader knows why it reached them.
+
+    Returns:
+        ``(drafts, chat_body)``; the body is ``None`` when the team has no ``chat_url``.
+    """
+    team = owner.team
+    payload = _payload(finding, kind, team)
+    if catch_all:
+        payload["catch_all"] = True
+    drafts = [
+        NotificationDraft(
+            user_id=user_id,
+            type=finding.finding_type,
+            payload=payload,
+            actor_id=finding.actor_id if is_uuid_string(finding.actor_id or "") else None,
+            project_id=finding.entity_id if kind in _PROJECT_KINDS else None,
+            version_id=finding.version_id if is_uuid_string(finding.version_id or "") else None,
+        )
+        for user_id in owner.user_ids
+    ]
+    return drafts, (_chat_body(finding, team, payload) if team.chat_url else None)
+
+
+def _deliver(
+    db: Any,
+    cursor: Any,
+    finding: OwnerFinding,
+    kind: str,
+    team: OwnerTeam,
+    drafts: list[NotificationDraft],
+    chat_body: Optional[Dict[str, Any]],
+) -> Optional[tuple[int, Optional[str]]]:
+    """Claim the throttle slot, then write the inbox rows and queue the chat post, on ``cursor``.
+
+    Returns:
+        ``(inbox rows written, chat delivery id)``, or ``None`` when the throttle held.
+    """
+    cursor.execute(
+        """
+        INSERT INTO apiome.owner_notification_throttle
+            (tenant_id, team_id, entity_kind, entity_id, finding_type)
+        VALUES (%s::uuid, %s::uuid, %s, %s::uuid, %s)
+        ON CONFLICT (team_id, entity_kind, entity_id, finding_type) DO UPDATE
+           SET last_notified_at = CASE
+                   WHEN apiome.owner_notification_throttle.last_notified_at
+                        <= CURRENT_TIMESTAMP - make_interval(secs => %s)
+                   THEN CURRENT_TIMESTAMP
+                   ELSE apiome.owner_notification_throttle.last_notified_at END,
+               suppressed_count = CASE
+                   WHEN apiome.owner_notification_throttle.last_notified_at
+                        <= CURRENT_TIMESTAMP - make_interval(secs => %s)
+                   THEN 0
+                   ELSE apiome.owner_notification_throttle.suppressed_count + 1 END
+        RETURNING (last_notified_at = CURRENT_TIMESTAMP) AS claimed
+        """,
+        (finding.tenant_id, team.id, kind, finding.entity_id, finding.finding_type,
+         THROTTLE_WINDOW_SECONDS, THROTTLE_WINDOW_SECONDS),
+    )
+    claimed = cursor.fetchone()
+    if not claimed or not claimed["claimed"]:
+        return None
+    written = db._insert_notifications(cursor, tenant_id=finding.tenant_id, notify=lambda _produced: drafts)
+    delivery_id = None
+    if chat_body is not None:
+        delivery_id = db._insert_direct_delivery(
+            cursor,
+            tenant_id=finding.tenant_id,
+            team_id=team.id,
+            target_url=str(team.chat_url),
+            event_type=f"owner.{finding.finding_type.removeprefix('owner_')}",
+            payload=chat_body,
+        )
+    return written, delivery_id
+
+
+def _record_unowned(
+    db: Any, finding: OwnerFinding, kind: str, catch_all: Optional[OwnerRecipients] = None
+) -> RoutingOutcome:
+    """Add (or count again) the finding in the Unowned findings report, and tell the catch-all team.
+
+    The report row is written either way — the entity still has no owner — and, when the tenant
+    has a live catch-all team (CDG-2.5), the same transaction delivers the finding to it, under the
+    same throttle as an owner team.
+    """
+    plan = _delivery_plan(finding, kind, catch_all, catch_all=True) if catch_all else None
 
     def work(cursor: Any) -> RoutingOutcome:
         from psycopg2.extras import Json
@@ -345,13 +481,26 @@ def _record_unowned(db: Any, finding: OwnerFinding, kind: str) -> RoutingOutcome
             (finding.tenant_id, kind, finding.entity_id, finding.finding_type,
              Json(_payload(finding, kind, None))),
         )
-        return RoutingOutcome(status=OUTCOME_UNOWNED)
+        if catch_all is None or plan is None:
+            return RoutingOutcome(status=OUTCOME_UNOWNED)
+        delivered = _deliver(db, cursor, finding, kind, catch_all.team, *plan)
+        if delivered is None:
+            return RoutingOutcome(status=OUTCOME_UNOWNED, team_slug=catch_all.team.slug)
+        return RoutingOutcome(
+            status=OUTCOME_CATCH_ALL,
+            team_slug=catch_all.team.slug,
+            inbox_rows=delivered[0],
+            chat_delivery_id=delivered[1],
+        )
 
     return db._guarded_tx(work)
 
 
 def route_owner_finding(db: Any, finding: OwnerFinding) -> RoutingOutcome:
     """Route one finding to its entity's confirmed owner team, or to the Unowned report.
+
+    With no confirmed owner the finding is recorded in the Unowned report and, when the tenant has
+    a catch-all team (CDG-2.5), delivered to that team too (``catch_all`` outcome).
 
     Args:
         db: Database handle.
@@ -370,70 +519,20 @@ def route_owner_finding(db: Any, finding: OwnerFinding) -> RoutingOutcome:
         return RoutingOutcome(status=OUTCOME_SKIPPED)
 
     # Resolve everything before the transaction opens (notification_store's rule).
-    owner = owner_recipients(
-        db,
-        finding.tenant_id,
-        kind,
-        finding.entity_id,
-        exclude=[finding.actor_id, *finding.already_notified],
-    )
+    exclude = [finding.actor_id, *finding.already_notified]
+    owner = owner_recipients(db, finding.tenant_id, kind, finding.entity_id, exclude=exclude)
     if owner is None:
-        return _record_unowned(db, finding, kind)
+        return _record_unowned(
+            db, finding, kind, catch_all_recipients(db, finding.tenant_id, exclude=exclude)
+        )
 
     team = owner.team
-    payload = _payload(finding, kind, team)
-    drafts = [
-        NotificationDraft(
-            user_id=user_id,
-            type=finding.finding_type,
-            payload=payload,
-            actor_id=finding.actor_id if is_uuid_string(finding.actor_id or "") else None,
-            project_id=finding.entity_id if kind in _PROJECT_KINDS else None,
-            version_id=finding.version_id if is_uuid_string(finding.version_id or "") else None,
-        )
-        for user_id in owner.user_ids
-    ]
-    chat_body = _chat_body(finding, team, payload) if team.chat_url else None
+    drafts, chat_body = _delivery_plan(finding, kind, owner, catch_all=False)
 
     def work(cursor: Any) -> RoutingOutcome:
-        cursor.execute(
-            """
-            INSERT INTO apiome.owner_notification_throttle
-                (tenant_id, team_id, entity_kind, entity_id, finding_type)
-            VALUES (%s::uuid, %s::uuid, %s, %s::uuid, %s)
-            ON CONFLICT (team_id, entity_kind, entity_id, finding_type) DO UPDATE
-               SET last_notified_at = CASE
-                       WHEN apiome.owner_notification_throttle.last_notified_at
-                            <= CURRENT_TIMESTAMP - make_interval(secs => %s)
-                       THEN CURRENT_TIMESTAMP
-                       ELSE apiome.owner_notification_throttle.last_notified_at END,
-                   suppressed_count = CASE
-                       WHEN apiome.owner_notification_throttle.last_notified_at
-                            <= CURRENT_TIMESTAMP - make_interval(secs => %s)
-                       THEN 0
-                       ELSE apiome.owner_notification_throttle.suppressed_count + 1 END
-            RETURNING (last_notified_at = CURRENT_TIMESTAMP) AS claimed
-            """,
-            (finding.tenant_id, team.id, kind, finding.entity_id, finding.finding_type,
-             THROTTLE_WINDOW_SECONDS, THROTTLE_WINDOW_SECONDS),
-        )
-        claimed = cursor.fetchone()
-        if not claimed or not claimed["claimed"]:
+        delivered = _deliver(db, cursor, finding, kind, team, drafts, chat_body)
+        if delivered is None:
             return RoutingOutcome(status=OUTCOME_THROTTLED, team_slug=team.slug)
-
-        written = db._insert_notifications(
-            cursor, tenant_id=finding.tenant_id, notify=lambda _produced: drafts
-        )
-        delivery_id = None
-        if chat_body is not None:
-            delivery_id = db._insert_direct_delivery(
-                cursor,
-                tenant_id=finding.tenant_id,
-                team_id=team.id,
-                target_url=str(team.chat_url),
-                event_type=f"owner.{finding.finding_type.removeprefix('owner_')}",
-                payload=chat_body,
-            )
         # The entity has an owner now; it no longer belongs in the Unowned report for this type.
         cursor.execute(
             """
@@ -444,8 +543,8 @@ def route_owner_finding(db: Any, finding: OwnerFinding) -> RoutingOutcome:
             (finding.tenant_id, kind, finding.entity_id, finding.finding_type),
         )
         return RoutingOutcome(
-            status=OUTCOME_ROUTED, team_slug=team.slug, inbox_rows=written,
-            chat_delivery_id=delivery_id,
+            status=OUTCOME_ROUTED, team_slug=team.slug, inbox_rows=delivered[0],
+            chat_delivery_id=delivered[1],
         )
 
     return db._guarded_tx(work)

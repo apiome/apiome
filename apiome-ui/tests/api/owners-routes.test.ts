@@ -124,3 +124,33 @@ describe('owners', () => {
     expect(((await response.json()) as { error: string }).error).toContain("no team 'ghost'");
   });
 });
+
+describe('ownership policy (CDG-2.5)', () => {
+  test('policy read/write, the gate preview and drift reach their REST paths', async () => {
+    const { GET: readPolicy, PUT: putPolicy } = await import('@/app/api/ownership-policy/route');
+    const { GET: readGate } = await import('@/app/api/ownership-policy/publish-gate/route');
+    const { GET: readDrift } = await import('@/app/api/ownership-drift/route');
+    await readPolicy();
+    await putPolicy(
+      new NextRequest('http://ui.test', {
+        method: 'PUT',
+        body: JSON.stringify({ unowned_findings_team: '', require_owner_to_publish: true, extra: 1 }),
+      })
+    );
+    await readGate(new NextRequest(`http://ui.test/api/x?project=${ID}`));
+    await readDrift();
+    expect(upstream.map((call) => [call.method, call.url, call.body])).toEqual([
+      ['GET', 'http://rest.test/v1/tenants/acme/ownership-policy', undefined],
+      ['PUT', 'http://rest.test/v1/tenants/acme/ownership-policy', { unowned_findings_team: null, require_owner_to_publish: true }],
+      ['GET', `http://rest.test/v1/tenants/acme/ownership-policy/publish-gate?project=${ID}`, undefined],
+      ['GET', 'http://rest.test/v1/tenants/acme/ownership-drift', undefined],
+    ]);
+  });
+
+  test('the gate preview refuses a project that is not an id', async () => {
+    const { GET: readGate } = await import('@/app/api/ownership-policy/publish-gate/route');
+    const response = await readGate(new NextRequest('http://ui.test/api/x?project=../../teams'));
+    expect(response.status).toBe(400);
+    expect(upstream).toEqual([]);
+  });
+});
