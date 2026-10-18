@@ -154,14 +154,15 @@ def test_create_returns_the_connector_without_credentials(store, audits):
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
     _create(kind="apigee", name="Apigee", scope={})
     body = client.get(_BASE).json()
-    assert len(body["kinds"]) == 8 and body["syncableKinds"] == ["aws-apigateway", "kong-admin", "kong-konnect"]
+    assert len(body["kinds"]) == 8
+    assert body["syncableKinds"] == ["aws-apigateway", "azure-apim", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is False
     register_connector_source("apigee", ConnectorRefreshSource)
     try:
         body = client.get(_BASE).json()
     finally:
         unregister_connector_source("apigee")
-    assert body["syncableKinds"] == ["apigee", "aws-apigateway", "kong-admin", "kong-konnect"]
+    assert body["syncableKinds"] == ["apigee", "aws-apigateway", "azure-apim", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is True
 
 

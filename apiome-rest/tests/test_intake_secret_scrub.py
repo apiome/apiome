@@ -368,3 +368,21 @@ def test_an_unquoted_boolean_or_null_under_a_secret_named_key_is_kept(text):
 
 def test_a_quoted_literal_under_a_secret_named_key_is_still_redacted():
     assert scrub_document_text('password: "true"').text == f'password: "{REDACTION_MARKER}"'
+
+
+@pytest.mark.parametrize(
+    "text",
+    ['<cors allow-credentials="true">', "<cors allow-credentials='false' />", '<x use-credential = "true"/>'],
+)
+def test_a_boolean_xml_attribute_under_a_secret_named_name_is_kept(text):
+    """CDG-1.4: ``<cors allow-credentials="true">`` in an APIM policy is a boolean, not a secret."""
+    outcome = scrub_document_text(text)
+    assert outcome.text == text and not outcome.scrubbed
+
+
+@pytest.mark.parametrize(
+    "text",
+    ['{"password": "true"}', '<authentication-basic password="hunter22" />', "client_secret='true-ish'"],
+)
+def test_strings_and_real_attribute_secrets_are_still_redacted(text):
+    assert scrub_document_text(text).scrubbed

@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Billing API",
+    "version": "1"
+  },
+  "servers": [
+    {
+      "url": "https://contoso-apim.azure-api.net/billing"
+    }
+  ],
+  "paths": {
+    "/invoices": {
+      "get": {
+        "operationId": "list-invoices",
+        "summary": "List invoices",
+        "responses": {
+          "200": {
+            "description": "Invoices"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKeyHeader": {
+        "type": "apiKey",
+        "name": "Ocp-Apim-Subscription-Key",
+        "in": "header"
+      },
+      "apiKeyQuery": {
+        "type": "apiKey",
+        "name": "subscription-key",
+        "in": "query"
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKeyHeader": []
+    },
+    {
+      "apiKeyQuery": []
+    }
+  ]
+}

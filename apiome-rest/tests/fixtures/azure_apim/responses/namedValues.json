@@ -1,0 +1,21 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/namedValues/tenant-header",
+      "name": "tenant-header",
+      "properties": {
+        "displayName": "tenant-header",
+        "secret": false,
+        "value": "acme-tenant-7"
+      }
+    },
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/namedValues/billing-key",
+      "name": "billing-key",
+      "properties": {
+        "displayName": "billing-key",
+        "secret": true
+      }
+    }
+  ]
+}

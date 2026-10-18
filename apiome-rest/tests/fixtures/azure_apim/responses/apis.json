@@ -1,0 +1,21 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/apis/orders-api",
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "orders-api",
+      "properties": {
+        "displayName": "Orders API",
+        "apiRevision": "2",
+        "path": "orders",
+        "protocols": [
+          "https"
+        ],
+        "isCurrent": true,
+        "subscriptionRequired": true,
+        "serviceUrl": "https://orders.internal.example.com/v2"
+      }
+    }
+  ],
+  "nextLink": "https://management.azure.com/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/apis?api-version=2024-05-01&%24skiptoken=page2"
+}

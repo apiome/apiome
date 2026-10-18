@@ -14,8 +14,8 @@ one quota, one audit trail.
 
 :::note
 Connectors are managed through the REST API for now; there is no screen for them yet. Each kind needs
-a source before it can sync. The two [Kong](#kong) kinds and [AWS API Gateway](#aws-api-gateway) sync
-today; the other gateway and URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
+a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway) and
+[Azure API Management](#azure-api-management) sync today; the other gateway and URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
 `GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
 :::
 
@@ -72,6 +72,9 @@ Secrets do not belong in **scope**: a scope key that looks like one (`token`, `p
 An [AWS API Gateway](#aws-api-gateway) connector stores **no** credential at all: Apiome assumes a
 role in your account instead. Sending it one is refused with `connector-credentials-refused`.
 
+An [Azure API Management](#azure-api-management) connector stores its application's client secret as
+`{"credentials": {"clientSecret": "…"}}`, or nothing at all when it uses a federated credential.
+
 ## Base URLs and private networks
 
 Apiome calls the base URL itself, so it must be `http` or `https`, carry no `user:password@`, and
@@ -99,7 +102,7 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 
 | Item status | Meaning |
 | --- | --- |
-| **discovered** | Seen in the inventory, not imported yet |
+| **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design) |
 | **imported** | Imported; `catalogItemId` is its catalog item |
 | **ignored** | Never fetched |
 | **missing** | No longer in the inventory |
@@ -122,7 +125,7 @@ example, if a run fetches 0 of 12 APIs because the gateway refused the credentia
 `errorClass: "auth"` and `httpStatus: 401`. The connector's **status** then turns **failing**
 until a run succeeds. The error classes are `auth`, `not-found`, `rate-limited`, `unavailable`,
 `credentials-unreadable`, `import-failed`, `invalid-configuration` (the connector is missing a
-token or base URL it needs, or Apiome has no AWS identity to assume a role from), `address-refused`
+token, client secret or base URL it needs, or Apiome has no AWS or Azure workload identity to use), `address-refused`
 (a request was redirected to a private address) and `unexpected`.
 
 A run also lists, under `summary.unchangedItems`, every API it did **not** re-import and why. For
@@ -298,6 +301,94 @@ change the scope.
 - **Failures name the permission.** If AWS refuses the role or a call, the run fails with
   `errorClass: "auth"`, and its message names the missing permission, such as
   `Missing permission sts:AssumeRole on arn:aws:iam::123456789012:role/apiome-catalog`.
+
+## Azure API Management
+
+The `azure-apim` kind reads the APIs in one Azure API Management (APIM) instance through Azure
+Resource Manager. **The current revision of each API becomes one catalog item.** Each item holds the
+API's OpenAPI definition **and its policies**, the API's and each operation's, imported exactly as an
+[archive of the same files](./azure-api-management-import.md) would be. JWT validation, rate limits,
+backends and the other policies are recorded on each operation.
+
+Apiome signs in as a Microsoft Entra ID **application** (a service principal) that you give read-only
+access to the instance.
+
+### Give Apiome read access
+
+1. **Register an application** in Microsoft Entra ID (**App registrations** → **New registration**).
+   Note its **Application (client) ID** and your **Directory (tenant) ID**.
+2. **Give it a credential**, one of:
+   - a **client secret** (**Certificates & secrets** → **New client secret**). Copy the value now:
+     you store it in Apiome in the next section;
+   - a **federated credential** (**Certificates & secrets** → **Federated credentials**) that trusts
+     your Apiome deployment's workload identity. Your Apiome operator gives you the issuer and
+     subject. No secret is stored.
+3. **Assign the role.** On the API Management instance, open **Access control (IAM)** →
+   **Add role assignment**, choose **API Management Service Reader Role**, and assign it to the
+   application. The role is read-only: the connector never changes anything.
+
+   ```bash
+   az role assignment create --assignee <client-id> \
+     --role "API Management Service Reader Role" \
+     --scope /subscriptions/<subscription-id>/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim
+   ```
+
+| What a sync calls (`api-version=2024-05-01`) | Why |
+| --- | --- |
+| `GET …/service/{name}` | The instance's gateway URL |
+| `GET …/apis`, `…/apis/{api}/revisions` | Every API and its revisions |
+| `GET …/apis/{api}?export=true&format=openapi+json-link` | The definition, downloaded from the link it returns |
+| `GET …/apis/{api}/policies/policy`, `…/operations/{op}/policies/policy` | The API's and each operation's policy |
+| `GET …/products`, `…/products/{product}/apis` | Which products each API is in |
+| `GET …/namedValues`, `…/backends` | The named values and backends the policies refer to. Only names and backend URLs are kept, never a named value's value. |
+
+### Register the connector
+
+1. **Create it** with the application, the subscription, the resource group and the instance name.
+   There is no base URL:
+
+   ```json
+   {
+     "kind": "azure-apim",
+     "name": "APIM production",
+     "scope": {
+       "tenantId": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+       "clientId": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+       "subscriptionId": "5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b",
+       "resourceGroup": "rg-apis",
+       "serviceName": "contoso-apim",
+       "authMethod": "client-secret"
+     }
+   }
+   ```
+
+   Set `authMethod` to `federated` for a federated credential. Set `includeNonCurrentRevisions` to
+   `true` to import every revision, not only the current one.
+2. **Store the client secret** (skip this for a federated credential):
+   `PUT …/connectors/{id}/credentials` with `{"credentials": {"clientSecret": "…"}}`.
+3. **Sync it:** `POST …/connectors/{id}/sync`.
+
+### What an Azure sync records
+
+- **One item per current revision.** The item's **environment** is the APIM instance, and its
+  **hosts** hold the API's gateway URL. Its revision label is `rev<n>-<digest>`.
+- **Other revisions are recorded, not imported.** A non-current revision appears in the inventory as
+  **discovered**, and the run counts it under `summary.discovered`. With
+  `includeNonCurrentRevisions`, it is imported as its own item, named "*API* (revision *n*)".
+- **Products become tags.** Each product the API is in becomes a tag on its catalog item, named after
+  the product. When the API leaves a product, the tag is removed. Tags you add yourself are never
+  touched.
+- **Every sync reads every API.** A policy change does not change an API's revision number, so each
+  sync fetches each API. An API whose definition and policies are unchanged is not imported again.
+- **Deployment details.** Each item's **`deployment`** records the subscription, resource group,
+  instance, API name, revision, whether it is current and online, its path, version and products.
+- **Findings.** A WebSocket, GraphQL or gRPC API cannot be exported as OpenAPI and is listed as an
+  `api-type-not-exported` finding. An instance with nothing to import gives a `service-empty`
+  finding.
+- **Failures name the cause.** If Microsoft Entra ID refuses the credential, the run fails with
+  `errorClass: "auth"`, and its message carries Entra ID's error code. For example, an expired client
+  secret gives `AADSTS7000222`. If Azure Resource Manager refuses a call, the message names its code,
+  such as `AuthorizationFailed` when the role assignment is missing.
 
 ## Quota and audit
 

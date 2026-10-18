@@ -1,0 +1,12 @@
+{
+  "value": [
+    {
+      "apiId": "/apis/billing-api;rev=1",
+      "apiRevision": "1",
+      "isCurrent": true,
+      "isOnline": true,
+      "createdDateTime": "2026-07-01T10:00:00Z",
+      "updatedDateTime": "2026-07-01T10:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/backends/orders-backend",
+      "name": "orders-backend",
+      "properties": {
+        "url": "https://orders.internal.example.com/v2",
+        "protocol": "http",
+        "credentials": {
+          "header": {
+            "x-key": [
+              "{{billing-key}}"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -161,7 +161,10 @@ SCOPE_DESCRIPTION = (
     "every control plane the token can read). `kong-admin`: `{\"workspace\": \"…\", "
     "\"environment\": \"…\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/…\", "
     "\"externalId\": \"…\", \"regions\": [\"eu-west-1\", …]}` (no base URL, no credential: Apiome assumes the "
-    "role). Kinds with a source check their scope on every write, and some dry-run it."
+    "role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", "
+    "\"resourceGroup\": \"…\", \"serviceName\": \"…\", \"authMethod\": \"client-secret\"|\"federated\", "
+    "\"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT …/credentials` as "
+    "`{\"clientSecret\": \"…\"}`). Kinds with a source check their scope on every write, and some dry-run it."
 )
 
 

@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.363.0] - 2026-10-18
+
+### Added
+- **Azure API Management connector (#5955, CDG-1.4)**: connectors of kind `azure-apim` now sync. Scope
+  `{tenantId, clientId, subscriptionId, resourceGroup, serviceName, authMethod, includeNonCurrentRevisions}`; the
+  Entra ID application signs in with a client secret (`PUT …/credentials` → `{"clientSecret": "…"}`) or, with
+  `authMethod: "federated"`, the deployment's workload-identity token (`AZURE_FEDERATED_TOKEN_FILE`) as a client
+  assertion. Inventory over ARM (`api-version=2024-05-01`): the service (gateway URL), `/apis` + `/apis/{api}/revisions`,
+  `/products` + `/products/{p}/apis`, `/namedValues` (names only) and `/backends`.
+  - The current revision of each API is one catalog item (environment: the APIM instance; hosts: the API's gateway
+    URL). Non-current revisions are recorded as `discovered` items and imported only with
+    `includeNonCurrentRevisions` (`summary.discovered` counts them).
+  - Each fetch exports the definition (`?export=true&format=openapi+json-link`, downloaded without the ARM token),
+    reads the API policy and every operation policy (`format=rawxml`), and imports them with a `service.json` of
+    named-value names and backends as one archive through the FMT-7.2 `azure-apim` adapter — the same input as a
+    direct import of those files. The catalog revision label is `rev<n>-<digest>`; unchanged content is re-anchored.
+  - Products become tags on the catalog item (the project's tags); a tag the connector added for a product the API
+    left is removed.
+  - An Entra ID refusal fails the run as `auth` with the `AADSTS` code in the message (`AADSTS7000222` for an
+    expired client secret); an ARM refusal names ARM's code (`AuthorizationFailed`). WebSocket, GraphQL and gRPC
+    APIs are `api-type-not-exported` findings.
+- Sync engine hooks: a source may return `should_import(candidate) = False` (the item stays `discovered`) and may
+  finish an imported item with `after_import(db, candidate, project_id)`; a failing hook is counted as
+  `summary.postImportFailed` and never fails the import.
+
+### Fixed
+- A catalog item imported from an **archive** (`format_metadata.intakeKind: "archive"`) is now rebuilt from its
+  captured archive through the adapter's `parse_fileset`, so its parsed model, Format details and conversion work.
+  Before, the base64 capture was parsed as text and the rebuild returned nothing.
+- Intake secret scrub: a quoted `true`/`false` XML attribute under a secret-named name (`<cors
+  allow-credentials="true">`) is no longer redacted. Redacting it withheld every APIM policy archive with CORS.
+
+The OpenAPI version moves to 1.227.0.
+
 ## [1.362.0] - 2026-10-18
 
 ### Added
