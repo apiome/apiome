@@ -687,6 +687,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['permission matrix', 'custom role', 'built-in', 'rbac', 'duplicate', 'unsaved changes'],
   },
   {
+    id: 'teams',
+    title: 'Teams',
+    summary: 'Named groups of members with owner links, the owners of catalog entities.',
+    page: 'apiome-docs/docs/workspace/teams.mdx',
+    section: 'reference',
+    keywords: ['owner', 'ownership', 'on-call', 'chat channel', 'lead', 'reassign', 'group'],
+  },
+  {
     id: 'api-keys',
     title: 'API keys & agent keys',
     summary: 'Create scoped keys for REST access, copy the secret once, rotate before expiry, and disable or delete keys.',

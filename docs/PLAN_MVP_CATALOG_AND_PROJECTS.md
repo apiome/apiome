@@ -151,7 +151,7 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5957](https://github.com/apiome/apiome/issues/5957) CDG-1.6 Shadow-API report
 - [x] [#5958](https://github.com/apiome/apiome/issues/5958) CDG-1.7 Connectors UI and CLI
 - [ ] [#5959](https://github.com/apiome/apiome/issues/5959) CDG-EPIC-2 Ownership and routing
-- [ ] [#5960](https://github.com/apiome/apiome/issues/5960) CDG-2.1 Teams model and RBAC resource
+- [x] [#5960](https://github.com/apiome/apiome/issues/5960) CDG-2.1 Teams model and RBAC resource
 - [ ] [#5961](https://github.com/apiome/apiome/issues/5961) CDG-2.2 Ownership on catalog entities
 - [ ] [#5962](https://github.com/apiome/apiome/issues/5962) CDG-2.3 Owner routing of findings
 - [ ] [#5963](https://github.com/apiome/apiome/issues/5963) CDG-2.4 Ownership surfaces

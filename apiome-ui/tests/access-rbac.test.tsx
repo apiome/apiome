@@ -148,9 +148,9 @@ describe('RolesClient (#3611)', () => {
     expect(await screen.findByTestId('role-item-owner')).toHaveTextContent('Owner');
     expect(screen.getByTestId('role-item-release-manager')).toHaveTextContent('Release Manager');
 
-    // All 14 resources render as rows (lint_findings added by CLX-4.1, #4859;
+    // All 15 resources render as rows (lint_findings added by CLX-4.1, #4859;
     // verification_targets by ECA-1.2, #4730; verification_evidence by ECA-1.3, #4731;
-    // consumer_contracts by CTG-4.1, #4479).
+    // consumer_contracts by CTG-4.1, #4479; teams by CDG-2.1, #5960).
     // HIVE-5.3 (#5306) took the labels to sentence case, as the mockup writes them; the
     // guard keys they grant against are unchanged and are now printed under each label.
     for (const label of [
@@ -168,6 +168,7 @@ describe('RolesClient (#3611)', () => {
       'Verification targets',
       'Verification evidence',
       'Consumer contracts',
+      'Teams',
     ]) {
       // Scoped to the matrix: "Members" is also the header's link to the roster.
       expect(within(screen.getByRole('table')).getByText(label)).toBeInTheDocument();
@@ -178,12 +179,12 @@ describe('RolesClient (#3611)', () => {
     const headers = within(matrix).getAllByRole('columnheader').map((h) => h.textContent);
     expect(headers).toEqual(['Resource', 'View', 'Create', 'Edit', 'Delete', 'Publish']);
 
-    // 14 resources x 5 actions = 70 toggle cells, plus the 14 row toggles HIVE-5.3 added —
+    // 15 resources x 5 actions = 75 toggle cells, plus the 15 row toggles HIVE-5.3 added —
     // the tri-state control that grants or revokes a whole resource at once.
     const toggles = within(matrix).getAllByRole('button');
-    expect(toggles).toHaveLength(84);
+    expect(toggles).toHaveLength(90);
     expect(toggles.filter((button) => button.getAttribute('aria-pressed') !== null)).toHaveLength(
-      84
+      90
     );
   });
 });

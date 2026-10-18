@@ -32,6 +32,7 @@ const RESOURCES = [
   'verification_targets',
   'verification_evidence',
   'consumer_contracts',
+  'teams',
 ] as const;
 
 /** The spec-authoring resources an Editor writes to. */
