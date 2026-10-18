@@ -853,3 +853,8 @@ def entity_owner(tenant_slug: str, kind: str, entity_id: str) -> str:
         f"{V1}/tenants/{tenant_slug}/owners/{quote(kind, safe='')}/"
         f"{quote(entity_id, safe='')}"
     )
+
+
+def graph_dependencies(tenant_slug: str, kind: str, entity: str) -> str:
+    """GET / PUT an entity's declared dependencies (CDG-3.2); ``entity`` is an id or a slug."""
+    return f"{V1}/graph/{tenant_slug}/entities/{quote(kind, safe='')}/{quote(entity, safe='')}/dependencies"

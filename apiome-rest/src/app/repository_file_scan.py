@@ -777,6 +777,69 @@ def apply_codeowners(
         return 0
 
 
+def apply_backstage(
+    db: Database,
+    tenant_id: str,
+    repository_id: str,
+    branch: str,
+    owner: str,
+    repo: str,
+    token: Optional[str],
+    *,
+    fetch_text: Optional[Any] = None,
+    record: Optional[Callable[..., Any]] = None,
+) -> Optional[Dict[str, int]]:
+    """Read the branch's Backstage ``catalog-info.yaml`` files into declared dependencies (CDG-3.2).
+
+    Runs once a walk completes, after CODEOWNERS. Every indexed ``catalog-info.yaml`` /
+    ``catalog-info.yml`` (at any depth) is downloaded and handed to
+    :func:`app.declared_dependency_store.record_backstage_dependencies`, which attaches its
+    ``consumesApis`` / ``dependsOn`` to the APIs imported from this branch. With no such file, earlier
+    Backstage declarations are removed. Advisory: any failure is logged and the scan goes on.
+
+    Args:
+        db: Database handle.
+        tenant_id: The repository's tenant.
+        repository_id: The repository.
+        branch: The scanned branch.
+        owner: GitHub owner.
+        repo: GitHub repository name.
+        token: Access token, if any.
+        fetch_text: Replaces :func:`fetch_github_repository_file_text` (tests).
+        record: Replaces ``record_backstage_dependencies`` (tests).
+
+    Returns:
+        The recorder's counts, or ``None`` when skipped.
+    """
+    from .declared_dependency_store import record_backstage_dependencies
+
+    fetch = fetch_text or fetch_github_repository_file_text
+    try:
+        rows = db.execute_query(
+            """
+            SELECT path FROM apiome.tenant_repository_files
+            WHERE repository_id = %s::uuid AND branch = %s
+              AND path ~* '(^|/)catalog-info\\.ya?ml$'
+            ORDER BY path
+            LIMIT 50
+            """,
+            (repository_id, branch),
+        )
+        files: Dict[str, str] = {}
+        for row in rows or []:
+            text, _ = fetch(owner, repo, str(row["path"]), branch, token, max_bytes=256_000)
+            files[str(row["path"])] = text
+        return (record or record_backstage_dependencies)(tenant_id, repository_id, branch, files)
+    except Exception as exc:  # noqa: BLE001 - declarations are advisory; never fail the scan
+        _logger.warning(
+            "Backstage declarations skipped repository_id=%s branch=%s error=%s",
+            repository_id,
+            branch,
+            f"{type(exc).__name__}: {exc}"[:300],
+        )
+        return None
+
+
 def scan_repository_branch_into_index(
     db: Database,
     repo_row: Dict[str, Any],
@@ -947,6 +1010,7 @@ def scan_repository_branch_into_index(
 
     db.clear_repository_scan_cursor(repository_id, branch)
     apply_codeowners(db, repository_id, branch, owner, repo, token)
+    apply_backstage(db, tenant_id, repository_id, branch, owner, repo, token)
     total_files, importable_count = db.count_tenant_repository_files(repository_id, branch)
     db.update_tenant_repository_after_file_scan(
         tenant_id=tenant_id,

@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.374.0] - 2026-10-18
+
+### Added
+- **Declared dependencies (#5967, CDG-3.2)**: `GET|PUT /v1/graph/{tenant}/entities/{kind}/{entity}/dependencies`
+  (the kind's own `view` / `edit`; `entity` is an id or a project/catalog-item slug). `PUT` replaces the entity's
+  `manual` declarations with `[{to: {kind, id} | {slug}, pointer?, note?}]` (at most 200) as `depends_on` edges with
+  provenance `declared`, audited as `graph.dependencies.update`; `GET` returns every declared edge from every source and
+  the `unresolved` references.
+- **`x-apiome-depends-on` on import (#5967)**: a root list of `<slug>[#<pointer>]` in OpenAPI, AsyncAPI, JSON Schema and
+  Avro `.avsc` documents, or an `x-apiome-depends-on:` line in a GraphQL description, is stored as the entity's `spec`
+  declarations on every import, in-process or through the OpenAPI worker; the set replaces the previous import's.
+- **Backstage `catalog-info.yaml` (#5967)**: each repository scan reads every `catalog-info.yaml` / `.yml` on the branch;
+  `consumesApis` become `consumes` and `dependsOn` `depends_on` declared edges (`source_ref: backstage:<path>`) of the
+  APIs imported from that branch (`providesApis` picks which). A removed file removes its declarations.
+- **Unresolved references (#5967)**: apiome-db V289 `catalog_unresolved_dependencies` keeps references that name no
+  entity (`not-found`) or the entity itself (`self`) on the declaring entity, replaced per source.
+
+The OpenAPI version moves to 1.238.0.
+
 ## [1.373.0] - 2026-10-18
 
 ### Added

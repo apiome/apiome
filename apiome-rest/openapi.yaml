@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.237.0
+  version: 1.238.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -17198,6 +17198,178 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listanentitysgraphedgesresponse422.
+  /v1/graph/{tenant_slug}/entities/{kind}/{entity}/dependencies:
+    get:
+      tags:
+      - graph
+      summary: Read an entity's declared dependencies
+      description: 'Every `declared` edge the entity has — written here (`source_ref:
+        manual`), read from its spec''s `x-apiome-depends-on` (`spec`) or from a Backstage
+        `catalog-info.yaml` in its repository (`backstage:<path>`) — and the references
+        that resolved to nothing (`unresolved`).
+
+
+        `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`;
+        a project or catalog item may be named by slug instead of id. Reading needs
+        the kind''s `view` and changing needs its `edit` (`projects` for projects,
+        catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports`
+        for connectors).'
+      operationId: get_entity_dependencies_v1_graph__tenant_slug__entities__kind___entity__dependencies_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+          description: Kind schema.
+        description: Path parameter identifying the kind segment.
+      - name: entity
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Entity
+          description: Entity schema.
+        description: Path parameter identifying the entity segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanentitysdeclareddependenciesauthorization schema.
+          - type: 'null'
+            description: Readanentitysdeclareddependenciesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanentitysdeclareddependencies Xapikey schema.
+          - type: 'null'
+            description: Readanentitysdeclareddependencies Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read an entity's declared dependencies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependenciesResponse'
+                description: Response payload for readanentitysdeclareddependenciesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readanentitysdeclareddependenciesresponse422.
+    put:
+      tags:
+      - graph
+      summary: Replace an entity's manual dependencies
+      description: 'Replace the entity''s `manual` dependencies with `dependencies`
+        — each `{to: {kind, id} | {slug}, pointer?, note?}` — as `depends_on` edges
+        with provenance `declared`. An empty list clears them; spec and Backstage
+        declarations are left alone. A target that does not exist is kept under `unresolved`,
+        not refused. At most 200 entries. Audited as `graph.dependencies.update`.
+
+
+        `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`;
+        a project or catalog item may be named by slug instead of id. Reading needs
+        the kind''s `view` and changing needs its `edit` (`projects` for projects,
+        catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports`
+        for connectors).'
+      operationId: put_entity_dependencies_v1_graph__tenant_slug__entities__kind___entity__dependencies_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+          description: Kind schema.
+        description: Path parameter identifying the kind segment.
+      - name: entity
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Entity
+          description: Entity schema.
+        description: Path parameter identifying the entity segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanentitysmanualdependenciesauthorization schema.
+          - type: 'null'
+            description: Replaceanentitysmanualdependenciesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanentitysmanualdependencies Xapikey schema.
+          - type: 'null'
+            description: Replaceanentitysmanualdependencies Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DependenciesInput'
+              description: Request body for replaceanentitysmanualdependenciesrequest.
+        description: Request body for replace an entity's manual dependencies.
+      responses:
+        '200':
+          description: Successful response for replace an entity's manual dependencies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependenciesResponse'
+                description: Response payload for replaceanentitysmanualdependenciesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for replaceanentitysmanualdependenciesresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads:
     get:
       tags:
@@ -75367,7 +75539,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         completed_at:
           anyOf:
           - type: string
@@ -76832,7 +77004,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -77005,7 +77177,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -77446,13 +77618,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -79843,7 +80015,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 6d7cc82e-ca16-4774-9817-fd761147f45f
+          example: d73c6f52-269f-4024-aa6d-6690e82de57c
         method:
           type: string
           title: Method
@@ -81986,7 +82158,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         envelope:
           additionalProperties: true
           type: object
@@ -82283,6 +82455,117 @@ components:
       - blocking
       title: DeliverySeverity
       description: How much a reason weighs on the decision.
+    DependenciesInput:
+      properties:
+        dependencies:
+          items:
+            $ref: '#/components/schemas/DependencyInput'
+          type: array
+          maxItems: 200
+          title: Dependencies
+          description: Dependencies.
+      additionalProperties: false
+      type: object
+      title: DependenciesInput
+      description: The entity's complete list of manual dependencies.
+    DependenciesResponse:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        entity_id:
+          type: string
+          title: Entity Id
+          description: Entity ID.
+          example: entity_01h2xcejqtf3fz5y5j0v8k9m2p
+        declared:
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+          type: array
+          title: Declared
+          description: Outgoing `declared` edges.
+          maxItems: 1000
+        unresolved:
+          items:
+            $ref: '#/components/schemas/UnresolvedDependency'
+          type: array
+          title: Unresolved
+          description: Unresolved.
+          maxItems: 1000
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the entity has more than 500 declared edges.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - entity_id
+      - truncated
+      title: DependenciesResponse
+      description: What an entity declares it depends on, from every source.
+    DependencyInput:
+      properties:
+        to:
+          $ref: '#/components/schemas/DependencyTarget'
+          description: To.
+        pointer:
+          anyOf:
+          - type: string
+            description: Dependency Input schema.
+          - type: 'null'
+            description: Dependency Input schema.
+          title: Pointer
+          description: A JSON pointer into the target.
+        note:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Dependency Input schema.
+          - type: 'null'
+            description: Dependency Input schema.
+          title: Note
+          description: Note.
+      additionalProperties: false
+      type: object
+      required:
+      - to
+      title: DependencyInput
+      description: One declared dependency.
+    DependencyTarget:
+      properties:
+        kind:
+          anyOf:
+          - type: string
+            description: Dependency Target schema.
+          - type: 'null'
+            description: Dependency Target schema.
+          title: Kind
+          description: The target's kind; required with `id`.
+        id:
+          anyOf:
+          - type: string
+            description: Dependency Target schema.
+          - type: 'null'
+            description: Dependency Target schema.
+          title: Id
+          description: Stable resource identifier.
+        slug:
+          anyOf:
+          - type: string
+            description: Dependency Target schema.
+          - type: 'null'
+            description: Dependency Target schema.
+          title: Slug
+          description: A project or catalog item's slug.
+      additionalProperties: false
+      type: object
+      title: DependencyTarget
+      description: 'What a dependency points at: an entity by `kind` + `id`, or a
+        project/catalog item by `slug`.'
     DeployGatePolicyOut:
       properties:
         schemaVersion:
@@ -83366,7 +83649,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         browse_url:
           anyOf:
           - type: string
@@ -115848,7 +116131,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
       additionalProperties: false
       type: object
       required:
@@ -125344,7 +125627,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         detected_by:
           anyOf:
           - type: string
@@ -129719,6 +130002,61 @@ components:
       - total
       title: UnreadCount
       description: How much of the caller's inbox is unread — the bell badge (COL-3.2).
+    UnresolvedDependency:
+      properties:
+        source_ref:
+          type: string
+          title: Source Ref
+          description: '`manual`, `spec` or `backstage:<path>`.'
+          example: example
+        reference:
+          type: string
+          title: Reference
+          description: The reference as written.
+          example: example
+        pointer:
+          anyOf:
+          - type: string
+            description: Unresolved Dependency schema.
+          - type: 'null'
+            description: Unresolved Dependency schema.
+          title: Pointer
+          description: Pointer.
+        edge_kind:
+          type: string
+          title: Edge Kind
+          description: Edge Kind.
+          example: example
+        reason:
+          type: string
+          title: Reason
+          description: '`not-found` or `self`.'
+          example: example
+        note:
+          anyOf:
+          - type: string
+            description: Unresolved Dependency schema.
+          - type: 'null'
+            description: Unresolved Dependency schema.
+          title: Note
+          description: Note.
+        created_at:
+          anyOf:
+          - type: string
+            description: Unresolved Dependency schema.
+          - type: 'null'
+            description: Unresolved Dependency schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - source_ref
+      - reference
+      - edge_kind
+      - reason
+      title: UnresolvedDependency
+      description: A declared reference that names no entity.
     UnresolvedInteraction:
       properties:
         reason:
@@ -131421,13 +131759,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-18T22:16:40Z'
+          example: '2026-10-18T22:48:35Z'
         outcome:
           anyOf:
           - type: string

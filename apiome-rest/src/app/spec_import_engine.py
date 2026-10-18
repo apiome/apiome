@@ -942,6 +942,43 @@ async def _drive_job_inner(job_id: str, payload: Dict[str, Any]) -> None:
             await asyncio.to_thread(
                 _capture_version_quality_score, tenant_slug, tenant_id, version_record_id
             )
+    project_id = getattr(result, "project_id", None) if result else None
+    if status.state == "completed" and project_id and payload.get("tenant_id"):
+        await asyncio.to_thread(
+            _record_worker_declared_dependencies, str(payload["tenant_id"]), str(project_id), payload
+        )
+
+
+def _record_worker_declared_dependencies(tenant_id: str, project_id: str, payload: Dict[str, Any]) -> None:
+    """Store a worker-imported document's ``x-apiome-depends-on`` (CDG-3.2, #5967), never raising.
+
+    OpenAPI and Swagger are persisted by the apiome-ui worker, so the in-process pipeline's hook
+    never sees them; this reads the submitted document (``document_base64`` or ``document_path``),
+    parses it as YAML (a superset of JSON) and records its root declarations on the project the
+    worker wrote. A document that can't be read or parsed records nothing.
+
+    Args:
+        tenant_id: The importing tenant.
+        project_id: The project or catalog item the worker wrote.
+        payload: The job payload.
+    """
+    import yaml
+
+    from .database import db
+    from .declared_dependency_store import record_spec_dependencies
+    from .import_source_pipeline import _decode_document_bytes
+
+    try:
+        document = yaml.safe_load(_decode_document_bytes(payload).decode("utf-8", errors="replace"))
+        project = db.get_project_by_id(project_id, tenant_id) or {}
+    except Exception as exc:  # noqa: BLE001 - declarations must not fail a finished import
+        logger.info("declared dependencies skipped project_id=%s: %s", project_id, f"{type(exc).__name__}"[:100])
+        return
+    if not isinstance(document, dict) or not project:
+        return
+    record_spec_dependencies(
+        tenant_id, "project" if project.get("publishable") else "catalog_item", project_id, document
+    )
 
 
 def _current_correlation_id(job_id: str) -> str:

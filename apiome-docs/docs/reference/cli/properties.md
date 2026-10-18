@@ -1,7 +1,7 @@
 ---
 title: "apiome properties"
 description: "List, show, fetch, create, update, delete and copy project properties."
-sidebar_position: 24
+sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

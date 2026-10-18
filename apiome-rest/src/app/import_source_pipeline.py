@@ -1282,6 +1282,9 @@ def persist_adapter_import(
     _record_spec_owner_suggestions(
         tenant_id, str(project_id), bool(routing.publishable), getattr(model, "raw", None)
     )
+    _record_spec_dependencies(
+        tenant_id, str(project_id), bool(routing.publishable), getattr(model, "raw", None)
+    )
 
     return SpecImportJobResult(
         project_id=project_id,
@@ -1325,6 +1328,26 @@ def _record_spec_owner_suggestions(
             project_id,
             f"{type(exc).__name__}: {exc}"[:300],
         )
+
+
+def _record_spec_dependencies(
+    tenant_id: str, project_id: str, publishable: bool, document: Any
+) -> None:
+    """Store the document's ``x-apiome-depends-on`` list as its ``spec`` declarations (CDG-3.2, #5967).
+
+    The set replaces the previous import's; references naming nothing are kept as unresolved.
+    :func:`app.declared_dependency_store.record_spec_dependencies` never raises, so the import is
+    never failed by it.
+
+    Args:
+        tenant_id: The importing tenant.
+        project_id: The project or catalog item the import wrote.
+        publishable: Whether that row is a project (``True``) or a catalog item.
+        document: The parsed source document (``model.raw``).
+    """
+    from .declared_dependency_store import record_spec_dependencies
+
+    record_spec_dependencies(tenant_id, "project" if publishable else "catalog_item", project_id, document)
 
 
 def _normalize_import_project_slug(slug: str, name: str) -> str:

@@ -21,6 +21,7 @@ from apiome_cli.commands import (
     doctor,
     export,
     formats,
+    graph,
     health,
     lint,
     mcp,
@@ -94,6 +95,7 @@ app.add_typer(verify.app, name="verify")
 app.add_typer(checks.app, name="checks")
 app.add_typer(connectors.app, name="connectors")
 app.add_typer(teams.app, name="teams")
+app.add_typer(graph.app, name="graph")
 app.command("diff")(diff.diff)
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")

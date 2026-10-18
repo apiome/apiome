@@ -158,7 +158,7 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5964](https://github.com/apiome/apiome/issues/5964) CDG-2.5 Unowned-entity policy and ownership drift
 - [ ] [#5965](https://github.com/apiome/apiome/issues/5965) CDG-EPIC-3 Dependency and supply-chain graph
 - [x] [#5966](https://github.com/apiome/apiome/issues/5966) CDG-3.1 Graph edge store and materializer
-- [ ] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
+- [x] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
 - [ ] [#5968](https://github.com/apiome/apiome/issues/5968) CDG-3.3 Blast-radius query
 - [ ] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
 - [ ] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges

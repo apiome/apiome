@@ -1,7 +1,7 @@
 ---
 title: "apiome lint"
 description: "Score schema quality, list lint findings, and run the CI lint gate."
-sidebar_position: 18
+sidebar_position: 19
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

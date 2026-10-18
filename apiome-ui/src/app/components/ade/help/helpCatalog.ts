@@ -668,7 +668,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'How Apiome records which APIs, consumers and sources depend on each other.',
     page: 'apiome-docs/docs/govern/dependency-graph.mdx',
     section: 'reference',
-    keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships'],
+    keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships', 'depends on', 'backstage'],
   },
   {
     id: 'reviews',

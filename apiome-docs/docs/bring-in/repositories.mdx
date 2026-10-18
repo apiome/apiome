@@ -84,6 +84,22 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 
 <Screenshot id="repository-batch-import" alt="Import 2 selected files: each file's kind, resolution and target project" />
 
+### Backstage files
+
+Each scan also reads any Backstage `catalog-info.yaml` (or `catalog-info.yml`) in the branch, at any
+depth, and turns its relations into [declared dependencies](../govern/dependency-graph.mdx#declare-dependencies)
+of the APIs you imported from that branch:
+
+| Backstage field | Becomes |
+| --- | --- |
+| `spec.consumesApis` | A `consumes` dependency on each API listed |
+| `spec.dependsOn` | A `depends_on` dependency on each entity listed |
+| `spec.providesApis` | Which of the branch's imported APIs the component is. When it names one, the relations attach to that API only; otherwise they attach to every API imported from the branch. |
+
+A Backstage name (`api:default/payments`) matches the project or catalog item with that slug
+(`payments`). A name that matches nothing is still listed, as unresolved. The scan replaces what it
+recorded last time, so deleting the file or a line removes the dependency.
+
 ## Discovered specs
 
 <Route path="/ade/dashboard/repositories/catalog" />

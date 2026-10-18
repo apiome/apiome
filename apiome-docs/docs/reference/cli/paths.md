@@ -1,7 +1,7 @@
 ---
 title: "apiome paths"
 description: "List and inspect OpenAPI path templates for a project version."
-sidebar_position: 22
+sidebar_position: 23
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
