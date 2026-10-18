@@ -615,6 +615,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['apim', 'policy', 'arm template', 'validate-jwt', 'rate limit'],
   },
   {
+    id: 'apigee-proxy-bundle-import',
+    title: 'Import an Apigee proxy bundle',
+    summary: 'Import an Apigee proxy bundle: flows, targets, policies and conditions.',
+    page: 'apiome-docs/docs/bring-in/apigee-proxy-bundle-import.md',
+    section: 'reference',
+    keywords: ['apiproxy', 'flow', 'route rule', 'verifyapikey', 'quota', 'spikearrest'],
+  },
+  {
     id: 'compare-published-versions',
     title: 'Compare published versions',
     summary: 'Diff two published versions from the CLI, for people and CI.',

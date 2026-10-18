@@ -165,7 +165,10 @@ SCOPE_DESCRIPTION = (
     "role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", "
     "\"resourceGroup\": \"…\", \"serviceName\": \"…\", \"authMethod\": \"client-secret\"|\"federated\", "
     "\"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT …/credentials` as "
-    "`{\"clientSecret\": \"…\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+    "`{\"clientSecret\": \"…\"}`). `apigee`: `{\"organization\": \"…\", \"environments\": [\"test\", …]}` "
+    "(environments optional; the service-account key or workload-identity configuration goes in "
+    "`PUT …/credentials` as `{\"credentialJson\": \"…\"}`). Kinds with a source check their scope on every write, "
+    "and some dry-run it."
 )
 
 

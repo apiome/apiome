@@ -1,0 +1,388 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": "Policy coverage bundle.",
+    "extras": {
+      "apigee": {
+        "basePaths": [
+          "/v3/lab"
+        ],
+        "declaredConditions": [
+          {
+            "expression": null,
+            "flow": "Unconditional",
+            "kind": "unconditional-flow",
+            "meaning": "Has no condition, so it runs for every request.",
+            "provenance": "declared",
+            "proxy": "default",
+            "steps": [],
+            "unreduced": []
+          }
+        ],
+        "faultRules": [
+          {
+            "condition": "oauthV2.Verify-OAuth-Token.failed = true",
+            "name": "oauth-failures",
+            "proxy": "default",
+            "steps": [
+              "Fault-Unauthorized"
+            ]
+          },
+          {
+            "default": true,
+            "name": "default-fault",
+            "proxy": "default",
+            "steps": [
+              "Fault-Unauthorized"
+            ]
+          }
+        ],
+        "flowCallouts": [],
+        "mapped": {
+          "OAuthV2": 2,
+          "Quota": 2,
+          "SpikeArrest": 2
+        },
+        "policies": {
+          "Extract-Correlation-Id": "ExtractVariables",
+          "Fault-Unauthorized": "RaiseFault",
+          "JSON-to-XML": "JSONToXML",
+          "Javascript-Merge": "Javascript",
+          "Quota-Per-App": "Quota",
+          "Response-Cache-Lookup": "ResponseCache",
+          "Response-Cache-Store": "ResponseCache",
+          "Service-Callout-Entitlements": "ServiceCallout",
+          "Spike-Arrest": "SpikeArrest",
+          "Validate-Payload": "JSONThreatProtection",
+          "Verify-OAuth-Token": "OAuthV2",
+          "XML-to-JSON": "XMLToJSON"
+        },
+        "provenance": "declared",
+        "proxyEndpoints": [
+          {
+            "basePath": "/v3/lab",
+            "name": "default",
+            "virtualHosts": [
+              "secure"
+            ]
+          }
+        ],
+        "proxyName": "lab-v3",
+        "resources": [
+          "apiproxy/resources/jsc/merge.js"
+        ],
+        "revision": "7",
+        "routeRules": [
+          {
+            "condition": null,
+            "name": "default",
+            "order": 0,
+            "proxy": "default",
+            "target": "default"
+          }
+        ],
+        "shape": "bundle",
+        "sharedFlows": [],
+        "targetEndpoints": [
+          {
+            "loadBalancer": {
+              "algorithm": "RoundRobin",
+              "servers": [
+                "lab-primary",
+                "lab-secondary"
+              ]
+            },
+            "name": "default",
+            "path": "/internal/v3",
+            "properties": {
+              "io.timeout.millis": "45000",
+              "success.codes": "2xx,3xx"
+            },
+            "steps": [
+              "Fault-Unauthorized"
+            ]
+          }
+        ],
+        "unmapped": [
+          {
+            "name": "Extract-Correlation-Id",
+            "policyType": "ExtractVariables",
+            "usedBy": [
+              "flow:Transcode"
+            ],
+            "xml": "<ExtractVariables name=\"Extract-Correlation-Id\">\n    <DisplayName>Extract-Correlation-Id</DisplayName>\n    <Source>request</Source>\n    <Header name=\"X-Correlation-Id\">\n        <Pattern ignoreCase=\"true\">{correlationId}</Pattern>\n    </Header>\n    <VariablePrefix>lab</VariablePrefix>\n</ExtractVariables>"
+          },
+          {
+            "name": "Fault-Unauthorized",
+            "policyType": "RaiseFault",
+            "usedBy": [
+              "target:default"
+            ],
+            "xml": "<RaiseFault name=\"Fault-Unauthorized\">\n    <DisplayName>Fault-Unauthorized</DisplayName>\n    <FaultResponse>\n        <Set>\n            <StatusCode>401</StatusCode>\n            <ReasonPhrase>Unauthorized</ReasonPhrase>\n        </Set>\n    </FaultResponse>\n</RaiseFault>"
+          },
+          {
+            "name": "JSON-to-XML",
+            "policyType": "JSONToXML",
+            "usedBy": [
+              "flow:Transcode"
+            ],
+            "xml": "<JSONToXML name=\"JSON-to-XML\">\n    <DisplayName>JSON-to-XML</DisplayName>\n    <Source>request</Source>\n    <OutputVariable>request</OutputVariable>\n</JSONToXML>"
+          },
+          {
+            "name": "Javascript-Merge",
+            "policyType": "Javascript",
+            "usedBy": [
+              "flow:Callout"
+            ],
+            "xml": "<Javascript name=\"Javascript-Merge\">\n    <DisplayName>Javascript-Merge</DisplayName>\n    <ResourceURL>jsc://merge.js</ResourceURL>\n    <TimeLimit>200</TimeLimit>\n</Javascript>"
+          },
+          {
+            "name": "Response-Cache-Lookup",
+            "policyType": "ResponseCache",
+            "usedBy": [
+              "preflow/postflow"
+            ],
+            "xml": "<ResponseCache name=\"Response-Cache-Lookup\">\n    <DisplayName>Response-Cache-Lookup</DisplayName>\n    <CacheKey><KeyFragment ref=\"proxy.pathsuffix\" /></CacheKey>\n    <ExpirySettings><TimeoutInSeconds>300</TimeoutInSeconds></ExpirySettings>\n    <SkipCacheLookup>request.header.cache-control = \"no-cache\"</SkipCacheLookup>\n</ResponseCache>"
+          },
+          {
+            "name": "Response-Cache-Store",
+            "policyType": "ResponseCache",
+            "usedBy": [
+              "preflow/postflow"
+            ],
+            "xml": "<ResponseCache name=\"Response-Cache-Store\">\n    <DisplayName>Response-Cache-Store</DisplayName>\n    <CacheKey><KeyFragment ref=\"proxy.pathsuffix\" /></CacheKey>\n    <ExpirySettings><TimeoutInSeconds>300</TimeoutInSeconds></ExpirySettings>\n</ResponseCache>"
+          },
+          {
+            "name": "Service-Callout-Entitlements",
+            "policyType": "ServiceCallout",
+            "usedBy": [
+              "flow:Callout"
+            ],
+            "xml": "<ServiceCallout name=\"Service-Callout-Entitlements\">\n    <DisplayName>Service-Callout-Entitlements</DisplayName>\n    <Request variable=\"entitlementRequest\">\n        <Set><Verb>GET</Verb><Path>/check</Path></Set>\n    </Request>\n    <Response>entitlementResponse</Response>\n    <HTTPTargetConnection>\n        <URL>https://entitlements.internal.example.com</URL>\n    </HTTPTargetConnection>\n</ServiceCallout>"
+          },
+          {
+            "name": "Validate-Payload",
+            "policyType": "JSONThreatProtection",
+            "usedBy": [
+              "preflow/postflow"
+            ],
+            "xml": "<JSONThreatProtection name=\"Validate-Payload\">\n    <DisplayName>Validate-Payload</DisplayName>\n    <ArrayElementCount>200</ArrayElementCount>\n    <ContainerDepth>10</ContainerDepth>\n    <ObjectEntryCount>150</ObjectEntryCount>\n    <StringValueLength>4096</StringValueLength>\n</JSONThreatProtection>"
+          },
+          {
+            "name": "XML-to-JSON",
+            "policyType": "XMLToJSON",
+            "usedBy": [
+              "flow:Transcode"
+            ],
+            "xml": "<XMLToJSON name=\"XML-to-JSON\">\n    <DisplayName>XML-to-JSON</DisplayName>\n    <Source>response</Source>\n    <OutputVariable>response</OutputVariable>\n</XMLToJSON>"
+          }
+        ],
+        "unresolvedSteps": {}
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "lab-v3",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Apigee target endpoint default, load-balanced across lab-primary, lab-secondary.",
+        "extras": {},
+        "name": "default",
+        "protocol": null,
+        "url": "https://{server}/internal/v3",
+        "variables": [
+          {
+            "default": "lab-primary",
+            "description": null,
+            "enum": [
+              "lab-primary",
+              "lab-secondary"
+            ],
+            "extras": {},
+            "name": "server"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": "Policy coverage: security, traffic management, mediation and extension.",
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/legacy/**\") and (request.verb = \"POST\")",
+                "flow": "Transcode",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "condition": "request.verb != \"OPTIONS\"",
+                  "identifier": "client.ip",
+                  "kind": "spike-arrest",
+                  "policy": "Spike-Arrest",
+                  "policyType": "SpikeArrest",
+                  "provenance": "declared",
+                  "rate": "60ps"
+                },
+                {
+                  "calls": 250000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "month"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "lab.read",
+                    "lab.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/v3/lab/legacy/{path}",
+            "key": "POST /v3/lab/legacy/{path}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Transcode",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Any number of path segments (Apigee `**`).",
+                "extras": {},
+                "key": "POST /v3/lab/legacy/{path}#path.path",
+                "location": "path",
+                "name": "path",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "proxy.pathsuffix MatchesPath \"/enriched\"",
+                "flow": "Callout",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "condition": "request.verb != \"OPTIONS\"",
+                  "identifier": "client.ip",
+                  "kind": "spike-arrest",
+                  "policy": "Spike-Arrest",
+                  "policyType": "SpikeArrest",
+                  "provenance": "declared",
+                  "rate": "60ps"
+                },
+                {
+                  "calls": 250000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "month"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "lab.read",
+                    "lab.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/lab/enriched",
+            "key": "ANY /v3/lab/enriched",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Callout",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Lab v3",
+    "types": [],
+    "version": "7"
+  },
+  "corpus_path": "apigee/04-stress-policy-coverage-bundle.zip",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:1ac7de63c26c3725d92c0a01af9017b84694e525216c45ef43fdcf0a0ad037e0",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "ca505ecb4bd1057034c7a970dcf0ae38726f6c8e0c8abad7c149dd5a604ef283",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

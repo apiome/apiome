@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.228.0",
+    "version": "1.230.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -98828,7 +98828,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "completed_at": {
             "anyOf": [
@@ -100752,7 +100752,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "comment_count": {
             "type": "integer",
@@ -100980,7 +100980,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "comment_count": {
             "type": "integer",
@@ -101511,14 +101511,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -102412,7 +102412,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -103241,7 +103241,7 @@
               }
             ],
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -104477,7 +104477,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "2338402d-8359-498b-92c2-978810384581"
+            "example": "21e2d08a-f4b1-4fd3-b661-c12051e643ee"
           },
           "method": {
             "type": "string",
@@ -107004,7 +107004,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -108740,7 +108740,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "browse_url": {
             "anyOf": [
@@ -148907,7 +148907,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           }
         },
         "additionalProperties": false,
@@ -161052,7 +161052,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "detected_by": {
             "anyOf": [
@@ -168269,14 +168269,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T16:12:47Z"
+            "example": "2026-10-18T17:07:32Z"
           },
           "outcome": {
             "anyOf": [

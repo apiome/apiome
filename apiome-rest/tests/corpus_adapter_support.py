@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 
 from corpus_loader import CorpusEntry, FilesetRole, ValidityClass, load_corpus
 
+from app.apigee_import_source import APIGEE_BUNDLE_SUFFIXES
 from app.arrow_parser import ARROW_IPC_SUFFIXES
 from app.fileset import IntakeFileset
 from app.import_source import (
@@ -147,9 +148,9 @@ def valid_entries() -> List[CorpusEntry]:
 
 #: Every corpus suffix that names a *binary* artifact rather than source text. One tuple,
 #: contributed by each adapter that has a binary form (IXH-7.5's protobuf descriptor sets,
-#: FMT-4.5's Arrow IPC payloads), so a new binary format is added in its own module rather
-#: than respelled here.
-BINARY_ENTRY_SUFFIXES: tuple[str, ...] = DESCRIPTOR_SET_SUFFIXES + ARROW_IPC_SUFFIXES
+#: FMT-4.5's Arrow IPC payloads, FMT-7.3's Apigee proxy bundle zips), so a new binary format is
+#: added in its own module rather than respelled here.
+BINARY_ENTRY_SUFFIXES: tuple[str, ...] = DESCRIPTOR_SET_SUFFIXES + ARROW_IPC_SUFFIXES + APIGEE_BUNDLE_SUFFIXES
 
 
 def is_binary_entry(entry: CorpusEntry) -> bool:

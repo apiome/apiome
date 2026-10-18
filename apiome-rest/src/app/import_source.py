@@ -1215,6 +1215,10 @@ def load_builtin_import_sources() -> None:
     # ARM templates of APIM resources, and APIM-exported definitions with their policies.
     from . import azure_apim_import_source as _azure_apim  # noqa: F401
 
+    # ``apigee_import_source`` (FMT-7.3) self-registers the ``apigee`` adapter: proxy bundle zips
+    # (``apiproxy/`` XML) and loose ProxyEndpoint / TargetEndpoint files.
+    from . import apigee_import_source as _apigee  # noqa: F401
+
 
 # ===========================================================================
 # Shared canonical fingerprint + diff

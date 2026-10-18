@@ -111,7 +111,7 @@ def test_each_route_enforces_its_imports_permission(store, audits, method, suffi
 
 
 def test_sync_enforces_imports_edit(store, audits):
-    existing = store.add_connector(_TENANT, kind="apigee")
+    existing = store.add_connector(_TENANT, kind="mcp-registry")
     with patch("app.catalog_connector_routes.enforce_permission", return_value=_ACTOR) as guard:
         client.post(f"{_BASE}/{existing['id']}/sync")
     assert guard.call_args.args[2:] == (Resource.IMPORTS, Action.EDIT)
@@ -148,21 +148,28 @@ def test_create_returns_the_connector_without_credentials(store, audits):
     assert created["hasCredentials"] is False and created["refreshIntervalSeconds"] == 900
     assert created["syncable"] is True  # the Kong sources ship with CDG-1.2
     assert audits[-1]["action"] == AUDIT_CREATE
-    assert _create(kind="apigee", name="Apigee", scope={})["syncable"] is False
+    assert _create(kind="mcp-registry", name="Registry", scope={})["syncable"] is False
 
 
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
-    _create(kind="apigee", name="Apigee", scope={})
+    _create(kind="mcp-registry", name="Registry", scope={})
     body = client.get(_BASE).json()
     assert len(body["kinds"]) == 8
-    assert body["syncableKinds"] == ["aws-apigateway", "azure-apim", "kong-admin", "kong-konnect"]
+    assert body["syncableKinds"] == ["apigee", "aws-apigateway", "azure-apim", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is False
-    register_connector_source("apigee", ConnectorRefreshSource)
+    register_connector_source("mcp-registry", ConnectorRefreshSource)
     try:
         body = client.get(_BASE).json()
     finally:
-        unregister_connector_source("apigee")
-    assert body["syncableKinds"] == ["apigee", "aws-apigateway", "azure-apim", "kong-admin", "kong-konnect"]
+        unregister_connector_source("mcp-registry")
+    assert body["syncableKinds"] == [
+        "apigee",
+        "aws-apigateway",
+        "azure-apim",
+        "kong-admin",
+        "kong-konnect",
+        "mcp-registry",
+    ]
     assert body["connectors"][0]["syncable"] is True
 
 
@@ -348,7 +355,7 @@ def test_a_failed_sync_is_a_200_carrying_the_provider_failure(store, audits, sou
 
 
 def test_sync_of_a_kind_without_a_source_is_a_409(store, audits):
-    created = _create(kind="apigee")
+    created = _create(kind="mcp-registry")
     response = client.post(f"{_BASE}/{created['id']}/sync")
     assert response.status_code == 409 and response.json()["detail"]["code"] == "connector-kind-unsupported"
 

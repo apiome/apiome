@@ -17,17 +17,17 @@ from corpus_adapter_support import (
     KNOWN_DETECTION_BUGS,
     KNOWN_IMPORT_BUGS,
     adapter_for,
-    build_fileset,
+    detection_input_for,
     missing_tools,
+    parse_native,
     valid_entries,
 )
-from corpus_loader import CorpusEntry, FilesetRole, Rung
+from corpus_loader import CorpusEntry, Rung
 from roundtrip_xfails import KNOWN_ROUNDTRIP_XFAILS as _GENERATED_XFAILS
 
 from app.canonical_model import CanonicalApi
 from app.emitter import EmitterTarget, load_builtin_emitters
 from app.import_source import (
-    DetectionInput,
     ImportSourceError,
     load_builtin_import_sources,
 )
@@ -130,12 +130,9 @@ def representatives_by_format(
 def _import_entry(entry: CorpusEntry) -> CanonicalApi:
     """Import one corpus entry to a canonical model (detect → parse → normalize)."""
     source = adapter_for(entry)
-    filename = Path(entry.path).name
-    source.detect(DetectionInput(text=entry.read_text(), filename=filename))
-    if entry.fileset_role is FilesetRole.ROOT:
-        native = source.parse_fileset(build_fileset(entry), source_label=entry.path)
-    else:
-        native = source.parse(entry.read_text(), source_label=entry.path)
+    # The shared helpers read a binary entry (an Apigee bundle zip, FMT-7.3) as bytes.
+    source.detect(detection_input_for(entry))
+    native = parse_native(source, entry)
     return source.normalize(native, include_raw=False)
 
 

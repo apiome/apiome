@@ -15,7 +15,8 @@ one quota, one audit trail.
 :::note
 Connectors are registered through the REST API for now; there is no screen to manage them yet. **Govern → [Shadow APIs](../govern/shadow-apis.mdx)** shows what they found that the catalog does not describe. Each kind needs
 a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway) and
-[Azure API Management](#azure-api-management) sync today; the other gateway and URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
+[Azure API Management](#azure-api-management) and [Apigee](#apigee) sync today; the URL and registry sources
+follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
 `GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
 :::
 
@@ -74,6 +75,9 @@ role in your account instead. Sending it one is refused with `connector-credenti
 
 An [Azure API Management](#azure-api-management) connector stores its application's client secret as
 `{"credentials": {"clientSecret": "…"}}`, or nothing at all when it uses a federated credential.
+
+An [Apigee](#apigee) connector stores a Google service-account key, or a workload identity federation
+configuration, as `{"credentials": {"credentialJson": "…"}}`.
 
 ## Base URLs and private networks
 
@@ -389,6 +393,73 @@ access to the instance.
   `errorClass: "auth"`, and its message carries Entra ID's error code. For example, an expired client
   secret gives `AADSTS7000222`. If Azure Resource Manager refuses a call, the message names its code,
   such as `AuthorizationFailed` when the role assignment is missing.
+
+## Apigee
+
+The `apigee` kind reads the API proxies of one Apigee X or hybrid organization. **Each proxy becomes
+one catalog item.** Each environment it is deployed to is its own inventory row, with the deployed
+revision, and every revision deployed somewhere is a revision of the item. Each revision's bundle is
+imported exactly as an [uploaded bundle](./apigee-proxy-bundle-import.md) would be.
+
+### Give Apiome read access
+
+1. **Choose the identity.** Either:
+   - create a **service account** and a JSON key for it (**IAM & Admin** → **Service accounts** →
+     **Keys** → **Add key**), or
+   - create a **workload identity federation** credential configuration for your Apiome deployment's
+     external identity (`gcloud iam workload-identity-pools create-cred-config …`). No key is stored.
+2. **Grant the role.** Give the identity **Apigee Read-only Admin** (`roles/apigee.readOnlyAdmin`)
+   on the Google Cloud project of the Apigee organization:
+
+   ```bash
+   gcloud projects add-iam-policy-binding acme-prod \
+     --member "serviceAccount:apiome-catalog@acme-prod.iam.gserviceaccount.com" \
+     --role roles/apigee.readOnlyAdmin
+   ```
+
+Apiome asks for an access token with the `https://www.googleapis.com/auth/cloud-platform` scope.
+
+| What a sync calls | Why |
+| --- | --- |
+| `GET …/organizations/{org}/apis` | The API proxies |
+| `GET …/organizations/{org}/environments` | The environments, when the scope names none |
+| `GET …/environments/{env}/deployments` | Which revision each proxy runs in each environment |
+| `GET …/apis/{api}/revisions` | The latest revision of a proxy deployed nowhere |
+| `GET …/apis/{api}/revisions/{rev}?format=bundle` | The bundle of a deployed revision |
+
+### Register the connector
+
+1. **Create it** with the organization and, optionally, the environments to read. There is no base
+   URL:
+
+   ```json
+   {
+     "kind": "apigee",
+     "name": "Apigee production",
+     "scope": { "organization": "acme-prod", "environments": ["test", "prod"] }
+   }
+   ```
+
+   Leave out `environments` to read every environment of the organization.
+2. **Store the credential:** `PUT …/connectors/{id}/credentials` with
+   `{"credentials": {"credentialJson": "<the key or configuration file's JSON>"}}`.
+3. **Sync it:** `POST …/connectors/{id}/sync`.
+
+### What an Apigee sync records
+
+- **One item per proxy, one row per environment.** A proxy deployed to `test` at revision 5 and to
+  `prod` at revision 3 is one catalog item with two inventory rows, environments `test` and `prod`, and
+  revisions 5 and 3. A revision both environments run is imported once.
+- **Undeployed proxies are recorded, not imported.** A proxy deployed nowhere appears as
+  **discovered**, with its latest revision.
+- **Unchanged deployments are skipped.** A row whose deployed revision has not changed is not
+  downloaded again; the run lists it under `summary.unchangedItems`.
+- **Declared conditions come with the bundle.** A route rule with no target endpoint, or a flow
+  condition that is not a path and verb, is recorded on the item as a declared condition.
+- **Failures name the cause.** A refused credential gives `errorClass: "auth"` with Google's error
+  (`invalid_grant` …). A missing IAM permission is named, for example
+  `Missing permission apigee.deployments.list`. A token without the `cloud-platform` scope says so
+  (`ACCESS_TOKEN_SCOPE_INSUFFICIENT`).
 
 ## Quota and audit
 

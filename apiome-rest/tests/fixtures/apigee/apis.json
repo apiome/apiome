@@ -1,0 +1,13 @@
+{
+  "proxies": [
+    {
+      "name": "orders-v2"
+    },
+    {
+      "name": "store-v1"
+    },
+    {
+      "name": "legacy-billing"
+    }
+  ]
+}

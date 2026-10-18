@@ -291,6 +291,25 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="3.1.0",
     ),
+    "apigee": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Apigee X / hybrid proxy bundle (apiproxy/ zip)",
+                format_key="apigee",
+                support=VersionSupport.FULL,
+                note="The bundle Apigee's `?format=bundle` revision download returns: an APIProxy manifest, "
+                "proxy and target endpoints and one file per policy. Apigee Edge bundles share the layout.",
+            ),
+            FormatVersion(
+                version="Loose ProxyEndpoint / TargetEndpoint / SharedFlow XML",
+                format_key="apigee",
+                support=VersionSupport.FULL,
+                note="One endpoint file, or a fileset of them; target references are not checked, since the "
+                "targets live outside the file.",
+            ),
+        ],
+        writes=[],
+    ),
     "aws-apigateway": VersionCoverage(
         reads=[
             FormatVersion(

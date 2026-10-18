@@ -1,0 +1,18 @@
+---
+slug: apigee-proxy-bundle-import
+title: Import Apigee proxy bundles
+description: Apigee proxy bundles import with their flows, targets, policies and conditions.
+authors: [apiome]
+---
+
+You can now [import an Apigee proxy bundle](/bring-in/apigee-proxy-bundle-import): the `apiproxy/`
+zip Apigee downloads for a proxy revision, or a single proxy or target endpoint file.
+
+{/* truncate */}
+
+- **Flows become operations, targets become servers.** Base paths and `MatchesPath` patterns turn
+  into routes; load-balanced targets keep their servers.
+- **Policies become metadata.** API keys, OAuth, spike arrests, quotas and CORS are recorded on each
+  operation, with the condition a step runs under.
+- **Conditions are kept.** A condition that is not a path and a verb, a flow with no condition and a
+  route rule with no target are recorded as declared conditions, never dropped.

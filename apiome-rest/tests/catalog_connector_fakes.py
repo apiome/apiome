@@ -320,6 +320,7 @@ class FakeDb:
 
 def restore_builtin_sources() -> None:
     """Re-register the sources the app ships (tests that swap in a fake source call this after)."""
+    from app import apigee_connector_source as apigee
     from app import aws_apigateway_connector_source as aws
     from app import azure_apim_connector_source as azure
     from app import kong_connector_source as kong
@@ -334,5 +335,6 @@ def restore_builtin_sources() -> None:
     )
 
     register_connector_source(azure.KIND, azure.AzureApimSource, scope_validator=azure.validate_azure_scope)
+    register_connector_source(apigee.KIND, apigee.ApigeeSource, scope_validator=apigee.validate_apigee_scope)
     register_connector_source(kong.KIND_KONNECT, kong.KongKonnectSource, scope_validator=kong.validate_konnect_scope)
     register_connector_source(kong.KIND_ADMIN, kong.KongAdminSource, scope_validator=kong.validate_admin_scope)

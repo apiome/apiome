@@ -58,6 +58,8 @@ _ROOT_CANDIDATE_SUFFIXES: Tuple[str, ...] = (
     ".asyncapi.yaml",
     ".asyncapi.yml",
     ".asyncapi.json",
+    # FMT-7.3: an Apigee proxy bundle is all XML (`apiproxy/<name>.xml` is its manifest).
+    ".xml",
 )
 
 

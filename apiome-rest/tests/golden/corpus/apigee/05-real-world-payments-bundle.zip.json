@@ -1,0 +1,420 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": "Public payments edge proxy.",
+    "extras": {
+      "apigee": {
+        "basePaths": [
+          "/v3/payments"
+        ],
+        "declaredConditions": [
+          {
+            "expression": "request.header.x-environment = \"sandbox\"",
+            "kind": "route-condition",
+            "meaning": "Routes to target endpoint 'sandbox' on a condition that is not a path and verb.",
+            "provenance": "declared",
+            "proxy": "default",
+            "routeRule": "sandbox",
+            "target": "sandbox",
+            "unreduced": [
+              "request.header.x-environment = \"sandbox\""
+            ]
+          }
+        ],
+        "faultRules": [
+          {
+            "condition": "ratelimit.Quota-Per-App.failed = true",
+            "name": "quota-exceeded",
+            "proxy": "default",
+            "steps": [
+              "Fault-Rate-Limited"
+            ]
+          }
+        ],
+        "flowCallouts": [],
+        "mapped": {
+          "OAuthV2": 4,
+          "Quota": 4
+        },
+        "policies": {
+          "Fault-Rate-Limited": "RaiseFault",
+          "Quota-Per-App": "Quota",
+          "Require-Idempotency-Key": "RaiseFault",
+          "Strip-Internal-Headers": "AssignMessage",
+          "Verify-OAuth-Token": "OAuthV2",
+          "Verify-Webhook-Signature": "HMAC"
+        },
+        "provenance": "declared",
+        "proxyEndpoints": [
+          {
+            "basePath": "/v3/payments",
+            "name": "default",
+            "virtualHosts": [
+              "secure"
+            ]
+          }
+        ],
+        "proxyName": "payments-v3",
+        "resources": [],
+        "revision": "7",
+        "routeRules": [
+          {
+            "condition": "request.header.x-environment = \"sandbox\"",
+            "name": "sandbox",
+            "order": 0,
+            "proxy": "default",
+            "target": "sandbox",
+            "unreduced": [
+              "request.header.x-environment = \"sandbox\""
+            ]
+          },
+          {
+            "condition": null,
+            "name": "default",
+            "order": 1,
+            "proxy": "default",
+            "target": "production"
+          }
+        ],
+        "shape": "bundle",
+        "sharedFlows": [],
+        "targetEndpoints": [
+          {
+            "name": "production",
+            "ssl": {
+              "clientAuth": true,
+              "enabled": true
+            },
+            "url": "https://payments-core.internal.example.com/v3"
+          },
+          {
+            "name": "sandbox",
+            "url": "https://payments-sandbox.internal.example.com/v3"
+          }
+        ],
+        "unmapped": [
+          {
+            "name": "Require-Idempotency-Key",
+            "policyType": "RaiseFault",
+            "usedBy": [
+              "preflow/postflow"
+            ],
+            "xml": "<RaiseFault name=\"Require-Idempotency-Key\">\n    <DisplayName>Require-Idempotency-Key</DisplayName>\n    <FaultResponse>\n        <Set>\n            <StatusCode>400</StatusCode>\n            <Payload contentType=\"application/json\">{\"message\":\"Idempotency-Key required\"}</Payload>\n        </Set>\n    </FaultResponse>\n    <Condition>request.header.idempotency-key = null</Condition>\n</RaiseFault>"
+          },
+          {
+            "name": "Strip-Internal-Headers",
+            "policyType": "AssignMessage",
+            "usedBy": [
+              "preflow/postflow"
+            ],
+            "xml": "<AssignMessage name=\"Strip-Internal-Headers\">\n    <DisplayName>Strip-Internal-Headers</DisplayName>\n    <Remove>\n        <Headers>\n            <Header name=\"X-Backend\" />\n            <Header name=\"Server\" />\n        </Headers>\n    </Remove>\n    <AssignTo createNew=\"false\" type=\"response\" />\n</AssignMessage>"
+          },
+          {
+            "name": "Verify-Webhook-Signature",
+            "policyType": "HMAC",
+            "usedBy": [
+              "flow:Webhooks"
+            ],
+            "xml": "<HMAC name=\"Verify-Webhook-Signature\">\n    <DisplayName>Verify-Webhook-Signature</DisplayName>\n    <Algorithm>SHA-256</Algorithm>\n    <Message ref=\"request.content\" />\n    <SecretKey ref=\"private.webhook.secret\" />\n    <VerificationValue ref=\"request.header.x-signature\" />\n</HMAC>"
+          }
+        ],
+        "unresolvedSteps": {}
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "payments-v3",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Apigee target endpoint production.",
+        "extras": {},
+        "name": "production",
+        "protocol": null,
+        "url": "https://payments-core.internal.example.com/v3",
+        "variables": []
+      },
+      {
+        "description": "Apigee target endpoint sandbox.",
+        "extras": {},
+        "name": "sandbox",
+        "protocol": null,
+        "url": "https://payments-sandbox.internal.example.com/v3",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Public payments edge: OAuth, quota, mTLS to the payments core.",
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Authorize a payment",
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/authorizations\") and (request.verb = \"POST\")",
+                "flow": "Authorize",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "calls": 5000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "minute"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "payments.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/v3/payments/authorizations",
+            "key": "POST /v3/payments/authorizations",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Authorize",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Read an authorization",
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/authorizations/*\") and (request.verb = \"GET\")",
+                "flow": "GetAuthorization",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "calls": 5000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "minute"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "payments.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/v3/payments/authorizations/{segment1}",
+            "key": "GET /v3/payments/authorizations/{segment1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GetAuthorization",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /v3/payments/authorizations/{segment1}#path.segment1",
+                "location": "path",
+                "name": "segment1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Capture an authorization",
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/authorizations/*/captures\") and (request.verb = \"POST\")",
+                "flow": "Capture",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "calls": 5000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "minute"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "payments.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/v3/payments/authorizations/{segment1}/captures",
+            "key": "POST /v3/payments/authorizations/{segment1}/captures",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Capture",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "POST /v3/payments/authorizations/{segment1}/captures#path.segment1",
+                "location": "path",
+                "name": "segment1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Network webhook receiver",
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/webhooks\") and (request.verb = \"POST\")",
+                "flow": "Webhooks",
+                "proxyEndpoint": "default"
+              },
+              "rate_limits": [
+                {
+                  "calls": 5000,
+                  "distributed": true,
+                  "identifier": "developer.app.name",
+                  "interval": "1",
+                  "kind": "quota",
+                  "policy": "Quota-Per-App",
+                  "policyType": "Quota",
+                  "provenance": "declared",
+                  "timeUnit": "minute"
+                }
+              ],
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-OAuth-Token",
+                  "parameterName": "Authorization",
+                  "policy": "Verify-OAuth-Token",
+                  "policyType": "OAuthV2",
+                  "provenance": "declared",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "payments.write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/v3/payments/webhooks",
+            "key": "POST /v3/payments/webhooks",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Webhooks",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Payments v3",
+    "types": [],
+    "version": "7"
+  },
+  "corpus_path": "apigee/05-real-world-payments-bundle.zip",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:a4ca2f8d877bd7d1bfe7bdc8b6b810e79174cb953febb264c70c113e493637fb",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

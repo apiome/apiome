@@ -21,7 +21,7 @@ The corpus holds **1421 files** across **103 format directories**. Every file ha
 | Directory | Format | Paradigm | Marker / shape | Files |
 | --- | --- | --- | --- | --- |
 | `api-blueprint/` | API Blueprint | rest | `FORMAT: 1A` metadata line | 11 |
-| `apigee/` | Apigee proxy bundle (pending #5457) | rest | zip with `apiproxy/` members and an `APIProxy` manifest, or a `ProxyEndpoint`/`TargetEndpoint` root | 15 |
+| `apigee/` | Apigee proxy bundle | rest | zip with `apiproxy/` members and an `APIProxy` manifest, or a `ProxyEndpoint`/`TargetEndpoint` root | 15 |
 | `arazzo/` | Arazzo workflows | rest | top-level `arazzo:` version | 11 |
 | `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
 | `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
@@ -178,25 +178,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-protobuf.proto` | — | `api-blueprint` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf` |
 | `negative/05-encoding-utf16.apib` | — | `api-blueprint` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 
-### `apigee/` — Apigee proxy bundle (pending #5457)
+### `apigee/` — Apigee proxy bundle
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-proxy-endpoint.xml` | minimal | `apigee` ≥ 0.9 | valid | `proxy-endpoint`, `base-path`, `route-rule`, `flow-condition`, `pending-adapter` |
-| `02-typical-proxy-bundle.zip` | typical | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `flows`, `VerifyAPIKey`, `SpikeArrest`, `Quota`, `cors`, `pending-adapter` |
-| `03-composition-multi-target-bundle.zip` | composition | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `multi-target`, `ordered-route-rules`, `conditioned-route`, `no-route-rule`, `pending-adapter` |
-| `04-stress-policy-coverage-bundle.zip` | stress | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `OAuthV2`, `JSONThreatProtection`, `ServiceCallout`, `Javascript`, `ResponseCache`, `FaultRules`, `load-balancer`, `unconditional-flow`, `script-resource`, `pending-adapter` |
-| `05-real-world-payments-bundle.zip` | real-world | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `oauth-scopes`, `quota`, `hmac`, `idempotency`, `environment-routing`, `mtls`, `pending-adapter` |
-| `06-typical-target-endpoint.xml` | typical | `apigee` ≥ 0.9 | valid | `target-endpoint`, `load-balancer`, `ssl-info`, `timeouts`, `success-codes`, `pending-adapter` |
-| `07-shared-flow-set/flow-callout.xml` ⚠ | multi-file (member) | `apigee` (no guarantee) | valid | `flow-callout-policy`, `shared-flow-bundle`, `parameters`, `pending-adapter` |
-| `07-shared-flow-set/proxy-endpoint.xml` | multi-file (root) | `apigee` ≥ 0.9 | valid | `flow-callout`, `delegated-security`, `pending-adapter` |
-| `07-shared-flow-set/shared-flow.xml` ⚠ | multi-file (member) | `apigee` (no guarantee) | valid | `shared-flow`, `oauth`, `quota`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-flow.xml` | — | `apigee` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-proxy-endpoint.zip` | — | `apigee` (no guarantee) | invalid | `negative`, `semantic`, `no-proxy-endpoint`, `bundle`, `pending-adapter` |
-| `negative/03-truncated-bundle.zip` ⚠ | — | `apigee` (no guarantee) | invalid | `negative`, `truncated`, `truncated-archive`, `pending-adapter` |
-| `negative/04-wrong-format-gateway-api.yaml` | — | `apigee` (no guarantee) | invalid | `negative`, `wrong-format`, `gateway-api`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `apigee` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-target-endpoint.zip` ⚠ | — | `apigee` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-target-endpoint`, `bundle`, `pending-adapter` |
+| `01-minimal-proxy-endpoint.xml` | minimal | `apigee` ≥ 0.9 | valid | `proxy-endpoint`, `base-path`, `route-rule`, `flow-condition` |
+| `02-typical-proxy-bundle.zip` | typical | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `flows`, `VerifyAPIKey`, `SpikeArrest`, `Quota`, `cors` |
+| `03-composition-multi-target-bundle.zip` | composition | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `multi-target`, `ordered-route-rules`, `conditioned-route`, `no-route-rule` |
+| `04-stress-policy-coverage-bundle.zip` | stress | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `OAuthV2`, `JSONThreatProtection`, `ServiceCallout`, `Javascript`, `ResponseCache`, `FaultRules`, `load-balancer`, `unconditional-flow`, `script-resource` |
+| `05-real-world-payments-bundle.zip` | real-world | `apigee` ≥ 0.9 | valid | `bundle`, `archive-intake`, `oauth-scopes`, `quota`, `hmac`, `idempotency`, `environment-routing`, `mtls` |
+| `06-typical-target-endpoint.xml` | typical | `apigee` ≥ 0.9 | valid | `target-endpoint`, `load-balancer`, `ssl-info`, `timeouts`, `success-codes` |
+| `07-shared-flow-set/flow-callout.xml` ⚠ | multi-file (member) | `apigee` (no guarantee) | valid | `flow-callout-policy`, `shared-flow-bundle`, `parameters` |
+| `07-shared-flow-set/proxy-endpoint.xml` | multi-file (root) | `apigee` ≥ 0.9 | valid | `flow-callout`, `delegated-security` |
+| `07-shared-flow-set/shared-flow.xml` ⚠ | multi-file (member) | `apigee` (no guarantee) | valid | `shared-flow`, `oauth`, `quota` |
+| `negative/01-syntactic-unclosed-flow.xml` | — | `apigee` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-proxy-endpoint.zip` | — | `apigee` (no guarantee) | invalid | `negative`, `semantic`, `no-proxy-endpoint`, `bundle` |
+| `negative/03-truncated-bundle.zip` ⚠ | — | `apigee` (no guarantee) | invalid | `negative`, `truncated`, `truncated-archive` |
+| `negative/04-wrong-format-gateway-api.yaml` | — | `apigee` (no guarantee) | invalid | `negative`, `wrong-format`, `gateway-api` |
+| `negative/05-encoding-utf16.xml` | — | `apigee` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-target-endpoint.zip` ⚠ | — | `apigee` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-target-endpoint`, `bundle` |
 
 > ⚠ **`07-shared-flow-set/flow-callout.xml`** — Fileset member: the FlowCallout policy that binds the proxy step to the shared flow bundle.
 

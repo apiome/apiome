@@ -1,0 +1,116 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "apigee": {
+        "basePaths": [],
+        "declaredConditions": [],
+        "faultRules": [],
+        "flowCallouts": [],
+        "mapped": {},
+        "policies": {},
+        "provenance": "declared",
+        "proxyEndpoints": [],
+        "proxyName": "production",
+        "resources": [],
+        "revision": null,
+        "routeRules": [],
+        "shape": "files",
+        "sharedFlows": [],
+        "targetEndpoints": [
+          {
+            "loadBalancer": {
+              "algorithm": "RoundRobin",
+              "servers": [
+                "orders-primary",
+                "orders-secondary"
+              ]
+            },
+            "name": "production",
+            "path": "/v2",
+            "properties": {
+              "connect.timeout.millis": "5000",
+              "io.timeout.millis": "30000",
+              "success.codes": "2xx,404"
+            },
+            "ssl": {
+              "clientAuth": true,
+              "enabled": true
+            },
+            "steps": [
+              "Add-Backend-Auth"
+            ]
+          }
+        ],
+        "unmapped": [],
+        "unresolvedSteps": {
+          "Add-Backend-Auth": [
+            "target:production"
+          ]
+        }
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "production",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Apigee target endpoint production, load-balanced across orders-primary, orders-secondary.",
+        "extras": {},
+        "name": "production",
+        "protocol": null,
+        "url": "https://{server}/v2",
+        "variables": [
+          {
+            "default": "orders-primary",
+            "description": null,
+            "enum": [
+              "orders-primary",
+              "orders-secondary"
+            ],
+            "extras": {},
+            "name": "server"
+          }
+        ]
+      }
+    ],
+    "services": [],
+    "title": "production",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "apigee/06-typical-target-endpoint.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 1,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:0ddf7ba65256fd4b229564e7f05cb1828249c502a3e3220e7c3ed7377743a912",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "06ca4c97d470937cb8d6b4e0b2829b4a4874d563f8c1a926db69fa941223573d",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
