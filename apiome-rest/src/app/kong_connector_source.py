@@ -65,7 +65,7 @@ import httpx
 import yaml
 
 from .catalog_connector_sync import ConnectorRefreshSource, register_connector_source
-from .catalog_connectors import CODE_INVALID, ConnectorError, build_connector_http_client
+from .catalog_connectors import CODE_INVALID, ConnectorError, build_connector_http_client, suggested_owner
 from .gateway_config_model import redact_secret_config
 from .kong_parser import ROUTE_EXTRA_KEYS, SERVICE_EXTRA_KEYS
 from .refresh_source import ERROR_CLASS_UNEXPECTED, FetchedDocument, RefreshCandidate, RefreshSourceError
@@ -119,10 +119,6 @@ FINDING_CONSUMERS = "consumers-not-imported"
 
 #: Tag prefix that names a suggested owner team.
 OWNER_TAG_PREFIX = "owner:"
-#: Suggested-owner source (the CDG-2.2 ``entity_owners.source`` value).
-OWNER_SOURCE_GATEWAY_TAG = "gateway_tag"
-
-_TEAM_SLUG = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 _CONTROL_PLANE_ID_MAX = 128
 _ERROR_DETAIL_MAX = 300
 _COLLECTIONS = ("services", "routes", "plugins", "consumers")
@@ -311,14 +307,14 @@ def owner_suggestions(tags: Sequence[Any]) -> Tuple[List[Dict[str, str]], List[s
     for tag in tags or []:
         if not isinstance(tag, str) or not tag.lower().startswith(OWNER_TAG_PREFIX):
             continue
-        slug = tag[len(OWNER_TAG_PREFIX):].strip().lower()
-        if not _TEAM_SLUG.fullmatch(slug):
+        suggestion = suggested_owner(tag[len(OWNER_TAG_PREFIX):], tag)
+        if suggestion is None:
             invalid.append(tag)
             continue
-        if slug in seen:
+        if suggestion["team"] in seen:
             continue
-        seen.add(slug)
-        suggestions.append({"team": slug, "source": OWNER_SOURCE_GATEWAY_TAG, "sourceRef": tag})
+        seen.add(suggestion["team"])
+        suggestions.append(suggestion)
     return suggestions, invalid
 
 

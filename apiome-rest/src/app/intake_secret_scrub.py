@@ -279,6 +279,22 @@ def _line_of(text: str, index: int) -> int:
     return text.count("\n", 0, index) + 1
 
 
+#: Unquoted JSON/YAML scalars that can never hold a credential.
+_NON_SECRET_LITERALS = frozenset({"true", "false", "null", "~"})
+
+
+def _is_unquoted_literal(text: str, start: int, end: int, secret_type: str) -> bool:
+    """True when a secret-named key's value is an unquoted boolean/null literal.
+
+    ``allowCredentials: true`` (CORS in an API Gateway export) names a credential but holds a
+    boolean; redacting it turns the boolean into a string and corrupts the document. A quoted
+    ``"true"`` is still a string and is still redacted.
+    """
+    if secret_type != "secret-assignment" or text[start:end].lower() not in _NON_SECRET_LITERALS:
+        return False
+    return start == 0 or text[start - 1] not in "\"'"
+
+
 def _collect_secret_spans(
     text: str, *, entropy_detection: bool
 ) -> List[Tuple[int, int, str]]:
@@ -324,7 +340,7 @@ def _collect_secret_spans(
             # whole match is the secret.
             group = 1 if match.re.groups >= 1 else 0
             start, end = match.span(group)
-            if start >= 0:
+            if start >= 0 and not _is_unquoted_literal(text, start, end, secret_type):
                 _claim(start, end, secret_type)
 
     if entropy_detection:

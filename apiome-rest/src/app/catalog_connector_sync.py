@@ -34,9 +34,10 @@ credential value has the value redacted before it is stored.
 
 **Sources** are registered per kind with :func:`register_connector_source`, optionally with a
 scope validator the routes run on every write (:func:`validate_connector_scope`). The Kong
-sources (``kong-konnect``, ``kong-admin``; CDG-1.2) register themselves from
-:mod:`app.kong_connector_source`, imported at the bottom of this module; the other gateway
-sources are CDG-1.3–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
+sources (``kong-konnect``, ``kong-admin``; CDG-1.2) and the AWS API Gateway source
+(``aws-apigateway``; CDG-1.3) register themselves from :mod:`app.kong_connector_source` and
+:mod:`app.aws_apigateway_connector_source`, imported at the bottom of this module; the other
+gateway sources are CDG-1.4–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
 is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
 
 **Findings.** A source may expose ``findings`` (a list of credential-free dicts with a ``code``)
@@ -96,6 +97,8 @@ __all__ = [
     "source_factory_for",
     "syncable_kinds",
     "unregister_connector_source",
+    "check_connector_connection",
+    "connector_accepts_credentials",
     "validate_connector_scope",
 ]
 
@@ -119,12 +122,26 @@ SourceFactory = Callable[[Mapping[str, Any], Optional[Dict[str, str]]], RefreshS
 #: ``(scope, base_url) -> None``; raises :class:`ConnectorError` (``connector-invalid``).
 ScopeValidator = Callable[[Mapping[str, Any], Optional[str]], None]
 
+#: ``(connector_row) -> None``; a live dry run against the provider. Raises
+#: :class:`ConnectorError` (``connector-check-failed``) naming what is missing.
+ConnectionCheck = Callable[[Mapping[str, Any]], None]
+
+#: At most this many unchanged items are listed, with their reason, on a run's summary.
+UNCHANGED_ITEMS_MAX = 50
+
 _SOURCES: Dict[str, SourceFactory] = {}
 _SCOPE_VALIDATORS: Dict[str, ScopeValidator] = {}
+_CONNECTION_CHECKS: Dict[str, ConnectionCheck] = {}
+_NO_CREDENTIAL_KINDS: set = set()
 
 
 def register_connector_source(
-    kind: str, factory: SourceFactory, *, scope_validator: Optional[ScopeValidator] = None
+    kind: str,
+    factory: SourceFactory,
+    *,
+    scope_validator: Optional[ScopeValidator] = None,
+    connection_check: Optional[ConnectionCheck] = None,
+    accepts_credentials: bool = True,
 ) -> None:
     """Make connectors of ``kind`` syncable with sources built by ``factory``.
 
@@ -133,18 +150,53 @@ def register_connector_source(
         factory: Builds the source for one connector row and its unsealed credentials.
         scope_validator: Checks the kind's ``scope`` (and base URL) when a connector is created
             or updated; ``None`` accepts any scope that passes the generic checks.
+        connection_check: A live dry run the routes run when a connector is created, or its
+            scope changes (CDG-1.3: AWS assumes the role and calls ``GetAccount``); ``None``
+            skips it.
+        accepts_credentials: ``False`` for a kind that must never hold a stored secret (AWS
+            assumes a role instead of storing keys); ``PUT …/credentials`` is then refused.
     """
     _SOURCES[kind] = factory
-    if scope_validator is not None:
-        _SCOPE_VALIDATORS[kind] = scope_validator
+    for registry, value in ((_SCOPE_VALIDATORS, scope_validator), (_CONNECTION_CHECKS, connection_check)):
+        if value is not None:
+            registry[kind] = value
+        else:
+            registry.pop(kind, None)
+    if accepts_credentials:
+        _NO_CREDENTIAL_KINDS.discard(kind)
     else:
-        _SCOPE_VALIDATORS.pop(kind, None)
+        _NO_CREDENTIAL_KINDS.add(kind)
 
 
 def unregister_connector_source(kind: str) -> None:
-    """Remove the source (and scope validator) for ``kind`` (tests)."""
+    """Remove the source and every hook registered for ``kind`` (tests)."""
     _SOURCES.pop(kind, None)
     _SCOPE_VALIDATORS.pop(kind, None)
+    _CONNECTION_CHECKS.pop(kind, None)
+    _NO_CREDENTIAL_KINDS.discard(kind)
+
+
+def check_connector_connection(connector: Mapping[str, Any]) -> bool:
+    """Run the kind's live dry run, when its source registered one.
+
+    Blocking (it calls the provider); routes call it via ``asyncio.to_thread``.
+
+    Returns:
+        ``True`` when a check ran and passed, ``False`` when the kind has none.
+
+    Raises:
+        ConnectorError: ``connector-check-failed``, naming the missing permission.
+    """
+    check = _CONNECTION_CHECKS.get(str(connector.get("kind")))
+    if check is None:
+        return False
+    check(connector)
+    return True
+
+
+def connector_accepts_credentials(kind: str) -> bool:
+    """``False`` for a kind that must never store a credential (it assumes a role instead)."""
+    return kind not in _NO_CREDENTIAL_KINDS
 
 
 def validate_connector_scope(kind: str, scope: Mapping[str, Any], base_url: Optional[str]) -> None:
@@ -372,6 +424,28 @@ def import_document_as_catalog_item(
     return project_id
 
 
+def _note_unchanged(summary: Dict[str, Any], source: Any, candidate: RefreshCandidate, reason_code: str) -> None:
+    """Record why ``candidate`` was not re-imported on the run summary (``unchangedItems``).
+
+    A source may phrase the reason in its own terms with ``explain_unchanged(candidate)`` (AWS:
+    "deploymentId … is unchanged"); otherwise the newer-than gate's reason code stands.
+    """
+    items = summary.setdefault("unchangedItems", [])
+    if len(items) >= UNCHANGED_ITEMS_MAX:
+        return
+    explain = getattr(source, "explain_unchanged", None)
+    reason = explain(candidate) if callable(explain) else None
+    items.append(
+        {
+            "remoteId": candidate.remote_id,
+            "name": candidate.name,
+            "revision": candidate.revision,
+            "reasonCode": reason_code,
+            "reason": reason or f"Not newer than the last import ({reason_code}).",
+        }
+    )
+
+
 def _audit(db: Any, connector: Mapping[str, Any], result: ConnectorSyncResult, actor_id: Optional[str]) -> None:
     """Write the run's ``repository.connector.sync`` workflow-audit row (no credentials)."""
     db.insert_workflow_audit(
@@ -485,8 +559,10 @@ def run_connector_sync(
             if row.get("status") == ITEM_IGNORED:
                 summary["ignored"] += 1
                 continue
-            if not decide_refresh(source, candidate).should_refresh:
+            decision = decide_refresh(source, candidate)
+            if not decision.should_refresh:
                 summary["unchanged"] += 1
+                _note_unchanged(summary, source, candidate, decision.reason.value)
                 continue
             if max_pulls is not None and pulls >= max_pulls:
                 summary["deferred"] += 1
@@ -661,4 +737,4 @@ def process_connector_refresh_sweep(db: Any) -> int:
 
 
 # Built-in sources register themselves on import (they subclass ConnectorRefreshSource above).
-from . import kong_connector_source  # noqa: E402,F401
+from . import aws_apigateway_connector_source, kong_connector_source  # noqa: E402,F401

@@ -23,6 +23,7 @@ from fastapi.testclient import TestClient
 from app.auth import validate_authentication
 from app.catalog_connector_routes import AUDIT_CREATE, AUDIT_CREDENTIALS, AUDIT_DELETE, AUDIT_UPDATE
 from app.catalog_connector_sync import ConnectorRefreshSource, register_connector_source, unregister_connector_source
+from app.catalog_connectors import ConnectorError
 from app.config import settings
 from app.database import db
 from app.main import app
@@ -153,14 +154,14 @@ def test_create_returns_the_connector_without_credentials(store, audits):
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
     _create(kind="apigee", name="Apigee", scope={})
     body = client.get(_BASE).json()
-    assert len(body["kinds"]) == 8 and body["syncableKinds"] == ["kong-admin", "kong-konnect"]
+    assert len(body["kinds"]) == 8 and body["syncableKinds"] == ["aws-apigateway", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is False
     register_connector_source("apigee", ConnectorRefreshSource)
     try:
         body = client.get(_BASE).json()
     finally:
         unregister_connector_source("apigee")
-    assert body["syncableKinds"] == ["apigee", "kong-admin", "kong-konnect"]
+    assert body["syncableKinds"] == ["apigee", "aws-apigateway", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is True
 
 
@@ -357,3 +358,72 @@ def test_items_filter_by_status_and_reject_unknown_ones(store, audits, source):
     assert client.get(f"{_BASE}/{created['id']}/items?status=missing").json()["total"] == 0
     assert client.get(f"{_BASE}/{created['id']}/items?status=imported").json()["total"] == 1
     assert client.get(f"{_BASE}/{created['id']}/items?status=gone").status_code == 400
+
+
+# --- CDG-1.3: dry run on create/update, no credentials for a role-assuming kind -----------
+
+_AWS_SCOPE = {
+    "roleArn": "arn:aws:iam::123456789012:role/apiome-catalog",
+    "externalId": "apiome-ext-7c1d9a",
+    "regions": ["eu-west-1"],
+}
+
+
+@pytest.fixture
+def aws_check(monkeypatch):
+    """Re-register the AWS source with a scriptable dry run (no AWS calls)."""
+    from app import aws_apigateway_connector_source as aws
+
+    calls: List[Dict[str, Any]] = []
+    state = {"fail": None}
+
+    def check(connector):
+        calls.append(dict(connector))
+        if state["fail"]:
+            raise ConnectorError("connector-check-failed", "The AWS dry run failed.", reason=state["fail"])
+
+    register_connector_source(
+        aws.KIND, aws.AwsApiGatewaySource, scope_validator=aws.validate_aws_scope,
+        connection_check=check, accepts_credentials=False,
+    )
+    return {"calls": calls, "state": state}
+
+
+def test_creating_an_aws_connector_runs_the_dry_run(store, audits, aws_check):
+    created = _create(kind="aws-apigateway", name="AWS prod", scope=_AWS_SCOPE)
+    assert created["syncable"] is True and created["hasCredentials"] is False
+    assert aws_check["calls"] == [{"kind": "aws-apigateway", "scope": _AWS_SCOPE, "base_url": None}]
+
+
+def test_a_failed_dry_run_refuses_the_connector_and_names_the_permission(store, audits, aws_check):
+    aws_check["state"]["fail"] = "apigateway:GET on arn:aws:apigateway:eu-west-1::/account"
+    response = client.post(_BASE, json={"kind": "aws-apigateway", "name": "AWS", "scope": _AWS_SCOPE})
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert detail["code"] == "connector-check-failed"
+    assert detail["reason"] == "apigateway:GET on arn:aws:apigateway:eu-west-1::/account"
+    assert store.connectors == {}
+
+
+def test_changing_the_scope_reruns_the_dry_run_but_renaming_does_not(store, audits, aws_check):
+    created = _create(kind="aws-apigateway", name="AWS prod", scope=_AWS_SCOPE)
+    client.patch(f"{_BASE}/{created['id']}", json={"name": "Renamed"})
+    assert len(aws_check["calls"]) == 1
+    aws_check["state"]["fail"] = "sts:AssumeRole on arn:aws:iam::123456789012:role/other"
+    response = client.patch(
+        f"{_BASE}/{created['id']}",
+        json={"scope": {**_AWS_SCOPE, "roleArn": "arn:aws:iam::123456789012:role/other"}},
+    )
+    assert response.status_code == 422 and response.json()["detail"]["code"] == "connector-check-failed"
+    assert store.connectors[created["id"]]["scope"] == _AWS_SCOPE
+
+
+def test_an_aws_connector_refuses_stored_credentials(store, audits, aws_check):
+    created = _create(kind="aws-apigateway", name="AWS prod", scope=_AWS_SCOPE)
+    response = client.put(
+        f"{_BASE}/{created['id']}/credentials",
+        json={"credentials": {"accessKeyId": "AKIAEXAMPLE", "secretAccessKey": _SECRET}},
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "connector-credentials-refused"
+    assert _SECRET not in response.text and store.credentials == {}

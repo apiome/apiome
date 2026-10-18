@@ -84,6 +84,8 @@ CODE_BASE_URL_REFUSED = "connector-base-url-refused"
 CODE_KIND_UNSUPPORTED = "connector-kind-unsupported"
 CODE_SYNC_RUNNING = "connector-sync-running"
 CODE_ENCRYPTION_UNCONFIGURED = "connector-encryption-unconfigured"
+CODE_CHECK_FAILED = "connector-check-failed"
+CODE_CREDENTIALS_REFUSED = "connector-credentials-refused"
 
 #: Stable reasons a base URL is refused (``detail.reason``).
 REASON_MALFORMED = "malformed-url"
@@ -118,6 +120,11 @@ _SECRET_LIKE_KEYS = frozenset(
 )
 
 _VERSION_LABEL_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+#: The suggested-owner source for an owner read from a gateway's tags (CDG-2.2 vocabulary).
+OWNER_SOURCE_GATEWAY_TAG = "gateway_tag"
+#: A team slug: lower-case letters, digits and inner hyphens, at most 64 characters.
+_TEAM_SLUG = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 _VERSION_LABEL_MAX = 64
 
 
@@ -152,7 +159,9 @@ SCOPE_DESCRIPTION = (
     "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|"
     "\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", …]}` (no control planes = "
     "every control plane the token can read). `kong-admin`: `{\"workspace\": \"…\", "
-    "\"environment\": \"…\"}`, both optional. Kinds with a source check their scope on every write."
+    "\"environment\": \"…\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/…\", "
+    "\"externalId\": \"…\", \"regions\": [\"eu-west-1\", …]}` (no base URL, no credential: Apiome assumes the "
+    "role). Kinds with a source check their scope on every write, and some dry-run it."
 )
 
 
@@ -608,3 +617,22 @@ def connector_provenance_metadata(
     if source_uri:
         meta["sourceUri"] = source_uri
     return meta
+
+
+def suggested_owner(team: str, source_ref: str) -> Optional[Dict[str, str]]:
+    """A CDG-2.2 *suggested* owner read from a gateway tag, or ``None`` for a malformed slug.
+
+    Shared by every gateway connector (Kong ``owner:<slug>`` tags, AWS ``apiome:owner`` tags), so
+    they all apply one slug rule and produce one record shape.
+
+    Args:
+        team: The team slug as tagged; it is trimmed and lower-cased.
+        source_ref: The tag it came from, verbatim (``owner:payments``, ``apiome:owner=payments``).
+
+    Returns:
+        ``{team, source: "gateway_tag", sourceRef}``, or ``None`` when ``team`` is not a slug.
+    """
+    slug = (team or "").strip().lower()
+    if not _TEAM_SLUG.fullmatch(slug):
+        return None
+    return {"team": slug, "source": OWNER_SOURCE_GATEWAY_TAG, "sourceRef": source_ref}

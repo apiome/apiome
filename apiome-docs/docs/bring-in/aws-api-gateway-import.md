@@ -79,4 +79,4 @@ and listed in the ledger with where it appeared. Nothing is dropped silently.
 ## Related
 
 - [Supported formats](./supported-formats.md): the versions this importer reads.
-- [Connectors](./connectors.mdx): keep a gateway's APIs in step with the catalog.
+- [Connectors](./connectors.mdx#aws-api-gateway): sync every deployed stage of an AWS account automatically.

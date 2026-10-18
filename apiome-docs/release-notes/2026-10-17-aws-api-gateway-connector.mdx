@@ -1,0 +1,24 @@
+---
+slug: aws-api-gateway-connector
+title: Every AWS API Gateway stage, kept in step automatically
+description: The AWS connector imports each deployed REST and HTTP API stage.
+authors: [apiome]
+---
+
+The `aws-apigateway` [connector](/bring-in/connectors#aws-api-gateway) now syncs. Give Apiome a
+read-only role in your account, and every deployed stage of every REST and HTTP API in the regions
+you choose becomes a catalog item, refreshed on the connector's schedule.
+
+{/* truncate */}
+
+- **No keys stored.** Apiome assumes your role with an external ID for each sync. It never stores
+  an access key.
+- **Checked before it is saved.** When you create the connector, Apiome tries the role. If a
+  permission is missing, it tells you which one, such as
+  `apigateway:GET on arn:aws:apigateway:eu-west-1::/account`.
+- **One item per stage.** Each stage records its invoke URL and deployment. A stage that has not
+  been redeployed is skipped, and the run says why.
+- **Extensions included.** Each stage is exported with its API Gateway extensions, so integrations,
+  authorizers, validators and CORS come through, as in an
+  [imported export](/bring-in/aws-api-gateway-import).
+- **Suggested owners.** An `apiome:owner` tag on an API suggests its owning team.
