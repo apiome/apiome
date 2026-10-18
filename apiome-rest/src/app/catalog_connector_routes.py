@@ -24,6 +24,12 @@ envelope and returns only their names; no route returns a credential, and the ro
 :class:`~app.redacted_validation_route.RedactedValidationRoute` so a malformed request's 422 does
 not echo one either.
 
+**Kinds may dry-run.** A kind whose source registered a connection check (``aws-apigateway``:
+assume the role, ``GetAccount``) runs it on create and whenever the scope or base URL changes; a
+failure is a 422 ``connector-check-failed`` whose ``detail.reason`` names the missing permission.
+A kind that assumes a role stores no credential, so ``PUT …/credentials`` is a 422
+``connector-credentials-refused``.
+
 **Base URLs pass the SSRF rule** (:func:`app.catalog_connectors.check_connector_base_url`): a
 private-range URL is a 422 with ``detail.reason = "private-address"`` unless the operator
 allowlisted the range.
@@ -43,8 +49,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from . import catalog_connector_store as store
 from .auth import validate_authentication
-from .catalog_connector_sync import run_connector_sync, syncable_kinds, validate_connector_scope
+from .catalog_connector_sync import (
+    check_connector_connection,
+    connector_accepts_credentials,
+    run_connector_sync,
+    syncable_kinds,
+    validate_connector_scope,
+)
 from .catalog_connectors import (
+    CODE_CREDENTIALS_REFUSED,
     CODE_ENCRYPTION_UNCONFIGURED,
     CODE_INVALID,
     CODE_KIND_UNSUPPORTED,
@@ -242,6 +255,7 @@ async def create_connector(
         scope = validate_scope(body.scope)
         base_url = connector_base_url_from_settings(body.base_url) if body.base_url else None
         validate_connector_scope(body.kind, scope, base_url)
+        await asyncio.to_thread(check_connector_connection, {"kind": body.kind, "scope": scope, "base_url": base_url})
         row = store.create_connector(
             db,
             tenant_id,
@@ -301,11 +315,13 @@ async def update_connector(
         if "scope" in sent:
             changes["scope"] = validate_scope(body.scope)
         if "scope" in changes or "base_url" in changes:
-            validate_connector_scope(
-                str(existing["kind"]),
-                changes.get("scope", existing.get("scope") or {}),
-                changes.get("base_url", existing.get("base_url")),
-            )
+            merged = {
+                "kind": str(existing["kind"]),
+                "scope": changes.get("scope", existing.get("scope") or {}),
+                "base_url": changes.get("base_url", existing.get("base_url")),
+            }
+            validate_connector_scope(merged["kind"], merged["scope"], merged["base_url"])
+            await asyncio.to_thread(check_connector_connection, merged)
         if "refresh_interval_seconds" in sent:
             changes["refresh_interval_seconds"] = body.refresh_interval_seconds
         for field_name in ("conflict_policy", "status"):
@@ -449,7 +465,15 @@ async def put_connector_credentials(
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
-    _require_connector(tenant_id, connector_id)
+    connector = _require_connector(tenant_id, connector_id)
+    if not connector_accepts_credentials(str(connector["kind"])):
+        raise _refusal(
+            ConnectorError(
+                CODE_CREDENTIALS_REFUSED,
+                f"{connector['kind']} connectors store no credential: Apiome assumes the role named in "
+                "the scope instead, so long-lived keys are never accepted.",
+            )
+        )
     try:
         plain = validate_credentials(body.credentials)
     except ConnectorError as exc:

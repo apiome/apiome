@@ -14,8 +14,8 @@ one quota, one audit trail.
 
 :::note
 Connectors are managed through the REST API for now; there is no screen for them yet. Each kind needs
-a source before it can sync. The two [Kong](#kong) kinds sync today; the other gateway and URL
-sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
+a source before it can sync. The two [Kong](#kong) kinds and [AWS API Gateway](#aws-api-gateway) sync
+today; the other gateway and URL sources follow. A connector's **`syncable`** field, and the **`syncableKinds`** list on
 `GET /v1/tenants/{tenant}/connectors`, show which kinds can sync on your deployment.
 :::
 
@@ -69,6 +69,9 @@ Deleting a connector destroys its credential.
 Secrets do not belong in **scope**: a scope key that looks like one (`token`, `password`, `apiKey`,
 `clientSecret`, …) is refused.
 
+An [AWS API Gateway](#aws-api-gateway) connector stores **no** credential at all: Apiome assumes a
+role in your account instead. Sending it one is refused with `connector-credentials-refused`.
+
 ## Base URLs and private networks
 
 Apiome calls the base URL itself, so it must be `http` or `https`, carry no `user:password@`, and
@@ -119,8 +122,11 @@ example, if a run fetches 0 of 12 APIs because the gateway refused the credentia
 `errorClass: "auth"` and `httpStatus: 401`. The connector's **status** then turns **failing**
 until a run succeeds. The error classes are `auth`, `not-found`, `rate-limited`, `unavailable`,
 `credentials-unreadable`, `import-failed`, `invalid-configuration` (the connector is missing a
-token or base URL it needs), `address-refused` (a request was redirected to a private address) and
-`unexpected`.
+token or base URL it needs, or Apiome has no AWS identity to assume a role from), `address-refused`
+(a request was redirected to a private address) and `unexpected`.
+
+A run also lists, under `summary.unchangedItems`, every API it did **not** re-import and why. For
+example: "deploymentId `rv7b2yhnzn` is unchanged since the last import".
 
 Set **status** to **paused** to stop scheduled syncs; a manual sync still runs. Scheduled syncs
 stop with every other refresh when `APIOME_REFRESH_ENABLED` is off.
@@ -188,6 +194,110 @@ A Kong service only gets a new revision when its document changes. If you change
 next sync imports one new revision of that service's item, writes one change report, and leaves
 the other items alone. If the token is revoked, the run fails with `errorClass: "auth"`,
 `httpStatus: 401` and Kong's error message.
+
+## AWS API Gateway
+
+The `aws-apigateway` kind reads the REST and HTTP APIs in one AWS account. **Each deployed stage
+becomes one catalog item.** Its definition is the stage's export with its API Gateway extensions,
+imported exactly as an [exported file](./aws-api-gateway-import.md) would be.
+
+Apiome never stores AWS keys. You create a read-only role in your account, and Apiome assumes it for
+each sync. Apiome uses its own AWS identity to do so: the AWS credentials of the deployment it runs
+on, such as an instance profile, a workload identity or environment variables.
+
+### Create the role
+
+1. **Choose an external ID**, a value only you and Apiome know, such as `apiome-7c1d9a2f`.
+2. **Create an IAM role** whose trust policy lets Apiome's AWS identity assume it with that external
+   ID. Replace the principal with the identity your Apiome operator gives you:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": { "AWS": "arn:aws:iam::111122223333:role/apiome" },
+         "Action": "sts:AssumeRole",
+         "Condition": { "StringEquals": { "sts:ExternalId": "apiome-7c1d9a2f" } }
+       }
+     ]
+   }
+   ```
+
+3. **Attach this permissions policy.** It is read-only; the connector never changes anything:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "ApiomeCatalogRead",
+         "Effect": "Allow",
+         "Action": "apigateway:GET",
+         "Resource": [
+           "arn:aws:apigateway:*::/account",
+           "arn:aws:apigateway:*::/restapis",
+           "arn:aws:apigateway:*::/restapis/*",
+           "arn:aws:apigateway:*::/apis",
+           "arn:aws:apigateway:*::/apis/*"
+         ]
+       }
+     ]
+   }
+   ```
+
+| What a sync calls | IAM action | Resource |
+| --- | --- | --- |
+| `AssumeRole` | `sts:AssumeRole` | Your role, from its trust policy |
+| `GetAccount` (dry run) | `apigateway:GET` | `arn:aws:apigateway:<region>::/account` |
+| `GetRestApis` | `apigateway:GET` | `arn:aws:apigateway:<region>::/restapis` |
+| `GetStages`, `GetExport` (REST APIs) | `apigateway:GET` | `arn:aws:apigateway:<region>::/restapis/*` |
+| `GetApis` | `apigateway:GET` | `arn:aws:apigateway:<region>::/apis` |
+| `GetStages`, `ExportApi` (HTTP APIs) | `apigateway:GET` | `arn:aws:apigateway:<region>::/apis/*` |
+
+### Register the connector
+
+**Create it** with the role, the external ID and the regions to read. There is no base URL and no
+credential:
+
+```json
+{
+  "kind": "aws-apigateway",
+  "name": "AWS production",
+  "scope": {
+    "roleArn": "arn:aws:iam::123456789012:role/apiome-catalog",
+    "externalId": "apiome-7c1d9a2f",
+    "regions": ["eu-west-1", "us-east-1"]
+  }
+}
+```
+
+Apiome **checks the role before it saves the connector**. It assumes the role, calls `GetAccount`,
+and lists one REST and one HTTP API in each region. If AWS refuses any call, the connector is not
+created. The response is a `422` with `detail.code` set to `connector-check-failed`, and
+`detail.reason` names what is missing, for example
+`apigateway:GET on arn:aws:apigateway:eu-west-1::/account`. The same check runs again whenever you
+change the scope.
+
+### What an AWS sync records
+
+- **One item per deployed stage.** The item's **environment** is the stage name, its **hosts** hold
+  the stage's invoke URL, and its remote revision is the stage's `deploymentId`.
+- **Unchanged stages are skipped.** A stage whose `deploymentId` has not changed since the last
+  import is not exported again. The run lists it under `summary.unchangedItems` with that reason.
+  When a redeploy produces the same definition, the stage is exported but nothing new is imported.
+- **Deployment details.** Each item's **`deployment`** records the region, account, API id and type
+  (`rest` or `http`), stage, `deploymentId`, invoke URL and the API's tags.
+- **Suggested owners.** An API tagged `apiome:owner` with a team slug, such as `payments`, gets that
+  team as a suggested owner. A suggestion never makes the team the owner. A malformed value is a
+  finding.
+- **Findings.** A region with no APIs is a successful run with no candidates and a `region-empty`
+  finding, so an empty result is visible. A stage with no deployment (`stage-not-deployed`) and a
+  WebSocket API (`websocket-api-not-exported`) are findings, because neither can be exported.
+- **Failures name the permission.** If AWS refuses the role or a call, the run fails with
+  `errorClass: "auth"`, and its message names the missing permission, such as
+  `Missing permission sts:AssumeRole on arn:aws:iam::123456789012:role/apiome-catalog`.
 
 ## Quota and audit
 

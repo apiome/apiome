@@ -298,8 +298,17 @@ class FakeDb:
 
 def restore_builtin_sources() -> None:
     """Re-register the sources the app ships (tests that swap in a fake source call this after)."""
+    from app import aws_apigateway_connector_source as aws
     from app import kong_connector_source as kong
     from app.catalog_connector_sync import register_connector_source
+
+    register_connector_source(
+        aws.KIND,
+        aws.AwsApiGatewaySource,
+        scope_validator=aws.validate_aws_scope,
+        connection_check=aws.check_aws_connection,
+        accepts_credentials=False,
+    )
 
     register_connector_source(kong.KIND_KONNECT, kong.KongKonnectSource, scope_validator=kong.validate_konnect_scope)
     register_connector_source(kong.KIND_ADMIN, kong.KongAdminSource, scope_validator=kong.validate_admin_scope)

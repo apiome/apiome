@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.361.0] - 2026-10-17
+
+### Added
+- **AWS API Gateway connector (#5954, CDG-1.3)**: `aws-apigateway` connectors now sync (`syncableKinds`).
+  - Scope `{"roleArn", "externalId", "regions": [...]}`; Apiome calls `sts:AssumeRole` from its own AWS identity and
+    never stores keys: `PUT …/credentials` on this kind is a 422 `connector-credentials-refused`, and a base URL is
+    refused. Scope is checked on create and update (422 `connector-invalid`).
+  - **Dry run on create and on scope change**: assume the role, `GetAccount`, list one REST and one HTTP API per
+    region. A refusal is a 422 `connector-check-failed` whose `detail.reason` names the missing permission
+    (`sts:AssumeRole on …`, `apigateway:GET on arn:aws:apigateway:<region>::/account`, …).
+  - Inventory from `GetRestApis` + `GetStages` and `GetApis` + `GetStages`; **one catalog item per deployed stage**:
+    `environment` = stage, invoke URL in `hosts`, `deploymentId` = remote revision. Definitions from `GetExport`
+    (`oas30`, `extensions=apigateway`) and `ExportApi` (`OAS30`, `IncludeExtensions`), imported by the FMT-7.1
+    `aws-apigateway` adapter unchanged.
+  - `deployment` records region, account, API id/type, stage, deploymentId, invoke URL, tags and
+    `suggestedOwners` from the `apiome:owner` tag. Findings: `region-empty`, `stage-not-deployed`,
+    `websocket-api-not-exported`, `owner-tag-invalid`.
+  - Access denials fail the run with `errorClass: "auth"` and the missing permission named; a deployment with no AWS
+    identity fails with `invalid-configuration`.
+- Connector runs list every skipped candidate with its reason under `summary.unchangedItems`
+  (`remoteId`, `revision`, `reasonCode`, `reason`); the AWS source explains it as an unchanged `deploymentId`.
+- Connector sources can register a `connection_check` (dry run) and declare `accepts_credentials=False`.
+
+### Fixed
+- The intake secret scrub no longer redacts an unquoted `true` / `false` / `null` under a secret-named key
+  (`allowCredentials: true` in an HTTP API export's CORS block was turned into a string). A quoted value is still
+  redacted.
+
+### Dependencies
+- `boto3` (runtime) and `moto` (dev, tests).
+
+The OpenAPI version moves to 1.225.0.
+
 ## [1.360.0] - 2026-10-17
 
 ### Added

@@ -354,3 +354,17 @@ def test_entropy_redaction_keeps_the_document_parseable():
     assert scrubbed["info"] == document["info"]
     assert scrubbed["paths"] == {}
     assert scrubbed["x-gateway"]["credential"] == REDACTION_MARKER
+
+
+@pytest.mark.parametrize(
+    "text",
+    ['"allowCredentials": true', "allowCredentials: false\n", "credentials: null\n", '{"withCredentials": true}'],
+)
+def test_an_unquoted_boolean_or_null_under_a_secret_named_key_is_kept(text):
+    """CDG-1.3: CORS ``allowCredentials: true`` in an API Gateway export is a boolean, not a secret."""
+    outcome = scrub_document_text(text)
+    assert outcome.text == text and not outcome.scrubbed
+
+
+def test_a_quoted_literal_under_a_secret_named_key_is_still_redacted():
+    assert scrub_document_text('password: "true"').text == f'password: "{REDACTION_MARKER}"'
