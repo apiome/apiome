@@ -1,0 +1,20 @@
+---
+slug: aws-api-gateway-import
+title: Import AWS API Gateway exports, extensions and all
+description: REST and HTTP API exports import with their integrations, authorizers and CORS.
+authors: [apiome]
+---
+
+You can now [import an API exported from Amazon API Gateway](/bring-in/aws-api-gateway-import).
+Apiome reads both the OpenAPI document and its `x-amazon-apigateway-*` extensions, so the catalog
+records what the API actually does, not only what it looks like.
+
+{/* truncate */}
+
+- **REST and HTTP APIs.** Both export flavours import, as does a Swagger 2.0 export.
+- **Backends, security, validation and CORS.** Each route records its backend (Lambda, HTTP, AWS
+  service or mock), who may call it (Lambda, Cognito and JWT authorizers, IAM, API keys), what is
+  validated and which origins are allowed, all labelled *declared*.
+- **Nothing silently dropped.** Extensions Apiome keeps but does not interpret, and extensions it
+  has never seen, are preserved and listed in the import's coverage ledger.
+- **Plain OpenAPI is unaffected.** A document with no AWS extensions still imports as OpenAPI.

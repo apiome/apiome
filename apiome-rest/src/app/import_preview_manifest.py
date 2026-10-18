@@ -238,6 +238,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # source's own `info.schema` is still reported (as `postman_schema_url`).
         "swagger_1_2",
         "postman_collection_version",
+        # FMT-7.1: the AWS API Gateway report (flavor, integration counts, authorizers,
+        # validators, every extension site). Rendered by ``_aws_apigateway_capability_rows``;
+        # the interpreted constructs themselves ride in ``backend``/``security``/``validation``.
+        "aws_apigateway",
         # FMT-5.1: the ODCS projection record (declared api version, contract status and
         # identity, the schema objects, declared limits, the composed file set). Our own
         # bookkeeping about the read — the contract's *own* governance blocks live under
@@ -1091,6 +1095,7 @@ def _document_scope_rows(
     ledger.extend(_overlay_provenance_rows(api))
     ledger.extend(_gateway_capability_rows(api))
     ledger.extend(_wit_capability_rows(api))
+    ledger.extend(_aws_apigateway_capability_rows(api))
     ledger.extend(_relaxng_capability_rows(api))
     ledger.extend(_dtd_capability_rows(api))
     ledger.extend(_cddl_capability_rows(api))
@@ -1304,6 +1309,91 @@ def _gateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
                 ),
                 document_scoped=True,
             )
+        )
+    return rows
+
+
+def _aws_apigateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-7.1 AWS API Gateway report as document-scoped ledger rows.
+
+    The interpreted extensions (integrations, authorizers, request validators, CORS) are
+    ``mapped``: each became a canonical backend, security, validation or CORS record labelled
+    ``declared``. A documented extension the canonical model has no construct for (resource
+    policy, gateway responses, binary media types, …) and an extension nobody has seen before
+    are ``partially-mapped``: kept verbatim in extras and listed here by name and location, so
+    neither is silently dropped.
+    """
+    report = api.extras.get("aws_apigateway") if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict):
+        return []
+    mapped_status, mapped_reason = STATUS_FOR_COVERAGE[CoverageClass.MAPPED]
+    partial_status, partial_reason = STATUS_FOR_COVERAGE[CoverageClass.PARTIALLY_MAPPED]
+    rows: List[CoverageEntry] = []
+
+    def _row(construct: str, coverage: CoverageClass, detail: str) -> None:
+        status, reason = (mapped_status, mapped_reason) if coverage is CoverageClass.MAPPED else (
+            partial_status,
+            partial_reason,
+        )
+        rows.append(
+            CoverageEntry(
+                source_construct=construct,
+                coverage=coverage,
+                status=status,
+                reason=reason,
+                detail=detail,
+                document_scoped=True,
+            )
+        )
+
+    for kind, count in sorted((report.get("integrations") or {}).items()):
+        _row(
+            f"aws#integration.{kind}",
+            CoverageClass.MAPPED,
+            f"{count} operation(s) declare a {kind} integration; recorded as each operation's "
+            "backend (declared), with the verbatim integration in extras.",
+        )
+    for authorizer in report.get("authorizers") or []:
+        if isinstance(authorizer, dict) and authorizer.get("name"):
+            kind = authorizer.get("type") or authorizer.get("authType") or "authorizer"
+            _row(
+                f"aws#authorizer.{authorizer['name']}",
+                CoverageClass.MAPPED,
+                f"Authorizer {authorizer['name']!r} ({kind}) mapped to canonical security on the "
+                "operations that require it (declared).",
+            )
+    for name in sorted(report.get("request_validators") or {}):
+        _row(
+            f"aws#request-validator.{name}",
+            CoverageClass.MAPPED,
+            f"Request validator {name!r} recorded as the declared validation posture of the "
+            "operations that name it.",
+        )
+    if isinstance(api.extras.get("cors"), dict):
+        _row(
+            "aws#cors",
+            CoverageClass.MAPPED,
+            "x-amazon-apigateway-cors recorded as the API's CORS metadata (declared).",
+        )
+
+    by_status: Dict[str, Dict[str, List[str]]] = {"preserved": {}, "unknown": {}}
+    for site in report.get("extensions") or []:
+        if isinstance(site, dict) and site.get("status") in by_status:
+            by_status[site["status"]].setdefault(str(site.get("name")), []).append(str(site.get("pointer")))
+    for name, pointers in sorted(by_status["preserved"].items()):
+        _row(
+            f"aws#extension.{name}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"{name} ({len(pointers)} site(s)) has no canonical construct; preserved verbatim in "
+            "extras.",
+        )
+    for name, pointers in sorted(by_status["unknown"].items()):
+        shown = ", ".join(pointers[:3]) + (f" and {len(pointers) - 3} more" if len(pointers) > 3 else "")
+        _row(
+            f"aws#unknown-extension.{name}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"Unrecognised extension {name} at {shown} is not interpreted; preserved verbatim in "
+            "extras and reported here, never dropped.",
         )
     return rows
 

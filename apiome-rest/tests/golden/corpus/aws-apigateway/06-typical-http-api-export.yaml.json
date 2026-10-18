@@ -1,0 +1,430 @@
+{
+  "adapter": "aws-apigateway",
+  "canonical": {
+    "channels": [],
+    "description": "An HTTP API export (the v2 flavour): JWT authorizer, payload format 2.0, route-level integrations and $default routing.\n",
+    "extras": {
+      "aws_apigateway": {
+        "authorizers": [
+          {
+            "identitySource": "$request.header.Authorization",
+            "jwtConfiguration": {
+              "audience": [
+                "subscriptions-api"
+              ],
+              "issuer": "https://auth.example.com/"
+            },
+            "name": "jwt-authorizer",
+            "type": "jwt"
+          }
+        ],
+        "default_request_validator": null,
+        "extensions": [
+          {
+            "name": "x-amazon-apigateway-authorizer",
+            "pointer": "/components/securitySchemes/jwt-authorizer/x-amazon-apigateway-authorizer",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-any-method",
+            "pointer": "/paths/~1$default/x-amazon-apigateway-any-method",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1subscriptions/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1subscriptions/post/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1subscriptions~1{subscriptionId}/delete/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-endpoint-configuration",
+            "pointer": "/servers/0/x-amazon-apigateway-endpoint-configuration",
+            "status": "preserved"
+          },
+          {
+            "name": "x-amazon-apigateway-cors",
+            "pointer": "/x-amazon-apigateway-cors",
+            "status": "interpreted"
+          }
+        ],
+        "flavor": "http",
+        "integrations": {
+          "http-proxy": 1,
+          "lambda-proxy": 3
+        },
+        "provenance": "declared",
+        "request_validators": {},
+        "server_extensions": {
+          "https://p1q2r3s4t5.execute-api.eu-west-1.amazonaws.com/": {
+            "x-amazon-apigateway-endpoint-configuration": {
+              "disableExecuteApiEndpoint": false
+            }
+          }
+        },
+        "settings": {}
+      },
+      "cors": {
+        "allowCredentials": true,
+        "allowHeaders": [
+          "authorization",
+          "content-type"
+        ],
+        "allowMethods": [
+          "GET",
+          "POST",
+          "DELETE",
+          "OPTIONS"
+        ],
+        "allowOrigins": [
+          "https://app.example.com"
+        ],
+        "exposeHeaders": [
+          "x-request-id"
+        ],
+        "maxAge": 600,
+        "provenance": "declared",
+        "source": "x-amazon-apigateway-cors"
+      }
+    },
+    "format": "aws-apigateway",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "subscriptions-http-api",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://p1q2r3s4t5.execute-api.eu-west-1.amazonaws.com/",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "payloadFormatVersion": "2.0",
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:lambda:eu-west-1:000000000000:function:catch-all"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "payloadFormatVersion": "2.0",
+                "provenance": "declared",
+                "type": "aws_proxy",
+                "uri": "arn:aws:lambda:eu-west-1:000000000000:function:catch-all"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/$default",
+            "key": "ANY /$default",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Default response",
+                "extras": {},
+                "headers": [],
+                "key": "ANY /$default#response.default",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "default"
+              }
+            ],
+            "name": "ANY /$default",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "connectionId": "vpclink-0abc123",
+                  "connectionType": "VPC_LINK",
+                  "httpMethod": "DELETE",
+                  "payloadFormatVersion": "1.0",
+                  "requestParameters": {
+                    "overwrite:path": "/subscriptions/${request.path.subscriptionId}"
+                  },
+                  "type": "http_proxy",
+                  "uri": "http://internal-billing.eu-west-1.elb.amazonaws.com/subscriptions/{subscriptionId}"
+                }
+              },
+              "backend": {
+                "connectionId": "vpclink-0abc123",
+                "connectionType": "VPC_LINK",
+                "httpMethod": "DELETE",
+                "kind": "http-proxy",
+                "payloadFormatVersion": "1.0",
+                "provenance": "declared",
+                "type": "http_proxy",
+                "uri": "http://internal-billing.eu-west-1.elb.amazonaws.com/subscriptions/{subscriptionId}"
+              },
+              "security": [
+                {
+                  "authorizer": {
+                    "identitySource": "$request.header.Authorization",
+                    "jwtConfiguration": {
+                      "audience": [
+                        "subscriptions-api"
+                      ],
+                      "issuer": "https://auth.example.com/"
+                    },
+                    "type": "jwt"
+                  },
+                  "name": "jwt-authorizer",
+                  "provenance": "declared",
+                  "scheme": "bearer",
+                  "scopes": [
+                    "subscriptions:write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "DELETE",
+            "http_path": "/subscriptions/{subscriptionId}",
+            "key": "DELETE /subscriptions/{subscriptionId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Default response",
+                "extras": {},
+                "headers": [],
+                "key": "DELETE /subscriptions/{subscriptionId}#response.default",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "default"
+              }
+            ],
+            "name": "DELETE /subscriptions/{subscriptionId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "DELETE /subscriptions/{subscriptionId}#path.subscriptionId",
+                "location": "path",
+                "name": "subscriptionId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "connectionType": "INTERNET",
+                  "httpMethod": "POST",
+                  "payloadFormatVersion": "2.0",
+                  "timeoutInMillis": 30000,
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:lambda:eu-west-1:000000000000:function:list-subscriptions"
+                }
+              },
+              "backend": {
+                "connectionType": "INTERNET",
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "payloadFormatVersion": "2.0",
+                "provenance": "declared",
+                "timeoutInMillis": 30000,
+                "type": "aws_proxy",
+                "uri": "arn:aws:lambda:eu-west-1:000000000000:function:list-subscriptions"
+              },
+              "security": [
+                {
+                  "authorizer": {
+                    "identitySource": "$request.header.Authorization",
+                    "jwtConfiguration": {
+                      "audience": [
+                        "subscriptions-api"
+                      ],
+                      "issuer": "https://auth.example.com/"
+                    },
+                    "type": "jwt"
+                  },
+                  "name": "jwt-authorizer",
+                  "provenance": "declared",
+                  "scheme": "bearer",
+                  "scopes": [
+                    "subscriptions:read"
+                  ]
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/subscriptions",
+            "key": "GET /subscriptions",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Default response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /subscriptions#response.default",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "default"
+              }
+            ],
+            "name": "GET /subscriptions",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "payloadFormatVersion": "2.0",
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:lambda:eu-west-1:000000000000:function:create-subscription"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "payloadFormatVersion": "2.0",
+                "provenance": "declared",
+                "type": "aws_proxy",
+                "uri": "arn:aws:lambda:eu-west-1:000000000000:function:create-subscription"
+              },
+              "security": [
+                {
+                  "authorizer": {
+                    "identitySource": "$request.header.Authorization",
+                    "jwtConfiguration": {
+                      "audience": [
+                        "subscriptions-api"
+                      ],
+                      "issuer": "https://auth.example.com/"
+                    },
+                    "type": "jwt"
+                  },
+                  "name": "jwt-authorizer",
+                  "provenance": "declared",
+                  "scheme": "bearer",
+                  "scopes": [
+                    "subscriptions:write"
+                  ]
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/subscriptions",
+            "key": "POST /subscriptions",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Default response",
+                "extras": {},
+                "headers": [],
+                "key": "POST /subscriptions#response.default",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "default"
+              }
+            ],
+            "name": "POST /subscriptions",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "subscriptions-http-api",
+    "types": [],
+    "version": "2026-08-19T13:00:00Z"
+  },
+  "corpus_path": "aws-apigateway/06-typical-http-api-export.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "aws-apigateway"
+  },
+  "fingerprint": "sha256:a69eba4ff9478d90c1e3d7cc75946e03d1372e7092613e52156b506a48a1c55b",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "081b20df87f931aecd1c419f36f95b8e9cea0dee879a6e4d5019aeae2de7ef7a",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

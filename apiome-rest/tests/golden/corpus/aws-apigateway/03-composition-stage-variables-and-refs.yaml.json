@@ -1,0 +1,329 @@
+{
+  "adapter": "aws-apigateway",
+  "canonical": {
+    "channels": [],
+    "description": "Composition: one integration definition reused across operations by $ref, stage variables in integration URIs, and shared request parameters.\n",
+    "extras": {
+      "aws_apigateway": {
+        "authorizers": [],
+        "default_request_validator": null,
+        "extensions": [
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1categories/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1products/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-integration",
+            "pointer": "/paths/~1products~1{sku}/get/x-amazon-apigateway-integration",
+            "status": "interpreted"
+          },
+          {
+            "name": "x-amazon-apigateway-binary-media-types",
+            "pointer": "/x-amazon-apigateway-binary-media-types",
+            "status": "preserved"
+          }
+        ],
+        "flavor": "rest",
+        "integrations": {
+          "http-proxy": 2,
+          "lambda-proxy": 1
+        },
+        "provenance": "declared",
+        "request_validators": {},
+        "server_extensions": {},
+        "settings": {
+          "x-amazon-apigateway-binary-media-types": [
+            "application/octet-stream",
+            "image/*"
+          ]
+        }
+      }
+    },
+    "format": "aws-apigateway",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "catalogue-api",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://f6g7h8i9j0.execute-api.eu-west-1.amazonaws.com/{basePath}",
+        "variables": [
+          {
+            "default": "prod",
+            "description": null,
+            "enum": [
+              "dev",
+              "staging",
+              "prod"
+            ],
+            "extras": {},
+            "name": "basePath"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "httpMethod": "POST",
+                  "passthroughBehavior": "when_no_match",
+                  "type": "aws_proxy",
+                  "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:${stageVariables.categoriesFn}/invocations"
+                }
+              },
+              "backend": {
+                "httpMethod": "POST",
+                "kind": "lambda-proxy",
+                "provenance": "declared",
+                "stageVariables": [
+                  "categoriesFn"
+                ],
+                "type": "aws_proxy",
+                "uri": "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:000000000000:function:${stageVariables.categoriesFn}/invocations"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/categories",
+            "key": "GET /categories",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /categories#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /categories",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "connectionId": "${stageVariables.vpcLinkId}",
+                  "connectionType": "VPC_LINK",
+                  "httpMethod": "GET",
+                  "passthroughBehavior": "when_no_match",
+                  "requestParameters": {
+                    "integration.request.header.X-Tenant": "method.request.header.X-Tenant"
+                  },
+                  "type": "http_proxy",
+                  "uri": "http://${stageVariables.backendHost}/products"
+                }
+              },
+              "backend": {
+                "connectionId": "${stageVariables.vpcLinkId}",
+                "connectionType": "VPC_LINK",
+                "httpMethod": "GET",
+                "kind": "http-proxy",
+                "provenance": "declared",
+                "stageVariables": [
+                  "backendHost",
+                  "vpcLinkId"
+                ],
+                "type": "http_proxy",
+                "uri": "http://${stageVariables.backendHost}/products"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/products",
+            "key": "GET /products",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /products",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /products#query.category",
+                "location": "query",
+                "name": "category",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "aws_apigateway": {
+                "integration": {
+                  "connectionId": "${stageVariables.vpcLinkId}",
+                  "connectionType": "VPC_LINK",
+                  "httpMethod": "GET",
+                  "passthroughBehavior": "when_no_match",
+                  "requestParameters": {
+                    "integration.request.header.X-Tenant": "method.request.header.X-Tenant",
+                    "integration.request.path.sku": "method.request.path.sku"
+                  },
+                  "type": "http_proxy",
+                  "uri": "http://${stageVariables.backendHost}/products/{sku}"
+                }
+              },
+              "backend": {
+                "connectionId": "${stageVariables.vpcLinkId}",
+                "connectionType": "VPC_LINK",
+                "httpMethod": "GET",
+                "kind": "http-proxy",
+                "provenance": "declared",
+                "stageVariables": [
+                  "backendHost",
+                  "vpcLinkId"
+                ],
+                "type": "http_proxy",
+                "uri": "http://${stageVariables.backendHost}/products/{sku}"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/products/{sku}",
+            "key": "GET /products/{sku}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "200 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products/{sku}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "404 response",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products/{sku}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "GET /products/{sku}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /products/{sku}#path.sku",
+                "location": "path",
+                "name": "sku",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "catalogue-api",
+    "types": [],
+    "version": "2026-08-19T11:00:00Z"
+  },
+  "corpus_path": "aws-apigateway/03-composition-stage-variables-and-refs.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "aws-apigateway"
+  },
+  "fingerprint": "sha256:ccbaed487d97207fc7e6bf4e05b235052eb942a57fe8b56c9a4646f3484a32c7",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "2aa38402ba697ffe808a22b7733ac91ae0b9523ce8260378ff71c2817a04447b",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

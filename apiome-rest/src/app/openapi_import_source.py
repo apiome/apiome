@@ -54,6 +54,7 @@ from . import (
     openapi_normalizer,  # noqa: F401
     swagger2_normalizer,  # noqa: F401
 )
+from .aws_apigateway_extensions import has_aws_extensions
 from .canonical_model import ApiParadigm, CanonicalApi
 from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
@@ -132,6 +133,17 @@ class OpenApiImportSource(ImportSource, register=True):
         if not isinstance(document, dict):
             return NO_MATCH
 
+        # FMT-7.1: an exported API Gateway definition is OpenAPI too, but the aws-apigateway
+        # adapter reads its extensions. Step down below the ambiguity margin for it, so the two
+        # are never reported as a tie; a plain OpenAPI document keeps full confidence.
+        if has_aws_extensions(document):
+            return DetectionResult(
+                confidence=0.8,
+                format=self._version_format(document),
+                reason="OpenAPI document with `x-amazon-apigateway-*` extensions "
+                "(the aws-apigateway adapter interprets them)",
+            )
+
         version = document.get("openapi")
         if isinstance(version, str) and version.startswith("3."):
             if version.startswith("3.0"):
@@ -170,6 +182,17 @@ class OpenApiImportSource(ImportSource, register=True):
             )
 
         return NO_MATCH
+
+    @staticmethod
+    def _version_format(document: Dict[str, Any]) -> str:
+        """The OpenAPI/Swagger format key a version marker pins (3.x or 2.0 documents)."""
+        version = document.get("openapi")
+        if isinstance(version, str) and version.startswith("3."):
+            for prefix, fmt in (("3.0", "openapi-3.0"), ("3.1", "openapi-3.1")):
+                if version.startswith(prefix):
+                    return fmt
+            return "openapi-3.2"
+        return "swagger-2.0"
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> Any:
         """Parse OpenAPI/Swagger source text (JSON or YAML) into a ``dict``.

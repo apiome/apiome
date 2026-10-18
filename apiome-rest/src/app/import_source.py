@@ -1207,6 +1207,10 @@ def load_builtin_import_sources() -> None:
     # effect of its own imports, the MCP manifest normalizer under ``mcp``.
     from . import mcp_import_source as _mcp  # noqa: F401
 
+    # ``aws_apigateway_import_source`` (FMT-7.1) self-registers the ``aws-apigateway`` adapter;
+    # it normalizes through the OpenAPI normalizer and interprets the AWS extensions itself.
+    from . import aws_apigateway_import_source as _aws_apigateway  # noqa: F401
+
 
 # ===========================================================================
 # Shared canonical fingerprint + diff

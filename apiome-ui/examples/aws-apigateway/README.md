@@ -3,8 +3,8 @@
 Fixtures for **FMT-7.1** ([#5455](https://github.com/apiome/apiome/issues/5455)) — asked for since
 backlog issue **#350**. In AWS estates the exported API Gateway definition is the most accurate
 description of what an API actually does, because it carries the integration, authorizer,
-request-validator, CORS and throttle configuration the hand-written spec omits. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+request-validator, CORS and throttle configuration the hand-written spec omits. Entries are read
+by the `aws-apigateway` adapter (`apiome-rest/src/app/aws_apigateway_import_source.py`).
 
 **Detection marker.** An OpenAPI document that also carries at least one `x-amazon-apigateway-*`
 extension. **Detection must not be greedy**: a plain OpenAPI document with no AWS extensions belongs
