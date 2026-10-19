@@ -243,7 +243,7 @@ const USAGE_WITH_CALLS = {
     { toolName: 'getPet', calls: 30, errors: 4, errorRate: 0.133, latencyAvgMs: 280, latencyP95MaxMs: 410 },
   ],
   agents: [
-    { keyId: 'k-1', name: 'claude-desktop', keyPrefix: 'ak_1...', revoked: false, calls: 100, errors: 5, errorRate: 0.05, latencyAvgMs: 190, latencyP95MaxMs: 410 },
+    { keyId: 'k-1', name: 'claude-desktop', keyPrefix: 'ak_1...', revoked: false, agentSlug: 'support-bot', calls: 100, errors: 5, errorRate: 0.05, latencyAvgMs: 190, latencyP95MaxMs: 410 },
     { keyId: 'k-0', name: null, keyPrefix: 'ak_0...', revoked: true, calls: 20, errors: 1, errorRate: 0.05, latencyAvgMs: 150, latencyP95MaxMs: 200 },
   ],
 };
@@ -549,8 +549,12 @@ describe('usage', () => {
     expect(within(tools).getByText('listPets')).toBeInTheDocument();
     expect(within(tools).getByText('13%')).toBeInTheDocument();
     const agents = screen.getByTestId('agx-usage-agents-table');
-    expect(within(agents).getByText('claude-desktop')).toBeInTheDocument();
-    expect(within(agents).getByText('ak_0... (revoked)')).toBeInTheDocument();
+    // CDG-5.2: a key a catalog agent uses links to the agent's page; the others are plain text.
+    expect(within(agents).getByRole('link', { name: 'claude-desktop' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/catalog/agents/support-bot'
+    );
+    expect(within(agents).getByText('ak_0... (revoked)').closest('a')).toBeNull();
     expect(requests.some((r) => r.path === '/api/agent-access/usage?days=30')).toBe(true);
   });
 

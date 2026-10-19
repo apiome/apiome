@@ -74,6 +74,8 @@ _OWNED_ENTITY_NAME_SQL = """
             WHEN 'mcp_endpoint' THEN (SELECT m.name FROM apiome.mcp_endpoints m WHERE m.id = eo.entity_id)
             WHEN 'consumer' THEN (SELECT c.name FROM apiome.consumer c WHERE c.id = eo.entity_id)
             WHEN 'connector' THEN (SELECT k.name FROM apiome.catalog_connectors k WHERE k.id = eo.entity_id)
+            WHEN 'agent' THEN (SELECT a.name FROM apiome.catalog_agents a WHERE a.id = eo.entity_id)
+            WHEN 'model' THEN (SELECT m.name FROM apiome.catalog_models m WHERE m.id = eo.entity_id)
         END,
         eo.entity_id::text
     )

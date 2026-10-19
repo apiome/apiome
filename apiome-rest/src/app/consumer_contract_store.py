@@ -488,7 +488,7 @@ def record_contract(
         surface: The resolved surface.
         actor: Who declared it.
         unresolved: Anything that could not be placed; stored, never dropped.
-        source: ``pact`` or ``manual``.
+        source: ``pact``, ``manual`` or ``agent`` (CDG-5.2).
         version_id: The specification revision the pointers were resolved against.
         version_label: That revision's label.
         source_metadata: Pact provenance, for a Pact import.

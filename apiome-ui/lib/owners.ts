@@ -24,6 +24,9 @@ export const OWNER_ENTITY_KINDS = [
   'mcp_endpoint',
   'consumer',
   'connector',
+  // CDG-5.2: agents (consumers in their own right) and the models they run on.
+  'agent',
+  'model',
 ] as const;
 
 /** One of {@link OWNER_ENTITY_KINDS}. */
@@ -36,6 +39,8 @@ export const OWNER_ENTITY_KIND_LABELS: Readonly<Record<OwnerEntityKind, string>>
   mcp_endpoint: 'MCP servers',
   consumer: 'Consumers',
   connector: 'Connectors',
+  agent: 'Agents',
+  model: 'Models',
 };
 
 /** The team an owner names. */
@@ -210,6 +215,10 @@ export function ownedEntityHref(entity: Pick<OwnedEntity, 'kind' | 'id'>): strin
       return `/ade/dashboard/mcp/${id}`;
     case 'connector':
       return `/ade/dashboard/connectors/${id}`;
+    case 'agent':
+      return `/ade/dashboard/catalog/agents/${id}`;
+    case 'model':
+      return `/ade/dashboard/catalog/models/${id}`;
     default:
       return null;
   }

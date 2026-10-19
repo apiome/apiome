@@ -406,6 +406,7 @@ async def update_agent_key_allowlist_route(
         key=updated,
         extra={"before": before, "after": list(updated.tool_allowlist)},
     )
+    _sync_owning_agent(tenant_id, str(key_id), auth_data, actor_id)
     return updated
 
 
@@ -455,4 +456,31 @@ async def revoke_agent_key_route(
             actor_id=actor_id,
             key=revoked,
         )
+        _sync_owning_agent(tenant_id, str(key_id), auth_data, actor_id)
     return Response(status_code=204)
+
+
+def _sync_owning_agent(tenant_id: str, key_id: str, auth_data: Dict[str, Any], actor_id: Optional[str]) -> None:
+    """Re-derive the consumer contracts of the catalog agent using this key (CDG-5.2).
+
+    A revoked key, or a narrower allowlist, takes operations away from the agent; the next contract
+    revision drops them and the graph marks their ``consumes`` edges stale. Best-effort: the key
+    change itself has already succeeded, so a failure here is logged, not raised.
+
+    Args:
+        tenant_id: The tenant.
+        key_id: The agent key that changed.
+        auth_data: The authenticated principal (for the contract's actor).
+        actor_id: The resolved acting user id.
+    """
+    from . import catalog_agent_store
+    from .consumer_contract_store import actor_from_auth
+
+    try:
+        agent_id = catalog_agent_store.agent_id_for_key(tenant_id, key_id)
+        if agent_id:
+            catalog_agent_store.sync_agent_consumers(
+                tenant_id, agent_id, actor=actor_from_auth(auth_data, actor_id)
+            )
+    except Exception:  # noqa: BLE001 - the key change stands; the agent re-syncs on its next change
+        logger.exception("could not re-derive the agent using key %s", key_id)

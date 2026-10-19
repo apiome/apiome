@@ -25,6 +25,7 @@ from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
 from .bulk_import_routes import router as bulk_import_router
 from .catalog_connector_routes import router as catalog_connector_router
+from .catalog_agent_routes import router as catalog_agent_router
 from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_routes import router as catalog_router
 from .change_report_routes import router as change_report_router
@@ -179,7 +180,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.251.0",
+    version="1.252.0",
 )
 
 
@@ -392,6 +393,8 @@ app.include_router(consumer_contract_router)
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)
 app.include_router(team_router)
+# Agent and model entities (CDG-5.2, #5980): `/v1/tenants/{t}/catalog-agents|catalog-models…`.
+app.include_router(catalog_agent_router)
 app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)
 app.include_router(ownership_policy_router)

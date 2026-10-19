@@ -147,6 +147,12 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-kinds.html'] },
   },
+  {
+    // CDG-5.2 (#5980): an agent's page and a model's page, dumped by `tests/catalog-agents-ui.test.tsx`.
+    id: 'catalog-agents',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['agent-entity.html', 'model-entity.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

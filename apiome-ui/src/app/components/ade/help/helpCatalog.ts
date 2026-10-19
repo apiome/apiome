@@ -607,6 +607,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['findings', 'waiver', 'acknowledge', 'false positive', 'saved view', 'owner', 'trends'],
   },
   {
+    id: 'agents-and-models',
+    title: 'Agents and models',
+    summary: 'Register AI agents and the models they run on; agents become consumers of what they call.',
+    page: 'apiome-docs/docs/bring-in/agents-and-models.mdx',
+    section: 'reference',
+    keywords: ['llm', 'agent key', 'toolset', 'deprecation', 'consumer', 'provider'],
+  },
+  {
     id: 'connectors',
     title: 'Connectors',
     summary: 'Register API gateways and registries whose APIs sync into the catalog.',
