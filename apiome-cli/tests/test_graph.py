@@ -257,3 +257,92 @@ def test_impact_usage_errors_make_no_call(httpx_mock: HTTPXMock, args: list) -> 
     result = runner.invoke(app, args)
     assert result.exit_code == EXIT_USAGE
     assert httpx_mock.get_requests() == []
+
+
+# ---------------------------------------------------------------------------------------------
+# apiome graph export (CDG-3.6 / #5971)
+# ---------------------------------------------------------------------------------------------
+
+_EXPORT = "http://localhost:8000/v1/graph/acme-corp/export"
+_JSON_EXPORT = {"format": "apiome.graph.export/v1", "truncated": False, "nodes": [], "edges": []}
+
+
+def test_export_writes_json_to_stdout(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_EXPORT}?format=json", json=_JSON_EXPORT)
+    result = runner.invoke(app, ["graph", "export"])
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert json.loads(result.stdout)["format"] == "apiome.graph.export/v1"
+    assert "truncated" not in result.stderr
+
+
+def test_export_passes_every_filter(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(method="GET", text="digraph apiome {\n}\n")
+    result = runner.invoke(
+        app,
+        ["graph", "export", "--format", "DOT", "--kind", "consumer", "--kind", "project", "--team", "payments",
+         "--provenance", "declared", "--no-stale", "--entity", "project:abc", "--depth", "3"],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    request = httpx_mock.get_requests()[0]
+    assert request.url.path == "/v1/graph/acme-corp/export"
+    assert list(request.url.params.multi_items()) == [
+        ("format", "dot"), ("kind", "consumer"), ("kind", "project"), ("team", "payments"),
+        ("provenance", "declared"), ("stale", "false"), ("entity", "project:abc"), ("depth", "3"),
+    ]
+    assert result.stdout == "digraph apiome {\n}\n"
+
+
+def test_export_leaves_depth_out_without_an_entity(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_EXPORT}?format=json", json=_JSON_EXPORT)
+    result = runner.invoke(app, ["graph", "export", "--depth", "4"])
+    assert result.exit_code == EXIT_SUCCESS, result.output
+
+
+def test_export_writes_a_file(httpx_mock: HTTPXMock, tmp_path) -> None:
+    httpx_mock.add_response(method="GET", text="// apiome graph export: 0 nodes, 0 edges\ndigraph apiome {\n}\n")
+    target = tmp_path / "graph.dot"
+    result = runner.invoke(app, ["graph", "export", "--format", "dot", "--out", str(target)])
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert target.read_text().startswith("// apiome graph export")
+    assert result.stdout == "" and f"Wrote {target}" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "fmt, body",
+    [("json", json.dumps({**_JSON_EXPORT, "truncated": True})),
+     ("dot", "// apiome graph export: 1 nodes, 10000 edges; truncated at 10000 edges\ndigraph apiome {\n}\n")],
+)
+def test_export_warns_when_truncated(httpx_mock: HTTPXMock, fmt: str, body: str) -> None:
+    httpx_mock.add_response(method="GET", text=body)
+    result = runner.invoke(app, ["graph", "export", "--format", fmt])
+    assert result.exit_code == EXIT_SUCCESS
+    assert "truncated at 10,000 edges" in result.stderr
+
+
+def test_export_refuses_an_unknown_format() -> None:
+    result = runner.invoke(app, ["graph", "export", "--format", "svg"])
+    assert result.exit_code == EXIT_USAGE
+
+
+def test_export_prints_the_refusal(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(
+        method="GET", status_code=400, json={"detail": {"code": "graph-invalid", "message": "unknown filter values: x"}}
+    )
+    result = runner.invoke(app, ["graph", "export", "--kind", "x"])
+    assert result.exit_code == EXIT_USAGE
+    assert "unknown filter values: x" in result.stderr
+
+
+def test_export_truncated_reader() -> None:
+    from apiome_cli.client.graph import export_truncated
+
+    assert export_truncated('{"truncated": true}', "json") is True
+    assert export_truncated('{"truncated": false}', "json") is False
+    assert export_truncated("not json", "json") is False
+    assert export_truncated("[]", "json") is False
+    assert export_truncated("// x; truncated at 10000 edges\ndigraph {}", "dot") is True
+    assert export_truncated("digraph {} // truncated", "dot") is False
+
+
+def test_graph_export_path() -> None:
+    assert api_paths.graph_export("acme") == "/v1/graph/acme/export"

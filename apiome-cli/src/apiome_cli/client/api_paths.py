@@ -863,3 +863,8 @@ def graph_dependencies(tenant_slug: str, kind: str, entity: str) -> str:
 def graph_blast_radius(tenant_slug: str) -> str:
     """POST a blast-radius question (CDG-3.3)."""
     return f"{V1}/graph/{tenant_slug}/blast-radius"
+
+
+def graph_export(tenant_slug: str) -> str:
+    """GET the dependency graph as JSON or DOT (CDG-3.6); filters go in the query string."""
+    return f"{V1}/graph/{tenant_slug}/export"

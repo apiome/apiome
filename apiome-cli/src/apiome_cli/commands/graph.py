@@ -1,8 +1,11 @@
-"""The catalog dependency graph from the command line — CDG-3.2 (#5967), CDG-3.3 (#5968).
+"""The catalog dependency graph from the command line — CDG-3.2 (#5967), CDG-3.3 (#5968), CDG-3.6 (#5971).
 
 ``apiome graph impact --project <slug> --operation "GET /pets/{id}"`` asks what a change affects:
 the consumers and dependents it reaches, directly and transitively, and the evidence it
 invalidates (``POST …/blast-radius``).
+
+``apiome graph export [--format json|dot]`` writes the workspace's dependency graph — or one
+entity's neighbourhood — for other tools (``GET …/export``, CDG-3.6).
 
 ``apiome graph declare <kind> <entity> --depends-on <slug>`` sets what an entity declares it
 depends on (its ``manual`` declarations, ``PUT …/dependencies``), and ``apiome graph dependencies``
@@ -15,7 +18,9 @@ A refusal prints REST's message on stderr and exits with the HTTP-derived code (
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 import typer
@@ -26,6 +31,7 @@ from apiome_cli.client.errors import http_exit_code
 from apiome_cli.client.graph import (
     dependency_rows,
     evidence_rows,
+    export_truncated,
     impact_rows,
     operation_pointer,
     parse_depends_on,
@@ -237,3 +243,57 @@ def impact(
         typer.echo("The answer was truncated: raise --depth (at most 5) or narrow the change.", err=True)
     for warning in answer.get("warnings") or []:
         typer.echo(f"Warning: {warning}", err=True)
+
+
+_EXPORT_FORMATS = ("json", "dot")
+
+
+@app.command("export")
+def export(
+    ctx: typer.Context,
+    export_format: str = typer.Option("json", "--format", help="json (default) or dot (Graphviz)."),
+    out: Path | None = typer.Option(None, "--out", help="Write to this file instead of stdout."),
+    kind: list[str] | None = typer.Option(
+        None, "--kind", help="Keep edges with an end of this node kind, e.g. consumer (repeatable)."
+    ),
+    team: str | None = typer.Option(None, "--team", help="Keep edges with an end owned by this team slug."),
+    provenance: list[str] | None = typer.Option(
+        None, "--provenance", help="declared, derived or runtime (repeatable; default all)."
+    ),
+    stale: bool = typer.Option(True, "--stale/--no-stale", help="Include stale edges (default) or drop them."),
+    entity: str | None = typer.Option(
+        None, "--entity", help="Export only this entity's neighbourhood, as KIND:ID, e.g. project:<id>."
+    ),
+    depth: int = typer.Option(2, "--depth", min=1, max=5, help="Hops around --entity (1-5, default 2)."),
+) -> None:
+    """Export the dependency graph as JSON or DOT (GET …/export).
+
+    Writes every edge of the workspace — or, with ``--entity``, the edges within ``--depth`` hops of
+    one entity — with each node's name, slug and owner team. ``--format dot`` writes a Graphviz file:
+    ``apiome graph export --format dot --out graph.dot && dot -Tsvg graph.dot > graph.svg``.
+
+    The export holds at most 10,000 edges; when more match, a warning is printed on stderr (and the
+    JSON says ``truncated: true``).
+    """
+    fmt = (export_format or "json").strip().lower()
+    if fmt not in _EXPORT_FORMATS:
+        raise typer.BadParameter("must be one of json, dot", param_hint="--format")
+    query: list[tuple[str, str]] = [("format", fmt)]
+    query += [("kind", value) for value in kind or []]
+    if team:
+        query.append(("team", team))
+    query += [("provenance", value) for value in provenance or []]
+    if not stale:
+        query.append(("stale", "false"))
+    if entity:
+        query += [("entity", entity), ("depth", str(depth))]
+    client, tenant = tenant_scoped_client(ctx)
+    response = _expect(client.get_raw(f"{api_paths.graph_export(tenant)}?{urlencode(query)}"))
+    text = response.text
+    if out is not None:
+        out.write_text(text, encoding="utf-8")
+        typer.echo(f"Wrote {out}", err=True)
+    else:
+        typer.echo(text, nl=not text.endswith("\n"))
+    if export_truncated(text, fmt):
+        typer.echo("The export was truncated at 10,000 edges: narrow it with --kind, --team or --entity.", err=True)

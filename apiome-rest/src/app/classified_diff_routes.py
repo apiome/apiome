@@ -11,6 +11,11 @@ Sending ``consumers: true`` adds the CTG-4.2 per-consumer analysis (#4480): the 
 intersected with what each registered consumer of the **base** project declared it uses, plus the
 "breaks 2 of 7 consumers" summary. It is opt-in because it needs ``consumer_contracts:view`` and
 costs a registry read the default gate does not.
+
+Sending ``blastRadius: true`` adds the CDG-3.6 blast-radius line to every breaking change (#5971):
+"affects N consumers across M teams (…); K verification runs invalidated", from the CDG-3.3 blast
+radius of the change against the **base** project (:mod:`app.diff_blast_radius`). Opt-in too: it
+needs ``projects:view`` and runs one graph traversal per breaking pointer.
 """
 
 from __future__ import annotations
@@ -27,6 +32,12 @@ from .compatibility_engine import openapi_for_revision
 from .consumer_impact import ConsumerImpactReport, render_consumer_impact_markdown
 from .consumer_impact_service import consumer_impact_for_diff
 from .database import db
+from .diff_blast_radius import (
+    BlastRadiusAnnotations,
+    BlastRadiusDiffMeta,
+    BlastRadiusSummary,
+    annotate_breaking_changes,
+)
 from .import_ingestion import IngestionError, parse_document
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
@@ -91,6 +102,15 @@ class ClassifiedDiffRequest(BaseModel):
         description=(
             "Include the CTG-4.2 per-consumer analysis for the base project's registered "
             "consumers. Requires ``consumer_contracts:view``."
+        ),
+    )
+    blast_radius: bool = Field(
+        default=False,
+        alias="blastRadius",
+        description=(
+            "Annotate each breaking change with its CDG-3.3 blast radius against the base project: "
+            "consumers affected, their owner teams and the verification runs invalidated. Requires "
+            "``projects:view``."
         ),
     )
 
@@ -165,6 +185,14 @@ class ClassifiedDiffChangeOut(BaseModel):
             "affected."
         ),
     )
+    blast_radius: Optional[BlastRadiusSummary] = Field(
+        default=None,
+        serialization_alias="blastRadius",
+        exclude_if=lambda value: value is None,
+        description=(
+            "With ``blastRadius: true``, on a breaking change: what it affects. Absent otherwise."
+        ),
+    )
 
 
 class ClassifiedDiffResponse(BaseModel):
@@ -182,6 +210,12 @@ class ClassifiedDiffResponse(BaseModel):
         description=(
             "CTG-4.2 per-consumer verdicts, present only when ``consumers: true`` was sent."
         ),
+    )
+    blast_radius: Optional[BlastRadiusDiffMeta] = Field(
+        default=None,
+        serialization_alias="blastRadius",
+        exclude_if=lambda value: value is None,
+        description="With ``blastRadius: true``: how many breaking changes were annotated. Absent otherwise.",
     )
 
 
@@ -318,6 +352,7 @@ def _response_from_classified(
     base_meta: ClassifiedDiffResolvedStored,
     head_meta: ClassifiedDiffHeadMeta,
     impact: Optional[ConsumerImpactReport] = None,
+    annotations: Optional[BlastRadiusAnnotations] = None,
 ) -> ClassifiedDiffResponse:
     """Map a pure ClassifiedDiff onto the REST response model.
 
@@ -327,6 +362,8 @@ def _response_from_classified(
         head_meta: Resolved head coordinates.
         impact: CTG-4.2 per-consumer analysis, when it was requested. Each change then also
             carries the handles it touches, so a caller never has to re-join the two lists.
+        annotations: CDG-3.6 blast-radius summaries, when they were requested; each breaking change
+            with a summary carries it as ``blastRadius``.
 
     Returns:
         The response model.
@@ -353,6 +390,11 @@ def _response_from_classified(
                     if impact is None
                     else slugs_by_change.get((c.pointer, c.rule_id, c.change_kind), [])
                 ),
+                blast_radius=(
+                    annotations.by_pointer.get(c.pointer)
+                    if annotations is not None and c.severity == "breaking"
+                    else None
+                ),
             )
             for c in result.changes
         ],
@@ -361,6 +403,7 @@ def _response_from_classified(
         base=base_meta,
         head=head_meta,
         consumers=impact,
+        blast_radius=None if annotations is None else annotations.meta(),
     )
 
 
@@ -402,10 +445,17 @@ async def post_classified_diff(
     "Consumer impact" section. Consumers are those registered against the **base** project, since
     that is the published contract they declared against; the flag needs
     ``consumer_contracts:view``.
+
+    With ``blastRadius: true`` each breaking change also carries ``blastRadius`` — consumers
+    affected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of
+    the change against the base project and revision — and each breaking row of the markdown gains a
+    "Blast radius:" line. The flag needs ``projects:view``.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     if body.consumers:
         enforce_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW)
+    if body.blast_radius:
+        enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
     tenant_id = str(auth_data["tenant_id"])
 
     base_doc, base_meta, base_version = _resolve_stored_side(
@@ -438,6 +488,16 @@ async def post_classified_diff(
             base_version_id=str(base_version.get("id") or "") or None,
         )
 
+    annotations: Optional[BlastRadiusAnnotations] = None
+    if body.blast_radius:
+        annotations = annotate_breaking_changes(
+            db,
+            tenant_id,
+            base_meta.project_id,
+            base_meta.version_record_id,
+            result.changes,
+        )
+
     if _wants_markdown(accept):
         to_version = head_meta.version_label or "inline"
         changelog = build_changelog(
@@ -445,11 +505,18 @@ async def post_classified_diff(
             from_version=base_meta.version_label,
             to_version=to_version,
         )
-        md = render_changelog_markdown(changelog)
+        md = render_changelog_markdown(
+            changelog, annotations=annotations.lines() if annotations is not None else None
+        )
+        if annotations is not None and annotations.skipped:
+            md = md.rstrip("\n") + (
+                f"\n\n_Blast radius shown for the first {annotations.meta().limit} breaking changes; "
+                f"{annotations.skipped} more were not checked._\n"
+            )
         if impact is not None:
             md = md.rstrip("\n") + "\n\n" + render_consumer_impact_markdown(impact)
         return Response(content=md, media_type="text/markdown; charset=utf-8")
 
     return _response_from_classified(
-        result, base_meta=base_meta, head_meta=head_meta, impact=impact
+        result, base_meta=base_meta, head_meta=head_meta, impact=impact, annotations=annotations
     )

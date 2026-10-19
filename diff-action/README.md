@@ -7,6 +7,7 @@ gate (CTG-2.2 / #4472).
 - Passes on exit `0`
 - Surfaces operational errors (`2`) with `::error::`
 - Upserts **one sticky PR comment** with the markdown changelog (`--format md`)
+- Says what each breaking change affects in the dependency graph (`--blast-radius`, on by default)
 
 ## Usage
 
@@ -45,6 +46,25 @@ Full guide: [`apiome-docs/docs/reference/ci/ci-diff-gate.md`](../apiome-docs/doc
 | `base-url` | no | `https://api.apiome.dev` | REST base URL |
 | `github-token` | no | `${{ github.token }}` | Token for sticky PR comments |
 | `comment` | no | `true` | Set `false` to skip the PR comment |
+| `blast-radius` | no | `true` | Add the blast-radius line under each breaking change; set `false` to leave it out. Needs `projects:view` |
+
+## The PR comment
+
+The comment is the markdown changelog. With `blast-radius` on (the default), each breaking change
+gets a line under it from the change's blast radius against the baseline project:
+
+```markdown
+- **Path removed** (`ctg.path_removed`) — `/paths/~1pets~1{petId}`
+  - Blast radius: affects 4 consumers across 2 teams (mobile, payments); 2 verification runs invalidated
+```
+
+- **Consumers** are those that depend on the change, directly or through another consumer.
+- **Teams** are those consumers' owner teams, named.
+- **Verification runs** are the latest runs that exercised an affected operation.
+
+A change nobody depends on reads `affects no registered consumers; no verification runs
+invalidated`. At most 50 breaking changes per diff get a line; the comment says how many more were
+not checked. The gate threshold does not change: `fail-on` still grades the whole specification.
 
 ## Outputs
 

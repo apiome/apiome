@@ -8,6 +8,9 @@ like ownership.
 ``…/blast-radius`` (CDG-3.3, #5968): ``POST`` answers "what does changing this affect" — direct
 and transitive dependents plus the evidence a change invalidates (:mod:`app.blast_radius`).
 
+``…/export`` (CDG-3.6, #5971): ``GET`` streams the tenant's graph — or one entity's neighbourhood —
+as JSON or Graphviz DOT, bounded at 10,000 edges (:mod:`app.graph_export`).
+
 ``…/edges`` (CDG-3.1, #5966):
 
 One entity's edges in ``apiome.catalog_edges``, outgoing (``direction=out``, the default) or incoming
@@ -21,9 +24,11 @@ needs ``projects:view``, the permission every catalog read shares.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
@@ -34,6 +39,10 @@ from .database import db
 from .declared_dependencies import MAX_DECLARED, DependencyValidationError
 from .declared_dependency_store import put_dependencies, read_dependencies
 from .entity_owners import KINDS
+from .graph_export import DEFAULT_DEPTH as DEFAULT_EXPORT_DEPTH
+from .graph_export import FORMATS as EXPORT_FORMATS
+from .graph_export import MAX_DEPTH as MAX_EXPORT_DEPTH
+from .graph_export import export_graph, render_dot, render_json
 from .graph_nodes import MAX_SEARCH_LIMIT, node_labels_with_owners, search_entities
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
@@ -501,4 +510,72 @@ async def get_graph_entities(
     return GraphEntityPage(
         entities=[GraphEntity(**e) for e in page.entities], total=page.total, truncated=page.truncated,
         limit=limit, offset=offset,
+    )
+
+
+# ---------------------------------------------------------------------------------------------
+# Export (CDG-3.6, #5971)
+# ---------------------------------------------------------------------------------------------
+
+#: The media type each export format is served as.
+_EXPORT_MEDIA_TYPES = {"json": "application/json", "dot": "text/vnd.graphviz"}
+
+
+@router.get(
+    "/{tenant_slug}/export",
+    summary="Export the dependency graph as JSON or DOT",
+    description=(
+        "The tenant's dependency graph as one document: `format=json` (default) writes "
+        "`{format: \"apiome.graph.export/v1\", tenant, generated_at, filters, limit, truncated, node_count, "
+        "edge_count, nodes, edges}`; `format=dot` writes a Graphviz `digraph` (`dot -Tsvg export.dot`). "
+        "Every node carries its name, slug and owner team.\n\n"
+        "Narrow it with `kind` (edges with either end of these node kinds), `team` (either end owned by "
+        "this team slug), `provenance` (each repeatable) and `stale=false` (drop stale edges), or export "
+        "one entity's neighbourhood with `entity=kind:id` and `depth` (1–5, default 2).\n\n"
+        "Bounded at 10,000 edges, current before stale: `truncated` (JSON) or the first-line comment "
+        "(DOT) says when more matched. The response is streamed and offered as a download.\n\n"
+        "Requires `projects:view`."
+    ),
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "The export.",
+            "content": {
+                "application/json": {"schema": {"type": "object"}},
+                "text/vnd.graphviz": {"schema": {"type": "string"}},
+            },
+        },
+        400: {"description": "`graph-invalid`: an unknown format, kind, provenance or entity, or a bad depth."},
+    },
+)
+async def export_graph_route(
+    tenant_slug: str,
+    format: str = Query("json", description="`json` or `dot`."),
+    kind: Optional[List[str]] = Query(None, description="Keep edges with an end of these node kinds."),
+    team: Optional[str] = Query(None, max_length=128, description="Keep edges with an end owned by this team slug."),
+    provenance: Optional[List[str]] = Query(None, description="Keep edges of these provenances."),
+    stale: bool = Query(True, description="`false` drops stale edges."),
+    entity: Optional[str] = Query(None, max_length=200, description="`kind:id`: export this entity's neighbourhood."),
+    depth: int = Query(DEFAULT_EXPORT_DEPTH, ge=1, le=MAX_EXPORT_DEPTH, description="Hops around `entity`."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StreamingResponse:
+    """Stream the tenant's graph as JSON or DOT."""
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
+    if format not in EXPORT_FORMATS:
+        raise HTTPException(
+            status_code=400, detail={"code": "graph-invalid", "message": "format must be 'json' or 'dot'"}
+        )
+    try:
+        export = export_graph(
+            db, _auth_tenant(auth_data), kinds=tuple(kind or ()), team=team, provenances=tuple(provenance or ()),
+            include_stale=stale, entity=entity, depth=depth,
+        )
+    except GraphValidationError as exc:
+        raise HTTPException(status_code=400, detail={"code": exc.code, "message": str(exc)}) from exc
+    chunks = render_dot(export, tenant=tenant_slug) if format == "dot" else render_json(export, tenant=tenant_slug)
+    filename = re.sub(r"[^A-Za-z0-9._-]", "-", tenant_slug) or "graph"
+    return StreamingResponse(
+        (chunk.encode("utf-8") for chunk in chunks),
+        media_type=_EXPORT_MEDIA_TYPES[format],
+        headers={"Content-Disposition": f'attachment; filename="{filename}-graph.{format}"'},
     )

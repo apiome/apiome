@@ -7,6 +7,7 @@ it. ``<kind>:<id>[#<pointer>]`` names any entity by id.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from apiome_cli.client.teams import ENTITY_KINDS
@@ -150,3 +151,23 @@ def evidence_rows(body: dict[str, Any]) -> list[dict[str, Any]]:
     """One table row per evidence section, with its count."""
     evidence = body.get("invalidated_evidence") or {}
     return [{"evidence": label, "count": len(evidence.get(key) or [])} for key, label in EVIDENCE_SECTIONS]
+
+
+def export_truncated(text: str, export_format: str) -> bool:
+    """Whether a graph export says it was cut short at its 10,000-edge bound.
+
+    Args:
+        text: The export as returned by ``GET …/export``.
+        export_format: ``json`` or ``dot``.
+
+    Returns:
+        ``truncated`` of a JSON export, or whether a DOT export's first-line comment says
+        "truncated". ``False`` for text that cannot be read.
+    """
+    if export_format == "dot":
+        first = text.split("\n", 1)[0]
+        return first.startswith("//") and "truncated" in first
+    try:
+        return bool(json.loads(text).get("truncated"))
+    except (ValueError, AttributeError):
+        return False

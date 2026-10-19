@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.241.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.242.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `classified-diff` · 1 operation
 
@@ -32,6 +32,11 @@ With ``consumers: true`` the response also carries the CTG-4.2 per-consumer anal
 "Consumer impact" section. Consumers are those registered against the **base** project, since
 that is the published contract they declared against; the flag needs
 ``consumer_contracts:view``.
+
+With ``blastRadius: true`` each breaking change also carries ``blastRadius`` — consumers
+affected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of
+the change against the base project and revision — and each breaking row of the markdown gains a
+"Blast radius:" line. The flag needs ``projects:view``.
 
 Operation id: `post_classified_diff_v1_diff__tenant_slug__classified_post`
 
@@ -68,6 +73,7 @@ Request body for classified diff: stored base vs stored or inline head.
 | `base` | `ClassifiedDiffStoredRef` | yes | Stored baseline revision (published contract / older side). |
 | `head` | `ClassifiedDiffStoredRef` or `ClassifiedDiffInlineHead` | yes | Head side: either another stored ``{project, version}`` or ``{inline}`` candidate document text. |
 | `consumers` | boolean | no | Include the CTG-4.2 per-consumer analysis for the base project's registered consumers. Requires ``consumer_contracts:view``. |
+| `blastRadius` | boolean | no | Annotate each breaking change with its CDG-3.3 blast radius against the base project: consumers affected, their owner teams and the verification runs invalidated. Requires ``projects:view``. |
 
 ### `ClassifiedDiffResponse` {#schema-classifieddiffresponse}
 
@@ -81,6 +87,7 @@ Classified change list with summary counts, max severity, and resolved sides.
 | `base` | `ClassifiedDiffResolvedStored` | yes | Base. |
 | `head` | `ClassifiedDiffHeadMeta` | yes | Head. |
 | `consumers` | `ConsumerImpactReport` or null | no | CTG-4.2 per-consumer verdicts, present only when ``consumers: true`` was sent. |
+| `blastRadius` | `BlastRadiusDiffMeta` or null | no | With ``blastRadius: true``: how many breaking changes were annotated. Absent otherwise. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

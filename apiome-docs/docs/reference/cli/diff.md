@@ -18,6 +18,8 @@ Uploads ``file`` as an inline candidate and classifies against a stored version 
 
 With ``--consumers`` the report also names *whose* build each change breaks ("breaks billing-service") in all three formats. The threshold is unchanged: it still grades the whole specification, so a passing gate never depends on who has registered.
 
+With ``--blast-radius`` each breaking change also says what it affects in the dependency graph — consumers reached directly or transitively, their owner teams, and the verification runs it invalidates — in all three formats. The threshold is unchanged here too.
+
 ```text
 apiome diff [OPTIONS] FILE
 ```
@@ -36,3 +38,4 @@ apiome diff [OPTIONS] FILE
 | `--fail-on` | text | `breaking` |  | Exit 1 when changes at this level or higher are present: breaking (default) or warn (non-breaking and breaking). docs-only alone never fails. Exit 2 on auth/network/parse errors. |
 | `--format` | text | `text` |  | Output format: text (default), json, or md (CTG-1.3 markdown changelog). |
 | `--consumers` | flag |  |  | Add the CTG-4.2 per-consumer analysis: which registered consumers of the baseline project this change breaks. Needs consumer_contracts:view. |
+| `--blast-radius` | flag |  |  | Add the CDG-3.3 blast radius to each breaking change: "affects N consumers across M teams (…); K verification runs invalidated". Needs projects:view. |

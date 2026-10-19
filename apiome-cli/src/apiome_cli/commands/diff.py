@@ -1,4 +1,7 @@
-"""CI classified-diff gate: ``apiome diff <file> --against <project>@<ref>`` (CTG-2.1)."""
+"""CI classified-diff gate: ``apiome diff <file> --against <project>@<ref>`` (CTG-2.1).
+
+``--blast-radius`` (CDG-3.6, #5971) adds what each breaking change affects in the dependency graph.
+"""
 
 from __future__ import annotations
 
@@ -107,6 +110,14 @@ def diff(
             "project this change breaks. Needs consumer_contracts:view."
         ),
     ),
+    blast_radius: bool = typer.Option(
+        False,
+        "--blast-radius",
+        help=(
+            "Add the CDG-3.3 blast radius to each breaking change: \"affects N consumers across M "
+            "teams (…); K verification runs invalidated\". Needs projects:view."
+        ),
+    ),
 ) -> None:
     """Diff a local OpenAPI file against a published project version (CI gate).
 
@@ -117,6 +128,10 @@ def diff(
     With ``--consumers`` the report also names *whose* build each change breaks
     ("breaks billing-service") in all three formats. The threshold is unchanged: it still
     grades the whole specification, so a passing gate never depends on who has registered.
+
+    With ``--blast-radius`` each breaking change also says what it affects in the dependency
+    graph — consumers reached directly or transitively, their owner teams, and the verification
+    runs it invalidates — in all three formats. The threshold is unchanged here too.
     """
     fmt = (output_format or "text").strip().lower()
     if json_mode_from_context(ctx):
@@ -149,11 +164,16 @@ def diff(
         }
         if consumers:
             body["consumers"] = True
+        if blast_radius:
+            body["blastRadius"] = True
 
+        # Markdown is fetched separately below; the JSON call then only needs the severity, so it
+        # skips the per-change graph traversals.
+        json_body = {k: v for k, v in body.items() if k != "blastRadius"} if fmt == "md" else body
         json_response = _post_classified(
             client,
             post_path,
-            body,
+            json_body,
             accept="application/json",
         )
         try:

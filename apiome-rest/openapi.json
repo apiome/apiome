@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.241.0",
+    "version": "1.242.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -19413,7 +19413,7 @@
           "classified-diff"
         ],
         "summary": "Post Classified Diff",
-        "description": "Classify changes between a stored base revision and a stored or inline head.\n\nSupports **stored-vs-stored** (``head: {project, version}``) and\n**inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline\ndocuments larger than 10MB UTF-8 are rejected with ``413``.\n\nDefault response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``\nincludes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown\nchangelog for the same classification (used by ``apiome diff --format md``).\n\nWith ``consumers: true`` the response also carries the CTG-4.2 per-consumer analysis \u2014\n``consumers`` on the body, and the touched handles on each change \u2014 and the markdown gains a\n\"Consumer impact\" section. Consumers are those registered against the **base** project, since\nthat is the published contract they declared against; the flag needs\n``consumer_contracts:view``.",
+        "description": "Classify changes between a stored base revision and a stored or inline head.\n\nSupports **stored-vs-stored** (``head: {project, version}``) and\n**inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline\ndocuments larger than 10MB UTF-8 are rejected with ``413``.\n\nDefault response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``\nincludes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown\nchangelog for the same classification (used by ``apiome diff --format md``).\n\nWith ``consumers: true`` the response also carries the CTG-4.2 per-consumer analysis \u2014\n``consumers`` on the body, and the touched handles on each change \u2014 and the markdown gains a\n\"Consumer impact\" section. Consumers are those registered against the **base** project, since\nthat is the published contract they declared against; the flag needs\n``consumer_contracts:view``.\n\nWith ``blastRadius: true`` each breaking change also carries ``blastRadius`` \u2014 consumers\naffected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of\nthe change against the base project and revision \u2014 and each breaking row of the markdown gains a\n\"Blast radius:\" line. The flag needs ``projects:view``.",
         "operationId": "post_classified_diff_v1_diff__tenant_slug__classified_post",
         "parameters": [
           {
@@ -23217,6 +23217,228 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for searchtheentitiesinthedependencygraphresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/graph/{tenant_slug}/export": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Export the dependency graph as JSON or DOT",
+        "description": "The tenant's dependency graph as one document: `format=json` (default) writes `{format: \"apiome.graph.export/v1\", tenant, generated_at, filters, limit, truncated, node_count, edge_count, nodes, edges}`; `format=dot` writes a Graphviz `digraph` (`dot -Tsvg export.dot`). Every node carries its name, slug and owner team.\n\nNarrow it with `kind` (edges with either end of these node kinds), `team` (either end owned by this team slug), `provenance` (each repeatable) and `stale=false` (drop stale edges), or export one entity's neighbourhood with `entity=kind:id` and `depth` (1\u20135, default 2).\n\nBounded at 10,000 edges, current before stale: `truncated` (JSON) or the first-line comment (DOT) says when more matched. The response is streamed and offered as a download.\n\nRequires `projects:view`.",
+        "operationId": "export_graph_route_v1_graph__tenant_slug__export_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "`json` or `dot`.",
+              "default": "json",
+              "title": "Format"
+            },
+            "description": "`json` or `dot`."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Exportthedependencygraphas Jsonor Dotkind schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotkind schema."
+                }
+              ],
+              "description": "Keep edges with an end of these node kinds.",
+              "title": "Kind"
+            },
+            "description": "Keep edges with an end of these node kinds."
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 128,
+                  "description": "Exportthedependencygraphas Jsonor Dotteam schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotteam schema."
+                }
+              ],
+              "description": "Keep edges with an end owned by this team slug.",
+              "title": "Team"
+            },
+            "description": "Keep edges with an end owned by this team slug."
+          },
+          {
+            "name": "provenance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Exportthedependencygraphas Jsonor Dotprovenance schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotprovenance schema."
+                }
+              ],
+              "description": "Keep edges of these provenances.",
+              "title": "Provenance"
+            },
+            "description": "Keep edges of these provenances."
+          },
+          {
+            "name": "stale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "`false` drops stale edges.",
+              "default": true,
+              "title": "Stale"
+            },
+            "description": "`false` drops stale edges."
+          },
+          {
+            "name": "entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200,
+                  "description": "Exportthedependencygraphas Jsonor Dotentity schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotentity schema."
+                }
+              ],
+              "description": "`kind:id`: export this entity's neighbourhood.",
+              "title": "Entity"
+            },
+            "description": "`kind:id`: export this entity's neighbourhood."
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5,
+              "minimum": 1,
+              "description": "Hops around `entity`.",
+              "default": 2,
+              "title": "Depth"
+            },
+            "description": "Hops around `entity`."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportthedependencygraphas Jsonor Dotauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportthedependencygraphas Jsonor Dotxapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportthedependencygraphas Jsonor Dotxapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response payload for exportthedependencygraphas jsonor dotresponse200."
+                }
+              },
+              "text/vnd.graphviz": {
+                "schema": {
+                  "type": "string",
+                  "description": "Response payload for exportthedependencygraphas jsonor dotresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`graph-invalid`: an unknown format, kind, provenance or entity, or a bad depth."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for exportthedependencygraphas jsonor dotresponse422."
                 }
               }
             }
@@ -95664,6 +95886,44 @@
         "title": "BindingListResponse",
         "description": "A page of a project's bindings."
       },
+      "BlastRadiusDiffMeta": {
+        "properties": {
+          "annotated": {
+            "type": "integer",
+            "title": "Annotated",
+            "description": "Breaking-change pointers that carry a `blastRadius`.",
+            "example": 1
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "description": "Breaking-change pointers past the per-diff bound, left unannotated.",
+            "example": 1
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "description": "Pointers whose blast radius could not be computed.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The most distinct pointers one diff annotates.",
+            "example": 50
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "annotated",
+          "skipped",
+          "failed",
+          "limit"
+        ],
+        "title": "BlastRadiusDiffMeta",
+        "description": "How the diff's breaking changes were annotated."
+      },
       "BlastRadiusEntity": {
         "properties": {
           "kind": {
@@ -95881,6 +96141,84 @@
         ],
         "title": "BlastRadiusResponse",
         "description": "What a change affects."
+      },
+      "BlastRadiusSummary": {
+        "properties": {
+          "consumers": {
+            "type": "integer",
+            "title": "Consumers",
+            "description": "Distinct consumers the change affects, directly or transitively.",
+            "example": 1
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/BlastRadiusTeam"
+            },
+            "type": "array",
+            "title": "Teams",
+            "description": "Owner teams of those consumers, sorted by slug.",
+            "maxItems": 1000
+          },
+          "verificationRuns": {
+            "type": "integer",
+            "title": "Verificationruns",
+            "description": "Verification runs the change invalidates.",
+            "example": 1
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when the counts are lower bounds.",
+            "default": false,
+            "example": false
+          },
+          "line": {
+            "type": "string",
+            "title": "Line",
+            "description": "e.g. `affects 3 consumers across 2 teams (mobile, payments); 1 verification run invalidated`.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumers",
+          "verificationRuns",
+          "line"
+        ],
+        "title": "BlastRadiusSummary",
+        "description": "What one breaking change affects, counted from its blast radius.\n\nAttributes:\n    consumers: Distinct consumers among the change's direct and transitive dependents.\n    teams: The distinct owner teams of those consumers, sorted by slug.\n    verification_runs: Verification runs the change invalidates.\n    truncated: True when the traversal hit its bound, so the counts are lower bounds.\n    line: The sentence the diff gate prints."
+      },
+      "BlastRadiusTeam": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Blast Radius Team schema."
+              },
+              {
+                "type": "null",
+                "description": "Blast Radius Team schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug"
+        ],
+        "title": "BlastRadiusTeam",
+        "description": "An owner team named in the line."
       },
       "BotPresetBody": {
         "properties": {
@@ -102095,7 +102433,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "completed_at": {
             "anyOf": [
@@ -103279,6 +103617,18 @@
             ],
             "title": "Consumers",
             "description": "Handles of the registered consumers this change touches. ``null`` when the consumer analysis was not requested; ``[]`` means no registered consumer is affected."
+          },
+          "blastRadius": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BlastRadiusSummary"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for classified diff change."
+              }
+            ],
+            "description": "With ``blastRadius: true``, on a breaking change: what it affects. Absent otherwise."
           }
         },
         "additionalProperties": false,
@@ -103409,6 +103759,13 @@
             "description": "Include the CTG-4.2 per-consumer analysis for the base project's registered consumers. Requires ``consumer_contracts:view``.",
             "default": false,
             "example": false
+          },
+          "blastRadius": {
+            "type": "boolean",
+            "title": "Blastradius",
+            "description": "Annotate each breaking change with its CDG-3.3 blast radius against the base project: consumers affected, their owner teams and the verification runs invalidated. Requires ``projects:view``.",
+            "default": false,
+            "example": false
           }
         },
         "additionalProperties": false,
@@ -103510,6 +103867,18 @@
               }
             ],
             "description": "CTG-4.2 per-consumer verdicts, present only when ``consumers: true`` was sent."
+          },
+          "blastRadius": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BlastRadiusDiffMeta"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for classified diff."
+              }
+            ],
+            "description": "With ``blastRadius: true``: how many breaking changes were annotated. Absent otherwise."
           }
         },
         "additionalProperties": false,
@@ -104019,7 +104388,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104247,7 +104616,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104778,14 +105147,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -107924,7 +108293,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "e68a57e3-abba-4aef-9d28-bb448041ba55"
+            "example": "d10a0e8d-c59c-4a33-8144-f1c61ef6f3a0"
           },
           "method": {
             "type": "string",
@@ -110451,7 +110820,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -112347,7 +112716,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "browse_url": {
             "anyOf": [
@@ -153883,7 +154252,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           }
         },
         "additionalProperties": false,
@@ -166136,7 +166505,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "detected_by": {
             "anyOf": [
@@ -174150,14 +174519,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T01:33:26Z"
+            "example": "2026-10-19T02:20:30Z"
           },
           "outcome": {
             "anyOf": [

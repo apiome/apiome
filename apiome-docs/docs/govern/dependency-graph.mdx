@@ -108,6 +108,9 @@ Declared edges don't go stale. They change only when their source does: see
 A consumer's `consumes` edges are exactly the pointers its current contract declares. The consumers
 that a change to an API can affect are the ones with a current `consumes` edge whose pointer
 overlaps a changed pointer, the same set the consumer impact check reports when a version is compared or published.
+To see those consumers together with what depends on them in turn, their owner teams and the
+evidence the change invalidates, run the [blast radius](#blast-radius), or add `--blast-radius` to
+the diff gate ([In the diff gate and the PR comment](#in-the-diff-gate-and-the-pr-comment)).
 
 ## Declare dependencies
 
@@ -282,6 +285,36 @@ A schema pointer affects every operation of the version that reaches that schema
 **Empty is an answer.** `evidence_checked: true` with empty lists means Apiome looked and nothing is
 affected. It does not mean the evidence wasn't checked.
 
+### In the diff gate and the PR comment
+
+The contract gate states each breaking change's blast radius in one line, so a reviewer sees who is
+affected without opening Apiome:
+
+```text
+affects 4 consumers across 2 teams (mobile, payments); 2 verification runs invalidated
+```
+
+- **Consumers**: the consumers among the change's direct and transitive dependents.
+- **Teams**: those consumers' owner teams, named. A consumer without an owner counts toward the
+  consumers, not the teams.
+- **Verification runs**: the `verification_runs` the change invalidates.
+
+The line is computed against the baseline project and version you diff against. A change nobody
+depends on reads `affects no registered consumers; no verification runs invalidated`; a cut-short
+answer says "at least". At most 50 breaking changes per diff are checked, and the output says how
+many more were not.
+
+- **The diff-action PR comment** shows it under each breaking change by default. Set the
+  `blast-radius` input to `false` to leave it out (see [diff-action](../reference/ci/diff-action.md)).
+- **The CLI** shows it with `apiome diff ./openapi.yaml --against petstore@latest --blast-radius`,
+  in the text, `json` and `md` formats.
+- **The API** adds it with `"blastRadius": true` on `POST /v1/diff/{tenant}/classified`. Each
+  breaking change then carries `blastRadius` (`consumers`, `teams`, `verificationRuns`,
+  `truncated`, `line`), and the markdown gains a `Blast radius:` line under each breaking row.
+
+It needs the `projects:view` permission. It never changes whether the gate passes: `--fail-on`
+still grades the whole specification.
+
 ## Reading edges
 
 ```http
@@ -318,5 +351,43 @@ X-API-Key: <your-api-key>
 Each entity comes with its name, owner team and `in_count`, `out_count` and `stale_count`, most
 connected first. `limit` is 1–2,000 (default 200); `total` says how many match and `truncated`
 whether there are more.
+
+## Export the graph
+
+Export the dependency graph to use it in other tools: as JSON for a script, or as a Graphviz DOT
+file to draw.
+
+```bash
+apiome graph export --out graph.json
+apiome graph export --format dot --out graph.dot && dot -Tsvg graph.dot > graph.svg
+apiome graph export --entity project:<project-id> --depth 2 --format dot
+```
+
+```http
+GET /v1/graph/{tenant}/export?format=dot&team=payments
+X-API-Key: <your-api-key>
+```
+
+| Parameter | CLI | Meaning |
+| --- | --- | --- |
+| `format` | `--format` | `json` (default) or `dot` |
+| `kind` | `--kind` | Keep edges with at least one end of this node kind, such as `consumer`. Repeat it for several. |
+| `team` | `--team` | Keep edges with at least one end owned by this team |
+| `provenance` | `--provenance` | Keep edges of these provenances. Repeat it for several. |
+| `stale` | `--no-stale` | `false` drops stale edges; they are included by default |
+| `entity` | `--entity` | `kind:id`: export only the edges around this entity, in both directions |
+| `depth` | `--depth` | How many hops around `entity` to export, 1–5. Default 2. |
+
+- **JSON** is one document, `apiome.graph.export/v1`: the `filters` used, `truncated`, `node_count`,
+  `edge_count`, every **node** (`kind`, `id`, `name`, `slug`, `owner`) and every **edge** (its
+  ends, `edge_kind`, `pointer`, `provenance`, `source_ref`, timestamps and `stale`).
+- **DOT** draws each node as a box labelled with its name, kind and owner team, and each edge from
+  the dependent to what it depends on, labelled with its kind and pointer. Declared edges are bold,
+  runtime edges dotted, stale edges dashed and grey.
+
+An export holds at most **10,000 edges**, current edges first. When more match, the JSON says
+`truncated: true`, the DOT file's first line says so, and the CLI prints a warning. Narrow the
+export with `kind`, `team` or `entity`. The response is streamed and downloads as
+`<tenant>-graph.json` or `<tenant>-graph.dot`. It needs the `projects:view` permission.
 
 The full reference is on [Graph](../reference/rest/graph.md).
