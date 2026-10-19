@@ -865,6 +865,26 @@
       ]
     },
     {
+      "id": "entity-facts",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-facts\"]",
+      "data": "fixture:hive-a11y/entity-facts.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalogFacts/CatalogFactsPanel.tsx",
+        "apiome-ui/lib/catalog-facts.ts"
+      ]
+    },
+    {
+      "id": "scorecard-kind",
+      "route": "/ade/dashboard/mcp",
+      "waitFor": "[data-testid=\"catalog-facts\"]",
+      "data": "fixture:hive-a11y/scorecard-kind.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalogFacts/CatalogFactsPanel.tsx",
+        "apiome-ui/lib/catalog-facts.ts"
+      ]
+    },
+    {
       "id": "catalog-item-subjects",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"catalog-subjects-panel\"]",

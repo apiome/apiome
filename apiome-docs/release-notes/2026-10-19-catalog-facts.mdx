@@ -1,0 +1,23 @@
+---
+slug: catalog-facts
+title: Catalog facts on every entity page
+description: A facts checklist per entity — owner, freshness, deployment and more — ahead of scorecards.
+authors: [apiome]
+---
+
+Every catalog entity now lists the **facts** maturity scorecards will read: whether it has a
+contactable owner team, declared consumers and dependencies, whether its source refreshed within
+twice its cadence, where it is deployed, and the facts specific to its kind.
+
+{/* truncate */}
+
+- **A plain checklist.** Each fact reads **Met**, **Not met**, **Not applicable** or **Not assessed**,
+  with what it is based on and a link to check it. Nothing Apiome cannot establish is ever counted
+  as met.
+- **No score yet.** Maturity ladders are still to come, so there is no grade — never one computed
+  from partial facts.
+- **Everywhere.** Catalog items, Projects, MCP servers, connectors, gateway environments, agents and
+  models.
+- **API.** `GET /v1/catalog/{tenant}/entities/{kind}/{id}/facts`.
+
+See [Scorecards](/govern/scorecards).

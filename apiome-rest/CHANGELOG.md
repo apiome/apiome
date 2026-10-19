@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.390.0] - 2026-10-19
+
+### Added
+- **Catalog facts for per-kind scorecards (#5982, CDG-5.4)**: `GET /v1/catalog/{tenant}/entities/{kind}/{id}/facts`
+  returns the typed facts a catalog entity carries, each with a status (`met`, `unmet`, `not_applicable`,
+  `not_assessed`), a value, a detail line and evidence links: `owner.present`, `owner.contactable`,
+  `consumers.declared` (count), `dependencies.declared`, `refresh.fresh` (its repository, connector, MCP discovery or
+  gateway sync last succeeded within twice its cadence; not applicable when nothing refreshes it), `deployment.known`
+  (current `deployed_on` edges), `shadow.none` (the shadow report for the connector or environment; not assessed on a
+  stale inventory), `registry.level-set` (catalog items' schema subjects), `mcp.baseline-approved` and
+  `agent.readiness` (always `not_assessed` until ATQ-2). Which facts apply depends on the kind (`app.catalog_facts`).
+  `score` is always `null` until GVM-1.x maturity ladders consume the facts; a grade is never computed from partial
+  facts. Needs `view` on the kind's resource; 422 for an unknown kind, 404 for an unknown entity. OpenAPI 1.254.0.
+
 ## [1.389.0] - 2026-10-19
 
 ### Added

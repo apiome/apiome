@@ -13,6 +13,7 @@ import { Input } from '@/app/components/ui/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/Select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
 import { ConnectorEnvironments } from '@/app/components/ade/gatewayConfigs/ConnectorEnvironments';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { toast } from '@/app/components/ui/toast';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -175,6 +176,9 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
               <TabsTrigger value="runs" data-testid="connector-tab-runs">
                 Runs
               </TabsTrigger>
+              <TabsTrigger value="facts" data-testid="connector-tab-facts">
+                Facts
+              </TabsTrigger>
               <TabsTrigger value="settings" data-testid="connector-tab-settings">
                 Settings
               </TabsTrigger>
@@ -273,6 +277,11 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
           {/* CDG-5.3: one gateway config per environment the syncs found. */}
           <TabsContent value="environments">
             <ConnectorEnvironments connectorId={connectorId} active={tab === 'environments'} />
+          </TabsContent>
+
+          {/* CDG-5.4: the connector's scorecard facts. */}
+          <TabsContent value="facts">
+            <CatalogFactsPanel kind="connector" id={connectorId} active={tab === 'facts'} />
           </TabsContent>
 
           <TabsContent value="runs">

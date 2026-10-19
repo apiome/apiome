@@ -9,8 +9,8 @@ Two routes over the kind registry (:mod:`app.catalog_entities`), under ``/v1/cat
   and **shadow** (the shadow-API report's count).
 
 A kind is listed only when the caller may ``view`` its RBAC resource; the others are left out of
-the list and the counts rather than refusing the whole request. ``…/entities/{kind}/{id}`` paths are
-reserved for per-entity reads (CDG-5.4).
+the list and the counts rather than refusing the whole request. ``…/entities/{kind}/{id}/facts`` returns
+one entity's catalog facts (CDG-5.4).
 
 This router is included before :mod:`app.catalog_routes`, whose ``/{tenant_slug}/{item_id}`` would
 otherwise read ``entities`` as an item id.
@@ -28,10 +28,13 @@ from pydantic.alias_generators import to_camel
 from . import catalog_entity_store as store
 from . import shadow_api_store
 from .auth import validate_authentication
-from .catalog_entities import EntityKind, EntityKindError, entity_href, parse_kinds
+from .catalog_entities import EntityKind, EntityKindError, entity_href, kind, parse_kinds
+from .catalog_fact_store import CadenceSettings, entity_name, read_facts
+from .catalog_facts import CatalogFactsOut
 from .database import db
 from .entity_owners import EntityOwnerRef, owner_ref_from_value
 from .permissions import Action, Resource, has_permission
+from .revision_deprecation import is_uuid_string
 from .shadow_api_report import build_shadow_report
 
 router = APIRouter(prefix="/v1/catalog", tags=["catalog-entities"])
@@ -57,7 +60,10 @@ class GraphNodeRef(_CamelModel):
 class CatalogEntity(_CamelModel):
     """One entity in the common envelope."""
 
-    kind: str = Field(description="The registry kind: `api`, `spec`, `mcp_server`, `consumer`, `connector` or `team`.")
+    kind: str = Field(
+        description="The registry kind: `api`, `spec`, `mcp_server`, `consumer`, `connector`, `agent`, `model`, "
+        "`gateway_config` or `team`."
+    )
     id: str
     slug: Optional[str] = Field(default=None, description="`null` for a kind without slugs (connectors).")
     name: str
@@ -255,3 +261,47 @@ async def summarize_catalog_entities(
         ],
         callouts=callouts,
     )
+
+
+@router.get(
+    "/{tenant_slug}/entities/{kind_key}/{entity_id}/facts",
+    response_model=CatalogFactsOut,
+    response_model_by_alias=True,
+)
+async def read_catalog_entity_facts(
+    tenant_slug: str,
+    kind_key: str,
+    entity_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CatalogFactsOut:
+    """The facts one entity carries for per-kind scorecards (CDG-5.4), each with its evidence.
+
+    `owner.present`, `owner.contactable`, `consumers.declared`, `dependencies.declared`,
+    `refresh.fresh` (its source last succeeded within twice its cadence), `deployment.known`,
+    `shadow.none`, `registry.level-set`, `mcp.baseline-approved` and `agent.readiness` — whichever
+    apply to the kind. A fact Apiome cannot establish is `not_assessed`, never `met`. `score` is
+    always `null` until maturity ladders (GVM-1.x) consume the facts. Needs `view` on the kind's
+    resource; an unknown kind is a 422, an unknown entity a 404.
+    """
+    from .config import settings
+
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        entry = kind(kind_key)
+    except EntityKindError as exc:
+        raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)}) from exc
+    if not has_permission(db, auth_data, entry.resource, Action.VIEW):
+        raise HTTPException(status_code=403, detail=f"Permission denied: {entry.resource}:view is required")
+    name = entity_name(db, entry, tenant_id, entity_id) if is_uuid_string(entity_id) else None
+    if name is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "entity-not-found", "message": f"No live {entry.label.lower()} {entity_id!r}."},
+        )
+    cadence = CadenceSettings(
+        refresh_default=int(settings.refresh_default_interval_seconds),
+        refresh_floor=int(settings.refresh_min_interval_seconds),
+        mcp_default=int(settings.mcp_discovery_default_cadence_seconds),
+    )
+    return read_facts(db, entry, tenant_id, entity_id, name, cadence=cadence)

@@ -68,6 +68,7 @@ import {
   Tags,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { CatalogSubjectsPanel } from '@/app/components/ade/schemaRegistry/CatalogSubjectsPanel';
 import { isRegistryFormat } from '@lib/schema-registry';
 
@@ -746,6 +747,8 @@ export function CatalogItemDetailClient({
             onOpenLint={() => selectTab('lint')}
             onOpenSource={showSourceTab}
           />
+          {/* CDG-5.4: the item's scorecard facts, as a plain checklist (no score). */}
+          <CatalogFactsPanel kind="spec" id={item.id} active={activeTab === 'overview'} />
         </TabPanel>
 
         <TabPanel id="format" active={activeTab}>

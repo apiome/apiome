@@ -160,6 +160,13 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['gateway-config-entity.html', 'export-studio-gateway.html'] },
   },
+  {
+    // CDG-5.4 (#5982): the Facts checklist of a catalog item and of an MCP server, dumped by
+    // `tests/catalog-facts-ui.test.tsx`.
+    id: 'catalog-facts',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['entity-facts.html', 'scorecard-kind.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

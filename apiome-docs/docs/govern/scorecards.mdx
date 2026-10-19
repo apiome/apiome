@@ -1,0 +1,87 @@
+---
+title: Scorecards
+description: Catalog facts each entity carries for maturity scorecards, shown as a checklist.
+sidebar_position: 1.6
+tags: [governance, catalog]
+---
+
+Scorecards will grade each catalog entity against a maturity ladder for its kind. The ladders are
+still to come; what is here today are the **catalog facts** they will read — and every entity page
+already shows them as a checklist.
+
+## Catalog facts
+
+A **fact** is one typed, evidence-backed statement about one entity: *it has a confirmed owner
+team*, *its source refreshed within twice its cadence*, *it is deployed on a gateway*. Each entity
+page lists the facts that apply to its kind in a **Facts** section:
+
+<Screenshot id="scorecard-kind" alt="The Facts checklist of an MCP server: no owner team, owner contact not applicable, one declared dependency, freshness not assessed because discovery is disabled, and an approved trust baseline" />
+
+Every fact shows its **status** as an icon and a word, what it is based on, and links to the
+evidence:
+
+| Status | Means |
+| --- | --- |
+| **Met** | The fact holds. |
+| **Not met** | It does not. |
+| **Not applicable** | It cannot apply to this entity — a catalog item with no schema-registry subject has no compatibility level to set. |
+| **Not assessed** | Apiome cannot establish it right now — a paused source, a stale gateway inventory, agent readiness. It is **never** treated as met. |
+
+**There is no score yet.** The checklist has no grade or percentage, and the API returns
+`score: null`: a grade computed from partial facts would mislead, so none is shown until maturity
+ladders are available.
+
+### The facts
+
+| Fact | Met when | Evidence |
+| --- | --- | --- |
+| `owner.present` | The entity has a confirmed owner team that has not been deleted | The owner and the [team](../workspace/teams.mdx) |
+| `owner.contactable` | That team has an on-call or chat link (not applicable without an owner) | The team |
+| `consumers.declared` | At least one consumer is registered for the API — for an agent, it consumes at least one API | The consumers |
+| `dependencies.declared` | At least one [declared dependency](./dependency-graph.mdx#declare-dependencies) | The dependencies |
+| `refresh.fresh` | The entity's source last refreshed successfully within **twice** its cadence: the repository or connector it was imported from, an MCP server's discovery, a connector's syncs, a gateway environment's sync. Not applicable when nothing refreshes it; not assessed when the source is paused. The detail also gives the last revision's date. | The repository, connector or server |
+| `deployment.known` | The API is deployed on at least one gateway environment — for a gateway environment, it serves at least one API | The [graph](./dependency-graph.mdx) |
+| `shadow.none` | The [shadow-API report](./shadow-apis.mdx) for the connector (or the environment) lists none; not assessed while its inventory is stale | Shadow APIs |
+| `registry.level-set` | Every [schema-registry subject](../ship/schema-registry.mdx) the catalog item backs has its own compatibility level | The item's **Subjects** tab |
+| `mcp.baseline-approved` | The MCP server has an approved trust baseline | The MCP server |
+| `agent.readiness` | Not assessed yet — agent readiness scoring is still to come | — |
+
+### Which facts each kind carries
+
+| Kind | Facts |
+| --- | --- |
+| Project | owner, consumers, dependencies, freshness, deployment |
+| Catalog item | owner, consumers, dependencies, freshness, deployment, registry level |
+| MCP server | owner, dependencies, freshness, trust baseline |
+| Connector | owner, dependencies, freshness, shadow APIs |
+| Gateway config | owner, freshness, deployment, shadow APIs |
+| Agent | owner, consumers, agent readiness |
+| Model | owner |
+| Consumer | owner, dependencies |
+
+Teams carry no facts.
+
+### Where the checklist is
+
+| Entity | Where |
+| --- | --- |
+| Catalog item | **Overview** tab — see [An item's page](../bring-in/catalog.mdx#facts) |
+| Project | **Dependencies** tab, under the graph |
+| MCP server | **Dependencies** tab, under the graph |
+| Connector | **Facts** tab |
+| Gateway config, agent | **Overview** tab |
+| Model | On the page |
+
+## With the API
+
+`GET /v1/catalog/{tenant}/entities/{kind}/{id}/facts` returns `{kind, id, name, facts: [{key, label,
+status, value, detail, evidence: [{label, href, api}]}], score: null}`. `kind` is a catalog kind —
+`api`, `spec`, `mcp_server`, `connector`, `gateway_config`, `agent`, `model`, `consumer`. You need
+permission to view that kind; an unknown kind is a `422` and an unknown entity a `404`. See
+[Catalog entities](../reference/rest/catalog-entities.md).
+
+## Where next
+
+- [Catalog](../bring-in/catalog.mdx) — the kinds and an item's page
+- [Lint posture](./lint-posture.mdx)
+- [Teams](../workspace/teams.mdx) — owner teams
