@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.249.0",
+    "version": "1.250.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -28495,7 +28495,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T17:28:23Z"
+                          "example": "2026-10-19T18:18:56Z"
                         },
                         "method": {
                           "type": "string",
@@ -107753,7 +107753,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "completed_at": {
             "anyOf": [
@@ -109708,7 +109708,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "comment_count": {
             "type": "integer",
@@ -109936,7 +109936,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "comment_count": {
             "type": "integer",
@@ -110467,14 +110467,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -111368,7 +111368,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -111624,7 +111624,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "credentials": {
             "anyOf": [
@@ -111893,6 +111893,34 @@
             ],
             "title": "Linkedat",
             "description": "When a person linked the item to a catalog item or Project; null for a sync import."
+          },
+          "mcpEndpointId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Mcpendpointid",
+            "description": "`mcp-registry` only: the MCP server this registry entry created or refreshed (CDG-4.4)."
+          },
+          "discoveredReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for connector item."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for connector item."
+              }
+            ],
+            "title": "Discoveredreason",
+            "description": "`mcp-registry` only: why the entry is still `discovered` \u2014 `no-remote`, `remote-templated`, `remote-refused` or `remote-unreachable`, then the explanation (CDG-4.4)."
           }
         },
         "type": "object",
@@ -112365,7 +112393,7 @@
               }
             ],
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -113730,7 +113758,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "4bbfc849-0efa-49c3-b03c-0c6743ce7704"
+            "example": "c209cfbb-411a-4e18-9a11-8e76dc10870f"
           },
           "method": {
             "type": "string",
@@ -116257,7 +116285,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -118153,7 +118181,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "browse_url": {
             "anyOf": [
@@ -159981,7 +160009,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           }
         },
         "additionalProperties": false,
@@ -171347,13 +171375,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           }
         },
         "additionalProperties": false,
@@ -172857,7 +172885,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "detected_by": {
             "anyOf": [
@@ -181033,14 +181061,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T17:28:23Z"
+            "example": "2026-10-19T18:18:56Z"
           },
           "outcome": {
             "anyOf": [

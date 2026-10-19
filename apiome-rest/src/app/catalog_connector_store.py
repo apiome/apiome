@@ -47,6 +47,7 @@ __all__ = [
     "list_refresh_runs",
     "list_runs",
     "mark_item_imported",
+    "mark_item_mcp_server",
     "mark_missing_items",
     "put_credentials",
     "record_connector_outcome",
@@ -72,7 +73,7 @@ _ITEM_COLUMNS = """
     i.id, i.connector_id, i.remote_id, i.remote_name, i.environment, i.hosts, i.base_path,
     i.remote_revision, i.remote_updated_at, i.imported_revision, i.imported_remote_updated_at,
     i.imported_sha256, i.status, i.project_id, i.first_seen_at, i.last_seen_at, i.deployment,
-    i.ignored_reason, i.ignored_at, i.linked_at
+    i.ignored_reason, i.ignored_at, i.linked_at, i.mcp_endpoint_id, i.discovered_reason
 """
 
 _RUN_COLUMNS = """
@@ -378,8 +379,9 @@ def count_items(db: Any, connector_id: str, *, status: Optional[str]) -> int:
 def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) -> Dict[str, Any]:
     """Record that a sync saw ``candidate``: insert it, or refresh what the remote reports.
 
-    A ``missing`` row that reappears returns to ``imported`` when it has a catalog item and to
-    ``discovered`` otherwise; ``ignored`` stays ignored. ``deployment`` (V282) is replaced with
+    A ``missing`` row that reappears returns to ``imported`` when it has a catalog item (or, for an
+    ``mcp-registry`` entry, an MCP server that answered: CDG-4.4) and to ``discovered`` otherwise;
+    ``ignored`` stays ignored. ``deployment`` (V282) is replaced with
     what the latest sync saw. The returned row's ``inserted`` is true when this sync saw the API
     for the first time (CDG-1.6 notifies new shadow APIs).
     """
@@ -402,6 +404,7 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
                   status = CASE
                     WHEN i.status = %s THEN i.status
                     WHEN i.project_id IS NOT NULL THEN %s
+                    WHEN i.mcp_endpoint_id IS NOT NULL AND i.discovered_reason IS NULL THEN %s
                     ELSE %s
                   END
             RETURNING {_ITEM_COLUMNS}, (i.xmax = 0) AS inserted
@@ -418,6 +421,7 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
                 json.dumps(dict(candidate.deployment or {}), sort_keys=True, default=str),
                 ITEM_DISCOVERED,
                 ITEM_IGNORED,
+                ITEM_IMPORTED,
                 ITEM_IMPORTED,
                 ITEM_DISCOVERED,
             ),
@@ -467,6 +471,52 @@ def mark_item_imported(
         WHERE id = %s::uuid
         """,
         (ITEM_IMPORTED, project_id, revision, remote_updated_at, content_sha256, item_id),
+    )
+
+
+def mark_item_mcp_server(
+    db: Any,
+    item_id: str,
+    *,
+    mcp_endpoint_id: Optional[str],
+    discovered_reason: Optional[str],
+    revision: Optional[str],
+    remote_updated_at: Any,
+) -> None:
+    """Record the outcome of syncing one ``mcp-registry`` entry (CDG-4.4).
+
+    With no ``discovered_reason`` the server answered: the row is ``imported`` and the freshness
+    anchor moves to ``revision``. With a reason the row stays ``discovered`` and keeps no anchor, so
+    the next sync tries the entry again; ``mcp_endpoint_id`` is still recorded when a server was
+    created for it (discovery could not reach it).
+
+    Args:
+        db: Database handle.
+        item_id: The inventory row.
+        mcp_endpoint_id: The MCP server created or refreshed for the entry, if any.
+        discovered_reason: Why the entry is not imported, or ``None`` when it is.
+        revision: The entry's remote revision (the anchor when imported).
+        remote_updated_at: The registry's ``updatedAt`` for the entry.
+    """
+    imported = discovered_reason is None
+    db._execute_write(
+        """
+        UPDATE apiome.catalog_connector_items
+        SET status = %s, mcp_endpoint_id = %s::uuid, discovered_reason = %s,
+            imported_revision = CASE WHEN %s THEN %s ELSE NULL END,
+            imported_remote_updated_at = CASE WHEN %s THEN %s::timestamptz ELSE NULL END
+        WHERE id = %s::uuid
+        """,
+        (
+            ITEM_IMPORTED if imported else ITEM_DISCOVERED,
+            mcp_endpoint_id,
+            discovered_reason[:1000] if discovered_reason else None,
+            imported,
+            revision,
+            imported,
+            remote_updated_at,
+            item_id,
+        ),
     )
 
 

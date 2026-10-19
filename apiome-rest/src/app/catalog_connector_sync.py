@@ -59,6 +59,15 @@ one API found in several places (an Apigee proxy deployed to ``test`` and ``prod
 separate inventory rows, each with its own environment and remote revision, but they import into
 one catalog item. A revision another row already imported is linked, not imported twice.
 
+**Sources that sync items themselves** (CDG-4.4). A source with ``sync_item(db, candidate, row,
+actor_id) -> ItemSyncOutcome`` takes over the fetch-and-import step for each fresh candidate: the
+``mcp-registry`` source (:mod:`app.mcp_registry_connector_source`) turns a registry server into an
+MCP server of the catalog (``mcp_endpoints``), not a catalog item. Its outcome names the MCP server
+and, when the entry could not be imported (no reachable remote), the reason it stays
+``discovered``; an entry that stays discovered is settled, not a failure. Such a source may set
+``reports_shadow_apis = False``: MCP servers are not APIs a gateway serves, so they raise no
+shadow-API notification.
+
 **Change reports.** When a sync adds a revision to a catalog item that already had one, the
 default importer writes a change report between the two revisions
 (:mod:`app.catalog_revision_change_report`), so a gateway change is reviewable like a refresh.
@@ -105,6 +114,7 @@ __all__ = [
     "ConnectorImportError",
     "ConnectorRefreshSource",
     "ConnectorSyncResult",
+    "ItemSyncOutcome",
     "import_document_as_catalog_item",
     "process_connector_refresh_sweep",
     "register_connector_source",
@@ -144,6 +154,9 @@ ConnectionCheck = Callable[[Mapping[str, Any]], None]
 
 #: At most this many unchanged items are listed, with their reason, on a run's summary.
 UNCHANGED_ITEMS_MAX = 50
+
+#: At most this many entries that stayed ``discovered`` are listed, with their reason (CDG-4.4).
+DISCOVERED_ITEMS_MAX = 50
 
 _SOURCES: Dict[str, SourceFactory] = {}
 _SCOPE_VALIDATORS: Dict[str, ScopeValidator] = {}
@@ -288,6 +301,20 @@ class ConnectorRefreshSource:
 
 class ConnectorImportError(RuntimeError):
     """The import pipeline refused a fetched document."""
+
+
+@dataclass(frozen=True)
+class ItemSyncOutcome:
+    """What a source's ``sync_item`` hook did with one candidate (CDG-4.4).
+
+    Attributes:
+        mcp_endpoint_id: The MCP server created or refreshed for the candidate, if any.
+        discovered_reason: Why the candidate stays ``discovered`` (no reachable remote, a refused
+            address, discovery could not reach it), or ``None`` when it was imported.
+    """
+
+    mcp_endpoint_id: Optional[str] = None
+    discovered_reason: Optional[str] = None
 
 
 @dataclass
@@ -522,6 +549,55 @@ def _note_unchanged(summary: Dict[str, Any], source: Any, candidate: RefreshCand
             "reason": reason or f"Not newer than the last import ({reason_code}).",
         }
     )
+
+
+def _sync_item_with_source(
+    db: Any,
+    source: Any,
+    candidate: RefreshCandidate,
+    row: Mapping[str, Any],
+    actor_id: Optional[str],
+    summary: Dict[str, Any],
+) -> Optional[ItemSyncOutcome]:
+    """Hand one fresh candidate to the source's ``sync_item`` hook and record the outcome.
+
+    The inventory row becomes ``imported`` (the MCP server answered) or stays ``discovered`` with the
+    source's reason, listed on the run summary as ``discoveredItems``.
+
+    Args:
+        db: Database handle.
+        source: The connector source (it has ``sync_item``).
+        candidate: The candidate to sync.
+        row: Its inventory row.
+        actor_id: Who asked, or ``None`` for the sweep.
+        summary: The run summary, extended in place.
+
+    Returns:
+        The outcome.
+
+    Raises:
+        RefreshSourceError: The provider refused (the caller counts it as a failure).
+        Exception: Anything else the hook raised (the caller counts it as an import failure).
+    """
+    outcome = source.sync_item(db, candidate, row, actor_id)
+    store.mark_item_mcp_server(
+        db,
+        str(row["id"]),
+        mcp_endpoint_id=outcome.mcp_endpoint_id,
+        discovered_reason=outcome.discovered_reason,
+        revision=candidate.revision,
+        remote_updated_at=candidate.updated_at,
+    )
+    if outcome.discovered_reason is None:
+        summary["imported"] += 1
+        return outcome
+    summary["discovered"] = int(summary.get("discovered", 0)) + 1
+    listed = summary.setdefault("discoveredItems", [])
+    if len(listed) < DISCOVERED_ITEMS_MAX:
+        listed.append(
+            {"remoteId": candidate.remote_id, "name": candidate.name, "reason": outcome.discovered_reason}
+        )
+    return outcome
 
 
 def _after_import(db: Any, source: Any, candidate: RefreshCandidate, project_id: str, summary: Dict[str, Any]) -> None:
@@ -769,6 +845,7 @@ def run_connector_sync(
     if only is not None:
         summary["requested"] = sorted(only)
     credentials: Optional[Dict[str, str]] = None
+    source: Any = None
     result: ConnectorSyncResult
 
     try:
@@ -815,6 +892,24 @@ def run_connector_sync(
                 continue
             if max_pulls is not None and pulls >= max_pulls:
                 summary["deferred"] += 1
+                continue
+            if callable(getattr(source, "sync_item", None)):
+                # CDG-4.4: the source turns the candidate into its own catalog object (an MCP server).
+                try:
+                    outcome = _sync_item_with_source(db, source, candidate, row, actor_id, summary)
+                except RefreshSourceError as exc:
+                    failures.append((exc.error_class, exc.http_status, str(exc)))
+                    summary["failed"] += 1
+                    continue
+                except Exception as exc:  # noqa: BLE001 - one bad entry must not end the run
+                    failures.append((ERROR_CLASS_IMPORT_FAILED, None, f"{type(exc).__name__}: {exc}"))
+                    summary["failed"] += 1
+                    continue
+                if outcome.mcp_endpoint_id:
+                    pulls += 1
+                    summary["fetched"] += 1
+                rows[candidate.remote_id] = {**rows[candidate.remote_id], "mcp_endpoint_id": outcome.mcp_endpoint_id}
+                settled += 1
                 continue
             try:
                 document = source.fetch(candidate)
@@ -943,7 +1038,7 @@ def run_connector_sync(
     _audit(db, connector, result, actor_id)
     if result.status == "failed":
         _route_sync_failure(db, connector, result, run_id, actor_id)
-    if new_rows and only is None:
+    if new_rows and only is None and getattr(source, "reports_shadow_apis", True):
         # CDG-1.6: APIs seen for the first time that match nothing in the catalog (best-effort).
         from .shadow_api_notifications import notify_new_shadow_apis
 
@@ -1022,4 +1117,5 @@ from . import (  # noqa: E402,F401
     aws_apigateway_connector_source,
     azure_apim_connector_source,
     kong_connector_source,
+    mcp_registry_connector_source,
 )

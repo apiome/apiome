@@ -16,7 +16,13 @@ import { GATE_THEMES, blockingAxeLines, mountMarkup, pinAppearance, readFixture 
  */
 
 /** The surfaces the jsdom suite dumps. */
-const SURFACES = ['connectors', 'connector-add', 'connector-detail', 'connector-runs'] as const;
+const SURFACES = [
+  'connectors',
+  'connector-add',
+  'connector-add-mcp-registry',
+  'connector-detail',
+  'connector-runs',
+] as const;
 
 /** The viewport width DESIGN.md §5 forbids horizontal document scroll at. */
 const DESKTOP_WIDTH = 1280;

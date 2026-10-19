@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.249.0
+  version: 1.250.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -21323,7 +21323,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-19T17:28:23Z'
+                        example: '2026-10-19T18:18:56Z'
                       method:
                         type: string
                         example: GET
@@ -80042,7 +80042,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         completed_at:
           anyOf:
           - type: string
@@ -81529,7 +81529,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -81702,7 +81702,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -82143,13 +82143,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -82853,6 +82853,9 @@ components:
             `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
             ["test", …]}` (environments optional; the service-account key or workload-identity
             configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            `mcp-registry`: `{"search": "…", "updatedSince": "<RFC 3339 instant>"}`,
+            both optional, with the registry root as the base URL (an optional `{"token":
+            "…"}` bearer token or `{"apiKey": "…"}` goes in `PUT …/credentials`).
             Kinds with a source check their scope on every write, and some dry-run
             it.'
         refreshIntervalSeconds:
@@ -83057,6 +83060,9 @@ components:
             `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
             ["test", …]}` (environments optional; the service-account key or workload-identity
             configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            `mcp-registry`: `{"search": "…", "updatedSince": "<RFC 3339 instant>"}`,
+            both optional, with the registry root as the base URL (an optional `{"token":
+            "…"}` bearer token or `{"apiKey": "…"}` goes in `PUT …/credentials`).
             Kinds with a source check their scope on every write, and some dry-run
             it.'
         credentials:
@@ -83238,6 +83244,25 @@ components:
           title: Linkedat
           description: When a person linked the item to a catalog item or Project;
             null for a sync import.
+        mcpEndpointId:
+          anyOf:
+          - type: string
+            description: Response payload for connector item.
+          - type: 'null'
+            description: Response payload for connector item.
+          title: Mcpendpointid
+          description: '`mcp-registry` only: the MCP server this registry entry created
+            or refreshed (CDG-4.4).'
+        discoveredReason:
+          anyOf:
+          - type: string
+            description: Response payload for connector item.
+          - type: 'null'
+            description: Response payload for connector item.
+          title: Discoveredreason
+          description: '`mcp-registry` only: why the entry is still `discovered` —
+            `no-remote`, `remote-templated`, `remote-refused` or `remote-unreachable`,
+            then the explanation (CDG-4.4).'
       type: object
       required:
       - id
@@ -83580,6 +83605,9 @@ components:
             `{"clientSecret": "…"}`). `apigee`: `{"organization": "…", "environments":
             ["test", …]}` (environments optional; the service-account key or workload-identity
             configuration goes in `PUT …/credentials` as `{"credentialJson": "…"}`).
+            `mcp-registry`: `{"search": "…", "updatedSince": "<RFC 3339 instant>"}`,
+            both optional, with the registry root as the base URL (an optional `{"token":
+            "…"}` bearer token or `{"apiKey": "…"}` goes in `PUT …/credentials`).
             Kinds with a source check their scope on every write, and some dry-run
             it.'
         refreshIntervalSeconds:
@@ -84627,7 +84655,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 4bbfc849-0efa-49c3-b03c-0c6743ce7704
+          example: c209cfbb-411a-4e18-9a11-8e76dc10870f
         method:
           type: string
           title: Method
@@ -86770,7 +86798,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         envelope:
           additionalProperties: true
           type: object
@@ -88261,7 +88289,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         browse_url:
           anyOf:
           - type: string
@@ -121140,7 +121168,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
       additionalProperties: false
       type: object
       required:
@@ -129977,12 +130005,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
       additionalProperties: false
       type: object
       required:
@@ -131111,7 +131139,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         detected_by:
           anyOf:
           - type: string
@@ -137385,13 +137413,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T17:28:23Z'
+          example: '2026-10-19T18:18:56Z'
         outcome:
           anyOf:
           - type: string

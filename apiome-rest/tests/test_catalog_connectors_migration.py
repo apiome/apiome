@@ -60,3 +60,11 @@ def test_v282_adds_the_deployment_bag_to_inventory_rows(repo_root: Path) -> None
     assert "ALTER TABLE apiome.catalog_connector_items" in text
     assert "ADD COLUMN IF NOT EXISTS deployment JSONB NOT NULL DEFAULT '{}'::jsonb" in text
     assert "DROP COLUMN IF EXISTS deployment" in text  # documented rollback
+
+
+def test_v296_links_inventory_rows_to_mcp_servers(repo_root: Path) -> None:
+    text = (repo_root / "apiome-db/scripts/V296__mcp_registry_connector_cdg_4_4.sql").read_text()
+    assert "mcp_endpoint_id   UUID REFERENCES apiome.mcp_endpoints(id) ON DELETE SET NULL" in text
+    assert "ADD COLUMN IF NOT EXISTS discovered_reason TEXT" in text
+    assert "idx_catalog_connector_items_mcp_endpoint" in text
+    assert "DROP COLUMN IF EXISTS mcp_endpoint_id" in text  # documented rollback

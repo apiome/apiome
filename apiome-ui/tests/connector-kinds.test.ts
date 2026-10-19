@@ -10,6 +10,7 @@ import {
   cadenceValue,
   connectorKind,
   connectorKindLabel,
+  landsInMcpCatalog,
   missingFields,
   scopeToValues,
 } from '../lib/connector-kinds';
@@ -29,6 +30,16 @@ describe('connector kinds', () => {
     ]);
     expect(connectorKindLabel('apigee')).toBe('Apigee');
     expect(connectorKindLabel('mystery')).toBe('mystery');
+  });
+
+  it('sends MCP registry entries to the MCP server catalog with optional credentials (CDG-4.4)', () => {
+    expect(landsInMcpCatalog('mcp-registry')).toBe(true);
+    expect(landsInMcpCatalog('kong-admin')).toBe(false);
+    const registry = connectorKind('mcp-registry')!;
+    expect(registry.scope.map((f) => f.key)).toEqual(['search', 'updatedSince']);
+    expect(registry.credentials.every((f) => !f.required)).toBe(true);
+    expect(missingFields(registry, 'scope', {}, '')).toEqual(['Base URL']);
+    expect(buildCredentials(registry, {})).toBeNull();
   });
 
   it('never puts a secret in the scope', () => {

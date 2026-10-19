@@ -167,8 +167,10 @@ SCOPE_DESCRIPTION = (
     "\"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT …/credentials` as "
     "`{\"clientSecret\": \"…\"}`). `apigee`: `{\"organization\": \"…\", \"environments\": [\"test\", …]}` "
     "(environments optional; the service-account key or workload-identity configuration goes in "
-    "`PUT …/credentials` as `{\"credentialJson\": \"…\"}`). Kinds with a source check their scope on every write, "
-    "and some dry-run it."
+    "`PUT …/credentials` as `{\"credentialJson\": \"…\"}`). `mcp-registry`: `{\"search\": \"…\", \"updatedSince\": "
+    "\"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional "
+    "`{\"token\": \"…\"}` bearer token or `{\"apiKey\": \"…\"}` goes in `PUT …/credentials`). Kinds with a "
+    "source check their scope on every write, and some dry-run it."
 )
 
 
@@ -294,6 +296,19 @@ class ConnectorItemOut(BaseModel):
         default=None,
         serialization_alias="linkedAt",
         description="When a person linked the item to a catalog item or Project; null for a sync import.",
+    )
+    mcp_endpoint_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="mcpEndpointId",
+        description="`mcp-registry` only: the MCP server this registry entry created or refreshed (CDG-4.4).",
+    )
+    discovered_reason: Optional[str] = Field(
+        default=None,
+        serialization_alias="discoveredReason",
+        description=(
+            "`mcp-registry` only: why the entry is still `discovered` — `no-remote`, `remote-templated`, "
+            "`remote-refused` or `remote-unreachable`, then the explanation (CDG-4.4)."
+        ),
     )
 
 

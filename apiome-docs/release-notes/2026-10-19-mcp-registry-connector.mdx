@@ -1,0 +1,26 @@
+---
+slug: mcp-registry-connector
+title: Pull MCP servers in from an upstream MCP registry
+description: An MCP registry connector keeps upstream registry servers in your MCP catalog.
+authors: [apiome]
+---
+
+Add the official MCP registry, Azure API Center, a Kong registry or another Apiome workspace as a
+connector, and its servers join your MCP server catalog on the connector's schedule.
+
+{/* truncate */}
+
+- **One more connector kind.** Choose **MCP registry** under **Bring in → Connectors → Add
+  connector**, enter the registry root, and narrow it with **Search** and **Updated since**. A
+  bearer token or an Apiome workspace API key is optional.
+- **Servers, not catalog items.** Each server with a reachable `streamable-http` or `sse` remote is
+  added as a private MCP server, marked as imported from a registry, then discovered, linted and
+  graded.
+- **Sources come along.** The registry entry, its repository and its npm, PyPI, NuGet, Cargo and OCI
+  packages are linked with the provenance *registry published*; a link the registry drops is
+  retired.
+- **Nothing hidden.** A server that only ships packages, has a templated or private remote, or does
+  not answer stays **discovered**, and the connector's **Items** tab says why
+  (`no-remote`, `remote-templated`, `remote-refused`, `remote-unreachable`).
+
+See [MCP registry](/bring-in/connectors#mcp-registry).

@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.386.0] - 2026-10-19
+
+### Added
+- **Upstream MCP registry connector (#5976, CDG-4.4)**: `app.mcp_registry_connector_source` registers a source for the
+  `mcp-registry` connector kind on the CDG-1.1 protocol. It pages `GET {baseUrl}/v0.1/servers` (`limit`, `cursor`,
+  `version=latest`, plus the scope's `search` and `updatedSince` → `updated_since`) from the official registry, Azure
+  API Center, a Kong registry or another Apiome tenant (`/registry/mcp/{tenant}`); a trailing `/v0.1[/servers]` on the
+  base URL is accepted. Optional credentials: `{"token"}` (bearer) and `{"apiKey"}` (`X-API-Key`). Scope is validated
+  (`search`, `updatedSince` only; a base URL is required). One inventory row per server name (the `isLatest` entry;
+  `deleted` entries turn the row `missing`); the revision is the version plus a digest of `server.json`. For each new or
+  changed entry the source picks the first concrete `streamable-http` / `sse` remote, checks it against the connector
+  address rule, creates or refreshes an `mcp_endpoints` row (`added_via = 'registry'`, private, unpublished), links its
+  sources as `registry_published` (`registry` identity, `repository.url` as git, npm/PyPI/NuGet/Cargo packages and OCI
+  images; links this connector made that the registry dropped are retired) and runs discovery with
+  `trigger = 'registry'`, which lints and scores the snapshot. Entries with no usable remote, a refused address, or a
+  remote discovery cannot reach stay `discovered` with a `discoveredReason` (`no-remote`, `remote-templated`,
+  `remote-refused`, `remote-unreachable`) and are retried every sync.
+- `GET …/connectors/{id}/items` rows carry `mcpEndpointId` and `discoveredReason` (apiome-db **V296** adds
+  `catalog_connector_items.mcp_endpoint_id` and `discovered_reason`). Run summaries count `discovered` entries and list
+  up to 50 under `discoveredItems`.
+- The sync engine (`app.catalog_connector_sync`) gains a `sync_item(db, candidate, row, actor_id) -> ItemSyncOutcome`
+  source hook for sources that create their own catalog objects, and a `reports_shadow_apis` source flag.
+
+### Changed
+- MCP registry connectors are excluded from the shadow-API report and raise no shadow-API notifications.
+
+The OpenAPI version moves to 1.250.0.
+
 ## [1.385.0] - 2026-10-19
 
 ### Added

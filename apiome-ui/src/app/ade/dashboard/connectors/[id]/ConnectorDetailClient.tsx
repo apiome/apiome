@@ -32,9 +32,11 @@ import {
   cadenceValue,
   connectorKind,
   connectorKindLabel,
+  landsInMcpCatalog,
   scopeToValues,
   type FieldValues,
 } from '@lib/connector-kinds';
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   deleteConnector,
   getConnector,
@@ -51,7 +53,8 @@ import {
  * One connector — `/ade/dashboard/connectors/[id]` (CDG-1.7, #5958).
  *
  * **Items** is the inventory: every API the connector has seen, its environment and revision, and a
- * link to its catalog item. **Runs** is the shared refresh ledger, filtered to this connector.
+ * link to its catalog item — or, for an MCP registry (CDG-4.4), to the MCP server it added and the reason
+ * an entry is still discovered. **Runs** is the shared refresh ledger, filtered to this connector.
  * **Settings** changes the name, scope, schedule and conflict policy, pauses or resumes scheduled
  * syncs, replaces the credential, and deletes the connector (its catalog items stay).
  */
@@ -74,6 +77,7 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
   const [syncing, setSyncing] = React.useState(false);
   const [runsKey, setRunsKey] = React.useState(0);
   const [tab, setTab] = React.useState('items');
+  const mcpInventory = landsInMcpCatalog(connector?.kind);
 
   const load = React.useCallback(async () => {
     try {
@@ -197,11 +201,11 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                 <table className="cnx-table">
                   <thead>
                     <tr>
-                      <th scope="col">API</th>
+                      <th scope="col">{mcpInventory ? 'Server' : 'API'}</th>
                       <th scope="col">Environment</th>
                       <th scope="col">Revision</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Catalog item</th>
+                      <th scope="col">{mcpInventory ? 'MCP server' : 'Catalog item'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -217,6 +221,11 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                           <Badge status={item.status} dot>
                             {item.status}
                           </Badge>
+                          {item.discoveredReason ? (
+                            <span className="cnx-meta" data-testid={`connector-item-reason-${item.id}`}>
+                              {item.discoveredReason}
+                            </span>
+                          ) : null}
                         </td>
                         <td>
                           {item.catalogItemId ? (
@@ -226,6 +235,19 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                               data-testid={`connector-item-link-${item.id}`}
                             >
                               Open in the catalog
+                            </Link>
+                          ) : item.mcpEndpointId && !isFeatureReleased('mcp') ? (
+                            // The MCP servers screen is not released yet: name the server, link nowhere.
+                            <span className="cnx-meta" data-testid={`connector-item-mcp-${item.id}`}>
+                              Added to the MCP servers
+                            </span>
+                          ) : item.mcpEndpointId ? (
+                            <Link
+                              href={`/ade/dashboard/mcp/${encodeURIComponent(item.mcpEndpointId)}`}
+                              className="cnx-link"
+                              data-testid={`connector-item-link-${item.id}`}
+                            >
+                              Open the MCP server
                             </Link>
                           ) : (
                             <span className="cnx-meta">Not imported</span>
@@ -237,7 +259,7 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                 </table>
                 {itemTotal > items.length ? (
                   <p className="cnx-note">
-                    Showing {items.length} of {itemTotal} APIs.
+                    Showing {items.length} of {itemTotal} {mcpInventory ? 'servers' : 'APIs'}.
                   </p>
                 ) : null}
               </div>

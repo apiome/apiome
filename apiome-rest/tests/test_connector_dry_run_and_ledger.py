@@ -143,7 +143,7 @@ def test_a_dry_run_checks_the_scope_and_the_base_url(store):
 
 
 def test_a_kind_without_a_source_is_a_409(store):
-    response = _dry({"kind": "mcp-registry", "scope": {}})
+    response = _dry({"kind": "schema-registry", "scope": {}})
     assert response.status_code == 409 and response.json()["detail"]["code"] == "connector-kind-unsupported"
 
 
