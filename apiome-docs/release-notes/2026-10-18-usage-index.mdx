@@ -1,0 +1,23 @@
+---
+slug: usage-index
+title: A usage index that counts traffic without keeping it
+description: The foundation for usage-aware verdicts and drift reports, built as counters, not logs.
+authors: [apiome]
+---
+
+Apiome now has a [usage index](/govern/runtime-usage): per-operation counters of how often live
+traffic calls an API, with what outcome, how fast and by which consumer. Usage-weighted diff verdicts
+and drift reports will read it.
+
+{/* truncate */}
+
+- **Counters, never a request log.** Calls, errors, a latency histogram, posture bits (credential
+  present, version marker, HTTPS) and byte sizes, per hour and per day. No header value, body, query
+  value or client address can be stored. The schema refuses them.
+- **Retention follows your plan.** Free keeps hourly counters 7 days and daily counters 90 days,
+  Paid 30 and 395, Sponsor 90 and 730. New `usage_*` seat limits on [Licenses](/admin/licenses#seat-limits)
+  set the windows and the daily event cap.
+- **Rollups always add up.** Hourly counters are deleted only after their day is rolled up and
+  finalized. A background sweep does this, and operators can run it once with
+  `python -m app.usage_sweep`.
+- Connecting traffic sources and the ingest endpoint come in a later release.

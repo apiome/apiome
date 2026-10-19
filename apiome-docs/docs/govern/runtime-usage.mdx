@@ -1,0 +1,102 @@
+---
+title: Runtime usage
+description: What the usage index records about live traffic, and how long it keeps it.
+sidebar_position: 1.6
+tags: [governance, usage, observability, privacy]
+---
+
+The **usage index** is where Apiome keeps what it learns from live traffic: how often each operation
+of a project is called, with what outcome, how fast, and by which consumer. Usage-weighted diff
+verdicts, drift reports and adoption charts all read it.
+
+The index is built as **counters, never as a request log**. It stores numbers per operation and per
+hour, not the requests themselves, so it can never become a store of credentials or customer data.
+
+:::note[What is available today]
+This release adds the index and its retention. Connecting a **usage source** (an OpenTelemetry
+Collector, a HAR upload, a gateway log) and the ingest endpoint that fills the index come in later
+releases, so the index stays empty until then.
+:::
+
+## What the index stores
+
+Every observed call is reduced at the edge to an `apiome.usage.event/v1` event and then counted.
+The counters are kept per project, source, environment, operation, status code, published version
+and consumer:
+
+| Counter | What it is |
+| --- | --- |
+| **Calls** and **errors** | How many calls there were, and how many answered `4xx` or `5xx` |
+| **Latency** | A histogram with bounds 5, 10, 25, 50, 100, 250, 500, 1,000, 2,500, 5,000 and 10,000 ms, plus the total and the slowest call |
+| **Posture** | How many calls carried a credential, carried a version marker or used HTTPS, and for how many the source could not tell |
+| **Bytes** | Request and response body sizes |
+| **Fields** | How often each field (a JSON Pointer such as `/items/0/id`) was present in a request or response, when the source reports field presence |
+| **Unmatched paths** | Traffic on paths no published version declares, by inferred template (`/users/{param}`), with first and last seen |
+| **Ingest ledger** | One row per batch a source sends: how many events were accepted, sampled out, unmatched or rejected |
+
+An operation is named the way the classified diff names it, for example
+`/paths/~1pets~1{petId}/get`, so usage joins consumer contracts and the
+[blast radius](./dependency-graph.mdx#blast-radius) directly.
+
+## What it never stores
+
+| Data | Rule |
+| --- | --- |
+| Header names and values | Never. Only whether a credential header was **present** survives the edge |
+| Request and response bodies | Never by default. A source may opt in to a small redacted sample (below) |
+| Query parameter values | Never. Names may be counted as fields; values are dropped before the event is built |
+| Raw paths | Never. A path such as `/users/alice@example.com` is templated before it is counted |
+| Client IP addresses and locations | Never. No column can hold one |
+| Consumer identity | Only an HMAC computed at the edge, never the key, token or header it came from |
+
+The schema enforces this: no table has a column that can hold an address, free text or a body. Every
+text column is a short, pattern-checked identifier, so a header or a query string is refused.
+
+### Opt-in samples
+
+A source can keep a **redacted sample** of exchanges for debugging. Samples are off by default and
+bounded on every side:
+
+- at most **5%** of calls, and only until an end date at most **7 days** ahead;
+- each sample is reduced by the same redactor as [mock proxy capture](../reference/mock-runtime/mock-proxy-capture.md),
+  re-scanned for credentials, and dropped if anything is still flagged;
+- at most **16 KiB** each, and **deleted after 7 days** on every plan.
+
+## How long it is kept
+
+Hourly counters are rolled up into daily counters. The plan's seat limits set how long each is
+kept (see [Licenses](../admin/licenses.mdx#seat-limits)):
+
+| Plan | Hourly counters | Daily counters, fields, unmatched paths and ledger | Events per day |
+| --- | --- | --- | --- |
+| **Free** | 7 days | 90 days | 100,000 |
+| **Paid** | 30 days | 395 days | 10,000,000 |
+| **Sponsor** | 90 days | 730 days | 100,000,000 |
+
+Hourly counters are deleted only after their day has been rolled up and **finalized**, so the daily
+numbers always match what they were built from. A day is finalized a few hours after it ends (6 by
+default). After that it is never recomputed and takes no new counts.
+
+## For operators
+
+The REST API runs the **usage sweep** in the background. Each run rolls up open days, finalizes
+closed ones and deletes what is past retention. Only one replica sweeps at a time.
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `APIOME_USAGE_SWEEP_INTERVAL_SECONDS` | `3600` | Time between sweeps; `0` turns the background sweep off |
+| `APIOME_USAGE_FINALIZE_GRACE_HOURS` | `6` | Hours after a UTC day ends before it is final. Must exceed the longest delay between a call and its ingest |
+| `APIOME_USAGE_SWEEP_BATCH_SIZE` | `10000` | The most rows each sweep deletes per table; the rest go on the next run |
+
+To run one sweep yourself, for example from cron with the background sweep off:
+
+```bash
+docker compose exec rest python -m app.usage_sweep --grace-hours 6 --batch-size 10000
+```
+
+It prints what it did as JSON, or `{"skipped": true}` when another replica is already sweeping.
+
+## Where next
+
+- [Dependency graph](./dependency-graph.mdx)
+- [Licenses](../admin/licenses.mdx)

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.377.0] - 2026-10-18
+
+### Added
+- **Usage event contract (#5759, RDG-1.1)**: `app.usage_events.UsageEvent`, the pure `apiome.usage.event/v1` model every
+  usage source will emit: method, path (templated or raw, never a query), status, latency, byte sizes, scheme, host,
+  tri-state `auth_present`, `version_hint`, a scrubbed user agent (≤ 256 characters), an HMAC-only `consumer_hint`,
+  `spec_revision_id` / `agent_key_id` and the field pointers seen in the bodies. Unknown keys are refused at every level,
+  and `to_json()` writes a byte-deterministic canonical form. `latency_bucket()` maps a latency to the shared histogram.
+- **Usage index sweep (#5759)**: `app.usage_sweep` rolls `usage_hourly` up into `usage_daily`, finalizes UTC days once
+  `APIOME_USAGE_FINALIZE_GRACE_HOURS` (default 6) have passed, and prunes the index per license tier (migration V290).
+  It runs from the lifespan every `APIOME_USAGE_SWEEP_INTERVAL_SECONDS` (default 3600; 0 disables it) behind an advisory
+  lock, and once from cron with `python -m app.usage_sweep [--grace-hours H] [--batch-size N]`.
+  `APIOME_USAGE_SWEEP_BATCH_SIZE` (default 10000) bounds each prune.
+
+No REST endpoint changes: the ingest route that writes the index arrives with RDG-1.2. The OpenAPI version moves to
+1.241.0.
+
 ## [1.376.0] - 2026-10-18
 
 ### Added

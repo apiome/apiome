@@ -671,6 +671,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships', 'depends on', 'backstage', 'blast radius'],
   },
   {
+    id: 'runtime-usage',
+    title: 'Runtime usage',
+    summary: 'What the usage index records about live traffic, and how long it keeps it.',
+    page: 'apiome-docs/docs/govern/runtime-usage.mdx',
+    section: 'reference',
+    keywords: ['traffic', 'usage index', 'retention', 'privacy', 'counters', 'sampling', 'sweep'],
+  },
+  {
     id: 'reviews',
     title: 'Reviews and the approval gate',
     summary: 'Review a draft version, approve or request changes, and require approvals before publishing.',
