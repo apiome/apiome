@@ -36430,3 +36430,178 @@ a.tm-fact:focus-visible {
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
+
+/* ===========================================================================
+   CATALOG KINDS (CDG-5.1, #5979) — the catalog home's kind tiles (which are
+   the Kind facet), the three callouts, and the cross-kind entity list.
+   `.cat-kinds*` / `.cat-entities*`. Tokens only.
+   =========================================================================== */
+.cat-kinds {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cat-kinds__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+}
+
+.cat-kinds__tile {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  text-align: start;
+  cursor: pointer;
+}
+
+.cat-kinds__tile:hover {
+  border-color: var(--border-strong);
+}
+
+.cat-kinds__tile:focus-visible,
+.cat-kinds__callout:focus-visible,
+.cat-entities__name:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cat-kinds__tile[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.cat-kinds__count {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-kinds__label {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.cat-kinds__callouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-kinds__callout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  text-decoration: none;
+}
+
+.cat-kinds__callout:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.cat-kinds__callout[data-attention] {
+  color: var(--fg);
+  border-color: var(--warn);
+}
+
+.cat-kinds__callout-count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-entities {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cat-entities__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cat-entities__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.cat-entities__wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.cat-entities__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.cat-entities__table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.cat-entities__table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.cat-entities__table tr:last-child td {
+  border-block-end: 0;
+}
+
+.cat-entities__name {
+  display: block;
+  color: var(--fg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cat-entities__name:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cat-entities__sub,
+.cat-entities__muted {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.cat-entities__date {
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.cat-entities__more {
+  display: flex;
+  justify-content: center;
+}

@@ -1,0 +1,24 @@
+---
+slug: catalog-entity-kinds
+title: The catalog home counts every kind
+description: One registry of entity kinds, one entity list, and three callouts on the catalog home.
+authors: [apiome]
+---
+
+The catalog home now counts everything Apiome knows about — Projects, catalog items, MCP servers,
+consumers, connectors and teams — and lists any of them, with their owner teams, in one table.
+
+{/* truncate */}
+
+- **Kind tiles.** One tile per kind with its count, plus **All kinds**. Click one to list that kind;
+  **Catalog items** keeps the cards and table you know. The address names the kind (`?kind=`).
+- **Three callouts.** **Unowned** (no confirmed owner team), **Stale** (connectors and MCP servers
+  not refreshed within twice their cadence) and **Shadow** (gateway APIs with no catalog entry),
+  each linking to the page that deals with it.
+- **One API for every kind.** `GET /v1/catalog/{tenant}/entities` returns every kind in one shape
+  with a `kind` field and its owner, filtered by `kind`, `team` and `q` and paged with a cursor;
+  `GET /v1/catalog/{tenant}/entities/summary` returns the counts and callouts.
+- **One registry.** The kinds are declared once in apiome-rest, so a kind added later appears in
+  the tiles, the list and the dependency graph without other changes.
+
+See [Kinds](/bring-in/catalog#kinds).

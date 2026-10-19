@@ -140,6 +140,13 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-item-subjects.html', 'schema-registry.html'] },
   },
+  {
+    // CDG-5.1 (#5979): the catalog home's kind tiles, callouts and cross-kind list, dumped by
+    // `tests/catalog-entities-ui.test.tsx`.
+    id: 'catalog-kinds',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-kinds.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

@@ -25,6 +25,7 @@ from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
 from .bulk_import_routes import router as bulk_import_router
 from .catalog_connector_routes import router as catalog_connector_router
+from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_routes import router as catalog_router
 from .change_report_routes import router as change_report_router
 from .change_report_template_routes import router as change_report_template_router
@@ -178,7 +179,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.250.0",
+    version="1.251.0",
 )
 
 
@@ -355,6 +356,9 @@ app.include_router(sdk_git_delivery_router)
 # too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged `sdk-regen-runs`,
 # `sdk-regen-jobs` or `sdk-regen-subscriptions` (SDK-4.3, #4497).
 app.include_router(sdk_regen_router)
+# The unified entity list (CDG-5.1, #5979) shares `/v1/catalog` and goes first, so
+# `/{tenant}/entities` is not read as `/{tenant}/{item_id}`.
+app.include_router(catalog_entity_router)
 app.include_router(catalog_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.
 app.include_router(catalog_connector_router)

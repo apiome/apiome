@@ -60,3 +60,9 @@ export { CatalogBulkFailureList } from './CatalogBulkFailureList';
 export type { CatalogBulkFailureListProps } from './CatalogBulkFailureList';
 export { CatalogCategoriesDialog } from './CatalogCategoriesDialog';
 export type { CatalogCategories, CatalogCategoriesDialogProps } from './CatalogCategoriesDialog';
+
+// CDG-5.1: the catalog home's kinds, callouts and cross-kind list.
+export { CatalogKindsPanel } from './CatalogKindsPanel';
+export type { CatalogKindsPanelProps } from './CatalogKindsPanel';
+export { CatalogEntityList } from './CatalogEntityList';
+export type { CatalogEntityListProps } from './CatalogEntityList';
