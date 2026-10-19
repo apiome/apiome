@@ -62,6 +62,17 @@ When the source was imported in another format, the studio hides the same-format
 Select a card — the foot reads *Exporting to gRPC / Protobuf* with its tier and **% preserved** — and
 **click “Continue”**.
 
+### Gateway targets
+
+**Kong Declarative Config** and **Gateway API** write a gateway's own format. A gateway config's
+**Push back** ([Environments](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway)) opens the
+studio on the gateway's target at **4. Verify**, so the fidelity report is the first thing you see;
+the target is offered even when the catalog item was imported from that same gateway. A gateway
+configuration carries no request/response schemas, so schemas are reported as dropped. AWS API
+Gateway, Azure API Management and Apigee targets are still to come (FMT-7.7).
+
+<Screenshot id="export-studio-gateway" alt="Pushing a catalog item back to Kong: the fidelity report for Kong Declarative Config before export" />
+
 ## 3. Options
 
 The target's options: checkboxes, a row of choices, or text fields. Errors appear under the field,

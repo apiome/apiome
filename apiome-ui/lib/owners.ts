@@ -27,6 +27,8 @@ export const OWNER_ENTITY_KINDS = [
   // CDG-5.2: agents (consumers in their own right) and the models they run on.
   'agent',
   'model',
+  // CDG-5.3: a gateway's environment.
+  'gateway_config',
 ] as const;
 
 /** One of {@link OWNER_ENTITY_KINDS}. */
@@ -41,6 +43,7 @@ export const OWNER_ENTITY_KIND_LABELS: Readonly<Record<OwnerEntityKind, string>>
   connector: 'Connectors',
   agent: 'Agents',
   model: 'Models',
+  gateway_config: 'Gateway configs',
 };
 
 /** The team an owner names. */
@@ -219,6 +222,8 @@ export function ownedEntityHref(entity: Pick<OwnedEntity, 'kind' | 'id'>): strin
       return `/ade/dashboard/catalog/agents/${id}`;
     case 'model':
       return `/ade/dashboard/catalog/models/${id}`;
+    case 'gateway_config':
+      return `/ade/dashboard/connectors/environments/${id}`;
     default:
       return null;
   }

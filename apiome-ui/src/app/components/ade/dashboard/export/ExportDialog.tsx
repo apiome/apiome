@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isFeatureReleased } from '@lib/feature-release';
 import { cn } from '@lib/utils';
@@ -82,6 +82,11 @@ interface ExportDialogProps {
   studioOrigin?: ExportStudioOrigin;
   /** Called after a successful export (the document has been emitted and is being previewed). */
   onExported?: (summary: ExportedArtifactSummary) => void;
+  /**
+   * A target to open on (CDG-5.3 push-back): once the targets load it is selected and the dialog
+   * goes straight to the fidelity report. It is kept even when it is the source's own format.
+   */
+  initialTarget?: string | null;
 }
 
 type Step = 'source' | 'target' | 'fidelity' | 'export';
@@ -151,6 +156,7 @@ export function ExportDialog({
   sourceFormat = null,
   studioOrigin,
   onExported,
+  initialTarget = null,
 }: ExportDialogProps) {
   // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
   // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
@@ -174,8 +180,8 @@ export function ExportDialog({
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
   // replaces it when the source's format is known.
   const cards = useMemo(
-    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat),
-    [response, sourceFormat],
+    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat, initialTarget),
+    [response, sourceFormat, initialTarget],
   );
   const selected = useMemo(
     () => cards.find((card) => card.key === selectedKey) ?? null,
@@ -278,6 +284,16 @@ export function ExportDialog({
     }
     setOptionValues(defaults);
   }, []);
+
+  // CDG-5.3 push-back: open on the requested target's fidelity report once the targets load, so
+  // the reader sees what the gateway format will lose before anything is exported.
+  useEffect(() => {
+    if (!open || !initialTarget || selectedKey !== null || step !== 'source') return;
+    const card = cards.find((entry) => entry.key === initialTarget);
+    if (!card || !card.available) return;
+    handleSelect(card);
+    setStep('fidelity');
+  }, [open, initialTarget, selectedKey, step, cards, handleSelect]);
 
   const setOption = useCallback((key: string, value: unknown) => {
     setOptionValues((current) => ({ ...current, [key]: value }));

@@ -37,6 +37,8 @@ def test_each_kind_is_gated_by_the_permission_that_edits_it() -> None:
         # CDG-5.2: an agent is a consumer; its model is catalogued with it.
         "agent": Resource.CONSUMER_CONTRACTS,
         "model": Resource.CONSUMER_CONTRACTS,
+        # CDG-5.3: a gateway's environment is connector data.
+        "gateway_config": Resource.IMPORTS,
     }
 
 

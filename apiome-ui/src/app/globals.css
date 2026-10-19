@@ -36796,3 +36796,117 @@ a.tm-fact:focus-visible {
 .agt-num {
   font-variant-numeric: tabular-nums;
 }
+
+/* ===========================================================================
+   GATEWAY CONFIGS (CDG-5.3, #5981) — `/ade/dashboard/connectors/environments/[slug]`
+   and a connector's Environments tab. `.gwc-*`. Tokens only.
+   =========================================================================== */
+.gwc-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.gwc-facts,
+.gwc-posture {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.gwc-facts dt,
+.gwc-posture dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+}
+
+.gwc-facts dd,
+.gwc-posture dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.gwc-section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.gwc-section__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.gwc-muted {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.gwc-strong {
+  display: block;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.gwc-link {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gwc-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gwc-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.gwc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.gwc-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.gwc-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.gwc-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.gwc-table tr:last-child td {
+  border-block-end: 0;
+}

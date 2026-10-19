@@ -12,8 +12,8 @@ Family             Edge                                        Source rows
                    converted from                              conversion of each pair)
 ``identity_of``    project / catalog item → identity group     ``api_identity_members``
 ``built_from``     MCP endpoint → MCP source                   ``mcp_endpoint_sources`` (not retired)
-``deployed_on``    catalog item → connector                    ``catalog_connector_items`` (imported or
-                                                               discovered, not missing or ignored)
+``deployed_on``    project / catalog item → gateway config      ``catalog_connector_items`` (imported or
+                   (CDG-5.3: the connector's environment)     discovered) × ``catalog_gateway_configs``
 ``served_by``      project / catalog item → repository         ``repository_import_spec`` and live
                                                                ``draft_repository_bindings``
 =================  ==========================================  ========================================
@@ -71,6 +71,8 @@ NODE_KINDS = (
     "repository",
     "mcp_source",
     "identity_group",
+    # CDG-5.3 (V298): one (connector, environment) — what `deployed_on` edges point at.
+    "gateway_config",
 )
 
 EDGE_KINDS = (
@@ -153,16 +155,20 @@ _FAMILY_SQL: Dict[str, str] = {
         JOIN apiome.mcp_endpoints e ON e.id = s.endpoint_id AND e.deleted_at IS NULL
         WHERE s.tenant_id = %(tenant)s::uuid AND s.retired_at IS NULL
     """,
+    # CDG-5.3: an API is deployed on the gateway config of the (connector, environment) serving it.
     "deployed_on": f"""
         SELECT {_PROJECT_KIND} AS from_kind, p.id AS from_id,
-               'connector' AS to_kind, k.id AS to_id,
+               'gateway_config' AS to_kind, g.id AS to_id,
                NULL::text AS pointer, 'connector_item:' || i.id::text AS source_ref,
                jsonb_strip_nulls(jsonb_build_object(
                    'remote_id', left(i.remote_id, 200), 'environment', i.environment,
-                   'revision', left(i.remote_revision, 120)
+                   'revision', left(i.remote_revision, 120), 'connector_id', k.id::text
                )) AS evidence
         FROM apiome.catalog_connector_items i
         JOIN apiome.catalog_connectors k ON k.id = i.connector_id AND k.deleted_at IS NULL
+        JOIN apiome.catalog_gateway_configs g
+             ON g.connector_id = i.connector_id AND g.environment = COALESCE(i.environment, '')
+            AND g.deleted_at IS NULL
         JOIN apiome.projects p ON p.id = i.project_id AND p.deleted_at IS NULL
         WHERE k.tenant_id = %(tenant)s::uuid AND i.status IN ('imported', 'discovered')
     """,

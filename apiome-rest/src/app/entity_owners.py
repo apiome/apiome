@@ -124,9 +124,15 @@ KINDS: Dict[str, KindSpec] = {
     "model": KindSpec(
         "model", "apiome.catalog_models", "e.deleted_at IS NULL", Resource.CONSUMER_CONTRACTS
     ),
+    # CDG-5.3 (V298): a gateway's environment, kept by connector sync.
+    "gateway_config": KindSpec(
+        "gateway_config", "apiome.catalog_gateway_configs", "e.deleted_at IS NULL", Resource.IMPORTS
+    ),
 }
 
-EntityKind = Literal["project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model"]
+EntityKind = Literal[
+    "project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model", "gateway_config"
+]
 
 
 class OwnerValidationError(ValueError):

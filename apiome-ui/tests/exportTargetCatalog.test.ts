@@ -397,6 +397,15 @@ describe('filterSameFormatTargets (MFX-41.1)', () => {
     expect(kept).toEqual(['openapi', 'proto']);
   });
 
+  it('keeps a same-format target the caller asked for by name (CDG-5.3 push-back)', () => {
+    expect(filterSameFormatTargets(cards, 'graphql', 'graphql').map((c) => c.key)).toEqual([
+      'openapi',
+      'graphql',
+      'proto',
+    ]);
+    expect(filterSameFormatTargets(cards, 'graphql', 'openapi').map((c) => c.key)).toEqual(['openapi', 'proto']);
+  });
+
   it('keeps every target when the source format is unknown', () => {
     expect(filterSameFormatTargets(cards, null).map((c) => c.key)).toEqual([
       'openapi',

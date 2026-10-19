@@ -153,6 +153,13 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['agent-entity.html', 'model-entity.html'] },
   },
+  {
+    // CDG-5.3 (#5981): a gateway config page and the push-back fidelity report, dumped by
+    // `tests/gateway-config-ui.test.tsx`.
+    id: 'gateway-configs',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['gateway-config-entity.html', 'export-studio-gateway.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

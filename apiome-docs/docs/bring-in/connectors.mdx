@@ -83,6 +83,8 @@ now** runs a sync; the tabs below fill in as soon as it finishes, without a relo
 
 - **Items** lists every API the connector has seen, with its environment, revision and
   [status](#what-a-sync-does). **Open in the catalog** opens the catalog item an imported API became.
+- **Environments** lists one [gateway config](#environments-gateway-configs) per environment the
+  connector's syncs found, with how many APIs it serves and its auth and rate limits.
 - **Runs** lists this connector's runs, newest first, with their outcome, for example *Imported 2 of
   3* or *Failed: auth (HTTP 401)*.
 
@@ -187,6 +189,51 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 | **imported** | Imported; `catalogItemId` is its catalog item (`mcpEndpointId`, its MCP server, for an MCP registry) |
 | **ignored** | Never fetched. Ignored from [Shadow APIs](../govern/shadow-apis.mdx), with a reason |
 | **missing** | No longer in the inventory |
+
+## Environments (gateway configs)
+
+<Route path="/ade/dashboard/connectors/environments/[slug]" />
+
+Every sync turns each environment the connector reports — a Kong control plane, an AWS stage, an
+Azure APIM instance, an Apigee environment — into a **gateway config**: an entity of its own in the
+[catalog](./catalog.mdx#kinds) and the [dependency graph](../govern/dependency-graph.mdx). **Open a
+connector**, **click “Environments”** and **click an environment** to see its page.
+
+<Screenshot id="gateway-config-entity" alt="A Kong environment's page: two APIs served with Push back buttons, the auth and rate-limit posture, the declared loss notice and the owner team" />
+
+- **APIs served** — every API the last sync saw in the environment, its route, and the catalog item
+  or Project it was imported as (**Not imported** when it was only discovered).
+- **Posture** — the **Auth** schemes and the plugin or policy that enforces each, the **Rate limits**
+  and the **Other policies** (CORS, transforms, …), read from the imported configuration. Only names
+  and schemes are kept: credentials are redacted at import, and the page says how many were.
+- **Declared loss** — *Gateway configs carry no request/response schemas*: a gateway configuration
+  says where a request goes, not what it carries, so its APIs are operations only. Supply schemas and
+  [convert](./convert-to-openapi.md) the catalog item to promote it.
+- **Owner** — the [owner team](../workspace/teams.mdx); **choose a team** and **click “Assign owner”**.
+- **Graph** — the APIs `deployed_on` this environment.
+
+An environment the connector no longer reports disappears on the next sync. A gateway config's
+`deployed_on` edges come from its APIs, so the [blast radius](../govern/dependency-graph.mdx) and the
+graph show where each API runs.
+
+### Push a catalog item back to the gateway
+
+**Click “Push back”** on an imported API to export the governed catalog item back to the gateway's
+own format. The export opens on that format's **fidelity report** — what is preserved, approximated
+and dropped — before anything is exported; acknowledge a lossy conversion to continue.
+
+<Screenshot id="export-studio-gateway" alt="The export opened by Push back on Kong Declarative Config: 71% preserved, 5 dropped and 2 approximated, with the acknowledgement checkbox" />
+
+| Connector | Push back to |
+| --- | --- |
+| Kong (Konnect or Admin API) | **Kong Declarative Config** (decK) |
+| AWS API Gateway, Azure API Management, Apigee | Not yet — their export formats are still to come ([FMT-7.7](https://github.com/apiome/apiome/issues/5461)); the button is disabled and says so |
+
+How the fidelity report is worked out is in [Understand export fidelity](../ship/export-fidelity.md).
+
+With the API: `GET /v1/tenants/{tenant}/gateway-configs` (`?connector=` for one connector) and
+`GET /v1/tenants/{tenant}/gateway-configs/{slug}` — see [Gateway configs](../reference/rest/gateway-configs.md).
+`pushBack.target` names the export target (`kong`) to use with `POST /v1/export/{tenant}/preview`.
 
 ## What never changes on a refresh
 

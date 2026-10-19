@@ -129,6 +129,8 @@ describe('parseExportStudioOptions', () => {
 describe('resolveStudioBack', () => {
   it('returns the Catalog screen for a catalog origin', () => {
     expect(resolveStudioBack('catalog')).toEqual({ href: '/ade/dashboard/catalog', label: 'Catalog' });
+    // CDG-5.3: a push-back started on a gateway config returns to the connectors.
+    expect(resolveStudioBack('gateway-config')).toEqual({ href: '/ade/dashboard/connectors', label: 'Connectors' });
   });
 
   it('returns the Versions screen for a versions origin', () => {

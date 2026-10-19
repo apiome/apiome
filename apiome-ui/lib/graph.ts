@@ -11,7 +11,7 @@
 
 import { ownedEntityHref } from '@lib/owners';
 
-/** Every node kind an edge end can be (apiome-db V288). */
+/** Every node kind an edge end can be (apiome-db V288, V298). */
 export const GRAPH_NODE_KINDS = [
   'project',
   'catalog_item',
@@ -21,6 +21,8 @@ export const GRAPH_NODE_KINDS = [
   'mcp_source',
   'repository',
   'identity_group',
+  // CDG-5.3 (V298): one (connector, environment) — what `deployed_on` edges point at.
+  'gateway_config',
 ] as const;
 export type GraphNodeKind = (typeof GRAPH_NODE_KINDS)[number];
 
@@ -50,6 +52,7 @@ export const NODE_KIND_LABELS: Readonly<Record<GraphNodeKind, string>> = {
   mcp_source: 'MCP source',
   repository: 'Repository',
   identity_group: 'Identity group',
+  gateway_config: 'Gateway config',
 };
 
 /** A short, text-only kind marker drawn inside a graph node (colour is never the only signal). */
@@ -62,6 +65,7 @@ export const NODE_KIND_ABBREVIATIONS: Readonly<Record<GraphNodeKind, string>> = 
   mcp_source: 'S',
   repository: 'R',
   identity_group: 'I',
+  gateway_config: 'E',
 };
 
 /** How an edge reads from its source's side (`out`) and from its target's side (`in`). */
@@ -249,7 +253,13 @@ export function graphPageHref(kind: GraphNodeKind, id: string): string {
  */
 export function graphNodeHref(kind: GraphNodeKind, id: string): string {
   if (kind === 'repository') return `/ade/dashboard/repositories/${encodeURIComponent(id)}`;
-  if (kind === 'project' || kind === 'catalog_item' || kind === 'mcp_endpoint' || kind === 'connector') {
+  if (
+    kind === 'project' ||
+    kind === 'catalog_item' ||
+    kind === 'mcp_endpoint' ||
+    kind === 'connector' ||
+    kind === 'gateway_config'
+  ) {
     return ownedEntityHref({ kind, id }) ?? graphPageHref(kind, id);
   }
   return graphPageHref(kind, id);

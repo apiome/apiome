@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.389.0] - 2026-10-19
+
+### Added
+- **Gateway configs as entities (#5981, CDG-5.3)**: V298 adds `catalog_gateway_configs`, one live row per (connector,
+  environment) — a Kong control plane, an AWS stage, an Azure APIM instance, an Apigee environment. Every connector sync
+  refreshes them (`gateway_config_store.refresh_gateway_configs`, before the graph): API count, auth and rate-limit
+  posture (names and schemes only, read from the served APIs' imported models — Kong's `extras["gateway"]`, the other
+  gateways' `extras["security"]` / `extras["rate_limits"]`), and the declared loss "gateway configs carry no
+  request/response schemas"; vanished environments are soft-deleted. New routes `GET /v1/tenants/{tenant}/gateway-configs`
+  (`?connector=`) and `GET …/gateway-configs/{slug}` (with the APIs served), `imports:view`. `pushBack.target` names the
+  export target that writes the gateway's format (`kong` for Kong connectors); AWS API Gateway, Azure APIM and Apigee
+  report `pushBack.reason: fmt-7.7` until FMT-7.7 (#5461) ships their emit modes. **Changed:** `deployed_on` graph edges
+  now run from a Project or catalog item to the gateway config of the environment serving it (was: to the connector);
+  `gateway_config` is a graph node kind, a catalog entity kind and an owner kind. OpenAPI 1.253.0.
+
 ## [1.388.0] - 2026-10-19
 
 ### Added

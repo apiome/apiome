@@ -1,0 +1,23 @@
+---
+slug: gateway-configs
+title: Gateway environments are catalog entities
+description: Each connector environment becomes a gateway config with posture, owner and push-back.
+authors: [apiome]
+---
+
+Every connector sync now turns each gateway environment — a Kong control plane, an AWS stage, an
+Azure APIM instance, an Apigee environment — into a **gateway config**: the APIs it serves, its auth
+and rate-limit posture, and an owner team.
+
+{/* truncate */}
+
+- **Environments.** A connector's new **Environments** tab lists them; each has a page with the APIs
+  served, the auth schemes and rate limits read from the imported configuration (credentials are
+  redacted), and the declared loss: gateway configs carry no request/response schemas.
+- **Where APIs run.** `deployed_on` graph edges now point from each API to the environment that
+  serves it, so the dependency graph and catalog home show gateway configs as a kind of their own.
+- **Push back.** **Push back** exports a governed catalog item back to Kong's declarative format,
+  showing the fidelity report first. AWS API Gateway, Azure APIM and Apigee follow with FMT-7.7.
+- **API.** `GET /v1/tenants/{tenant}/gateway-configs` and `…/gateway-configs/{slug}`.
+
+See [Environments (gateway configs)](/bring-in/connectors#environments-gateway-configs).

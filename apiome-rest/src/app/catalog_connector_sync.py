@@ -1043,6 +1043,13 @@ def run_connector_sync(
         from .shadow_api_notifications import notify_new_shadow_apis
 
         notify_new_shadow_apis(db, connector, new_rows)
+    # CDG-5.3: one gateway config per environment the run saw — before the edges that point at them.
+    try:
+        from .gateway_config_store import refresh_gateway_configs
+
+        refresh_gateway_configs(db, tenant_id, connector_id)
+    except Exception:  # noqa: BLE001 - the sync itself succeeded; the next run refreshes them
+        _logger.exception("gateway config refresh failed connector_id=%s", connector_id)
     # CDG-3.1: re-derive this tenant's `deployed_on` edges from the items the run just recorded.
     refresh_graph = getattr(db, "refresh_graph", None)
     if callable(refresh_graph):

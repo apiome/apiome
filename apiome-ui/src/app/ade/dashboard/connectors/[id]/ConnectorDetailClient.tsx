@@ -12,6 +12,7 @@ import { FormField } from '@/app/components/ui/FormField';
 import { Input } from '@/app/components/ui/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/Select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
+import { ConnectorEnvironments } from '@/app/components/ade/gatewayConfigs/ConnectorEnvironments';
 import { toast } from '@/app/components/ui/toast';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -168,6 +169,9 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
               <TabsTrigger value="items" data-testid="connector-tab-items">
                 Items
               </TabsTrigger>
+              <TabsTrigger value="environments" data-testid="connector-tab-environments">
+                Environments
+              </TabsTrigger>
               <TabsTrigger value="runs" data-testid="connector-tab-runs">
                 Runs
               </TabsTrigger>
@@ -264,6 +268,11 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                 ) : null}
               </div>
             ) : null}
+          </TabsContent>
+
+          {/* CDG-5.3: one gateway config per environment the syncs found. */}
+          <TabsContent value="environments">
+            <ConnectorEnvironments connectorId={connectorId} active={tab === 'environments'} />
           </TabsContent>
 
           <TabsContent value="runs">
