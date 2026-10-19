@@ -22139,6 +22139,88 @@ class Database:
         "AND e.visibility = 'public'::apiome.visibility_type"
     )
 
+    def list_mcp_registry_endpoints(
+        self,
+        tenant_slug: str,
+        *,
+        include_private: bool,
+        limit: int,
+        after_slug: Optional[str] = None,
+        slug: Optional[str] = None,
+        search: Optional[str] = None,
+        updated_since: Optional[datetime] = None,
+    ) -> List[Dict[str, Any]]:
+        """Page a tenant's cataloged endpoints for the MCP Registry API (AAU-5.3, #5724).
+
+        One row per live, enabled endpoint that has a current snapshot, joined to that snapshot and
+        its stored score. Anonymous callers (``include_private=False``) see only what the public
+        gate admits (:attr:`_MCP_PUBLIC_ENDPOINT_PREDICATE`); a tenant credential widens the read
+        to private and unpublished endpoints. Rows are keyset-paged by ``slug`` (tenant-unique), so
+        a page boundary never shifts when endpoints are inserted or updated mid-walk.
+
+        ``endpoint_url`` *is* selected because the registry entry advertises the remote; the pure
+        builder (:func:`app.mcp_registry.remote_url`) strips userinfo, query and fragment before
+        anything leaves the process.
+
+        Args:
+            tenant_slug: The owning tenant's URL slug.
+            include_private: Whether private / unpublished endpoints are visible to the caller.
+            limit: Maximum rows to return (the route asks for one extra to detect a next page).
+            after_slug: Keyset cursor — only rows whose slug sorts after this one.
+            slug: Restrict to this exact endpoint slug (single-server lookups).
+            search: Case-insensitive substring matched against name and slug.
+            updated_since: Only rows whose entry changed at or after this instant — the later of
+                the endpoint's ``updated_at`` and its current snapshot's discovery time.
+
+        Returns:
+            Endpoint rows ordered by slug ascending, each carrying ``tenant_slug``, the snapshot's
+            ``version_tag`` / ``server_version`` / ``server_title`` / ``surface_fingerprint`` /
+            ``version_discovered_at``, ``entry_updated_at``, and ``score`` / ``grade``.
+        """
+        clauses = [
+            "t.slug = %s",
+            "t.deleted_at IS NULL",
+            "e.deleted_at IS NULL",
+            "e.enabled IS TRUE",
+        ]
+        params: List[Any] = [tenant_slug]
+        if not include_private:
+            clauses.append(self._MCP_PUBLIC_ENDPOINT_PREDICATE)
+        if after_slug is not None:
+            clauses.append("e.slug > %s")
+            params.append(after_slug)
+        if slug is not None:
+            clauses.append("e.slug = %s")
+            params.append(slug)
+        if search:
+            pattern = "%" + search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            clauses.append("(e.name ILIKE %s OR e.slug ILIKE %s)")
+            params.extend([pattern, pattern])
+        entry_updated = "GREATEST(e.updated_at, COALESCE(v.discovered_at, v.created_at))"
+        if updated_since is not None:
+            clauses.append(f"{entry_updated} >= %s")
+            params.append(updated_since)
+        params.append(int(limit))
+        q = f"""
+            SELECT e.id, e.name, e.slug, e.description, e.transport, e.endpoint_url,
+                   e.visibility, e.published, e.quarantined_at, e.created_at, e.updated_at,
+                   e.current_version_id,
+                   t.slug AS tenant_slug,
+                   v.version_tag, v.server_version, v.server_title, v.surface_fingerprint,
+                   COALESCE(v.discovered_at, v.created_at) AS version_discovered_at,
+                   {entry_updated} AS entry_updated_at,
+                   s.score, s.grade
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.tenants t ON t.id = e.tenant_id
+            JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE {" AND ".join(clauses)}
+            ORDER BY e.slug ASC
+            LIMIT %s
+        """
+        rows = self.execute_query(q, tuple(params))
+        return [dict(r) for r in rows or []]
+
     #: Stable per-snapshot item ordering shared by the change-history reads (server metadata first,
     #: then tools, resources, resource templates, prompts, each by name), matching the compare
     #: engine's emission order so a feed lists a snapshot's changes deterministically.
@@ -25527,6 +25609,47 @@ class Database:
         if not rows:
             return None
         return self._normalize_mcp_api_key_row(rows[0])
+
+    def resolve_mcp_api_key_tenant_id(self, secret: str) -> Optional[str]:
+        """Return the owning tenant id of a live MCP API key secret, or ``None`` (AAU-5.3, #5724).
+
+        Mirrors apiome-mcp's ``validate_mcp_api_key``: rows are found by the indexed prefix, revoked
+        and expired keys are skipped, and the secret must verify against ``bcrypt(SHA-256(secret))``.
+        Read-only — ``last_used_at`` is not touched, because the registry API only uses the key to
+        decide whether private entries are visible.
+
+        Args:
+            secret: The raw MCP API key the caller presented.
+
+        Returns:
+            The key's ``tenant_id`` as a string, or ``None`` when the secret is unknown, revoked,
+            expired, too short, or does not verify.
+        """
+        if not secret or len(secret) < self._MCP_API_KEY_PREFIX_CHARS:
+            return None
+        rows = self.execute_query(
+            """
+            SELECT tenant_id, key_hash
+            FROM apiome.mcp_api_keys
+            WHERE prefix = %s
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+            """,
+            (self.mcp_api_key_prefix(secret),),
+        )
+        digest = hashlib.sha256(secret.encode("utf-8")).digest()
+        for row in rows or []:
+            key_hash = row.get("key_hash")
+            if isinstance(key_hash, memoryview):
+                key_hash = key_hash.tobytes()
+            elif isinstance(key_hash, str):
+                key_hash = key_hash.encode("utf-8")
+            try:
+                if key_hash and bcrypt.checkpw(digest, key_hash):
+                    return str(row["tenant_id"])
+            except (ValueError, TypeError):
+                continue
+        return None
 
     def create_mcp_api_key(
         self,

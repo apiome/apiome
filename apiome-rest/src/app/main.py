@@ -70,6 +70,7 @@ from .mcp_collection_routes import router as mcp_collection_router
 from .mcp_credential_crypto import validate_credential_encryption_keys
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_feed_routes import router as mcp_feed_router
+from .mcp_registry_routes import router as mcp_registry_router
 from .mcp_key_routes import router as mcp_key_router
 from .mcp_manifest_routes import router as mcp_manifest_router
 from .mcp_policy_routes import router as mcp_policy_router
@@ -173,7 +174,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.245.0",
+    version="1.246.0",
 )
 
 
@@ -309,6 +310,9 @@ app.include_router(public_types_router)
 app.include_router(mcp_badge_router)
 # mcp_feed_router: anonymous public RSS/Atom/JSON change feeds at /mcp/feed/* (unauthenticated, like browse).
 app.include_router(mcp_feed_router)
+# mcp_registry_router: MCP Registry API v0.1 at /v1/tenants/{t}/mcp-registry/* — anonymous public
+# slice, widened to private entries by a tenant credential (AAU-5.3, #5724).
+app.include_router(mcp_registry_router)
 app.include_router(browse_export_router)
 app.include_router(snippet_browse_router)
 app.include_router(sdk_kit_router)

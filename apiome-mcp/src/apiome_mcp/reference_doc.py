@@ -571,6 +571,12 @@ def render_index_page(registry: McpRegistry) -> str:
             "- [MCP surface lint rules](../../govern/mcp-surface-lint-rules.md)",
             "- [MCP trust posture rules](../../govern/mcp-trust-posture-rules.md)",
             "",
+            "## Registry API",
+            "",
+            "A gateway or registry client can page through a tenant's imported MCP servers in the official "
+            "MCP Registry API v0.1 shape at `/v1/tenants/{tenant}/mcp-registry/v0.1/servers` — see "
+            "[MCP registry](../rest/mcp-registry.md) in the REST reference.",
+            "",
             "To connect a host step by step, see the [MCP quick-start](../mcp-quickstart.md).",
             "",
             _generated_note(),

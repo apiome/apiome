@@ -18,7 +18,7 @@ MCP catalog endpoints and tenant governance (policy / key capabilities).
 apiome mcp [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
+Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
 
 ## apiome mcp conformance {#mcp-conformance}
 
@@ -365,6 +365,33 @@ apiome mcp register [OPTIONS]
 | `--bearer` | text |  |  | Seal a bearer token as the endpoint's outbound credential. |
 | `--header` | text |  |  | Seal a custom header secret as 'Name:Value'. |
 | `--output` | text |  |  | Output format: table (default) or json. |
+
+## apiome mcp registry {#mcp-registry}
+
+Read the tenant's catalog through the MCP Registry API v0.1 (AAU-5.3).
+
+```text
+apiome mcp registry [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`list`](#mcp-registry-list).
+
+## apiome mcp registry list {#mcp-registry-list}
+
+List the tenant's servers in registry shape, following every page (GET .../mcp-registry/v0.1/servers).
+
+The configured API key is sent, so private and unpublished endpoints are listed too. JSON output is one ``ServerList``: every page's ``servers`` and ``metadata.count``.
+
+```text
+apiome mcp registry list [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--since` | text |  |  | Only servers updated at or after this ISO 8601 timestamp (updated_since). |
+| `--output` | text |  |  | Output: table (default) or json. |
 
 ## apiome mcp shadowing {#mcp-shadowing}
 

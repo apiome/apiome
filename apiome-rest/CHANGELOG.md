@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.382.0] - 2026-10-19
+
+### Added
+- **MCP Registry API over the MCP server catalog (#5724, AAU-5.3)**: read-only router `app.mcp_registry_routes`
+  serves a tenant's cataloged MCP servers in the official MCP Registry API v0.1 shape —
+  `GET /v1/tenants/{t}/mcp-registry/v0.1/servers` (`cursor`, `limit` 1–100 default 30, `search`, `updated_since`,
+  `version`), `GET …/servers/{serverName}/versions` and `GET …/servers/{serverName}/versions/{version}` (`latest` or
+  exact; `ETag` + `If-None-Match` → `304`). Each entry is a `server.json` built by `app.mcp_registry` from the endpoint
+  and its current snapshot: name `apiome.<tenant-slug>/<endpoint-slug>`, version from `serverInfo.version` (else the
+  snapshot label), `remotes[]` from the transport and the endpoint URL with userinfo, query and fragment removed
+  (`stdio` has none). `_meta` carries `io.modelcontextprotocol.registry/official` (`status`, `publishedAt`,
+  `updatedAt`, `isLatest`) and `dev.apiome/catalog` (stored grade and score, the trust posture recomputed offline with
+  the vulnerability lookup off, visibility, manifest digest). Anonymous callers get the public gate's slice; a session,
+  workspace API key or MCP API key of the tenant (`Database.resolve_mcp_api_key_tenant_id`, read-only) also sees
+  private and unpublished endpoints, and a bad or foreign credential is `401` / `403`. Pages are keyset-ordered by slug
+  (`Database.list_mcp_registry_endpoints`), so cursors are stable under inserts. The registry response schema is
+  vendored at `app/data/mcp_registry_v0_1_schema.json` (server.json 2025-12-11, registry API 2025-12-01 at commit
+  `11b7b0e`) and every built page is validated against it in tests. `_build_posture_context` gains
+  `scan_vulnerabilities`. The tenant's own agent-runtime entry is left to AAU-5.1 (#5722).
+
+The OpenAPI version moves to 1.246.0.
+
 ## [1.381.0] - 2026-10-18
 
 ### Added

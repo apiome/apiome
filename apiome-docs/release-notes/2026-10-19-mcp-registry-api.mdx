@@ -1,0 +1,27 @@
+---
+slug: mcp-registry-api
+title: Your MCP catalog, in the registry API shape
+description: Gateways and hosts can page through your imported MCP servers with a standard registry client.
+authors: [apiome]
+---
+
+Apiome now serves each tenant's imported MCP servers through the official MCP Registry API v0.1, at
+`GET /v1/tenants/{tenant}/mcp-registry/v0.1/servers`. A gateway or MCP host that already discovers
+servers from a registry can read your catalog without Apiome-specific code.
+
+{/* truncate */}
+
+- **Public by default, private with a key.** Anonymous callers see servers that are published and
+  public. An MCP API key, a workspace API key or a signed-in session of the same tenant also lists
+  private and unpublished ones. A wrong credential is refused rather than shown the public list.
+- **Standard `server.json` entries.** Each server is named `apiome.<tenant>/<server-slug>` and lists
+  its remote URL (without any stored credentials or query string) and its reported version. Entries
+  validate against the registry schema, which Apiome vendors at a pinned version.
+- **Grade and trust posture in `_meta`.** The `dev.apiome/catalog` extension carries the server's
+  grade, its trust posture and its manifest digest.
+- **Paging and caching.** Up to 100 servers a page with cursors that stay valid when servers are
+  added, plus `search` and `updated_since`. A single server comes with an `ETag` and answers
+  `If-None-Match` with `304`.
+- **CLI.** `apiome mcp registry list [--since …]` walks every page.
+
+The routes are on the [MCP registry](/reference/rest/mcp-registry) REST reference page.
