@@ -43,6 +43,10 @@ export interface ConnectorItem {
   catalogItemId: string | null;
   lastSeenAt: string | null;
   ignoredReason?: string | null;
+  /** `mcp-registry` only: the MCP server this registry entry created or refreshed (CDG-4.4). */
+  mcpEndpointId?: string | null;
+  /** `mcp-registry` only: why the entry is still `discovered` (no reachable remote, …). */
+  discoveredReason?: string | null;
 }
 
 /** One row of the refresh ledger: a Git refresh job or a connector run. */

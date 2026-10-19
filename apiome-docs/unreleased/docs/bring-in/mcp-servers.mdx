@@ -95,6 +95,29 @@ latency. Pick the servers and **click “Compare”**.
 
 <Screenshot id="mcp-compare" alt="Server comparison: three servers side by side across surface, quality and safety metrics" />
 
+## Servers from a registry
+
+An [MCP registry connector](./connectors.mdx#mcp-registry) keeps servers from an upstream
+registry — the official registry, Azure API Center, a Kong registry or another Apiome workspace — in
+your catalog. **Go to Bring in → Connectors**, click **Add connector** and choose **MCP registry**.
+
+Each server the registry lists with a reachable `streamable-http` or `sse` remote is added here,
+private and unpublished, and discovered, linted and graded like a server you added by hand. You can
+tell it apart by its source:
+
+- **Added via** reads **Imported from a registry** (`added_via: registry` in the API), and its
+  discovery runs are labelled **Registry refresh**.
+- **Sources** lists what the registry declared, each with the provenance **registry published**
+  and the connector that linked it: the registry entry (`io.github.acme/weather`), the repository,
+  and the npm, PyPI, NuGet, Cargo or OCI packages. A package is pinned only when the registry names
+  an exact version.
+
+Each sync refreshes the server's name, URL, transport and description from the registry, and retires
+a source link the registry no longer lists. Links you added yourself stay. A server that only ships
+packages, or whose remote resolves to a private address, is not added. A server whose remote does not
+answer is added, but its row on the connector stays **discovered** until it does. The connector's
+**Items** tab says why.
+
 ## With the CLI or the API
 
 - CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp

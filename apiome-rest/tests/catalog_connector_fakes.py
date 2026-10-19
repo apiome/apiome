@@ -194,12 +194,15 @@ class FakeConnectorStore:
                 "imported_sha256": None,
                 "status": ITEM_DISCOVERED,
                 "project_id": None,
+                "mcp_endpoint_id": None,
+                "discovered_reason": None,
                 "first_seen_at": _now(),
             }
             self.items[existing["id"]] = existing
         else:
             if existing["status"] != ITEM_IGNORED:
-                existing["status"] = ITEM_IMPORTED if existing["project_id"] else ITEM_DISCOVERED
+                answered = existing.get("mcp_endpoint_id") and not existing.get("discovered_reason")
+                existing["status"] = ITEM_IMPORTED if existing["project_id"] or answered else ITEM_DISCOVERED
         existing.update(seen)
         return {**existing, "inserted": inserted}
 
@@ -222,6 +225,18 @@ class FakeConnectorStore:
             imported_revision=revision,
             imported_remote_updated_at=remote_updated_at,
             imported_sha256=content_sha256,
+        )
+
+    def mark_item_mcp_server(
+        self, db, item_id, *, mcp_endpoint_id, discovered_reason, revision, remote_updated_at
+    ):
+        imported = discovered_reason is None
+        self.items[item_id].update(
+            status=ITEM_IMPORTED if imported else ITEM_DISCOVERED,
+            mcp_endpoint_id=mcp_endpoint_id,
+            discovered_reason=discovered_reason,
+            imported_revision=revision if imported else None,
+            imported_remote_updated_at=remote_updated_at if imported else None,
         )
 
     # --- runs -----------------------------------------------------------------------

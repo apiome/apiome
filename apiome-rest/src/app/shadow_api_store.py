@@ -39,7 +39,7 @@ _ITEM_COLUMNS = """
 
 
 def load_report_connectors(db: Any, tenant_id: str, connector_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """The tenant's live connectors, with the finish time of each one's last successful run.
+    """The tenant's live connectors (not `mcp-registry` ones), with the finish time of each one's last successful run.
 
     Args:
         db: Database handle.
@@ -54,6 +54,8 @@ def load_report_connectors(db: Any, tenant_id: str, connector_id: Optional[str] 
                  WHERE j.connector_id = c.id AND j.status = 'succeeded') AS last_success_at
         FROM apiome.catalog_connectors c
         WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL
+          -- CDG-4.4: an MCP registry lists MCP servers, not APIs a gateway serves.
+          AND c.kind <> 'mcp-registry'
           AND (%s::uuid IS NULL OR c.id = %s::uuid)
         ORDER BY lower(c.name)
         """,

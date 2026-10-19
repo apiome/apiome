@@ -101,7 +101,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: {
       kind: 'fixtures',
       dir: 'hive-a11y',
-      files: ['connectors.html', 'connector-add.html', 'connector-detail.html', 'connector-runs.html'],
+      files: [
+        'connectors.html',
+        'connector-add.html',
+        'connector-add-mcp-registry.html',
+        'connector-detail.html',
+        'connector-runs.html',
+      ],
     },
   },
   {

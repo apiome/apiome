@@ -212,6 +212,8 @@ def _item_out(row: Mapping[str, Any]) -> ConnectorItemOut:
         ignored_reason=row.get("ignored_reason"),
         ignored_at=_iso(row.get("ignored_at")),
         linked_at=_iso(row.get("linked_at")),
+        mcp_endpoint_id=_text(row.get("mcp_endpoint_id")),
+        discovered_reason=row.get("discovered_reason"),
     )
 
 

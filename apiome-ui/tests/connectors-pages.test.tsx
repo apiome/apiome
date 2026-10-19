@@ -46,7 +46,7 @@ import AddConnectorClient from '../src/app/ade/dashboard/connectors/new/AddConne
 import ConnectorDetailClient from '../src/app/ade/dashboard/connectors/[id]/ConnectorDetailClient';
 import { RefreshRunsLedger } from '../src/app/components/ade/connectors/RefreshRunsLedger';
 import type { Connector, RefreshRun } from '../lib/connectors-api';
-import { writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 function connector(overrides: Partial<Connector> = {}): Connector {
   return {
@@ -326,6 +326,110 @@ describe('Add connector wizard', () => {
     await user.click(screen.getByTestId('connector-next'));
     expect(screen.queryByTestId('connector-dry-run-result')).not.toBeInTheDocument();
     expect(screen.getByTestId('connector-next')).toBeDisabled();
+  });
+});
+
+describe('MCP registry connector (CDG-4.4)', () => {
+  it('asks for the registry root, a search and an optional credential, and dry-runs them', async () => {
+    routes.push((url, init) => {
+      if (url === '/api/connectors' && (init?.method ?? 'GET') === 'GET') {
+        return { body: { connectors: [], kinds: ['mcp-registry'], syncableKinds: ['mcp-registry'] } };
+      }
+      if (url === '/api/connectors/dry-run') {
+        return {
+          body: {
+            itemCount: 2,
+            items: [{ remoteId: 'io.github.acme/weather', name: 'Weather', environment: null, revision: '1.0.0' }],
+            truncated: false,
+            findings: [],
+          },
+        };
+      }
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(<AddConnectorClient />);
+    const kind = await screen.findByTestId('connector-kind-mcp-registry');
+    await waitFor(() => expect(kind).not.toBeDisabled());
+    await user.click(kind);
+    await user.click(screen.getByTestId('connector-next'));
+    expect(screen.getByTestId('connector-credential-token')).toBeInTheDocument();
+    expect(screen.getByTestId('connector-credential-apiKey')).toBeInTheDocument();
+    await user.click(screen.getByTestId('connector-next')); // both credentials are optional
+    expect(screen.getByTestId('connector-missing')).toHaveTextContent('Base URL');
+    await user.type(screen.getByTestId('connector-base-url'), 'https://registry.modelcontextprotocol.io');
+    await user.type(screen.getByTestId('connector-scope-search'), 'io.github.acme');
+    await user.type(screen.getByTestId('connector-scope-updatedSince'), '2026-01-01T00:00:00Z');
+    writeA11yFixture('connector-add-mcp-registry', liveMarkup(document.body));
+    await user.click(screen.getByTestId('connector-next'));
+    await user.click(screen.getByTestId('connector-dry-run'));
+    expect(await screen.findByTestId('connector-dry-run-result')).toHaveTextContent('Weather');
+    expect(calls.find((call) => call.url === '/api/connectors/dry-run')?.body).toMatchObject({
+      kind: 'mcp-registry',
+      baseUrl: 'https://registry.modelcontextprotocol.io',
+      scope: { search: 'io.github.acme', updatedSince: '2026-01-01T00:00:00Z' },
+    });
+  });
+
+  it('links each entry to its MCP server and says why an entry is still discovered', async () => {
+    routes.push((url) => {
+      if (url === '/api/connectors/c1') return { body: connector({ kind: 'mcp-registry', name: 'Official registry' }) };
+      if (url.startsWith('/api/connectors/c1/items')) {
+        return {
+          body: {
+            total: 2,
+            items: [
+              {
+                id: 'm1',
+                remoteId: 'io.github.acme/weather',
+                remoteName: 'Weather',
+                environment: null,
+                hosts: ['weather.acme.test'],
+                basePath: null,
+                remoteRevision: '1.0.0+sha256.0123456789ab',
+                status: 'imported',
+                catalogItemId: null,
+                mcpEndpointId: 'e1',
+                discoveredReason: null,
+                lastSeenAt: '2026-10-18T10:00:00Z',
+              },
+              {
+                id: 'm2',
+                remoteId: 'io.github.acme/local-files',
+                remoteName: 'io.github.acme/local-files',
+                environment: null,
+                hosts: [],
+                basePath: null,
+                remoteRevision: '0.3.1+sha256.ba9876543210',
+                status: 'discovered',
+                catalogItemId: null,
+                mcpEndpointId: null,
+                discoveredReason: 'no-remote: the server lists only packages, which run locally (stdio).',
+                lastSeenAt: '2026-10-18T10:00:00Z',
+              },
+            ],
+          },
+        };
+      }
+      return undefined;
+    });
+    const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'mcp';
+    const view = render(<ConnectorDetailClient connectorId="c1" />);
+    const link = await screen.findByTestId('connector-item-link-m1');
+    expect(link).toHaveAttribute('href', '/ade/dashboard/mcp/e1');
+    expect(link).toHaveTextContent('Open the MCP server');
+    expect(screen.getByRole('columnheader', { name: 'MCP server' })).toBeInTheDocument();
+    expect(screen.queryByTestId('connector-item-link-m2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('connector-item-reason-m2')).toHaveTextContent('no-remote');
+    view.unmount();
+
+    // While the MCP servers screen is unreleased, the entry names its server without a dead link.
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    render(<ConnectorDetailClient connectorId="c1" />);
+    expect(await screen.findByTestId('connector-item-mcp-m1')).toHaveTextContent('Added to the MCP servers');
+    expect(screen.queryByTestId('connector-item-link-m1')).not.toBeInTheDocument();
+    if (preview !== undefined) process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
   });
 });
 

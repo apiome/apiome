@@ -5,7 +5,7 @@
  * never secrets) and the **credential** fields (sealed by REST on `PUT …/credentials`, never shown
  * again). The shapes mirror the REST scope validators (`app.kong_connector_source`,
  * `app.aws_apigateway_connector_source`, `app.azure_apim_connector_source`,
- * `app.apigee_connector_source`), which stay the authority: this model only lays the form out and
+ * `app.apigee_connector_source`, `app.mcp_registry_connector_source`), which stay the authority: this model only lays the form out and
  * turns its values into the request body.
  */
 
@@ -174,12 +174,44 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
   {
     kind: 'mcp-registry',
     label: 'MCP registry',
-    description: 'Servers listed in an MCP registry.',
+    description: 'MCP servers listed in an MCP registry, added to the MCP server catalog.',
     baseUrl: 'required',
-    scope: [],
-    credentials: [],
+    baseUrlHelp:
+      'The registry root, for example https://registry.modelcontextprotocol.io, an Azure API Center or Kong ' +
+      'registry, or another Apiome workspace at https://<apiome>/registry/mcp/<workspace>.',
+    scope: [
+      {
+        key: 'search',
+        label: 'Search',
+        type: 'text',
+        help: 'Only servers whose name matches. Leave empty for every server the registry lists.',
+        placeholder: 'io.github.acme',
+      },
+      {
+        key: 'updatedSince',
+        label: 'Updated since',
+        type: 'text',
+        help: 'Only servers updated at or after this RFC 3339 instant. Servers it hides are reported missing.',
+        placeholder: '2026-01-01T00:00:00Z',
+      },
+    ],
+    credentials: [
+      { key: 'token', label: 'Bearer token', type: 'secret' },
+      { key: 'apiKey', label: 'Apiome workspace API key', type: 'secret' },
+    ],
+    credentialNote: 'Leave both empty for a public registry. An Apiome workspace takes its API key.',
   },
 ];
+
+/**
+ * Whether a kind's inventory lands in the MCP server catalog rather than the API catalog (CDG-4.4).
+ *
+ * @param kind - The REST kind.
+ * @returns `true` for `mcp-registry`.
+ */
+export function landsInMcpCatalog(kind: string | null | undefined): boolean {
+  return kind === 'mcp-registry';
+}
 
 /** Refresh cadences the schedule step offers (`null` = the deployment default). */
 export const CADENCE_OPTIONS: readonly { value: string; label: string; seconds: number | null }[] = [

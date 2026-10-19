@@ -23,8 +23,8 @@ found that the catalog does not describe.
 
 :::note
 Each kind needs a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway),
-[Azure API Management](#azure-api-management) and [Apigee](#apigee) sync today; the URL and registry
-sources follow. A kind your deployment cannot sync yet is shown as **Not available on this
+[Azure API Management](#azure-api-management), [Apigee](#apigee) and the [MCP registry](#mcp-registry)
+sync today; the URL and schema registry sources follow. A kind your deployment cannot sync yet is shown as **Not available on this
 deployment** when you add a connector.
 :::
 
@@ -39,7 +39,7 @@ deployment** when you add a connector.
 | `apigee` | Apigee, by organization and environment |
 | `url` | A specification published at a URL |
 | `schema-registry` | A schema registry |
-| `mcp-registry` | An MCP server registry |
+| `mcp-registry` | An MCP registry: the official registry, Azure API Center, a Kong registry or another Apiome workspace. Its servers become MCP servers, not catalog items |
 
 A connector has a **name**, an optional **base URL** (the control-plane or admin address), a
 **scope** (the kind's coordinates: control-plane ids, region and account, resource group, org and
@@ -183,8 +183,8 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 
 | Item status | Meaning |
 | --- | --- |
-| **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design) |
-| **imported** | Imported; `catalogItemId` is its catalog item |
+| **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design). An MCP registry server Apiome cannot reach stays here with its `discoveredReason` |
+| **imported** | Imported; `catalogItemId` is its catalog item (`mcpEndpointId`, its MCP server, for an MCP registry) |
 | **ignored** | Never fetched. Ignored from [Shadow APIs](../govern/shadow-apis.mdx), with a reason |
 | **missing** | No longer in the inventory |
 
@@ -542,6 +542,86 @@ Apiome asks for an access token with the `https://www.googleapis.com/auth/cloud-
   (`invalid_grant` …). A missing IAM permission is named, for example
   `Missing permission apigee.deployments.list`. A token without the `cloud-platform` scope says so
   (`ACCESS_TOKEN_SCOPE_INSUFFICIENT`).
+
+## MCP registry
+
+The `mcp-registry` kind reads `GET /v0.1/servers` from any registry that speaks the MCP Registry API:
+the official registry at `https://registry.modelcontextprotocol.io`, Azure API Center, a Kong
+registry, or another Apiome workspace's [MCP registry endpoint](../ship/mcp-registry.mdx). **Each
+server becomes an MCP server** of your workspace's MCP catalog, not a catalog item.
+
+### Add an MCP registry
+
+1. **Go to Bring in → Connectors** and click **Add connector**.
+2. **Kind:** choose **MCP registry** and click **Continue**.
+3. **Credentials:** leave both fields empty for a public registry. Enter a **Bearer token** for a
+   registry that asks for one, or an **Apiome workspace API key** to read another Apiome workspace.
+   Click **Continue**.
+4. **Scope:** enter the registry root as the **Base URL**. Optionally narrow what is read:
+   - **Search:** only servers whose name matches, for example `io.github.acme`.
+   - **Updated since:** only servers updated at or after an RFC 3339 instant, for example
+     `2026-01-01T00:00:00Z`. Servers the filter hides are reported **missing**, so leave it empty
+     to keep the whole registry in view.
+
+   <Screenshot id="connector-add-mcp-registry" alt="Add a connector, Scope step for an MCP registry: the registry root as Base URL, a Search of io.github.acme and an Updated since instant" />
+
+5. **Dry run** and **Schedule** work as for every other kind: the dry run lists the servers the
+   registry returns, and nothing is stored until you click **Save connector**.
+
+With the API, register it with the registry root as `baseUrl` (a trailing `/v0.1` or `/v0.1/servers`
+is accepted):
+
+```json
+{
+  "kind": "mcp-registry",
+  "name": "Official MCP registry",
+  "baseUrl": "https://registry.modelcontextprotocol.io",
+  "scope": { "search": "io.github.acme", "updatedSince": "2026-01-01T00:00:00Z" }
+}
+```
+
+Store a credential, when the registry needs one, with `PUT …/connectors/{id}/credentials` and
+`{"credentials": {"token": "…"}}` (sent as `Authorization: Bearer`) or `{"credentials": {"apiKey": "…"}}`
+(sent as `X-API-Key`).
+
+### What an MCP registry sync does
+
+Each sync pages through `/v0.1/servers` (`version=latest`, with your `search` and `updated_since`).
+Each server name is one inventory row; a server the registry marks deleted turns **missing**. For
+every server that is new or changed since the last sync:
+
+1. **It picks a remote.** The first `remotes[]` entry of type `streamable-http` or `sse` with a
+   concrete URL.
+2. **It adds or refreshes the MCP server.** A new server is added as **private** and unpublished,
+   marked as **imported from a registry**. A server it added before has its name, URL, transport and
+   description refreshed from the registry.
+3. **It links the server's sources** with the provenance **registry published**: the registry
+   entry itself, `repository.url` as a Git source, and each npm, PyPI, NuGet, Cargo or OCI entry of
+   `packages[]`. A package is pinned only when the registry names an exact version. A link this
+   connector made that the registry no longer lists is retired; links you added yourself are never
+   touched.
+4. **It runs discovery**, which also lints and grades the server. Any answer from the server, even
+   `401`, means it is there, and the row becomes **imported**.
+
+Discovery runs inside the sync, one server at a time, so the first sync of a large registry takes a
+while. Narrow it with **Search**. A scheduled sync stops at the workspace's polling quota and defers
+the rest to its next run; unchanged servers are skipped.
+
+A server that cannot be reached stays **discovered**, and the **Items** tab shows why under its
+status. The reason starts with a stable code:
+
+| `discoveredReason` | What it means | What to do |
+| --- | --- | --- |
+| `no-remote` | The server lists only packages, which run locally over stdio, or no HTTP remote at all | Nothing: there is nothing to discover remotely |
+| `remote-templated` | The remote URL contains a `{variable}` the client fills in | Add the server by hand with its concrete URL |
+| `remote-refused` | The remote resolves to a private address (the [base URL rule](#base-urls-and-private-networks)) | An operator can allow the range |
+| `remote-unreachable` | Discovery could not connect (`connect_error`, `tls_error`, `timeout`, …). The server was added; Apiome tries again on the next sync | Check the server is up |
+
+On the **Items** tab, the column **MCP server** says **Added to the MCP servers** for every server
+the connector added (**Open the MCP server** on deployments where the MCP servers screen is turned
+on). MCP registry
+connectors are left out of [Shadow APIs](../govern/shadow-apis.mdx): MCP servers are not APIs a
+gateway serves.
 
 ## Quota and audit
 

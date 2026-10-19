@@ -326,12 +326,12 @@ def test_runs_count_pulls_against_the_quota_window_and_are_audited(store, db, im
 
 
 def test_a_kind_without_a_source_cannot_sync_and_opens_no_run(store, db, importer):
-    other = store.add_connector(TENANT, kind="mcp-registry")
+    other = store.add_connector(TENANT, kind="schema-registry")
     with pytest.raises(ConnectorError) as info:
         _run(db, other, importer)
     assert info.value.code == CODE_KIND_UNSUPPORTED
     assert store.runs == {}
-    assert "mcp-registry" not in syncable_kinds() and "kong-admin" in syncable_kinds()
+    assert "schema-registry" not in syncable_kinds() and "kong-admin" in syncable_kinds()
 
 
 def test_one_run_at_a_time(store, db, importer, connector):
@@ -354,7 +354,7 @@ def test_sweep_syncs_due_connectors_and_skips_paused_and_unsupported(store, db, 
     monkeypatch.setattr("app.repository_refresh_quota.load_tenant_refresh_quota_tracker", lambda d: None)
     due = store.add_connector(TENANT, name="due")
     paused = store.add_connector(TENANT, name="paused", status="paused")
-    other = store.add_connector(TENANT, name="registry", kind="mcp-registry")
+    other = store.add_connector(TENANT, name="registry", kind="schema-registry")
     FakeGatewaySource.inventory = [_api("orders")]
     assert process_connector_refresh_sweep(db) == 1
     synced = {r["connector_id"] for r in store.runs.values()}
