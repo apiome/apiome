@@ -45,6 +45,9 @@ list on [Supported formats](./supported-formats.md).
   **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
   **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
+- **Registry** — an Avro, JSON Schema or Protobuf item that backs a
+  [schema registry subject](../ship/schema-registry.mdx) carries a **Registry** chip on its card
+  and table row. Hover it to see the subject names; **click it** to open the item's **Subjects** tab.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
 - **Cards** or **Table**, at the end of the filter row; cards can be grouped by protocol. Your
@@ -87,7 +90,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 **Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
 **“Convert to OpenAPI Project”**, **“Export”** and **“View code”** — plus **“Open in Designer”**
 when your workspace has the Designer suite (see [View an item in Designer](#view-an-item-in-designer)).
-Nine tabs follow:
+Nine tabs follow — ten on an Avro, JSON Schema or Protobuf item, which also has **Subjects**:
 
 | Tab | Shows |
 | --- | --- |
@@ -100,12 +103,14 @@ Nine tabs follow:
 | **Test bench** | Validate a payload against one of the item's schemas |
 | **Versions** | The item's revisions |
 | **Dependencies** | What the item depends on and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
+| **Subjects** | Avro, JSON Schema and Protobuf items only: the schema registry subjects the item backs, with their versions and schema ids — see [The Subjects tab](../ship/schema-registry.mdx#the-subjects-tab) |
 
 The page address names the open tab — `?tab=lint`, `?tab=versions` and so on, with no `?tab=`
 for **Overview** — so you can **copy the address and send it** to land a teammate on the same tab.
 Switching tabs updates the address without reloading the page, and does not add a step to the
 browser's **Back** button. The tab ids are `overview`, `format`, `source`, `provenance`,
-`conversions`, `lint`, `test-bench` and `versions`; an unknown id opens **Overview**.
+`conversions`, `lint`, `test-bench`, `versions`, `dependencies` and `subjects`; an unknown id
+opens **Overview**, and so does `subjects` on an item that has no **Subjects** tab.
 
 While the page or a tab is loading, it shows grey placeholders in the shape of what is coming —
 the header, the tabs and the tiles — so nothing moves when the content arrives. The list does the

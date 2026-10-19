@@ -1,7 +1,7 @@
 ---
 title: "apiome versions"
 description: "List, publish, unpublish, freeze, fork, compare and delete versions."
-sidebar_position: 35
+sidebar_position: 36
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

@@ -596,7 +596,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Register Avro, JSON Schema and Protobuf schemas under subjects; connect Kafka serializers.',
     page: 'apiome-docs/docs/ship/schema-registry.mdx',
     section: 'reference',
-    keywords: ['subject', 'confluent', 'kafka', 'avro', 'protobuf', 'serializer', 'compatibility'],
+    keywords: ['subject', 'confluent', 'kafka', 'avro', 'protobuf', 'serializer', 'compatibility', 'registry settings', 'apiome registry'],
   },
   {
     id: 'lint-posture',

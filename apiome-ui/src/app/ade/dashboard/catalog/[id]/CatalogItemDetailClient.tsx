@@ -54,6 +54,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Binary,
+  BookKey,
   Code2,
   FileOutput,
   FlaskConical,
@@ -67,6 +68,8 @@ import {
   Tags,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { CatalogSubjectsPanel } from '@/app/components/ade/schemaRegistry/CatalogSubjectsPanel';
+import { isRegistryFormat } from '@lib/schema-registry';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
 import { useAuthSession } from '@lib/auth/session-client';
@@ -191,6 +194,7 @@ const TAB_GLYPH: Readonly<Record<string, typeof LayoutDashboard>> = {
   'test-bench': FlaskConical,
   versions: GitBranch,
   dependencies: Network,
+  subjects: BookKey,
 };
 
 /** The empty summary a payload without one degrades to. */
@@ -297,7 +301,8 @@ export function CatalogItemDetailClient({
     conversions: number | null;
     lint: number | null;
     versions: number | null;
-  }>({ conversions: null, lint: null, versions: null });
+    subjects: number | null;
+  }>({ conversions: null, lint: null, versions: null, subjects: null });
   // A lint finding deep-link (MFI-28.2) wants to scroll to this Overview entity once it mounts.
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
   const [highlightedAnchor, setHighlightedAnchor] = useState<string | null>(null);
@@ -431,6 +436,10 @@ export function CatalogItemDetailClient({
     (count: number) => setTabCounts((prev) => (prev.versions === count ? prev : { ...prev, versions: count })),
     [],
   );
+  const setSubjectsCount = useCallback(
+    (count: number) => setTabCounts((prev) => (prev.subjects === count ? prev : { ...prev, subjects: count })),
+    [],
+  );
 
   /**
    * Open the Export Studio (MFX-41.2, #4349) scoped to this item's latest revision — the power
@@ -469,7 +478,14 @@ export function CatalogItemDetailClient({
     else setQualityOpen(true);
   }, [item, orbs]);
 
-  const tabs = useMemo(() => catalogDetailTabs(tabCounts), [tabCounts]);
+  // Subjects (CDG-4.5) is a schema item's tab: Avro, JSON Schema or Protobuf.
+  const hasSubjects = isRegistryFormat(item?.sourceFormat);
+  const tabs = useMemo(() => catalogDetailTabs(tabCounts, { subjects: hasSubjects }), [tabCounts, hasSubjects]);
+
+  // A `?tab=subjects` link to an item that has no such tab opens Overview instead.
+  useEffect(() => {
+    if (item && !hasSubjects && activeTab === 'subjects') setActiveTab('overview');
+  }, [item, hasSubjects, activeTab]);
 
   /** Select and focus the tab at `index`, wrapping around the ends (WAI-ARIA automatic activation). */
   const focusTab = useCallback(
@@ -833,6 +849,16 @@ export function CatalogItemDetailClient({
             label={{ name: item.name, slug: item.slug ?? null, owner: null }}
           />
         </TabPanel>
+        {hasSubjects ? (
+          <TabPanel id="subjects" active={activeTab}>
+            <CatalogSubjectsPanel
+              itemId={item.id}
+              itemSlug={item.slug ?? null}
+              active={activeTab === 'subjects'}
+              onCountChange={setSubjectsCount}
+            />
+          </TabPanel>
+        ) : null}
       </PageBody>
 
       <ProjectQualityHistoryDialog

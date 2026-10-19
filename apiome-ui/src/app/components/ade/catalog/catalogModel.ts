@@ -99,6 +99,11 @@ export interface CatalogItem {
   tags?: readonly string[];
   /** The owner team: confirmed, else suggested; null when none (CDG-2.2/2.4). */
   owner?: EntityOwner | null;
+  /**
+   * The schema-registry subjects this item backs, by name (CDG-4.5); filled in by the list after a
+   * second read, so it is absent until then and empty for an item that backs none.
+   */
+  registrySubjects?: readonly string[];
 }
 
 /** The quality history of every item on screen, keyed by item id. */

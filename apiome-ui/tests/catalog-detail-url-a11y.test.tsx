@@ -186,7 +186,8 @@ describe('URL-synced detail tabs', () => {
     expect(screen.getByTestId('catalog-detail-tab-format')).toHaveFocus();
     expect(window.location.search).toBe('?tab=format');
     fireEvent.keyDown(screen.getByTestId('catalog-detail-tab-format'), { key: 'End' });
-    expect(window.location.search).toBe('?tab=dependencies');
+    // The item is Protobuf, so its last pane is Subjects (CDG-4.5).
+    expect(window.location.search).toBe('?tab=subjects');
   });
 
   it('records the pane "View code" opens', async () => {
@@ -286,7 +287,7 @@ describe('axe (MFI-28.8)', () => {
       expect(screen.getByTestId(`catalog-detail-tab-${tab}`)).toHaveAttribute('aria-selected', 'true')
     );
     const tabs = screen.getByTestId('catalog-detail-tabs');
-    expect(within(tabs).getAllByRole('tab')).toHaveLength(9);
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(10); // nine panes + Subjects (a Protobuf item)
     expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
   });
 });

@@ -328,7 +328,10 @@ export function catalogConvertedStrip(
 // The tabs
 // ---------------------------------------------------------------------------------------
 
-/** The nine panes, in the order the mockup's tab row draws them, then Dependencies (CDG-3.4). */
+/**
+ * The nine panes, in the order the mockup's tab row draws them, then Dependencies (CDG-3.4), then
+ * Subjects (CDG-4.5) — which only schema items (Avro, JSON Schema, Protobuf) show.
+ */
 export const CATALOG_DETAIL_TAB_IDS = [
   'overview',
   'format',
@@ -339,6 +342,7 @@ export const CATALOG_DETAIL_TAB_IDS = [
   'test-bench',
   'versions',
   'dependencies',
+  'subjects',
 ] as const;
 
 export type CatalogDetailTabId = (typeof CATALOG_DETAIL_TAB_IDS)[number];
@@ -367,6 +371,7 @@ const TAB_META: Readonly<Record<CatalogDetailTabId, { label: string; icon: strin
   'test-bench': { label: 'Test bench', icon: 'test-bench' },
   versions: { label: 'Versions', icon: 'versions' },
   dependencies: { label: 'Dependencies', icon: 'dependencies' },
+  subjects: { label: 'Subjects', icon: 'subjects' },
 };
 
 /** The counts a caller can hand the tab row; each is `null` until its pane has loaded. */
@@ -374,24 +379,40 @@ export interface CatalogDetailTabCounts {
   conversions?: number | null;
   lint?: number | null;
   versions?: number | null;
+  /** How many schema-registry subjects the item backs (CDG-4.5). */
+  subjects?: number | null;
+}
+
+/** Which optional panes an item has. */
+export interface CatalogDetailTabOptions {
+  /** Show **Subjects** — true for Avro, JSON Schema and Protobuf items (see `isRegistryFormat`). */
+  subjects?: boolean;
 }
 
 /**
- * The nine tabs, with the three counts the mockup shows.
+ * The tabs, with the counts the mockup shows (and the Subjects count).
+ *
+ * **Subjects** is listed only when `options.subjects` is set.
  *
  * A count of `0` is still a count — "Conversions 0" is a fact the reader can act on, and the
  * mockup's empty-state copy says as much — but a count that has not *loaded* is `null` and
  * draws no chip at all. That distinction is the whole reason this is a function.
  *
  * @param counts What each counted pane has loaded so far.
+ * @param options Which optional panes the item has.
  * @returns The tabs in display order.
  */
-export function catalogDetailTabs(counts: CatalogDetailTabCounts = {}): CatalogDetailTabView[] {
-  return CATALOG_DETAIL_TAB_IDS.map((id) => {
+export function catalogDetailTabs(
+  counts: CatalogDetailTabCounts = {},
+  options: CatalogDetailTabOptions = {},
+): CatalogDetailTabView[] {
+  const ids = CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects' || options.subjects === true);
+  return ids.map((id) => {
     const raw =
       id === 'conversions' ? counts.conversions
       : id === 'lint' ? counts.lint
       : id === 'versions' ? counts.versions
+      : id === 'subjects' ? counts.subjects
       : null;
     return {
       id,

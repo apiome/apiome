@@ -232,6 +232,25 @@ describe('the nine panes', () => {
     expect(screen.getByTestId('catalog-detail-pane-versions')).not.toBeVisible();
   });
 
+  it('adds a Subjects tab to a schema item only (CDG-4.5)', async () => {
+    expect(screen.queryByTestId('catalog-detail-tab-subjects')).not.toBeInTheDocument();
+    await renderDetail({ ...ITEM, sourceFormat: 'avro' });
+    const tab = screen.getByTestId('catalog-detail-tab-subjects');
+    expect(screen.getAllByRole('tab')).toHaveLength(10);
+    fireEvent.click(tab);
+    expect(tab).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByTestId('catalog-subjects-panel')).toBeVisible();
+  });
+
+  it('opens Overview when ?tab=subjects names an item without that tab', async () => {
+    mockSearch = 'tab=subjects';
+    await renderDetail();
+    expect(screen.queryByTestId('catalog-detail-tab-subjects')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('catalog-detail-tab-overview')).toHaveAttribute('aria-selected', 'true'),
+    );
+  });
+
   it('moves selection and focus with the arrow keys, wrapping at the ends', async () => {
     await renderDetail();
     const first = screen.getByTestId('catalog-detail-tab-overview');
