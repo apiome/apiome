@@ -3,6 +3,16 @@
 import { AssignOwnerControl, OwnerFilter, assignOwner, useTeams } from '@/app/components/ade/owners';
 import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
+import {
+  DEFAULT_CATALOG_KIND,
+  KIND_PARAM,
+  catalogKindParam,
+  withKindParam,
+  type CatalogEntitySummary,
+} from '@lib/catalog-entities';
+import { CatalogEntityList } from '@/app/components/ade/catalog/CatalogEntityList';
+import { CatalogKindsPanel } from '@/app/components/ade/catalog/CatalogKindsPanel';
+import { fetchEntitySummary } from '@/app/components/ade/catalog/catalogEntitiesApi';
 import { isRegistryFormat, subjectNamesByItem } from '@lib/schema-registry';
 import { fetchSubjects } from '@/app/components/ade/schemaRegistry/schemaRegistryApi';
 import Link from 'next/link';
@@ -207,6 +217,12 @@ export default function CatalogClient() {
     },
     [router, searchParams]
   );
+  // CDG-5.1: the Kind facet lives in the URL (`?kind=`); no parameter means Catalog items.
+  const kindFacet = catalogKindParam(searchParams.get(KIND_PARAM));
+  const setKindFacet = React.useCallback(
+    (kind: string) => router.replace(withKindParam(searchParams.toString(), kind), { scroll: false }),
+    [router, searchParams]
+  );
   const { data: session } = useAuthSession();
   const { confirm, alert } = useDialog();
 
@@ -325,6 +341,22 @@ export default function CatalogClient() {
   React.useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
+
+  /**
+   * The kinds and callouts (CDG-5.1): a second, best-effort read. When it fails the panel is left
+   * out and the page is the catalog-items list it always was.
+   */
+  const [kindSummary, setKindSummary] = React.useState<CatalogEntitySummary | null>(null);
+  React.useEffect(() => {
+    if (!currentTenantId) return;
+    let live = true;
+    fetchEntitySummary(teamFilter)
+      .then((next) => live && setKindSummary(next))
+      .catch(() => live && setKindSummary(null));
+    return () => {
+      live = false;
+    };
+  }, [currentTenantId, teamFilter]);
 
   /** The Deleted chip cannot outlive the switch that reveals deleted rows. */
   React.useEffect(() => {
@@ -1042,6 +1074,17 @@ export default function CatalogClient() {
           <>
             <CatalogExplainerCallout onLearnMore={openAbout} />
 
+            {/* CDG-5.1: every kind in the catalog, with counts, and the three callouts. The tiles
+                are the Kind facet; any kind but Catalog items shows the cross-kind list below. */}
+            {kindSummary ? (
+              <CatalogKindsPanel summary={kindSummary} selected={kindFacet} onSelect={setKindFacet} />
+            ) : null}
+
+            {kindSummary && kindFacet !== DEFAULT_CATALOG_KIND ? (
+              <CatalogEntityList kind={kindFacet} team={teamFilter} kinds={kindSummary.kinds} />
+            ) : (
+              <>
+
             {/* The stat strip, folded into one line; Show stats reveals it in place. On an
                 empty catalog the line reads "0 items" and offers no strip of zeros. */}
             <FactsLine
@@ -1176,6 +1219,8 @@ export default function CatalogClient() {
                     data-testid="catalog-cards-bulk-bar"
                   />
                 ) : null}
+              </>
+            )}
               </>
             )}
           </>

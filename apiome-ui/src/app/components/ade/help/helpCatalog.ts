@@ -540,7 +540,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Imports in formats other than OpenAPI: find items, read their tabs, convert one to OpenAPI.',
     page: 'apiome-docs/docs/bring-in/catalog.mdx',
     section: 'reference',
-    keywords: ['graphql', 'asyncapi', 'grpc', 'catalog item', 'convert', 'fidelity'],
+    keywords: ['graphql', 'asyncapi', 'grpc', 'catalog item', 'convert', 'fidelity', 'kind', 'unowned', 'stale', 'entities'],
   },
   {
     id: 'import-wizard',

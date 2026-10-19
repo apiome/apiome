@@ -1,7 +1,7 @@
 ---
 title: "Style guides"
 description: "REST endpoints tagged style-guides: 19 operations."
-sidebar_position: 77
+sidebar_position: 78
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.250.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.251.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `style-guides` · 19 operations
 

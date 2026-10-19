@@ -812,6 +812,17 @@
       "data": "fixture:hive-a11y/api-keys-registry-scope.html"
     },
     {
+      "id": "catalog-kinds",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-kinds\"]",
+      "data": "fixture:hive-a11y/catalog-kinds.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogKindsPanel.tsx",
+        "apiome-ui/src/app/components/ade/catalog/CatalogEntityList.tsx",
+        "apiome-ui/lib/catalog-entities.ts"
+      ]
+    },
+    {
       "id": "catalog-item-subjects",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"catalog-subjects-panel\"]",

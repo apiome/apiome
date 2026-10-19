@@ -167,7 +167,9 @@ async function renderTable() {
   await screen.findByTestId('catalog-table');
 }
 
-const catalogReads = () => calls.filter((call) => call.url.startsWith('/api/catalog'));
+// The catalog-item list read; the kinds summary (`/api/catalog/entities…`, CDG-5.1) is a separate read.
+const catalogReads = () =>
+  calls.filter((call) => call.url.startsWith('/api/catalog') && !call.url.startsWith('/api/catalog/entities'));
 
 test('choosing a team puts it in the URL, and the read asks the server for it', async () => {
   const user = userEvent.setup();

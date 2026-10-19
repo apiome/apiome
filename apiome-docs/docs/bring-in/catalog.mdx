@@ -22,6 +22,48 @@ average quality, how many were converted to OpenAPI, and how many are active or 
 deleted, when **Show deleted** is on). **Click “Show stats”** to open the full statistics in
 place; Apiome remembers the choice in this browser.
 
+## Kinds
+
+Above the list, the catalog home counts **everything** in the catalog by **kind**, not only
+catalog items:
+
+| Kind | What it is | Key in the API |
+| --- | --- | --- |
+| **Projects** | Publishable OpenAPI projects | `api` |
+| **Catalog items** | Imported specs in other formats (this page's list) | `spec` |
+| **MCP servers** | MCP endpoints Apiome discovers and grades (**Bring in → MCP servers**) | `mcp_server` |
+| **Consumers** | Applications registered as consumers of a project | `consumer` |
+| **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
+| **Teams** | The [teams](../workspace/teams.mdx) that own the rest | `team` |
+
+The tiles are the **Kind** filter:
+
+1. **Click a tile** — for example **MCP servers** — to list that kind. **All kinds** lists
+   everything, in name order.
+2. Each row shows the **name** (click it to open its page), the **kind**, the **owner team** and
+   when it was last **updated**. **Type in the filter box** to narrow by name, slug or description;
+   the **owner** filter applies too (teams have no owner, so they drop out while it is set).
+3. **Click “Load more”** for the next page.
+4. **Click “Catalog items”** to go back to the catalog-item cards and table described below.
+
+The address names the kind (`?kind=mcp_server`, `?kind=all`), so you can share the view. You see
+only the kinds your role may view.
+
+<Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
+
+### Home callouts
+
+Under the tiles, three counts point at what needs attention. **Click one** to open the page that
+deals with it:
+
+| Callout | Counts | Opens |
+| --- | --- | --- |
+| **Unowned** | Projects, catalog items, MCP servers, consumers and connectors with no confirmed owner team | **Ownership drift** on the [Teams](../workspace/teams.mdx) page |
+| **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence | **Connectors** |
+| **Shadow** | APIs a gateway serves that have no catalog entry | [Shadow APIs](../govern/shadow-apis.mdx) |
+
+A callout you may not see — for example **Shadow** without permission to view imports — is left out.
+
 ## How the catalog works
 
 On your first visit a note above the list explains what catalog items are. **Click “Learn more”**
@@ -255,6 +297,11 @@ Every control on the list and on an item's page works from the keyboard.
 
 - CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
   --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `GET /v1/catalog/{tenant}/entities` lists every kind in one shape (`kind`, `id`, `slug`,
+  `name`, `description`, `owner`, `updatedAt`, `href`, `graphNode`), filtered by repeatable `kind`,
+  `team` and `q` and paged with `cursor` (`pagination.nextCursor`);
+  `GET /v1/catalog/{tenant}/entities/summary` returns the count of each kind and the three callouts
+  — see [Catalog entities](../reference/rest/catalog-entities.md).
 - REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain` and
   `tag`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
   (the count per value), `PUT /v1/catalog/{tenant}/{item}/categories` (`{ "domain", "tags" }`),

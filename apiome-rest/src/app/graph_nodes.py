@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from .catalog_entities import kinds_by_graph_kind
 from .catalog_graph import NODE_KINDS, PROVENANCES, GraphValidationError
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "PROJECT_KINDS",
     "current_node_kinds",
     "label_nodes",
+    "label_sql",
     "node_owners",
     "search_entities",
 ]
@@ -29,12 +31,28 @@ MAX_SEARCH_LIMIT = 2_000
 
 _BY_IDS = " WHERE e.tenant_id = %s::uuid AND e.id = ANY(%s::uuid[])"
 
-#: ``SELECT id, name, slug`` per table-backed node kind (a catalog item is a ``projects`` row).
-_LABEL_SQL: Mapping[str, str] = {
-    "project": "SELECT e.id::text AS id, e.name, e.slug FROM apiome.projects e" + _BY_IDS,
-    "consumer": "SELECT e.id::text AS id, e.name, e.slug FROM apiome.consumer e" + _BY_IDS,
-    "mcp_endpoint": "SELECT e.id::text AS id, e.name, e.slug FROM apiome.mcp_endpoints e" + _BY_IDS,
-    "connector": "SELECT e.id::text AS id, e.name, NULL::text AS slug FROM apiome.catalog_connectors e" + _BY_IDS,
+
+def _table_kind(kind: str) -> str:
+    return "project" if kind == "catalog_item" else kind
+
+
+def _entity_label_sql() -> Dict[str, str]:
+    """``SELECT id, name, slug`` for every catalog entity kind that is a graph node (CDG-5.1).
+
+    Derived from the kind registry (:data:`app.catalog_entities.REGISTRY`), so a kind added there
+    with a ``graph_kind`` is labelled here with no other change. A catalog item and a Project share
+    the ``projects`` query (labels do not filter on ``publishable``).
+    """
+    return {
+        _table_kind(graph_kind): (
+            f"SELECT e.id::text AS id, e.name, {entry.slug_sql} AS slug FROM {entry.table} e" + _BY_IDS
+        )
+        for graph_kind, entry in kinds_by_graph_kind().items()
+    }
+
+
+#: ``SELECT id, name, slug`` for the graph kinds that are not catalog entities.
+_OTHER_LABEL_SQL: Mapping[str, str] = {
     "repository": (
         "SELECT e.id::text AS id, COALESCE(e.repository_full_name, e.clone_url_normalized) AS name, "
         "NULL::text AS slug FROM apiome.tenant_repositories e" + _BY_IDS
@@ -44,8 +62,10 @@ _LABEL_SQL: Mapping[str, str] = {
 }
 
 
-def _table_kind(kind: str) -> str:
-    return "project" if kind == "catalog_item" else kind
+def label_sql() -> Dict[str, str]:
+    """``SELECT id, name, slug`` per table-backed node kind: the registry's entity kinds (read on
+    every call, so the registry stays the one source) plus the graph-only kinds."""
+    return {**_OTHER_LABEL_SQL, **_entity_label_sql()}
 
 
 def label_nodes(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dict[str, Dict[str, Any]]:
@@ -64,13 +84,14 @@ def label_nodes(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dic
     """
     by_kind: Dict[str, List[str]] = {}
     labels: Dict[str, Dict[str, Any]] = {}
+    queries = label_sql()
     for kind, entity_id in refs:
         if kind == "identity_group":
             labels[str(entity_id)] = {"name": "Identity group", "slug": None}
-        elif _table_kind(kind) in _LABEL_SQL:
+        elif _table_kind(kind) in queries:
             by_kind.setdefault(_table_kind(kind), []).append(str(entity_id))
     for kind, ids in by_kind.items():
-        for row in db.execute_query(_LABEL_SQL[kind], (tenant_id, sorted(set(ids)))):
+        for row in db.execute_query(queries[kind], (tenant_id, sorted(set(ids)))):
             labels[str(row["id"])] = {"name": row.get("name"), "slug": row.get("slug")}
     return labels
 

@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.387.0] - 2026-10-19
+
+### Added
+- **Entity-kind registry and unified entity list (#5979, CDG-5.1)**: `app.catalog_entities` is one code registry of
+  catalog entity kinds — `api` (publishable Projects), `spec` (catalog items), `mcp_server`, `consumer`, `connector`
+  and `team` — each declaring its table, live predicate, slug / description columns, owner kind, graph node kind,
+  RBAC view resource and UI routes. `GET /v1/catalog/{tenant}/entities?kind=&team=&q=&cursor=&limit=` returns one
+  page across kinds in a common envelope (`kind`, `id`, `slug`, `name`, `description`, `owner`, `updatedAt`, `href`,
+  `graphNode`), ordered by name, then kind, then id, with a keyset `pagination.nextCursor`; it issues one bounded
+  read per kind whatever the page holds. `GET /v1/catalog/{tenant}/entities/summary` counts every kind (one
+  statement) and returns the catalog home callouts: `unowned` (no confirmed owner team), `stale` (connectors and MCP
+  servers not refreshed within twice their cadence) and `shadow` (the shadow-API report's count). Kinds the caller
+  may not view are left out; a `team` filter leaves out kinds without owners; an unknown `kind` is a 422 and a
+  malformed `cursor` a 400. The graph labeller (`graph_nodes.label_sql`) now derives its entity queries from the
+  registry. OpenAPI 1.251.0.
+
 ## [1.386.0] - 2026-10-19
 
 ### Added
