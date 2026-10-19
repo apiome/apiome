@@ -10,7 +10,10 @@
 import { withTeamParam } from '@lib/owners';
 import type {
   AvailableSurface,
+  BindingDraft,
   Consumer,
+  ConsumerBinding,
+  ConsumerRuntime,
   ConsumerContract,
   ConsumerSummary,
   SelectionPayloadOperation,
@@ -189,5 +192,67 @@ export function importPact(
       method: 'POST',
       body: JSON.stringify({ pact, ...(consumerSlug ? { consumer_slug: consumerSlug } : {}) }),
     },
+  );
+}
+
+/**
+ * A consumer's live bindings (RDG-1.8). A bound value is never part of the answer.
+ *
+ * @param projectRef Project slug or id.
+ * @param consumerRef Consumer slug or id.
+ * @returns The bindings, newest first.
+ */
+export async function fetchBindings(projectRef: string, consumerRef: string): Promise<ConsumerBinding[]> {
+  const data = await call<{ bindings: ConsumerBinding[] }>(
+    `/${encodeURIComponent(projectRef)}/${encodeURIComponent(consumerRef)}/bindings`,
+  );
+  return data.bindings;
+}
+
+/**
+ * Bind a header, API key, JWT claim or user agent to a consumer. The server hashes the value
+ * before it stores it.
+ *
+ * @param projectRef Project slug or id.
+ * @param consumerRef Consumer slug or id.
+ * @param payload The binding as `bindingPayload` builds it.
+ * @returns The stored binding.
+ */
+export function createBinding(
+  projectRef: string,
+  consumerRef: string,
+  payload: { kind: BindingDraft['kind']; name: string; value?: string },
+): Promise<ConsumerBinding> {
+  return call<ConsumerBinding>(
+    `/${encodeURIComponent(projectRef)}/${encodeURIComponent(consumerRef)}/bindings`,
+    { method: 'POST', body: JSON.stringify(payload) },
+  );
+}
+
+/**
+ * Delete a binding. Traffic it already attributed stays attributed.
+ *
+ * @param projectRef Project slug or id.
+ * @param consumerRef Consumer slug or id.
+ * @param bindingId The binding.
+ */
+export async function deleteBinding(projectRef: string, consumerRef: string, bindingId: string): Promise<void> {
+  await call<void>(
+    `/${encodeURIComponent(projectRef)}/${encodeURIComponent(consumerRef)}/bindings/${encodeURIComponent(bindingId)}`,
+    { method: 'DELETE' },
+  );
+}
+
+/**
+ * Declared versus observed for one consumer (or `anonymous`).
+ *
+ * @param projectRef Project slug or id.
+ * @param consumerRef Consumer slug or id, or `anonymous`.
+ * @param days The window in UTC days, ending today.
+ * @returns The report.
+ */
+export function fetchRuntime(projectRef: string, consumerRef: string, days = 30): Promise<ConsumerRuntime> {
+  return call<ConsumerRuntime>(
+    `/${encodeURIComponent(projectRef)}/${encodeURIComponent(consumerRef)}/runtime?days=${days}`,
   );
 }

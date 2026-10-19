@@ -60,6 +60,7 @@ from urllib.parse import parse_qsl, unquote
 
 from pydantic import ValidationError
 
+from .consumer_binding import ConsumerMatcher
 from .consumer_surface import SpecIndex
 from .inferred_spec import template_path
 from .intake_secret_scrub import REDACTION_MARKER, scrub_document_text
@@ -634,8 +635,10 @@ class RevisionMatcher:
 class HourlyCounter:
     """One ``usage_hourly`` grain's counts over the batch's kept events (unscaled).
 
-    The grain is ``(environment, hour, version_record_id, operation_key, status)``; the source,
-    tenant and project are the batch's, and ``consumer_binding_id`` is NULL until RDG-1.8.
+    The grain is ``(environment, hour, version_record_id, operation_key, status,
+    consumer_binding_id)``; the source, tenant and project are the batch's. The binding is the one
+    the RDG-1.8 :class:`~app.consumer_binding.ConsumerMatcher` attributed the call to, or ``None``
+    for an anonymous call.
     """
 
     events: int = 0
@@ -750,6 +753,9 @@ class BatchPlan:
         samples: ``(environment, captured_at, operation_key, status, exchange)`` to store.
         samples_dropped: Chosen samples the re-scan or the size cap refused.
         sampling_rate: The source's rate, which every count above was scaled by.
+        attributed: Accepted events a consumer binding matched (the rest are anonymous).
+        binding_matches: Binding id → the newest observed time attributed to it.
+        binding_consumers: Binding id → its consumer id.
     """
 
     received: int = 0
@@ -759,12 +765,17 @@ class BatchPlan:
     rejected: int = 0
     scrub_findings: int = 0
     rejections: List[Tuple[int, str]] = field(default_factory=list)
-    hourly: Dict[Tuple[str, datetime, Optional[str], str, int], HourlyCounter] = field(default_factory=dict)
+    hourly: Dict[Tuple[str, datetime, Optional[str], str, int, Optional[str]], HourlyCounter] = field(
+        default_factory=dict
+    )
     unmatched_rows: Dict[Tuple[str, date, str, str], UnmatchedCounter] = field(default_factory=dict)
     field_groups: Dict[Tuple[str, date, str, str, int], FieldGroup] = field(default_factory=dict)
     samples: List[Tuple[str, datetime, Optional[str], int, Dict[str, Any]]] = field(default_factory=list)
     samples_dropped: int = 0
     sampling_rate: float = 1.0
+    attributed: int = 0
+    binding_matches: Dict[str, datetime] = field(default_factory=dict)
+    binding_consumers: Dict[str, str] = field(default_factory=dict)
 
     @property
     def basis(self) -> str:
@@ -853,6 +864,7 @@ def plan_batch(
     *,
     now: datetime,
     is_day_finalized: Callable[[date], bool] = lambda _day: False,
+    consumers: Optional[ConsumerMatcher] = None,
 ) -> BatchPlan:
     """Run steps 2–4 over a batch the tier cap already admitted, and plan step 5.
 
@@ -863,6 +875,8 @@ def plan_batch(
         now: The current instant (body windows).
         is_day_finalized: Whether a UTC day is finalized; an event on one is rejected
             (``day-finalized``), since V290 refuses new counts there.
+        consumers: The project's live consumer bindings (RDG-1.8). A matched event's grain carries
+            the binding; an unmatched one is counted with none (the ``anonymous`` consumer).
 
     Returns:
         The :class:`BatchPlan`.
@@ -913,7 +927,8 @@ def plan_batch(
             plan.reject(index, REASON_TEMPLATE_UNSTORABLE)
             continue
         plan.accepted += 1
-        key_h = (event.environment, _hour_of(event.observed_at), version_id, operation_key, event.status)
+        binding_id = _attribute(plan, consumers, event)
+        key_h = (event.environment, _hour_of(event.observed_at), version_id, operation_key, event.status, binding_id)
         counter_h = plan.hourly.get(key_h)
         if counter_h is None:
             counter_h = plan.hourly[key_h] = HourlyCounter()
@@ -923,6 +938,31 @@ def plan_batch(
         _maybe_sample(plan, scrubbed, source, template, operation_key, take_samples)
 
     return plan
+
+
+def _attribute(plan: BatchPlan, consumers: Optional[ConsumerMatcher], event: UsageEvent) -> Optional[str]:
+    """Match an accepted event to a consumer binding and note the match (RDG-1.8).
+
+    Args:
+        plan: The plan, which records the match for the ``last_matched_at`` stamps.
+        consumers: The project's bindings, if any.
+        event: The scrubbed event (its user agent is the scrubbed one).
+
+    Returns:
+        The binding id, or ``None`` — the call is anonymous, and still counted.
+    """
+    if not consumers:
+        return None
+    hint = event.consumer_hint
+    binding = consumers.match(hint.kind if hint else None, hint.hmac if hint else None, event.user_agent)
+    if binding is None:
+        return None
+    plan.attributed += 1
+    seen = plan.binding_matches.get(binding.id)
+    if seen is None or event.observed_at > seen:
+        plan.binding_matches[binding.id] = event.observed_at
+    plan.binding_consumers[binding.id] = binding.consumer_id
+    return binding.id
 
 
 def _count_fields(plan: BatchPlan, scrubbed: ScrubbedEvent, day: date, operation_key: str) -> None:

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.243.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.244.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `draft-bindings` · 7 operations
 
@@ -42,7 +42,7 @@ Operation id: `list_bindings_v1_tenants__tenant_slug__projects__project_ref__bin
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for list a project's branch-to-draft bindings. | `application/json` [`BindingListResponse`](#schema-bindinglistresponse) |
+| 200 | Successful response for list a project's branch-to-draft bindings. | `application/json` [`DraftBindingBindingListResponse`](#schema-draftbindingbindinglistresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/bindings/{binding_id}` {#read-binding-v1-tenants-tenant-slug-projects-project-ref-bindings-binding-id-get}
@@ -234,7 +234,7 @@ Operation id: `check_version_binding_v1_tenants__tenant_slug__projects__project_
 
 ## Schemas used {#schemas-used}
 
-### `BindingListResponse` {#schema-bindinglistresponse}
+### `DraftBindingBindingListResponse` {#schema-draftbindingbindinglistresponse}
 
 A page of a project's bindings.
 

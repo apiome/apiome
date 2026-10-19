@@ -508,7 +508,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Every API in your workspace as cards or a table: create, edit, delete, restore, consumers.',
     page: 'apiome-docs/docs/build/projects.mdx',
     section: 'reference',
-    keywords: ['new project', 'cards', 'table', 'delete', 'undelete', 'consumers'],
+    keywords: ['new project', 'cards', 'table', 'delete', 'undelete', 'consumers', 'bindings'],
   },
   {
     id: 'versions',
@@ -676,7 +676,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'What the usage index records about live traffic, and how long it keeps it.',
     page: 'apiome-docs/docs/govern/runtime-usage.mdx',
     section: 'reference',
-    keywords: ['traffic', 'usage index', 'retention', 'privacy', 'counters', 'sampling', 'sweep'],
+    keywords: ['traffic', 'usage index', 'retention', 'privacy', 'counters', 'sampling', 'sweep', 'consumer bindings', 'declared vs observed', 'anonymous'],
   },
   {
     id: 'reviews',

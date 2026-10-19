@@ -796,6 +796,13 @@
       "data": "fixture:hive-a11y/api-keys-usage-scope.html"
     },
     {
+      "id": "project-consumers-bindings",
+      "route": "/ade/dashboard/projects/pets/consumers",
+      "waitFor": "[data-testid=\"consumer-bindings-drawer\"]",
+      "data": "fixture:hive-a11y/project-consumers-bindings.html",
+      "sources": ["apiome-ui/src/app/components/ade/consumers/ConsumerBindingsDrawer.tsx"]
+    },
+    {
       "id": "preferences-account",
       "route": "/ade/dashboard",
       "waitFor": "[data-testid=\"preferences-drawer\"]",

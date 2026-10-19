@@ -108,6 +108,22 @@ const CONSUMER_PRELUDES = [
   '.cns-drawer__fields',
   '.cns-drawer__field',
   '.cns-drawer__where',
+  // RDG-1.8 (#5765): the bindings and traffic drawer.
+  '.cns-bindings__list',
+  '.cns-bindings__item',
+  '.cns-bindings__name',
+  '.cns-bindings__meta',
+  '.cns-bindings__form',
+  '.cns-bindings__select',
+  ".cns-bindings__hint, .cns-bindings__form > [role='alert'], .cns-bindings__actions",
+  '.cns-bindings__actions',
+  '.cns-runtime',
+  '.cns-runtime__window',
+  '.cns-runtime__side',
+  '.cns-runtime__ops',
+  '.cns-runtime__op',
+  '.cns-runtime__label',
+  '.cns-runtime__meta',
 ] as const;
 
 /**

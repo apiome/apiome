@@ -91,10 +91,15 @@ CODE_INVALID_SLUG = "consumer-invalid-slug"
 CODE_PACT_MALFORMED = "consumer-pact-malformed"
 CODE_PACT_TOO_LARGE = "consumer-pact-too-large"
 CODE_PROJECT_NOT_FOUND = "consumer-project-not-found"
+CODE_SLUG_RESERVED = "consumer-slug-reserved"
 CODE_SLUG_TAKEN = "consumer-slug-taken"
 CODE_VERSION_NOT_FOUND = "consumer-version-not-found"
 
 #: How a contract revision got here. Mirrors the V251 CHECK constraint.
+#: The handle unattributed usage traffic is reported under (RDG-1.8). No real consumer may take it;
+#: apiome-db V292's ``consumer_slug_reserved_check`` enforces the same rule.
+ANONYMOUS_CONSUMER_SLUG = "anonymous"
+
 SOURCE_PACT = "pact"
 SOURCE_MANUAL = "manual"
 CONTRACT_SOURCES = (SOURCE_PACT, SOURCE_MANUAL)
@@ -489,6 +494,7 @@ class ConsumerRecord(BaseModel):
         created_at: When it was registered.
         updated_at: When it was last changed.
         deleted_at: Retirement stamp, when retired.
+        runtime_last_seen_at: When usage traffic last attributed to it through a binding (RDG-1.8).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -505,6 +511,27 @@ class ConsumerRecord(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     deleted_at: Optional[str] = None
+    runtime_last_seen_at: Optional[str] = None
+
+
+class RuntimeSummary(BaseModel):
+    """Declared versus observed in counts — a consumer list row's runtime column (RDG-1.8).
+
+    Attributes:
+        declared_and_used: Declared operations called in the window.
+        declared_unused: Declared operations not called in the window.
+        used_undeclared: Called operations the contract does not declare.
+        calls: Every call attributed to the consumer in the window.
+        last_seen_day: The newest UTC day with an attributed call.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    declared_and_used: int = 0
+    declared_unused: int = 0
+    used_undeclared: int = 0
+    calls: int = Field(default=0, description="Every attributed call in the window.")
+    last_seen_day: Optional[str] = Field(default=None, description="Newest UTC day with a call.")
 
 
 class ConsumerSummary(BaseModel):
@@ -525,6 +552,13 @@ class ConsumerSummary(BaseModel):
         description=(
             "The consumer's owner team (CDG-2.2): confirmed, else suggested. Distinct from the "
             "free-text `consumer.owner`."
+        ),
+    )
+    runtime: Optional[RuntimeSummary] = Field(
+        default=None,
+        description=(
+            "Declared versus observed over the list's runtime window (RDG-1.8), from the usage "
+            "traffic its bindings attribute. Null when the usage index could not be read."
         ),
     )
 
@@ -631,6 +665,7 @@ def consumer_record_from_row(row: Dict[str, Any]) -> ConsumerRecord:
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
         deleted_at=_iso(row.get("deleted_at")),
+        runtime_last_seen_at=_iso(row.get("runtime_last_seen_at")),
     )
 
 

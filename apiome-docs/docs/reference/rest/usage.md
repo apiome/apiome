@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.243.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.244.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `usage` · 1 operation
 
@@ -74,6 +74,7 @@ The ledger row of an admitted batch, echoed back.
 | `receivedAt` | string (date-time) | yes | When the batch was ledgered. |
 | `received` | integer | yes | Events in the batch. |
 | `accepted` | integer | yes | Kept by sampling and matched to an operation of a published revision. |
+| `attributed` | integer | no | Of the accepted events, how many a consumer binding attributed to a consumer (RDG-1.8). The rest are counted under the reserved `anonymous` consumer, never dropped. |
 | `sampledOut` | integer | yes | Dropped by head sampling. |
 | `unmatched` | integer | yes | Kept, but no published revision declares the operation; counted by inferred template. |
 | `rejected` | integer | yes | Refused; see `rejections`. |

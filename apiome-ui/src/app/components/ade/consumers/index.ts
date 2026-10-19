@@ -27,4 +27,8 @@ export type { SurfacePickerDialogProps } from './SurfacePickerDialog';
 export { default as ConsumerSurfaceDrawer } from './ConsumerSurfaceDrawer';
 export type { ConsumerSurfaceDrawerProps } from './ConsumerSurfaceDrawer';
 
+export { default as ConsumerBindingsDrawer } from './ConsumerBindingsDrawer';
+export type { ConsumerBindingsDrawerProps } from './ConsumerBindingsDrawer';
+
 export * from './consumersModel';
+export * from './bindingsModel';

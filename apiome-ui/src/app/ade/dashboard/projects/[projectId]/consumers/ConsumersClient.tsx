@@ -22,30 +22,40 @@ import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import {
   CONSUMER_FACETS,
   CONSUMER_FACET_LABELS,
+  ConsumerBindingsDrawer,
   ConsumerFormDialog,
   ConsumerSurfaceDrawer,
   ConsumersTable,
   PactImportDialog,
   SurfacePickerDialog,
+  bindingPayload,
   consumerFacetCounts,
+  contractWithOperation,
   matchesConsumerFacet,
   searchConsumers,
   selectionFromContract,
   sortConsumers,
   type AvailableSurface,
+  type BindingDraft,
+  type ConsumerBinding,
   type ConsumerDraft,
   type ConsumerFacet,
   type ConsumerSortColumn,
   type ConsumerSummary,
   type PickerSelection,
+  type RuntimeOperation,
   type SelectionPayloadOperation,
 } from '@/app/components/ade/consumers';
 
 import {
+  createBinding,
   createConsumer,
   declareContract,
+  deleteBinding,
   fetchAvailableSurface,
+  fetchBindings,
   fetchConsumers,
+  fetchRuntime,
   importPact,
   retireConsumer,
   updateConsumer,
@@ -82,7 +92,7 @@ import {
 const HOME_ROUTE = '/ade/dashboard';
 
 /** Which overlay, if any, is open over the page. */
-type ConsumerOverlay = 'none' | 'register' | 'edit' | 'declare' | 'import' | 'surface';
+type ConsumerOverlay = 'none' | 'register' | 'edit' | 'declare' | 'import' | 'surface' | 'bindings';
 
 /** The caller's effective permissions, as `/api/access/permissions/me` reports them. */
 interface MyPermissions {
@@ -289,6 +299,53 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
     }
   };
 
+  // RDG-1.8: the bindings drawer's reads and writes. Each resolves to an error sentence or `null`.
+  const loadBindings = React.useCallback(
+    (consumerSlug: string) => fetchBindings(projectRef, consumerSlug),
+    [projectRef],
+  );
+  const loadRuntime = React.useCallback(
+    (consumerSlug: string) => fetchRuntime(projectRef, consumerSlug),
+    [projectRef],
+  );
+
+  const addBinding = async (consumerSlug: string, draft: BindingDraft): Promise<string | null> => {
+    try {
+      await createBinding(projectRef, consumerSlug, bindingPayload(draft));
+      toast.success('Binding added');
+      return null;
+    } catch (error) {
+      return describeFailure(error, 'The binding could not be added');
+    }
+  };
+
+  const removeBinding = async (consumerSlug: string, binding: ConsumerBinding): Promise<string | null> => {
+    try {
+      await deleteBinding(projectRef, consumerSlug, binding.id);
+      toast.success(`Binding ${binding.name} deleted`);
+      return null;
+    } catch (error) {
+      return describeFailure(error, 'The binding could not be deleted');
+    }
+  };
+
+  /** "Add to contract": the current declaration plus one operation, through the picker's PUT. */
+  const addToContract = async (row: ConsumerSummary, operation: RuntimeOperation): Promise<string | null> => {
+    try {
+      const result = await declareContract(
+        projectRef,
+        row.consumer.slug,
+        contractWithOperation(row.contract, operation),
+        `Added ${operation.method.toUpperCase()} ${operation.path} from observed traffic`,
+      );
+      toast.success(`Revision ${result.contract.revision} stored`);
+      await load();
+      return null;
+    } catch (error) {
+      return describeFailure(error, 'The contract could not be stored');
+    }
+  };
+
   const retire = async (row: ConsumerSummary) => {
     try {
       await retireConsumer(projectRef, row.consumer.slug);
@@ -388,6 +445,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
           onDeclare={(row) => openOverlay('declare', row)}
           onImport={(row) => openOverlay('import', row)}
           onRetire={retire}
+          onBindings={(row) => openOverlay('bindings', row)}
           canEdit={can('edit')}
           canDelete={can('delete')}
           onOwnerChange={updateOwner}
@@ -425,6 +483,20 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
         open={overlay === 'surface'}
         onOpenChange={(next) => !next && setOverlay('none')}
         summary={active}
+      />
+
+      <ConsumerBindingsDrawer
+        open={overlay === 'bindings'}
+        onOpenChange={(next) => !next && setOverlay('none')}
+        summary={active}
+        loadBindings={loadBindings}
+        loadRuntime={loadRuntime}
+        onCreate={addBinding}
+        onDelete={removeBinding}
+        onAddToContract={addToContract}
+        canCreate={can('create')}
+        canDelete={can('delete')}
+        canEdit={can('edit')}
       />
     </Page>
   );

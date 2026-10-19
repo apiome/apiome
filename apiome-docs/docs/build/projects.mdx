@@ -67,6 +67,36 @@ In the table, tick rows to **Delete** or **Undelete** several at once.
 each one uses. **“Register consumer”** adds one by hand; **“Import Pact file”** adds one from a
 consumer contract.
 
+### Bindings and traffic
+
+A consumer's **contract** says what it declares it uses. Its **bindings** let the
+[usage index](../govern/runtime-usage.mdx#attribute-traffic-to-consumers) recognise its live calls,
+so you can see what it really calls next to what it declares.
+
+1. On **Consumers**, open a consumer's row menu (**⋯**) and choose **Bindings and traffic**.
+2. Under **Bindings**, pick the **Kind**: **Header**, **API key**, **JWT claim** or **User agent**.
+3. Enter the name: the header (`x-client-id`), the header carrying the key (`x-api-key`), the claim
+   (`azp`), or a user-agent pattern such as `billing-service/*`.
+4. For every kind except **User agent**, enter the **Value** this consumer sends. It is hashed
+   before it is stored and is never shown again.
+5. **Click “Add binding”.** Calls ingested from now on are attributed to the consumer.
+
+<Screenshot id="project-consumers-bindings" alt="The Bindings and traffic drawer for Billing Service: an API key and a user-agent binding with when each last matched, the add-binding form, and the declared-vs-observed lists with an Add to contract button" />
+
+Each binding shows its name and when it last matched, never its value. The trash button deletes
+one: it stops matching from the next batch, and calls it already attributed stay with the consumer.
+Until a consumer has a binding that matches, its calls are counted as **anonymous**.
+
+**Declared vs observed** covers the last 30 days:
+
+- **Used, undeclared** lists operations the consumer calls but does not declare. **Click “Add to
+  contract”** to store a new contract revision with that operation added to what is already
+  declared.
+- **Declared and used** lists declared operations with calls, with the count and the last day seen.
+- **Declared, unused** lists declared operations with no calls in the window.
+
+Adding and deleting bindings needs the same permissions as registering and retiring consumers.
+
 ## Owner
 
 A project can have an owner team. CODEOWNERS rules for the spec's path and the document's own
@@ -94,6 +124,9 @@ the free-text owner it was registered with; **Owner** in the toolbar filters by 
   back the whole project up as one document ([format](../reference/cli-export-format.md)) — see the
   [`projects` command reference](../reference/cli/projects.md) and the [CLI
   quick-start](../reference/cli-quickstart.md).
+- REST, consumers: `GET` / `POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/bindings`,
+  `DELETE …/bindings/{id}` and `GET …/consumers/{consumer}/runtime` — see
+  [Runtime usage](../govern/runtime-usage.mdx#bindings-with-the-api).
 - REST: `GET` / `POST /v1/projects/{tenant}`, `GET` / `PUT` / `DELETE
   /v1/projects/{tenant}/{project}`, `POST /v1/projects/{tenant}/{project}/restore` — see the [API
   reference](../reference/api-reference.md). `DELETE` is a soft delete (undone with `restore`);

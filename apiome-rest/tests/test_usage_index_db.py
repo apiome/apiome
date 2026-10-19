@@ -212,6 +212,23 @@ def _count(cursor: Any, table: str, tenant: str, where: str = "true", params: Tu
 #: Every column of every usage_* table, with its type. A new column must be reviewed against the
 #: privacy model (no header value, body, query value or address), so the list is pinned.
 EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
+    # RDG-1.8 (V292): a bound value is only ever stored as its 64-hex HMAC; `name` is a header or
+    # claim *name*, or a user-agent glob — never a value.
+    "usage_consumer_binding": {
+        "id": "uuid",
+        "tenant_id": "uuid",
+        "project_id": "uuid",
+        "consumer_id": "uuid",
+        "kind": "character varying",
+        "name": "character varying",
+        "value_hmac": "character",
+        "key_version": "integer",
+        "last_matched_at": "timestamp with time zone",
+        "created_by": "uuid",
+        "created_at": "timestamp with time zone",
+        "deleted_at": "timestamp with time zone",
+        "deleted_by": "uuid",
+    },
     "usage_source": {
         "id": "uuid",
         "tenant_id": "uuid",

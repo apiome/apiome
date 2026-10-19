@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.380.0] - 2026-10-18
+
+### Added
+- **Consumer bindings and runtime edges (#5765, RDG-1.8)**: apiome-db **V292** adds `usage_consumer_binding` (tenant,
+  project, consumer, `kind` `header|api_key|jwt_claim|user_agent`, `name` — the header or claim name, or a user-agent
+  glob — `value_hmac`, `key_version`, `last_matched_at`, soft `deleted_at`; unique per tenant/kind/name/value among live
+  bindings), `consumer.runtime_last_seen_at`, and reserves the consumer handle `anonymous`
+  (`409 consumer-slug-reserved`). `GET|POST /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` and
+  `DELETE …/bindings/{id}` (`consumer_contracts:view|create|delete`): the value is accepted once, hashed with
+  HMAC-SHA256 under a tenant key derived by HKDF from `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` before the transaction
+  opens (`503 consumer-binding-key-unavailable` without one), and never returned — not even as a hash. Responses carry
+  `hashed`, never the value. A user-agent glob needs three literal characters (`400 consumer-binding-invalid`); one
+  value binds one consumer per tenant (`409 consumer-binding-exists`); 50 live bindings per consumer
+  (`409 consumer-binding-limit`). At ingest (`app.usage_ingest`), an accepted event is matched by its `consumer_hint`
+  (kind + HMAC), then by its scrubbed user agent (most literal characters first, case-insensitive), and its
+  `usage_hourly` grain carries the binding; unmatched traffic keeps no binding and is reported as `anonymous`, never
+  dropped. The ingest response gains `attributed`. Bindings are read inside the batch transaction, so a deleted binding
+  stops matching on the next batch while history stays attributed (the row is kept). `app.consumer_runtime_edges` (pure)
+  compares a consumer's current contract with `usage_daily` and reports `declared_and_used`, `declared_unused` and
+  `used_undeclared` operations with calls, errors and last-seen day: `GET …/consumers/{c}/runtime?days=` (1–395, default
+  30; `anonymous` reports unattributed traffic) and a `runtime` summary on each `GET …/consumers` row
+  (`?runtime_days=`). "Add to contract" goes through the existing `PUT …/contract`.
+
+The OpenAPI version moves to 1.244.0.
+
 ## [1.379.0] - 2026-10-18
 
 ### Added

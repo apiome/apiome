@@ -75,6 +75,13 @@ class UsageIngestResponse(BaseModel):
     received_at: datetime = Field(alias="receivedAt", description="When the batch was ledgered.")
     received: int = Field(description="Events in the batch.")
     accepted: int = Field(description="Kept by sampling and matched to an operation of a published revision.")
+    attributed: int = Field(
+        default=0,
+        description=(
+            "Of the accepted events, how many a consumer binding attributed to a consumer (RDG-1.8). "
+            "The rest are counted under the reserved `anonymous` consumer, never dropped."
+        ),
+    )
     sampled_out: int = Field(alias="sampledOut", description="Dropped by head sampling.")
     unmatched: int = Field(
         description="Kept, but no published revision declares the operation; counted by inferred template."
@@ -295,6 +302,7 @@ async def ingest_usage(
         received_at=outcome.received_at,
         received=plan.received,
         accepted=plan.accepted,
+        attributed=plan.attributed,
         sampled_out=plan.sampled_out,
         unmatched=plan.unmatched,
         rejected=plan.rejected,
