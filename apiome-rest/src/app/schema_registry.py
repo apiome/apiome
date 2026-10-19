@@ -55,6 +55,14 @@ STRATEGIES: Tuple[str, ...] = (STRATEGY_TOPIC, STRATEGY_RECORD, STRATEGY_TOPIC_R
 #: The fingerprint kind every row carries today (V294 ``fingerprint_kind``).
 FINGERPRINT_KIND = "canonical-model"
 
+#: The compatibility level that needs no verdict.
+LEVEL_NONE = "NONE"
+
+#: Schema types whose XPC-4.x compatibility rules have shipped (Avro #3785, JSON Schema #5746,
+#: Protobuf #5747). None yet: until a type is listed here, a new version under any level but
+#: ``NONE`` is refused with ``compatibility-rules-unavailable`` instead of being accepted unchecked.
+COMPATIBILITY_RULES_SHIPPED: frozenset = frozenset()
+
 #: Longest subject name (V294 ``VARCHAR(255)``).
 SUBJECT_NAME_MAX = 255
 
@@ -256,3 +264,46 @@ def effective_mode(subject_mode: Optional[str], tenant_mode: Optional[str]) -> s
     if MODE_READONLY in (subject_mode, tenant_mode):
         return MODE_READONLY
     return MODE_READWRITE
+
+
+def compatibility_rules_available(schema_type: str) -> bool:
+    """Return whether XPC-4.x compatibility rules exist for ``schema_type`` (CDG-4.3)."""
+    return schema_type in COMPATIBILITY_RULES_SHIPPED
+
+
+def require_verdict_possible(level: str, schema_type: str, has_live_versions: bool) -> None:
+    """Refuse a check that would need a compatibility verdict Apiome cannot compute yet.
+
+    No silent success (CDG-4.3): a level other than ``NONE`` against a subject that already has
+    versions needs a verdict, and until XPC-4.x ships rules for the schema type there is none to
+    give. A first version needs no verdict — there is nothing to compare it with.
+
+    Args:
+        level: The subject's effective compatibility level.
+        schema_type: ``AVRO`` / ``JSON`` / ``PROTOBUF``.
+        has_live_versions: Whether the subject already holds a live version.
+
+    Raises:
+        SchemaRegistryError: ``compatibility-rules-unavailable`` (422).
+    """
+    if level == LEVEL_NONE or not has_live_versions:
+        return
+    if not compatibility_rules_available(schema_type):
+        raise SchemaRegistryError(
+            "compatibility-rules-unavailable",
+            f"Compatibility level {level} needs {schema_type} compatibility rules, which Apiome does "
+            "not have yet (XPC-4.x). Set the subject's compatibility level to NONE to register "
+            "without a check.",
+        )
+    # Unreachable until a type is added to COMPATIBILITY_RULES_SHIPPED with its XPC-4.x engine.
+    raise SchemaRegistryError(
+        "compatibility-rules-unavailable", f"No {schema_type} compatibility engine is wired in."
+    )
+
+
+def registrable_schema_types() -> Tuple[str, ...]:
+    """Return the schema types this deployment can read (Protobuf needs the bundled ``buf``)."""
+    from .proto_descriptor import BUF_TOOL_KEY
+    from .toolchain_runner import is_tool_available
+
+    return tuple(t for t in SCHEMA_TYPES if t != SCHEMA_TYPE_PROTOBUF or is_tool_available(BUF_TOOL_KEY))

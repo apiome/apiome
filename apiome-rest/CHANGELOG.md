@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.385.0] - 2026-10-19
+
+### Added
+- **Confluent-compatible schema registry API (#5975, CDG-4.3)**: `app.schema_registry_confluent_routes` mounts the
+  Confluent v1 contract at `/registry/schema/{tenant}` over the CDG-4.2 subject model, answering
+  `application/vnd.schemaregistry.v1+json`: `GET /subjects` (`?deleted=true`), `GET|POST /subjects/{s}/versions`
+  (register → `{id}`), `POST /subjects/{s}` (lookup), `GET /subjects/{s}/versions/{v|latest|-1}` and `…/schema`,
+  `DELETE /subjects/{s}` (soft, `imports:edit`; `?permanent=true` after a soft delete, `imports:delete`),
+  `GET /schemas/ids/{id}` (+ `/subjects`, `/versions`), `GET /schemas/types` (`?details=true` labels each type),
+  `GET|PUT /config` and `/config/{s}` (`?defaultToGlobal`), `GET|PUT /mode` and `/mode/{s}`,
+  `POST /compatibility/subjects/{s}/versions[/{v}]` (`{is_compatible, messages}`). Errors use Confluent's
+  `{error_code, message}` body and codes (`40101`, `40301`, `40401`–`40405`, `40408`, `42201`–`42205`). Auth maps onto
+  existing workspace API keys — basic auth with the key as password, a bearer key, `X-API-Key`, or a session — through
+  `validate_authentication`; new scopes `registry:read` (GETs, lookup, compatibility test) and `registry:write`
+  (register, config, mode, delete) in the `app.auth` allowlist (apiome-db V295 widens `api_keys_scopes_vocab_ck`).
+  Writes are audited in `registry_audit` (`registry.subject.register|config|delete`). **No silent success**: no XPC-4.x
+  rules have shipped (`schema_registry.COMPATIBILITY_RULES_SHIPPED` is empty), so a new version under any level but
+  `NONE` — through either API — is refused with `422` `compatibility-rules-unavailable` (Confluent `error_code` 42290);
+  a subject's first version and re-registering held content need no verdict. `schema_registry_store` gains
+  `list_subject_names` and `hard_delete_subject`; `schema_registry_service` gains `lookup_schema`, `check_compatibility`
+  and `effective_level`. `confluent-kafka[avro,json]` joins the dev dependency group: a test runs its
+  `SchemaRegistryClient`, `AvroSerializer`/`AvroDeserializer` and `JSONSerializer`/`JSONDeserializer` against the app.
+
+### Changed
+- `POST /v1/tenants/{t}/schema-registry/subjects/{s}/versions` (CDG-4.2) applies the same compatibility rule: a new
+  version under a level other than `NONE` is refused with `422 compatibility-rules-unavailable`.
+
+The OpenAPI version moves to 1.249.0.
+
 ## [1.384.0] - 2026-10-19
 
 ### Added

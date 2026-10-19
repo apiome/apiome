@@ -10,6 +10,10 @@ Two ways a subject gains a version, both ending in :func:`app.schema_registry_st
   upload uses (:func:`app.import_source_pipeline.run_adapter_import_job`), as a new revision of the
   subject's catalog item (created on the subject's first registration). So a subject version **is** a
   catalog item revision, and registering the same schema twice makes one revision.
+* **Compatibility** (CDG-4.3) — a new version under a level other than ``NONE`` needs a verdict.
+  Until XPC-4.x ships rules for the schema type, :func:`register_schema` refuses it with
+  ``compatibility-rules-unavailable`` rather than accepting it unchecked; :func:`check_compatibility`
+  answers the same way. A subject's first version needs no verdict.
 * **Attach** (:func:`attach_catalog_item`) — an existing Avro, JSON Schema or Protobuf catalog item
   backs an empty subject: its latest revision becomes version 1, and its earlier revisions are left
   exactly as they are.
@@ -27,6 +31,7 @@ from typing import Any, Dict, List, Optional
 
 from . import schema_registry_store as store
 from .schema_registry import (
+    LEVEL_NONE,
     MODE_READONLY,
     SCHEMA_TYPES,
     STRATEGIES,
@@ -34,6 +39,7 @@ from .schema_registry import (
     effective_mode,
     fingerprint_schema,
     normalize_choice,
+    require_verdict_possible,
     schema_type_for_format,
     validate_subject_name,
 )
@@ -50,6 +56,13 @@ def _require_writable(db: Any, tenant_id: str, subject: Optional[Dict[str, Any]]
         raise SchemaRegistryError(
             "subject-read-only", "The registry or this subject is in READONLY mode.", status_code=409
         )
+
+
+def effective_level(db: Any, tenant_id: str, subject: Optional[Dict[str, Any]]) -> str:
+    """Return a subject's compatibility level, else the tenant default."""
+    if subject and subject.get("compatibility_level"):
+        return str(subject["compatibility_level"])
+    return str(store.get_config(db, tenant_id).get("compatibility_level") or LEVEL_NONE)
 
 
 def _live_catalog_item_id(db: Any, tenant_id: str, project_id: Any) -> Optional[str]:
@@ -170,6 +183,9 @@ def register_schema(
         if held is not None:
             return {**held, "created": False, "subject": subject, "subject_id": existing_subject["id"]}
 
+    has_versions = bool(existing_subject and store.list_versions(db, str(existing_subject["id"])))
+    require_verdict_possible(effective_level(db, tenant_id, existing_subject), parsed.schema_type, has_versions)
+
     known = store.get_schema_by_fingerprint(db, tenant_id, parsed.schema_type, parsed.fingerprint)
     subject_project_id: Optional[str] = None
     if known is not None:
@@ -208,6 +224,77 @@ def register_schema(
         strategy=strategy,
         subject_project_id=subject_project_id,
     )
+
+
+def lookup_schema(
+    db: Any, *, tenant_id: str, subject: str, schema: str, schema_type: str
+) -> Optional[Dict[str, Any]]:
+    """Find the live version of ``subject`` that holds ``schema`` (Confluent ``POST /subjects/{s}``).
+
+    Args:
+        db: The database handle.
+        tenant_id: The tenant.
+        subject: The subject name.
+        schema: The schema text to look up.
+        schema_type: ``AVRO`` / ``JSON`` / ``PROTOBUF``.
+
+    Returns:
+        The version row, or ``None`` when the subject does not hold this schema.
+
+    Raises:
+        SchemaRegistryError: ``subject-not-found`` (404) for an unknown subject; ``schema-invalid``
+            when the schema cannot be read.
+    """
+    subject = validate_subject_name(subject)
+    normalize_choice(schema_type, SCHEMA_TYPES, field="schemaType")
+    row = store.get_subject(db, tenant_id, subject)
+    if row is None:
+        raise SchemaRegistryError("subject-not-found", f"Subject {subject!r} not found.", status_code=404)
+    parsed = fingerprint_schema(schema_type, schema, subject)
+    return store.find_version_by_fingerprint(db, str(row["id"]), parsed.schema_type, parsed.fingerprint)
+
+
+def check_compatibility(
+    db: Any,
+    *,
+    tenant_id: str,
+    subject: str,
+    schema: str,
+    schema_type: str,
+    version: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Test ``schema`` against a subject's versions (Confluent ``POST /compatibility/…``).
+
+    Under ``NONE``, or against a subject with no versions, the answer is compatible. Any other level
+    needs an XPC-4.x verdict; until one exists for the type the call is refused rather than answered.
+
+    Args:
+        db: The database handle.
+        tenant_id: The tenant.
+        subject: The subject name.
+        schema: The candidate schema text (validated by its import source).
+        schema_type: ``AVRO`` / ``JSON`` / ``PROTOBUF``.
+        version: The version to test against, or ``None`` for the versions the level selects.
+
+    Returns:
+        ``{"is_compatible": bool, "messages": [str]}``.
+
+    Raises:
+        SchemaRegistryError: ``subject-not-found`` / ``version-not-found`` (404), ``schema-invalid``
+            (422), ``compatibility-rules-unavailable`` (422).
+    """
+    subject = validate_subject_name(subject)
+    normalize_choice(schema_type, SCHEMA_TYPES, field="schemaType")
+    row = store.get_subject(db, tenant_id, subject)
+    if row is None:
+        raise SchemaRegistryError("subject-not-found", f"Subject {subject!r} not found.", status_code=404)
+    versions = store.list_versions(db, str(row["id"]))
+    if version is not None and not any(int(v["version"]) == int(version) for v in versions):
+        raise SchemaRegistryError("version-not-found", f"Version {version} not found.", status_code=404)
+    fingerprint_schema(schema_type, schema, subject)
+    level = effective_level(db, tenant_id, row)
+    require_verdict_possible(level, schema_type, bool(versions))
+    return {"is_compatible": True, "messages": []}
 
 
 def revision_fingerprint(revision: Dict[str, Any], schema_type: str, subject: str) -> str:

@@ -20,9 +20,8 @@ Four layers:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from unittest.mock import patch
 
 import pytest
@@ -45,10 +44,10 @@ from app.schema_registry import (
     strategy_to_avro,
     validate_subject_name,
 )
+from tests.schema_registry_fakes import NOW, FakeCatalog, FakeStore
 from tests.scripted_connection import ScriptedConnection, database_with
 
 T = "11111111-1111-1111-1111-111111111111"
-NOW = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
 
 ORDER = json.dumps(
     {"type": "record", "name": "Order", "namespace": "acme", "fields": [{"name": "id", "type": "string"}]}
@@ -175,211 +174,6 @@ def test_protobuf_goes_through_the_grpc_intake():
 # --------------------------------------------------------------------------- in-memory doubles
 
 
-class FakeCatalog:
-    """Catalog items and revisions, plus the ``db`` methods the service calls."""
-
-    def __init__(self) -> None:
-        self.projects: Dict[str, Dict[str, Any]] = {}
-        self.revisions: Dict[str, Dict[str, Any]] = {}
-        self.imports: List[Dict[str, Any]] = []
-        self._n = 0
-
-    def _id(self, prefix: str) -> str:
-        self._n += 1
-        return f"{prefix}-{self._n}"
-
-    def add_item(self, name: str, revisions: List[Dict[str, Any]], *, publishable: bool = False) -> str:
-        pid = self._id("item")
-        self.projects[pid] = {"id": pid, "name": name, "publishable": publishable, "deleted": False}
-        for rev in revisions:
-            self.add_revision(pid, **rev)
-        return pid
-
-    def add_revision(self, project_id: str, *, label: str, source_format: str, format_metadata: Dict[str, Any]) -> str:
-        rid = self._id("rev")
-        self.revisions[rid] = {
-            "id": rid,
-            "project_id": project_id,
-            "version_id": label,
-            "source_format": source_format,
-            "format_metadata": format_metadata,
-            "order": self._n,
-        }
-        return rid
-
-    def item_revisions(self, project_id: str) -> List[Dict[str, Any]]:
-        return sorted((r for r in self.revisions.values() if r["project_id"] == project_id), key=lambda r: r["order"])
-
-    # --- db surface ---
-    def get_catalog_item_by_id(self, item_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
-        p = self.projects.get(item_id)
-        return p if p and not p["deleted"] and not p["publishable"] else None
-
-    def allocate_version_id(self, project_id: str, base: str) -> str:
-        taken = {r["version_id"] for r in self.item_revisions(project_id)}
-        if base not in taken:
-            return base
-        n = 2
-        while f"{base}-{n}" in taken:
-            n += 1
-        return f"{base}-{n}"
-
-    def allocate_project_slug(self, tenant_id: str, base: str) -> str:
-        return base
-
-    async def run_import(self, adapter: Any, payload: Dict[str, Any]) -> Any:
-        """Stand-in for ``run_adapter_import_job``: one call → one revision."""
-        self.imports.append(payload)
-        meta = payload["metadata"]
-        pid = meta["existing_project_id"] or self.add_item(meta["project"]["name"], [])
-        content = payload["document_base64"]
-        rid = self.add_revision(
-            pid,
-            label=meta["version"]["version_id"],
-            source_format=adapter.key if adapter.key != "grpc" else "protobuf",
-            format_metadata={"sourceContentBase64": content},
-        )
-        return SimpleNamespace(
-            state="completed", error=None, result=SimpleNamespace(project_id=pid, version_record_id=rid)
-        )
-
-
-class FakeStore:
-    """In-memory store with the same contract as :mod:`app.schema_registry_store`."""
-
-    def __init__(self, catalog: FakeCatalog) -> None:
-        self.catalog = catalog
-        self.config = {"compatibility_level": "BACKWARD", "mode": "READWRITE"}
-        self.subjects: List[Dict[str, Any]] = []
-        self.schemas: List[Dict[str, Any]] = []
-        self.versions: List[Dict[str, Any]] = []
-
-    def get_config(self, db, tenant_id):
-        return dict(self.config)
-
-    def get_subject(self, db, tenant_id, name):
-        return next((s for s in self.subjects if s["name"] == name and not s["deleted_at"]), None)
-
-    def list_versions(self, db, subject_id):
-        return sorted(
-            (v for v in self.versions if v["subject_id"] == subject_id and not v["deleted_at"]),
-            key=lambda v: v["version"],
-        )
-
-    def next_version_number(self, db, subject_id):
-        return max((v["version"] for v in self.versions if v["subject_id"] == subject_id), default=0) + 1
-
-    def find_version_by_fingerprint(self, db, subject_id, schema_type, fingerprint):
-        return next(
-            (
-                v
-                for v in self.list_versions(db, subject_id)
-                if v["schema_type"] == schema_type and v["fingerprint"] == fingerprint
-            ),
-            None,
-        )
-
-    def get_schema_by_fingerprint(self, db, tenant_id, schema_type, fingerprint):
-        return next(
-            (s for s in self.schemas if s["schema_type"] == schema_type and s["fingerprint"] == fingerprint), None
-        )
-
-    def get_latest_live_revision(self, db, tenant_id, project_id):
-        if self.catalog.get_catalog_item_by_id(project_id, tenant_id) is None:
-            return None
-        revs = self.catalog.item_revisions(project_id)
-        return dict(revs[-1]) if revs else None
-
-    def soft_delete_subject(self, db, tenant_id, name):
-        subject = self.get_subject(db, tenant_id, name)
-        if subject is None:
-            return None
-        subject["deleted_at"] = NOW
-        deleted = [v for v in self.versions if v["subject_id"] == subject["id"] and not v["deleted_at"]]
-        for v in deleted:
-            v["deleted_at"] = NOW
-        return [v["version"] for v in deleted]
-
-    def get_schema_by_id(self, db, tenant_id, schema_id):
-        row = next((s for s in self.schemas if s["schema_id"] == schema_id), None)
-        if row is None:
-            return None
-        holders = [
-            {"subject": s["name"], "version": v["version"]}
-            for v in self.versions
-            for s in self.subjects
-            if v["subject_id"] == s["id"] and v["schema_id"] == schema_id and not v["deleted_at"] and not s["deleted_at"]
-        ]
-        return {**row, "subjects": holders}
-
-    def record_version(
-        self,
-        db,
-        *,
-        tenant_id,
-        subject,
-        schema_type,
-        fingerprint,
-        references,
-        project_id,
-        version_record_id,
-        actor_id,
-        strategy=None,
-        subject_project_id=None,
-        require_empty_subject=False,
-    ):
-        row = self.get_subject(db, tenant_id, subject)
-        if row is None:
-            row = {
-                "id": f"subject-{len(self.subjects) + 1}",
-                "name": subject,
-                "strategy": strategy,
-                "mode": self.config["mode"],
-                "project_id": None,
-                "deleted_at": None,
-            }
-            self.subjects.append(row)
-        if require_empty_subject:
-            if row["project_id"] and row["project_id"] != subject_project_id:
-                raise SchemaRegistryError("subject-attached-elsewhere", "x", status_code=409)
-            if any(v["subject_id"] == row["id"] for v in self.versions):
-                raise SchemaRegistryError("subject-has-versions", "x", status_code=409)
-        if subject_project_id and not row["project_id"]:
-            row["project_id"] = subject_project_id
-        schema = self.get_schema_by_fingerprint(db, tenant_id, schema_type, fingerprint)
-        if schema is None:
-            schema = {
-                "schema_id": len(self.schemas) + 1,
-                "schema_type": schema_type,
-                "fingerprint": fingerprint,
-                "fingerprint_kind": FINGERPRINT_KIND,
-                "project_id": project_id,
-                "version_record_id": version_record_id,
-                "references": references,
-            }
-            self.schemas.append(schema)
-        existing = next(
-            (v for v in self.versions if v["subject_id"] == row["id"] and v["schema_id"] == schema["schema_id"]), None
-        )
-        if existing:
-            existing["deleted_at"] = None
-            return {**existing, "created": False, "subject": subject, "subject_id": row["id"]}
-        version = {
-            "subject_id": row["id"],
-            "version": self.next_version_number(db, row["id"]),
-            "schema_id": schema["schema_id"],
-            "schema_type": schema_type,
-            "fingerprint": fingerprint,
-            "references": references,
-            "project_id": project_id,
-            "version_record_id": version_record_id,
-            "created_at": NOW,
-            "deleted_at": None,
-        }
-        self.versions.append(version)
-        return {**version, "created": True, "subject": subject, "subject_id": row["id"]}
-
-
 @pytest.fixture
 def registry():
     """The service wired to the in-memory catalog, store and import pipeline."""
@@ -435,6 +229,7 @@ def test_two_subjects_share_an_id_for_the_same_schema_without_a_new_revision(reg
 
 
 def test_a_new_schema_adds_a_revision_to_the_subjects_item(registry):
+    registry.store.config["compatibility_level"] = "NONE"  # no XPC-4.x verdicts yet (CDG-4.3)
     v1 = _register(registry, "orders-value")
     v2 = _register(registry, "orders-value", ORDER_V2)
     assert (v2["schema_id"], v2["version"]) == (2, 2)
@@ -462,8 +257,23 @@ def test_a_soft_deleted_subjects_versions_are_hidden_but_resolvable_by_id(regist
     assert len(registry.catalog.revisions) == 1
 
 
+def test_a_second_version_under_a_checked_level_is_refused_not_accepted_unchecked(registry):
+    """CDG-4.3: no XPC-4.x rules yet, so BACKWARD (the default) cannot judge a second version."""
+    _register(registry, "orders-value")
+    with pytest.raises(SchemaRegistryError) as exc:
+        _register(registry, "orders-value", ORDER_V2)
+    assert exc.value.code == "compatibility-rules-unavailable" and exc.value.status_code == 422
+    assert len(registry.catalog.imports) == 1
+    # Re-registering what the subject already holds needs no verdict.
+    assert _register(registry, "orders-value", ORDER_REORDERED)["created"] is False
+    # A subject-level NONE beats the tenant default.
+    registry.store.get_subject(None, T, "orders-value")["compatibility_level"] = "NONE"
+    assert _register(registry, "orders-value", ORDER_V2)["version"] == 2
+
+
 @pytest.mark.parametrize("where", ["tenant", "subject"])
 def test_readonly_mode_refuses_registration(registry, where):
+    registry.store.config["compatibility_level"] = "NONE"
     _register(registry, "orders-value")
     if where == "tenant":
         registry.store.config["mode"] = "READONLY"
@@ -502,6 +312,7 @@ def test_a_failed_import_is_a_clean_refusal(registry):
 
 
 def test_a_deleted_backing_item_gets_a_fresh_one(registry):
+    registry.store.config["compatibility_level"] = "NONE"  # no XPC-4.x verdicts yet (CDG-4.3)
     v1 = _register(registry, "orders-value")
     registry.catalog.projects[v1["project_id"]]["deleted"] = True
     v2 = _register(registry, "orders-value", ORDER_V2)
@@ -535,6 +346,7 @@ def test_attach_makes_the_latest_revision_version_1_and_keeps_history(registry):
 
 
 def test_after_attach_registration_is_idempotent_and_adds_revisions_to_the_item(registry):
+    registry.store.config["compatibility_level"] = "NONE"  # no XPC-4.x verdicts yet (CDG-4.3)
     item = _avro_item(registry)
     service.attach_catalog_item(registry.db, tenant_id=T, actor_id=None, subject="orders-value", project_id=item)
     same = _register(registry, "orders-value", ORDER_REORDERED)

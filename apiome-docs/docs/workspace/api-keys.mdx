@@ -32,7 +32,7 @@ monospace, with a copy button — use it to match a key to a log line), **Scopes
 
 ## Scopes
 
-A key carries one of five presets, chosen when it is created:
+A key carries one of seven presets, chosen when it is created:
 
 | Preset | Scopes | Allows |
 | --- | --- | --- |
@@ -41,6 +41,8 @@ A key carries one of five presets, chosen when it is created:
 | **CI: lint** | `lint:read` | `GET …/lint` and `…/lint/gate` only (catalog and MCP) |
 | **CI: diff + lint** | `diff:read` `lint:read` | Both CI read scopes; still no write access |
 | **Usage source** | `usage:ingest` | `POST /v1/tenants/{tenant}/usage/ingest` only — for a traffic source feeding the [usage index](../govern/runtime-usage.mdx) |
+| **Schema registry: read** | `registry:read` | Reads of the [schema registry](../ship/schema-registry.mdx) at `/registry/schema/{tenant}` only — for Kafka consumers and deserializers |
+| **Schema registry: read + write** | `registry:read` `registry:write` | Also registers schemas and changes registry settings — for Kafka producers that auto-register |
 
 Give pipelines the narrowest preset that works: a contract gate needs only `diff:read`. A key's
 scopes cannot be changed after it is created — create a new key instead. See [CI diff
@@ -57,6 +59,18 @@ away. Choose the **Usage source** preset when you create it.
 
 Agent keys can never hold `usage:ingest`, and the ingest endpoint does not accept a signed-in
 session — see [Runtime usage](../govern/runtime-usage.mdx#send-usage-events).
+
+### A key for a Kafka serializer
+
+A Kafka producer or consumer reaches the [schema registry](../ship/schema-registry.mdx) with an
+ordinary workspace key. Choose **Schema registry: read** for a consumer (it only fetches schemas by
+id) and **Schema registry: read + write** for a producer that registers its schemas. Either key
+reaches `/registry/schema/{tenant}` and nothing else.
+
+<Screenshot id="api-keys-registry-scope" alt="The Create API key dialog with the Schema registry: read + write preset chosen: the registry:read and registry:write scopes, an Orders producer name and 365 days to expiry" />
+
+Confluent clients send the key as the **password** of basic auth — the user name can be anything —
+or as a bearer token.
 
 ## Create a key
 

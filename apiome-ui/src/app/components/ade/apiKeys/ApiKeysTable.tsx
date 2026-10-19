@@ -389,7 +389,8 @@ export default function ApiKeysTable({
           <span data-testid="api-keys-summary">{describeApiKeyBreakdown(summary)}</span>
           <span className="akey-foot-legend">
             Scopes: <code className="mono">*</code> (full), <code className="mono">diff:read</code>,{' '}
-            <code className="mono">lint:read</code>, <code className="mono">usage:ingest</code> —{' '}
+            <code className="mono">lint:read</code>, <code className="mono">usage:ingest</code>,{' '}
+            <code className="mono">registry:read</code>, <code className="mono">registry:write</code> —{' '}
             <code className="mono">*</code> must stand alone.
           </span>
         </DataTableFoot>

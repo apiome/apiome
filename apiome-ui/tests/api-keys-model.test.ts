@@ -224,21 +224,25 @@ describe('scopes', () => {
       'diff:read': 2,
       'lint:read': 2,
       'usage:ingest': 0,
+      'registry:read': 0,
+      'registry:write': 0,
     });
   });
 
-  it('describes the four scopes the reference card lists', () => {
+  it('describes the six scopes the reference card lists', () => {
     expect(API_KEY_SCOPE_REFERENCE.map((entry) => entry.scope)).toEqual([
       '*',
       'diff:read',
       'lint:read',
       'usage:ingest',
+      'registry:read',
+      'registry:write',
     ]);
     expect(API_KEY_SCOPE_REFERENCE.filter((entry) => entry.full)).toHaveLength(1);
   });
 });
 
-describe('the five presets', () => {
+describe('the seven presets', () => {
   it('produce exactly the scope strings the server already stores', () => {
     // The acceptance criterion, as a property: every option reads its scopes from the shared
     // table rather than restating them.
@@ -250,13 +254,15 @@ describe('the five presets', () => {
     }
   });
 
-  it('cover every preset the shared table defines, in the mockup order, then usage', () => {
+  it('cover every preset the shared table defines, in the mockup order, then usage and registry', () => {
     expect(API_KEY_SCOPE_PRESET_OPTIONS.map((option) => option.value)).toEqual([
       'full',
       'diff',
       'lint',
       'ci_both',
       'usage',
+      'registry_read',
+      'registry_client',
     ]);
     expect(API_KEY_SCOPE_PRESET_OPTIONS).toHaveLength(
       Object.keys(API_KEY_SCOPE_PRESETS).length
@@ -267,6 +273,8 @@ describe('the five presets', () => {
     expect(describeApiKeyScopePreset('full')).toBe('full access');
     expect(describeApiKeyScopePreset('ci_both')).toBe('diff:read + lint:read');
     expect(describeApiKeyScopePreset('usage')).toBe('usage:ingest');
+    expect(describeApiKeyScopePreset('registry_read')).toBe('registry:read');
+    expect(describeApiKeyScopePreset('registry_client')).toBe('registry:read + registry:write');
   });
 });
 

@@ -46,6 +46,15 @@ API_KEY_SCOPE_AGENT_INVOKE = "agent:invoke"
 #: RDG-1.2 (#5760, V291): a usage source's key. It admits the usage ingest door and nothing else,
 #: so a key copied out of a Collector's config cannot read or change anything in the workspace.
 API_KEY_SCOPE_USAGE_INGEST = "usage:ingest"
+#: CDG-4.3 (#5975, V295): the Confluent-compatible schema registry at ``/registry/schema/{tenant}``.
+#: ``registry:read`` admits its GETs and its two read-only POSTs (subject lookup, compatibility
+#: test) — what a deserializer needs; ``registry:write`` admits registering, config / mode changes
+#: and deletes — what an auto-registering serializer adds. Neither admits any other route.
+API_KEY_SCOPE_REGISTRY_READ = "registry:read"
+API_KEY_SCOPE_REGISTRY_WRITE = "registry:write"
+
+#: Every route of the Confluent-compatible registry mount (CDG-4.3).
+_REGISTRY_SCHEMA_PATH = r"^/registry/schema/[^/]+"
 
 #: (HTTP method, path regex) → an acceptable scope for restricted machine keys. A route may have
 #: several entries; holding **any** of the matched scopes admits the call.
@@ -124,6 +133,15 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         re.compile(r"^/v1/tenants/[^/]+/usage/ingest/?$"),
         API_KEY_SCOPE_USAGE_INGEST,
     ),
+    # CDG-4.3 (#5975): the Confluent-compatible schema registry. Reads (every GET, the subject
+    # lookup ``POST /subjects/{s}`` and ``POST /compatibility/…``) take ``registry:read``; writes
+    # (register, config, mode, delete) take ``registry:write``.
+    ("GET", re.compile(_REGISTRY_SCHEMA_PATH + r"(/.*)?$"), API_KEY_SCOPE_REGISTRY_READ),
+    ("POST", re.compile(_REGISTRY_SCHEMA_PATH + r"/subjects/[^/]+/?$"), API_KEY_SCOPE_REGISTRY_READ),
+    ("POST", re.compile(_REGISTRY_SCHEMA_PATH + r"/compatibility/.*$"), API_KEY_SCOPE_REGISTRY_READ),
+    ("POST", re.compile(_REGISTRY_SCHEMA_PATH + r"/subjects/[^/]+/versions/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
+    ("PUT", re.compile(_REGISTRY_SCHEMA_PATH + r"/(config|mode)(/[^/]+)?/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
+    ("DELETE", re.compile(_REGISTRY_SCHEMA_PATH + r"/subjects/[^/]+/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
 )
 
 

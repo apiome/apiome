@@ -885,4 +885,21 @@ describe('the docs fixtures', () => {
     expect(within(dialog).getByTestId('api-key-scope-usage')).toHaveTextContent('usage:ingest');
     writeA11yFixture('api-keys-usage-scope', bodyMarkup());
   });
+
+  it('renders the create dialog with the schema registry preset (CDG-4.3)', async () => {
+    const user = userEvent.setup();
+    render(<ApiKeysClient />);
+    await screen.findByText('CI contract gate');
+
+    const dialog = await openCreateDialog(user, 'Orders producer');
+    await user.type(within(dialog).getByLabelText('Description'), 'Registers Avro schemas for the orders topic.');
+    await user.click(within(dialog).getByTestId('api-key-scope-registry_client'));
+    await user.type(within(dialog).getByLabelText('Expires in (days)'), '365');
+    const card = within(dialog).getByTestId('api-key-scope-registry_client');
+    expect(card).toHaveAttribute('data-checked');
+    expect(card).toHaveTextContent('registry:read');
+    expect(card).toHaveTextContent('registry:write');
+    expect(within(dialog).getByTestId('api-key-scope-registry_read')).toHaveTextContent('registry:read');
+    writeA11yFixture('api-keys-registry-scope', bodyMarkup());
+  });
 });

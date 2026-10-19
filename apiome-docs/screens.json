@@ -806,6 +806,12 @@
       "data": "fixture:hive-a11y/api-keys-usage-scope.html"
     },
     {
+      "id": "api-keys-registry-scope",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"api-key-create-dialog\"]",
+      "data": "fixture:hive-a11y/api-keys-registry-scope.html"
+    },
+    {
       "id": "project-consumers-bindings",
       "route": "/ade/dashboard/projects/pets/consumers",
       "waitFor": "[data-testid=\"consumer-bindings-drawer\"]",

@@ -35,6 +35,17 @@ describe('apiKeyScopes', () => {
     expect(API_KEY_SCOPE_PRESETS.lint).toEqual(['lint:read']);
     expect(API_KEY_SCOPE_PRESETS.ci_both).toEqual(['diff:read', 'lint:read']);
     expect(API_KEY_SCOPE_PRESETS.usage).toEqual(['usage:ingest']);
+    expect(API_KEY_SCOPE_PRESETS.registry_read).toEqual(['registry:read']);
+    expect(API_KEY_SCOPE_PRESETS.registry_client).toEqual(['registry:read', 'registry:write']);
+  });
+
+  test('the schema registry scopes stand on their own (CDG-4.3)', () => {
+    expect(normalizeApiKeyScopes('registry:read,registry:write')).toEqual([
+      'registry:read',
+      'registry:write',
+    ]);
+    expect(() => normalizeApiKeyScopes('*,registry:read')).toThrow(/must stand alone/);
+    expect(() => normalizeApiKeyScopes('registry:admin')).toThrow(/Invalid API key scope/);
   });
 
   test('usage:ingest is a scope of its own (RDG-1.2)', () => {
@@ -56,5 +67,7 @@ describe('apiKeyScopes', () => {
     expect(presetFromScopes(['lint:read'])).toBe('lint');
     expect(presetFromScopes(['lint:read', 'diff:read'])).toBe('ci_both');
     expect(presetFromScopes(['usage:ingest'])).toBe('usage');
+    expect(presetFromScopes(['registry:read'])).toBe('registry_read');
+    expect(presetFromScopes(['registry:write', 'registry:read'])).toBe('registry_client');
   });
 });

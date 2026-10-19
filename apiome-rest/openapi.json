@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.248.0",
+    "version": "1.249.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -2755,6 +2755,2158 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get schema by idresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/subjects": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent List Subjects",
+        "description": "List subject names (Confluent ``GET /subjects``).",
+        "operationId": "confluent_list_subjects_registry_schema__tenant__subjects_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include soft-deleted subjects.",
+              "default": false,
+              "title": "Deleted"
+            },
+            "description": "Include soft-deleted subjects."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent List Subjectsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent List Subjectsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent List Subjects Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent List Subjects Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent list subjects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent list subjectsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent list subjectsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/subjects/{subject}/versions": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent List Versions",
+        "description": "List a subject's live version numbers (Confluent ``GET /subjects/{s}/versions``).",
+        "operationId": "confluent_list_versions_registry_schema__tenant__subjects__subject__versions_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent List Versionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent List Versionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent List Versions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent List Versions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent list versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent list versionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent list versionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Register",
+        "description": "Register a schema under a subject and return its id (Confluent ``POST /subjects/{s}/versions``).\n\nRegistering content the subject already holds returns the same id. A new version under a level\nother than ``NONE`` is refused with ``42290`` until XPC-4.x rules exist for the schema type.",
+        "operationId": "confluent_register_registry_schema__tenant__subjects__subject__versions_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Registerauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Registerauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Register Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Register Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent register."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent register.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent registerresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent registerresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/subjects/{subject}": {
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Lookup",
+        "description": "Find the version of a subject that holds a schema (Confluent ``POST /subjects/{s}``).",
+        "operationId": "confluent_lookup_registry_schema__tenant__subjects__subject__post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Lookupauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Lookupauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Lookup Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Lookup Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent lookup."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent lookup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent lookupresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent lookupresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Delete Subject",
+        "description": "Delete a subject (Confluent ``DELETE /subjects/{s}``); returns the deleted versions.\n\nA soft delete (``imports:edit``) hides the subject and its versions; ids keep resolving.\n``?permanent=true`` (``imports:delete``) removes a soft-deleted subject's rows; the catalog item\nrevisions are never deleted.",
+        "operationId": "confluent_delete_subject_registry_schema__tenant__subjects__subject__delete",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "permanent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Hard-delete a subject that was soft-deleted first.",
+              "default": false,
+              "title": "Permanent"
+            },
+            "description": "Hard-delete a subject that was soft-deleted first."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Delete Subjectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Delete Subjectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Delete Subject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Delete Subject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent delete subject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent delete subjectresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent delete subjectresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/subjects/{subject}/versions/{version}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Version",
+        "description": "Return one version (``latest`` and ``-1`` work) (Confluent ``GET /subjects/{s}/versions/{v}``).",
+        "operationId": "confluent_get_version_registry_schema__tenant__subjects__subject__versions__version__get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version",
+              "description": "Version schema."
+            },
+            "description": "Endpoint or API version metadata."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/subjects/{subject}/versions/{version}/schema": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Version Schema",
+        "description": "Return only the schema text of one version (Confluent ``\u2026/versions/{v}/schema``).",
+        "operationId": "confluent_get_version_schema_registry_schema__tenant__subjects__subject__versions__version__schema_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version",
+              "description": "Version schema."
+            },
+            "description": "Endpoint or API version metadata."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Version Schemaauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Version Schemaauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Version Schema Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Version Schema Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get version schema.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get version schemaresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get version schemaresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/schemas/types": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Schema Types",
+        "description": "List the schema types this registry accepts (Confluent ``GET /schemas/types``).\n\nOnly types this deployment can read are listed (Protobuf needs the bundled ``buf``). With\n``details=true`` each is labelled: ``compatibilityRules`` is ``available`` or ``unavailable``\n(XPC-4.x) and ``registrableUnder`` names the levels a new version can be registered under.",
+        "operationId": "confluent_schema_types_registry_schema__tenant__schemas_types_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "details",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Label each type with what it can be registered under.",
+              "default": false,
+              "title": "Details"
+            },
+            "description": "Label each type with what it can be registered under."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Typesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Typesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Types Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Types Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent schema types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent schema typesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent schema typesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/schemas/ids/{schema_id}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Schema By Id",
+        "description": "Return a schema by id \u2014 it resolves after its subjects are deleted (Confluent ``/schemas/ids/{id}``).",
+        "operationId": "confluent_schema_by_id_registry_schema__tenant__schemas_ids__schema_id__get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schema_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Schema Id",
+              "description": "Schema Id schema."
+            },
+            "description": "Path parameter identifying the schema id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema By Idauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema By Idauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema By ID Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema By ID Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent schema by id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent schema by idresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent schema by idresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/schemas/ids/{schema_id}/subjects": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Schema Subjects",
+        "description": "List the live subjects holding a schema id (Confluent ``/schemas/ids/{id}/subjects``).",
+        "operationId": "confluent_schema_subjects_registry_schema__tenant__schemas_ids__schema_id__subjects_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schema_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Schema Id",
+              "description": "Schema Id schema."
+            },
+            "description": "Path parameter identifying the schema id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Subjectsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Subjectsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Subjects Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Subjects Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent schema subjects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent schema subjectsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent schema subjectsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/schemas/ids/{schema_id}/versions": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Schema Versions",
+        "description": "List the live subject versions holding a schema id (Confluent ``/schemas/ids/{id}/versions``).",
+        "operationId": "confluent_schema_versions_registry_schema__tenant__schemas_ids__schema_id__versions_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schema_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Schema Id",
+              "description": "Schema Id schema."
+            },
+            "description": "Path parameter identifying the schema id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Versionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Versionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Schema Versions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Schema Versions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent schema versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent schema versionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent schema versionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/config": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Config",
+        "description": "Return the tenant's default compatibility level (Confluent ``GET /config``).",
+        "operationId": "confluent_get_config_registry_schema__tenant__config_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get configresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Put Config",
+        "description": "Set the tenant's default compatibility level (Confluent ``PUT /config``).",
+        "operationId": "confluent_put_config_registry_schema__tenant__config_put",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent put config."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent put config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent put configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent put configresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/config/{subject}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Subject Config",
+        "description": "Return a subject's compatibility level (Confluent ``GET /config/{s}``).",
+        "operationId": "confluent_get_subject_config_registry_schema__tenant__config__subject__get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "defaultToGlobal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Fall back to the tenant default.",
+              "default": false,
+              "title": "Defaulttoglobal"
+            },
+            "description": "Fall back to the tenant default."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Subject Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Subject Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Subject Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Subject Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get subject config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get subject configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get subject configresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Put Subject Config",
+        "description": "Set a subject's compatibility level, creating the subject if needed (Confluent ``PUT /config/{s}``).",
+        "operationId": "confluent_put_subject_config_registry_schema__tenant__config__subject__put",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Subject Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Subject Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Subject Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Subject Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent put subject config."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent put subject config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent put subject configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent put subject configresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/mode": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Mode",
+        "description": "Return the tenant's default mode (Confluent ``GET /mode``).",
+        "operationId": "confluent_get_mode_registry_schema__tenant__mode_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Modeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Modeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Mode Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Mode Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get moderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get moderesponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Put Mode",
+        "description": "Set the tenant's default mode, ``READWRITE`` or ``READONLY`` (Confluent ``PUT /mode``).",
+        "operationId": "confluent_put_mode_registry_schema__tenant__mode_put",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Modeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Modeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Mode Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Mode Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent put mode."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent put mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent put moderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent put moderesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/mode/{subject}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Get Subject Mode",
+        "description": "Return a subject's mode (Confluent ``GET /mode/{s}``).",
+        "operationId": "confluent_get_subject_mode_registry_schema__tenant__mode__subject__get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Subject Modeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Subject Modeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Get Subject Mode Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Get Subject Mode Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent get subject mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent get subject moderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent get subject moderesponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Put Subject Mode",
+        "description": "Set a subject's mode, creating the subject if needed (Confluent ``PUT /mode/{s}``).",
+        "operationId": "confluent_put_subject_mode_registry_schema__tenant__mode__subject__put",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Subject Modeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Subject Modeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Put Subject Mode Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Put Subject Mode Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent put subject mode."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent put subject mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent put subject moderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent put subject moderesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/compatibility/subjects/{subject}/versions/{version}": {
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Compatibility Version",
+        "description": "Test a schema against one version (Confluent ``POST /compatibility/subjects/{s}/versions/{v}``).",
+        "operationId": "confluent_compatibility_version_registry_schema__tenant__compatibility_subjects__subject__versions__version__post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version",
+              "description": "Version schema."
+            },
+            "description": "Endpoint or API version metadata."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Compatibility Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Compatibility Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Compatibility Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Compatibility Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent compatibility version."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent compatibility version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent compatibility versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent compatibility versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/schema/{tenant}/compatibility/subjects/{subject}/versions": {
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Confluent Compatibility All",
+        "description": "Test a schema against the versions the level selects (Confluent ``\u2026/compatibility/subjects/{s}/versions``).",
+        "operationId": "confluent_compatibility_all_registry_schema__tenant__compatibility_subjects__subject__versions_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant",
+              "description": "Tenant schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Compatibility Allauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Compatibility Allauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Confluent Compatibility All Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Confluent Compatibility All Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for confluent compatibility all."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for confluent compatibility all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for confluent compatibility allresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for confluent compatibility allresponse422."
                 }
               }
             }
@@ -26343,7 +28495,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T16:48:35Z"
+                          "example": "2026-10-19T17:28:23Z"
                         },
                         "method": {
                           "type": "string",
@@ -105601,7 +107753,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "completed_at": {
             "anyOf": [
@@ -107556,7 +109708,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "comment_count": {
             "type": "integer",
@@ -107784,7 +109936,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "comment_count": {
             "type": "integer",
@@ -108315,14 +110467,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -111578,7 +113730,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "2d14022a-d223-4b58-949e-6fcfa6004061"
+            "example": "4bbfc849-0efa-49c3-b03c-0c6743ce7704"
           },
           "method": {
             "type": "string",
@@ -114105,7 +116257,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -116001,7 +118153,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "browse_url": {
             "anyOf": [
@@ -157829,7 +159981,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           }
         },
         "additionalProperties": false,
@@ -169195,13 +171347,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           }
         },
         "additionalProperties": false,
@@ -170705,7 +172857,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "detected_by": {
             "anyOf": [
@@ -178881,14 +181033,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T16:48:35Z"
+            "example": "2026-10-19T17:28:23Z"
           },
           "outcome": {
             "anyOf": [
