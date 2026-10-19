@@ -54,6 +54,56 @@
             "items": {
               "type": "string"
             }
+          },
+          "blastRadius": {
+            "description": "CDG-3.6: on a breaking change, what it affects; absent unless --blast-radius was used.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "consumers",
+              "teams",
+              "verificationRuns",
+              "truncated",
+              "line"
+            ],
+            "properties": {
+              "consumers": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "teams": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "slug"
+                  ],
+                  "properties": {
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              },
+              "verificationRuns": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "truncated": {
+                "type": "boolean"
+              },
+              "line": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         }
       }
@@ -398,6 +448,35 @@
               }
             }
           }
+        }
+      }
+    },
+    "blastRadius": {
+      "description": "CDG-3.6: how many breaking changes were annotated; absent unless --blast-radius was used.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "annotated",
+        "skipped",
+        "failed",
+        "limit"
+      ],
+      "properties": {
+        "annotated": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }

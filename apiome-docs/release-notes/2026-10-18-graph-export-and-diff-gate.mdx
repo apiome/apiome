@@ -1,0 +1,22 @@
+---
+slug: graph-export-and-diff-gate
+title: Export the dependency graph, and see who a breaking change affects in your PR
+description: JSON and DOT graph export, and a blast-radius line on every breaking change.
+authors: [apiome]
+---
+
+The dependency graph now leaves Apiome in two ways: as a file you can draw or script against, and as
+a line on every breaking change in the contract gate.
+
+{/* truncate */}
+
+- **The PR comment names who is affected.** The [diff-action](/reference/ci/diff-action) comment
+  now says, under each breaking change, "affects 4 consumers across 2 teams (mobile, payments);
+  2 verification runs invalidated", from the change's [blast radius](/govern/dependency-graph#in-the-diff-gate-and-the-pr-comment).
+  It is on by default. Set `blast-radius: false` to turn it off. The gate's pass or fail does not change.
+- **The same line on the command line.** Run `apiome diff ./openapi.yaml --against payments@latest --blast-radius`,
+  or send `"blastRadius": true` to `POST /v1/diff/{tenant}/classified`.
+- **Export the graph.** `apiome graph export --format dot --out graph.dot` writes a Graphviz file,
+  and `--format json` (the default) a document a script can read. Filter by node kind, owner team,
+  provenance or one entity's neighbourhood. `GET /v1/graph/{tenant}/export` does the same over the
+  API, up to 10,000 edges.

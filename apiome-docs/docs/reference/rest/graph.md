@@ -1,6 +1,6 @@
 ---
 title: "Graph"
-description: "REST endpoints tagged graph: 5 operations."
+description: "REST endpoints tagged graph: 6 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.241.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.242.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `graph` · 5 operations
+Tag: `graph` · 6 operations
 
 ## `POST /v1/graph/{tenant_slug}/blast-radius` {#post-blast-radius-v1-graph-tenant-slug-blast-radius-post}
 
@@ -166,6 +166,43 @@ Request body for replace an entity's manual dependencies.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for replace an entity's manual dependencies. | `application/json` [`DependenciesResponse`](#schema-dependenciesresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/graph/{tenant_slug}/export` {#export-graph-route-v1-graph-tenant-slug-export-get}
+
+**Export the dependency graph as JSON or DOT**
+
+The tenant's dependency graph as one document: `format=json` (default) writes `{format: "apiome.graph.export/v1", tenant, generated_at, filters, limit, truncated, node_count, edge_count, nodes, edges}`; `format=dot` writes a Graphviz `digraph` (`dot -Tsvg export.dot`). Every node carries its name, slug and owner team.
+
+Narrow it with `kind` (edges with either end of these node kinds), `team` (either end owned by this team slug), `provenance` (each repeatable) and `stale=false` (drop stale edges), or export one entity's neighbourhood with `entity=kind:id` and `depth` (1–5, default 2).
+
+Bounded at 10,000 edges, current before stale: `truncated` (JSON) or the first-line comment (DOT) says when more matched. The response is streamed and offered as a download.
+
+Requires `projects:view`.
+
+Operation id: `export_graph_route_v1_graph__tenant_slug__export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `format` | query | string | no | `json` or `dot`. |
+| `kind` | query | array of string or null | no | Keep edges with an end of these node kinds. |
+| `team` | query | string or null | no | Keep edges with an end owned by this team slug. |
+| `provenance` | query | array of string or null | no | Keep edges of these provenances. |
+| `stale` | query | boolean | no | `false` drops stale edges. |
+| `entity` | query | string or null | no | `kind:id`: export this entity's neighbourhood. |
+| `depth` | query | integer | no | Hops around `entity`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The export. | `application/json` object; `text/vnd.graphviz` string |
+| 400 | `graph-invalid`: an unknown format, kind, provenance or entity, or a bad depth. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}

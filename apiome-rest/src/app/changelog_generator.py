@@ -406,11 +406,13 @@ def _display_path_group(path_group: str) -> str:
     return "/" + "/".join(decoded)
 
 
-def render_changelog_markdown(changelog: Changelog) -> str:
+def render_changelog_markdown(changelog: Changelog, annotations: Optional[Mapping[str, str]] = None) -> str:
     """Render a changelog as stable, human-readable markdown.
 
     Args:
         changelog: Ordered changelog from :func:`build_changelog` or aggregation.
+        annotations: Optional ``{pointer: line}`` written as a ``Blast radius:`` sub-bullet under each
+            breaking change with that pointer (CDG-3.6, #5971).
 
     Returns:
         Markdown text with severity sections and path groups. Empty changelogs
@@ -465,6 +467,8 @@ def render_changelog_markdown(changelog: Changelog) -> str:
             hop = f" _{entry.from_version or '—'} → {entry.to_version or '—'}_"
 
         lines.append(f"- **{entry.summary.rstrip('.')}** (`{entry.rule_id}`) — `{entry.pointer}`{badge}{hop}")
+        if annotations and entry.severity == "breaking" and entry.pointer in annotations:
+            lines.append(f"  - Blast radius: {annotations[entry.pointer]}")
 
     lines.append("")
     return "\n".join(lines)

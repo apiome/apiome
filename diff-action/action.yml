@@ -38,6 +38,12 @@ inputs:
     description: When true, upsert a sticky PR comment with the markdown changelog.
     required: false
     default: "true"
+  blast-radius:
+    description: >
+      When true (default), each breaking change in the changelog says what it affects:
+      "affects N consumers across M teams (…); K verification runs invalidated". Needs projects:view.
+    required: false
+    default: "true"
 
 outputs:
   exit-code:
@@ -57,3 +63,4 @@ runs:
     INPUT_BASE_URL: ${{ inputs.base-url }}
     INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
     INPUT_COMMENT: ${{ inputs.comment }}
+    INPUT_BLAST_RADIUS: ${{ inputs.blast-radius }}

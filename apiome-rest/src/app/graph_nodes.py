@@ -17,6 +17,8 @@ from .catalog_graph import NODE_KINDS, PROVENANCES, GraphValidationError
 __all__ = [
     "MAX_SEARCH_LIMIT",
     "NodePage",
+    "PROJECT_KINDS",
+    "current_node_kinds",
     "label_nodes",
     "node_owners",
     "search_entities",
@@ -104,6 +106,37 @@ def node_labels_with_owners(
     }
 
 
+#: The two node kinds a ``projects`` row can be.
+PROJECT_KINDS = ("project", "catalog_item")
+
+
+def current_node_kinds(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dict[str, str]:
+    """The kind each ``projects``-row node has today.
+
+    A projects row is a ``project`` or a ``catalog_item`` by its ``publishable`` flag now, not by the
+    edge that first named it (a converted catalog item keeps old edges that say ``catalog_item``).
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        refs: ``(kind, id)`` node references; only the ``project`` / ``catalog_item`` ones are read.
+
+    Returns:
+        ``{id: "project" | "catalog_item"}`` for each projects row still present.
+    """
+    project_ids = sorted({str(entity_id) for kind, entity_id in refs if kind in PROJECT_KINDS})
+    if not project_ids:
+        return {}
+    return {
+        str(row["id"]): "project" if row["publishable"] else "catalog_item"
+        for row in db.execute_query(
+            "SELECT id::text AS id, publishable FROM apiome.projects "
+            "WHERE tenant_id = %s::uuid AND id = ANY(%s::uuid[])",
+            (tenant_id, project_ids),
+        )
+    }
+
+
 @dataclass(frozen=True)
 class NodePage:
     """One page of the tenant-wide entity search.
@@ -177,25 +210,13 @@ def search_entities(
     )
     refs = [(str(row["kind"]), str(row["id"])) for row in rows]
     info = node_labels_with_owners(db, tenant_id, refs)
-    project_kinds = {"project", "catalog_item"}
-    # A projects row's kind follows `publishable` today, not the edge that first named it.
-    project_ids = [entity_id for kind, entity_id in refs if kind in project_kinds]
-    publishable: Dict[str, bool] = {}
-    if project_ids:
-        for row in db.execute_query(
-            "SELECT id::text AS id, publishable FROM apiome.projects "
-            "WHERE tenant_id = %s::uuid AND id = ANY(%s::uuid[])",
-            (tenant_id, project_ids),
-        ):
-            publishable[str(row["id"])] = bool(row["publishable"])
+    current = current_node_kinds(db, tenant_id, refs)
     needle = (query or "").strip().lower()
     wanted_kinds = set(kinds)
     entities: List[Dict[str, Any]] = []
     for row in rows:
         entity_id = str(row["id"])
-        kind = str(row["kind"])
-        if kind in project_kinds and entity_id in publishable:
-            kind = "project" if publishable[entity_id] else "catalog_item"
+        kind = current.get(entity_id, str(row["kind"]))
         item = info.get(entity_id, {})
         if wanted_kinds and kind not in wanted_kinds:
             continue

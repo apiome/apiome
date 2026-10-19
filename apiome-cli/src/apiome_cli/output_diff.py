@@ -77,6 +77,9 @@ def gate_should_fail(max_severity: str | None, fail_on: str) -> bool:
 def format_diff_text(payload: dict[str, Any]) -> str:
     """Render a human-readable text report from a ClassifiedDiffResponse.
 
+    A breaking change that carries ``blastRadius`` (``--blast-radius``, CDG-3.6) gets an indented
+    "Blast radius:" line under it.
+
     Args:
         payload: Parsed JSON body from ``POST …/diff/…/classified``.
 
@@ -107,6 +110,15 @@ def format_diff_text(payload: dict[str, Any]) -> str:
         consumers = change.get("consumers")
         touches = f" — breaks {', '.join(consumers)}" if consumers else ""
         lines.append(f"  [{sev}] {rule} {pointer}{touches}")
+        blast = change.get("blastRadius")
+        if isinstance(blast, dict) and blast.get("line"):
+            lines.append(f"      Blast radius: {blast['line']}")
+    blast_meta = payload.get("blastRadius")
+    if isinstance(blast_meta, dict) and blast_meta.get("skipped"):
+        lines.append(
+            f"Blast radius shown for the first {blast_meta.get('limit')} breaking changes; "
+            f"{blast_meta['skipped']} more were not checked."
+        )
     impact = payload.get("consumers")
     if isinstance(impact, dict):
         lines.extend(format_consumer_impact_text(impact))

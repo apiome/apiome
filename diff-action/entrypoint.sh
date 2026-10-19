@@ -27,6 +27,7 @@ API_KEY="${INPUT_API_KEY:-}"
 TENANT="${INPUT_TENANT:-}"
 BASE_URL="${INPUT_BASE_URL:-https://api.apiome.dev}"
 COMMENT="${INPUT_COMMENT:-true}"
+BLAST_RADIUS="${INPUT_BLAST_RADIUS:-true}"
 GITHUB_TOKEN="${INPUT_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 
 log() {
@@ -80,6 +81,14 @@ case "${FAIL_ON}" in
     ;;
 esac
 
+case "${BLAST_RADIUS}" in
+  true|false) ;;
+  *)
+    echo "::error::Input 'blast-radius' must be 'true' or 'false' (got: ${BLAST_RADIUS})"
+    exit 2
+    ;;
+esac
+
 cd "${WORKSPACE}"
 
 SPEC_PATH="${SPEC}"
@@ -93,7 +102,13 @@ export APIOME_TENANT_ID="${TENANT}"
 export APIOME_BASE_URL="${BASE_URL}"
 export APIOME_LOAD_DOTENV="${APIOME_LOAD_DOTENV:-0}"
 
-log "Running: ${APIOME_BIN} diff ${SPEC_PATH} --against ${PROJECT} --fail-on ${FAIL_ON} --format md"
+# CDG-3.6 (#5971): the blast-radius line under each breaking change of the changelog.
+DIFF_FLAGS=()
+if [[ "${BLAST_RADIUS}" == "true" ]]; then
+  DIFF_FLAGS+=(--blast-radius)
+fi
+
+log "Running: ${APIOME_BIN} diff ${SPEC_PATH} --against ${PROJECT} --fail-on ${FAIL_ON} --format md ${DIFF_FLAGS[*]:-}"
 
 ERR_PATH="$(mktemp)"
 set +e
@@ -101,6 +116,7 @@ set +e
   --against "${PROJECT}" \
   --fail-on "${FAIL_ON}" \
   --format md \
+  "${DIFF_FLAGS[@]}" \
   >"${CHANGELOG_PATH}" 2>"${ERR_PATH}"
 DIFF_EXIT=$?
 set -e

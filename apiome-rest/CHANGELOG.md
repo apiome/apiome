@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.378.0] - 2026-10-18
+
+### Added
+- **Graph export (#5971, CDG-3.6)**: `GET /v1/graph/{tenant}/export?format=json|dot` (`projects:view`) streams the
+  dependency graph as one `apiome.graph.export/v1` JSON document (`filters`, `truncated`, `node_count`, `edge_count`,
+  `nodes` with name/slug/owner team, `edges`) or a Graphviz `digraph` (declared edges bold, runtime dotted, stale dashed).
+  Filters: `kind`, `team`, `provenance` (repeatable), `stale=false`, or a neighbourhood with `entity=kind:id&depth=1–5`
+  (default 2). Bounded at 10,000 edges, current first; the response is a download (`<tenant>-graph.<format>`).
+- **Blast radius on the diff gate (#5971)**: `POST /v1/diff/{tenant}/classified` accepts `blastRadius: true`
+  (`projects:view`). Each breaking change then carries `blastRadius` — `consumers` (direct and transitive), `teams`
+  (their owner teams), `verificationRuns` (invalidated), `truncated` and `line`, e.g. "affects 4 consumers across 2 teams
+  (mobile, payments); 2 verification runs invalidated" — computed from the CDG-3.3 blast radius against the base
+  project and revision; the response gains `blastRadius: {annotated, skipped, failed, limit}` (at most 50 distinct
+  breaking pointers per diff). The markdown changelog gains a `Blast radius:` sub-bullet under each breaking row.
+  Without the flag the response is unchanged (no `blastRadius` keys).
+
+The OpenAPI version moves to 1.242.0.
+
 ## [1.377.0] - 2026-10-18
 
 ### Added

@@ -18,7 +18,7 @@ The dependency graph: declare and list what an API depends on.
 apiome graph [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`declare`](#graph-declare), [`dependencies`](#graph-dependencies), [`impact`](#graph-impact).
+Subcommands: [`declare`](#graph-declare), [`dependencies`](#graph-dependencies), [`export`](#graph-export), [`impact`](#graph-impact).
 
 ## apiome graph declare {#graph-declare}
 
@@ -66,6 +66,31 @@ apiome graph dependencies [OPTIONS] KIND ENTITY
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome graph export {#graph-export}
+
+Export the dependency graph as JSON or DOT (GET …/export).
+
+Writes every edge of the workspace — or, with ``--entity``, the edges within ``--depth`` hops of one entity — with each node's name, slug and owner team. ``--format dot`` writes a Graphviz file: ``apiome graph export --format dot --out graph.dot && dot -Tsvg graph.dot > graph.svg``.
+
+The export holds at most 10,000 edges; when more match, a warning is printed on stderr (and the JSON says ``truncated: true``).
+
+```text
+apiome graph export [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `json` |  | json (default) or dot (Graphviz). |
+| `--out` | path |  |  | Write to this file instead of stdout. |
+| `--kind` | text (repeatable) |  |  | Keep edges with an end of this node kind, e.g. consumer (repeatable). |
+| `--team` | text |  |  | Keep edges with an end owned by this team slug. |
+| `--provenance` | text (repeatable) |  |  | declared, derived or runtime (repeatable; default all). |
+| `--stale` / `--no-stale` | flag | `--stale` |  | Include stale edges (default) or drop them. |
+| `--entity` | text |  |  | Export only this entity's neighbourhood, as KIND:ID, e.g. project:&lt;id&gt;. |
+| `--depth` | integer range | `2` |  | Hops around --entity (1-5, default 2). |
 
 ## apiome graph impact {#graph-impact}
 

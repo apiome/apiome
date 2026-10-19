@@ -560,3 +560,79 @@ def test_diff_consumers_markdown_asks_the_server_for_the_section(httpx_mock: obj
     assert "## Consumer impact" in result.stdout
     for request in httpx_mock.get_requests():
         assert json.loads(request.content.decode("utf-8"))["consumers"] is True
+
+
+# ---------------------------------------------------------------------------------------------
+# --blast-radius (CDG-3.6 / #5971)
+# ---------------------------------------------------------------------------------------------
+
+_BLAST_LINE = "affects 3 consumers across 2 teams (mobile, payments); 1 verification run invalidated"
+_BLAST_PAYLOAD = {
+    **_BREAKING_PAYLOAD,
+    "changes": [
+        {
+            **_BREAKING_PAYLOAD["changes"][0],
+            "blastRadius": {
+                "consumers": 3,
+                "teams": [{"slug": "mobile", "name": "Mobile"}, {"slug": "payments", "name": "Payments"}],
+                "verificationRuns": 1,
+                "truncated": False,
+                "line": _BLAST_LINE,
+            },
+        }
+    ],
+    "blastRadius": {"annotated": 1, "skipped": 0, "failed": 0, "limit": 50},
+}
+
+
+def test_diff_blast_radius_sends_the_flag_and_prints_the_line(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_BLAST_PAYLOAD)
+    result = runner.invoke(app, ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--blast-radius"])
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert json.loads(httpx_mock.get_requests()[0].content.decode("utf-8"))["blastRadius"] is True
+    lines = result.stdout.splitlines()
+    row = next(i for i, line in enumerate(lines) if "ctg.property_removed" in line)
+    assert lines[row + 1] == f"      Blast radius: {_BLAST_LINE}"
+
+
+def test_diff_without_blast_radius_does_not_send_the_flag(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_BREAKING_PAYLOAD)
+    result = runner.invoke(app, ["diff", str(_SPEC_FILE), "--against", "payments@latest"])
+    assert result.exit_code == EXIT_ERROR
+    assert "blastRadius" not in json.loads(httpx_mock.get_requests()[0].content.decode("utf-8"))
+    assert "Blast radius" not in result.stdout
+
+
+def test_diff_blast_radius_text_says_when_changes_were_skipped(httpx_mock: object) -> None:
+    payload = {**_BLAST_PAYLOAD, "blastRadius": {"annotated": 50, "skipped": 7, "failed": 0, "limit": 50}}
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=payload)
+    result = runner.invoke(app, ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--blast-radius"])
+    assert "first 50 breaking changes; 7 more were not checked" in result.stdout
+
+
+def test_diff_blast_radius_json_matches_the_schema(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_BLAST_PAYLOAD)
+    result = runner.invoke(
+        app, ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--blast-radius", "--format", "json"]
+    )
+    document = json.loads(result.stdout)
+    jsonschema.validate(document, json.loads(_SCHEMA_FILE.read_text()))
+    assert document["changes"][0]["blastRadius"]["line"] == _BLAST_LINE
+
+
+def test_diff_blast_radius_markdown_asks_only_the_markdown_call(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_BREAKING_PAYLOAD)
+    httpx_mock.add_response(
+        url=_DIFF_URL,
+        method="POST",
+        text=f"# Changelog\n\n- **Removed** (`ctg.property_removed`)\n  - Blast radius: {_BLAST_LINE}\n",
+        headers={"content-type": "text/markdown; charset=utf-8"},
+    )
+    result = runner.invoke(
+        app, ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--blast-radius", "--format", "md"]
+    )
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert f"  - Blast radius: {_BLAST_LINE}" in result.stdout
+    first, second = (json.loads(r.content.decode("utf-8")) for r in httpx_mock.get_requests())
+    # The severity call skips the per-change traversals; the markdown call carries them.
+    assert "blastRadius" not in first and second["blastRadius"] is True

@@ -58,6 +58,17 @@ new comments. Requires `permissions.pull-requests: write`.
 
 Set `comment: false` to skip the comment and only fail/pass the check.
 
+Under each breaking change, the comment says what the change affects in the
+[dependency graph](../../govern/dependency-graph.mdx#in-the-diff-gate-and-the-pr-comment):
+
+```markdown
+- **Path removed** (`ctg.path_removed`) — `/paths/~1pets~1{petId}`
+  - Blast radius: affects 4 consumers across 2 teams (mobile, payments); 2 verification runs invalidated
+```
+
+Set `blast-radius: false` to leave that line out. It needs the API key to have `projects:view`, and it
+never changes whether the check passes.
+
 ### Fail on warnings too
 
 ```yaml
@@ -78,7 +89,7 @@ see [CI contract gate on GitLab and Bitbucket](./ci-gitlab-bitbucket.md).
 export APIOME_BASE_URL=https://api.apiome.dev
 export APIOME_API_KEY=…          # from secrets
 export APIOME_TENANT_ID=…        # from secrets
-apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --format md
+apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --format md --blast-radius
 ```
 
 ## Related
