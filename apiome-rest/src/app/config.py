@@ -1772,6 +1772,37 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Usage index sweep (RDG-1.1, #5759). A background loop (app.usage_sweep) rolls usage_hourly up
+    # into usage_daily, finalizes closed UTC days and prunes the index per license tier. The same
+    # tick runs from cron as `python -m app.usage_sweep`.
+    #
+    # usage_sweep_interval_seconds    Pause between ticks. 0 (or less) disables the loop.
+    # usage_finalize_grace_hours      How long after a UTC day ends before it is final (no longer
+    #                                 recomputed, and closed to new counts). Must exceed the longest
+    #                                 delay between a call and its ingest.
+    # usage_sweep_batch_size          Most rows each prune deletes per table per tick.
+    usage_sweep_interval_seconds: int = Field(
+        default=3600,
+        validation_alias=AliasChoices(
+            "APIOME_USAGE_SWEEP_INTERVAL_SECONDS",
+            "usage_sweep_interval_seconds",
+        ),
+    )
+    usage_finalize_grace_hours: float = Field(
+        default=6,
+        validation_alias=AliasChoices(
+            "APIOME_USAGE_FINALIZE_GRACE_HOURS",
+            "usage_finalize_grace_hours",
+        ),
+    )
+    usage_sweep_batch_size: int = Field(
+        default=10000,
+        validation_alias=AliasChoices(
+            "APIOME_USAGE_SWEEP_BATCH_SIZE",
+            "usage_sweep_batch_size",
+        ),
+    )
+
     # Dependency-vulnerability lookup for the MCP supply-chain scan (CLX-3.2, #4856). OFF by default:
     # the trust-posture scan is fully offline unless an operator turns this on, which is what the
     # roadmap asks for ("start with local/offline tools; third-party scanning APIs are optional

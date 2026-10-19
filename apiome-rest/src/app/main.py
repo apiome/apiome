@@ -171,7 +171,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.240.0",
+    version="1.241.0",
 )
 
 
@@ -527,6 +527,7 @@ _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
 _catalog_graph_task: asyncio.Task | None = None
+_usage_sweep_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
@@ -795,6 +796,35 @@ async def startup_event():
             except Exception:
                 log.exception("catalog graph sweep")
 
+    async def _usage_index_sweep(interval_seconds: int) -> None:
+        """Roll up, finalize and prune the usage index on a schedule (RDG-1.1, #5759).
+
+        Each tick runs :func:`app.usage_sweep.run_usage_sweep` on a dedicated DB connection, which
+        holds the sweep's advisory lock so replicas don't overlap. Started only when
+        ``APIOME_USAGE_SWEEP_INTERVAL_SECONDS`` is positive.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        while True:
+            await asyncio.sleep(interval_seconds)
+            try:
+
+                def _run_usage() -> None:
+                    thread_db = Database()
+                    try:
+                        from .usage_sweep import run_usage_sweep_with_settings
+
+                        run_usage_sweep_with_settings(thread_db, settings)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_usage)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("usage index sweep")
+
     async def _lint_waiver_expiry_sweep() -> None:
         """Periodically notify soon-expiring lint waivers (CLX-4.2, #4860).
 
@@ -1011,6 +1041,9 @@ async def startup_event():
     _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
     global _catalog_graph_task
     _catalog_graph_task = asyncio.create_task(_catalog_graph_sweep())
+    global _usage_sweep_task
+    if int(settings.usage_sweep_interval_seconds) > 0:
+        _usage_sweep_task = asyncio.create_task(_usage_index_sweep(int(settings.usage_sweep_interval_seconds)))
     global _lint_waiver_expiry_task
     _lint_waiver_expiry_task = asyncio.create_task(_lint_waiver_expiry_sweep())
     global _verification_schedule_task
@@ -1088,6 +1121,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _catalog_graph_task = None
+    global _usage_sweep_task
+    if _usage_sweep_task is not None:
+        _usage_sweep_task.cancel()
+        try:
+            await _usage_sweep_task
+        except asyncio.CancelledError:
+            pass
+        _usage_sweep_task = None
     global _lint_waiver_expiry_task
     if _lint_waiver_expiry_task is not None:
         _lint_waiver_expiry_task.cancel()
