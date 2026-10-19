@@ -104,6 +104,36 @@ latency. Pick the servers and **click “Compare”**.
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API
   reference](../reference/api-reference.md).
 
+## Registry API
+
+Gateways and MCP hosts that discover servers through the official MCP Registry API can read your
+catalog directly. Point them at:
+
+```text
+https://<your-apiome-host>/v1/tenants/<tenant>/mcp-registry/v0.1/servers
+```
+
+- **Who sees what.** Without a credential, the list holds only servers that are **Published** and
+  **Public**. Send an MCP API key (`Authorization: Bearer …`), a workspace API key (`X-API-Key`) or
+  a signed-in session of the same tenant to list private and unpublished servers too. A credential
+  that is wrong or belongs to another tenant is refused (`401` / `403`). It never falls back to the
+  public list.
+- **Names.** Each server is named `apiome.<tenant>/<server-slug>`, for example
+  `apiome.acme/weather`. Its `version` is the version the server reports (`serverInfo.version`),
+  or the snapshot label when it reports none.
+- **Paging.** Up to 100 servers a page (`limit`, default 30). Pass `metadata.nextCursor` back as
+  `cursor` to get the next page. Cursors stay valid when servers are added. Filter with `search`
+  (name or slug) and `updated_since`.
+- **One server.** `GET …/servers/apiome.acme%2Fweather/versions/latest` returns one entry with an
+  `ETag`. A client that sends it back in `If-None-Match` gets `304` until the server changes.
+- **Apiome extras.** Each entry's `_meta` carries `dev.apiome/catalog`: the server's grade and
+  score, its trust posture (`score`, `grade`, `gatePassed`), its visibility and its manifest digest.
+- **Remotes.** A server's URL is listed without any credentials, query string or fragment it was
+  registered with. A `stdio` server has no remote.
+
+From the CLI, `apiome mcp registry list [--since 2026-10-01T00:00:00Z]` walks every page. The routes
+are on the [MCP registry](../reference/rest/mcp-registry.md) REST reference page.
+
 ## Where next
 
 - [Agent access](./agent-access.mdx)

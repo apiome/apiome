@@ -32,6 +32,10 @@ Apiome also lints MCP servers you import:
 - [MCP surface lint rules](../../govern/mcp-surface-lint-rules.md)
 - [MCP trust posture rules](../../govern/mcp-trust-posture-rules.md)
 
+## Registry API
+
+A gateway or registry client can page through a tenant's imported MCP servers in the official MCP Registry API v0.1 shape at `/v1/tenants/{tenant}/mcp-registry/v0.1/servers` — see [MCP registry](../rest/mcp-registry.md) in the REST reference.
+
 To connect a host step by step, see the [MCP quick-start](../mcp-quickstart.md).
 
 *This page is generated from the server's registry; regenerate it with `cd apiome-mcp && uv run python scripts/generate_mcp_reference_docs.py`.*

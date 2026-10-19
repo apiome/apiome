@@ -1507,6 +1507,8 @@ def _active_source_link(endpoint_id: str):
 async def _build_posture_context(
     endpoint_id: str,
     version: Dict[str, Any],
+    *,
+    scan_vulnerabilities: bool = True,
 ) -> PostureContext:
     """Assemble a :class:`PostureContext` for one snapshot from what the database holds.
 
@@ -1525,6 +1527,9 @@ async def _build_posture_context(
     rules are reported as skipped. A CI runner that has the checked-out source can obtain those
     findings through the pure :mod:`app.mcp_static_checks` scanner without the contents ever being
     persisted.
+
+    ``scan_vulnerabilities=False`` skips the lookup even when it is enabled, for read paths that must
+    never call out (the anonymous MCP Registry API, AAU-5.3); the dependency rules then skip.
     """
     items = db.get_mcp_capability_items(str(version["id"]))
     surface = reconstruct_surface(version, items)
@@ -1539,7 +1544,11 @@ async def _build_posture_context(
             from .mcp_sbom import inventory_from_row
 
             inventory = inventory_from_row(sbom_row)
-            if settings.mcp_vulnerability_scan_enabled and inventory is not None:
+            if (
+                scan_vulnerabilities
+                and settings.mcp_vulnerability_scan_enabled
+                and inventory is not None
+            ):
                 from .mcp_vulnerability import scan_inventory
 
                 vulnerabilities = await scan_inventory(inventory)

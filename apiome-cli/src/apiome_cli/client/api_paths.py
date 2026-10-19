@@ -316,6 +316,11 @@ def mcp_conformance_rules() -> str:
     return f"{V1}/mcp/conformance/rules"
 
 
+def mcp_registry_servers(tenant_slug: str) -> str:
+    """The tenant's MCP Registry API v0.1 server list (AAU-5.3, #5724)."""
+    return f"{V1}/tenants/{tenant_slug}/mcp-registry/v0.1/servers"
+
+
 def mcp_endpoint_sources(tenant_slug: str, endpoint_id: str | UUID) -> str:
     """An MCP endpoint's linked source associations (CLX-3.2, #4856)."""
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/sources"

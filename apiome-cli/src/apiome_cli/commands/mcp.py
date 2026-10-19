@@ -9,6 +9,7 @@ against ``/v1/tenants/{tenant_slug}/mcp-policy`` and ``…/mcp-keys/…`` (MTG-5
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlencode
 from uuid import UUID
@@ -94,6 +95,14 @@ source_app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(source_app, name="source")
+
+registry_app = typer.Typer(
+    name="registry",
+    help="Read the tenant's catalog through the MCP Registry API v0.1 (AAU-5.3).",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+app.add_typer(registry_app, name="registry")
 app.add_typer(policy_app, name="policy")
 app.add_typer(key_app, name="key")
 
@@ -1509,5 +1518,106 @@ def shadowing(
         groups if isinstance(groups, list) else [],
         _SHADOW_GROUP_COLUMNS,
         empty_message="No shadowed names across the enabled host scope.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# MCP Registry API (AAU-5.3, #5724)
+# --------------------------------------------------------------------------- #
+
+# Page size requested per call; the REST maximum, so a full walk takes the fewest round-trips.
+_REGISTRY_PAGE_LIMIT = 100
+
+_REGISTRY_LIST_COLUMNS: tuple[ListColumn, ...] = (
+    ("Name", "name", None),
+    ("Version", "version", None),
+    ("Remote", "remote", _format_optional),
+    ("Grade", "grade", _format_optional),
+    ("Trust", "trust", _format_optional),
+    ("Visibility", "visibility", _format_optional),
+    ("Updated", "updated_at", _format_optional),
+)
+
+
+def _normalize_since(since: str | None) -> str | None:
+    """Validate ``--since`` as an ISO 8601 / RFC 3339 timestamp, returning it unchanged.
+
+    A trailing ``Z`` is accepted. An unparseable value is a usage error rather than a 422.
+    """
+    if since is None:
+        return None
+    value = since.strip()
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        msg = "--since must be an ISO 8601 timestamp, e.g. 2026-10-01T00:00:00Z."
+        raise typer.BadParameter(msg) from None
+    return value
+
+
+def _registry_row(entry: dict[str, Any]) -> dict[str, Any]:
+    """Flatten one registry ``ServerResponse`` into a table row."""
+    server = entry.get("server") or {}
+    meta = entry.get("_meta") or {}
+    official = meta.get("io.modelcontextprotocol.registry/official") or {}
+    catalog = meta.get("dev.apiome/catalog") or {}
+    remotes = server.get("remotes") or []
+    posture = catalog.get("trustPosture") or {}
+    return {
+        "name": server.get("name"),
+        "version": server.get("version"),
+        "remote": remotes[0].get("url") if remotes and isinstance(remotes[0], dict) else None,
+        "grade": catalog.get("grade"),
+        "trust": posture.get("grade") if isinstance(posture, dict) else None,
+        "visibility": catalog.get("visibility"),
+        "updated_at": official.get("updatedAt"),
+    }
+
+
+@registry_app.command("list")
+def registry_list(
+    ctx: typer.Context,
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help="Only servers updated at or after this ISO 8601 timestamp (updated_since).",
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """List the tenant's servers in registry shape, following every page (GET .../mcp-registry/v0.1/servers).
+
+    The configured API key is sent, so private and unpublished endpoints are listed too. JSON
+    output is one ``ServerList``: every page's ``servers`` and ``metadata.count``.
+    """
+    json_mode = _json_output(ctx, output)
+    since_value = _normalize_since(since)
+    client, tenant_slug = _scoped_client(ctx)
+
+    servers: list[dict[str, Any]] = []
+    cursor: str | None = None
+    seen_cursors: set[str] = set()
+    while True:
+        params: dict[str, Any] = {"limit": _REGISTRY_PAGE_LIMIT}
+        if since_value:
+            params["updated_since"] = since_value
+        if cursor:
+            params["cursor"] = cursor
+        payload = client.get(f"{api_paths.mcp_registry_servers(tenant_slug)}?{urlencode(params)}").json()
+        page = payload.get("servers") if isinstance(payload, dict) else None
+        servers.extend(entry for entry in page or [] if isinstance(entry, dict))
+        metadata = payload.get("metadata") if isinstance(payload, dict) else None
+        cursor = metadata.get("nextCursor") if isinstance(metadata, dict) else None
+        if not cursor or cursor in seen_cursors:
+            break
+        seen_cursors.add(cursor)
+
+    if json_mode:
+        emit_json({"servers": servers, "metadata": {"count": len(servers)}})
+        return
+    emit_list_table(
+        [_registry_row(entry) for entry in servers],
+        _REGISTRY_LIST_COLUMNS,
+        empty_message="No servers in the registry.",
         min_width=_MCP_LIST_MIN_WIDTH,
     )
