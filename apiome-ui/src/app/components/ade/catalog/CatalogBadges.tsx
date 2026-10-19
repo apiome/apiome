@@ -110,3 +110,36 @@ export function CatalogFormatRow({ item }: CatalogFormatRowProps) {
     </>
   );
 }
+
+export interface RegistryBadgeProps {
+  /** The item id, which the chip links to (the item's Subjects tab). */
+  itemId: string;
+  /** The subjects the item backs; absent or empty draws nothing. */
+  subjects?: readonly string[];
+}
+
+/**
+ * The **Registry** chip (CDG-4.5, #5977): this schema item backs one or more schema-registry
+ * subjects. It opens the item's Subjects tab, and its tooltip names the subjects.
+ *
+ * @param props See {@link RegistryBadgeProps}.
+ * @returns The chip, or `null` for an item that backs no subject.
+ */
+export function RegistryBadge({ itemId, subjects }: RegistryBadgeProps) {
+  if (!subjects || subjects.length === 0) return null;
+  const names = subjects.join(', ');
+  return (
+    <Link
+      href={`/ade/dashboard/catalog/${encodeURIComponent(itemId)}?tab=subjects`}
+      className="cat-registry"
+      data-testid="catalog-registry-badge"
+      title={`Schema registry subjects: ${names}`}
+      aria-label={`Registry: ${names}`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <Badge variant="accent" square>
+        Registry
+      </Badge>
+    </Link>
+  );
+}

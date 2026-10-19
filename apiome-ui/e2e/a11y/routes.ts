@@ -133,6 +133,13 @@ const ADDITIONAL: A11yRoute[] = [
       ],
     },
   },
+  {
+    // CDG-4.5 (#5977): the catalog item's Subjects tab and the Workspace → Schema registry page,
+    // dumped by `tests/schema-registry-ui.test.tsx`.
+    id: 'schema-registry',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-item-subjects.html', 'schema-registry.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

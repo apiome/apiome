@@ -47,7 +47,9 @@ and Spring Kafka work against it with no code change — only their configuratio
 1. **Create a key** under **Workspace → API keys** with the **Schema registry: read + write**
    preset for a producer, or **Schema registry: read** for a consumer (see
    [A key for a Kafka serializer](../workspace/api-keys.mdx#a-key-for-a-kafka-serializer)).
-2. **Point the client at** `https://<your-apiome-host>/registry/schema/<tenant>`.
+2. **Point the client at** `https://<your-apiome-host>/registry/schema/<tenant>`. **Workspace →
+   Schema registry** shows your workspace's exact URL and these snippets with it filled in — see
+   [Registry settings](#registry-settings).
 3. **Send the key as the basic-auth password.** The user name can be anything.
 
 **Python (`confluent-kafka`)**
@@ -129,6 +131,78 @@ Errors have Confluent's body, `{"error_code": …, "message": …}`:
 | 422 | `42204` | Invalid mode (only `READWRITE` and `READONLY` exist) |
 | 422 | `42205` | The registry or the subject is `READONLY` |
 | 422 | `42290` | `compatibility-rules-unavailable` — see [Compatibility levels](#compatibility-levels) |
+
+## The Subjects tab
+
+An Avro, JSON Schema or Protobuf item in the [Catalog](../bring-in/catalog.mdx) has a **Subjects**
+tab: **open the item** and **click “Subjects”** (or add `?tab=subjects` to its address). It lists
+every subject the item backs:
+
+- the subject's **name**, **mode** and **naming strategy**;
+- **Compatibility** — the subject's level, or the workspace default marked
+  “(workspace default)”. **Choose a level** to change it; it is saved at once;
+- the subject's **versions**, each with its **schema ID**, schema type and the day it was
+  registered.
+
+<Screenshot id="catalog-item-subjects" alt="A catalog item's Subjects tab: two subjects with their compatibility level, mode, strategy and versions with schema ids, and the Attach to a subject form" />
+
+**To back a subject with this item:**
+
+1. Under **Attach to a subject**, **type the subject name** — for example `orders-value`. The
+   field starts with the item's slug followed by `-value`.
+2. **Choose a Naming strategy** — **Topic**, **Record** or **Topic + record** (see
+   [Subject naming strategies](#subject-naming-strategies)).
+3. **Click “Attach”.** The item's latest revision becomes version 1. The subject must have no
+   versions yet; you need the **Imports — edit** permission.
+
+**To detach a subject**, **click “Detach”** on it, then **“Detach”** again to confirm. Detaching
+deletes the subject and its versions (a soft delete, as on the API), but the catalog item and its
+revisions stay, and **its schema ids keep resolving**. You need the **Imports — delete** permission.
+
+Items that back a subject also carry a **Registry** chip in the Catalog list.
+
+## Registry settings
+
+<Route path="/ade/dashboard/schema-registry" />
+
+**Open Workspace → Schema registry.** The page has three sections.
+
+<Screenshot id="registry-settings" alt="The Schema registry page: the default compatibility level and mode with Save changes, then Connect a serializer with the registry URL, the API key hint and the Python snippet" />
+
+**Settings** — the workspace defaults:
+
+1. **Choose a Default compatibility level.** Every subject without a level of its own uses it.
+2. **Choose a Mode** — **READWRITE** accepts new versions; **READONLY** refuses every new
+   version in every subject.
+3. **Click “Save changes”.** You need the **Imports — edit** permission.
+
+**Connect a serializer** — your workspace's **Registry URL** (**“Copy URL”** copies it), which
+API key to create (**Schema registry: read + write** for a producer, **Schema registry: read** for
+a consumer), and configuration for **Python** (`confluent-kafka`), **Java**
+(`kafka-avro-serializer`) and **Spring** (Spring Kafka). **Click a language**, then **click
+“Copy”**, and replace `<api-key>` with your key — the page never shows a key.
+
+**Subjects** — every live subject with its version count, latest version, compatibility level,
+mode and strategy. **Click a subject name** to open its catalog item's **Subjects** tab.
+
+<Screenshot id="schema-registry-subjects" alt="The Subjects section of the Schema registry page: a table of subjects with versions, latest version, compatibility, mode and strategy" />
+
+## From the command line
+
+`apiome registry` works with the same subjects (see the [registry reference](/reference/cli/registry)):
+
+| Command | Does |
+| --- | --- |
+| `apiome registry subjects` | Lists the workspace's subjects |
+| `apiome registry versions orders-value` | Lists a subject's versions; `--version latest` (or a number) prints one with its schema |
+| `apiome registry register orders-value order.avsc` | Registers a schema; the type comes from the extension (`.avsc`, `.json`, `.proto`) or `--type` |
+| `apiome registry compat orders-value order.avsc` | Tests a schema without registering it; exits `1` when it is not compatible |
+| `apiome registry config` | Prints the workspace defaults; `--level` and `--mode` change them |
+| `apiome registry config orders-value --level NONE` | Prints or changes one subject's level, mode or `--strategy` |
+
+`compat` follows the [compatibility rule](#compatibility-levels): under any level except `NONE`
+it fails with error `42290` and exit code `2`, and both `register` and `compat` then suggest
+`apiome registry config <subject> --level NONE`.
 
 ## Subject naming strategies
 

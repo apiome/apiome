@@ -1,7 +1,7 @@
 ---
 title: "apiome teams"
 description: "Teams: who owns catalog entities and is notified about their findings."
-sidebar_position: 32
+sidebar_position: 33
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

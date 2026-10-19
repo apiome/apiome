@@ -812,6 +812,37 @@
       "data": "fixture:hive-a11y/api-keys-registry-scope.html"
     },
     {
+      "id": "catalog-item-subjects",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-subjects-panel\"]",
+      "data": "fixture:hive-a11y/catalog-item-subjects.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/schemaRegistry/CatalogSubjectsPanel.tsx",
+        "apiome-ui/lib/schema-registry.ts"
+      ]
+    },
+    {
+      "id": "registry-settings",
+      "route": "/ade/dashboard/schema-registry",
+      "waitFor": "[data-testid=\"registry-settings\"]",
+      "data": "fixture:hive-a11y/schema-registry.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/schema-registry",
+        "apiome-ui/lib/schema-registry.ts"
+      ]
+    },
+    {
+      "id": "schema-registry-subjects",
+      "route": "/ade/dashboard/schema-registry",
+      "waitFor": "[data-testid=\"registry-subjects\"]",
+      "scrollTo": "[data-testid=\"registry-subjects\"]",
+      "data": "fixture:hive-a11y/schema-registry.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/schema-registry",
+        "apiome-ui/lib/schema-registry.ts"
+      ]
+    },
+    {
       "id": "project-consumers-bindings",
       "route": "/ade/dashboard/projects/pets/consumers",
       "waitFor": "[data-testid=\"consumer-bindings-drawer\"]",

@@ -3,6 +3,8 @@
 import { AssignOwnerControl, OwnerFilter, assignOwner, useTeams } from '@/app/components/ade/owners';
 import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
+import { isRegistryFormat, subjectNamesByItem } from '@lib/schema-registry';
+import { fetchSubjects } from '@/app/components/ade/schemaRegistry/schemaRegistryApi';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -266,10 +268,21 @@ export default function CatalogClient() {
       if (!data.success || !Array.isArray(data.catalog)) {
         throw new Error(data.error || 'Failed to load the catalog');
       }
-      setItems(
-        (data.catalog as Record<string, unknown>[]).map(normalizeCatalogListItem) as CatalogItem[]
-      );
+      const loaded = (data.catalog as Record<string, unknown>[]).map(normalizeCatalogListItem) as CatalogItem[];
+      setItems(loaded);
       setLoadError(null);
+      // The Registry chip (CDG-4.5): which schema items back a schema-registry subject. A second,
+      // best-effort read — only when there are schema items — so a registry outage hides the chip.
+      if (loaded.some((item) => isRegistryFormat(item.sourceFormat))) {
+        fetchSubjects()
+          .then((subjects) => {
+            const byItem = subjectNamesByItem(subjects);
+            setItems((current) =>
+              current.map((item) => ({ ...item, registrySubjects: byItem.get(item.id) ?? [] }))
+            );
+          })
+          .catch(() => undefined);
+      }
     } catch (error) {
       // A read that failed and a catalog that is empty used to look identical here — the
       // screen logged to the console and rendered "Your catalog is empty".

@@ -55,7 +55,7 @@ import { CATALOG_EXPORT_VS_CONVERT_COPY, convertActionLabel } from '@/app/utils/
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 import { cn } from '@lib/utils';
 
-import { CatalogFormatRow, ConvertedBadge } from './CatalogBadges';
+import { CatalogFormatRow, ConvertedBadge, RegistryBadge } from './CatalogBadges';
 import {
   CATALOG_LIFECYCLE_LABEL,
   catalogItemHref,
@@ -202,6 +202,11 @@ export default function CatalogCard({
         {/* The mockup's dashed `fmt-slot`: what this item *is*, above what it scores. */}
         <div className="cat-card__formats" data-testid="catalog-card-formats">
           <CatalogFormatRow item={item} />
+          {item.registrySubjects && item.registrySubjects.length > 0 ? (
+            <span className="cat-card__above">
+              <RegistryBadge itemId={item.id} subjects={item.registrySubjects} />
+            </span>
+          ) : null}
         </div>
 
         <CatalogCategoryRow item={item} />

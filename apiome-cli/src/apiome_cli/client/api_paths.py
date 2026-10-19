@@ -873,3 +873,22 @@ def graph_blast_radius(tenant_slug: str) -> str:
 def graph_export(tenant_slug: str) -> str:
     """GET the dependency graph as JSON or DOT (CDG-3.6); filters go in the query string."""
     return f"{V1}/graph/{tenant_slug}/export"
+
+
+def schema_registry(tenant_slug: str) -> str:
+    """The Apiome schema registry routes of a tenant (CDG-4.2); ``…/config``, ``…/subjects``."""
+    return f"{V1}/tenants/{tenant_slug}/schema-registry"
+
+
+def schema_subject(tenant_slug: str, subject: str) -> str:
+    """GET / PUT / DELETE one schema subject (CDG-4.2); ``…/versions`` lists or registers."""
+    return f"{schema_registry(tenant_slug)}/subjects/{quote(subject, safe='')}"
+
+
+def confluent_compatibility(tenant_slug: str, subject: str, version: str | None = None) -> str:
+    """POST a compatibility check on the Confluent-compatible API (CDG-4.3).
+
+    Without ``version`` the schema is tested against the versions the subject's level selects.
+    """
+    path = f"/registry/schema/{quote(tenant_slug, safe='')}/compatibility/subjects/{quote(subject, safe='')}/versions"
+    return f"{path}/{quote(version, safe='')}" if version else path

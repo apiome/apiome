@@ -430,6 +430,14 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         requiresTenant: true,
       },
       {
+        // CDG-4.5: registry defaults, serializer snippets and the tenant's schema subjects.
+        id: 'schema-registry',
+        label: 'Schema registry',
+        href: `${DASHBOARD_HREF}/schema-registry`,
+        icon: 'file-json-2',
+        requiresTenant: true,
+      },
+      {
         // Not tenant-gated: choosing a workspace is how you *stop* having none.
         id: 'tenants',
         label: 'Tenants',

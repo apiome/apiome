@@ -36207,3 +36207,226 @@ a.tm-fact:focus-visible {
   font-size: var(--fs-xs);
   overflow-wrap: anywhere;
 }
+
+/* ===========================================================================
+   SCHEMA REGISTRY (CDG-4.5, #5977) — the catalog item's Subjects tab, the
+   Workspace → Schema registry page and the Catalog Registry chip. `.sr-*`.
+   The tables mirror the Teams table (`.tm-table`); tokens only.
+   =========================================================================== */
+.sr-panel,
+.sr-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sr-note {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.sr-link,
+.sr-name {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sr-name {
+  font-weight: 600;
+}
+
+.sr-card,
+.sr-section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.sr-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sr-card__title,
+.sr-section__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.sr-card__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sr-card__detach {
+  margin-inline-start: auto;
+}
+
+.sr-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.sr-field {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.sr-label {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.sr-select {
+  inline-size: 100%;
+  max-inline-size: 24rem;
+  block-size: var(--control-h);
+  padding-inline: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.sr-card__row .sr-select {
+  inline-size: auto;
+}
+
+.sr-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-problem {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-xs);
+}
+
+.sr-attach__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.sr-attach__fields .sr-field {
+  flex: 1 1 14rem;
+}
+
+.sr-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sr-url {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.sr-code-inline {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.sr-snippet {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sr-snippet__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.sr-snippet__code {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+}
+
+.sr-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.sr-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.sr-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.sr-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.sr-table tr:last-child td {
+  border-block-end: 0;
+}
+
+.sr-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-registry {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.cat-registry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}

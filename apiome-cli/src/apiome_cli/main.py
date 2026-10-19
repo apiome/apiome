@@ -30,6 +30,7 @@ from apiome_cli.commands import (
     paths,
     projects,
     properties,
+    registry,
     repos,
     repository,
     schema,
@@ -96,6 +97,7 @@ app.add_typer(checks.app, name="checks")
 app.add_typer(connectors.app, name="connectors")
 app.add_typer(teams.app, name="teams")
 app.add_typer(graph.app, name="graph")
+app.add_typer(registry.app, name="registry")
 app.command("diff")(diff.diff)
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")

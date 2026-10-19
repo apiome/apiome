@@ -85,7 +85,7 @@ describe('platform-nav model — shape', () => {
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
       ship: ['published', 'sunset-timeline', 'export-studio', 'sdk-settings'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
-      workspace: ['members', 'roles', 'teams', 'api-keys', 'tenants'],
+      workspace: ['members', 'roles', 'teams', 'api-keys', 'schema-registry', 'tenants'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
       'profile',
@@ -115,6 +115,7 @@ describe('platform-nav model — shape', () => {
       'Roles',
       'Teams',
       'API keys',
+      'Schema registry',
       'Tenants',
       'Profile',
       'Linked accounts',
@@ -209,6 +210,7 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/teams', 'teams'],
     ['/ade/dashboard/teams/payments', 'teams'],
     ['/ade/dashboard/api-keys', 'api-keys'],
+    ['/ade/dashboard/schema-registry', 'schema-registry'],
     ['/ade/dashboard/tenants', 'tenants'],
     ['/ade/dashboard/profile', 'profile'],
     ['/ade/dashboard/linked-accounts', 'linked-accounts'],
@@ -290,6 +292,7 @@ describe('platform-nav model — workspace gating', () => {
     'roles',
     'teams',
     'api-keys',
+    'schema-registry',
   ];
 
   it('disables exactly the workspace-scoped destinations when there is no tenant', () => {

@@ -255,7 +255,9 @@ describe('the converted strip', () => {
 
 describe('the tabs', () => {
   it('draws the nine panes in the mockup order, with the mockup labels', () => {
-    expect(catalogDetailTabs().map((tab) => tab.id)).toEqual([...CATALOG_DETAIL_TAB_IDS]);
+    // Subjects (CDG-4.5) is the one optional pane: only schema items list it.
+    expect(catalogDetailTabs().map((tab) => tab.id)).toEqual(CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects'));
+    expect(catalogDetailTabs({}, { subjects: true }).map((tab) => tab.id)).toEqual([...CATALOG_DETAIL_TAB_IDS]);
     expect(catalogDetailTabs().map((tab) => tab.label)).toEqual([
       'Overview',
       'Format details',

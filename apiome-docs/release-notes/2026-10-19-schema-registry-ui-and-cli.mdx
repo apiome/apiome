@@ -1,0 +1,27 @@
+---
+slug: schema-registry-ui-and-cli
+title: Schema subjects in the app and on the command line
+description: A Subjects tab, Schema registry settings, serializer snippets and apiome registry.
+authors: [apiome]
+---
+
+Avro, JSON Schema and Protobuf catalog items now show the schema registry subjects they back, the
+workspace has a **Schema registry** page, and `apiome registry` works with subjects from a
+terminal or a pipeline.
+
+{/* truncate */}
+
+- **Subjects tab.** On an Avro, JSON Schema or Protobuf item: each subject's versions and schema
+  ids, its compatibility level (change it in place) and mode, **Attach to a subject** to back a new
+  subject with the item, and **Detach**, which deletes the subject but keeps the item and its
+  schema ids.
+- **Workspace → Schema registry.** The default compatibility level and mode, your workspace's
+  registry URL, which API key to create, and copy-paste configuration for Python, Java and Spring
+  Kafka with the URL filled in. Below them, every subject in the workspace.
+- **Registry chip.** Catalog items that back a subject carry a **Registry** chip that opens their
+  Subjects tab.
+- **`apiome registry`.** `subjects`, `versions`, `register`, `compat` (exits `1` when a schema is
+  not compatible) and `config` for the workspace defaults or one subject.
+
+See [The Subjects tab](/ship/schema-registry#the-subjects-tab) and
+[Registry settings](/ship/schema-registry#registry-settings).
