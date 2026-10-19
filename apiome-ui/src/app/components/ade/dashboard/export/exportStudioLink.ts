@@ -35,7 +35,7 @@ import {
 export const EXPORT_STUDIO_PATH = '/ade/dashboard/export/studio';
 
 /** Where an export was launched from — determines the Studio's "back" destination. */
-export type ExportStudioOrigin = 'versions' | 'catalog';
+export type ExportStudioOrigin = 'versions' | 'catalog' | 'gateway-config';
 
 /** A resolved back-link target: where to return and what to call it. */
 export interface ExportStudioBackTarget {
@@ -47,6 +47,8 @@ export interface ExportStudioBackTarget {
 const STUDIO_BACK_TARGETS: Record<ExportStudioOrigin, ExportStudioBackTarget> = {
   versions: { href: '/ade/dashboard/versions', label: 'Versions' },
   catalog: { href: '/ade/dashboard/catalog', label: 'Catalog' },
+  // CDG-5.3: a push-back started on a gateway config returns to the connectors.
+  'gateway-config': { href: '/ade/dashboard/connectors', label: 'Connectors' },
 };
 
 /** The fallback origin when none was carried (the version view is the primary export entry). */

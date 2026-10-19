@@ -68,13 +68,13 @@ An edge goes *from* one node *to* another and has a kind:
 | `converted_from` | Project → catalog item | Converting a catalog item into a Project |
 | `identity_of` | Project or catalog item → identity group | Linking APIs that are the same API in different formats |
 | `built_from` | MCP endpoint → MCP source | Linking a source artifact to an MCP endpoint |
-| `deployed_on` | catalog item → connector | A [connector](../bring-in/connectors.mdx) sync that found the API on a gateway |
+| `deployed_on` | Project or catalog item → gateway config | A [connector](../bring-in/connectors.mdx) sync that found the API in a gateway environment — see [Environments](../bring-in/connectors.mdx#environments-gateway-configs) |
 | `served_by` | Project or catalog item → repository | A repository import, or a draft bound to a repository branch |
 | `depends_on` | Project or catalog item → what it depends on | A [declared dependency](#declare-dependencies). A Backstage `consumesApis` entry is a declared `consumes` edge. |
 | `runtime_calls` | consumer → Project or catalog item | Calls the [usage index](./runtime-usage.mdx) attributed to the consumer. One edge per operation it called. See [Runtime edges](#runtime-edges). |
 
 Node kinds are `project`, `catalog_item`, `consumer`, `connector`, `mcp_endpoint`, `mcp_source`,
-`repository` and `identity_group`. A Project that is not yet publishable is a `catalog_item`.
+`repository`, `identity_group` and `gateway_config` (one per connector environment). A Project that is not yet publishable is a `catalog_item`.
 
 ## Provenance
 

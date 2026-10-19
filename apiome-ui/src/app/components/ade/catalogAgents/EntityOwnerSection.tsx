@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The **Owner** section of an agent or model page — CDG-5.2 (#5980).
+ * The **Owner** section of an agent, model or gateway config page — CDG-5.2 (#5980), CDG-5.3 (#5981).
  *
  * Shows the owner team (confirmed, else suggested, with **Confirm** on a suggestion) and lets the
  * reader assign a team. Assigning makes the team the confirmed owner (`PUT /v1/tenants/{t}/owners/
@@ -15,8 +15,8 @@ import type { EntityOwner, OwnerEntityKind } from '@lib/owners';
 
 /** Props for {@link EntityOwnerSection}. */
 export interface EntityOwnerSectionProps {
-  /** `agent` or `model`. */
-  kind: Extract<OwnerEntityKind, 'agent' | 'model'>;
+  /** `agent`, `model` or `gateway_config` (CDG-5.3). */
+  kind: Extract<OwnerEntityKind, 'agent' | 'model' | 'gateway_config'>;
   /** The entity id. */
   entityId: string;
   /** The current owner, or `null`. */

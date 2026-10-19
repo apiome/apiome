@@ -938,6 +938,25 @@ describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
     expect(query.get('target')).toBe('proto');
   });
 
+  it('opens on a requested target and goes straight to its fidelity report (CDG-5.3 push-back)', async () => {
+    global.fetch = mockFetch() as unknown as typeof fetch;
+    render(
+      <ExportDialog
+        open
+        onClose={jest.fn()}
+        artifact="proj-petstore"
+        sourceFormat="protobuf"
+        studioOrigin="gateway-config"
+        initialTarget="proto"
+      />,
+    );
+    // The same-format target is kept because it was asked for, and its fidelity report shows first.
+    await waitFor(() =>
+      expect(screen.getByTestId('export-preserved-percent')).toHaveTextContent('64%'),
+    );
+    expect(screen.getByText('3 dropped')).toBeInTheDocument();
+  });
+
   it('hides the same-format target, offers the original source, and carries origin + format into the Studio', async () => {
     const fetchMock = mockFetch();
     global.fetch = fetchMock as unknown as typeof fetch;

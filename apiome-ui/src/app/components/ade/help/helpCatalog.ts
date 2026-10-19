@@ -620,7 +620,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Register API gateways and registries whose APIs sync into the catalog.',
     page: 'apiome-docs/docs/bring-in/connectors.mdx',
     section: 'reference',
-    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials'],
+    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials', 'environment', 'gateway config', 'push back'],
   },
   {
     id: 'aws-api-gateway-import',

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.252.0
+  version: 1.253.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -12902,6 +12902,152 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get shadow reportresponse422.
+  /v1/tenants/{tenant_slug}/gateway-configs:
+    get:
+      tags:
+      - gateway-configs
+      summary: List gateway configs
+      description: 'Every live gateway config: one per (connector, environment), with
+        its API count, auth and
+
+        rate-limit posture, declared losses and push-back target (`imports:view`).'
+      operationId: list_tenant_gateway_configs_v1_tenants__tenant_slug__gateway_configs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: connector
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Listgatewayconfigsconnector schema.
+          - type: 'null'
+            description: Listgatewayconfigsconnector schema.
+          description: Only this connector's environments.
+          title: Connector
+        description: Only this connector's environments.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listgatewayconfigsauthorization schema.
+          - type: 'null'
+            description: Listgatewayconfigsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listgatewayconfigs Xapikey schema.
+          - type: 'null'
+            description: Listgatewayconfigs Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list gateway configs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayConfigList'
+                description: Response payload for listgatewayconfigsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listgatewayconfigsresponse422.
+  /v1/tenants/{tenant_slug}/gateway-configs/{ref}:
+    get:
+      tags:
+      - gateway-configs
+      summary: Read a gateway config
+      description: 'One gateway config, by slug or id, with the APIs its environment
+        serves (`imports:view`).
+
+
+        `pushBack.target` is the export target that writes this gateway''s format
+        (`kong`), or `null` with
+
+        `pushBack.reason` — `fmt-7.7` for AWS API Gateway, Azure APIM and Apigee,
+        whose emit modes are
+
+        still to come (#5461).'
+      operationId: read_tenant_gateway_config_v1_tenants__tenant_slug__gateway_configs__ref__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ref
+          description: Ref schema.
+        description: Path parameter identifying the ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readagatewayconfigauthorization schema.
+          - type: 'null'
+            description: Readagatewayconfigauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readagatewayconfig Xapikey schema.
+          - type: 'null'
+            description: Readagatewayconfig Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a gateway config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayConfigOut'
+                description: Response payload for readagatewayconfigresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readagatewayconfigresponse422.
   /v1/identity/{tenant_slug}/projects/{project_id}/related:
     get:
       tags:
@@ -22346,7 +22492,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-19T21:38:40Z'
+                        example: '2026-10-19T22:29:17Z'
                       method:
                         type: string
                         example: GET
@@ -81631,7 +81777,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         completed_at:
           anyOf:
           - type: string
@@ -83118,7 +83264,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -83291,7 +83437,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -83732,13 +83878,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -86244,7 +86390,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 94c87378-3671-437b-b4a0-ef3bdd251a9c
+          example: 06198530-76b3-4322-b51d-f42432914a38
         method:
           type: string
           title: Method
@@ -88387,7 +88533,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         envelope:
           additionalProperties: true
           type: object
@@ -89878,7 +90024,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         browse_url:
           anyOf:
           - type: string
@@ -90946,6 +91092,7 @@ components:
           - connector
           - agent
           - model
+          - gateway_config
           title: Kind
           description: Kind.
           example: project
@@ -95832,6 +95979,324 @@ components:
         \ observed and what the policy makes of it.\n    link: API path a reader follows\
         \ for the underlying evidence.\n    data: The facts the judgment was made\
         \ from, so the verdict is checkable without a\n        second request."
+    GatewayAuth:
+      properties:
+        scheme:
+          type: string
+          title: Scheme
+          description: Scheme.
+          example: example
+        via:
+          type: string
+          title: Via
+          default: ''
+          description: Via.
+          example: example
+      type: object
+      required:
+      - scheme
+      title: GatewayAuth
+      description: An auth scheme and the plugin or policy that enforces it.
+    GatewayConfigList:
+      properties:
+        gatewayConfigs:
+          items:
+            $ref: '#/components/schemas/GatewayConfigOut'
+          type: array
+          title: Gatewayconfigs
+          description: Gateway Configs.
+          maxItems: 1000
+      type: object
+      required:
+      - gatewayConfigs
+      title: GatewayConfigList
+      description: The tenant's live gateway configs.
+    GatewayConfigOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        connector:
+          $ref: '#/components/schemas/GatewayConnectorRef'
+          description: Connector.
+        environment:
+          type: string
+          title: Environment
+          description: Environment.
+          example: example
+        flavor:
+          type: string
+          title: Flavor
+          description: Flavor.
+          example: example
+        apiCount:
+          type: integer
+          title: Apicount
+          description: Number of api.
+          example: 1
+        posture:
+          $ref: '#/components/schemas/GatewayPosture'
+          description: Posture.
+        declaredLosses:
+          items:
+            $ref: '#/components/schemas/GatewayLoss'
+          type: array
+          title: Declaredlosses
+          description: Declared Losses.
+          maxItems: 1000
+        pushBack:
+          $ref: '#/components/schemas/GatewayPushBack'
+          description: Push Back.
+        owner:
+          anyOf:
+          - $ref: '#/components/schemas/EntityOwnerRef'
+          - type: 'null'
+            description: Response payload for gateway config.
+          description: Owner.
+        apis:
+          items:
+            $ref: '#/components/schemas/GatewayServedApi'
+          type: array
+          title: Apis
+          description: On a single read only.
+          maxItems: 1000
+        lastSyncedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for gateway config.
+          - type: 'null'
+            description: Response payload for gateway config.
+          title: Lastsyncedat
+          description: Last Synced At.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for gateway config.
+          - type: 'null'
+            description: Response payload for gateway config.
+          title: Updatedat
+          description: Updated At.
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      - connector
+      - environment
+      - flavor
+      - apiCount
+      - posture
+      - pushBack
+      title: GatewayConfigOut
+      description: A gateway config.
+    GatewayConnectorRef:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+      type: object
+      required:
+      - id
+      - name
+      - kind
+      title: GatewayConnectorRef
+      description: The connector a gateway config comes from.
+    GatewayLoss:
+      properties:
+        construct:
+          type: string
+          title: Construct
+          description: Construct.
+          example: example
+        reason:
+          type: string
+          title: Reason
+          description: Reason.
+          example: example
+      type: object
+      required:
+      - construct
+      - reason
+      title: GatewayLoss
+      description: Something a gateway configuration cannot carry.
+    GatewayPosture:
+      properties:
+        auth:
+          items:
+            $ref: '#/components/schemas/GatewayAuth'
+          type: array
+          title: Auth
+          description: Auth.
+          maxItems: 1000
+        rateLimits:
+          items:
+            $ref: '#/components/schemas/GatewayRateLimit'
+          type: array
+          title: Ratelimits
+          description: Rate Limits.
+          maxItems: 1000
+        policies:
+          items:
+            type: string
+          type: array
+          title: Policies
+          description: Other gateway plugins (transforms, CORS, …).
+          maxItems: 1000
+        credentialRedactions:
+          type: integer
+          title: Credentialredactions
+          description: Credentials redacted from the configuration.
+          default: 0
+          example: 1
+      type: object
+      title: GatewayPosture
+      description: Auth and rate-limit posture, by name and scheme only — never a
+        credential.
+    GatewayPushBack:
+      properties:
+        target:
+          anyOf:
+          - type: string
+            description: Gateway Push Back schema.
+          - type: 'null'
+            description: Gateway Push Back schema.
+          title: Target
+          description: The export target (`kong`), or `null`.
+        reason:
+          anyOf:
+          - type: string
+            description: Gateway Push Back schema.
+          - type: 'null'
+            description: Gateway Push Back schema.
+          title: Reason
+          description: 'Why not: `fmt-7.7` (emit mode still to come, #5461) or `unsupported`.'
+      type: object
+      title: GatewayPushBack
+      description: Whether a catalog item can be pushed back to this gateway's format.
+    GatewayRateLimit:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        kind:
+          type: string
+          title: Kind
+          default: ''
+          description: Kind.
+          example: example
+      type: object
+      required:
+      - name
+      title: GatewayRateLimit
+      description: A rate-limit or quota plugin or policy.
+    GatewayServedApi:
+      properties:
+        itemId:
+          type: string
+          title: Itemid
+          description: Item ID.
+          example: example
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        remoteId:
+          anyOf:
+          - type: string
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Remoteid
+          description: Remote ID.
+        status:
+          type: string
+          title: Status
+          description: Status.
+          example: active
+        hosts:
+          items:
+            type: string
+          type: array
+          title: Hosts
+          description: Hosts.
+          maxItems: 1000
+        basePath:
+          anyOf:
+          - type: string
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Basepath
+          description: Base Path.
+        projectId:
+          anyOf:
+          - type: string
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Projectid
+          description: Project ID.
+        projectName:
+          anyOf:
+          - type: string
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Projectname
+          description: Project Name.
+        publishable:
+          anyOf:
+          - type: boolean
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Publishable
+          description: '`true` for a Project (`api`), `false` for a catalog item.'
+        lastSeenAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Gateway Served API schema.
+          - type: 'null'
+            description: Gateway Served API schema.
+          title: Lastseenat
+          description: Last Seen At.
+      type: object
+      required:
+      - itemId
+      - name
+      - status
+      title: GatewayServedApi
+      description: One API the environment serves (a connector item).
     GitDeliveryTargetListResponse:
       properties:
         ecosystems:
@@ -123104,7 +123569,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
       additionalProperties: false
       type: object
       required:
@@ -131941,12 +132406,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
       additionalProperties: false
       type: object
       required:
@@ -133075,7 +133540,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         detected_by:
           anyOf:
           - type: string
@@ -139349,13 +139814,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T21:38:40Z'
+          example: '2026-10-19T22:29:17Z'
         outcome:
           anyOf:
           - type: string

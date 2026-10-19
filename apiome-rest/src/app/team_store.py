@@ -76,6 +76,7 @@ _OWNED_ENTITY_NAME_SQL = """
             WHEN 'connector' THEN (SELECT k.name FROM apiome.catalog_connectors k WHERE k.id = eo.entity_id)
             WHEN 'agent' THEN (SELECT a.name FROM apiome.catalog_agents a WHERE a.id = eo.entity_id)
             WHEN 'model' THEN (SELECT m.name FROM apiome.catalog_models m WHERE m.id = eo.entity_id)
+            WHEN 'gateway_config' THEN (SELECT g.name FROM apiome.catalog_gateway_configs g WHERE g.id = eo.entity_id)
         END,
         eo.entity_id::text
     )

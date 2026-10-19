@@ -189,16 +189,23 @@ export function targetMatchesSourceFormat(
  * "Original source" option replaces it. With no known `sourceFormat` (e.g. a version source),
  * every card is kept.
  *
+ * A target the caller asked for by name is kept even when it matches (`keep`): pushing a governed
+ * catalog item back to the gateway it came from is exactly that round-trip, on purpose (CDG-5.3).
+ *
  * @param cards The renderable target cards from {@link exportTargetCards}.
  * @param sourceFormat The source's original import format, when known.
+ * @param keep A target key to keep regardless (the push-back target), when any.
  * @returns The cards with any same-format target removed.
  */
 export function filterSameFormatTargets(
   cards: ExportTargetCard[],
   sourceFormat: string | null | undefined,
+  keep?: string | null,
 ): ExportTargetCard[] {
   if (!canonicalFormatFamily(sourceFormat)) return cards;
-  return cards.filter((card) => !targetMatchesSourceFormat(card.entry.descriptor, sourceFormat));
+  return cards.filter(
+    (card) => (keep != null && card.key === keep) || !targetMatchesSourceFormat(card.entry.descriptor, sourceFormat),
+  );
 }
 
 /** Human label for a fidelity tier, as printed on the card badge. */

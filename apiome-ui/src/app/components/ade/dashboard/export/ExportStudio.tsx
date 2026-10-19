@@ -258,8 +258,9 @@ export function ExportStudio({
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
   // replaces it when the source's format is known.
   const cards = useMemo(
-    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat),
-    [response, sourceFormat],
+    // A target the link asked for is kept even when it is the source's own format (CDG-5.3 push-back).
+    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat, initialTarget),
+    [response, sourceFormat, initialTarget],
   );
   const backTarget = useMemo(() => resolveStudioBack(origin), [origin]);
   const selected = useMemo(

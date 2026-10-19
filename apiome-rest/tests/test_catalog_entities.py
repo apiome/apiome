@@ -107,6 +107,7 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
         "connector": ["Kong prod", "Apigee"],
         "agent": ["Support bot", "Orders agent"],
         "model": ["Claude", "Llama self-hosted"],
+        "gateway_config": ["Kong · prod", "Kong · staging"],
         "team": ["Payments", "Catalog team"],
     }
     rows: Dict[str, List[Dict[str, Any]]] = {}
@@ -131,7 +132,7 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
 
 def test_the_registry_lists_its_kinds_in_order() -> None:
     assert catalog_entities.kind_keys() == (
-        "api", "spec", "mcp_server", "consumer", "connector", "agent", "model", "team",
+        "api", "spec", "mcp_server", "consumer", "connector", "agent", "model", "gateway_config", "team",
     )
 
 

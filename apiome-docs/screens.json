@@ -845,6 +845,26 @@
       ]
     },
     {
+      "id": "gateway-config-entity",
+      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
+      "waitFor": "[data-testid=\"gateway-config-detail\"]",
+      "data": "fixture:hive-a11y/gateway-config-entity.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/connectors/environments",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
+        "apiome-ui/lib/gateway-configs.ts"
+      ]
+    },
+    {
+      "id": "export-studio-gateway",
+      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
+      "waitFor": "[data-testid=\"export-preserved-percent\"]",
+      "data": "fixture:hive-a11y/export-studio-gateway.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-item-subjects",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"catalog-subjects-panel\"]",
