@@ -1,0 +1,25 @@
+---
+slug: schema-registry-subjects
+title: Schema subjects, ids and versions
+description: Register Avro, JSON Schema and Protobuf schemas under subjects with stable schema ids.
+authors: [apiome]
+---
+
+Apiome now has a schema registry model: Avro, JSON Schema and Protobuf schemas can be registered
+under named **subjects**, each version getting an integer **schema id** — and every version is a
+catalog item revision, so schemas still live in one catalog.
+
+{/* truncate */}
+
+- **Idempotent registration.** Registering the same schema twice returns the same id and creates
+  one revision. The same schema under two subjects shares one id.
+- **Strategies, levels and modes.** Each subject records its naming strategy (`topic`, `record`,
+  `topic_record`), a compatibility level (or the tenant default) and a `READWRITE` / `READONLY`
+  mode. Compatibility checks come later.
+- **Attach what you already imported.** An existing Avro, JSON Schema or Protobuf catalog item can
+  back a subject: its latest revision becomes version 1 and its history stays as it is.
+- **Deletes keep ids working.** A deleted subject leaves every list, but its schema ids still
+  resolve.
+
+See [Schema registry subjects](/ship/schema-registry) and the
+[Schema registry](/reference/rest/schema-registry) REST reference.

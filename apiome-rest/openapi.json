@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.247.0",
+    "version": "1.248.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -1655,6 +1655,1106 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get registry schema versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/config": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Get Registry Config",
+        "description": "Return the tenant's registry defaults (``imports:view``).",
+        "operationId": "get_registry_config_v1_tenants__tenant_slug__schema_registry_config_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Registry Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Registry Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Registry Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Registry Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get registry config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryConfig",
+                  "description": "Response payload for get registry configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get registry configresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Put Registry Config",
+        "description": "Set the tenant's default compatibility level and/or mode (``imports:edit``).",
+        "operationId": "put_registry_config_v1_tenants__tenant_slug__schema_registry_config_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Registry Configauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Registry Configauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Registry Config Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Registry Config Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistryConfigUpdate",
+                "description": "Request body for put registry configrequest."
+              }
+            }
+          },
+          "description": "Request body for put registry config."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put registry config.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryConfig",
+                  "description": "Response payload for put registry configresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put registry configresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/subjects": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "List Schema Subjects",
+        "description": "List the tenant's live subjects (``imports:view``); deleted subjects are left out.",
+        "operationId": "list_schema_subjects_v1_tenants__tenant_slug__schema_registry_subjects_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Schema Subjectsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Schema Subjectsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Schema Subjects Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Schema Subjects Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list schema subjects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectList",
+                  "description": "Response payload for list schema subjectsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list schema subjectsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/subjects/{subject}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Get Schema Subject",
+        "description": "Return one live subject (``imports:view``).",
+        "operationId": "get_schema_subject_v1_tenants__tenant_slug__schema_registry_subjects__subject__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema Subjectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema Subjectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema Subject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema Subject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get schema subject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectOut",
+                  "description": "Response payload for get schema subjectresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get schema subjectresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Put Schema Subject",
+        "description": "Create a subject or change its strategy, compatibility level or mode (``imports:edit``).",
+        "operationId": "put_schema_subject_v1_tenants__tenant_slug__schema_registry_subjects__subject__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Schema Subjectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Schema Subjectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Schema Subject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Schema Subject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectSettings",
+                "description": "Request body for put schema subjectrequest."
+              }
+            }
+          },
+          "description": "Request body for put schema subject."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put schema subject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectOut",
+                  "description": "Response payload for put schema subjectresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put schema subjectresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Delete Schema Subject",
+        "description": "Soft-delete a subject and its versions (``imports:delete``); returns the deleted versions.\n\nThe versions leave every list, but their schema ids keep resolving at ``/schemas/ids/{id}``\nand the catalog item revisions are untouched.",
+        "operationId": "delete_schema_subject_v1_tenants__tenant_slug__schema_registry_subjects__subject__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Schema Subjectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Schema Subjectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Schema Subject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Schema Subject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete schema subject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "title": "Response Delete Schema Subject V1 Tenants  Tenant Slug  Schema Registry Subjects  Subject  Delete",
+                  "description": "Response Delete Schema Subject V1 Tenants  Tenant Slug  Schema Registry Subjects  Subject  Delete schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete schema subjectresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/subjects/{subject}/versions": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "List Schema Subject Versions",
+        "description": "List a subject's live versions, oldest first (``imports:view``).",
+        "operationId": "list_schema_subject_versions_v1_tenants__tenant_slug__schema_registry_subjects__subject__versions_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Schema Subject Versionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Schema Subject Versionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Schema Subject Versions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Schema Subject Versions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list schema subject versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectVersionList",
+                  "description": "Response payload for list schema subject versionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list schema subject versionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Register Schema Version",
+        "description": "Register a schema under a subject (``imports:create``).\n\nThe schema is read by the same import source a catalog upload uses. Registering content the\nsubject already holds returns its version (``created: false``); content another subject holds\nreuses that schema id and revision; new content becomes a new revision of the subject's catalog\nitem (created on the first registration).",
+        "operationId": "register_schema_version_v1_tenants__tenant_slug__schema_registry_subjects__subject__versions_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Register Schema Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Register Schema Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Register Schema Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Register Schema Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest",
+                "description": "Request body for register schema versionrequest."
+              }
+            }
+          },
+          "description": "Request body for register schema version."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for register schema version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse",
+                  "description": "Response payload for register schema versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for register schema versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/subjects/{subject}/versions/{version}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Get Schema Subject Version",
+        "description": "Return one version (a number or ``latest``) with its schema text (``imports:view``).",
+        "operationId": "get_schema_subject_version_v1_tenants__tenant_slug__schema_registry_subjects__subject__versions__version__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version",
+              "description": "Version schema."
+            },
+            "description": "Endpoint or API version metadata."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema Subject Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema Subject Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema Subject Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema Subject Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get schema subject version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectVersionOut",
+                  "description": "Response payload for get schema subject versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get schema subject versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/subjects/{subject}/attach": {
+      "post": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Attach Catalog Item To Subject",
+        "description": "Back an empty subject with an existing catalog item (``imports:edit``).\n\nThe item's latest revision becomes version 1; its earlier revisions stay as they are, and later\nregistrations add revisions to the item.",
+        "operationId": "attach_catalog_item_to_subject_v1_tenants__tenant_slug__schema_registry_subjects__subject__attach_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject",
+              "description": "Subject schema."
+            },
+            "description": "Path parameter identifying the subject segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Attach Catalog Item To Subjectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Attach Catalog Item To Subjectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Attach Catalog Item To Subject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Attach Catalog Item To Subject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachRequest",
+                "description": "Request body for attach catalog item to subjectrequest."
+              }
+            }
+          },
+          "description": "Request body for attach catalog item to subject."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for attach catalog item to subject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse",
+                  "description": "Response payload for attach catalog item to subjectresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for attach catalog item to subjectresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/schema-registry/schemas/ids/{schema_id}": {
+      "get": {
+        "tags": [
+          "schema-registry"
+        ],
+        "summary": "Get Schema By Id",
+        "description": "Resolve a schema id (``imports:view``) \u2014 it keeps resolving after its subjects are deleted.",
+        "operationId": "get_schema_by_id_v1_tenants__tenant_slug__schema_registry_schemas_ids__schema_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schema_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Schema Id",
+              "description": "Schema Id schema."
+            },
+            "description": "Path parameter identifying the schema id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema By Idauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema By Idauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Schema By ID Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Schema By ID Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get schema by id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaByIdOut",
+                  "description": "Response payload for get schema by idresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get schema by idresponse422."
                 }
               }
             }
@@ -25243,7 +26343,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T14:56:04Z"
+                          "example": "2026-10-19T16:48:35Z"
                         },
                         "method": {
                           "type": "string",
@@ -97520,6 +98620,36 @@
         "title": "AttachDomainRequest",
         "description": "Attach a hostname to a lane."
       },
+      "AttachRequest": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "The catalog item id (an Avro, JSON Schema or Protobuf item).",
+            "example": "example"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for attach."
+              },
+              {
+                "type": "null",
+                "description": "Request body for attach."
+              }
+            ],
+            "title": "Strategy",
+            "description": "Naming strategy for a subject this creates."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId"
+        ],
+        "title": "AttachRequest",
+        "description": "An existing catalog item to back an empty subject."
+      },
       "AuthorizeResponse": {
         "properties": {
           "domain": {
@@ -104471,7 +105601,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "completed_at": {
             "anyOf": [
@@ -106426,7 +107556,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "comment_count": {
             "type": "integer",
@@ -106654,7 +107784,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "comment_count": {
             "type": "integer",
@@ -107185,14 +108315,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -110448,7 +111578,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "38e72a40-69a0-4bc6-9a56-ccf0aea4c4f5"
+            "example": "2d14022a-d223-4b58-949e-6fcfa6004061"
           },
           "method": {
             "type": "string",
@@ -112975,7 +114105,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -114871,7 +116001,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "browse_url": {
             "anyOf": [
@@ -152773,6 +153903,144 @@
         "title": "RegenSubscriptionPutRequest",
         "description": "Body for storing a subscription.\n\nAttributes:\n    delivery_mode: ``registry``, ``git`` or ``registry_and_git``. Required.\n    options: The options object (``{\"dryRun\": true}``), or omitted for the defaults.\n    active: Whether publishes regenerate this SDK. Defaults to ``true``."
       },
+      "RegisterRequest": {
+        "properties": {
+          "schema": {
+            "type": "string",
+            "title": "Schema",
+            "description": "The schema text (Avro JSON, JSON Schema or .proto).",
+            "example": "example"
+          },
+          "schemaType": {
+            "type": "string",
+            "title": "Schematype",
+            "description": "`AVRO` (default), `JSON` or `PROTOBUF`.",
+            "default": "AVRO",
+            "example": "example"
+          },
+          "references": {
+            "items": {},
+            "type": "array",
+            "title": "References",
+            "description": "Schema references, stored as sent.",
+            "maxItems": 1000
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for register."
+              },
+              {
+                "type": "null",
+                "description": "Request body for register."
+              }
+            ],
+            "title": "Strategy",
+            "description": "Naming strategy for a subject this creates."
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema"
+        ],
+        "title": "RegisterRequest",
+        "description": "A schema to register under a subject."
+      },
+      "RegisterResponse": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "Subject.",
+            "example": "example"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Version.",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "The schema id (shared by every subject holding the same schema).",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "schemaType": {
+            "type": "string",
+            "title": "Schematype",
+            "description": "Schema Type.",
+            "example": "example"
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "references": {
+            "items": {},
+            "type": "array",
+            "title": "References",
+            "description": "References.",
+            "maxItems": 1000
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "The catalog item holding the schema.",
+            "example": "example"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "The catalog item revision holding the schema.",
+            "example": "1.0.0"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat",
+            "description": "Created At.",
+            "example": "example"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for register."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for register."
+              }
+            ],
+            "title": "Schema",
+            "description": "The schema text (single-version reads only)."
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "description": "Created.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "version",
+          "id",
+          "schemaType",
+          "fingerprint",
+          "projectId",
+          "versionRecordId",
+          "createdAt",
+          "created"
+        ],
+        "title": "RegisterResponse",
+        "description": "The registered version; ``created`` is ``false`` when the subject already held this schema."
+      },
       "RegisterSuggestionInput": {
         "properties": {
           "name": {
@@ -153086,6 +154354,64 @@
         ],
         "title": "RegistryAuditPaginationOut",
         "description": "Offset and/or cursor pagination metadata for the registry audit log."
+      },
+      "RegistryConfig": {
+        "properties": {
+          "compatibilityLevel": {
+            "type": "string",
+            "title": "Compatibilitylevel",
+            "description": "Default compatibility level for subjects that set none.",
+            "example": "example"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "`READWRITE` or `READONLY`; `READONLY` refuses every new version.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "compatibilityLevel",
+          "mode"
+        ],
+        "title": "RegistryConfig",
+        "description": "The tenant's registry defaults."
+      },
+      "RegistryConfigUpdate": {
+        "properties": {
+          "compatibilityLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Registry Config Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Registry Config Update schema."
+              }
+            ],
+            "title": "Compatibilitylevel",
+            "description": "One of the seven Confluent levels."
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Registry Config Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Registry Config Update schema."
+              }
+            ],
+            "title": "Mode",
+            "description": "`READWRITE` or `READONLY`."
+          }
+        },
+        "type": "object",
+        "title": "RegistryConfigUpdate",
+        "description": "A change to the tenant's registry defaults; an omitted field is kept."
       },
       "RegistryCoverageStatsResponse": {
         "properties": {
@@ -156503,7 +157829,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           }
         },
         "additionalProperties": false,
@@ -157519,6 +158845,87 @@
         "title": "RuntimesResponse",
         "description": "The execution runtime catalog."
       },
+      "SchemaByIdOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "schemaType": {
+            "type": "string",
+            "title": "Schematype",
+            "description": "Schema Type.",
+            "example": "example"
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "fingerprintKind": {
+            "type": "string",
+            "title": "Fingerprintkind",
+            "description": "`canonical-model` today; `avro-pcf` once MFI-12.1 ships.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "references": {
+            "items": {},
+            "type": "array",
+            "title": "References",
+            "description": "References.",
+            "maxItems": 1000
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "Version Record ID.",
+            "example": "1.0.0"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for schema by id."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for schema by id."
+              }
+            ],
+            "title": "Schema",
+            "description": "Embedded JSON Schema document."
+          },
+          "subjects": {
+            "items": {
+              "$ref": "#/components/schemas/SchemaSubjectRef"
+            },
+            "type": "array",
+            "title": "Subjects",
+            "description": "Live subject versions holding it (empty once all are deleted).",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schemaType",
+          "fingerprint",
+          "fingerprintKind",
+          "projectId",
+          "versionRecordId"
+        ],
+        "title": "SchemaByIdOut",
+        "description": "A schema resolved by id."
+      },
       "SchemaInstanceValidationRequest": {
         "properties": {
           "instance": {
@@ -157854,6 +159261,29 @@
         ],
         "title": "SchemaSourceInfo",
         "description": "What the reference actually resolved to, echoed back so a caller can confirm it."
+      },
+      "SchemaSubjectRef": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "Subject.",
+            "example": "example"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Version.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "version"
+        ],
+        "title": "SchemaSubjectRef",
+        "description": "A live subject version holding a schema id."
       },
       "SchemaSynthesisRequest": {
         "properties": {
@@ -167413,6 +168843,296 @@
         "title": "StyleGuideUpdateRequest",
         "description": "Rename / re-describe a custom style guide (GOV-2.1). Builtin guides are read-only."
       },
+      "SubjectList": {
+        "properties": {
+          "subjects": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectOut"
+            },
+            "type": "array",
+            "title": "Subjects",
+            "description": "Subjects.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "subjects"
+        ],
+        "title": "SubjectList",
+        "description": "The tenant's live subjects, by name."
+      },
+      "SubjectOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Strategy",
+            "description": "Strategy."
+          },
+          "compatibilityLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Compatibilitylevel",
+            "description": "`null` = the tenant default."
+          },
+          "effectiveCompatibilityLevel": {
+            "type": "string",
+            "title": "Effectivecompatibilitylevel",
+            "description": "This subject's level, else the tenant default.",
+            "example": "example"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Mode.",
+            "example": "example"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Projectid",
+            "description": "The catalog item new versions are registered into."
+          },
+          "versionCount": {
+            "type": "integer",
+            "title": "Versioncount",
+            "default": 0,
+            "description": "Number of version.",
+            "example": 1
+          },
+          "latestVersion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Latestversion",
+            "description": "Latest Version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat",
+            "description": "Created At.",
+            "example": "example"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat",
+            "description": "Updated At.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "effectiveCompatibilityLevel",
+          "mode",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "SubjectOut",
+        "description": "A schema subject."
+      },
+      "SubjectSettings": {
+        "properties": {
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Subject Settings schema."
+              },
+              {
+                "type": "null",
+                "description": "Subject Settings schema."
+              }
+            ],
+            "title": "Strategy",
+            "description": "`topic`, `record` or `topic_record`."
+          },
+          "compatibilityLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Subject Settings schema."
+              },
+              {
+                "type": "null",
+                "description": "Subject Settings schema."
+              }
+            ],
+            "title": "Compatibilitylevel",
+            "description": "This subject's level; unset means the tenant default."
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Subject Settings schema."
+              },
+              {
+                "type": "null",
+                "description": "Subject Settings schema."
+              }
+            ],
+            "title": "Mode",
+            "description": "`READWRITE` or `READONLY`."
+          }
+        },
+        "type": "object",
+        "title": "SubjectSettings",
+        "description": "Create a subject or change its settings; an omitted field is kept."
+      },
+      "SubjectVersionList": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "Subject.",
+            "example": "example"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectVersionOut"
+            },
+            "type": "array",
+            "title": "Versions",
+            "description": "Versions.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "versions"
+        ],
+        "title": "SubjectVersionList",
+        "description": "A subject's live versions, oldest first."
+      },
+      "SubjectVersionOut": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "Subject.",
+            "example": "example"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Version.",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "The schema id (shared by every subject holding the same schema).",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "schemaType": {
+            "type": "string",
+            "title": "Schematype",
+            "description": "Schema Type.",
+            "example": "example"
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "references": {
+            "items": {},
+            "type": "array",
+            "title": "References",
+            "description": "References.",
+            "maxItems": 1000
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "The catalog item holding the schema.",
+            "example": "example"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "The catalog item revision holding the schema.",
+            "example": "1.0.0"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat",
+            "description": "Created At.",
+            "example": "example"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject version."
+              }
+            ],
+            "title": "Schema",
+            "description": "The schema text (single-version reads only)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "version",
+          "id",
+          "schemaType",
+          "fingerprint",
+          "projectId",
+          "versionRecordId",
+          "createdAt"
+        ],
+        "title": "SubjectVersionOut",
+        "description": "One version of a subject: a schema id and the catalog item revision that holds it."
+      },
       "SuggestedConsumer": {
         "properties": {
           "id": {
@@ -167475,13 +169195,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           }
         },
         "additionalProperties": false,
@@ -168985,7 +170705,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "detected_by": {
             "anyOf": [
@@ -177161,14 +178881,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T14:56:04Z"
+            "example": "2026-10-19T16:48:35Z"
           },
           "outcome": {
             "anyOf": [
