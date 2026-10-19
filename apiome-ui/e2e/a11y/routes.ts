@@ -118,7 +118,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: {
       kind: 'fixtures',
       dir: 'hive-a11y',
-      files: ['dependency-graph.html', 'dependency-graph-truncated.html', 'dependencies-tab.html', 'blast-radius.html'],
+      files: [
+        'dependency-graph.html',
+        'dependency-graph-truncated.html',
+        'dependencies-tab.html',
+        'dependencies-runtime.html',
+        'blast-radius.html',
+      ],
     },
   },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },

@@ -86,7 +86,10 @@ See the [API reference](../reference/api-reference.md).
 
 To see who still depends on a version before you sunset it, run a
 [blast radius](../govern/dependency-graph.mdx#blast-radius) query. Its `sunset_consumers` list shows
-the consumers whose contracts are pinned to a deprecated or sunset version.
+the consumers whose contracts are pinned to a deprecated or sunset version. A client that calls the API without being
+registered isn't in that list: register it from the project's
+[suggested consumers](../govern/dependency-graph.mdx#suggested-consumers) first, so it is counted and
+can be told about the sunset.
 
 ## Where next
 

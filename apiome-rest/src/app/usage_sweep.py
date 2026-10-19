@@ -9,7 +9,12 @@ work and the rest skip):
 2. ``purge_usage`` prunes the index per license tier: hourly rows past
    ``usage_hourly_retention_days`` — only on finalized days, so every pruned row is already in
    ``usage_daily`` — samples after 7 days, and daily, field, unmatched and ledger rows past
-   ``usage_rollup_retention_days``.
+   ``usage_rollup_retention_days``;
+3. ``purge_usage_unattributed`` prunes the unattributed client counts (V293, CDG-3.5) on the same
+   rollup retention;
+4. :func:`app.runtime_graph.refresh_runtime_edges` re-derives the dependency graph's ``runtime_calls``
+   edges from the freshly rolled-up ``usage_daily`` (CDG-3.5). A failure there is logged and never
+   fails the tick.
 
 The SQL lives in migration V290, so the rules are the same whoever runs them. The REST lifespan runs
 a tick every ``APIOME_USAGE_SWEEP_INTERVAL_SECONDS`` (0 disables it); operators run one from cron
@@ -60,6 +65,8 @@ class UsageSweepResult:
         fields_purged: ``usage_field_daily`` rows deleted.
         unmatched_purged: ``usage_unmatched_daily`` rows deleted.
         batches_purged: ``usage_ingest_batch`` rows deleted.
+        unattributed_purged: ``usage_unattributed_client_daily`` rows deleted (CDG-3.5).
+        runtime_tenants: Tenants whose runtime graph edges were re-derived (CDG-3.5).
     """
 
     days_rolled_up: int
@@ -69,6 +76,8 @@ class UsageSweepResult:
     fields_purged: int
     unmatched_purged: int
     batches_purged: int
+    unattributed_purged: int = 0
+    runtime_tenants: int = 0
 
 
 def run_usage_sweep(
@@ -107,15 +116,37 @@ def run_usage_sweep(
             "SELECT apiome.purge_usage(CURRENT_TIMESTAMP, %s) AS purged",
             (max(1, int(batch_size)),),
         )
+        unattributed_rows = db.execute_query(
+            "SELECT apiome.purge_usage_unattributed(CURRENT_TIMESTAMP, %s) AS purged",
+            (max(1, int(batch_size)),),
+        )
+        runtime = _refresh_runtime_edges(db)
     finally:
         db.execute_query("SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked", (SWEEP_LOCK_KEY,))
     purged = _as_dict(purged_rows[0].get("purged") if purged_rows else None)
     result = UsageSweepResult(
         days_rolled_up=int((rolled[0].get("days") if rolled else 0) or 0),
         **{f"{key}_purged": int(purged.get(key) or 0) for key in _PURGED_KEYS},
+        unattributed_purged=int((unattributed_rows[0].get("purged") if unattributed_rows else 0) or 0),
+        runtime_tenants=runtime,
     )
     _logger.info("usage sweep finished %s", asdict(result))
     return result
+
+
+def _refresh_runtime_edges(db: Any) -> int:
+    """Re-derive the runtime graph edges; a failure is logged, never raised (CDG-3.5).
+
+    Returns:
+        How many tenants were refreshed.
+    """
+    from .runtime_graph import refresh_runtime_edges
+
+    try:
+        return int(refresh_runtime_edges(db).get("tenants") or 0)
+    except Exception:
+        _logger.warning("usage sweep: runtime graph edges were not refreshed", exc_info=True)
+        return 0
 
 
 def _as_dict(value: Any) -> dict:

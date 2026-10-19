@@ -1,6 +1,6 @@
 ---
 title: "Consumer contracts"
-description: "REST endpoints tagged consumer-contracts: 14 operations."
+description: "REST endpoints tagged consumer-contracts: 16 operations."
 sidebar_position: 18
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.244.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.245.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `consumer-contracts` · 14 operations
+Tag: `consumer-contracts` · 16 operations
 
 ## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports` {#import-pact-contract-v1-tenants-tenant-slug-projects-project-ref-consumer-pact-imports-post}
 
@@ -49,6 +49,69 @@ Request body for import a pact file into a consumer contract.
 | Status | Description | Body |
 | --- | --- | --- |
 | 201 | Successful response for import a pact file into a consumer contract. | `application/json` [`ContractResponse`](#schema-contractresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-suggestions` {#list-consumer-suggestions-v1-tenants-tenant-slug-projects-project-ref-consumer-suggestions-get}
+
+**List suggested consumers**
+
+Clients seen in this project's usage traffic that no binding attributes to a consumer — by the product token of their user agent (`checkout-web`), or by the hashed `consumer_hint` the edge sent. Busiest first; a client a live binding already recognises is left out. A hashed client is shown by an opaque id, never by its value or its hash.
+
+Requires `consumer_contracts:view`.
+
+Operation id: `list_consumer_suggestions_v1_tenants__tenant_slug__projects__project_ref__consumer_suggestions_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `days` | query | integer | no | Window in UTC days. |
+| `limit` | query | integer | no | Most to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list suggested consumers. | `application/json` [`SuggestionListResponse`](#schema-suggestionlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-suggestions/{suggestion_id}/register` {#register-consumer-suggestion-v1-tenants-tenant-slug-projects-project-ref-consumer-suggestions-suggestion-id-register-post}
+
+**Register a suggested consumer**
+
+Register the client as a consumer (or, with `consumer`, bind it to an existing one) and create the binding that recognises it: the glob `<token>/*` for a user agent, or a hashed binding holding the value's hash the edge already sent — so no value is typed. A hashed client needs `binding_name`, the header or claim its value arrives in. From the next ingested batch on, its calls are attributed and its runtime edges appear in the graph.
+
+Requires `consumer_contracts:create`.
+
+Operation id: `register_consumer_suggestion_v1_tenants__tenant_slug__projects__project_ref__consumer_suggestions__suggestion_id__register_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `suggestion_id` | path | string | yes | Path parameter identifying the suggestion id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for register a suggested consumer.
+
+- `application/json` — [`RegisterSuggestionInput`](#schema-registersuggestioninput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for register a suggested consumer. | `application/json` [`RegisteredSuggestion`](#schema-registeredsuggestion) |
+| 404 | `consumer-suggestion-not-found`, or an unknown project or `consumer`. | — |
+| 409 | `consumer-slug-taken`, `consumer-slug-reserved` or `consumer-binding-exists`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-surface` {#read-available-surface-v1-tenants-tenant-slug-projects-project-ref-consumer-surface-get}
@@ -722,6 +785,43 @@ Attributes:
 | `consumer_name` | string or null | no | Consumer Name. |
 | `version` | string or null | no | Version. |
 | `note` | string or null | no | Note. |
+
+### `RegisterSuggestionInput` {#schema-registersuggestioninput}
+
+How to register a suggestion.
+
+Attributes:
+    name: Display name for a new consumer (defaults to the suggestion's).
+    slug: Handle for a new consumer (defaults to the suggestion's).
+    consumer: Bind to this existing consumer (slug or id) instead of registering a new one.
+    binding_name: For a hashed client: the header, API-key header or claim name.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string or null | no | Human-readable name. |
+| `slug` | string or null | no | URL-safe identifier. |
+| `consumer` | string or null | no | Consumer. |
+| `binding_name` | string or null | no | Binding Name. |
+
+### `RegisteredSuggestion` {#schema-registeredsuggestion}
+
+What registering did.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer` | [`ConsumerRecord`](#schema-consumerrecord) | yes | Consumer. |
+| `binding` | [`BindingRecord`](#schema-bindingrecord) | yes | Binding. |
+| `created_consumer` | boolean | yes | False when the client was bound to an existing consumer. |
+
+### `SuggestionListResponse` {#schema-suggestionlistresponse}
+
+A project's suggested consumers.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `suggestions` | array of `SuggestedConsumer` | no | Busiest first. |
+| `count` | integer | yes | How many suggestions were returned. |
+| `window_days` | integer | yes | The window they were drawn from, in UTC days ending today. |
 
 ### `SurfaceSelection` {#schema-surfaceselection}
 

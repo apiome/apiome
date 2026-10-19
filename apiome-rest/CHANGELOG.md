@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.381.0] - 2026-10-18
+
+### Added
+- **Runtime-derived graph edges (#5970, CDG-3.5)**: `app.runtime_graph` materializes `runtime_calls` edges in
+  `catalog_edges` from `usage_daily` rows a RDG-1.8 binding attributed: consumer → project / catalog item, one per
+  operation pointer, provenance `runtime`, `source_ref` `usage:30d`, evidence `{calls, errors, last_seen_day,
+  window_days, via, consumer_slug}`. Same life cycle as derived edges (upsert, stale when no call in the window, purged
+  after 30 days stale), never merged with declared or derived ones. The usage sweep re-derives them after its rollup
+  (`UsageSweepResult.runtime_tenants`; a failure there never fails the tick).
+- **Suggested consumers (#5970)**: apiome-db **V293** adds `usage_unattributed_client_daily` — per project, day and
+  client key, the accepted calls no binding matched: the lower-cased product token of the scrubbed user agent (plain
+  names only; credential- or random-looking tokens are dropped) or the `consumer_hint` HMAC — and
+  `purge_usage_unattributed()` on the rollup retention, run by the usage sweep (`unattributed_purged`).
+  `GET /v1/tenants/{t}/projects/{p}/consumer-suggestions` (`consumer_contracts:view`) lists them busiest first, minus
+  keys a live binding already recognises; a hashed client is addressed by an opaque id (truncated SHA-256 of the HMAC)
+  and never shows its HMAC. `POST …/consumer-suggestions/{id}/register` (`consumer_contracts:create`) registers a CTG-4.1
+  consumer (or binds to an existing one with `consumer`) and creates the binding — `<token>/*` for a user agent, or a
+  hashed binding holding the received HMAC (`binding_name` required) — validating everything before the consumer is
+  created.
+- **Blast radius**: each affected entity carries `provenances`, every provenance that reached it at its depth, so a
+  consumer that declares and calls an operation reports `["derived", "runtime"]`; `provenance: ["runtime"]` answers
+  with live callers only.
+
+The OpenAPI version moves to 1.245.0.
+
 ## [1.380.0] - 2026-10-18
 
 ### Added

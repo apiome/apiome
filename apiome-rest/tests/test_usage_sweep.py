@@ -40,8 +40,13 @@ class FakeDb:
             return [{"locked": self.locked}]
         if "rollup_usage_days" in query:
             return [{"days": 2}]
+        if "purge_usage_unattributed" in query:
+            return [{"purged": 7}]
         if "purge_usage" in query:
             return [{"purged": self.purged}]
+        if "catalog_edges" in query:
+            # CDG-3.5: the runtime-edge refresh lists tenants with usage; none here.
+            return []
         if "pg_advisory_unlock" in query:
             return [{"unlocked": True}]
         raise AssertionError(f"unexpected query {query}")
@@ -50,17 +55,31 @@ class FakeDb:
         self.closed = True
 
     def statements(self) -> List[str]:
-        names = ("pg_try_advisory_lock", "rollup_usage_days", "purge_usage", "pg_advisory_unlock")
+        names = (
+            "pg_try_advisory_lock",
+            "rollup_usage_days",
+            "purge_usage_unattributed",
+            "purge_usage",
+            "catalog_edges",
+            "pg_advisory_unlock",
+        )
         return [next(n for n in names if n in q) for q, _ in self.calls]
 
 
 def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
     db = FakeDb()
     result = run_usage_sweep(db, finalize_grace=timedelta(hours=3), batch_size=50)
-    assert db.statements() == ["pg_try_advisory_lock", "rollup_usage_days", "purge_usage", "pg_advisory_unlock"]
+    assert db.statements() == [
+        "pg_try_advisory_lock",
+        "rollup_usage_days",
+        "purge_usage",
+        "purge_usage_unattributed",
+        "catalog_edges",
+        "pg_advisory_unlock",
+    ]
     assert db.calls[0][1] == (SWEEP_LOCK_KEY,) and db.calls[-1][1] == (SWEEP_LOCK_KEY,)
     assert db.calls[1][1] == (timedelta(hours=3),)
-    assert db.calls[2][1] == (50,)
+    assert db.calls[2][1] == (50,) and db.calls[3][1] == (50,)
     assert result == UsageSweepResult(
         days_rolled_up=2,
         hourly_purged=3,
@@ -69,6 +88,8 @@ def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
         fields_purged=4,
         unmatched_purged=5,
         batches_purged=6,
+        unattributed_purged=7,
+        runtime_tenants=0,
     )
 
 
@@ -168,3 +189,14 @@ def test_the_module_is_runnable() -> None:
     assert usage_sweep.__name__ == "app.usage_sweep"
     source = open(usage_sweep.__file__, encoding="utf-8").read()
     assert 'if __name__ == "__main__":\n    raise SystemExit(main())' in source
+
+
+def test_a_failed_runtime_edge_refresh_never_fails_the_tick(monkeypatch: pytest.MonkeyPatch) -> None:
+    """CDG-3.5: the graph refresh is a follow-on; the counters' rollup and pruning still report."""
+
+    def boom(_db: Any) -> Dict[str, int]:
+        raise RuntimeError("graph down")
+
+    monkeypatch.setattr("app.runtime_graph.refresh_runtime_edges", boom)
+    result = run_usage_sweep(FakeDb())
+    assert result is not None and result.runtime_tenants == 0 and result.days_rolled_up == 2

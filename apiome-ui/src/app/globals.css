@@ -35723,6 +35723,104 @@ a.tm-fact:focus-visible {
   overflow-wrap: anywhere;
 }
 
+/* Runtime edges and suggested consumers (CDG-3.5, #5970). Declared and runtime edges sit in two
+   columns that stack on a narrow screen; the suggestion rows reuse the edge row's chrome. */
+.dg-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.dg-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.dg-side__title {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.dg-side__empty {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.dg-edge__calls {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-5);
+}
+
+.dg-suggest__intro {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.dg-suggest__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dg-suggest__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.dg-suggest__name {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.dg-suggest__label {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dg-suggest__meta {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.dg-suggest-dialog__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+
+.dg-suggest-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .dg-edge__via {
   color: var(--fg-muted);
   font-size: var(--fs-xs);

@@ -1,0 +1,22 @@
+---
+slug: runtime-edges
+title: The dependency graph now shows what consumers really call
+description: Runtime edges from live traffic beside declared ones, and suggested consumers to register.
+authors: [apiome]
+---
+
+The [dependency graph](/govern/dependency-graph#runtime-edges) now draws what the usage index sees in
+live traffic, beside what contracts and declarations say, without mixing the two.
+
+{/* truncate */}
+
+- **Runtime edges.** Calls a binding attributes to a consumer become `runtime_calls` edges, one per
+  operation, with the call count and the last day seen. A project's **Dependencies** tab shows them
+  in an **Observed at runtime** column next to **Declared and derived**. An operation that has had
+  no calls for 30 days goes stale, then disappears.
+- **Suggested consumers.** Clients that call an API but aren't registered are listed under
+  **Suggested consumers**: by their user agent's name, or as an unrecognised key, header or claim
+  whose value Apiome never sees. **“Register consumer”** registers one together with the binding that
+  recognises it, so its next calls are attributed.
+- **Blast radius.** Each affected consumer lists every provenance that reached it, and
+  `provenance: ["runtime"]` answers with live callers only.

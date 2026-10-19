@@ -97,6 +97,10 @@ Until a consumer has a binding that matches, its calls are counted as **anonymou
 
 Adding and deleting bindings needs the same permissions as registering and retiring consumers.
 
+A client that calls the API but isn't registered yet is listed as a **suggested consumer** on the
+project's **Dependencies** tab. **“Register consumer”** there registers it together with its
+binding. See [Suggested consumers](../govern/dependency-graph.mdx#suggested-consumers).
+
 ## Owner
 
 A project can have an owner team. CODEOWNERS rules for the spec's path and the document's own

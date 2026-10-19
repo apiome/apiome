@@ -10,7 +10,11 @@ same ``consumer_contracts`` permissions:
 * ``DELETE …/bindings/{binding_id}`` — ``consumer_contracts:delete`` (Owner and Admin), because
   unbinding removes a signal other people's changes are judged by. History stays attributed;
 * ``GET …/runtime`` — ``consumer_contracts:view``. ``anonymous`` is accepted as the consumer: it
-  reports the traffic no binding attributes.
+  reports the traffic no binding attributes;
+* ``GET …/projects/{p}/consumer-suggestions`` — ``consumer_contracts:view``, and
+  ``POST …/consumer-suggestions/{id}/register`` — ``consumer_contracts:create``: clients seen in
+  unattributed traffic, and the one click that registers one as a consumer with its binding
+  (CDG-3.5). Like ``consumer-surface``, the path sits beside ``consumers`` so no slug is reserved.
 
 "Add to contract" on a ``used_undeclared`` operation is not a new writer: the client submits the
 consumer's current selection plus that operation to the existing ``PUT …/contract``.
@@ -37,6 +41,15 @@ from .consumer_contract import ConsumerContractSurface, ConsumerSummary, Consume
 from .consumer_contract_routes import _http_error, _tenant_id
 from .consumer_contract_store import actor_from_auth, current_contract, get_consumer, resolve_project
 from .consumer_runtime_edges import ConsumerRuntime, RuntimeConsumer, build_runtime
+from .consumer_suggestions import (
+    DEFAULT_WINDOW_DAYS,
+    MAX_SUGGESTIONS,
+    RegisteredSuggestion,
+    RegisterSuggestionInput,
+    SuggestedConsumer,
+    list_suggestions,
+    register_suggestion,
+)
 from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .redacted_validation_route import RedactedValidationRoute
@@ -356,3 +369,120 @@ async def read_consumer_runtime(
     except ConsumerValidationError as exc:
         raise _http_error(exc) from exc
     return build_runtime(subject, rows, since=since, until=until)
+
+
+class SuggestionListResponse(BaseModel):
+    """A project's suggested consumers."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    suggestions: List[SuggestedConsumer] = Field(default_factory=list, description="Busiest first.")
+    count: int = Field(description="How many suggestions were returned.")
+    window_days: int = Field(description="The window they were drawn from, in UTC days ending today.")
+
+
+@router.get(
+    "/{tenant_slug}/projects/{project_ref}/consumer-suggestions",
+    response_model=SuggestionListResponse,
+    summary="List suggested consumers",
+    description=(
+        "Clients seen in this project's usage traffic that no binding attributes to a consumer — "
+        "by the product token of their user agent (`checkout-web`), or by the hashed "
+        "`consumer_hint` the edge sent. Busiest first; a client a live binding already recognises "
+        "is left out. A hashed client is shown by an opaque id, never by its value or its hash.\n\n"
+        "Requires `consumer_contracts:view`."
+    ),
+)
+async def list_consumer_suggestions(
+    tenant_slug: str,
+    project_ref: str,
+    days: int = Query(default=DEFAULT_WINDOW_DAYS, ge=1, le=MAX_RUNTIME_DAYS, description="Window in UTC days."),
+    limit: int = Query(default=MAX_SUGGESTIONS, ge=1, le=MAX_SUGGESTIONS, description="Most to return."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> SuggestionListResponse:
+    """List the project's suggested consumers.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes it).
+        project_ref: Project slug or id.
+        days: The window.
+        limit: The most to return.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The suggestions.
+
+    Raises:
+        HTTPException: 404 for an unknown project, 403 without ``consumer_contracts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW)
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        project = resolve_project(tenant_id, project_ref)
+    except ConsumerValidationError as exc:
+        raise _http_error(exc) from exc
+    suggestions = list_suggestions(db, tenant_id, str(project["id"]), days=days, limit=limit)
+    return SuggestionListResponse(suggestions=suggestions, count=len(suggestions), window_days=days)
+
+
+@router.post(
+    "/{tenant_slug}/projects/{project_ref}/consumer-suggestions/{suggestion_id}/register",
+    response_model=RegisteredSuggestion,
+    status_code=201,
+    summary="Register a suggested consumer",
+    description=(
+        "Register the client as a consumer (or, with `consumer`, bind it to an existing one) and "
+        "create the binding that recognises it: the glob `<token>/*` for a user agent, or a hashed "
+        "binding holding the value's hash the edge already sent — so no value is typed. A hashed "
+        "client needs `binding_name`, the header or claim its value arrives in. From the next "
+        "ingested batch on, its calls are attributed and its runtime edges appear in the graph.\n\n"
+        "Requires `consumer_contracts:create`."
+    ),
+    responses={
+        404: {"description": "`consumer-suggestion-not-found`, or an unknown project or `consumer`."},
+        409: {"description": "`consumer-slug-taken`, `consumer-slug-reserved` or `consumer-binding-exists`."},
+    },
+)
+async def register_consumer_suggestion(
+    tenant_slug: str,
+    project_ref: str,
+    suggestion_id: str,
+    body: RegisterSuggestionInput,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RegisteredSuggestion:
+    """Register a suggested consumer.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_ref: Project slug or id.
+        suggestion_id: The suggestion's id.
+        body: Name, slug, an existing consumer, the binding name.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The consumer and its new binding.
+
+    Raises:
+        HTTPException: 400 / 404 / 409 / 503 as documented, 403 without
+            ``consumer_contracts:create``.
+    """
+    user_id = enforce_permission(
+        db, auth_data, Resource.CONSUMER_CONTRACTS, Action.CREATE, target=body.slug or suggestion_id
+    )
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        project = resolve_project(tenant_id, project_ref)
+        return register_suggestion(
+            db,
+            tenant_id=tenant_id,
+            project_id=str(project["id"]),
+            suggestion=suggestion_id,
+            body=body,
+            actor=actor_from_auth(auth_data, user_id),
+        )
+    except ConsumerValidationError as exc:
+        raise _http_error(exc) from exc
+    except BindingError as exc:
+        raise _binding_error(exc) from exc

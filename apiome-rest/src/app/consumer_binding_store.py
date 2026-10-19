@@ -40,7 +40,9 @@ from .revision_deprecation import is_uuid_string
 __all__ = [
     "create_binding",
     "delete_binding",
+    "insert_binding",
     "list_bindings",
+    "live_bindings",
     "load_live_bindings",
     "stamp_matches",
     "usage_by_consumer",
@@ -110,6 +112,53 @@ def create_binding(
     key_version: Optional[int] = None
     if body.kind != KIND_USER_AGENT and body.value is not None:
         value_hmac, key_version = consumer_hint_hmac(tenant_id, body.value.get_secret_value())
+    return insert_binding(
+        db,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        consumer_id=consumer_id,
+        kind=body.kind,
+        name=name,
+        value_hmac=value_hmac,
+        key_version=key_version,
+        user_id=user_id,
+    )
+
+
+def insert_binding(
+    db: Any,
+    *,
+    tenant_id: str,
+    project_id: str,
+    consumer_id: str,
+    kind: str,
+    name: str,
+    value_hmac: Optional[str],
+    key_version: Optional[int],
+    user_id: Optional[str],
+) -> BindingRecord:
+    """Insert a binding whose name is already normalized and whose value is already hashed.
+
+    :func:`create_binding` calls it after hashing a value it was given; registering a suggested
+    consumer (CDG-3.5) calls it with the HMAC the edge already sent, so no value is ever needed.
+
+    Args:
+        db: The database.
+        tenant_id: The tenant.
+        project_id: The consumer's project.
+        consumer_id: The consumer.
+        kind: The binding kind.
+        name: The normalized name or glob.
+        value_hmac: The value's HMAC (``None`` for a user-agent glob).
+        key_version: The master-key version of ``value_hmac``.
+        user_id: The creating user, when the caller is one.
+
+    Returns:
+        The stored binding.
+
+    Raises:
+        BindingError: 409 ``consumer-binding-exists`` or ``consumer-binding-limit``.
+    """
 
     def work(cursor: Any) -> Dict[str, Any]:
         cursor.execute(
@@ -134,7 +183,7 @@ def create_binding(
                     tenant_id,
                     project_id,
                     consumer_id,
-                    body.kind,
+                    kind,
                     name,
                     value_hmac,
                     key_version,
@@ -196,6 +245,29 @@ def delete_binding(
     return binding_record_from_row(dict(rows[0]))
 
 
+#: The project's live bindings of live consumers, for :class:`~app.consumer_binding.ConsumerMatcher`.
+_LIVE_SQL = """
+    SELECT b.id::text AS id, b.consumer_id::text AS consumer_id, b.kind, b.name, b.value_hmac,
+           b.created_at
+    FROM apiome.usage_consumer_binding b
+    JOIN apiome.consumer c ON c.id = b.consumer_id
+    WHERE b.tenant_id = %s::uuid AND b.project_id = %s::uuid
+      AND b.deleted_at IS NULL AND c.deleted_at IS NULL
+"""
+
+
+def _live_binding(row: Mapping[str, Any]) -> LiveBinding:
+    """Adapt one :data:`_LIVE_SQL` row (``value_hmac`` is CHAR(64); the pad is stripped)."""
+    return LiveBinding(
+        id=row["id"],
+        consumer_id=row["consumer_id"],
+        kind=row["kind"],
+        name=row["name"],
+        value_hmac=row["value_hmac"].strip() if row["value_hmac"] else None,
+        created_at=row["created_at"],
+    )
+
+
 def load_live_bindings(cursor: Any, tenant_id: str, project_id: str) -> List[LiveBinding]:
     """The project's live bindings, for the ingest matcher.
 
@@ -209,28 +281,22 @@ def load_live_bindings(cursor: Any, tenant_id: str, project_id: str) -> List[Liv
     Returns:
         The bindings of the project's live consumers.
     """
-    cursor.execute(
-        """
-        SELECT b.id::text AS id, b.consumer_id::text AS consumer_id, b.kind, b.name, b.value_hmac,
-               b.created_at
-        FROM apiome.usage_consumer_binding b
-        JOIN apiome.consumer c ON c.id = b.consumer_id
-        WHERE b.tenant_id = %s::uuid AND b.project_id = %s::uuid
-          AND b.deleted_at IS NULL AND c.deleted_at IS NULL
-        """,
-        (tenant_id, project_id),
-    )
-    return [
-        LiveBinding(
-            id=row["id"],
-            consumer_id=row["consumer_id"],
-            kind=row["kind"],
-            name=row["name"],
-            value_hmac=row["value_hmac"].strip() if row["value_hmac"] else None,
-            created_at=row["created_at"],
-        )
-        for row in cursor.fetchall()
-    ]
+    cursor.execute(_LIVE_SQL, (tenant_id, project_id))
+    return [_live_binding(row) for row in cursor.fetchall()]
+
+
+def live_bindings(db: Any, tenant_id: str, project_id: str) -> List[LiveBinding]:
+    """The project's live bindings, read outside any transaction (the suggestions read, CDG-3.5).
+
+    Args:
+        db: The database.
+        tenant_id: The tenant.
+        project_id: The project.
+
+    Returns:
+        The bindings of the project's live consumers.
+    """
+    return [_live_binding(row) for row in db.execute_query(_LIVE_SQL, (tenant_id, project_id)) or []]
 
 
 def stamp_matches(cursor: Any, matches: Mapping[str, datetime], consumers: Mapping[str, str]) -> None:

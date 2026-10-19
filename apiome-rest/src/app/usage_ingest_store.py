@@ -346,6 +346,36 @@ def _write_unmatched(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None
         )
 
 
+def _write_unattributed(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
+    """Add the plan's unattributed client counts into ``usage_unattributed_client_daily`` (CDG-3.5)."""
+    for (day, client_kind, client_key), counter in plan.unattributed_clients.items():
+        calls = scale(counter.events, plan.sampling_rate)
+        if calls <= 0:
+            continue
+        cursor.execute(
+            """
+            INSERT INTO apiome.usage_unattributed_client_daily AS u (
+                tenant_id, project_id, day, client_kind, client_key, calls, first_seen_at, last_seen_at)
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT ON CONSTRAINT usage_unattributed_client_daily_pk DO UPDATE SET
+                calls = u.calls + EXCLUDED.calls,
+                first_seen_at = LEAST(u.first_seen_at, EXCLUDED.first_seen_at),
+                last_seen_at = GREATEST(u.last_seen_at, EXCLUDED.last_seen_at),
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (
+                source.tenant_id,
+                source.project_id,
+                day,
+                client_kind,
+                client_key,
+                calls,
+                counter.first_seen,
+                counter.last_seen,
+            ),
+        )
+
+
 def _write_fields(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
     """Add the plan's field presence into ``usage_field_daily`` (scaled).
 
@@ -490,6 +520,7 @@ def ingest_batch(
         )
         _write_hourly(cursor, source, plan)
         stamp_matches(cursor, plan.binding_matches, plan.binding_consumers)
+        _write_unattributed(cursor, source, plan)
         _write_unmatched(cursor, source, plan)
         _write_fields(cursor, source, plan)
         _write_samples(cursor, source, plan)

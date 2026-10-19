@@ -23,6 +23,8 @@
  *   POST   /api/consumers/pets                        -> POST   …/projects/pets/consumers
  *   GET    /api/consumers/pets/:surface?version=1.0.0 -> GET    …/projects/pets/consumer-surface
  *   POST   /api/consumers/pets/:pact-imports          -> POST   …/projects/pets/consumer-pact-imports
+ *   GET    /api/consumers/pets/:suggestions           -> GET    …/projects/pets/consumer-suggestions
+ *   POST   /api/consumers/pets/:suggestions/ua:x/register -> POST …/consumer-suggestions/ua:x/register
  *   GET    /api/consumers/pets/billing                -> GET    …/projects/pets/consumers/billing
  *   PUT    /api/consumers/pets/billing/contract       -> PUT    …/consumers/billing/contract
  *   DELETE /api/consumers/pets/billing                -> DELETE …/projects/pets/consumers/billing
@@ -39,6 +41,9 @@ const SURFACE_MARKER = ':surface';
 
 /** The marker segment that addresses the Pact import instead of a consumer. */
 const PACT_IMPORT_MARKER = ':pact-imports';
+
+/** The marker segment that addresses the suggested consumers (CDG-3.5) instead of a consumer. */
+const SUGGESTIONS_MARKER = ':suggestions';
 
 /**
  * Build the upstream URL for a request.
@@ -57,6 +62,10 @@ function upstreamPath(tenantSlug: string, segments: string[]): string | null {
 
   if (rest[0] === SURFACE_MARKER) return `${base}/consumer-surface`;
   if (rest[0] === PACT_IMPORT_MARKER) return `${base}/consumer-pact-imports`;
+  if (rest[0] === SUGGESTIONS_MARKER) {
+    const tail = rest.slice(1).map(encodeURIComponent).join('/');
+    return `${base}/consumer-suggestions${tail ? `/${tail}` : ''}`;
+  }
 
   const subPath = rest.map(encodeURIComponent).join('/');
   return `${base}/consumers${subPath ? `/${subPath}` : ''}`;
