@@ -376,10 +376,16 @@ def _inbound(
 
 def _traverse(
     db: Any, tenant_id: str, root: Tuple[str, str], request: BlastRadiusRequest, contracts: List[Dict[str, Any]]
-) -> Tuple[Dict[str, _Node], bool]:
-    """Breadth-first walk of inbound dependency edges (module docstring)."""
+) -> Tuple[Dict[str, _Node], bool, int]:
+    """Breadth-first walk of inbound dependency edges (module docstring).
+
+    Returns:
+        ``(nodes, truncated, total_found)`` — ``total_found`` also counts the entities seen past the
+        node cap or one level past the depth bound, so it is a lower bound when truncated.
+    """
     root_kind, root_id = root
     nodes: Dict[str, _Node] = {}
+    beyond: Set[str] = set()
     truncated = False
 
     def add(node: _Node) -> bool:
@@ -391,6 +397,7 @@ def _traverse(
             return False
         if len(nodes) >= MAX_NODES:
             truncated = True
+            beyond.add(node.id)
             return False
         nodes[node.id] = node
         return True
@@ -428,53 +435,28 @@ def _traverse(
     if frontier and not truncated:
         # The depth bound cut the walk short only if the next level has new entities: one probe.
         probe = _inbound(db, tenant_id, frontier[:MAX_NODES], request.provenances, skip_derived_consumes=False)
-        truncated = any(str(row["from_id"]) not in nodes and str(row["from_id"]) != root_id for row in probe)
-    return nodes, truncated
+        unseen = {str(row["from_id"]) for row in probe} - set(nodes) - {root_id}
+        truncated = bool(unseen)
+        beyond |= unseen
+    return nodes, truncated, len(nodes) + len(beyond)
 
 
 # ---------------------------------------------------------------------------------------------
 # Names and owners
 # ---------------------------------------------------------------------------------------------
 
-_BY_IDS = " WHERE tenant_id = %s::uuid AND id = ANY(%s::uuid[])"
-
-_NAME_SQL: Mapping[str, str] = {
-    "project": "SELECT id::text AS id, name, slug FROM apiome.projects" + _BY_IDS,
-    "consumer": "SELECT id::text AS id, name, slug FROM apiome.consumer" + _BY_IDS,
-    "mcp_endpoint": "SELECT id::text AS id, name, slug FROM apiome.mcp_endpoints" + _BY_IDS,
-    "connector": "SELECT id::text AS id, name, NULL::text AS slug FROM apiome.catalog_connectors" + _BY_IDS,
-}
-
-
 def _labels(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dict[str, Dict[str, Any]]:
-    """``{id: {name, slug}}`` for the entities, one query per kind present."""
-    by_kind: Dict[str, List[str]] = {}
-    for kind, entity_id in refs:
-        table_kind = "project" if kind in _PROJECT_KINDS else kind
-        if table_kind in _NAME_SQL:
-            by_kind.setdefault(table_kind, []).append(entity_id)
-    labels: Dict[str, Dict[str, Any]] = {}
-    for kind, ids in by_kind.items():
-        for row in db.execute_query(_NAME_SQL[kind], (tenant_id, ids)):
-            labels[str(row["id"])] = {"name": row.get("name"), "slug": row.get("slug")}
-    return labels
+    """``{id: {name, slug}}`` (:func:`app.graph_nodes.label_nodes`)."""
+    from .graph_nodes import label_nodes
+
+    return label_nodes(db, tenant_id, refs)
 
 
 def _owners(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dict[str, Dict[str, Any]]:
-    """``{id: {slug, name, status}}`` — the confirmed owner team, else the oldest suggestion."""
-    if not refs:
-        return {}
-    rows = db.execute_query(
-        """
-        SELECT DISTINCT ON (eo.entity_id) eo.entity_id::text AS id, t.slug, t.name, eo.status
-        FROM apiome.entity_owners eo
-        JOIN apiome.teams t ON t.id = eo.team_id AND t.deleted_at IS NULL
-        WHERE eo.tenant_id = %s::uuid AND eo.entity_id = ANY(%s::uuid[])
-        ORDER BY eo.entity_id, (eo.status = 'confirmed') DESC, eo.created_at
-        """,
-        (tenant_id, [entity_id for _kind, entity_id in refs]),
-    )
-    return {str(row["id"]): {"slug": row["slug"], "name": row["name"], "status": row["status"]} for row in rows}
+    """``{id: owner}`` (:func:`app.graph_nodes.node_owners`)."""
+    from .graph_nodes import node_owners
+
+    return node_owners(db, tenant_id, [entity_id for _kind, entity_id in refs])
 
 
 # ---------------------------------------------------------------------------------------------
@@ -728,7 +710,7 @@ def blast_radius(db: Any, tenant_id: str, request: BlastRadiusRequest) -> Dict[s
 
     Returns:
         ``{entity, version, pointers, operations, depth, provenance, direct, transitive,
-        invalidated_evidence, evidence_checked, truncated, node_count, warnings}``.
+        invalidated_evidence, evidence_checked, truncated, node_count, total_found, warnings}``.
 
     Raises:
         DependencyValidationError: ``graph-invalid`` for a malformed request,
@@ -746,7 +728,7 @@ def blast_radius(db: Any, tenant_id: str, request: BlastRadiusRequest) -> Dict[s
     is_api = root_kind in _PROJECT_KINDS
 
     contracts = _current_contracts(db, tenant_id, root_id, pointers) if is_api else []
-    nodes, truncated = _traverse(db, tenant_id, (root_kind, root_id), request, contracts)
+    nodes, truncated, total_found = _traverse(db, tenant_id, (root_kind, root_id), request, contracts)
 
     refs = [(node.kind, node.id) for node in nodes.values()] + [(root_kind, root_id)]
     labels = _labels(db, tenant_id, refs)
@@ -810,5 +792,6 @@ def blast_radius(db: Any, tenant_id: str, request: BlastRadiusRequest) -> Dict[s
         "evidence_checked": True,
         "truncated": truncated,
         "node_count": len(nodes),
+        "total_found": total_found,
         "warnings": warnings,
     }

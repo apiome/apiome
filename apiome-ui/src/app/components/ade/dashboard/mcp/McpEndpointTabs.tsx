@@ -28,6 +28,7 @@ import * as React from 'react';
 import {
   ChartSpline,
   History,
+  Network,
   Settings2,
   ShieldCheck,
   ShieldHalf,
@@ -69,13 +70,14 @@ export const MCP_ENDPOINT_PROPOSED_LABEL = 'Proposed';
 
 /**
  * The strip, in the mockup's order: the surface, then what we know about it, then how it got
- * that way, then its score, then its settings — and the proposal last.
+ * that way, then its score, what it depends on (CDG-3.4), then its settings — and the proposal last.
  */
 export const MCP_ENDPOINT_TABS: readonly McpEndpointTab[] = [
   { value: 'capabilities', label: 'Capabilities', icon: Wrench },
   { value: 'insight', label: 'Insight', icon: ChartSpline },
   { value: 'versions', label: 'Versions', icon: History },
   { value: 'lint', label: 'Lint & score', icon: ShieldCheck },
+  { value: 'dependencies', label: 'Dependencies', icon: Network },
   { value: 'settings', label: 'Settings', icon: Settings2 },
   {
     value: 'trust',

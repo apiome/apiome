@@ -186,7 +186,7 @@ describe('URL-synced detail tabs', () => {
     expect(screen.getByTestId('catalog-detail-tab-format')).toHaveFocus();
     expect(window.location.search).toBe('?tab=format');
     fireEvent.keyDown(screen.getByTestId('catalog-detail-tab-format'), { key: 'End' });
-    expect(window.location.search).toBe('?tab=versions');
+    expect(window.location.search).toBe('?tab=dependencies');
   });
 
   it('records the pane "View code" opens', async () => {
@@ -286,7 +286,7 @@ describe('axe (MFI-28.8)', () => {
       expect(screen.getByTestId(`catalog-detail-tab-${tab}`)).toHaveAttribute('aria-selected', 'true')
     );
     const tabs = screen.getByTestId('catalog-detail-tabs');
-    expect(within(tabs).getAllByRole('tab')).toHaveLength(8);
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(9);
     expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
   });
 });

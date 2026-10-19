@@ -84,7 +84,7 @@ describe('platform-nav model — shape', () => {
       build: ['projects', 'primitives'],
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
       ship: ['published', 'sunset-timeline', 'export-studio', 'sdk-settings'],
-      govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'audit'],
+      govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
       workspace: ['members', 'roles', 'teams', 'api-keys', 'tenants'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
@@ -109,6 +109,7 @@ describe('platform-nav model — shape', () => {
       'Style guides',
       'Lint posture',
       'Shadow APIs',
+      'Dependency graph',
       'Access audit',
       'Members',
       'Roles',
@@ -202,6 +203,7 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/connectors/new', 'connectors'],
     ['/ade/dashboard/connectors/3f1c', 'connectors'],
     ['/ade/dashboard/connectors/shadow', 'shadow-apis'],
+    ['/ade/dashboard/graph', 'dependency-graph'],
     ['/ade/dashboard/members', 'members'],
     ['/ade/dashboard/roles', 'roles'],
     ['/ade/dashboard/teams', 'teams'],
@@ -282,6 +284,7 @@ describe('platform-nav model — workspace gating', () => {
     'style-guides',
     'lint-workspace',
     'shadow-apis',
+    'dependency-graph',
     'audit',
     'members',
     'roles',

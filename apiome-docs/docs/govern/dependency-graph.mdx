@@ -9,8 +9,49 @@ The **dependency graph** records how the things in your workspace relate: which 
 on which fields of an API, which catalog item a Project was converted from, which gateway serves an
 API, which repository a draft lives in. Each relationship is an **edge** between two **nodes**.
 
-The graph has no screen yet. You read it through the REST API (see [Reading edges](#reading-edges)),
-and later features (impact views, scorecards) build on it.
+You see it in three places: the **Dependency graph** page, a **Dependencies** tab on every project,
+catalog item and MCP server, and the **Blast radius** drawer. The REST API reads the same edges (see
+[Reading edges](#reading-edges)).
+
+## The Dependency graph page
+
+<Route path="/ade/dashboard/graph" />
+
+**Go to Govern → Dependency graph.** It lists every entity that has at least one edge, most
+connected first, with its owner team and two counts: **Depended on by** (edges pointing at it) and
+**Depends on** (edges leaving it). An entity with stale edges says how many.
+
+- **Search** by name or slug.
+- Narrow the list with the kind chips (**Project**, **Catalog item**, **Consumer**, **Connector**,
+  **MCP server**, **Repository**), the **Owner** team, and the provenance chips (**Declared**,
+  **Derived**, **Runtime**).
+- **Click “Show”** on a row to open its dependencies below the list. The address changes to
+  `?entity=<kind>:<id>`, so you can send it to a teammate.
+- **Click “Blast radius”** on a project or catalog item to open the [Blast radius](#the-blast-radius-drawer) drawer.
+
+The page shows at most 2,000 entities. When more match, it says **Showing 2,000 of N**; search or
+filter to see the rest.
+
+<Screenshot id="dependency-graph" alt="The Dependency graph page: search, kind and provenance filters, the entity table with owners and edge counts, and the Petstore project's dependencies below" />
+
+## The Dependencies tab
+
+Every project (**Build → Projects**, the project's versions page), catalog item and MCP server has a
+**Dependencies** tab. It shows a list first, then a drawing:
+
+- **The list** groups the entity's edges by direction and kind (**Depends on**, **Consumed by**,
+  **Served by** and so on). Each row names the other end (a link to its page), the pointer when
+  there is one, the provenance (**Declared**, **Derived** or **Runtime**) and the other end's owner
+  team. A **Stale** edge is dimmed and says when it was **Last seen**.
+- **The drawing** puts the entity in the middle, what depends on it to the left and what it depends
+  on to the right. A letter in each node says its kind (**P** project, **C** catalog item, **U**
+  consumer, **R** repository…), and a dashed node or line is stale. **Press +** beside a node to draw
+  its own dependencies one step further out. Every node is a link. A column shows at most ten
+  nodes and says how many more are in the list.
+
+**“Open in the dependency graph”** opens the same entity on the Dependency graph page.
+
+<Screenshot id="dependencies-tab" alt="A project's Dependencies tab: the edges grouped by kind with provenance and owner badges, a stale consumer, and the drawing centred on the project" />
 
 ## Edges
 
@@ -159,6 +200,25 @@ apiome graph dependencies project orders
 Before you change an operation or a schema, ask what the change affects: who depends on it, and
 which evidence you would have to produce again.
 
+### The Blast radius drawer
+
+**Click “Blast radius”** on a project or catalog item's Dependencies tab, or on its row of the
+Dependency graph page.
+
+1. Under **What changes**, pick **An operation**, **A schema** or **The whole API**.
+2. Type the operation (for example `GET /pets/{id}`) or the schema name (for example `Pet`).
+3. Choose the **Depth** (1–5) and which edges to **Follow**.
+4. **Click “Show the blast radius”.**
+
+The drawer lists the **Direct** and **Transitive** dependents, each with its owner team, and every
+kind of **Invalidated evidence** with links to where it lives. When nothing is affected it says
+**Nothing depends on this change, and no evidence is invalidated.** When the answer is cut short at
+2,000 entities it says how many it found.
+
+<Screenshot id="blast-radius" alt="The Blast radius drawer: GET /pets/{id} reaches three consumers directly and one transitively, and invalidates verification runs, a contract, a deploy gate, an SDK target, an agent tool and a fixture pack" />
+
+### From the API or the CLI
+
 ```bash
 apiome graph impact --project petstore --operation "GET /pets/{id}"
 apiome graph impact --project petstore --schema Pet --format json
@@ -235,6 +295,7 @@ GET /v1/graph/{tenant}/entities/{kind}/{id}/edges
 | `provenance` | Only these provenances. Repeat it for several. |
 | `limit` | 1–500, default 100 |
 | `offset` | Edges to skip, for the next page |
+| `labels` | `true` adds each end's `name`, `slug` and `owner` team (`from_label`, `to_label`) |
 
 The response lists the edges, current ones first and stale ones last, with `total` (how many
 match) and `truncated` (`true` when there are more than this page holds). It needs the
@@ -246,5 +307,16 @@ For example, to list the consumers of a Project:
 GET /v1/graph/{tenant}/entities/project/{project-id}/edges?direction=in&kind=consumes
 X-API-Key: <your-api-key>
 ```
+
+To list every entity that has edges, as the Dependency graph page does:
+
+```http
+GET /v1/graph/{tenant}/entities?q=pet&kind=project&team=payments&provenance=declared
+X-API-Key: <your-api-key>
+```
+
+Each entity comes with its name, owner team and `in_count`, `out_count` and `stale_count`, most
+connected first. `limit` is 1–2,000 (default 200); `total` says how many match and `truncated`
+whether there are more.
 
 The full reference is on [Graph](../reference/rest/graph.md).

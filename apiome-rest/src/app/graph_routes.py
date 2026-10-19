@@ -34,6 +34,7 @@ from .database import db
 from .declared_dependencies import MAX_DECLARED, DependencyValidationError
 from .declared_dependency_store import put_dependencies, read_dependencies
 from .entity_owners import KINDS
+from .graph_nodes import MAX_SEARCH_LIMIT, node_labels_with_owners, search_entities
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
 
@@ -61,6 +62,12 @@ class GraphEdge(BaseModel):
     last_seen_at: Optional[str] = None
     stale_since: Optional[str] = None
     stale: bool = Field(description="True when the edge's source is gone; purged 30 days after `stale_since`.")
+    from_label: Optional[Dict[str, Any]] = Field(
+        default=None, description="With `labels=true`: the source's `{name, slug, owner}`."
+    )
+    to_label: Optional[Dict[str, Any]] = Field(
+        default=None, description="With `labels=true`: the target's `{name, slug, owner}`."
+    )
 
 
 class GraphEdgePage(BaseModel):
@@ -103,6 +110,7 @@ async def get_entity_edges(
     provenance: Optional[List[str]] = Query(None, description="Provenances to keep."),
     limit: int = Query(100, ge=1, le=MAX_READ_LIMIT),
     offset: int = Query(0, ge=0),
+    labels: bool = Query(False, description="Add each end's name, slug and owner team."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> GraphEdgePage:
     """Read one page of an entity's edges.
@@ -130,8 +138,13 @@ async def get_entity_edges(
         )
     except GraphValidationError as exc:
         raise HTTPException(status_code=400, detail={"code": exc.code, "message": str(exc)}) from exc
+    edges = page.edges
+    if labels and edges:
+        refs = {(e["from_kind"], e["from_id"]) for e in edges} | {(e["to_kind"], e["to_id"]) for e in edges}
+        info = node_labels_with_owners(db, str(tenant_id), sorted(refs))
+        edges = [{**e, "from_label": info.get(e["from_id"]), "to_label": info.get(e["to_id"])} for e in edges]
     return GraphEdgePage(
-        edges=[GraphEdge(**edge) for edge in page.edges],
+        edges=[GraphEdge(**edge) for edge in edges],
         total=page.total,
         truncated=page.truncated,
         limit=limit,
@@ -378,6 +391,9 @@ class BlastRadiusResponse(BaseModel):
     evidence_checked: bool = Field(description="True whenever evidence was looked for: empty means none.")
     truncated: bool = Field(description="True when the depth or the 2,000-entity bound cut the walk short.")
     node_count: int
+    total_found: int = Field(
+        default=0, description="Entities found, including those past the cap; a lower bound when `truncated`."
+    )
     warnings: List[str] = Field(default_factory=list)
 
 
@@ -417,3 +433,72 @@ async def post_blast_radius(
         return BlastRadiusResponse(**blast_radius(db, _auth_tenant(auth_data), request))
     except DependencyValidationError as exc:
         raise _dependency_error(exc) from exc
+
+
+# ---------------------------------------------------------------------------------------------
+# Tenant-wide entity search (CDG-3.4, #5969)
+# ---------------------------------------------------------------------------------------------
+
+
+class GraphEntity(BaseModel):
+    """An entity that has edges."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    id: str
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    owner: Optional[Dict[str, Any]] = Field(default=None, description="Its owner team `{slug, name, status}`.")
+    in_count: int = Field(description="Edges pointing at it.")
+    out_count: int = Field(description="Edges leaving it.")
+    stale_count: int = Field(description="How many of those edges are stale.")
+
+
+class GraphEntityPage(BaseModel):
+    """One page of the tenant-wide entity search."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    entities: List[GraphEntity] = Field(default_factory=list)
+    total: int = Field(description="How many entities match.")
+    truncated: bool = Field(description="True when more entities match than this page holds.")
+    limit: int
+    offset: int
+
+
+@router.get(
+    "/{tenant_slug}/entities",
+    response_model=GraphEntityPage,
+    summary="Search the entities in the dependency graph",
+    description=(
+        "Every entity that has at least one edge, most connected first, with its name, owner team "
+        "and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` "
+        "(each repeatable) and `team` (owner team slug). `limit` is 1–2000 (default 200); "
+        "`truncated` is true when more match.\n\nRequires `projects:view`."
+    ),
+)
+async def get_graph_entities(
+    tenant_slug: str,
+    q: Optional[str] = Query(None, max_length=200, description="Substring of the name or slug."),
+    kind: Optional[List[str]] = Query(None, description="Node kinds to keep."),
+    team: Optional[str] = Query(None, max_length=128, description="Owner team slug."),
+    provenance: Optional[List[str]] = Query(None, description="Only count edges of these provenances."),
+    limit: int = Query(200, ge=1, le=MAX_SEARCH_LIMIT),
+    offset: int = Query(0, ge=0),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> GraphEntityPage:
+    """Search the graph's entities."""
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
+    _ = tenant_slug
+    try:
+        page = search_entities(
+            db, _auth_tenant(auth_data), query=q, kinds=tuple(kind or ()), team=team,
+            provenances=tuple(provenance or ()), limit=limit, offset=offset,
+        )
+    except GraphValidationError as exc:
+        raise HTTPException(status_code=400, detail={"code": exc.code, "message": str(exc)}) from exc
+    return GraphEntityPage(
+        entities=[GraphEntity(**e) for e in page.entities], total=page.total, truncated=page.truncated,
+        limit=limit, offset=offset,
+    )

@@ -713,6 +713,35 @@
       "data": "fixture:hive-a11y/ownership-drift.html"
     },
     {
+      "id": "dependency-graph",
+      "route": "/ade/dashboard/graph",
+      "waitFor": "[data-testid=\"graph-entities\"]",
+      "data": "fixture:hive-a11y/dependency-graph.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
+        "apiome-ui/src/app/components/ade/graph/DependencyGraphSvg.tsx",
+        "apiome-ui/src/app/components/ade/graph/graphLayoutModel.ts"
+      ]
+    },
+    {
+      "id": "dependencies-tab",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"dependencies-panel\"]",
+      "data": "fixture:hive-a11y/dependencies-tab.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
+        "apiome-ui/src/app/components/ade/graph/DependencyGraphSvg.tsx",
+        "apiome-ui/src/app/components/ade/graph/graphLayoutModel.ts"
+      ]
+    },
+    {
+      "id": "blast-radius",
+      "route": "/ade/dashboard/graph",
+      "waitFor": "[data-testid=\"blast-radius-answer\"]",
+      "data": "fixture:hive-a11y/blast-radius.html",
+      "sources": ["apiome-ui/src/app/components/ade/graph/BlastRadiusDrawer.tsx"]
+    },
+    {
       "id": "roles-builtin",
       "route": "/ade/dashboard/roles",
       "waitFor": "[data-testid=\"roles-lock-note\"]",

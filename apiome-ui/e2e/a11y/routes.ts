@@ -110,6 +110,17 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['teams.html', 'team-detail.html'] },
   },
+  {
+    // CDG-3.4 (#5969): the graph page, the Dependencies tab and the blast-radius drawer, dumped by
+    // `tests/dependency-graph-ui.test.tsx`.
+    id: 'dependency-graph',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['dependency-graph.html', 'dependency-graph-truncated.html', 'dependencies-tab.html', 'blast-radius.html'],
+    },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

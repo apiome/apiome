@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.376.0] - 2026-10-18
+
+### Added
+- **Graph entity search (#5969, CDG-3.4)**: `GET /v1/graph/{tenant}/entities?q=&kind=&team=&provenance=&limit=&offset=`
+  (`projects:view`) lists every entity with at least one edge — name, slug, owner team, `in_count`, `out_count`,
+  `stale_count` — most connected first; `limit` 1–2000 (default 200), with `total` and `truncated`.
+- **Edge labels (#5969)**: `GET …/entities/{kind}/{id}/edges?labels=true` adds `from_label` / `to_label`
+  (`{name, slug, owner}`) to each edge, looked up in batch (`app.graph_nodes`).
+- **Blast radius `total_found` (#5969)**: how many entities the walk found, including those past the 2,000 cap or one
+  level past `depth` — a lower bound when `truncated`, so a client can say "showing 2,000 of at least N".
+
+The OpenAPI version moves to 1.240.0.
+
 ## [1.375.0] - 2026-10-18
 
 ### Added

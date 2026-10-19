@@ -26,7 +26,9 @@ import {
   ShieldCheck,
   Upload,
   MessagesSquare,
+  Network,
 } from 'lucide-react';
+import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import dynamic from 'next/dynamic';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
@@ -399,7 +401,14 @@ const Versions = () => {
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
   /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476) vs the Schema Test Bench (IXH-5.3, #5115) vs the project Discussion panel (COL-1.3, #4515) vs the repository binding (GNC-2.1, #4737). */
   const [versionsMainTab, setVersionsMainTab] = useState<
-    'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion' | 'discussion' | 'repository'
+    | 'timeline'
+    | 'change-report'
+    | 'changes'
+    | 'test-bench'
+    | 'conversion'
+    | 'discussion'
+    | 'repository'
+    | 'dependencies'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
   const [focusThreadId, setFocusThreadId] = useState<string | null>(null);
@@ -816,6 +825,7 @@ const Versions = () => {
     if (appliedDeepLinkRef.current === applied) return;
     appliedDeepLinkRef.current = applied;
     if (tab === 'discussion') setVersionsMainTab('discussion');
+    if (tab === 'dependencies') setVersionsMainTab('dependencies');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
   }, [searchParams]);
 
@@ -3065,9 +3075,12 @@ const Versions = () => {
   const studioWorkspaceRoute = useMemo(() => getStudioWorkspaceRoute(), []);
   /** Every project has a Repository tab (GNC-2.1, #4737): a draft is bound to a branch from there. */
   const showRepositoryTab = Boolean(selectedProjectId);
+  /** Every project has a Dependencies tab (CDG-3.4, #5969): its edges in the catalog graph. */
+  const showDependenciesTab = Boolean(selectedProjectId);
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
     (versionsMainTab === 'repository' && !showRepositoryTab) ||
+    (versionsMainTab === 'dependencies' && !showDependenciesTab) ||
     (versionsMainTab === 'discussion' && !showDiscussionTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
@@ -3403,6 +3416,20 @@ const Versions = () => {
           Repository
         </button>
       ) : null}
+      {showDependenciesTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'dependencies'}
+          data-testid="versions-tab-dependencies"
+          className={tabTriggerClass({ active: effectiveMainTab === 'dependencies' })}
+          title="What this project depends on, and what depends on it"
+          onClick={() => setVersionsMainTab('dependencies')}
+        >
+          <Network className="ver-tab-glyph" aria-hidden />
+          Dependencies
+        </button>
+      ) : null}
     </div>
   ) : undefined;
 
@@ -3674,6 +3701,19 @@ const Versions = () => {
               projectId={selectedProjectId}
               versions={versions}
               initialVersionId={selectedVersion?.id ?? null}
+            />
+          </Card>
+        ) : null}
+
+        {showDependenciesTab && effectiveMainTab === 'dependencies' && selectedProjectId ? (
+          /* Dependencies (CDG-3.4, #5969): the project's edges in the catalog graph. */
+          <Card className="ver-panel">
+            <DependenciesPanel
+              key={selectedProjectId}
+              kind="project"
+              id={selectedProjectId}
+              active
+              label={{ name: selectedProject?.name ?? null, slug: selectedProject?.slug ?? null, owner: null }}
             />
           </Card>
         ) : null}

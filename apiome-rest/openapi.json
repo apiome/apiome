@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.239.0",
+    "version": "1.240.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22617,6 +22617,18 @@
             "description": "Number of rows to skip before returning results."
           },
           {
+            "name": "labels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Add each end's name, slug and owner team.",
+              "default": false,
+              "title": "Labels"
+            },
+            "description": "Add each end's name, slug and owner team."
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -23003,6 +23015,208 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for askwhatachangeaffectsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/graph/{tenant_slug}/entities": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Search the entities in the dependency graph",
+        "description": "Every entity that has at least one edge, most connected first, with its name, owner team and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` (each repeatable) and `team` (owner team slug). `limit` is 1\u20132000 (default 200); `truncated` is true when more match.\n\nRequires `projects:view`.",
+        "operationId": "get_graph_entities_v1_graph__tenant_slug__entities_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200,
+                  "description": "Searchtheentitiesinthedependencygraphq schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraphq schema."
+                }
+              ],
+              "description": "Substring of the name or slug.",
+              "title": "Q"
+            },
+            "description": "Substring of the name or slug."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Searchtheentitiesinthedependencygraphkind schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraphkind schema."
+                }
+              ],
+              "description": "Node kinds to keep.",
+              "title": "Kind"
+            },
+            "description": "Node kinds to keep."
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 128,
+                  "description": "Searchtheentitiesinthedependencygraphteam schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraphteam schema."
+                }
+              ],
+              "description": "Owner team slug.",
+              "title": "Team"
+            },
+            "description": "Owner team slug."
+          },
+          {
+            "name": "provenance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Searchtheentitiesinthedependencygraphprovenance schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraphprovenance schema."
+                }
+              ],
+              "description": "Only count edges of these provenances.",
+              "title": "Provenance"
+            },
+            "description": "Only count edges of these provenances."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000,
+              "minimum": 1,
+              "default": 200,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset",
+              "description": "Offset schema."
+            },
+            "description": "Number of rows to skip before returning results."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Searchtheentitiesinthedependencygraphauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraphauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Searchtheentitiesinthedependencygraph Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Searchtheentitiesinthedependencygraph Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for search the entities in the dependency graph.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphEntityPage",
+                  "description": "Response payload for searchtheentitiesinthedependencygraphresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for searchtheentitiesinthedependencygraphresponse422."
                 }
               }
             }
@@ -95634,6 +95848,13 @@
             "description": "Number of node.",
             "example": 1
           },
+          "total_found": {
+            "type": "integer",
+            "title": "Total Found",
+            "description": "Entities found, including those past the cap; a lower bound when `truncated`.",
+            "default": 0,
+            "example": 1
+          },
           "warnings": {
             "items": {
               "type": "string"
@@ -101874,7 +102095,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "completed_at": {
             "anyOf": [
@@ -103798,7 +104019,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104026,7 +104247,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104557,14 +104778,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -107703,7 +107924,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "f5fef455-78e6-4068-9931-7d3e22738009"
+            "example": "79c224d5-ac64-4b16-a8c7-6d772f0475a1"
           },
           "method": {
             "type": "string",
@@ -110230,7 +110451,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -112126,7 +112347,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "browse_url": {
             "anyOf": [
@@ -119908,6 +120129,36 @@
             "title": "Stale",
             "description": "True when the edge's source is gone; purged 30 days after `stale_since`.",
             "example": false
+          },
+          "from_label": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Graph Edge schema."
+              },
+              {
+                "type": "null",
+                "description": "Graph Edge schema."
+              }
+            ],
+            "title": "From Label",
+            "description": "With `labels=true`: the source's `{name, slug, owner}`."
+          },
+          "to_label": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Graph Edge schema."
+              },
+              {
+                "type": "null",
+                "description": "Graph Edge schema."
+              }
+            ],
+            "title": "To Label",
+            "description": "With `labels=true`: the target's `{name, slug, owner}`."
           }
         },
         "additionalProperties": false,
@@ -119972,6 +120223,141 @@
         ],
         "title": "GraphEdgePage",
         "description": "One page of an entity's edges."
+      },
+      "GraphEntity": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Graph Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Graph Entity schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Graph Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Graph Entity schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-safe identifier."
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Graph Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Graph Entity schema."
+              }
+            ],
+            "title": "Owner",
+            "description": "Its owner team `{slug, name, status}`."
+          },
+          "in_count": {
+            "type": "integer",
+            "title": "In Count",
+            "description": "Edges pointing at it.",
+            "example": 1
+          },
+          "out_count": {
+            "type": "integer",
+            "title": "Out Count",
+            "description": "Edges leaving it.",
+            "example": 1
+          },
+          "stale_count": {
+            "type": "integer",
+            "title": "Stale Count",
+            "description": "How many of those edges are stale.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "in_count",
+          "out_count",
+          "stale_count"
+        ],
+        "title": "GraphEntity",
+        "description": "An entity that has edges."
+      },
+      "GraphEntityPage": {
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEntity"
+            },
+            "type": "array",
+            "title": "Entities",
+            "description": "Entities.",
+            "maxItems": 1000
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many entities match.",
+            "example": 1
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when more entities match than this page holds.",
+            "example": false
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Limit.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "total",
+          "truncated",
+          "limit",
+          "offset"
+        ],
+        "title": "GraphEntityPage",
+        "description": "One page of the tenant-wide entity search."
       },
       "HTTPValidationError": {
         "properties": {
@@ -153497,7 +153883,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           }
         },
         "additionalProperties": false,
@@ -165750,7 +166136,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "detected_by": {
             "anyOf": [
@@ -173764,14 +174150,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T23:27:15Z"
+            "example": "2026-10-19T00:11:00Z"
           },
           "outcome": {
             "anyOf": [

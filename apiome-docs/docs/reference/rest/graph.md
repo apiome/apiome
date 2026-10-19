@@ -1,6 +1,6 @@
 ---
 title: "Graph"
-description: "REST endpoints tagged graph: 4 operations."
+description: "REST endpoints tagged graph: 5 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.239.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.240.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `graph` · 4 operations
+Tag: `graph` · 5 operations
 
 ## `POST /v1/graph/{tenant_slug}/blast-radius` {#post-blast-radius-v1-graph-tenant-slug-blast-radius-post}
 
@@ -44,6 +44,37 @@ Request body for ask what a change affects.
 | 200 | Successful response for ask what a change affects. | `application/json` [`BlastRadiusResponse`](#schema-blastradiusresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/graph/{tenant_slug}/entities` {#get-graph-entities-v1-graph-tenant-slug-entities-get}
+
+**Search the entities in the dependency graph**
+
+Every entity that has at least one edge, most connected first, with its name, owner team and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` (each repeatable) and `team` (owner team slug). `limit` is 1–2000 (default 200); `truncated` is true when more match.
+
+Requires `projects:view`.
+
+Operation id: `get_graph_entities_v1_graph__tenant_slug__entities_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `q` | query | string or null | no | Substring of the name or slug. |
+| `kind` | query | array of string or null | no | Node kinds to keep. |
+| `team` | query | string or null | no | Owner team slug. |
+| `provenance` | query | array of string or null | no | Only count edges of these provenances. |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for search the entities in the dependency graph. | `application/json` [`GraphEntityPage`](#schema-graphentitypage) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/graph/{tenant_slug}/entities/{kind}/{entity_id}/edges` {#get-entity-edges-v1-graph-tenant-slug-entities-kind-entity-id-edges-get}
 
 **List an entity's graph edges**
@@ -66,6 +97,7 @@ Operation id: `get_entity_edges_v1_graph__tenant_slug__entities__kind___entity_i
 | `provenance` | query | array of string or null | no | Provenances to keep. |
 | `limit` | query | integer | no | Maximum number of rows to return. |
 | `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `labels` | query | boolean | no | Add each end's name, slug and owner team. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -168,6 +200,7 @@ What a change affects.
 | `evidence_checked` | boolean | yes | True whenever evidence was looked for: empty means none. |
 | `truncated` | boolean | yes | True when the depth or the 2,000-entity bound cut the walk short. |
 | `node_count` | integer | yes | Number of node. |
+| `total_found` | integer | no | Entities found, including those past the cap; a lower bound when `truncated`. |
 | `warnings` | array of string | no | Warnings. |
 
 ### `DependenciesInput` {#schema-dependenciesinput}
@@ -199,6 +232,18 @@ One page of an entity's edges.
 | `edges` | array of `GraphEdge` | no | Edges. |
 | `total` | integer | yes | How many edges match the filters. |
 | `truncated` | boolean | yes | True when more edges match than this page holds. |
+| `limit` | integer | yes | Limit. |
+| `offset` | integer | yes | Offset. |
+
+### `GraphEntityPage` {#schema-graphentitypage}
+
+One page of the tenant-wide entity search.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `entities` | array of `GraphEntity` | no | Entities. |
+| `total` | integer | yes | How many entities match. |
+| `truncated` | boolean | yes | True when more entities match than this page holds. |
 | `limit` | integer | yes | Limit. |
 | `offset` | integer | yes | Offset. |
 
