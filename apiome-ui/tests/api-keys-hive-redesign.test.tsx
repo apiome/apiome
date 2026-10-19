@@ -871,4 +871,18 @@ describe('the docs fixtures', () => {
     await screen.findByTestId('api-key-secret-dialog');
     writeA11yFixture('api-keys-secret', bodyMarkup());
   });
+
+  it('renders the create dialog with the usage-source preset (RDG-1.2)', async () => {
+    const user = userEvent.setup();
+    render(<ApiKeysClient />);
+    await screen.findByText('CI contract gate');
+
+    const dialog = await openCreateDialog(user, 'Production OTel Collector');
+    await user.type(within(dialog).getByLabelText('Description'), 'Sends live traffic to the usage index.');
+    await user.click(within(dialog).getByTestId('api-key-scope-usage'));
+    await user.type(within(dialog).getByLabelText('Expires in (days)'), '365');
+    expect(within(dialog).getByTestId('api-key-scope-usage')).toHaveAttribute('data-checked');
+    expect(within(dialog).getByTestId('api-key-scope-usage')).toHaveTextContent('usage:ingest');
+    writeA11yFixture('api-keys-usage-scope', bodyMarkup());
+  });
 });

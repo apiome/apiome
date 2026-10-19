@@ -3,7 +3,8 @@ Authentication module for JWT and API Key validation.
 
 Supports both JWT tokens (from NextAuth) and API keys for authentication.
 API keys may carry machine scopes (CTG-2.3 / #4473): ``*`` (full access),
-``diff:read``, and ``lint:read``. Restricted keys are allowlisted by method+path.
+``diff:read``, ``lint:read`` and ``usage:ingest`` (RDG-1.2 / #5760). Restricted keys are
+allowlisted by method+path.
 
 A route may appear in the allowlist more than once, each entry naming a different acceptable
 scope: the deploy gate (CTG-4.5 / #4502) is a read over lint grades *and* breaking classification,
@@ -42,6 +43,9 @@ API_KEY_SCOPE_LINT_READ = "lint:read"
 #: allowlist below, so an agent key is refused on every REST route even if it ever reached
 #: :func:`enforce_api_key_scopes` (``db.validate_api_key`` already only accepts workspace keys).
 API_KEY_SCOPE_AGENT_INVOKE = "agent:invoke"
+#: RDG-1.2 (#5760, V291): a usage source's key. It admits the usage ingest door and nothing else,
+#: so a key copied out of a Collector's config cannot read or change anything in the workspace.
+API_KEY_SCOPE_USAGE_INGEST = "usage:ingest"
 
 #: (HTTP method, path regex) → an acceptable scope for restricted machine keys. A route may have
 #: several entries; holding **any** of the matched scopes admits the call.
@@ -112,6 +116,13 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         "GET",
         re.compile(r"^/v1/tenants/[^/]+/projects/[^/]+/versions/[^/]+/check-suite/?$"),
         API_KEY_SCOPE_LINT_READ,
+    ),
+    # RDG-1.2 (#5760): the usage ingest door. Write-only by design — the scope admits posting a
+    # batch of usage events and no read of anything the batch was matched against.
+    (
+        "POST",
+        re.compile(r"^/v1/tenants/[^/]+/usage/ingest/?$"),
+        API_KEY_SCOPE_USAGE_INGEST,
     ),
 )
 

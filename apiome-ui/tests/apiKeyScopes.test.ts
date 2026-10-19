@@ -34,6 +34,13 @@ describe('apiKeyScopes', () => {
     expect(API_KEY_SCOPE_PRESETS.diff).toEqual(['diff:read']);
     expect(API_KEY_SCOPE_PRESETS.lint).toEqual(['lint:read']);
     expect(API_KEY_SCOPE_PRESETS.ci_both).toEqual(['diff:read', 'lint:read']);
+    expect(API_KEY_SCOPE_PRESETS.usage).toEqual(['usage:ingest']);
+  });
+
+  test('usage:ingest is a scope of its own (RDG-1.2)', () => {
+    expect(normalizeApiKeyScopes('usage:ingest')).toEqual(['usage:ingest']);
+    expect(() => normalizeApiKeyScopes('*,usage:ingest')).toThrow(/must stand alone/);
+    expect(() => normalizeApiKeyScopes('agent:invoke')).toThrow(/Invalid API key scope/);
   });
 
   test('formatApiKeyScopes labels full access', () => {
@@ -48,5 +55,6 @@ describe('apiKeyScopes', () => {
     expect(presetFromScopes(['diff:read'])).toBe('diff');
     expect(presetFromScopes(['lint:read'])).toBe('lint');
     expect(presetFromScopes(['lint:read', 'diff:read'])).toBe('ci_both');
+    expect(presetFromScopes(['usage:ingest'])).toBe('usage');
   });
 });

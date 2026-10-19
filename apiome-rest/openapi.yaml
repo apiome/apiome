@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.242.0
+  version: 1.243.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -17771,6 +17771,240 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for exportthedependencygraphas jsonor
                   dotresponse422.
+  /v1/tenants/{tenant_slug}/usage/ingest:
+    post:
+      tags:
+      - usage
+      summary: Ingest a batch of usage events
+      description: 'The usage index''s one door (RDG-1.2). Each event runs through
+        the pipeline in order and stops at its first refusal:
+
+
+        1. **Tier cap** — `usage_events_per_day` of the workspace''s license. Over
+        it, the whole batch is answered `429 usage-quota-exceeded` with `retryAt`
+        and ledgered as rejected.
+
+        2. **Head sampling** — a deterministic hash of `(source, observed_at, path,
+        status)` against the source''s `sampling_rate`; counts are scaled by the inverse
+        rate (`basis: sampled`).
+
+        3. **Scrubbing** — path segments that look like a credential, an email or
+        a UUID become `{param}`; query values are discarded and names kept; the user
+        agent is scrubbed and truncated.
+
+        4. **Template matching** against the project''s **published** revisions —
+        `/pets/42` lands on `GET /pets/{petId}`. Unmatched traffic is counted by inferred
+        template.
+
+        5. **Ledger** — one row per batch; this response echoes it.
+
+
+        Requires a workspace API key with the `usage:ingest` scope (or full access).
+        A batch carrying a `sample` is refused with `422 usage-body-not-accepted`
+        unless the source''s body window is open.'
+      operationId: ingest_usage_v1_tenants__tenant_slug__usage_ingest_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestabatchofusageeventsauthorization schema.
+          - type: 'null'
+            description: Ingestabatchofusageeventsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestabatchofusageevents Xapikey schema.
+          - type: 'null'
+            description: Ingestabatchofusageevents Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: X-Apiome-Usage-Source
+        in: header
+        required: false
+        schema:
+          type: string
+          format: uuid
+          description: Ingestabatchofusageevents Xapiome Usage Source schema.
+        description: The usage source, when the body has no `source_id`.
+      responses:
+        '200':
+          description: Successful response for ingest a batch of usage events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageIngestResponse'
+                description: Response payload for ingestabatchofusageeventsresponse200.
+        '400':
+          description: Malformed batch, unknown encoding, or no source named.
+        '403':
+          description: Not a workspace API key, or the source is disabled.
+        '404':
+          description: Unknown source.
+        '413':
+          description: Over 2 MiB or 5,000 events.
+        '422':
+          description: '`usage-body-not-accepted`: a sample was sent while the body
+            window is closed.'
+        '429':
+          description: '`usage-quota-exceeded`: over today''s cap; `retryAt` says
+            when it resets.'
+      requestBody:
+        required: true
+        description: 'A batch of at most 5000 `apiome.usage.event/v1` events, at most
+          2097152 bytes (send `Content-Encoding: gzip` to compress it; the limit applies
+          before and after decompression).'
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - events
+              properties:
+                source_id:
+                  type: string
+                  format: uuid
+                  description: The usage source (or send the `X-Apiome-Usage-Source`
+                    header).
+                  example: source_01h2xcejqtf3fz5y5j0v8k9m2p
+                events:
+                  type: array
+                  maxItems: 5000
+                  items:
+                    type: object
+                    description: 'One `apiome.usage.event/v1` event. `schema`, `source_id`
+                      and `environment` may be omitted (the source''s are used). `path`
+                      may carry a query string: its parameter names are kept and its
+                      values discarded before the event is built. Unknown keys reject
+                      the event.'
+                    required:
+                    - observed_at
+                    - method
+                    - path
+                    - status
+                    - latency_ms
+                    properties:
+                      observed_at:
+                        type: string
+                        format: date-time
+                        description: Observed At timestamp (ISO 8601).
+                        example: '2026-10-19T03:04:13Z'
+                      method:
+                        type: string
+                        example: GET
+                        description: Method.
+                      path:
+                        type: string
+                        example: /pets/42?limit=10
+                        description: Path.
+                      status:
+                        type: integer
+                        minimum: 100
+                        maximum: 599
+                        description: Status.
+                        example: 100
+                      latency_ms:
+                        type: integer
+                        minimum: 0
+                        description: Latency Ms.
+                        example: 1
+                      environment:
+                        type: string
+                        example: prod
+                        description: Environment.
+                      request_bytes:
+                        type: integer
+                        minimum: 0
+                        description: Request Bytes.
+                        example: 1
+                      response_bytes:
+                        type: integer
+                        minimum: 0
+                        description: Response Bytes.
+                        example: 1
+                      scheme:
+                        type: string
+                        enum:
+                        - http
+                        - https
+                        description: Scheme.
+                        example: http
+                      host:
+                        type: string
+                        description: Host.
+                        example: example
+                      auth_present:
+                        type: string
+                        enum:
+                        - 'true'
+                        - 'false'
+                        - unknown
+                        description: Auth Present.
+                        example: 'true'
+                      version_hint:
+                        type: object
+                        description: Version Hint.
+                      user_agent:
+                        type: string
+                        maxLength: 256
+                        description: User Agent.
+                        example: example
+                      consumer_hint:
+                        type: object
+                        description: Consumer Hint.
+                      spec_revision_id:
+                        type: string
+                        format: uuid
+                        description: Spec Revision ID.
+                        example: spec_01h2xcejqtf3fz5y5j0v8k9m2p
+                      agent_key_id:
+                        type: string
+                        format: uuid
+                        description: Agent Key ID.
+                        example: agent_01h2xcejqtf3fz5y5j0v8k9m2p
+                      fields:
+                        type: object
+                        properties:
+                          request:
+                            type: array
+                            items:
+                              type: string
+                            description: Request.
+                            maxItems: 1000
+                          response:
+                            type: array
+                            items:
+                              type: string
+                            description: Response.
+                            maxItems: 1000
+                        description: Fields.
+                      sample:
+                        type: object
+                        description: Opt-in exchange (`request` / `response`, each
+                          with `headers`, `body`, `mediaType`). Refused with `422
+                          usage-body-not-accepted` unless the source's body window
+                          is open.
+                  description: Events.
+              description: Request body for ingestabatchofusageeventsrequest.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads:
     get:
       tags:
@@ -76281,7 +76515,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         completed_at:
           anyOf:
           - type: string
@@ -77768,7 +78002,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -77941,7 +78175,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -78382,13 +78616,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -80779,7 +81013,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: d10a0e8d-c59c-4a33-8144-f1c61ef6f3a0
+          example: 5ab96725-00d9-4fc3-b8e6-3c8f9e2d7b67
         method:
           type: string
           title: Method
@@ -82922,7 +83156,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         envelope:
           additionalProperties: true
           type: object
@@ -84413,7 +84647,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         browse_url:
           anyOf:
           - type: string
@@ -117075,7 +117309,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
       additionalProperties: false
       type: object
       required:
@@ -126571,7 +126805,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         detected_by:
           anyOf:
           - type: string
@@ -131462,6 +131696,140 @@ components:
         \    username: ``basic``: the user-id (may not contain ``:``, per RFC 7617).\n\
         \    password: ``basic``: the password (may be empty, for APIs that use the\
         \ key as username)."
+    UsageIngestRejection:
+      properties:
+        index:
+          type: integer
+          title: Index
+          description: The event's position in the batch (0-based).
+          example: 1
+        reason:
+          type: string
+          title: Reason
+          description: 'Why it was rejected: `invalid-event`, `source-mismatch`, `environment-reserved`,
+            `template-too-long`, `day-finalized`, `quota-exceeded`.'
+          example: example
+      type: object
+      required:
+      - index
+      - reason
+      title: UsageIngestRejection
+      description: One rejected event — its index and why, never its content.
+    UsageIngestResponse:
+      properties:
+        batchId:
+          type: string
+          title: Batchid
+          description: The `usage_ingest_batch` ledger row.
+          example: example
+        sourceId:
+          type: string
+          title: Sourceid
+          description: The source the batch was filed under.
+          example: example
+        receivedAt:
+          type: string
+          format: date-time
+          title: Receivedat
+          description: When the batch was ledgered.
+          example: example
+        received:
+          type: integer
+          title: Received
+          description: Events in the batch.
+          example: 1
+        accepted:
+          type: integer
+          title: Accepted
+          description: Kept by sampling and matched to an operation of a published
+            revision.
+          example: 1
+        sampledOut:
+          type: integer
+          title: Sampledout
+          description: Dropped by head sampling.
+          example: 1
+        unmatched:
+          type: integer
+          title: Unmatched
+          description: Kept, but no published revision declares the operation; counted
+            by inferred template.
+          example: 1
+        rejected:
+          type: integer
+          title: Rejected
+          description: Refused; see `rejections`.
+          example: 1
+        scrubFindings:
+          type: integer
+          title: Scrubfindings
+          description: Strings the edge scrub rewrote or dropped (a count, never what
+            was found).
+          example: 1
+        basis:
+          type: string
+          title: Basis
+          description: '`complete` at sampling rate 1; `sampled` when counts were
+            scaled by the inverse rate.'
+          example: example
+        samplingRate:
+          type: number
+          title: Samplingrate
+          description: The source's head-sampling rate.
+          example: 1.0
+        samples:
+          $ref: '#/components/schemas/UsageIngestSamples'
+          description: Samples.
+        rejections:
+          items:
+            $ref: '#/components/schemas/UsageIngestRejection'
+          type: array
+          title: Rejections
+          description: Per-event rejections, at most 100 (the counts cover every event).
+          maxItems: 1000
+        rejectionsTruncated:
+          type: boolean
+          title: Rejectionstruncated
+          description: Whether `rejections` was cut short.
+          example: false
+      type: object
+      required:
+      - batchId
+      - sourceId
+      - receivedAt
+      - received
+      - accepted
+      - sampledOut
+      - unmatched
+      - rejected
+      - scrubFindings
+      - basis
+      - samplingRate
+      - samples
+      - rejections
+      - rejectionsTruncated
+      title: UsageIngestResponse
+      description: The ledger row of an admitted batch, echoed back.
+    UsageIngestSamples:
+      properties:
+        stored:
+          type: integer
+          title: Stored
+          description: Samples reduced, re-scanned clean and stored as `usage_sample`
+            rows.
+          example: 1
+        dropped:
+          type: integer
+          title: Dropped
+          description: Chosen samples refused because the credential re-scan flagged
+            them or they exceeded 16 KiB.
+          example: 1
+      type: object
+      required:
+      - stored
+      - dropped
+      title: UsageIngestSamples
+      description: What happened to the opt-in body samples of the batch.
     UsageRecordBody:
       properties:
         id:
@@ -132703,13 +133071,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T02:20:30Z'
+          example: '2026-10-19T03:04:13Z'
         outcome:
           anyOf:
           - type: string

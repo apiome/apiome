@@ -223,20 +223,22 @@ describe('scopes', () => {
       '*': 1,
       'diff:read': 2,
       'lint:read': 2,
+      'usage:ingest': 0,
     });
   });
 
-  it('describes the three scopes the reference card lists', () => {
+  it('describes the four scopes the reference card lists', () => {
     expect(API_KEY_SCOPE_REFERENCE.map((entry) => entry.scope)).toEqual([
       '*',
       'diff:read',
       'lint:read',
+      'usage:ingest',
     ]);
     expect(API_KEY_SCOPE_REFERENCE.filter((entry) => entry.full)).toHaveLength(1);
   });
 });
 
-describe('the four presets', () => {
+describe('the five presets', () => {
   it('produce exactly the scope strings the server already stores', () => {
     // The acceptance criterion, as a property: every option reads its scopes from the shared
     // table rather than restating them.
@@ -248,12 +250,13 @@ describe('the four presets', () => {
     }
   });
 
-  it('cover every preset the shared table defines, in the mockup order', () => {
+  it('cover every preset the shared table defines, in the mockup order, then usage', () => {
     expect(API_KEY_SCOPE_PRESET_OPTIONS.map((option) => option.value)).toEqual([
       'full',
       'diff',
       'lint',
       'ci_both',
+      'usage',
     ]);
     expect(API_KEY_SCOPE_PRESET_OPTIONS).toHaveLength(
       Object.keys(API_KEY_SCOPE_PRESETS).length
@@ -263,6 +266,7 @@ describe('the four presets', () => {
   it('describe themselves in one line for the secret dialog', () => {
     expect(describeApiKeyScopePreset('full')).toBe('full access');
     expect(describeApiKeyScopePreset('ci_both')).toBe('diff:read + lint:read');
+    expect(describeApiKeyScopePreset('usage')).toBe('usage:ingest');
   });
 });
 

@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.379.0] - 2026-10-18
+
+### Added
+- **Usage ingest (#5760, RDG-1.2)**: `POST /v1/tenants/{tenant}/usage/ingest` takes a batch of at most 5,000
+  `apiome.usage.event/v1` events and 2 MiB (gzip accepted; the limit applies before and after decompression), naming its
+  `usage_source` by `X-Apiome-Usage-Source` or `source_id`. Authenticated with a workspace API key carrying the new
+  `usage:ingest` scope (apiome-db V291; the scope admits this route only) or a full-access key; a session is refused
+  (`403 usage-ingest-key-required`) and an agent key is never a REST credential. `app.usage_ingest` runs per event, in
+  order: the tier cap (`licenses.seats.usage_events_per_day`; over it the batch is `429 usage-quota-exceeded` with
+  `retryAt`, `batchId` and `Retry-After`, and ledgered as rejected), deterministic head sampling on
+  `(source, observed_at, path, status)` with counts scaled by the inverse rate (`basis: sampled`), the edge scrub (path
+  segments flagged by `app.intake_secret_scrub` or shaped like an email or UUID become `{param}` via the new
+  `app.inferred_spec.template_path`; query values discarded, names kept as `/parameters/query:<name>` field counters;
+  user agents scrubbed then truncated to 256), template matching through `app.consumer_surface.SpecIndex` against the
+  project's 20 newest **published** revisions (draft-only operations stay unmatched and count into
+  `usage_unmatched_daily` by inferred template), and one `usage_ingest_batch` ledger row per batch echoed in the
+  response (`accepted`, `sampledOut`, `unmatched`, `rejected`, `scrubFindings`, up to 100 `rejections` by index and
+  reason). Events on a finalized day are rejected (`day-finalized`). A `sample` is refused with
+  `422 usage-body-not-accepted` unless the source's body window is open; then it is reduced by the PMR-2.4 capture
+  reducer and stored as `usage_sample` only when the credential re-scan is clean and it fits 16 KiB.
+
+### Fixed
+- **Secret scrub performance**: the `secret-assignment` pattern of `app.intake_secret_scrub` only starts a match where a
+  key-character run starts. Same matches; a long token-shaped string no longer costs quadratic time to scan.
+
+The OpenAPI version moves to 1.243.0.
+
 ## [1.378.0] - 2026-10-18
 
 ### Added
