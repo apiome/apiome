@@ -67,6 +67,7 @@ __all__ = [
     "operation_key_from_pointer",
     "shape_pointer",
     "template_shape",
+    "version_document",
 ]
 
 _logger = logging.getLogger(__name__)
@@ -493,8 +494,12 @@ def _resolve_version(db: Any, tenant_id: str, project_id: str, version: Optional
     return dict(rows[0]) if rows else None
 
 
-def _version_document(db: Any, tenant_id: str, version: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
-    """The version's OpenAPI document: its frozen snapshot, else a render; ``None`` on failure."""
+def version_document(db: Any, tenant_id: str, version: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    """The version's OpenAPI document: its frozen snapshot, else a render; ``None`` on failure.
+
+    Shared with the usage ingest matcher (RDG-1.2, :mod:`app.usage_ingest_store`), which indexes
+    the same documents to resolve traffic onto operations.
+    """
     try:
         snapshot = db.get_spec_snapshot(version["id"], with_content=True)
         content = (snapshot or {}).get("content")
@@ -751,7 +756,7 @@ def blast_radius(db: Any, tenant_id: str, request: BlastRadiusRequest) -> Dict[s
         version = _resolve_version(db, tenant_id, root_id, request.version)
         document = None
         if version and any(operation_key_from_pointer(p) is None for p in pointers):
-            document = _version_document(db, tenant_id, version)
+            document = version_document(db, tenant_id, version)
         operations, warnings = affected_operations(pointers, document)
         evidence["consumer_contracts"] = [
             {"contract_id": row["id"], "consumer_id": row["consumer_id"], "revision": row["revision"],

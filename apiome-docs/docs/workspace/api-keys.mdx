@@ -32,7 +32,7 @@ monospace, with a copy button — use it to match a key to a log line), **Scopes
 
 ## Scopes
 
-A key carries one of four presets, chosen when it is created:
+A key carries one of five presets, chosen when it is created:
 
 | Preset | Scopes | Allows |
 | --- | --- | --- |
@@ -40,10 +40,23 @@ A key carries one of four presets, chosen when it is created:
 | **CI: classified diff** | `diff:read` | `POST /v1/diff/…/classified` only — recommended for contract gates |
 | **CI: lint** | `lint:read` | `GET …/lint` and `…/lint/gate` only (catalog and MCP) |
 | **CI: diff + lint** | `diff:read` `lint:read` | Both CI read scopes; still no write access |
+| **Usage source** | `usage:ingest` | `POST /v1/tenants/{tenant}/usage/ingest` only — for a traffic source feeding the [usage index](../govern/runtime-usage.mdx) |
 
 Give pipelines the narrowest preset that works: a contract gate needs only `diff:read`. A key's
 scopes cannot be changed after it is created — create a new key instead. See [CI diff
 gate](../reference/ci/ci-diff-gate.md) for the gate that uses `diff:read`.
+
+### A key for a usage source
+
+An OpenTelemetry Collector, a log shipper or any other traffic source sends usage events with a
+key that holds only `usage:ingest`. Such a key can post usage batches and nothing else: it cannot
+read a project, a version or another key, so a key copied out of a Collector's config gives nothing
+away. Choose the **Usage source** preset when you create it.
+
+<Screenshot id="api-keys-usage-scope" alt="The Create API key dialog with the Usage source preset chosen: the usage:ingest scope, a Production OTel Collector name and 365 days to expiry" />
+
+Agent keys can never hold `usage:ingest`, and the ingest endpoint does not accept a signed-in
+session — see [Runtime usage](../govern/runtime-usage.mdx#send-usage-events).
 
 ## Create a key
 

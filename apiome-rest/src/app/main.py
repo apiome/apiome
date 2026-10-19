@@ -146,6 +146,7 @@ from .type_namespaces_routes import router as type_namespaces_router
 from .unowned_findings_routes import router as unowned_findings_router
 from .upstream_credential_routes import router as upstream_credential_router
 from .upstream_credentials import validate_upstream_credential_keys
+from .usage_ingest_routes import router as usage_ingest_router
 from .verification_evidence_routes import router as verification_evidence_router
 from .verification_policy_routes import router as verification_policy_router
 from .verification_schedule_routes import router as verification_schedule_router
@@ -171,7 +172,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.242.0",
+    version="1.243.0",
 )
 
 
@@ -372,6 +373,8 @@ app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)
 app.include_router(ownership_policy_router)
 app.include_router(graph_router)
+# usage_ingest_router: RDG-1.2 usage ingest door POST /v1/tenants/{t}/usage/ingest (#5760).
+app.include_router(usage_ingest_router)
 app.include_router(comment_router)
 app.include_router(review_router)
 app.include_router(draft_binding_router)

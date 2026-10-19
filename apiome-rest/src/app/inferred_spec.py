@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl, urlparse
 
 from .canonical_model import (
@@ -42,6 +42,8 @@ __all__ = [
     "PathInferenceEvidence",
     "InferredSpecResult",
     "infer_canonical_api",
+    "PARAM_SEGMENT",
+    "template_path",
 ]
 
 _PROVENANCE = "inferred"
@@ -242,6 +244,50 @@ def _tokenize_path(path: str) -> Tuple[str, ...]:
     if not stripped:
         return ()
     return tuple(stripped.split("/"))
+
+
+#: The placeholder :func:`template_path` writes for a generalized segment.
+PARAM_SEGMENT = "{param}"
+
+
+def template_path(
+    path: str,
+    *,
+    generalize_dynamic: bool = True,
+    is_sensitive: Optional[Callable[[str], bool]] = None,
+) -> str:
+    """Generalize a concrete path into a template, segment by segment.
+
+    The same tokenizer and dynamic-segment rules the clustering engine uses (numeric, UUID and
+    hex-hash segments are dynamic), applied to one path with no cluster to compare against — what
+    the usage ingest pipeline (RDG-1.2) needs to turn ``/users/42/orders`` into
+    ``/users/{param}/orders`` before a raw path could persist.
+
+    Args:
+        path: A path without query or fragment (``/pets/42``).
+        generalize_dynamic: Whether numeric / UUID / hash segments become :data:`PARAM_SEGMENT`.
+            ``False`` generalizes only what ``is_sensitive`` flags.
+        is_sensitive: Optional predicate over one segment; a flagged segment becomes
+            :data:`PARAM_SEGMENT` whatever its shape.
+
+    Returns:
+        The template, always starting with ``/``. Segments already written as ``{name}`` are kept,
+        ``:name`` segments are rewritten to ``{name}``, and a trailing slash is dropped.
+    """
+    parts: List[str] = []
+    for segment in _tokenize_path(path):
+        colon = _COLON_PARAM_RE.match(segment)
+        if is_sensitive is not None and not _ALREADY_PARAM_RE.match(segment) and is_sensitive(segment):
+            parts.append(PARAM_SEGMENT)
+        elif _ALREADY_PARAM_RE.match(segment):
+            parts.append(segment)
+        elif colon:
+            parts.append("{" + colon.group(1) + "}")
+        elif generalize_dynamic and _is_dynamic_segment(segment):
+            parts.append(PARAM_SEGMENT)
+        else:
+            parts.append(segment)
+    return "/" + "/".join(parts)
 
 
 def _parse_url(url: str) -> Tuple[str, str, Tuple[str, ...], List[Tuple[str, str]]]:

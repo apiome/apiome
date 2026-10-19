@@ -18,7 +18,7 @@
  *
  * ### The one rule this module does not own
  *
- * The scope *vocabulary* — what `*`, `diff:read` and `lint:read` mean, and that `*` must
+ * The scope *vocabulary* — what `*`, `diff:read`, `lint:read` and `usage:ingest` mean, and that `*` must
  * stand alone — is `@/app/utils/apiKeyScopes`, which the REST layer and `lib/db/helper`
  * share. This module presents those scopes; it does not decide them, so the strings a preset
  * produces here are the same strings the database has always stored.
@@ -29,6 +29,7 @@ import {
   API_KEY_SCOPE_FULL,
   API_KEY_SCOPE_LINT_READ,
   API_KEY_SCOPE_PRESETS,
+  API_KEY_SCOPE_USAGE_INGEST,
   normalizeApiKeyScopes,
   type ApiKeyScopePreset,
 } from '@/app/utils/apiKeyScopes';
@@ -288,7 +289,8 @@ export interface ApiKeyScopeReference {
 }
 
 /**
- * The three scopes, in the order the mockup's reference card lists them.
+ * The four scopes, in the order the reference card lists them (the mockup's three, then
+ * `usage:ingest`, RDG-1.2 / #5760).
  *
  * Stated once so the card, the create dialog's badges and the table's legend cannot drift
  * into three different descriptions of `lint:read`.
@@ -309,6 +311,11 @@ export const API_KEY_SCOPE_REFERENCE: readonly ApiKeyScopeReference[] = [
     allows: 'GET …/lint and …/lint/gate (catalog + MCP).',
     full: false,
   },
+  {
+    scope: API_KEY_SCOPE_USAGE_INGEST,
+    allows: 'POST …/usage/ingest only — traffic sources feeding the usage index.',
+    full: false,
+  },
 ];
 
 /**
@@ -322,6 +329,7 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
     [API_KEY_SCOPE_FULL]: 0,
     [API_KEY_SCOPE_DIFF_READ]: 0,
     [API_KEY_SCOPE_LINT_READ]: 0,
+    [API_KEY_SCOPE_USAGE_INGEST]: 0,
   };
   for (const key of keys) {
     const scopes = apiKeyScopeList(key);
@@ -336,7 +344,7 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
   return counts;
 }
 
-/** One of the create dialog's four scope cards. */
+/** One of the create dialog's five scope cards. */
 export interface ApiKeyScopePresetOption {
   /** The preset id, which is also the radio's value. */
   value: ApiKeyScopePreset;
@@ -349,7 +357,7 @@ export interface ApiKeyScopePresetOption {
 }
 
 /**
- * The four presets, in the mockup's order.
+ * The five presets: the mockup's four, in its order, then the usage-source preset (RDG-1.2).
  *
  * `scopes` is read from {@link API_KEY_SCOPE_PRESETS} rather than restated, which is what
  * makes the second acceptance criterion — *"scope presets produce the same scope strings as
@@ -379,6 +387,12 @@ export const API_KEY_SCOPE_PRESET_OPTIONS: readonly ApiKeyScopePresetOption[] = 
     label: 'CI: diff + lint',
     scopes: API_KEY_SCOPE_PRESETS.ci_both,
     hint: 'Both CI read scopes; still no write access.',
+  },
+  {
+    value: 'usage',
+    label: 'Usage source',
+    scopes: API_KEY_SCOPE_PRESETS.usage,
+    hint: 'POST …/usage/ingest only — for an OpenTelemetry Collector or log shipper.',
   },
 ];
 

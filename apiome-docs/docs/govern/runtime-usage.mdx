@@ -13,9 +13,10 @@ The index is built as **counters, never as a request log**. It stores numbers pe
 hour, not the requests themselves, so it can never become a store of credentials or customer data.
 
 :::note[What is available today]
-This release adds the index and its retention. Connecting a **usage source** (an OpenTelemetry
-Collector, a HAR upload, a gateway log) and the ingest endpoint that fills the index come in later
-releases, so the index stays empty until then.
+The index, its retention and the **ingest endpoint** that fills it are available. The ready-made
+sources that call the endpoint for you (an OpenTelemetry receiver, a HAR upload, gateway logs) and
+creating a source from the app or the CLI come in later releases. Until then, a script or a log
+shipper can [send usage events](#send-usage-events) directly.
 :::
 
 ## What the index stores
@@ -44,7 +45,7 @@ An operation is named the way the classified diff names it, for example
 | --- | --- |
 | Header names and values | Never. Only whether a credential header was **present** survives the edge |
 | Request and response bodies | Never by default. A source may opt in to a small redacted sample (below) |
-| Query parameter values | Never. Names may be counted as fields; values are dropped before the event is built |
+| Query parameter values | Never. Names are counted as fields (`/parameters/query:<name>`) when the source reports field presence; values are dropped before the event is built |
 | Raw paths | Never. A path such as `/users/alice@example.com` is templated before it is counted |
 | Client IP addresses and locations | Never. No column can hold one |
 | Consumer identity | Only an HMAC computed at the edge, never the key, token or header it came from |
@@ -59,8 +60,140 @@ bounded on every side:
 
 - at most **5%** of calls, and only until an end date at most **7 days** ahead;
 - each sample is reduced by the same redactor as [mock proxy capture](../reference/mock-runtime/mock-proxy-capture.md),
-  re-scanned for credentials, and dropped if anything is still flagged;
+  which removes credential headers, credential-shaped fields, tokens and personal data such as
+  emails, then re-scanned for credentials, and **not stored at all** if anything is still flagged;
 - at most **16 KiB** each, and **deleted after 7 days** on every plan.
+
+An event carries its exchange in a `sample` field. A batch that sends one while the source's sample
+window is closed is refused with `422 usage-body-not-accepted`.
+
+## Send usage events
+
+Every source sends its traffic through one endpoint:
+
+```http
+POST /v1/tenants/{tenant}/usage/ingest
+```
+
+### Before you start
+
+- **A usage source.** Each source belongs to one project and sets its environment (`prod` by
+  default), its sampling rate, whether it reports field presence, and its sample window. Creating
+  sources from the app or the CLI comes in a later release. Until then, an operator creates one in
+  the database and passes its id to whoever runs the source:
+
+  ```sql
+  INSERT INTO apiome.usage_source (tenant_id, project_id, kind, environment, sampling_rate)
+  SELECT p.tenant_id, p.id, 'otlp', 'prod', 1
+  FROM apiome.projects p WHERE p.slug = 'payments-api'
+  RETURNING id;
+  ```
+
+- **A key with the `usage:ingest` scope.** Create a workspace API key with the **Usage source**
+  preset (see [API keys](../workspace/api-keys.mdx#a-key-for-a-usage-source)). That key can post usage
+  batches and call nothing else. A full-access key also works. A signed-in session and agent keys
+  are refused.
+
+### The request
+
+Send a JSON batch of at most **5,000 events** and **2 MiB**. To compress it, send
+`Content-Encoding: gzip`; the 2 MiB limit applies before and after decompression. Name the source
+with the `X-Apiome-Usage-Source` header or with `source_id` in the body.
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/northwind/usage/ingest \
+  -H "X-API-Key: $APIOME_USAGE_KEY" \
+  -H "X-Apiome-Usage-Source: 6f1c9a52-4a5e-4c1b-9d0e-1f2a3b4c5d6e" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [
+      {
+        "observed_at": "2026-10-18T14:03:12.481Z",
+        "method": "GET",
+        "path": "/pets/42?limit=10",
+        "status": 200,
+        "latency_ms": 38,
+        "scheme": "https",
+        "auth_present": true,
+        "user_agent": "checkout-web/4.2"
+      }
+    ]
+  }'
+```
+
+Each event is an `apiome.usage.event/v1` event. `observed_at` (with a time zone), `method`, `path`,
+`status` and `latency_ms` are required. `request_bytes`, `response_bytes`, `scheme`, `host`,
+`auth_present`, `version_hint`, `user_agent`, `consumer_hint` and `fields` are optional.
+`environment` and `source_id` default to the source's. An event with an unknown key, or a value out
+of range (for example a `latency_ms` above 2,147,483,647), is rejected on its own. The rest of the batch still counts.
+
+### What happens to each event
+
+The pipeline runs these five steps in order. An event stops at the first step that refuses it.
+
+1. **Tier cap.** Your plan's **Events per day** ([table above](#how-long-it-is-kept)). A batch that
+   would take the workspace over today's cap is refused whole with `429 usage-quota-exceeded`.
+   `retryAt` (and the `Retry-After` header) says when the cap resets, at 00:00 UTC. The batch is
+   still written to the ledger, as rejected.
+2. **Head sampling.** A source with a sampling rate below 1 keeps a fixed share of events. The
+   choice hashes the source, `observed_at`, the path and the status, so a retried batch keeps the
+   same events. Counts are scaled up by the inverse rate, and the response says `basis: sampled`.
+3. **Scrubbing.** Every string the index could keep is cleaned first:
+   - a path segment that looks like a credential (a known key or token shape, a bearer token, a
+     random-looking string), an email address or a UUID becomes `{param}`, so
+     `/users/alice@example.com/orders` is counted as `/users/{param}/orders`;
+   - the query string is split off before the event is built: parameter **names** are kept and
+     **values** are discarded;
+   - the user agent is scrubbed of credentials and emails, then cut to 256 characters;
+   - a field pointer that names a credential is dropped.
+4. **Template matching.** The path is matched against the project's **published** versions, newest
+   first, the same way [**Import Pact file**](../build/projects.mdx#consumers) resolves a Pact file:
+   `/pets/42` lands on `GET /pets/{petId}`. A match counts toward that operation and version. Traffic
+   that no published version declares, including an operation that only a draft declares, is counted
+   as **unmatched** under an inferred template, where numbers, UUIDs and hashes become `{param}`.
+   With field presence on, the call's query names and `fields` are counted too.
+5. **Ledger.** One ledger row per batch records how many events were accepted, sampled out,
+   unmatched or rejected, and how many strings scrubbing rewrote. The response echoes it.
+
+Scrubbing always applies, even when your workspace's import secret-scrub policy is set to warn
+only: that setting covers documents you upload, not tokens that came along in live traffic.
+
+### The response
+
+```json
+{
+  "batchId": "0c4e…",
+  "sourceId": "6f1c9a52-4a5e-4c1b-9d0e-1f2a3b4c5d6e",
+  "receivedAt": "2026-10-18T14:03:15.002Z",
+  "received": 1, "accepted": 1, "sampledOut": 0, "unmatched": 0, "rejected": 0,
+  "scrubFindings": 0,
+  "basis": "complete", "samplingRate": 1.0,
+  "samples": {"stored": 0, "dropped": 0},
+  "rejections": [], "rejectionsTruncated": false
+}
+```
+
+`rejections` lists up to 100 rejected events by index and reason, never by content:
+
+| Reason | Meaning |
+| --- | --- |
+| `invalid-event` | The event does not match `apiome.usage.event/v1` |
+| `source-mismatch` | The event names a different `source_id` from the batch |
+| `environment-reserved` | `mock` is reserved for the mock runtime's own source |
+| `template-unstorable` | The path's template is longer than 1,024 characters, or has a character the index cannot store |
+| `day-finalized` | The event's UTC day is already final and takes no new counts |
+| `quota-exceeded` | The batch was over the daily cap |
+
+### Errors
+
+| Status | Code | When |
+| --- | --- | --- |
+| `400` | `usage-batch-invalid`, `usage-source-required` | The body is not a batch, the encoding is not gzip, or no source is named |
+| `403` | `usage-ingest-key-required`, `usage-source-disabled` | Not an API key, or the source is switched off |
+| `404` | `usage-source-not-found` | No such source in this workspace |
+| `413` | `usage-batch-too-large` | Over 2 MiB or 5,000 events |
+| `422` | `usage-body-not-accepted` | A `sample` was sent while the source's sample window is closed |
+| `429` | `usage-quota-exceeded` | Over today's events-per-day cap |
 
 ## How long it is kept
 
@@ -98,5 +231,6 @@ It prints what it did as JSON, or `{"skipped": true}` when another replica is al
 
 ## Where next
 
+- [API keys](../workspace/api-keys.mdx) — the `usage:ingest` scope
 - [Dependency graph](./dependency-graph.mdx)
 - [Licenses](../admin/licenses.mdx)

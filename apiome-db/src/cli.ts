@@ -371,7 +371,7 @@ apiKeysCmd
   .option("--created-by <user>", "Attribute creation to a user (email or id)")
   .option(
     "--scopes <scopes>",
-    "Comma-separated scopes: * (full access, default), diff:read, lint:read (CTG-2.3)",
+    "Comma-separated scopes: * (full access, default), diff:read, lint:read (CTG-2.3), usage:ingest (RDG-1.2)",
   )
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;

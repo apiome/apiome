@@ -1,0 +1,26 @@
+---
+slug: usage-ingest
+title: One door for live traffic, scrubbed at the edge
+description: Send usage events with a usage:ingest key; tokens, cookies and emails never reach the index.
+authors: [apiome]
+---
+
+The [usage index](/govern/runtime-usage) now has its ingest endpoint. A traffic source posts batches
+of usage events to `POST /v1/tenants/{tenant}/usage/ingest`, and Apiome turns them into
+per-operation counters without keeping the traffic itself.
+
+{/* truncate */}
+
+- **A key that can only send usage.** The new `usage:ingest` scope, the **Usage source** preset on
+  [API keys](/workspace/api-keys#a-key-for-a-usage-source), admits the ingest endpoint and nothing
+  else. Agent keys and signed-in sessions are refused.
+- **Scrubbed before it is counted.** Path segments that look like a token, an email or a UUID become
+  `{param}`, query values are dropped (names are kept), and user agents are scrubbed and cut to 256
+  characters. Opt-in body samples are reduced by the mock-capture redactor and not stored at all if
+  the final credential re-scan still flags anything.
+- **Matched against published versions only.** `/pets/42` is counted as `GET /pets/{petId}`.
+  Traffic that only a draft declares stays **unmatched**, under an inferred template.
+- **Sampling and caps.** Sources can head-sample (counts are scaled back up and marked
+  `basis: sampled`). Your plan's events-per-day cap answers `429` with `retryAt`, and every batch,
+  accepted or not, gets a ledger row.
+- Batches carry up to 5,000 events and 2 MiB, gzip accepted.

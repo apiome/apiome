@@ -106,8 +106,12 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
     # --- generic secret-named assignments (JSON/YAML/env/query) ----------------
     # The key must *name* a secret; a short or placeholder-looking value still gets
     # redacted, because deciding "this one is fake" is not intake's call.
+    # The lookbehind lets a match start only where a key-character run starts. The leftmost
+    # match always started there anyway (the leading class covers the same characters), but
+    # without it the engine retried every position inside a long run — quadratic on a long
+    # token-shaped string, which the usage ingest edge (RDG-1.2) scrubs on every event.
     ("secret-assignment", _p(
-        r"(?:\"|')?[A-Za-z0-9_\-]*"
+        r"(?:\"|')?(?<![A-Za-z0-9_\-])[A-Za-z0-9_\-]*"
         r"(?:password|passwd|secret|api[-_]?key|apikey|access[-_]?token|refresh[-_]?token"
         r"|auth[-_]?token|client[-_]?secret|private[-_]?key|credential|passphrase"
         r"|session[-_]?id|sessionid|session)"
