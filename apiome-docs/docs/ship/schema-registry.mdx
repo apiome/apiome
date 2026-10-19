@@ -1,0 +1,104 @@
+---
+title: Schema registry subjects
+description: Register Avro, JSON Schema and Protobuf schemas under subjects with stable ids.
+sidebar_position: 7.1
+tags: [catalog, versions]
+---
+
+The schema registry gives your Avro, JSON Schema and Protobuf schemas what a Kafka-style registry
+expects: named **subjects**, integer **schema ids** and numbered **versions**. It keeps the schemas
+themselves in the catalog — every subject version is a catalog item revision — so there is one
+place schemas live.
+
+## Concepts
+
+| Term | Meaning |
+| --- | --- |
+| **Subject** | A name schemas are registered under, for example `orders-value`. Unique among your tenant's live subjects. |
+| **Version** | A subject's 1st, 2nd, 3rd … schema. Each version points at the catalog item revision that holds it. |
+| **Schema id** | A number for the schema's *content*, counted per tenant (1, 2, 3 …). The same schema under two subjects has one id. |
+| **Strategy** | How the subject name was chosen: `topic`, `record` or `topic_record` (see below). |
+| **Compatibility level** | `NONE`, `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL` or `FULL_TRANSITIVE`. A subject without one uses the tenant default (`BACKWARD` until you change it). |
+| **Mode** | `READWRITE` or `READONLY`. A `READONLY` subject — or a `READONLY` tenant default — refuses new versions. |
+
+Compatibility levels are stored now. Apiome does not yet check a new version against them.
+
+## What a version is
+
+When you register a schema, Apiome reads it with the same importer a catalog upload uses (Avro,
+JSON Schema or Protobuf) and computes its **fingerprint** — a hash of the parsed schema, so the
+order of keys or whitespace does not matter. Then:
+
+- **The subject already holds that schema** — you get its existing version and id back. Nothing is
+  created (`created: false`).
+- **Another subject holds that schema** — the subject gets a new version with the *same* schema id,
+  pointing at the same catalog revision. Nothing is imported.
+- **The schema is new to your tenant** — it is imported as a new revision of the subject's catalog
+  item and gets the next schema id. The first registration under a subject creates that catalog
+  item, named after the subject.
+
+So registering the same schema twice always returns the same id and creates one revision.
+
+## Subject naming strategies
+
+The strategy records how a subject name is built — the same three strategies the Avro export uses
+for its subject names:
+
+| Strategy | Subject name | Example |
+| --- | --- | --- |
+| `topic` | `<topic>-value` (or `-key`) | `orders-value` |
+| `record` | `<namespace.Record>-value` | `acme.Order-value` |
+| `topic_record` | `<topic>-<namespace.Record>-value` | `orders-acme.Order-value` |
+
+## Register a schema
+
+Send the schema text to the subject's versions. `schemaType` is `AVRO` (the default), `JSON` or
+`PROTOBUF`:
+
+```bash
+curl -X POST https://<your-apiome-host>/v1/tenants/acme/schema-registry/subjects/orders-value/versions \
+  -H "X-API-Key: <workspace-api-key>" -H "Content-Type: application/json" \
+  -d '{"schemaType": "AVRO", "strategy": "topic",
+       "schema": "{\"type\":\"record\",\"name\":\"Order\",\"namespace\":\"acme\",\"fields\":[{\"name\":\"id\",\"type\":\"string\"}]}"}'
+```
+
+The answer names the schema `id`, the subject `version`, whether it was `created`, and the catalog
+item (`projectId`) and revision (`versionRecordId`) that hold it. You need the **Imports — create**
+permission.
+
+## Attach an existing catalog item
+
+An Avro, JSON Schema or Protobuf item you already imported can back a subject. Its **latest
+revision becomes version 1**; its earlier revisions stay exactly as they are, and later
+registrations under the subject add revisions to the same item:
+
+```bash
+curl -X POST https://<your-apiome-host>/v1/tenants/acme/schema-registry/subjects/orders-value/attach \
+  -H "X-API-Key: <workspace-api-key>" -H "Content-Type: application/json" \
+  -d '{"projectId": "<catalog-item-id>"}'
+```
+
+The subject must have no versions yet. You need the **Imports — edit** permission.
+
+## Read, change and delete subjects
+
+| Route | Does |
+| --- | --- |
+| `GET …/schema-registry/subjects` | Lists live subjects with their version count and latest version |
+| `PUT …/subjects/<subject>` | Creates a subject or changes its `strategy`, `compatibilityLevel` or `mode` |
+| `GET …/subjects/<subject>/versions` | Lists a subject's versions, oldest first |
+| `GET …/subjects/<subject>/versions/<n>` | One version with its schema text (`latest` works too) |
+| `DELETE …/subjects/<subject>` | Deletes a subject and its versions |
+| `GET …/schema-registry/schemas/ids/<id>` | Resolves a schema id to its schema text |
+| `GET` / `PUT …/schema-registry/config` | The tenant's default compatibility level and mode |
+
+Deleting a subject hides it and its versions from every list, but **its schema ids keep
+resolving**, so a consumer that already holds an id can still read the schema. The catalog item and
+its revisions are not deleted. You can register a deleted subject's name again; it starts at
+version 1.
+
+## Reference
+
+- [Schema registry](/reference/rest/schema-registry) REST reference
+- [Catalog](../bring-in/catalog.mdx) — where subject versions live as catalog item revisions
+- [Export a spec](./export-a-spec.md) — exporting to Avro and other formats

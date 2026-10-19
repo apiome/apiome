@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.384.0] - 2026-10-19
+
+### Added
+- **Schema subject model (#5974, CDG-4.2)**: apiome-db **V294** adds `schema_registry_config` (per-tenant default
+  compatibility level and mode, plus `next_schema_id`, the per-tenant schema id counter), `schema_registry_schemas` (one
+  row per distinct schema: `schema_id`, `schema_type` `AVRO|JSON|PROTOBUF`, `fingerprint` + `fingerprint_kind`
+  `canonical-model` — `avro-pcf` reserved for MFI-12.1 #3782 — and the catalog revision that first held it; UNIQUE
+  (tenant, schema_id) and (tenant, type, kind, fingerprint)), `schema_subjects` (name unique among live subjects,
+  `strategy` `topic|record|topic_record`, nullable `compatibility_level` = tenant default, `mode`, backing catalog item,
+  soft delete) and `schema_subject_versions` (subject, version, schema_id, the holding `project_id` +
+  `version_record_id`, `references`, soft delete; UNIQUE (subject, version) and (subject, schema_id)). Schema ids live
+  in their own table so two subjects holding one schema share its id. `app.schema_registry` (rules, strategy mapping to
+  the MFX-19.3 `AvroSubjectNamingStrategy`, fingerprint through the Avro / JSON Schema / Protobuf import sources),
+  `app.schema_registry_store` (`record_version` creates the subject, finds or allocates the id and inserts the next
+  version in one transaction) and `app.schema_registry_service` (register: an existing fingerprint returns its version,
+  one held by another subject shares its id and revision, a new one is imported through `run_adapter_import_job` as a
+  revision of the subject's catalog item; attach: an existing Avro / JSON Schema / Protobuf catalog item's latest
+  revision becomes version 1, history untouched). Routes under `/v1/tenants/{t}/schema-registry` (`schema-registry`
+  tag): `GET|PUT /config`, `GET /subjects`, `GET|PUT|DELETE /subjects/{s}`, `GET|POST /subjects/{s}/versions`,
+  `GET /subjects/{s}/versions/{n|latest}`, `POST /subjects/{s}/attach`, `GET /schemas/ids/{id}` (resolves after its
+  subjects are deleted). Permissions `imports:view|create|edit|delete`. Compatibility verdicts and the
+  Confluent-compatible API are CDG-4.3 (#5975).
+
+The OpenAPI version moves to 1.248.0.
+
 ## [1.383.0] - 2026-10-19
 
 ### Added
