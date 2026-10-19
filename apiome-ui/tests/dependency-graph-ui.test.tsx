@@ -11,8 +11,13 @@
  * * **Graph page**: searches and filters through the BFF, says "Showing 2,000 of N" when cut
  *   short, opens an entity's panel from `?entity=`; axe passes.
  *
+ * * **Runtime edges and suggested consumers** (CDG-3.5): runtime edges sit in their own column beside
+ *   the declared ones, with calls and last seen; suggested consumers are listed and **Register
+ *   consumer** registers one (with the header name a hashed client needs); a viewer gets no button.
+ *
  * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures (`dependency-graph`,
- * `dependencies-tab`, `blast-radius`) and the browser suite's `dependency-graph-truncated`.
+ * `dependencies-tab`, `dependencies-runtime`, `blast-radius`) and the browser suite's
+ * `dependency-graph-truncated`.
  */
 
 import React from 'react';
@@ -186,7 +191,8 @@ describe('the Dependencies panel', () => {
     expect(calls).toHaveLength(0);
     rerender(<DependenciesPanel kind="project" id={PROJECT} active />);
     await screen.findByTestId('dependency-edge-e1');
-    expect(calls.map((c) => c.url).sort()).toEqual([
+    // The edge reads; a project also reads its suggested consumers (CDG-3.5) once the edges land.
+    expect(calls.map((c) => c.url).filter((url) => url.startsWith('/api/graph')).sort()).toEqual([
       `/api/graph/edges/project/${PROJECT}?direction=in&limit=500`,
       `/api/graph/edges/project/${PROJECT}?direction=out&limit=500`,
     ]);
@@ -361,5 +367,128 @@ describe('the graph page', () => {
     await screen.findByTestId('dependency-edge-e1');
     expect(await axe(container)).toHaveNoViolations();
     writeA11yFixture('dependency-graph', (container.querySelector('.page') ?? container.firstElementChild)!.outerHTML);
+  });
+});
+
+
+// ---------------------------------------------------------------------------------------
+// CDG-3.5 — runtime edges and suggested consumers
+// ---------------------------------------------------------------------------------------
+
+describe('runtime edges and suggested consumers', () => {
+  const RUNTIME: GraphEdge[] = [
+    edge(1, {
+      id: 'r1', edge_kind: 'runtime_calls', provenance: 'runtime', source_ref: 'usage:30d',
+      evidence: { calls: 1025, errors: 6, last_seen_day: '2026-10-18', window_days: 30, via: ['api_key'] },
+    }),
+    edge(4, {
+      id: 'r4', edge_kind: 'runtime_calls', provenance: 'runtime', source_ref: 'usage:30d',
+      pointer: '/paths/~1users~1{userId}~1orders/get',
+      evidence: { calls: 1, errors: 0, last_seen_day: '2026-10-02', window_days: 30, via: ['user_agent'] },
+      from_label: { name: 'Search indexer', slug: 'search-indexer', owner: null },
+    }),
+  ];
+  const SUGGESTIONS = [
+    {
+      id: 'ua:checkout-web', client_kind: 'user_agent', label: 'checkout-web', suggested_name: 'checkout-web',
+      suggested_slug: 'checkout-web', needs_binding_name: false, calls: 240, days_seen: 3,
+      first_seen_at: '2026-10-15T08:00:00Z', last_seen_at: '2026-10-18T09:30:00Z',
+    },
+    {
+      id: 'api_key:0123456789abcdef0123', client_kind: 'api_key', label: 'Unrecognised API key 012345',
+      suggested_name: 'Unrecognised API key 012345', suggested_slug: null, needs_binding_name: true, calls: 1,
+      days_seen: 1, first_seen_at: '2026-10-17T10:00:00Z', last_seen_at: '2026-10-17T10:00:00Z',
+    },
+  ];
+  let canCreate = true;
+
+  beforeEach(() => {
+    canCreate = true;
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (url.startsWith('/api/access/permissions/me')) {
+        return res({ success: true, data: { is_admin: false, permissions: canCreate ? ['consumer_contracts:create'] : [] } });
+      }
+      if (url.endsWith('/register')) {
+        return res({ success: true, data: { consumer: { id: id(9), slug: 'checkout-web', name: 'Checkout web' } } }, 201);
+      }
+      if (url.startsWith(`/api/consumers/${PROJECT}/:suggestions`)) {
+        return res({ success: true, data: { suggestions: SUGGESTIONS, count: 2, window_days: 30 } });
+      }
+      if (url.startsWith('/api/graph/edges/')) {
+        const incoming = url.includes('direction=in');
+        const edges = incoming ? [...INCOMING, ...RUNTIME] : OUTGOING;
+        return res({ edges, total: edges.length, truncated: false, limit: 500, offset: 0 });
+      }
+      return res({}, 404);
+    }) as unknown as typeof fetch;
+  });
+
+  async function renderRuntime() {
+    const view = await renderPanel();
+    await screen.findByTestId('suggested-consumers');
+    return view;
+  }
+
+  it('lists runtime edges in their own column, with calls and last seen', async () => {
+    await renderRuntime();
+    const declared = screen.getByText('Declared and derived').parentElement as HTMLElement;
+    const runtime = screen.getByTestId('dependencies-runtime');
+    expect(within(runtime).getByRole('heading', { name: /Called at runtime by/ })).toBeInTheDocument();
+    expect(within(runtime).getByTestId('dependency-edge-r1')).toHaveTextContent('1,025 calls · last 2026-10-18');
+    expect(within(runtime).getByTestId('dependency-edge-r4')).toHaveTextContent('1 call · last 2026-10-02');
+    expect(within(runtime).getAllByText('Runtime')).toHaveLength(2);
+    // Never merged: the declared column keeps the contract edge of the same consumer.
+    expect(within(declared).getByTestId('dependency-edge-e1')).toHaveTextContent('Derived');
+    expect(within(declared).queryByTestId('dependency-edge-r1')).not.toBeInTheDocument();
+  });
+
+  it('lists suggested consumers and registers one', async () => {
+    await renderRuntime();
+    const row = screen.getByTestId('suggested-consumer-ua:checkout-web');
+    expect(row).toHaveTextContent('checkout-web');
+    expect(row).toHaveTextContent('240 calls on 3 days · last seen 18 Oct 2026');
+    fireEvent.click(within(row).getByRole('button', { name: /Register consumer/ }));
+    const dialog = await screen.findByTestId('register-suggestion-dialog');
+    expect(within(dialog).getByLabelText('Name')).toHaveValue('checkout-web');
+    expect(within(dialog).queryByLabelText('Header or claim name')).not.toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Checkout web' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Register consumer' }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/register'))).toBe(true));
+    const post = calls.find((c) => c.url.endsWith('/register'));
+    expect(post?.url).toBe(`/api/consumers/${PROJECT}/:suggestions/ua%3Acheckout-web/register`);
+    expect(post?.body).toEqual({ name: 'Checkout web', slug: 'checkout-web' });
+  });
+
+  it('asks a hashed client for its header name before registering', async () => {
+    await renderRuntime();
+    const row = screen.getByTestId('suggested-consumer-api_key:0123456789abcdef0123');
+    fireEvent.click(within(row).getByRole('button', { name: /Register consumer/ }));
+    const dialog = await screen.findByTestId('register-suggestion-dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Register consumer' }));
+    expect(within(dialog).getByText('Enter the header or claim the value arrives in.')).toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith('/register'))).toBe(false);
+    fireEvent.change(within(dialog).getByLabelText('Header or claim name'), { target: { value: 'x-api-key' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Register consumer' }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/register'))).toBe(true));
+    expect(calls.find((c) => c.url.endsWith('/register'))?.body).toEqual({
+      name: 'Unrecognised API key 012345',
+      binding_name: 'x-api-key',
+    });
+  });
+
+  it('offers no register button to a viewer', async () => {
+    canCreate = false;
+    await renderRuntime();
+    await waitFor(() => expect(calls.some((c) => c.url.startsWith('/api/access/permissions/me'))).toBe(true));
+    expect(screen.queryByRole('button', { name: /Register consumer/ })).not.toBeInTheDocument();
+  });
+
+  it('passes axe and dumps the docs fixture', async () => {
+    const { container } = await renderRuntime();
+    await screen.findAllByRole('button', { name: /Register consumer/ });
+    expect(await axe(container)).toHaveNoViolations();
+    writeA11yFixture('dependencies-runtime', container.innerHTML);
   });
 });

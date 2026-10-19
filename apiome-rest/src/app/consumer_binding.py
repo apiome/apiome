@@ -63,6 +63,7 @@ __all__ = [
     "BindingRecord",
     "ConsumerMatcher",
     "LiveBinding",
+    "active_key_version",
     "binding_record_from_row",
     "consumer_hint_hmac",
     "derive_tenant_key",
@@ -190,6 +191,28 @@ def _master_keys() -> Tuple[Dict[int, bytes], Optional[int]]:
         return master_key_map()
     except EnvelopeEncryptionError as exc:
         raise BindingError(CODE_BINDING_KEY_UNAVAILABLE, str(exc), status=503) from exc
+
+
+def active_key_version() -> int:
+    """The master-key version new hashes are made under.
+
+    Registering a suggested consumer (CDG-3.5) stores the HMAC the edge already sent, which was made
+    under the current tenant key, so it records this version.
+
+    Returns:
+        The active version.
+
+    Raises:
+        BindingError: 503 ``consumer-binding-key-unavailable`` when no master key is configured.
+    """
+    keys, active = _master_keys()
+    if not keys:
+        raise BindingError(
+            CODE_BINDING_KEY_UNAVAILABLE,
+            "consumer bindings need APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS to be configured",
+            status=503,
+        )
+    return active if active is not None else max(keys)
 
 
 def consumer_hint_hmac(tenant_id: str, value: str, *, key_version: Optional[int] = None) -> Tuple[str, int]:

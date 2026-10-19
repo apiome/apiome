@@ -362,6 +362,13 @@ class AffectedEntity(BaseModel):
     depth: int = Field(description="1 for a direct dependent, 2+ for a transitive one.")
     edge_kind: str = Field(description="The edge that reached it: `consumes`, `depends_on` or `runtime_calls`.")
     provenance: str
+    provenances: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Every provenance that reached it at this depth — `declared`, `derived` and `runtime` side by "
+            "side, never merged (CDG-3.5). `provenance` is the first of them."
+        ),
+    )
     pointers: List[str] = Field(default_factory=list, description="The changed pointers it depends on.")
     path: List[Dict[str, Any]] = Field(default_factory=list, description="The edges from it back to the change.")
     owner: Optional[Dict[str, Any]] = Field(default=None, description="Its owner team `{slug, name, status}`.")

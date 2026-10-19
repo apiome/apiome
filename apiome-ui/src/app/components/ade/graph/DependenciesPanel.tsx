@@ -8,6 +8,11 @@
  * its provenance and the other end's owner team; stale edges are dimmed, marked "Stale" and show
  * when they were last seen. Then the bounded drawing (depth 2, expandable per node). Loads only
  * when the tab is active. A project or catalog item also gets a **Blast radius** button.
+ *
+ * Runtime edges (CDG-3.5) — calls the usage index attributed to a consumer — are listed in their own
+ * column, **Observed at runtime**, beside the declared and derived edges and never merged into them;
+ * each carries its call count and the last day it was seen. A project or catalog item then lists its
+ * **Suggested consumers**: clients seen in its traffic that are not registered.
  */
 
 import * as React from 'react';
@@ -25,7 +30,10 @@ import {
   mergeEdges,
   neighbourOf,
   nodeDisplayName,
+  runtimeEvidenceLine,
+  splitRuntimeGroups,
   truncationNotice,
+  type EdgeGroup,
   type EdgeNeighbour,
   type GraphEdge,
   type GraphNodeKind,
@@ -34,6 +42,7 @@ import {
 import { BlastRadiusDrawer } from './BlastRadiusDrawer';
 import { DependencyGraphSvg } from './DependencyGraphSvg';
 import { GraphOwnerBadge } from './GraphOwnerBadge';
+import { SuggestedConsumers } from './SuggestedConsumers';
 import { fetchEdges } from './graphApi';
 import { graphLayout, type GraphLayoutNode } from './graphLayoutModel';
 
@@ -132,6 +141,57 @@ export function DependenciesPanel({ kind, id, active, label, showGraphLink = tru
   const canBlast = kind === 'project' || kind === 'catalog_item';
   const notice = loaded ? truncationNotice(loaded.edges.length, loaded.total, loaded.truncated) : null;
 
+  const sides = splitRuntimeGroups(groups);
+
+  /** One column's groups, each a titled list of edges. */
+  const renderGroups = (list: readonly EdgeGroup[]) => (
+    <div className="dg-groups">
+      {list.map((group) => (
+        <section key={group.key} className="dg-group" aria-labelledby={`dg-group-${group.key}`}>
+          <h3 id={`dg-group-${group.key}`} className="dg-group__title">
+            {group.title}
+            <span className="dg-group__count">{group.neighbours.length}</span>
+            {group.staleCount ? <span className="dg-group__stale">{group.staleCount} stale</span> : null}
+          </h3>
+          <ul className="dg-edges">
+            {group.neighbours.map((n) => (
+              <li
+                key={n.edge.id}
+                className="dg-edge"
+                data-stale={n.edge.stale ? '' : undefined}
+                data-testid={`dependency-edge-${n.edge.id}`}
+              >
+                <span className="dg-edge__kind">{NODE_KIND_LABELS[n.kind]}</span>
+                <Link href={graphNodeHref(n.kind, n.id)} className="dg-edge__name">
+                  {nodeDisplayName(n.kind, n.id, n.label)}
+                </Link>
+                {n.edge.pointer ? <code className="dg-edge__pointer">{n.edge.pointer}</code> : null}
+                {runtimeEvidenceLine(n.edge) ? (
+                  <span className="dg-edge__calls">{runtimeEvidenceLine(n.edge)}</span>
+                ) : null}
+                <Badge variant="neutral" className="dg-edge__provenance" data-provenance={n.edge.provenance}>
+                  {PROVENANCE_LABELS[n.edge.provenance]}
+                </Badge>
+                <GraphOwnerBadge owner={n.label?.owner} testId={`dependency-owner-${n.edge.id}`} />
+                {n.edge.stale ? (
+                  <span className="dg-edge__stale">
+                    <Badge variant="warn">Stale</Badge>
+                    <span className="dg-edge__seen">{lastSeenLabel(n.edge.last_seen_at)}</span>
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+
+  // Above the drawing: the rows a person acts on come before the picture.
+  const suggestions = canBlast ? (
+    <SuggestedConsumers projectId={id} active={active} onRegistered={() => void load()} />
+  ) : null;
+
   if (!active) return null;
   return (
     <section className="dg-panel" aria-labelledby={`dg-title-${id}`} data-testid="dependencies-panel">
@@ -160,11 +220,14 @@ export function DependenciesPanel({ kind, id, active, label, showGraphLink = tru
       ) : state.status === 'error' ? (
         <ErrorState title="Dependencies could not be loaded" description={state.error} />
       ) : groups.length === 0 ? (
-        <EmptyState
-          icon={<Network aria-hidden />}
-          title="Nothing depends on this yet"
-          description="Contracts, conversions, declarations and syncs add edges here."
-        />
+        <>
+          <EmptyState
+            icon={<Network aria-hidden />}
+            title="Nothing depends on this yet"
+            description="Contracts, conversions, declarations and syncs add edges here."
+          />
+          {suggestions}
+        </>
       ) : (
         <>
           {notice ? (
@@ -172,43 +235,25 @@ export function DependenciesPanel({ kind, id, active, label, showGraphLink = tru
               {notice}
             </p>
           ) : null}
-          <div className="dg-groups">
-            {groups.map((group) => (
-              <section key={group.key} className="dg-group" aria-labelledby={`dg-group-${group.key}`}>
-                <h3 id={`dg-group-${group.key}`} className="dg-group__title">
-                  {group.title}
-                  <span className="dg-group__count">{group.neighbours.length}</span>
-                  {group.staleCount ? <span className="dg-group__stale">{group.staleCount} stale</span> : null}
-                </h3>
-                <ul className="dg-edges">
-                  {group.neighbours.map((n) => (
-                    <li
-                      key={n.edge.id}
-                      className="dg-edge"
-                      data-stale={n.edge.stale ? '' : undefined}
-                      data-testid={`dependency-edge-${n.edge.id}`}
-                    >
-                      <span className="dg-edge__kind">{NODE_KIND_LABELS[n.kind]}</span>
-                      <Link href={graphNodeHref(n.kind, n.id)} className="dg-edge__name">
-                        {nodeDisplayName(n.kind, n.id, n.label)}
-                      </Link>
-                      {n.edge.pointer ? <code className="dg-edge__pointer">{n.edge.pointer}</code> : null}
-                      <Badge variant="neutral" className="dg-edge__provenance" data-provenance={n.edge.provenance}>
-                        {PROVENANCE_LABELS[n.edge.provenance]}
-                      </Badge>
-                      <GraphOwnerBadge owner={n.label?.owner} testId={`dependency-owner-${n.edge.id}`} />
-                      {n.edge.stale ? (
-                        <span className="dg-edge__stale">
-                          <Badge variant="warn">Stale</Badge>
-                          <span className="dg-edge__seen">{lastSeenLabel(n.edge.last_seen_at)}</span>
-                        </span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          {sides.runtime.length > 0 ? (
+            <div className="dg-sides" data-testid="dependencies-sides">
+              <div className="dg-side">
+                <h3 className="dg-side__title">Declared and derived</h3>
+                {sides.declared.length > 0 ? (
+                  renderGroups(sides.declared)
+                ) : (
+                  <p className="dg-side__empty">Nothing is declared or derived for this entity.</p>
+                )}
+              </div>
+              <div className="dg-side" data-testid="dependencies-runtime">
+                <h3 className="dg-side__title">Observed at runtime</h3>
+                {renderGroups(sides.runtime)}
+              </div>
+            </div>
+          ) : (
+            renderGroups(groups)
+          )}
+          {suggestions}
           {layout ? (
             <figure className="dg-figure">
               <figcaption className="dg-figure__caption">

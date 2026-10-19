@@ -34,6 +34,7 @@ and consumer:
 | **Fields** | How often each field (a JSON Pointer such as `/items/0/id`) was present in a request or response, when the source reports field presence |
 | **Unmatched paths** | Traffic on paths no published version declares, by inferred template (`/users/{param}`), with first and last seen |
 | **Ingest ledger** | One row per batch a source sends: how many events were accepted, sampled out, unmatched or rejected |
+| **Unattributed clients** | Per day, how many calls no binding recognised came from each client: the first word of its scrubbed user agent (`checkout-web`), or the HMAC its `consumer_hint` carried. These are the [suggested consumers](./dependency-graph.mdx#suggested-consumers) |
 
 An operation is named the way the classified diff names it, for example
 `/paths/~1pets~1{petId}/get`, so usage joins consumer contracts and the
@@ -48,7 +49,7 @@ An operation is named the way the classified diff names it, for example
 | Query parameter values | Never. Names are counted as fields (`/parameters/query:<name>`) when the source reports field presence; values are dropped before the event is built |
 | Raw paths | Never. A path such as `/users/alice@example.com` is templated before it is counted |
 | Client IP addresses and locations | Never. No column can hold one |
-| Consumer identity | Only an HMAC computed at the edge, never the key, token or header it came from |
+| Consumer identity | Only an HMAC computed at the edge, never the key, token or header it came from. For a call no binding recognises, the first word of its scrubbed user agent is kept too, and only when it is a plain name (letters, digits, `.`, `_`, `-`, at most 64 characters) that does not look like a credential |
 
 The schema enforces this: no table has a column that can hold an address, free text or a body. Every
 text column is a short, pattern-checked identifier, so a header or a query string is refused.
@@ -277,8 +278,8 @@ attributed to it.
 
 ## How long it is kept
 
-Hourly counters are rolled up into daily counters. The plan's seat limits set how long each is
-kept (see [Licenses](../admin/licenses.mdx#seat-limits)):
+Hourly counters are rolled up into daily counters, and unattributed client counts are kept as long
+as the daily counters. The plan's seat limits set how long each is kept (see [Licenses](../admin/licenses.mdx#seat-limits)):
 
 | Plan | Hourly counters | Daily counters, fields, unmatched paths and ledger | Events per day |
 | --- | --- | --- | --- |
@@ -293,7 +294,8 @@ default). After that it is never recomputed and takes no new counts.
 ## For operators
 
 The REST API runs the **usage sweep** in the background. Each run rolls up open days, finalizes
-closed ones and deletes what is past retention. Only one replica sweeps at a time.
+closed ones, deletes what is past retention, then refreshes the dependency graph's
+[runtime edges](./dependency-graph.mdx#runtime-edges). Only one replica sweeps at a time.
 
 | Variable | Default | Effect |
 | --- | --- | --- |

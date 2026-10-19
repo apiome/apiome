@@ -539,3 +539,83 @@ def test_without_bindings_every_grain_is_anonymous() -> None:
     plan = plan_batch([_event("/pets/1"), _event("/pets")], _source(), _matcher(), now=NOW)
     assert plan.attributed == 0
     assert all(key[-1] is None for key in plan.hourly)
+
+
+# ---------------------------------------------------------------------------------------------
+# CDG-3.5 — unattributed client keys
+# ---------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "user_agent, token",
+    [
+        ("checkout-web/4.2 (linux)", "checkout-web"),
+        ("Checkout-Web/4.2", "checkout-web"),
+        ("python-requests/2.32", "python-requests"),
+        ("curl", "curl"),
+        ("  billing.service_v2/1 ", "billing.service_v2"),
+        (None, None),
+        ("", None),
+        ("(compatible; bot)", None),
+        ("alice@example.com/1.0", None),
+        ("x" * 65 + "/1", None),
+        ("ghp_abcdefghijklmnopqrstuvwxyz0123456789/1.0", None),
+    ],
+)
+def test_client_token_keeps_plain_product_names_only(user_agent: Any, token: Any) -> None:
+    from app.usage_ingest import client_token
+
+    assert client_token(user_agent) == token
+
+
+def test_the_hint_wins_over_the_user_agent_and_a_user_agent_hint_is_ignored() -> None:
+    from app.usage_events import UsageEvent
+    from app.usage_ingest import unattributed_client_key
+
+    base = {
+        "schema": "apiome.usage.event/v1",
+        "source_id": SOURCE_ID,
+        "environment": "prod",
+        "observed_at": NOW.isoformat(),
+        "method": "GET",
+        "path": "/pets/1",
+        "status": 200,
+        "latency_ms": 1,
+        "user_agent": "checkout-web/1",
+    }
+    hinted = UsageEvent.model_validate({**base, "consumer_hint": {"kind": "api_key", "hmac": "c" * 64}})
+    assert unattributed_client_key(hinted) == ("api_key", "c" * 64)
+    ua_hint = UsageEvent.model_validate({**base, "consumer_hint": {"kind": "user_agent", "hmac": "d" * 64}})
+    assert unattributed_client_key(ua_hint) == ("user_agent", "checkout-web")
+    bare = UsageEvent.model_validate({k: v for k, v in base.items() if k != "user_agent"})
+    assert unattributed_client_key(bare) is None
+
+
+def test_unattributed_accepted_calls_are_counted_by_client_key() -> None:
+    from app.consumer_binding import ConsumerMatcher, LiveBinding
+
+    consumers = ConsumerMatcher(
+        [LiveBinding(id="ua", consumer_id="billing", kind="user_agent", name="billing-service/*", value_hmac=None)]
+    )
+    later = NOW + timedelta(minutes=3)
+    raw = [
+        _event("/pets/1", user_agent="billing-service/1"),
+        _event("/pets/2", user_agent="checkout-web/4.2"),
+        _event("/pets/3", user_agent="checkout-web/4.3", observed_at=later.isoformat()),
+        _event("/pets/4", consumer_hint={"kind": "header", "hmac": "e" * 64}),
+        _event("/pets/5"),
+        _event("/nothing/here", user_agent="checkout-web/4.2"),
+    ]
+    plan = plan_batch(raw, _source(), _matcher(), now=NOW, consumers=consumers)
+    assert plan.attributed == 1
+    counted = {key: (c.events, c.first_seen, c.last_seen) for key, c in plan.unattributed_clients.items()}
+    # The unmatched path is not an accepted call, so it is not counted as a client.
+    assert counted == {
+        (NOW.date(), "user_agent", "checkout-web"): (2, NOW, later),
+        (NOW.date(), "header", "e" * 64): (1, NOW, NOW),
+    }
+
+
+def test_without_any_binding_every_keyed_call_is_unattributed() -> None:
+    plan = plan_batch([_event("/pets/1", user_agent="checkout-web/1")], _source(), _matcher(), now=NOW)
+    assert list(plan.unattributed_clients) == [(NOW.date(), "user_agent", "checkout-web")]

@@ -61,6 +61,9 @@ def _wired() -> Any:
          "create_binding"),
         ("delete", "/billing-service/bindings/b1", None, Action.DELETE, "delete_binding"),
         ("get", "/billing-service/runtime", None, Action.VIEW, "usage_by_consumer"),
+        ("get", "/../consumer-suggestions", None, Action.VIEW, "list_suggestions"),
+        ("post", "/../consumer-suggestions/ua:x-y/register", {"name": "X"}, Action.CREATE,
+         "register_suggestion"),
     ],
 )
 def test_each_route_checks_its_action_and_a_denial_never_reaches_the_store(

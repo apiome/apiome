@@ -735,6 +735,16 @@
       ]
     },
     {
+      "id": "dependencies-runtime",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"suggested-consumers\"]",
+      "data": "fixture:hive-a11y/dependencies-runtime.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
+        "apiome-ui/src/app/components/ade/graph/SuggestedConsumers.tsx"
+      ]
+    },
+    {
       "id": "blast-radius",
       "route": "/ade/dashboard/graph",
       "waitFor": "[data-testid=\"blast-radius-answer\"]",

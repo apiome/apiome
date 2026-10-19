@@ -483,3 +483,75 @@ export function evidenceItem(
       };
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Runtime edges and suggested consumers (CDG-3.5, #5970)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The evidence line of a `runtime_calls` edge: request count and the newest day with a call.
+ *
+ * @param edge - The edge.
+ * @returns `"1,025 calls · last 2026-10-18"`, or `null` for an edge with no runtime evidence.
+ */
+export function runtimeEvidenceLine(edge: GraphEdge): string | null {
+  if (edge.provenance !== 'runtime') return null;
+  const calls = typeof edge.evidence.calls === 'number' ? edge.evidence.calls : null;
+  const last = typeof edge.evidence.last_seen_day === 'string' ? edge.evidence.last_seen_day : null;
+  if (calls === null && !last) return null;
+  const parts: string[] = [];
+  if (calls !== null) parts.push(calls === 1 ? '1 call' : `${calls.toLocaleString('en-US')} calls`);
+  if (last) parts.push(`last ${last}`);
+  return parts.join(' · ');
+}
+
+/**
+ * Split edge groups into what was declared or derived and what was observed at runtime, so the two
+ * are shown side by side and never merged.
+ *
+ * @param groups - The groups {@link groupEdges} built.
+ * @returns `{declared, runtime}`; `runtime` holds the `runtime_calls` groups.
+ */
+export function splitRuntimeGroups(groups: readonly EdgeGroup[]): {
+  declared: EdgeGroup[];
+  runtime: EdgeGroup[];
+} {
+  return {
+    declared: groups.filter((group) => group.edgeKind !== 'runtime_calls'),
+    runtime: groups.filter((group) => group.edgeKind === 'runtime_calls'),
+  };
+}
+
+/** A client seen in a project's traffic that no binding attributes (REST `consumer-suggestions`). */
+export interface SuggestedConsumer {
+  id: string;
+  client_kind: 'user_agent' | 'header' | 'api_key' | 'jwt_claim';
+  label: string;
+  suggested_name: string;
+  suggested_slug: string | null;
+  needs_binding_name: boolean;
+  calls: number;
+  days_seen: number;
+  first_seen_at: string;
+  last_seen_at: string;
+}
+
+/** How each client kind reads in a suggestion row. */
+export const SUGGESTION_KIND_LABELS: Readonly<Record<SuggestedConsumer['client_kind'], string>> = {
+  user_agent: 'User agent',
+  header: 'Header',
+  api_key: 'API key',
+  jwt_claim: 'JWT claim',
+};
+
+/**
+ * The line under a suggestion's label.
+ *
+ * @param suggestion - The suggestion.
+ * @returns `"240 calls on 3 days · last seen 18 Oct 2026"`.
+ */
+export function suggestionMetaLine(suggestion: SuggestedConsumer): string {
+  const calls = suggestion.calls === 1 ? '1 call' : `${suggestion.calls.toLocaleString('en-US')} calls`;
+  const days = suggestion.days_seen === 1 ? '1 day' : `${suggestion.days_seen} days`;
+  return `${calls} on ${days} · ${lastSeenLabel(suggestion.last_seen_at).replace('Last seen', 'last seen')}`;
+}

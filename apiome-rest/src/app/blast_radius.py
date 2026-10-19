@@ -289,6 +289,12 @@ class _Node:
     provenance: str
     pointers: List[str] = field(default_factory=list)
     path: List[Dict[str, Any]] = field(default_factory=list)
+    #: Every provenance that reached the node at its depth (CDG-3.5: declared and runtime side by side).
+    provenances: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.provenances:
+            self.provenances = [self.provenance]
 
 
 def _edge_step(row: Mapping[str, Any]) -> Dict[str, Any]:
@@ -395,6 +401,8 @@ def _traverse(
             existing = nodes.get(node.id)
             if existing and existing.depth == node.depth:
                 existing.pointers = sorted(set(existing.pointers) | set(node.pointers))
+                if node.provenance not in existing.provenances:
+                    existing.provenances.append(node.provenance)
             return False
         if len(nodes) >= MAX_NODES:
             truncated = True
@@ -744,7 +752,7 @@ def blast_radius(db: Any, tenant_id: str, request: BlastRadiusRequest) -> Dict[s
         return {
             "kind": node.kind, "id": node.id, "name": label.get("name"), "slug": label.get("slug"),
             "depth": node.depth, "edge_kind": node.edge_kind, "provenance": node.provenance,
-            "pointers": node.pointers, "path": node.path, "owner": owners.get(node.id),
+            "provenances": node.provenances, "pointers": node.pointers, "path": node.path, "owner": owners.get(node.id),
         }
 
     ordered = sorted(nodes.values(), key=lambda n: (n.depth, n.kind, labels.get(n.id, {}).get("slug") or "", n.id))

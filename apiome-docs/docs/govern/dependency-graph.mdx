@@ -51,6 +51,11 @@ Every project (**Build → Projects**, the project's versions page), catalog ite
 
 **“Open in the dependency graph”** opens the same entity on the Dependency graph page.
 
+When the entity has [runtime edges](#runtime-edges), the list splits into two columns: **Declared
+and derived** on one side and **Observed at runtime** on the other. A runtime row also shows its
+call count and the last day it was seen. A project or catalog item then lists its
+[suggested consumers](#suggested-consumers).
+
 <Screenshot id="dependencies-tab" alt="A project's Dependencies tab: the edges grouped by kind with provenance and owner badges, a stale consumer, and the drawing centred on the project" />
 
 ## Edges
@@ -66,6 +71,7 @@ An edge goes *from* one node *to* another and has a kind:
 | `deployed_on` | catalog item → connector | A [connector](../bring-in/connectors.mdx) sync that found the API on a gateway |
 | `served_by` | Project or catalog item → repository | A repository import, or a draft bound to a repository branch |
 | `depends_on` | Project or catalog item → what it depends on | A [declared dependency](#declare-dependencies). A Backstage `consumesApis` entry is a declared `consumes` edge. |
+| `runtime_calls` | consumer → Project or catalog item | Calls the [usage index](./runtime-usage.mdx) attributed to the consumer. One edge per operation it called. See [Runtime edges](#runtime-edges). |
 
 Node kinds are `project`, `catalog_item`, `consumer`, `connector`, `mcp_endpoint`, `mcp_source`,
 `repository` and `identity_group`. A Project that is not yet publishable is a `catalog_item`.
@@ -78,7 +84,7 @@ Every edge says how Apiome knows about it:
 | --- | --- |
 | `derived` | Apiome worked it out from records it already has: contracts, conversions, links, syncs. Every edge kind above except `depends_on` is derived. |
 | `declared` | Someone stated it: through the API, in the spec itself, or in a Backstage file. See [Declare dependencies](#declare-dependencies). |
-| `runtime` | Seen in traffic. Reserved for a later release. |
+| `runtime` | Seen in traffic: `runtime_calls` edges, from the [usage index](./runtime-usage.mdx). See [Runtime edges](#runtime-edges). |
 
 The same two nodes can be joined by edges of different provenance. Each edge also names the record
 it came from (`source_ref`, such as `consumer_contract:<id>`).
@@ -111,6 +117,63 @@ overlaps a changed pointer, the same set the consumer impact check reports when 
 To see those consumers together with what depends on them in turn, their owner teams and the
 evidence the change invalidates, run the [blast radius](#blast-radius), or add `--blast-radius` to
 the diff gate ([In the diff gate and the PR comment](#in-the-diff-gate-and-the-pr-comment)).
+
+## Runtime edges
+
+A contract says what a consumer **declares** it uses. Live traffic says what it **calls**. Once a
+[binding](./runtime-usage.mdx#attribute-traffic-to-consumers) recognises a consumer's calls, Apiome
+draws a `runtime_calls` edge from the consumer to the API for each operation it called:
+
+| Field | Value |
+| --- | --- |
+| `pointer` | The operation, for example `/paths/~1pets~1{petId}/get` |
+| `provenance` | `runtime` |
+| `source_ref` | `usage:30d`: the edge summarises the last 30 days of calls |
+| `evidence` | `calls`, `errors`, `last_seen_day` (the newest UTC day with a call), `window_days` and `via` (the binding kinds that recognised the calls: `header`, `api_key`, `jwt_claim`, `user_agent`) |
+
+Runtime edges sit **beside** the declared and derived ones and are **never merged** into them. A
+consumer that declares `GET /pets/{petId}` and also calls it has both a `consumes` edge and a
+`runtime_calls` edge for it. An operation it calls without declaring has only the runtime edge, which
+is how a dependency nobody wrote down shows up.
+
+**How runtime edges appear and go stale.** The usage sweep (hourly by default) rolls up the day's
+calls and then re-derives every workspace's runtime edges. A call therefore shows up as an edge
+after the next sweep. When an operation has had no attributed call for 30 days, its edge becomes
+**stale**, and it is removed 30 days after that, like any other stale edge. Calls that no binding
+recognises draw no edge, because there is no consumer to draw it from. They appear as suggested
+consumers instead.
+
+<Screenshot id="dependencies-runtime" alt="A project's Dependencies tab with two columns, Declared and derived next to Observed at runtime with call counts and last-seen days, and a Suggested consumers list with Register consumer buttons" />
+
+### Suggested consumers
+
+A **suggested consumer** is a client seen calling the API in the last 30 days that no binding
+recognises. A project's or catalog item's **Dependencies** tab lists them under **Suggested
+consumers**, busiest first:
+
+- a **User agent** client is named by the first word of its user agent (`checkout-web` from
+  `checkout-web/4.2`);
+- a **Header**, **API key** or **JWT claim** client is one whose hashed value arrived in the usage
+  event's `consumer_hint` without matching a binding. It reads **Unrecognised API key** plus a short
+  tag. Apiome never had the value, and never shows its hash either.
+
+To register one:
+
+1. On the **Dependencies** tab, **click “Register consumer”** next to the suggestion.
+2. Check the **Name** and **Handle**. Change them if you like.
+3. For a header, API key or JWT claim client, enter the **Header or claim name** its value arrives in,
+   for example `x-api-key`.
+4. **Click “Register consumer”.**
+
+Apiome registers the consumer and adds the binding that recognises it: the pattern `checkout-web/*`
+for a user agent, or the hashed value Apiome already received for the others, so you never type the
+value. From the next batch on, its calls are attributed, and its runtime edges appear after the
+next sweep. Registering needs `consumer_contracts:create`.
+
+With the API, `GET /v1/tenants/{t}/projects/{p}/consumer-suggestions` lists the suggestions, and
+`POST …/consumer-suggestions/{id}/register` registers one. The body takes `name`, `slug`,
+`binding_name` (for a hashed client) or `consumer`, the handle of an existing consumer to bind the
+client to instead of registering a new one.
 
 ## Declare dependencies
 
@@ -261,7 +324,9 @@ declared `GET /pets/{petId}`.
 
 Only dependency edges are followed: `consumes`, `depends_on` and `runtime_calls`. Each affected
 entity comes with its **path** (the edges from it back to the change), its provenance and its owner
-team. The answer covers at most 2,000 entities. `truncated: true` says there is more, beyond
+team. `provenances` lists every provenance that reached it, so a consumer that both declares and
+calls the changed operation reports `["derived", "runtime"]`. To see only who calls the operation
+in live traffic, send `provenance: ["runtime"]`. The answer covers at most 2,000 entities. `truncated: true` says there is more, beyond
 `depth` or that limit.
 
 ### Invalidated evidence

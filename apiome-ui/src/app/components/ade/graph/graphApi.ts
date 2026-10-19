@@ -8,6 +8,7 @@ import type {
   GraphEntityPage,
   GraphNodeKind,
   GraphProvenance,
+  SuggestedConsumer,
 } from '@lib/graph';
 import { EDGE_PAGE_LIMIT } from '@lib/graph';
 
@@ -72,4 +73,64 @@ export async function runBlastRadius(question: BlastRadiusQuestion): Promise<Bla
     body: JSON.stringify(question),
   });
   return readJson<BlastRadiusAnswer>(response);
+}
+
+/**
+ * Call the consumer-registry proxy (`/api/consumers`) and unwrap its `{success, data}` envelope.
+ *
+ * @param path - The path under `/api/consumers`.
+ * @param init - Fetch options.
+ * @returns The `data` payload.
+ */
+async function consumerCall<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api/consumers${path}`, {
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json' },
+    ...init,
+  });
+  const body = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    data?: T;
+    error?: string;
+  } | null;
+  if (!body?.success) throw new Error(body?.error || 'The request could not be completed.');
+  return body.data as T;
+}
+
+/**
+ * A project's suggested consumers (CDG-3.5): clients in its traffic that no binding attributes.
+ *
+ * @param projectId - The project (or catalog item) id.
+ */
+export async function fetchSuggestedConsumers(projectId: string): Promise<SuggestedConsumer[]> {
+  const data = await consumerCall<{ suggestions: SuggestedConsumer[] }>(
+    `/${encodeURIComponent(projectId)}/:suggestions`
+  );
+  return data.suggestions;
+}
+
+/** What registering a suggestion takes. */
+export interface RegisterSuggestionBody {
+  name?: string;
+  slug?: string;
+  binding_name?: string;
+}
+
+/**
+ * Register a suggested consumer and the binding that recognises it.
+ *
+ * @param projectId - The project id.
+ * @param suggestionId - The suggestion's id.
+ * @param body - Name, slug and, for a hashed client, the header or claim name.
+ * @returns The new consumer's slug.
+ */
+export async function registerSuggestedConsumer(
+  projectId: string,
+  suggestionId: string,
+  body: RegisterSuggestionBody
+): Promise<{ consumer: { id: string; slug: string; name: string } }> {
+  return consumerCall(`/${encodeURIComponent(projectId)}/:suggestions/${encodeURIComponent(suggestionId)}/register`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }

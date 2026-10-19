@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.244.0",
+    "version": "1.245.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -21202,6 +21202,259 @@
         }
       }
     },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-suggestions": {
+      "get": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "List suggested consumers",
+        "description": "Clients seen in this project's usage traffic that no binding attributes to a consumer \u2014 by the product token of their user agent (`checkout-web`), or by the hashed `consumer_hint` the edge sent. Busiest first; a client a live binding already recognises is left out. A hashed client is shown by an opaque id, never by its value or its hash.\n\nRequires `consumer_contracts:view`.",
+        "operationId": "list_consumer_suggestions_v1_tenants__tenant_slug__projects__project_ref__consumer_suggestions_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 395,
+              "minimum": 1,
+              "description": "Window in UTC days.",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "Window in UTC days."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Most to return.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Most to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listsuggestedconsumersauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listsuggestedconsumersauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listsuggestedconsumers Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listsuggestedconsumers Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list suggested consumers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionListResponse",
+                  "description": "Response payload for listsuggestedconsumersresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listsuggestedconsumersresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-suggestions/{suggestion_id}/register": {
+      "post": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "Register a suggested consumer",
+        "description": "Register the client as a consumer (or, with `consumer`, bind it to an existing one) and create the binding that recognises it: the glob `<token>/*` for a user agent, or a hashed binding holding the value's hash the edge already sent \u2014 so no value is typed. A hashed client needs `binding_name`, the header or claim its value arrives in. From the next ingested batch on, its calls are attributed and its runtime edges appear in the graph.\n\nRequires `consumer_contracts:create`.",
+        "operationId": "register_consumer_suggestion_v1_tenants__tenant_slug__projects__project_ref__consumer_suggestions__suggestion_id__register_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "suggestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Suggestion Id",
+              "description": "Suggestion Id schema."
+            },
+            "description": "Path parameter identifying the suggestion id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registerasuggestedconsumerauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registerasuggestedconsumerauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registerasuggestedconsumer Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registerasuggestedconsumer Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterSuggestionInput",
+                "description": "Request body for registerasuggestedconsumerrequest."
+              }
+            }
+          },
+          "description": "Request body for register a suggested consumer."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for register a suggested consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredSuggestion",
+                  "description": "Response payload for registerasuggestedconsumerresponse201."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`consumer-suggestion-not-found`, or an unknown project or `consumer`."
+          },
+          "409": {
+            "description": "`consumer-slug-taken`, `consumer-slug-reserved` or `consumer-binding-exists`."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for registerasuggestedconsumerresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{tenant_slug}/teams": {
       "get": {
         "tags": [
@@ -24080,7 +24333,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T03:40:51Z"
+                          "example": "2026-10-19T04:00:44Z"
                         },
                         "method": {
                           "type": "string",
@@ -93818,6 +94071,15 @@
             "description": "Provenance.",
             "example": "example"
           },
+          "provenances": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Provenances",
+            "description": "Every provenance that reached it at this depth \u2014 `declared`, `derived` and `runtime` side by side, never merged (CDG-3.5). `provenance` is the first of them.",
+            "maxItems": 1000
+          },
           "pointers": {
             "items": {
               "type": "string"
@@ -103299,7 +103561,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "completed_at": {
             "anyOf": [
@@ -105254,7 +105516,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "comment_count": {
             "type": "integer",
@@ -105482,7 +105744,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "comment_count": {
             "type": "integer",
@@ -106013,14 +106275,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -109276,7 +109538,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "6d502c52-f7f9-4663-a39b-84e3ffa7ec2a"
+            "example": "31dff7ff-f1cb-4a90-abb7-3b5e19dcd30c"
           },
           "method": {
             "type": "string",
@@ -111803,7 +112065,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -113699,7 +113961,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "browse_url": {
             "anyOf": [
@@ -151601,6 +151863,102 @@
         "title": "RegenSubscriptionPutRequest",
         "description": "Body for storing a subscription.\n\nAttributes:\n    delivery_mode: ``registry``, ``git`` or ``registry_and_git``. Required.\n    options: The options object (``{\"dryRun\": true}``), or omitted for the defaults.\n    active: Whether publishes regenerate this SDK. Defaults to ``true``."
       },
+      "RegisterSuggestionInput": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "description": "Register Suggestion Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Register Suggestion Input schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Register Suggestion Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Register Suggestion Input schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-safe identifier."
+          },
+          "consumer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Register Suggestion Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Register Suggestion Input schema."
+              }
+            ],
+            "title": "Consumer",
+            "description": "Consumer."
+          },
+          "binding_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256,
+                "description": "Register Suggestion Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Register Suggestion Input schema."
+              }
+            ],
+            "title": "Binding Name",
+            "description": "Binding Name."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RegisterSuggestionInput",
+        "description": "How to register a suggestion.\n\nAttributes:\n    name: Display name for a new consumer (defaults to the suggestion's).\n    slug: Handle for a new consumer (defaults to the suggestion's).\n    consumer: Bind to this existing consumer (slug or id) instead of registering a new one.\n    binding_name: For a hashed client: the header, API-key header or claim name."
+      },
+      "RegisteredSuggestion": {
+        "properties": {
+          "consumer": {
+            "$ref": "#/components/schemas/ConsumerRecord",
+            "description": "Consumer."
+          },
+          "binding": {
+            "$ref": "#/components/schemas/BindingRecord",
+            "description": "Binding."
+          },
+          "created_consumer": {
+            "type": "boolean",
+            "title": "Created Consumer",
+            "description": "False when the client was bound to an existing consumer.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "binding",
+          "created_consumer"
+        ],
+        "title": "RegisteredSuggestion",
+        "description": "What registering did."
+      },
       "RegistryAuditEntryOut": {
         "properties": {
           "id": {
@@ -155235,7 +155593,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           }
         },
         "additionalProperties": false,
@@ -166145,6 +166503,126 @@
         "title": "StyleGuideUpdateRequest",
         "description": "Rename / re-describe a custom style guide (GOV-2.1). Builtin guides are read-only."
       },
+      "SuggestedConsumer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "`ua:<token>` or `<kind>:<opaque>`; what register takes.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "client_kind": {
+            "type": "string",
+            "title": "Client Kind",
+            "description": "`user_agent`, `header`, `api_key` or `jwt_claim`.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "How the client reads: its user-agent token, or the kind of credential.",
+            "example": "example"
+          },
+          "suggested_name": {
+            "type": "string",
+            "title": "Suggested Name",
+            "description": "A display name to register it under.",
+            "example": "Example"
+          },
+          "suggested_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Suggested Consumer schema."
+              },
+              {
+                "type": "null",
+                "description": "Suggested Consumer schema."
+              }
+            ],
+            "title": "Suggested Slug",
+            "description": "A handle to register it under."
+          },
+          "needs_binding_name": {
+            "type": "boolean",
+            "title": "Needs Binding Name",
+            "description": "True for a hashed client: registering needs the header or claim name the value came in.",
+            "example": false
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Unattributed calls in the window.",
+            "example": 1
+          },
+          "days_seen": {
+            "type": "integer",
+            "title": "Days Seen",
+            "description": "UTC days in the window with a call.",
+            "example": 1
+          },
+          "first_seen_at": {
+            "type": "string",
+            "title": "First Seen At",
+            "description": "First Seen At timestamp (ISO 8601).",
+            "example": "2026-10-19T04:00:44Z"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "title": "Last Seen At",
+            "description": "Last Seen At timestamp (ISO 8601).",
+            "example": "2026-10-19T04:00:44Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "client_kind",
+          "label",
+          "suggested_name",
+          "needs_binding_name",
+          "calls",
+          "days_seen",
+          "first_seen_at",
+          "last_seen_at"
+        ],
+        "title": "SuggestedConsumer",
+        "description": "A client seen in the project's traffic that no binding attributes."
+      },
+      "SuggestionListResponse": {
+        "properties": {
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedConsumer"
+            },
+            "type": "array",
+            "title": "Suggestions",
+            "description": "Busiest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many suggestions were returned.",
+            "example": 1
+          },
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days",
+            "description": "The window they were drawn from, in UTC days ending today.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "window_days"
+        ],
+        "title": "SuggestionListResponse",
+        "description": "A project's suggested consumers."
+      },
       "SuiteApiInfo": {
         "properties": {
           "name": {
@@ -167597,7 +168075,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "detected_by": {
             "anyOf": [
@@ -175773,14 +176251,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T03:40:51Z"
+            "example": "2026-10-19T04:00:44Z"
           },
           "outcome": {
             "anyOf": [

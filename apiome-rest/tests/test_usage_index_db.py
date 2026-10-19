@@ -212,6 +212,18 @@ def _count(cursor: Any, table: str, tenant: str, where: str = "true", params: Tu
 #: Every column of every usage_* table, with its type. A new column must be reviewed against the
 #: privacy model (no header value, body, query value or address), so the list is pinned.
 EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
+    # CDG-3.5 (V293): a client key is a scrubbed user-agent product token or a consumer_hint HMAC.
+    "usage_unattributed_client_daily": {
+        "tenant_id": "uuid",
+        "project_id": "uuid",
+        "day": "date",
+        "client_kind": "character varying",
+        "client_key": "character varying",
+        "calls": "bigint",
+        "first_seen_at": "timestamp with time zone",
+        "last_seen_at": "timestamp with time zone",
+        "updated_at": "timestamp with time zone",
+    },
     # RDG-1.8 (V292): a bound value is only ever stored as its 64-hex HMAC; `name` is a header or
     # claim *name*, or a user-agent glob — never a value.
     "usage_consumer_binding": {

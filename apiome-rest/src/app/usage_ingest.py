@@ -723,6 +723,21 @@ class UnmatchedCounter:
 
 
 @dataclass
+class UnattributedCounter:
+    """One ``usage_unattributed_client_daily`` grain ``(day, client_kind, client_key)`` (CDG-3.5)."""
+
+    first_seen: datetime
+    last_seen: datetime
+    events: int = 0
+
+    def add(self, event: UsageEvent) -> None:
+        """Count one event."""
+        self.events += 1
+        self.first_seen = min(self.first_seen, event.observed_at)
+        self.last_seen = max(self.last_seen, event.observed_at)
+
+
+@dataclass
 class FieldGroup:
     """One ``usage_field_daily`` group ``(environment, day, operation_key, direction, status)``.
 
@@ -756,6 +771,8 @@ class BatchPlan:
         attributed: Accepted events a consumer binding matched (the rest are anonymous).
         binding_matches: Binding id → the newest observed time attributed to it.
         binding_consumers: Binding id → its consumer id.
+        unattributed_clients: ``(day, client_kind, client_key)`` → the accepted calls no binding
+            matched, by the client key that could later identify them (CDG-3.5).
     """
 
     received: int = 0
@@ -776,6 +793,7 @@ class BatchPlan:
     attributed: int = 0
     binding_matches: Dict[str, datetime] = field(default_factory=dict)
     binding_consumers: Dict[str, str] = field(default_factory=dict)
+    unattributed_clients: Dict[Tuple[date, str, str], UnattributedCounter] = field(default_factory=dict)
 
     @property
     def basis(self) -> str:
@@ -951,11 +969,14 @@ def _attribute(plan: BatchPlan, consumers: Optional[ConsumerMatcher], event: Usa
     Returns:
         The binding id, or ``None`` — the call is anonymous, and still counted.
     """
-    if not consumers:
-        return None
     hint = event.consumer_hint
-    binding = consumers.match(hint.kind if hint else None, hint.hmac if hint else None, event.user_agent)
+    binding = (
+        consumers.match(hint.kind if hint else None, hint.hmac if hint else None, event.user_agent)
+        if consumers
+        else None
+    )
     if binding is None:
+        _note_unattributed(plan, event)
         return None
     plan.attributed += 1
     seen = plan.binding_matches.get(binding.id)
@@ -963,6 +984,64 @@ def _attribute(plan: BatchPlan, consumers: Optional[ConsumerMatcher], event: Usa
         plan.binding_matches[binding.id] = event.observed_at
     plan.binding_consumers[binding.id] = binding.consumer_id
     return binding.id
+
+
+#: A user-agent product token the index may keep as a client key (V293's CHECK, 64 at most).
+_CLIENT_TOKEN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+
+
+def client_token(user_agent: Optional[str]) -> Optional[str]:
+    """The product token of a scrubbed user agent, as a client key (CDG-3.5).
+
+    ``checkout-web/4.2 (linux)`` gives ``checkout-web``. A token that is not a short plain name, or
+    that looks like a credential or a random string, gives ``None``: it could identify a person or
+    carry a secret, and is not a consumer name anyone would register anyway.
+
+    Args:
+        user_agent: The event's user agent, already scrubbed.
+
+    Returns:
+        The lower-cased token, or ``None``.
+    """
+    if not user_agent:
+        return None
+    first = user_agent.strip().split(None, 1)[0] if user_agent.strip() else ""
+    token = first.split("/", 1)[0].lower()
+    if not _CLIENT_TOKEN.match(token) or _is_sensitive(token):
+        return None
+    return token
+
+
+def unattributed_client_key(event: UsageEvent) -> Optional[Tuple[str, str]]:
+    """The client key an unattributed call is counted under (CDG-3.5).
+
+    The edge's own hint wins (it is an exact identity): ``(kind, hmac)`` for a ``header``,
+    ``api_key`` or ``jwt_claim`` hint. Otherwise the user agent's product token,
+    ``("user_agent", token)``. A call with neither has no key and stays only in the anonymous counts.
+
+    Args:
+        event: The scrubbed event.
+
+    Returns:
+        ``(client_kind, client_key)``, or ``None``.
+    """
+    hint = event.consumer_hint
+    if hint is not None and hint.kind != "user_agent":
+        return hint.kind, hint.hmac
+    token = client_token(event.user_agent)
+    return ("user_agent", token) if token else None
+
+
+def _note_unattributed(plan: BatchPlan, event: UsageEvent) -> None:
+    """Count an accepted call no binding matched under its client key, if it has one."""
+    key = unattributed_client_key(event)
+    if key is None:
+        return
+    grain = (event.observed_at.date(), key[0], key[1])
+    counter = plan.unattributed_clients.get(grain)
+    if counter is None:
+        counter = plan.unattributed_clients[grain] = UnattributedCounter(event.observed_at, event.observed_at)
+    counter.add(event)
 
 
 def _count_fields(plan: BatchPlan, scrubbed: ScrubbedEvent, day: date, operation_key: str) -> None:
