@@ -22175,7 +22175,10 @@ class Database:
         Returns:
             Endpoint rows ordered by slug ascending, each carrying ``tenant_slug``, the snapshot's
             ``version_tag`` / ``server_version`` / ``server_title`` / ``surface_fingerprint`` /
-            ``version_discovered_at``, ``entry_updated_at``, and ``score`` / ``grade``.
+            ``version_discovered_at``, ``entry_updated_at``, ``score`` / ``grade``, and (CDG-4.1,
+            #5973) the owner envelope ``entity_owner``, the live source rows as ``sources`` (newest
+            first; ``[]`` when none is linked), and the snapshot's latest stored lint gate verdict
+            ``lint_gate_passed`` / ``lint_gate_evaluated_at`` (``NULL`` when never evaluated).
         """
         clauses = [
             "t.slug = %s",
@@ -22209,11 +22212,37 @@ class Database:
                    v.version_tag, v.server_version, v.server_title, v.surface_fingerprint,
                    COALESCE(v.discovered_at, v.created_at) AS version_discovered_at,
                    {entry_updated} AS entry_updated_at,
-                   s.score, s.grade
+                   s.score, s.grade,
+                   own.entity_owner,
+                   src.sources,
+                   lg.passed AS lint_gate_passed, lg.evaluated_at AS lint_gate_evaluated_at
             FROM apiome.mcp_endpoints e
             JOIN apiome.tenants t ON t.id = e.tenant_id
             JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            {owner_envelope_join(("mcp_endpoint",), "e.id", "e.tenant_id")}
+            LEFT JOIN LATERAL (
+                SELECT COALESCE(
+                           jsonb_agg(
+                               jsonb_build_object(
+                                   'source_kind', ms.source_kind, 'locator', ms.locator,
+                                   'purl', ms.purl, 'revision', ms.revision,
+                                   'digest', ms.digest,
+                                   'verification_state', ms.verification_state
+                               ) ORDER BY ms.created_at DESC, ms.id
+                           ),
+                           '[]'::jsonb
+                       ) AS sources
+                FROM apiome.mcp_endpoint_sources ms
+                WHERE ms.endpoint_id = e.id AND ms.retired_at IS NULL
+            ) src ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT pe.passed, pe.evaluated_at
+                FROM apiome.lint_policy_evaluations pe
+                WHERE pe.mcp_version_id = e.current_version_id
+                ORDER BY pe.evaluated_at DESC, pe.id DESC
+                LIMIT 1
+            ) lg ON TRUE
             WHERE {" AND ".join(clauses)}
             ORDER BY e.slug ASC
             LIMIT %s

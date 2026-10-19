@@ -107,17 +107,20 @@ latency. Pick the servers and **click “Compare”**.
 ## Registry API
 
 Gateways and MCP hosts that discover servers through the official MCP Registry API can read your
-catalog directly. Point them at:
+catalog directly. Point them at your tenant's registry base URL (the full guide is
+[MCP registry endpoint](../ship/mcp-registry.mdx)):
 
 ```text
-https://<your-apiome-host>/v1/tenants/<tenant>/mcp-registry/v0.1/servers
+https://<your-apiome-host>/registry/mcp/<tenant>/v0.1/servers
 ```
 
-- **Who sees what.** Without a credential, the list holds only servers that are **Published** and
-  **Public**. Send an MCP API key (`Authorization: Bearer …`), a workspace API key (`X-API-Key`) or
-  a signed-in session of the same tenant to list private and unpublished servers too. A credential
-  that is wrong or belongs to another tenant is refused (`401` / `403`). It never falls back to the
-  public list.
+The same routes also answer under `/v1/tenants/<tenant>/mcp-registry/v0.1/servers`.
+
+- **Publish lists it.** **Publish** a server and make it **Public** and it is listed in the registry
+  endpoint for anyone. Send an MCP API key (`Authorization: Bearer …`), a workspace API key
+  (`X-API-Key`) or a signed-in session of the same tenant to list private and unpublished servers
+  too. A credential that is wrong or belongs to another tenant is refused (`401` / `403`). It never
+  falls back to the public list.
 - **Names.** Each server is named `apiome.<tenant>/<server-slug>`, for example
   `apiome.acme/weather`. Its `version` is the version the server reports (`serverInfo.version`),
   or the snapshot label when it reports none.
@@ -126,10 +129,17 @@ https://<your-apiome-host>/v1/tenants/<tenant>/mcp-registry/v0.1/servers
   (name or slug) and `updated_since`.
 - **One server.** `GET …/servers/apiome.acme%2Fweather/versions/latest` returns one entry with an
   `ETag`. A client that sends it back in `If-None-Match` gets `304` until the server changes.
+- **Packages and repository.** The server's linked sources fill `packages` (npm, PyPI, NuGet and
+  other packages, and container images as `oci`) and `repository` (the newest linked git repo). A
+  server with no linked source has `packages: []`.
 - **Apiome extras.** Each entry's `_meta` carries `dev.apiome/catalog`: the server's grade and
-  score, its trust posture (`score`, `grade`, `gatePassed`), its visibility and its manifest digest.
+  score, its trust posture (`score`, `grade`, `gatePassed`), the latest lint gate verdict, the owner
+  team, whether any source is linked (`sources`: `linked` or `none`), its visibility and its
+  manifest digest.
 - **Remotes.** A server's URL is listed without any credentials, query string or fragment it was
   registered with. A `stdio` server has no remote.
+- **Schema version.** `GET …/v0.1/schema` names the registry API and `server.json` schema versions
+  served.
 
 From the CLI, `apiome mcp registry list [--since 2026-10-01T00:00:00Z]` walks every page. The routes
 are on the [MCP registry](../reference/rest/mcp-registry.md) REST reference page.

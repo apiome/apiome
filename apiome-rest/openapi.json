@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.246.0",
+    "version": "1.247.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -1154,6 +1154,507 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get registry server versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/mcp-registry/v0.1/schema": {
+      "get": {
+        "tags": [
+          "mcp-registry"
+        ],
+        "summary": "Get Registry Schema Version",
+        "description": "Return the registry API and ``server.json`` schema versions this registry serves (CDG-4.1).\n\nAnonymous and tenant-independent in content (the tenant segment only mirrors the other routes'\nbase URL), so a client can check compatibility before paging.\n\nArgs:\n    tenant_slug: The tenant whose registry base URL was called (not looked up).\n\nReturns:\n    ``{\"registryApiVersion\", \"serverSchema\", \"apiSpec\": {\"version\", \"commit\"}}``.",
+        "operationId": "get_registry_schema_version_v1_tenants__tenant_slug__mcp_registry_v0_1_schema_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get registry schema version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for get registry schema versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get registry schema versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/mcp/{tenant_slug}/v0.1/servers": {
+      "get": {
+        "tags": [
+          "mcp-registry"
+        ],
+        "summary": "List Registry Servers",
+        "description": "List a tenant's cataloged MCP servers in the MCP Registry API v0.1 ``ServerList`` shape (AAU-5.3).\n\nPages are keyset-ordered by endpoint slug, so a cursor stays valid while servers are added.\nAnonymous callers see only published, public endpoints; a credential of the tenant (session,\nworkspace API key, or MCP API key) also lists private and unpublished ones. An unknown tenant\nis an empty list, so the route never confirms whether a tenant exists.\n\nArgs:\n    tenant_slug: The tenant whose catalog to list.\n    cursor: The previous page's ``metadata.nextCursor``.\n    limit: Page size, 1\u2013100.\n    search: Case-insensitive substring of the server's name or slug.\n    updated_since: Lower bound on each entry's ``updatedAt``.\n    version: ``latest`` or an exact version; only current versions are served.\n    authorization: Optional session JWT or MCP API key (``Bearer``).\n    x_api_key: Optional workspace or MCP API key.\n\nReturns:\n    A ``ServerList`` (``servers`` + ``metadata.count`` / ``metadata.nextCursor``).",
+        "operationId": "list_registry_servers_registry_mcp__tenant_slug__v0_1_servers_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Serverscursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Serverscursor schema."
+                }
+              ],
+              "description": "Opaque cursor from `metadata.nextCursor`.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from `metadata.nextCursor`."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size (1\u2013100, default 30).",
+              "default": 30,
+              "title": "Limit"
+            },
+            "description": "Page size (1\u2013100, default 30)."
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Serverssearch schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Serverssearch schema."
+                }
+              ],
+              "description": "Substring matched against server name and slug.",
+              "title": "Search"
+            },
+            "description": "Substring matched against server name and slug."
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "List Registry Serversupdatedsince schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Serversupdatedsince schema."
+                }
+              ],
+              "description": "Only servers whose entry changed at or after this RFC 3339 instant.",
+              "title": "Updated Since"
+            },
+            "description": "Only servers whose entry changed at or after this RFC 3339 instant."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Serversversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Serversversion schema."
+                }
+              ],
+              "description": "`latest` (every served entry) or an exact version string.",
+              "title": "Version"
+            },
+            "description": "`latest` (every served entry) or an exact version string."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Serversauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Serversauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Servers Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Servers Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list registry servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for list registry serversresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list registry serversresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/mcp/{tenant_slug}/v0.1/servers/{server_name}/versions": {
+      "get": {
+        "tags": [
+          "mcp-registry"
+        ],
+        "summary": "List Registry Server Versions",
+        "description": "List the served versions of one server \u2014 a ``ServerList`` holding its current version (AAU-5.3).\n\nArgs:\n    tenant_slug: The tenant whose catalog to read.\n    server_name: The URL-encoded server name (``apiome.<tenant>%2F<endpoint>``).\n    authorization: Optional session JWT or MCP API key (``Bearer``).\n    x_api_key: Optional workspace or MCP API key.\n\nReturns:\n    A ``ServerList`` with the server's current version; ``404`` when the caller cannot see it.",
+        "operationId": "list_registry_server_versions_registry_mcp__tenant_slug__v0_1_servers__server_name__versions_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "server_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Server Name",
+              "description": "Server Name schema."
+            },
+            "description": "Path parameter identifying the server name segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Server Versionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Server Versionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Registry Server Versions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Registry Server Versions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list registry server versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for list registry server versionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list registry server versionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/mcp/{tenant_slug}/v0.1/servers/{server_name}/versions/{version}": {
+      "get": {
+        "tags": [
+          "mcp-registry"
+        ],
+        "summary": "Get Registry Server Version",
+        "description": "Return one server version as a registry ``ServerResponse``, with an ``ETag`` (AAU-5.3).\n\nArgs:\n    tenant_slug: The tenant whose catalog to read.\n    server_name: The URL-encoded server name (``apiome.<tenant>%2F<endpoint>``).\n    version: ``latest`` or the exact (URL-encoded) version string.\n    authorization: Optional session JWT or MCP API key (``Bearer``).\n    x_api_key: Optional workspace or MCP API key.\n    if_none_match: Conditional-request header; a match answers ``304``.\n\nReturns:\n    The ``ServerResponse``; ``304`` when unchanged; ``404`` for an unknown or hidden server\n    or a version that is not the one served.",
+        "operationId": "get_registry_server_version_registry_mcp__tenant_slug__v0_1_servers__server_name__versions__version__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "server_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Server Name",
+              "description": "Server Name schema."
+            },
+            "description": "Path parameter identifying the server name segment."
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version",
+              "description": "Version schema."
+            },
+            "description": "Endpoint or API version metadata."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Registry Server Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Registry Server Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Registry Server Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Registry Server Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Registry Server Version If None Match schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Registry Server Version If None Match schema."
+                }
+              ],
+              "title": "If-None-Match",
+              "description": "If-None-Match schema."
+            },
+            "description": "ETag from a prior response; returns 304 when unchanged."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get registry server version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for get registry server versionresponse200."
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified (the `If-None-Match` ETag still matches)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get registry server versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/mcp/{tenant_slug}/v0.1/schema": {
+      "get": {
+        "tags": [
+          "mcp-registry"
+        ],
+        "summary": "Get Registry Schema Version",
+        "description": "Return the registry API and ``server.json`` schema versions this registry serves (CDG-4.1).\n\nAnonymous and tenant-independent in content (the tenant segment only mirrors the other routes'\nbase URL), so a client can check compatibility before paging.\n\nArgs:\n    tenant_slug: The tenant whose registry base URL was called (not looked up).\n\nReturns:\n    ``{\"registryApiVersion\", \"serverSchema\", \"apiSpec\": {\"version\", \"commit\"}}``.",
+        "operationId": "get_registry_schema_version_registry_mcp__tenant_slug__v0_1_schema_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get registry schema version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for get registry schema versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get registry schema versionresponse422."
                 }
               }
             }
@@ -24742,7 +25243,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T14:40:02Z"
+                          "example": "2026-10-19T14:56:04Z"
                         },
                         "method": {
                           "type": "string",
@@ -103970,7 +104471,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "completed_at": {
             "anyOf": [
@@ -105925,7 +106426,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "comment_count": {
             "type": "integer",
@@ -106153,7 +106654,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "comment_count": {
             "type": "integer",
@@ -106684,14 +107185,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -109947,7 +110448,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "b63acb98-e868-472e-a302-8ee602fcba06"
+            "example": "38e72a40-69a0-4bc6-9a56-ccf0aea4c4f5"
           },
           "method": {
             "type": "string",
@@ -112474,7 +112975,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -114370,7 +114871,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "browse_url": {
             "anyOf": [
@@ -156002,7 +156503,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           }
         },
         "additionalProperties": false,
@@ -166974,13 +167475,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           }
         },
         "additionalProperties": false,
@@ -168484,7 +168985,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "detected_by": {
             "anyOf": [
@@ -176660,14 +177161,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T14:40:02Z"
+            "example": "2026-10-19T14:56:04Z"
           },
           "outcome": {
             "anyOf": [
