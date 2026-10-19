@@ -1,13 +1,16 @@
-"""MCP Registry API over the MCP server catalog — read-only routes (AAU-5.3, #5724).
+"""MCP Registry API over the MCP server catalog — read-only routes (AAU-5.3, #5724; CDG-4.1, #5973).
 
 Serves a tenant's cataloged MCP servers in the official registry API shape, so a host, gateway or
-registry client can page through them with no Apiome-specific code:
+registry client can page through them with no Apiome-specific code. Every route is mounted twice
+with identical behaviour: under ``/v1/tenants/{tenant_slug}/mcp-registry`` (AAU-5.3) and under the
+registry-style base ``/registry/mcp/{tenant_slug}`` (CDG-4.1) that a host or gateway is pointed at:
 
-* ``GET /v1/tenants/{tenant_slug}/mcp-registry/v0.1/servers`` — ``ServerList`` (``cursor``,
-  ``limit`` ≤ 100, ``search``, ``updated_since``, ``version``).
+* ``GET …/v0.1/servers`` — ``ServerList`` (``cursor``, ``limit`` ≤ 100, ``search``,
+  ``updated_since``, ``version``).
 * ``GET …/v0.1/servers/{serverName}/versions`` — every served version of one server.
 * ``GET …/v0.1/servers/{serverName}/versions/{version}`` — one ``ServerResponse`` (``latest`` or
   the exact version), with an ``ETag`` and ``If-None-Match`` support.
+* ``GET …/v0.1/schema`` — the registry API and ``server.json`` schema versions served.
 
 Visibility follows the catalog: anonymous callers see only endpoints the public gate admits
 (published, public, enabled); a signed-in member, a workspace API key (``X-API-Key``) or an MCP API
@@ -43,6 +46,7 @@ from .mcp_registry import (
     encode_cursor,
     endpoint_slug_from_name,
     entry_version,
+    schema_info,
     server_list,
     trust_posture_summary,
 )
@@ -51,6 +55,9 @@ from .mcp_trust_posture import run_trust_posture
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/tenants", tags=["mcp-registry"])
+
+#: The registry-style mount (CDG-4.1): ``/registry/mcp/{tenant_slug}/v0.1/…``, same handlers.
+registry_router = APIRouter(prefix="/registry/mcp", tags=["mcp-registry"])
 
 #: ``Cache-Control`` for an anonymous (public-slice) response and for a credentialed one.
 _PUBLIC_CACHE = "public, max-age=60"
@@ -179,6 +186,7 @@ def _server_row(tenant_slug: str, server_name_param: str, *, private: bool) -> D
     return rows[0]
 
 
+@registry_router.get("/{tenant_slug}/v0.1/servers")
 @router.get("/{tenant_slug}/mcp-registry/v0.1/servers")
 async def list_registry_servers(
     tenant_slug: str,
@@ -239,6 +247,7 @@ async def list_registry_servers(
     return _json(body, private=private, etag=body_etag(body))
 
 
+@registry_router.get("/{tenant_slug}/v0.1/servers/{server_name:path}/versions")
 @router.get("/{tenant_slug}/mcp-registry/v0.1/servers/{server_name:path}/versions")
 async def list_registry_server_versions(
     tenant_slug: str,
@@ -263,6 +272,10 @@ async def list_registry_server_versions(
     return _json(body, private=private, etag=body_etag(body))
 
 
+@registry_router.get(
+    "/{tenant_slug}/v0.1/servers/{server_name:path}/versions/{version}",
+    responses={304: {"description": "Not modified (the `If-None-Match` ETag still matches)."}},
+)
 @router.get(
     "/{tenant_slug}/mcp-registry/v0.1/servers/{server_name:path}/versions/{version}",
     responses={304: {"description": "Not modified (the `If-None-Match` ETag still matches)."}},
@@ -306,3 +319,21 @@ async def get_registry_server_version(
             },
         )
     return _json(entry, private=private, etag=etag)
+
+
+@registry_router.get("/{tenant_slug}/v0.1/schema")
+@router.get("/{tenant_slug}/mcp-registry/v0.1/schema")
+async def get_registry_schema_version(tenant_slug: str) -> JSONResponse:
+    """Return the registry API and ``server.json`` schema versions this registry serves (CDG-4.1).
+
+    Anonymous and tenant-independent in content (the tenant segment only mirrors the other routes'
+    base URL), so a client can check compatibility before paging.
+
+    Args:
+        tenant_slug: The tenant whose registry base URL was called (not looked up).
+
+    Returns:
+        ``{"registryApiVersion", "serverSchema", "apiSpec": {"version", "commit"}}``.
+    """
+    _ = tenant_slug
+    return _json(schema_info(), private=False)

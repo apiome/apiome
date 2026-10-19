@@ -1,0 +1,101 @@
+---
+title: MCP registry endpoint
+description: Point an MCP host or gateway at your tenant's MCP server registry.
+sidebar_position: 7
+tags: [mcp, publish]
+---
+
+Apiome serves the MCP servers your tenant has imported in the **official MCP Registry API v0.1**
+shape. A host, gateway or registry client that already discovers servers from a registry can read
+your catalog with no Apiome-specific code.
+
+## Point a host or gateway at it
+
+Give the client your tenant's registry base URL:
+
+```text
+https://<your-apiome-host>/registry/mcp/<tenant>
+```
+
+The client then calls the standard routes under it:
+
+| Route | Returns |
+| --- | --- |
+| `GET /registry/mcp/<tenant>/v0.1/servers` | One page of servers (`servers` and `metadata`) |
+| `GET …/v0.1/servers/<server-name>/versions` | Every served version of one server |
+| `GET …/v0.1/servers/<server-name>/versions/<version>` | One server — `latest` or an exact version |
+| `GET …/v0.1/schema` | The registry API and `server.json` schema versions served |
+
+The same routes also answer under `/v1/tenants/<tenant>/mcp-registry/v0.1/…`.
+
+Put the server name in the path URL-encoded: `apiome.acme/weather` becomes `apiome.acme%2Fweather`.
+
+To check it from a terminal:
+
+```bash
+curl https://<your-apiome-host>/registry/mcp/acme/v0.1/servers?limit=10
+```
+
+## Who sees what
+
+- **Without a credential**, the registry lists only servers that are **Published** and **Public**
+  and enabled. Any other server is `404`.
+- **With a credential of the tenant** — an MCP API key (`Authorization: Bearer …`), a workspace API
+  key (`X-API-Key`) or a signed-in session — it also lists private and unpublished servers.
+- **A wrong credential**, or one of another tenant, is refused with `401` or `403`. It never falls
+  back to the public list.
+
+To list a server anonymously, publish it and make it public:
+`PATCH /v1/mcp/<tenant>/endpoints/<endpoint-id>` with `{"published": true, "visibility": "public"}`.
+The same server then also appears in the public [change feed](/reference/rest/mcp-catalog).
+
+## How servers are named
+
+Each server is named `apiome.<tenant>/<server-slug>`, for example `apiome.acme/weather`. One tenant
+is one namespace, and the name stays the same for the life of the server.
+
+Its `version` is the version the server reports (`serverInfo.version`). When it reports none, it is
+the label of the server's latest discovery snapshot. Only the current snapshot is served.
+
+## What each entry holds
+
+Each entry is a `server.json` document (`server`) plus registry metadata (`_meta`):
+
+- **`remotes`** — the server's URL and transport (`streamable-http` or `sse`). Credentials, query
+  string and fragment are removed. A `stdio` server has no remote.
+- **`packages`** — one per package or container image linked as the server's source
+  (`apiome mcp source link`). An npm, PyPI or NuGet package lists its registry and, when the link
+  pins an exact version, its `version`. An image is an `oci` package. A server with no linked
+  package has `packages: []` — Apiome never guesses one.
+- **`repository`** — the newest git repository linked as a source, if any.
+- **`_meta["io.modelcontextprotocol.registry/official"]`** — `status`, `isLatest`, `publishedAt`
+  and `updatedAt`.
+- **`_meta["dev.apiome/catalog"]`** — Apiome's own extension:
+
+| Field | Meaning |
+| --- | --- |
+| `grade`, `score` | The server's stored quality grade and score |
+| `trustPosture` | Trust posture `score`, `grade` and `gatePassed` |
+| `lintGate` | The latest stored lint gate `verdict` (`pass`, `fail` or `not_evaluated`) and `evaluatedAt` |
+| `ownerTeam` | The owning team's `slug`, `name` and `status` (confirmed or suggested), or `null` |
+| `sources` | `linked` when any source is linked, `none` when none is |
+| `visibility`, `published`, `manifestDigest` | Catalog visibility, published flag and manifest digest |
+
+## Paging and keeping in sync
+
+- **Pages** hold up to 100 servers (`limit`, default 30). Pass `metadata.nextCursor` back as
+  `cursor` for the next page. Cursors stay valid when servers are added.
+- **Filters**: `search` matches the name or slug, `updated_since` (an RFC 3339 time) keeps servers
+  changed since then, and `version=latest` keeps every current entry.
+- **Change feed**: a server with a change-feed entry at or after a time is always in the
+  `updated_since` listing for that time.
+- **Caching**: a single server comes with an `ETag`. Send it back in `If-None-Match` to get `304`
+  until the server changes.
+
+From the CLI, `apiome mcp registry list [--since 2026-10-01T00:00:00Z]` walks every page.
+
+## Reference
+
+- [MCP registry](/reference/rest/mcp-registry) REST reference
+- [MCP reference](/reference/mcp)
+- [Connect an MCP host](../getting-started/connect-an-mcp-host.mdx) — Apiome's own MCP server

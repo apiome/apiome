@@ -6,6 +6,9 @@ Three layers:
   remote URLs, version choice, text clipping, cursors, ETags and the trust-posture summary.
 * **Conformance tests** validate built pages and entries against the vendored, pinned registry
   schema (``data/mcp_registry_v0_1_schema.json``).
+* **CDG-4.1 (#5973)** — ``packages[]`` / ``repository`` from linked sources (never invented), the
+  owner team, the lint gate verdict, ``sources: "none"``, the ``schema`` route and the
+  ``/registry/mcp/{t}/v0.1`` mount, which serves exactly what the ``/v1/tenants`` mount does.
 * **Route tests** drive the three ``/v1/tenants/{t}/mcp-registry/v0.1`` routes against an in-memory
   catalog that implements the same keyset contract as
   :meth:`app.database.Database.list_mcp_registry_endpoints`: a registry-client walk that follows
@@ -31,12 +34,16 @@ from app.mcp_registry import (
     OFFICIAL_META_KEY,
     InvalidCursorError,
     body_etag,
+    build_packages,
+    build_repository,
     build_server_response,
     decode_cursor,
     definition_schema,
     encode_cursor,
     endpoint_slug_from_name,
     entry_version,
+    lint_gate_summary,
+    owner_team,
     remote_url,
     server_list,
     server_name,
@@ -533,3 +540,176 @@ def test_resolve_mcp_api_key_tenant_id_verifies_hash():
     with patch.object(real_db, "execute_query") as eq:
         assert real_db.resolve_mcp_api_key_tenant_id("short") is None
         eq.assert_not_called()
+
+
+
+# --------------------------------------------------------------------------- CDG-4.1 (#5973)
+
+_REGISTRY_BASE = "/registry/mcp/acme/v0.1/servers"
+
+_NPM = {"source_kind": "package", "locator": "pkg:npm/%40acme/weather@1.4.2",
+        "purl": "pkg:npm/%40acme/weather@1.4.2", "digest": "1.4.2"}
+_PYPI_FLOATING = {"source_kind": "package", "locator": "pkg:pypi/weather-mcp@latest",
+                  "purl": "pkg:pypi/weather-mcp@latest", "digest": None}
+_IMAGE = {"source_kind": "image", "locator": "ghcr.io/acme/weather@sha256:" + "a" * 64,
+          "purl": None, "digest": "sha256:" + "a" * 64}
+_GIT = {"source_kind": "git", "locator": "https://github.com/acme/weather", "purl": None,
+        "digest": None}
+_REGISTRY_ID = {"source_kind": "registry", "locator": "io.github.acme/weather", "purl": None,
+                "digest": None}
+
+
+def test_build_packages_maps_package_and_image_sources():
+    packages = build_packages([_NPM, _PYPI_FLOATING, _IMAGE, _GIT, _REGISTRY_ID])
+    assert packages == [
+        {"registryType": "npm", "identifier": "@acme/weather", "transport": {"type": "stdio"},
+         "registryBaseUrl": "https://registry.npmjs.org", "version": "1.4.2"},
+        {"registryType": "pypi", "identifier": "weather-mcp", "transport": {"type": "stdio"},
+         "registryBaseUrl": "https://pypi.org"},
+        {"registryType": "oci", "identifier": _IMAGE["locator"], "transport": {"type": "stdio"}},
+    ]
+
+
+def test_build_packages_never_invents_and_dedupes():
+    assert build_packages([]) == []
+    assert build_packages([_GIT, _REGISTRY_ID]) == []
+    assert build_packages([{"source_kind": "package", "purl": "pkg:npm"}]) == []
+    assert len(build_packages([_NPM, dict(_NPM)])) == 1
+    unscoped = {"source_kind": "package", "purl": "pkg:npm/%40acme/tool", "digest": None}
+    assert build_packages([unscoped])[0]["identifier"] == "@acme/tool"
+    assert "version" not in build_packages([unscoped])[0]
+
+
+def test_build_repository_uses_newest_git_source():
+    assert build_repository([_NPM, _GIT]) == {"url": "https://github.com/acme/weather", "source": "github"}
+    other = {"source_kind": "git", "locator": "https://git.acme.dev/team/weather"}
+    assert build_repository([other, _GIT]) == {"url": "https://git.acme.dev/team/weather", "source": "git.acme.dev"}
+    assert build_repository([_NPM, _IMAGE]) is None
+    assert build_repository([]) is None
+
+
+def test_lint_gate_summary_reads_stored_verdict():
+    assert lint_gate_summary(_row("a")) == {"verdict": "not_evaluated", "evaluatedAt": None}
+    assert lint_gate_summary(_row("a", lint_gate_passed=True, lint_gate_evaluated_at=_T0)) == {
+        "verdict": "pass", "evaluatedAt": "2026-10-01T12:00:00Z"}
+    assert lint_gate_summary(_row("a", lint_gate_passed=False))["verdict"] == "fail"
+
+
+def test_owner_team_summary():
+    owner = {"team": {"id": "t1", "slug": "platform", "name": "Platform"}, "status": "confirmed",
+             "source": "manual"}
+    assert owner_team(_row("a", entity_owner=owner)) == {
+        "slug": "platform", "name": "Platform", "status": "confirmed"}
+    assert owner_team(_row("a")) is None
+    assert owner_team(_row("a", entity_owner={"team": None})) is None
+
+
+def test_server_without_sources_has_empty_packages_and_sources_none():
+    entry = build_server_response(_row("weather"))
+    assert entry["server"]["packages"] == []
+    assert "repository" not in entry["server"]
+    catalog = entry["_meta"][CATALOG_META_KEY]
+    assert catalog["sources"] == "none"
+    assert catalog["ownerTeam"] is None
+    assert catalog["lintGate"]["verdict"] == "not_evaluated"
+    _validate("ServerResponse", entry)
+
+
+def test_server_with_sources_validates_against_vendored_schema():
+    row = _row("weather", sources=[_NPM, _IMAGE, _GIT, _REGISTRY_ID], lint_gate_passed=True,
+               lint_gate_evaluated_at=_T0,
+               entity_owner={"team": {"slug": "platform", "name": "Platform"}, "status": "suggested"})
+    entry = build_server_response(row, trust_posture=_POSTURE)
+    _validate("ServerResponse", entry)
+    _validate("ServerDetail", entry["server"])
+    assert [p["registryType"] for p in entry["server"]["packages"]] == ["npm", "oci"]
+    assert entry["server"]["repository"]["url"] == "https://github.com/acme/weather"
+    catalog = entry["_meta"][CATALOG_META_KEY]
+    assert catalog["sources"] == "linked"
+    assert catalog["lintGate"] == {"verdict": "pass", "evaluatedAt": "2026-10-01T12:00:00Z"}
+    assert catalog["ownerTeam"]["slug"] == "platform"
+
+
+def test_only_registry_sources_is_linked_but_packages_empty():
+    entry = build_server_response(_row("weather", sources=[_REGISTRY_ID]))
+    assert entry["server"]["packages"] == []
+    assert entry["_meta"][CATALOG_META_KEY]["sources"] == "linked"
+
+
+def test_registry_mount_serves_the_same_listing(catalog):
+    legacy = client.get(_BASE)
+    mounted = client.get(_REGISTRY_BASE)
+    assert mounted.status_code == 200
+    assert mounted.json() == legacy.json()
+    assert mounted.headers["etag"] == legacy.headers["etag"]
+    _validate("ServerList", mounted.json())
+
+
+def test_registry_mount_pages_with_stable_cursor(catalog):
+    seen: List[str] = []
+    url = f"{_REGISTRY_BASE}?limit=2"
+    while True:
+        body = client.get(url).json()
+        seen.extend(_names(body))
+        cursor = body["metadata"].get("nextCursor")
+        if not cursor:
+            break
+        catalog.rows.append(_row("able"))  # sorts before every cursor: never shows up mid-walk
+        url = f"{_REGISTRY_BASE}?limit=2&cursor={cursor}"
+    assert seen == ["alpha", "bravo", "echo"]
+
+
+def test_registry_mount_unpublished_is_404_anonymously_and_200_with_key(catalog):
+    path = f"{_REGISTRY_BASE}/apiome.acme%2Fdelta/versions/latest"
+    assert client.get(path).status_code == 404
+    assert client.get(f"{_REGISTRY_BASE}/apiome.acme%2Fdelta/versions").status_code == 404
+    catalog.db.resolve_mcp_api_key_tenant_id.return_value = _TENANT_ID
+    resp = client.get(path, headers={"X-API-Key": "mcpk_live_secretsecret"})
+    assert resp.status_code == 200
+    _validate("ServerResponse", resp.json())
+
+
+def test_registry_mount_updated_since_and_limit(catalog):
+    body = client.get(_REGISTRY_BASE, params={"updated_since": "2026-10-02T00:00:00Z"}).json()
+    assert _names(body) == ["echo"]
+    assert client.get(f"{_REGISTRY_BASE}?limit=101").status_code == 422
+
+
+def test_schema_route_on_both_mounts():
+    for path in ("/registry/mcp/acme/v0.1/schema", "/v1/tenants/acme/mcp-registry/v0.1/schema"):
+        resp = client.get(path)
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "registryApiVersion": "v0.1",
+            "serverSchema": mcp_registry.SERVER_SCHEMA_URL,
+            "apiSpec": {"version": "2025-12-01",
+                        "commit": "11b7b0e274d518b6f449c5ee3518a6151d9848b9"},
+        }
+        assert resp.headers["cache-control"] == "public, max-age=60"
+
+
+def test_schema_info_matches_vendored_pin():
+    comment = mcp_registry.registry_schema()["$comment"]
+    info = mcp_registry.schema_info()
+    assert info["apiSpec"]["commit"] in comment
+    assert info["apiSpec"]["version"] in comment
+    assert "2025-12-11/server.schema.json" in info["serverSchema"]
+
+
+def test_list_mcp_registry_endpoints_sql_joins_sources_owner_and_lint_gate():
+    with patch.object(real_db, "execute_query", return_value=[]) as eq:
+        real_db.list_mcp_registry_endpoints("acme", include_private=False, limit=2)
+    sql = eq.call_args.args[0]
+    assert "FROM apiome.mcp_endpoint_sources ms" in sql and "ms.retired_at IS NULL" in sql
+    assert "'[]'::jsonb" in sql
+    assert "FROM apiome.lint_policy_evaluations pe" in sql
+    assert "pe.mcp_version_id = e.current_version_id" in sql
+    assert "own.entity_owner" in sql and "apiome.entity_owners" in sql
+
+
+def test_listing_updated_since_covers_the_change_feed_timestamp():
+    """A feed entry's stamp is its snapshot's ``discovered_at``; the listing's bound is never earlier."""
+    with patch.object(real_db, "execute_query", return_value=[]) as eq:
+        real_db.list_mcp_registry_endpoints("acme", include_private=False, limit=2, updated_since=_T0)
+    sql = eq.call_args.args[0]
+    assert "GREATEST(e.updated_at, COALESCE(v.discovered_at, v.created_at)) >= %s" in sql

@@ -1,0 +1,25 @@
+---
+slug: mcp-registry-endpoint
+title: Point hosts and gateways at your MCP registry
+description: The MCP registry now lists packages, repository, owner team and lint verdict.
+authors: [apiome]
+---
+
+Your tenant's MCP registry now has a registry-style base URL, `/registry/mcp/{tenant}`, that an MCP
+host or gateway can be pointed at. Each entry is a fuller `server.json` built from the server's
+manifest and linked sources.
+
+{/* truncate */}
+
+- **Registry base URL.** `GET /registry/mcp/{tenant}/v0.1/servers`, `…/servers/{name}/versions` and
+  `…/versions/{version}` serve the same entries as `/v1/tenants/{tenant}/mcp-registry/v0.1/…`.
+- **Packages and repository.** Linked package sources (npm, PyPI, NuGet and others) and container
+  images fill `packages`, and the newest linked git repository fills `repository`. A server with no
+  linked source has `packages: []` and `sources: "none"` — Apiome never invents a package.
+- **More in `_meta`.** `dev.apiome/catalog` adds the owner team, the latest lint gate verdict and
+  whether a source is linked.
+- **Schema version.** `GET …/v0.1/schema` names the registry API and `server.json` schema versions
+  served.
+
+Published, public servers are listed anonymously; a tenant credential lists the rest. See
+[MCP registry endpoint](/ship/mcp-registry).

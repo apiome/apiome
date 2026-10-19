@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.383.0] - 2026-10-19
+
+### Added
+- **MCP Registry API over the MCP server catalog (#5973, CDG-4.1)**: the registry routes are also mounted at
+  `/registry/mcp/{tenant}/v0.1/…` (`app.mcp_registry_routes.registry_router`) — `GET …/servers`,
+  `…/servers/{serverName}/versions` and `…/versions/{version}` — with the same handlers, visibility, cursors and
+  ETags as `/v1/tenants/{t}/mcp-registry/v0.1/…`. New `GET …/v0.1/schema` (both mounts) returns the registry API
+  version, the `server.json` schema URL and the pinned upstream spec version and commit. Each `server.json` now
+  carries `packages[]` from the endpoint's live `mcp_endpoint_sources` (package sources by purl type, identifier and
+  — only when pinned to an exact version — `version`; image sources as `oci`; `transport` `stdio`) and `repository`
+  from the newest live git source; no source means `packages: []` and no `repository`. `_meta["dev.apiome/catalog"]`
+  adds `ownerTeam` (confirmed, else suggested owner), `lintGate` (`verdict` `pass` / `fail` / `not_evaluated` and
+  `evaluatedAt` from the snapshot's latest stored `lint_policy_evaluations` row; never run on read) and `sources`
+  (`linked` / `none`). `Database.list_mcp_registry_endpoints` joins the owner envelope, the live sources and the
+  latest lint gate verdict in the same statement. Names stay `apiome.<tenant-slug>/<endpoint-slug>`: Apiome has no
+  tenant-level verified domain yet, so the reverse-DNS naming rule is deferred.
+
+The OpenAPI version moves to 1.247.0.
+
 ## [1.382.0] - 2026-10-19
 
 ### Added

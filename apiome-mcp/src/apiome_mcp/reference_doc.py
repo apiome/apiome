@@ -574,8 +574,10 @@ def render_index_page(registry: McpRegistry) -> str:
             "## Registry API",
             "",
             "A gateway or registry client can page through a tenant's imported MCP servers in the official "
-            "MCP Registry API v0.1 shape at `/v1/tenants/{tenant}/mcp-registry/v0.1/servers` — see "
-            "[MCP registry](../rest/mcp-registry.md) in the REST reference.",
+            "MCP Registry API v0.1 shape at `/registry/mcp/{tenant}/v0.1/servers` (also served at "
+            "`/v1/tenants/{tenant}/mcp-registry/v0.1/servers`) — see "
+            "[MCP registry endpoint](../../ship/mcp-registry.mdx) for pointing a host or gateway at it, "
+            "and [MCP registry](../rest/mcp-registry.md) in the REST reference.",
             "",
             "To connect a host step by step, see the [MCP quick-start](../mcp-quickstart.md).",
             "",
