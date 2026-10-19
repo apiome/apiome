@@ -188,6 +188,17 @@ connector syncs always land in the catalog, even OpenAPI; convert the item to ma
 
 <Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
 
+### Facts
+
+The **Overview** tab ends with the item's **Facts**: the [catalog facts](../govern/scorecards.mdx)
+scorecards will read — owner team, consumers, declared dependencies, whether its source refreshed
+within twice its cadence, where it is deployed and, for a schema item, whether its registry subjects
+set a compatibility level. Each shows **Met**, **Not met**, **Not applicable** or **Not assessed**
+with what it is based on and a link to check it. There is no score until maturity ladders are
+available.
+
+<Screenshot id="entity-facts" alt="A catalog item's Facts: owner present but not contactable, three consumers, no declared dependencies, refreshed within cadence, deployed on two environments, compatibility level not set" />
+
 ## View an item in Designer
 
 When your workspace has the **Designer** suite, **click “Open in Designer”** on an item's page to

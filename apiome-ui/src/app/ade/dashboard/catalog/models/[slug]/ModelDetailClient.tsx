@@ -17,6 +17,7 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { Alert, Badge, Button, EmptyState, GatedState, Input, Label, LoadingState } from '@/app/components/ui';
 import { EntityOwnerSection } from '@/app/components/ade/catalogAgents/EntityOwnerSection';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { deleteModel, fetchModel, updateModel } from '@/app/components/ade/catalogAgents/catalogAgentsApi';
 import { useAuthSession } from '@lib/auth/session-client';
 import { MODEL_HOSTING_LABELS, agentHref, deprecationLabel, type CatalogModel } from '@lib/catalog-agents';
@@ -178,6 +179,7 @@ export default function ModelDetailClient({ slug }: ModelDetailClientProps) {
             </section>
 
             <EntityOwnerSection kind="model" entityId={model.id} owner={model.owner} onChanged={() => void load()} />
+            <CatalogFactsPanel kind="model" id={model.id} />
 
             <section className="agt-section" aria-labelledby="agt-deprecate">
               <h2 id="agt-deprecate" className="agt-section__title">

@@ -615,6 +615,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['llm', 'agent key', 'toolset', 'deprecation', 'consumer', 'provider'],
   },
   {
+    id: 'scorecards',
+    title: 'Scorecards',
+    summary: 'The catalog facts each entity carries for maturity scorecards, shown as a checklist.',
+    page: 'apiome-docs/docs/govern/scorecards.mdx',
+    section: 'reference',
+    keywords: ['facts', 'maturity', 'ladder', 'owner', 'freshness', 'deployment', 'checklist'],
+  },
+  {
     id: 'connectors',
     title: 'Connectors',
     summary: 'Register API gateways and registries whose APIs sync into the catalog.',

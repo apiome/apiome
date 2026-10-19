@@ -24,6 +24,7 @@ import { Alert, Badge, Button, EmptyState, GatedState, LoadingState } from '@/ap
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import { EntityOwnerSection } from '@/app/components/ade/catalogAgents/EntityOwnerSection';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import ExportDialog from '@/app/components/ade/dashboard/export/ExportDialog';
 import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
 import { fetchGatewayConfig } from '@/app/components/ade/gatewayConfigs/gatewayConfigsApi';
@@ -168,6 +169,7 @@ export default function GatewayConfigClient({ slug }: GatewayConfigClientProps) 
                 <ServedApis config={config} unavailable={unavailable} onPushBack={pushBack} />
                 <PostureSection config={config} />
                 <EntityOwnerSection kind="gateway_config" entityId={config.id} owner={config.owner} onChanged={() => void load()} />
+                <CatalogFactsPanel kind="gateway_config" id={config.id} active={tab === 'overview'} />
               </TabsContent>
               <TabsContent value="graph">
                 <DependenciesPanel

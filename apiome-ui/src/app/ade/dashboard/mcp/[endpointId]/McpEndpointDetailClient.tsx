@@ -50,6 +50,7 @@
  */
 
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -880,6 +881,8 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 active={activeTab === 'dependencies'}
                 label={{ name: endpoint.name ?? null, slug: endpoint.slug ?? null, owner: null }}
               />
+              {/* CDG-5.4: the server's scorecard facts, beside its edges. */}
+              <CatalogFactsPanel kind="mcp_server" id={endpointId} active={activeTab === 'dependencies'} />
             </McpEndpointTabPanel>
 
             <McpEndpointTabPanel value="settings" active={activeTab}>

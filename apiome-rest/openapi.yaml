@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.253.0
+  version: 1.254.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -10296,6 +10296,95 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for summarize catalog entitiesresponse422.
+  /v1/catalog/{tenant_slug}/entities/{kind_key}/{entity_id}/facts:
+    get:
+      tags:
+      - catalog-entities
+      summary: Read Catalog Entity Facts
+      description: 'The facts one entity carries for per-kind scorecards (CDG-5.4),
+        each with its evidence.
+
+
+        `owner.present`, `owner.contactable`, `consumers.declared`, `dependencies.declared`,
+
+        `refresh.fresh` (its source last succeeded within twice its cadence), `deployment.known`,
+
+        `shadow.none`, `registry.level-set`, `mcp.baseline-approved` and `agent.readiness`
+        — whichever
+
+        apply to the kind. A fact Apiome cannot establish is `not_assessed`, never
+        `met`. `score` is
+
+        always `null` until maturity ladders (GVM-1.x) consume the facts. Needs `view`
+        on the kind''s
+
+        resource; an unknown kind is a 422, an unknown entity a 404.'
+      operationId: read_catalog_entity_facts_v1_catalog__tenant_slug__entities__kind_key___entity_id__facts_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: kind_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind Key
+          description: Kind Key schema.
+        description: Path parameter identifying the kind key segment.
+      - name: entity_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Entity Id
+          description: Entity Id schema.
+        description: Path parameter identifying the entity id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Read Catalog Entity Factsauthorization schema.
+          - type: 'null'
+            description: Read Catalog Entity Factsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Read Catalog Entity Facts Xapikey schema.
+          - type: 'null'
+            description: Read Catalog Entity Facts Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read catalog entity facts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogFactsOut'
+                description: Response payload for read catalog entity factsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for read catalog entity factsresponse422.
   /v1/catalog/{tenant_slug}:
     get:
       tags:
@@ -22492,7 +22581,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-19T22:29:17Z'
+                        example: '2026-10-19T23:08:53Z'
                       method:
                         type: string
                         example: GET
@@ -80043,7 +80132,7 @@ components:
           type: string
           title: Kind
           description: 'The registry kind: `api`, `spec`, `mcp_server`, `consumer`,
-            `connector` or `team`.'
+            `connector`, `agent`, `model`, `gateway_config` or `team`.'
           example: example
         id:
           type: string
@@ -80229,6 +80318,99 @@ components:
       title: CatalogFacetsResponse
       description: '``GET /v1/catalog/{tenant}/facets`` (MFI-6.3): facet counts for
         the catalog browse.'
+    CatalogFact:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: '`owner.present`, `consumers.declared`, `refresh.fresh`, …'
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        status:
+          type: string
+          enum:
+          - met
+          - unmet
+          - not_applicable
+          - not_assessed
+          title: Status
+          description: '`met`, `unmet`, `not_applicable` (cannot apply to this entity)
+            or `not_assessed` (Apiome cannot establish it — never treated as met).'
+          example: met
+        value:
+          anyOf:
+          - type: boolean
+            description: Catalog Fact schema.
+          - type: integer
+            description: Catalog Fact schema.
+          - type: 'null'
+            description: Catalog Fact schema.
+          title: Value
+          description: A count for count facts, else the boolean.
+        detail:
+          anyOf:
+          - type: string
+            description: Catalog Fact schema.
+          - type: 'null'
+            description: Catalog Fact schema.
+          title: Detail
+          description: What the status is based on.
+        evidence:
+          items:
+            $ref: '#/components/schemas/FactEvidence'
+          type: array
+          title: Evidence
+          description: Evidence.
+          maxItems: 1000
+      type: object
+      required:
+      - key
+      - label
+      - status
+      title: CatalogFact
+      description: One fact about one entity.
+    CatalogFactsOut:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        facts:
+          items:
+            $ref: '#/components/schemas/CatalogFact'
+          type: array
+          title: Facts
+          description: Facts.
+          maxItems: 1000
+        score:
+          type: 'null'
+          title: Score
+          description: 'Always `null`: maturity ladders (GVM-1.x) are not available
+            yet, and a grade is never computed from partial facts.'
+      type: object
+      required:
+      - kind
+      - id
+      - name
+      - facts
+      title: CatalogFactsOut
+      description: An entity's facts, in display order. No score until GVM-1.x ladders
+        consume them.
     CatalogItemDetailSchema:
       properties:
         id:
@@ -81777,7 +81959,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         completed_at:
           anyOf:
           - type: string
@@ -83264,7 +83446,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -83437,7 +83619,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -83878,13 +84060,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -86390,7 +86572,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 06198530-76b3-4322-b51d-f42432914a38
+          example: effe46a2-6749-4465-a7ff-741878be4607
         method:
           type: string
           title: Method
@@ -88533,7 +88715,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         envelope:
           additionalProperties: true
           type: object
@@ -90024,7 +90206,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         browse_url:
           anyOf:
           - type: string
@@ -94405,6 +94587,35 @@ components:
       - rationale
       title: ExternalLintAdaptersResponse
       description: Discovery for Spectral / Vacuum / Redocly validation packs (CLX-2.2).
+    FactEvidence:
+      properties:
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        href:
+          anyOf:
+          - type: string
+            description: Fact Evidence schema.
+          - type: 'null'
+            description: Fact Evidence schema.
+          title: Href
+          description: The app page.
+        api:
+          anyOf:
+          - type: string
+            description: Fact Evidence schema.
+          - type: 'null'
+            description: Fact Evidence schema.
+          title: Api
+          description: The REST route (relative to the API host).
+      type: object
+      required:
+      - label
+      title: FactEvidence
+      description: 'Where to check a fact: a page in the app and/or the API that holds
+        the data.'
     FirstTenantProvisionRequest:
       properties:
         name:
@@ -123569,7 +123780,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
       additionalProperties: false
       type: object
       required:
@@ -132406,12 +132617,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
       additionalProperties: false
       type: object
       required:
@@ -133540,7 +133751,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         detected_by:
           anyOf:
           - type: string
@@ -139814,13 +140025,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-19T22:29:17Z'
+          example: '2026-10-19T23:08:53Z'
         outcome:
           anyOf:
           - type: string

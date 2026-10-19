@@ -1,6 +1,6 @@
 ---
 title: "Catalog entities"
-description: "REST endpoints tagged catalog-entities: 2 operations."
+description: "REST endpoints tagged catalog-entities: 3 operations."
 sidebar_position: 13
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.253.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.254.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `catalog-entities` · 2 operations
+Tag: `catalog-entities` · 3 operations
 
 ## `GET /v1/catalog/{tenant_slug}/entities` {#list-catalog-entities-v1-catalog-tenant-slug-entities-get}
 
@@ -76,6 +76,38 @@ Operation id: `summarize_catalog_entities_v1_catalog__tenant_slug__entities_summ
 | 200 | Successful response for summarize catalog entities. | `application/json` [`CatalogEntitySummary`](#schema-catalogentitysummary) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/catalog/{tenant_slug}/entities/{kind_key}/{entity_id}/facts` {#read-catalog-entity-facts-v1-catalog-tenant-slug-entities-kind-key-entity-id-facts-get}
+
+**Read Catalog Entity Facts**
+
+The facts one entity carries for per-kind scorecards (CDG-5.4), each with its evidence.
+
+`owner.present`, `owner.contactable`, `consumers.declared`, `dependencies.declared`,
+`refresh.fresh` (its source last succeeded within twice its cadence), `deployment.known`,
+`shadow.none`, `registry.level-set`, `mcp.baseline-approved` and `agent.readiness` — whichever
+apply to the kind. A fact Apiome cannot establish is `not_assessed`, never `met`. `score` is
+always `null` until maturity ladders (GVM-1.x) consume the facts. Needs `view` on the kind's
+resource; an unknown kind is a 422, an unknown entity a 404.
+
+Operation id: `read_catalog_entity_facts_v1_catalog__tenant_slug__entities__kind_key___entity_id__facts_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `kind_key` | path | string | yes | Path parameter identifying the kind key segment. |
+| `entity_id` | path | string | yes | Path parameter identifying the entity id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read catalog entity facts. | `application/json` [`CatalogFactsOut`](#schema-catalogfactsout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `CatalogEntityPage` {#schema-catalogentitypage}
@@ -95,6 +127,18 @@ Every visible kind with its count, and the home callouts.
 | --- | --- | --- | --- |
 | `kinds` | array of `EntityKindSummary` | yes | Kinds. |
 | `callouts` | `CatalogCallouts` | yes | Callouts. |
+
+### `CatalogFactsOut` {#schema-catalogfactsout}
+
+An entity's facts, in display order. No score until GVM-1.x ladders consume them.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | string | yes | Kind. |
+| `id` | string | yes | Stable resource identifier. |
+| `name` | string | yes | Human-readable name. |
+| `facts` | array of `CatalogFact` | yes | Facts. |
+| `score` | null | no | Always `null`: maturity ladders (GVM-1.x) are not available yet, and a grade is never computed from partial facts. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

@@ -29,6 +29,7 @@ import {
   Network,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import dynamic from 'next/dynamic';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
@@ -3715,6 +3716,8 @@ const Versions = () => {
               active
               label={{ name: selectedProject?.name ?? null, slug: selectedProject?.slug ?? null, owner: null }}
             />
+            {/* CDG-5.4: the project's scorecard facts, beside its edges. */}
+            <CatalogFactsPanel key={`facts-${selectedProjectId}`} kind="api" id={selectedProjectId} />
           </Card>
         ) : null}
 

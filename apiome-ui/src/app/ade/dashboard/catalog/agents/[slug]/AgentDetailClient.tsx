@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { EntityOwnerSection } from '@/app/components/ade/catalogAgents/EntityOwnerSection';
 import {
   deleteAgent,
@@ -210,6 +211,7 @@ export default function AgentDetailClient({ slug }: AgentDetailClientProps) {
                 <EntityOwnerSection kind="agent" entityId={agent.id} owner={agent.owner} onChanged={() => void load()} />
                 <KeysSection agent={agent} busy={busy} onLink={() => setLinkOpen(true)} onUnlink={(keyId) => void act(() => unlinkAgentKey(agent.slug, keyId))} />
                 <ConsumersSection agent={agent} />
+                <CatalogFactsPanel kind="agent" id={agent.id} active={tab === 'overview'} />
               </TabsContent>
               <TabsContent value="graph">
                 <AgentGraph agent={agent} active={tab === 'graph'} />
