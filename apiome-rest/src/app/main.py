@@ -73,6 +73,8 @@ from .mcp_feed_routes import router as mcp_feed_router
 from .mcp_registry_routes import registry_router as mcp_registry_alias_router
 from .mcp_registry_routes import router as mcp_registry_router
 from .schema_registry_routes import router as schema_registry_router
+from .schema_registry_confluent_routes import ConfluentRegistryError, confluent_error_handler
+from .schema_registry_confluent_routes import router as schema_registry_confluent_router
 from .mcp_key_routes import router as mcp_key_router
 from .mcp_manifest_routes import router as mcp_manifest_router
 from .mcp_policy_routes import router as mcp_policy_router
@@ -176,7 +178,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.248.0",
+    version="1.249.0",
 )
 
 
@@ -319,6 +321,9 @@ app.include_router(mcp_registry_router)
 app.include_router(mcp_registry_alias_router)
 # schema_registry_router: schema subjects, ids and versions at /v1/tenants/{t}/schema-registry/* (CDG-4.2, #5974).
 app.include_router(schema_registry_router)
+# schema_registry_confluent_router: the Confluent-compatible schema registry at /registry/schema/{t}/* (CDG-4.3, #5975).
+app.include_router(schema_registry_confluent_router)
+app.add_exception_handler(ConfluentRegistryError, confluent_error_handler)
 app.include_router(browse_export_router)
 app.include_router(snippet_browse_router)
 app.include_router(sdk_kit_router)

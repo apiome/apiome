@@ -18,7 +18,8 @@
  *
  * ### The one rule this module does not own
  *
- * The scope *vocabulary* — what `*`, `diff:read`, `lint:read` and `usage:ingest` mean, and that `*` must
+ * The scope *vocabulary* — what `*`, `diff:read`, `lint:read`, `usage:ingest`, `registry:read` and
+ * `registry:write` mean, and that `*` must
  * stand alone — is `@/app/utils/apiKeyScopes`, which the REST layer and `lib/db/helper`
  * share. This module presents those scopes; it does not decide them, so the strings a preset
  * produces here are the same strings the database has always stored.
@@ -29,6 +30,8 @@ import {
   API_KEY_SCOPE_FULL,
   API_KEY_SCOPE_LINT_READ,
   API_KEY_SCOPE_PRESETS,
+  API_KEY_SCOPE_REGISTRY_READ,
+  API_KEY_SCOPE_REGISTRY_WRITE,
   API_KEY_SCOPE_USAGE_INGEST,
   normalizeApiKeyScopes,
   type ApiKeyScopePreset,
@@ -289,8 +292,8 @@ export interface ApiKeyScopeReference {
 }
 
 /**
- * The four scopes, in the order the reference card lists them (the mockup's three, then
- * `usage:ingest`, RDG-1.2 / #5760).
+ * The six scopes, in the order the reference card lists them (the mockup's three, then
+ * `usage:ingest`, RDG-1.2 / #5760, then the schema registry pair, CDG-4.3 / #5975).
  *
  * Stated once so the card, the create dialog's badges and the table's legend cannot drift
  * into three different descriptions of `lint:read`.
@@ -316,6 +319,16 @@ export const API_KEY_SCOPE_REFERENCE: readonly ApiKeyScopeReference[] = [
     allows: 'POST …/usage/ingest only — traffic sources feeding the usage index.',
     full: false,
   },
+  {
+    scope: API_KEY_SCOPE_REGISTRY_READ,
+    allows: 'Reads of the schema registry at /registry/schema/… — Kafka deserializers.',
+    full: false,
+  },
+  {
+    scope: API_KEY_SCOPE_REGISTRY_WRITE,
+    allows: 'Registers schemas and changes registry config at /registry/schema/… only.',
+    full: false,
+  },
 ];
 
 /**
@@ -330,6 +343,8 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
     [API_KEY_SCOPE_DIFF_READ]: 0,
     [API_KEY_SCOPE_LINT_READ]: 0,
     [API_KEY_SCOPE_USAGE_INGEST]: 0,
+    [API_KEY_SCOPE_REGISTRY_READ]: 0,
+    [API_KEY_SCOPE_REGISTRY_WRITE]: 0,
   };
   for (const key of keys) {
     const scopes = apiKeyScopeList(key);
@@ -344,7 +359,7 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
   return counts;
 }
 
-/** One of the create dialog's five scope cards. */
+/** One of the create dialog's seven scope cards. */
 export interface ApiKeyScopePresetOption {
   /** The preset id, which is also the radio's value. */
   value: ApiKeyScopePreset;
@@ -357,7 +372,8 @@ export interface ApiKeyScopePresetOption {
 }
 
 /**
- * The five presets: the mockup's four, in its order, then the usage-source preset (RDG-1.2).
+ * The seven presets: the mockup's four, in its order, then the usage-source preset (RDG-1.2), then
+ * the two schema registry presets (CDG-4.3).
  *
  * `scopes` is read from {@link API_KEY_SCOPE_PRESETS} rather than restated, which is what
  * makes the second acceptance criterion — *"scope presets produce the same scope strings as
@@ -393,6 +409,18 @@ export const API_KEY_SCOPE_PRESET_OPTIONS: readonly ApiKeyScopePresetOption[] = 
     label: 'Usage source',
     scopes: API_KEY_SCOPE_PRESETS.usage,
     hint: 'POST …/usage/ingest only — for an OpenTelemetry Collector or log shipper.',
+  },
+  {
+    value: 'registry_read',
+    label: 'Schema registry: read',
+    scopes: API_KEY_SCOPE_PRESETS.registry_read,
+    hint: 'Reads /registry/schema/… only — for Kafka consumers and deserializers.',
+  },
+  {
+    value: 'registry_client',
+    label: 'Schema registry: read + write',
+    scopes: API_KEY_SCOPE_PRESETS.registry_client,
+    hint: 'Also registers schemas — for Kafka producers that auto-register.',
   },
 ];
 

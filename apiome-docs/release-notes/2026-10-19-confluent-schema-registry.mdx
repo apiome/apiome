@@ -1,0 +1,25 @@
+---
+slug: confluent-schema-registry
+title: Kafka serializers can use Apiome as their schema registry
+description: Apiome serves the Confluent Schema Registry API for Avro, JSON Schema and Protobuf.
+authors: [apiome]
+---
+
+Point `confluent-kafka`, `kafka-avro-serializer` or Spring Kafka at
+`/registry/schema/{tenant}` and they register, look up, serialize and deserialize against Apiome
+with no code change.
+
+{/* truncate */}
+
+- **The Confluent contract.** Subjects, versions, schema ids, the subject lookup, config, mode and
+  compatibility routes, in `application/vnd.schemaregistry.v1+json` with Confluent's error codes.
+- **No second key system.** Use a workspace API key as the basic-auth password (or a bearer
+  token). The new **Schema registry: read** and **read + write** presets (`registry:read`,
+  `registry:write`) reach the registry and nothing else.
+- **No silent success.** Compatibility rules for Avro, JSON Schema and Protobuf are still to come.
+  Until then a new version registers only under level `NONE`; under any other level it is refused
+  with `42290 compatibility-rules-unavailable` rather than accepted unchecked. A subject's first
+  version registers under any level.
+- **Audited.** Every register, config, mode and delete call is recorded in the registry audit log.
+
+See [Connect a Kafka client](/ship/schema-registry#connect-a-kafka-client).

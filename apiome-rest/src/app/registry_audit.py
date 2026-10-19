@@ -23,12 +23,21 @@ ACTION_UPDATE = "primitive.update"
 ACTION_DELETE = "primitive.delete"
 ACTION_IMPORT = "primitive.import"
 
+# Schema registry subject verbs (CDG-4.3, #5975): every write through the Confluent-compatible
+# API. ``namespace`` carries the subject name and ``schema_id`` the integer schema id, when one.
+ACTION_SUBJECT_REGISTER = "registry.subject.register"
+ACTION_SUBJECT_CONFIG = "registry.subject.config"
+ACTION_SUBJECT_DELETE = "registry.subject.delete"
+
 #: Every action this service writes — used by the list endpoint's documentation/tests.
 REGISTRY_AUDIT_ACTIONS = (
     ACTION_CREATE,
     ACTION_UPDATE,
     ACTION_DELETE,
     ACTION_IMPORT,
+    ACTION_SUBJECT_REGISTER,
+    ACTION_SUBJECT_CONFIG,
+    ACTION_SUBJECT_DELETE,
 )
 
 OUTCOME_SUCCESS = "success"

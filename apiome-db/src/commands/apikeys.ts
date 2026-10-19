@@ -6,8 +6,18 @@ import { note, printRecord, printRows, type OutputMode } from "../output.js";
 import { apiKeyPrefix, generateApiKey, hashApiKey } from "../secrets.js";
 import { confirmDestructive, isUuid } from "../util.js";
 
-/** Allowed workspace API key scopes (CTG-2.3 / #4473; `usage:ingest` RDG-1.2 / #5760). */
-export const API_KEY_SCOPE_VOCAB = new Set(["*", "diff:read", "lint:read", "usage:ingest"]);
+/**
+ * Allowed workspace API key scopes (CTG-2.3 / #4473; `usage:ingest` RDG-1.2 / #5760;
+ * `registry:read` / `registry:write` CDG-4.3 / #5975).
+ */
+export const API_KEY_SCOPE_VOCAB = new Set([
+  "*",
+  "diff:read",
+  "lint:read",
+  "usage:ingest",
+  "registry:read",
+  "registry:write",
+]);
 
 /**
  * Normalize and validate a scopes list for insert.
@@ -30,7 +40,7 @@ export function normalizeApiKeyScopes(raw?: string | string[] | null): string[] 
   for (const s of parts) {
     if (!API_KEY_SCOPE_VOCAB.has(s)) {
       throw new CliError(
-        `Invalid API key scope "${s}". Allowed: *, diff:read, lint:read, usage:ingest.`,
+        `Invalid API key scope "${s}". Allowed: *, diff:read, lint:read, usage:ingest, registry:read, registry:write.`,
       );
     }
   }

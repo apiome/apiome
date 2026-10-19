@@ -1,6 +1,6 @@
 ---
 title: Schema registry subjects
-description: Register Avro, JSON Schema and Protobuf schemas under subjects with stable ids.
+description: Register Avro, JSON Schema and Protobuf schemas; connect Kafka serializers.
 sidebar_position: 7.1
 tags: [catalog, versions]
 ---
@@ -21,7 +21,7 @@ place schemas live.
 | **Compatibility level** | `NONE`, `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL` or `FULL_TRANSITIVE`. A subject without one uses the tenant default (`BACKWARD` until you change it). |
 | **Mode** | `READWRITE` or `READONLY`. A `READONLY` subject — or a `READONLY` tenant default — refuses new versions. |
 
-Compatibility levels are stored now. Apiome does not yet check a new version against them.
+How a level is used today is under [Compatibility levels](#compatibility-levels).
 
 ## What a version is
 
@@ -39,6 +39,97 @@ order of keys or whitespace does not matter. Then:
 
 So registering the same schema twice always returns the same id and creates one revision.
 
+## Connect a Kafka client
+
+Apiome serves the **Confluent Schema Registry API**, so `confluent-kafka`, `kafka-avro-serializer`
+and Spring Kafka work against it with no code change — only their configuration:
+
+1. **Create a key** under **Workspace → API keys** with the **Schema registry: read + write**
+   preset for a producer, or **Schema registry: read** for a consumer (see
+   [A key for a Kafka serializer](../workspace/api-keys.mdx#a-key-for-a-kafka-serializer)).
+2. **Point the client at** `https://<your-apiome-host>/registry/schema/<tenant>`.
+3. **Send the key as the basic-auth password.** The user name can be anything.
+
+**Python (`confluent-kafka`)**
+
+```python
+from confluent_kafka.schema_registry import SchemaRegistryClient
+
+registry = SchemaRegistryClient({
+    "url": "https://<your-apiome-host>/registry/schema/acme",
+    "basic.auth.user.info": "orders-producer:<api-key>",
+})
+```
+
+**Java (`kafka-avro-serializer`)**
+
+```properties
+schema.registry.url=https://<your-apiome-host>/registry/schema/acme
+basic.auth.credentials.source=USER_INFO
+basic.auth.user.info=orders-producer:<api-key>
+```
+
+**Spring Kafka (`application.yml`)**
+
+```yaml
+spring:
+  kafka:
+    properties:
+      schema.registry.url: https://<your-apiome-host>/registry/schema/acme
+      basic.auth.credentials.source: USER_INFO
+      basic.auth.user.info: orders-producer:<api-key>
+```
+
+A bearer token works too (`bearer.auth.credentials.source=STATIC_TOKEN` with the key as
+`bearer.auth.token`). The API answers with `application/vnd.schemaregistry.v1+json` and supports
+`/subjects`, `/subjects/<s>/versions`, the subject lookup `POST /subjects/<s>`, `/schemas/ids/<id>`
+(also `…/subjects` and `…/versions`), `/schemas/types`, `/config`, `/mode` and `/compatibility` —
+the full list is on the [Schema registry](/reference/rest/schema-registry) reference page.
+
+Deleting a subject is a soft delete; `DELETE /subjects/<s>?permanent=true` removes a soft-deleted
+subject for good and needs the **Imports — delete** permission. Every write — register, config
+and mode changes, delete — is recorded in the registry audit log.
+
+## Compatibility levels
+
+Each subject has a compatibility level (or uses the tenant default, `BACKWARD` until you change it).
+Apiome does **not yet compute compatibility verdicts** — the Avro, JSON Schema and Protobuf rules
+are still to come. Rather than accept a version it cannot check, Apiome refuses it:
+
+- **A subject's first version** registers under any level — there is nothing to compare it with.
+- **Re-registering a schema the subject already holds** returns its id under any level.
+- **A new version under any level except `NONE`** is refused with `422` and error code `42290`
+  (`compatibility-rules-unavailable`).
+- **`POST /compatibility/…`** answers `is_compatible: true` under `NONE` or for a subject with no
+  versions, and `42290` otherwise.
+
+To keep registering new versions now, set the level to `NONE` — for one subject
+(`PUT /config/<subject>` with `{"compatibility": "NONE"}`) or for the tenant (`PUT /config`).
+`GET /schemas/types?details=true` lists each schema type with `compatibilityRules: "unavailable"`
+and the levels it can be registered under. Protobuf is listed only where the bundled `buf` tool is
+installed.
+
+## Error codes
+
+Errors have Confluent's body, `{"error_code": …, "message": …}`:
+
+| HTTP | `error_code` | Meaning |
+| --- | --- | --- |
+| 401 | `40101` | No key, or the key is wrong, expired or disabled |
+| 403 | `40301` | The key belongs to another tenant, lacks `registry:read` / `registry:write`, or its user lacks the **Imports** permission |
+| 404 | `40401` | Subject not found |
+| 404 | `40402` | Version not found |
+| 404 | `40403` | Schema not found (by id, or under the subject in a lookup) |
+| 404 | `40404` | The subject was already soft-deleted |
+| 404 | `40405` | A permanent delete of a subject that was not soft-deleted first |
+| 404 | `40408` | The subject has no level of its own (`GET /config/<s>` without `defaultToGlobal=true`) |
+| 422 | `42201` | Invalid schema, or a schema type this deployment cannot read |
+| 422 | `42202` | Invalid version |
+| 422 | `42203` | Invalid compatibility level |
+| 422 | `42204` | Invalid mode (only `READWRITE` and `READONLY` exist) |
+| 422 | `42205` | The registry or the subject is `READONLY` |
+| 422 | `42290` | `compatibility-rules-unavailable` — see [Compatibility levels](#compatibility-levels) |
+
 ## Subject naming strategies
 
 The strategy records how a subject name is built — the same three strategies the Avro export uses
@@ -50,8 +141,10 @@ for its subject names:
 | `record` | `<namespace.Record>-value` | `acme.Order-value` |
 | `topic_record` | `<topic>-<namespace.Record>-value` | `orders-acme.Order-value` |
 
-## Register a schema
+## Register a schema with the Apiome API
 
+Besides the Confluent API, the Apiome API under `/v1/tenants/<tenant>/schema-registry` shows each
+version's catalog item and revision. It follows the same [compatibility rule](#compatibility-levels).
 Send the schema text to the subject's versions. `schemaType` is `AVRO` (the default), `JSON` or
 `PROTOBUF`:
 

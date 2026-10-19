@@ -583,6 +583,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['try it', 'preview', 'test drive', 'x-mock-scenario'],
   },
   {
+    id: 'mcp-registry',
+    title: 'MCP registry endpoint',
+    summary: 'Point an MCP host or gateway at your tenant’s MCP server registry.',
+    page: 'apiome-docs/docs/ship/mcp-registry.mdx',
+    section: 'reference',
+    keywords: ['server.json', 'v0.1', 'gateway', 'discovery', 'host'],
+  },
+  {
+    id: 'schema-registry',
+    title: 'Schema registry',
+    summary: 'Register Avro, JSON Schema and Protobuf schemas under subjects; connect Kafka serializers.',
+    page: 'apiome-docs/docs/ship/schema-registry.mdx',
+    section: 'reference',
+    keywords: ['subject', 'confluent', 'kafka', 'avro', 'protobuf', 'serializer', 'compatibility'],
+  },
+  {
     id: 'lint-posture',
     title: 'Lint posture',
     summary: 'Triage lint findings across the workspace: filter, acknowledge, request and approve waivers, assign owners.',
@@ -716,7 +732,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Create scoped keys for REST access, copy the secret once, rotate before expiry, and disable or delete keys.',
     page: 'apiome-docs/docs/workspace/api-keys.mdx',
     section: 'reference',
-    keywords: ['scopes', 'diff:read', 'lint:read', 'usage:ingest', 'revoke', 'bearer', 'x-api-key', 'ci token'],
+    keywords: ['scopes', 'diff:read', 'lint:read', 'usage:ingest', 'registry:read', 'registry:write', 'schema registry', 'revoke', 'bearer', 'x-api-key', 'ci token'],
   },
   {
     id: 'tenants',

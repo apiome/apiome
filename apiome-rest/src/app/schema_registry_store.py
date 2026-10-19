@@ -565,3 +565,73 @@ def record_version(
         return {**inserted, "created": True, "subject": subject, "subject_id": subject_id}
 
     return db._guarded_tx(work)
+
+
+# --------------------------------------------------------------------------- Confluent API (CDG-4.3)
+
+
+def list_subject_names(db: Any, tenant_id: str, *, include_deleted: bool = False) -> List[str]:
+    """Return the tenant's subject names, sorted; soft-deleted ones only with ``include_deleted``.
+
+    A name both live and soft-deleted (deleted, then registered again) appears once.
+    """
+    deleted_clause = "" if include_deleted else "AND deleted_at IS NULL"
+    rows = db.execute_query(
+        f"""
+        SELECT DISTINCT name FROM apiome.schema_subjects
+        WHERE tenant_id = %s {deleted_clause}
+        ORDER BY name ASC
+        """,
+        (tenant_id,),
+    )
+    return [str(r["name"]) for r in rows or []]
+
+
+def hard_delete_subject(db: Any, tenant_id: str, name: str) -> Optional[List[int]]:
+    """Permanently delete a subject that was soft-deleted first (Confluent ``?permanent=true``).
+
+    Removes the soft-deleted subject rows called ``name`` and their versions. Schema rows stay, so an
+    id another subject still holds keeps resolving, and the catalog item revisions are untouched.
+
+    Returns:
+        The versions removed (ascending), or ``None`` when no soft-deleted subject has that name.
+
+    Raises:
+        SchemaRegistryError: ``subject-not-soft-deleted`` (404) when the subject is still live.
+    """
+
+    def work(cursor: Any) -> Optional[List[int]]:
+        live = _fetch_one(
+            cursor,
+            "SELECT id FROM apiome.schema_subjects WHERE tenant_id = %s AND name = %s AND deleted_at IS NULL",
+            (tenant_id, name),
+        )
+        if live is not None:
+            raise SchemaRegistryError(
+                "subject-not-soft-deleted",
+                f"Subject {name!r} must be soft-deleted before it is permanently deleted.",
+                status_code=404,
+            )
+        cursor.execute(
+            """
+            DELETE FROM apiome.schema_subject_versions v
+             USING apiome.schema_subjects s
+             WHERE v.subject_id = s.id AND s.tenant_id = %s AND s.name = %s AND s.deleted_at IS NOT NULL
+            RETURNING v.version
+            """,
+            (tenant_id, name),
+        )
+        versions = sorted(int(r["version"]) for r in cursor.fetchall() or [])
+        cursor.execute(
+            """
+            DELETE FROM apiome.schema_subjects
+             WHERE tenant_id = %s AND name = %s AND deleted_at IS NOT NULL
+            RETURNING id
+            """,
+            (tenant_id, name),
+        )
+        if not cursor.fetchall():
+            return None
+        return versions
+
+    return db._guarded_tx(work)
