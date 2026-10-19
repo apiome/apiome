@@ -503,3 +503,39 @@ def test_the_sample_size_is_measured_as_postgres_measures_it() -> None:
     compact = len(json.dumps({"body": body}, separators=(",", ":")))
     assert compact < MAX_SAMPLE_BYTES < len(json.dumps({"body": body}))
     assert reduce_sample({"response": {"body": body}}, method="GET", path="/p", status=200) is None
+
+
+# ---------------------------------------------------------------------------------------------
+# RDG-1.8 — consumer attribution
+# ---------------------------------------------------------------------------------------------
+
+
+def test_matched_events_carry_their_binding_and_the_rest_stay_anonymous() -> None:
+    from app.consumer_binding import ConsumerMatcher, LiveBinding
+
+    key_hash = "a" * 64
+    consumers = ConsumerMatcher(
+        [
+            LiveBinding(id="key", consumer_id="billing", kind="api_key", name="x-api-key", value_hmac=key_hash),
+            LiveBinding(id="ua", consumer_id="billing", kind="user_agent", name="billing-service/*", value_hmac=None),
+        ]
+    )
+    later = NOW + timedelta(minutes=7)
+    raw = [
+        _event("/pets/1", consumer_hint={"kind": "api_key", "hmac": key_hash}),
+        _event("/pets/2", user_agent="billing-service/2.0", observed_at=later.isoformat()),
+        _event("/pets/3", user_agent="curl/8.0"),
+        _event("/pets/4", consumer_hint={"kind": "api_key", "hmac": "b" * 64}),
+    ]
+    plan = plan_batch(raw, _source(), _matcher(), now=NOW, consumers=consumers)
+    assert plan.accepted == 4 and plan.attributed == 2
+    by_binding = {key[-1]: counter.events for key, counter in plan.hourly.items()}
+    assert by_binding == {"key": 1, "ua": 1, None: 2}
+    assert plan.binding_matches == {"key": NOW, "ua": later}
+    assert plan.binding_consumers == {"key": "billing", "ua": "billing"}
+
+
+def test_without_bindings_every_grain_is_anonymous() -> None:
+    plan = plan_batch([_event("/pets/1"), _event("/pets")], _source(), _matcher(), now=NOW)
+    assert plan.attributed == 0
+    assert all(key[-1] is None for key in plan.hourly)

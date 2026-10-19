@@ -34,6 +34,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from psycopg2.extras import Json
 
+from .consumer_binding import ConsumerMatcher
+from .consumer_binding_store import load_live_bindings, stamp_matches
 from .consumer_surface import SpecIndex
 from .revision_deprecation import is_uuid_string
 from .usage_ingest import (
@@ -249,7 +251,7 @@ def _finalized_lookup(cursor: Any) -> Callable[[date], bool]:
 
 def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
     """Add the plan's hourly grains into ``usage_hourly`` (scaled)."""
-    for (environment, hour, version_id, operation_key, status), counter in plan.hourly.items():
+    for (environment, hour, version_id, operation_key, status, binding_id), counter in plan.hourly.items():
         row = counter.scaled(plan.sampling_rate)
         cursor.execute(
             """
@@ -258,7 +260,7 @@ def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
                 operation_key, status_code, consumer_binding_id, calls, latency_buckets,
                 latency_sum_ms, latency_max_ms, auth_present_calls, auth_unknown_calls,
                 versioned_calls, version_unknown_calls, https_calls, request_bytes, response_bytes)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s::uuid, %s, %s, NULL, %s, %s::bigint[],
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s::uuid, %s, %s, %s::uuid, %s, %s::bigint[],
                     %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT ON CONSTRAINT usage_hourly_grain_uq DO UPDATE SET
                 calls = h.calls + EXCLUDED.calls,
@@ -286,6 +288,7 @@ def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
                 version_id,
                 operation_key,
                 status,
+                binding_id,
                 row["calls"],
                 row["latency_buckets"],
                 row["latency_sum_ms"],
@@ -479,8 +482,14 @@ def ingest_batch(
         if cap > 0 and _events_used_today(cursor, tenant_id, today) + len(raw_events) > cap:
             plan = rejected_plan(raw_events, REASON_QUOTA_EXCEEDED)
             return "quota", _ledger(cursor, source, plan, api_key_id=api_key_id, digest=digest, now=now), plan
-        plan = plan_batch(raw_events, source, matcher, now=now, is_day_finalized=_finalized_lookup(cursor))
+        # RDG-1.8: bindings are read inside the transaction, so one deleted before the batch began
+        # attributes nothing in it.
+        consumers = ConsumerMatcher(load_live_bindings(cursor, tenant_id, source.project_id))
+        plan = plan_batch(
+            raw_events, source, matcher, now=now, is_day_finalized=_finalized_lookup(cursor), consumers=consumers
+        )
         _write_hourly(cursor, source, plan)
+        stamp_matches(cursor, plan.binding_matches, plan.binding_consumers)
         _write_unmatched(cursor, source, plan)
         _write_fields(cursor, source, plan)
         _write_samples(cursor, source, plan)

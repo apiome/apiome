@@ -1,0 +1,25 @@
+---
+slug: consumer-bindings
+title: Usage traffic now knows which consumer sent it
+description: Bind headers, keys, claims or user agents to consumers; compare declared and observed operations.
+authors: [apiome]
+---
+
+The [usage index](/govern/runtime-usage#attribute-traffic-to-consumers) can now attribute live
+traffic to the consumers in your [registry](/build/projects#consumers), without ever storing the
+headers, keys or claims it recognises them by.
+
+{/* truncate */}
+
+- **Bindings.** On a project's **Consumers**, open **Bindings and traffic** and bind a header, an
+  API key, a JWT claim or a user-agent pattern to a consumer. A value is hashed before it is stored
+  and is never shown again, not even as a hash.
+- **Nothing is dropped.** A call no binding recognises is counted under the reserved consumer
+  **anonymous**. Deleting a binding stops it matching from the next batch, and what it already
+  attributed stays attributed.
+- **Declared vs observed.** For each consumer, see the operations it declares and calls, the ones it
+  declares but never calls, and the ones it calls without declaring. **“Add to contract”** stores
+  the next contract revision with that operation added.
+- **REST.** `GET|POST …/consumers/{c}/bindings`, `DELETE …/bindings/{id}` and
+  `GET …/consumers/{c}/runtime`, under the existing `consumer_contracts` permissions. Each consumer
+  list row carries its counts in `runtime`.

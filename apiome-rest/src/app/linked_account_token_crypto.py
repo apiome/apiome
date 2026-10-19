@@ -65,6 +65,7 @@ __all__ = [
     "LinkedAccountTokenEncryptionError",
     "is_sealed",
     "linked_account_token_encryption_configured",
+    "master_key_map",
     "needs_reseal",
     "seal_plaintext_tokens",
     "seal_token",
@@ -101,6 +102,26 @@ _CIPHER = EnvelopeCipher(
 def linked_account_token_encryption_configured() -> bool:
     """Return ``True`` when at least one master key is configured and parseable."""
     return _CIPHER.configured()
+
+
+def master_key_map() -> Tuple[Dict[int, bytes], Optional[int]]:
+    """The configured master keys and the active key-version, for key derivation elsewhere.
+
+    The RDG-1.8 consumer bindings (:mod:`app.consumer_binding`) derive a tenant-scoped HMAC key
+    from this map with HKDF rather than adding another secret to configure. The keys never leave
+    the process.
+
+    Returns:
+        ``({version: 32-byte key}, active version)``; ``({}, None)`` when nothing is configured.
+
+    Raises:
+        LinkedAccountTokenEncryptionError: If the key map is present but malformed, or the active
+            version is absent from it.
+    """
+    keys = _CIPHER.load_key_map()
+    if not keys:
+        return {}, None
+    return keys, _CIPHER.active_key_version(keys)
 
 
 def validate_linked_account_token_keys() -> None:

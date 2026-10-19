@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.243.0",
+    "version": "1.244.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -19539,7 +19539,7 @@
           "consumer-contracts"
         ],
         "summary": "List a project's consumers",
-        "description": "Every live consumer of the project, newest first, each with its **current** contract revision \u2014 the operations and fields it declares it uses, plus how many interactions could not be resolved.\n\nA consumer that has never declared a contract is still listed, with `contract: null`. That is the state a newly registered consumer is in, and hiding it would make the registration look like it failed.\n\nRequires `consumer_contracts:view`.",
+        "description": "Every live consumer of the project, newest first, each with its **current** contract revision \u2014 the operations and fields it declares it uses, plus how many interactions could not be resolved.\n\nA consumer that has never declared a contract is still listed, with `contract: null`. That is the state a newly registered consumer is in, and hiding it would make the registration look like it failed.\n\nEach row's `runtime` counts its declared-and-used, declared-unused and used-undeclared operations over `runtime_days`, from the traffic its bindings attribute.\n\nRequires `consumer_contracts:view`.",
         "operationId": "list_project_consumers_v1_tenants__tenant_slug__projects__project_ref__consumers_get",
         "parameters": [
           {
@@ -19584,6 +19584,20 @@
               "title": "Team"
             },
             "description": "Only consumers whose owner (confirmed, else suggested) is this team slug (CDG-2.4)."
+          },
+          {
+            "name": "runtime_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 395,
+              "minimum": 1,
+              "description": "Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8).",
+              "default": 30,
+              "title": "Runtime Days"
+            },
+            "description": "Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8)."
           },
           {
             "name": "authorization",
@@ -20700,6 +20714,487 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for importa pactfileintoaconsumercontractresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings": {
+      "get": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "List a consumer's bindings",
+        "description": "How this consumer is recognised in usage traffic: a header, an API key, a JWT claim, or a user-agent glob. A bound value is never returned \u2014 not even as a hash.\n\nDeleted bindings are listed with `include_deleted=true`; they no longer match traffic but keep the history they attributed.\n\nRequires `consumer_contracts:view`.",
+        "operationId": "list_consumer_bindings_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "consumer_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer Ref",
+              "description": "Consumer Ref schema."
+            },
+            "description": "Path parameter identifying the consumer ref segment."
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also list deleted bindings.",
+              "default": false,
+              "title": "Include Deleted"
+            },
+            "description": "Also list deleted bindings."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaconsumersbindingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaconsumersbindingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaconsumersbindings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaconsumersbindings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a consumer's bindings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumerBindingBindingListResponse",
+                  "description": "Response payload for listaconsumersbindingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaconsumersbindingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "Bind a header, API key, JWT claim or user agent to a consumer",
+        "description": "Attribute usage traffic to this consumer. `header`, `api_key` and `jwt_claim` take the `value` to recognise: it is accepted **once**, hashed (HMAC-SHA256 under a key derived for this workspace) before anything is stored, and never returned. `user_agent` takes no value; its `name` is a glob such as `billing-service/*`.\n\nMatching starts with the next ingested batch. One kind, name and value can identify only one consumer per workspace (`409 consumer-binding-exists`).\n\nRequires `consumer_contracts:create`.",
+        "operationId": "create_consumer_binding_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "consumer_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer Ref",
+              "description": "Consumer Ref schema."
+            },
+            "description": "Path parameter identifying the consumer ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Bindaheader Apikey Jwtclaimoruseragenttoacauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Bindaheader Apikey Jwtclaimoruseragenttoacauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Bindaheader Apikey Jwtclaimoruseragenttoac Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Bindaheader Apikey Jwtclaimoruseragenttoac Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindingInput",
+                "description": "Request body for bindaheader apikey jwtclaimoruseragenttoacrequest."
+              }
+            }
+          },
+          "description": "Request body for bind a header, api key, jwt claim or user agent to a consumer."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for bind a header, api key, jwt claim or user agent to a consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindingRecord",
+                  "description": "Response payload for bindaheader apikey jwtclaimoruseragenttoacresponse201."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`consumer-binding-exists` or `consumer-binding-limit`."
+          },
+          "503": {
+            "description": "`consumer-binding-key-unavailable`: no envelope master key is configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for bindaheader apikey jwtclaimoruseragenttoacresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings/{binding_id}": {
+      "delete": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "Delete a consumer binding",
+        "description": "Stop attributing traffic through this binding, from the next ingested batch on. Traffic it already attributed **stays attributed** to the consumer.\n\nRequires `consumer_contracts:delete`.",
+        "operationId": "delete_consumer_binding_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings__binding_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "consumer_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer Ref",
+              "description": "Consumer Ref schema."
+            },
+            "description": "Path parameter identifying the consumer ref segment."
+          },
+          {
+            "name": "binding_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Binding Id",
+              "description": "Binding Id schema."
+            },
+            "description": "Path parameter identifying the binding id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteaconsumerbindingauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteaconsumerbindingauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteaconsumerbinding Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteaconsumerbinding Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete a consumer binding."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteaconsumerbindingresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/runtime": {
+      "get": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "Compare a consumer's contract with its observed traffic",
+        "description": "Per operation, what the consumer **declares** (its current contract) next to what its bindings show it **calls** (the usage index, by UTC day):\n\n* `declared_and_used` \u2014 declared and called in the window;\n* `declared_unused` \u2014 declared, never called in the window;\n* `used_undeclared` \u2014 called, not declared. To add one to the contract, submit the current selection plus that operation to `PUT \u2026/consumers/{consumer_ref}/contract`.\n\nA consumer with no contract (`contract_state: undeclared`) reports everything it calls as `used_undeclared`. `anonymous` reports the traffic no binding attributes.\n\nRequires `consumer_contracts:view`.",
+        "operationId": "read_consumer_runtime_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__runtime_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "consumer_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer Ref",
+              "description": "Consumer Ref schema."
+            },
+            "description": "Path parameter identifying the consumer ref segment."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 395,
+              "minimum": 1,
+              "description": "Window in UTC days, ending today.",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "Window in UTC days, ending today."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compareaconsumerscontractwithitsobservedauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compareaconsumerscontractwithitsobservedauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compareaconsumerscontractwithitsobserved Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compareaconsumerscontractwithitsobserved Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for compare a consumer's contract with its observed traffic.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumerRuntime",
+                  "description": "Response payload for compareaconsumerscontractwithitsobservedresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for compareaconsumerscontractwithitsobservedresponse422."
                 }
               }
             }
@@ -23585,7 +24080,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T03:04:13Z"
+                          "example": "2026-10-19T03:40:51Z"
                         },
                         "method": {
                           "type": "string",
@@ -25990,7 +26485,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BindingListResponse",
+                  "$ref": "#/components/schemas/DraftBindingBindingListResponse",
                   "description": "Response payload for listaprojectsbranchtodraftbindingsresponse200."
                 }
               }
@@ -96108,52 +96603,154 @@
         "title": "AvailableSurfaceResponse",
         "description": "The picker's catalogue for one stored version."
       },
-      "BindingListResponse": {
+      "BindingInput": {
         "properties": {
-          "bindings": {
-            "items": {
-              "$ref": "#/components/schemas/DraftBindingRecord"
-            },
-            "type": "array",
-            "title": "Bindings",
-            "description": "Bindings, newest first.",
-            "maxItems": 1000
+          "kind": {
+            "type": "string",
+            "enum": [
+              "header",
+              "api_key",
+              "jwt_claim",
+              "user_agent"
+            ],
+            "title": "Kind",
+            "description": "What identifies the consumer in traffic.",
+            "example": "header"
           },
-          "count": {
-            "type": "integer",
-            "title": "Count",
-            "description": "How many bindings this page holds.",
-            "example": 1
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The header name (`x-client-id`), the header carrying the API key (`x-api-key`), the JWT claim (`azp`), or for `user_agent` a glob such as `billing-service/*`.",
+            "example": "Pet"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total",
-            "description": "How many bindings match the filters in all.",
-            "example": 1
-          },
-          "limit": {
-            "type": "integer",
-            "title": "Limit",
-            "description": "The page size used.",
-            "example": 50
-          },
-          "offset": {
-            "type": "integer",
-            "title": "Offset",
-            "description": "The offset used.",
-            "example": 0
+          "value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "password",
+                "writeOnly": true,
+                "description": "Binding Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Binding Input schema."
+              }
+            ],
+            "title": "Value",
+            "description": "The value to recognise. Required for `header`, `api_key` and `jwt_claim`; refused for `user_agent`. Hashed before it is stored and never returned."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "count",
-          "total",
-          "limit",
-          "offset"
+          "kind",
+          "name"
         ],
-        "title": "BindingListResponse",
-        "description": "A page of a project's bindings."
+        "title": "BindingInput",
+        "description": "A binding to create.\n\nAttributes:\n    kind: ``header``, ``api_key``, ``jwt_claim`` or ``user_agent``.\n    name: The header name, the API-key header name, the JWT claim name, or the user-agent glob.\n    value: The value to recognise (not for ``user_agent``). Accepted once, hashed, and never\n        stored or returned."
+      },
+      "BindingRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "consumer_id": {
+            "type": "string",
+            "title": "Consumer Id",
+            "description": "Consumer ID.",
+            "example": "consumer_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "hashed": {
+            "type": "boolean",
+            "title": "Hashed",
+            "description": "True when a value is bound; the value itself is never returned.",
+            "example": false
+          },
+          "key_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Binding schema."
+              }
+            ],
+            "title": "Key Version",
+            "description": "Key Version."
+          },
+          "last_matched_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Binding schema."
+              }
+            ],
+            "title": "Last Matched At",
+            "description": "Last Matched At timestamp (ISO 8601)."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Binding schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Binding schema."
+              }
+            ],
+            "title": "Deleted At",
+            "description": "Deleted At timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "consumer_id",
+          "kind",
+          "name",
+          "hashed"
+        ],
+        "title": "BindingRecord",
+        "description": "A stored binding as every response shows it \u2014 never with its value or its hash.\n\nAttributes:\n    id: Row id.\n    consumer_id: The consumer it attributes traffic to.\n    kind: The binding kind.\n    name: The header or claim name, or the user-agent glob.\n    hashed: Whether a value is bound (every kind but ``user_agent``).\n    key_version: The master-key version the value was hashed under.\n    last_matched_at: When traffic last matched it.\n    created_at: When it was created.\n    deleted_at: When it was deleted (it stops matching; history keeps it)."
       },
       "BlastRadiusDiffMeta": {
         "properties": {
@@ -102702,7 +103299,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "completed_at": {
             "anyOf": [
@@ -104657,7 +105254,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104885,7 +105482,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -105416,14 +106013,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -108263,6 +108860,20 @@
             ],
             "title": "Deleted At",
             "description": "Deleted At timestamp (ISO 8601)."
+          },
+          "runtime_last_seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Consumer schema."
+              },
+              {
+                "type": "null",
+                "description": "Consumer schema."
+              }
+            ],
+            "title": "Runtime Last Seen At",
+            "description": "Runtime Last Seen At timestamp (ISO 8601)."
           }
         },
         "additionalProperties": false,
@@ -108275,7 +108886,98 @@
           "name"
         ],
         "title": "ConsumerRecord",
-        "description": "A stored consumer.\n\nAttributes:\n    id: Row id.\n    tenant_id: Owning tenant.\n    project_id: Project this consumer consumes.\n    slug: Stable handle.\n    name: Display name.\n    description: What this consumer is.\n    owner: Accountable team or person.\n    contact: Where to reach them.\n    metadata: Free-form non-secret context.\n    created_at: When it was registered.\n    updated_at: When it was last changed.\n    deleted_at: Retirement stamp, when retired."
+        "description": "A stored consumer.\n\nAttributes:\n    id: Row id.\n    tenant_id: Owning tenant.\n    project_id: Project this consumer consumes.\n    slug: Stable handle.\n    name: Display name.\n    description: What this consumer is.\n    owner: Accountable team or person.\n    contact: Where to reach them.\n    metadata: Free-form non-secret context.\n    created_at: When it was registered.\n    updated_at: When it was last changed.\n    deleted_at: Retirement stamp, when retired.\n    runtime_last_seen_at: When usage traffic last attributed to it through a binding (RDG-1.8)."
+      },
+      "ConsumerRuntime": {
+        "properties": {
+          "consumer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Consumer Runtime schema."
+              },
+              {
+                "type": "null",
+                "description": "Consumer Runtime schema."
+              }
+            ],
+            "title": "Consumer Id",
+            "description": "Null for the anonymous consumer."
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "contract_state": {
+            "type": "string",
+            "title": "Contract State",
+            "description": "declared, undeclared, or none (anonymous).",
+            "example": "example"
+          },
+          "since_day": {
+            "type": "string",
+            "title": "Since Day",
+            "description": "First UTC day of the window.",
+            "example": "example"
+          },
+          "until_day": {
+            "type": "string",
+            "title": "Until Day",
+            "description": "Last UTC day of the window.",
+            "example": "example"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/RuntimeSummary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "declared_and_used": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeOperation"
+            },
+            "type": "array",
+            "title": "Declared And Used",
+            "description": "Declared And Used.",
+            "maxItems": 1000
+          },
+          "declared_unused": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeOperation"
+            },
+            "type": "array",
+            "title": "Declared Unused",
+            "description": "Declared Unused.",
+            "maxItems": 1000
+          },
+          "used_undeclared": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeOperation"
+            },
+            "type": "array",
+            "title": "Used Undeclared",
+            "description": "Used Undeclared.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "contract_state",
+          "since_day",
+          "until_day",
+          "summary"
+        ],
+        "title": "ConsumerRuntime",
+        "description": "Declared versus observed for one consumer."
       },
       "ConsumerSummary": {
         "properties": {
@@ -108306,6 +109008,18 @@
               }
             ],
             "description": "The consumer's owner team (CDG-2.2): confirmed, else suggested. Distinct from the free-text `consumer.owner`."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeSummary"
+              },
+              {
+                "type": "null",
+                "description": "Consumer schema."
+              }
+            ],
+            "description": "Declared versus observed over the list's runtime window (RDG-1.8), from the usage traffic its bindings attribute. Null when the usage index could not be read."
           }
         },
         "additionalProperties": false,
@@ -108562,7 +109276,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "5ab96725-00d9-4fc3-b8e6-3c8f9e2d7b67"
+            "example": "6d502c52-f7f9-4663-a39b-84e3ffa7ec2a"
           },
           "method": {
             "type": "string",
@@ -111089,7 +111803,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -112985,7 +113699,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "browse_url": {
             "anyOf": [
@@ -154521,7 +155235,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           }
         },
         "additionalProperties": false,
@@ -155408,6 +156122,115 @@
         ],
         "title": "RuntimeBody",
         "description": "One execution environment as data, so the UI never holds a second copy of the sandbox."
+      },
+      "RuntimeOperation": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "/paths/<escaped template>/<method>.",
+            "example": "GET"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "description": "Lowercase HTTP method.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Specification path template.",
+            "example": "/resources/{id}"
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls in the window (0 for declared_unused).",
+            "default": 0,
+            "example": 1
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Of them, responses with status 4xx or 5xx.",
+            "default": 0,
+            "example": 1
+          },
+          "last_seen_day": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Runtime Operation schema."
+              },
+              {
+                "type": "null",
+                "description": "Runtime Operation schema."
+              }
+            ],
+            "title": "Last Seen Day",
+            "description": "Newest UTC day with a call."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key",
+          "method",
+          "path"
+        ],
+        "title": "RuntimeOperation",
+        "description": "One operation on one side of the comparison."
+      },
+      "RuntimeSummary": {
+        "properties": {
+          "declared_and_used": {
+            "type": "integer",
+            "title": "Declared And Used",
+            "default": 0,
+            "description": "Declared And Used.",
+            "example": 1
+          },
+          "declared_unused": {
+            "type": "integer",
+            "title": "Declared Unused",
+            "default": 0,
+            "description": "Declared Unused.",
+            "example": 1
+          },
+          "used_undeclared": {
+            "type": "integer",
+            "title": "Used Undeclared",
+            "default": 0,
+            "description": "Used Undeclared.",
+            "example": 1
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Every attributed call in the window.",
+            "default": 0,
+            "example": 1
+          },
+          "last_seen_day": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Runtime schema."
+              },
+              {
+                "type": "null",
+                "description": "Runtime schema."
+              }
+            ],
+            "title": "Last Seen Day",
+            "description": "Newest UTC day with a call."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RuntimeSummary",
+        "description": "Declared versus observed in counts \u2014 a consumer list row's runtime column (RDG-1.8).\n\nAttributes:\n    declared_and_used: Declared operations called in the window.\n    declared_unused: Declared operations not called in the window.\n    used_undeclared: Called operations the contract does not declare.\n    calls: Every call attributed to the consumer in the window.\n    last_seen_day: The newest UTC day with an attributed call."
       },
       "RuntimesResponse": {
         "properties": {
@@ -166774,7 +167597,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "detected_by": {
             "anyOf": [
@@ -173230,7 +174053,7 @@
           "reason": {
             "type": "string",
             "title": "Reason",
-            "description": "Why it was rejected: `invalid-event`, `source-mismatch`, `environment-reserved`, `template-too-long`, `day-finalized`, `quota-exceeded`.",
+            "description": "Why it was rejected: `invalid-event`, `source-mismatch`, `environment-reserved`, `template-unstorable`, `day-finalized`, `quota-exceeded`.",
             "example": "example"
           }
         },
@@ -173273,6 +174096,13 @@
             "type": "integer",
             "title": "Accepted",
             "description": "Kept by sampling and matched to an operation of a published revision.",
+            "example": 1
+          },
+          "attributed": {
+            "type": "integer",
+            "title": "Attributed",
+            "description": "Of the accepted events, how many a consumer binding attributed to a consumer (RDG-1.8). The rest are counted under the reserved `anonymous` consumer, never dropped.",
+            "default": 0,
             "example": 1
           },
           "sampledOut": {
@@ -174943,14 +175773,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T03:04:13Z"
+            "example": "2026-10-19T03:40:51Z"
           },
           "outcome": {
             "anyOf": [
@@ -183674,6 +184504,79 @@
         ],
         "title": "MockScenarioRuleSpec",
         "description": "One declarative rule: request predicates plus the response(s) they select (#4744 PMR-2.1)."
+      },
+      "ConsumerBindingBindingListResponse": {
+        "properties": {
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/BindingRecord"
+            },
+            "type": "array",
+            "title": "Bindings",
+            "description": "Newest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many bindings were returned.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "BindingListResponse",
+        "description": "A consumer's bindings."
+      },
+      "DraftBindingBindingListResponse": {
+        "properties": {
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/DraftBindingRecord"
+            },
+            "type": "array",
+            "title": "Bindings",
+            "description": "Bindings, newest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many bindings this page holds.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many bindings match the filters in all.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "BindingListResponse",
+        "description": "A page of a project's bindings."
       },
       "IntakeBundleGraphImportResolution": {
         "type": "string",

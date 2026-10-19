@@ -151,7 +151,9 @@ The pipeline runs these five steps in order. An event stops at the first step th
    `/pets/42` lands on `GET /pets/{petId}`. A match counts toward that operation and version. Traffic
    that no published version declares, including an operation that only a draft declares, is counted
    as **unmatched** under an inferred template, where numbers, UUIDs and hashes become `{param}`.
-   With field presence on, the call's query names and `fields` are counted too.
+   With field presence on, the call's query names and `fields` are counted too. A matched call is
+   then [attributed to a consumer](#attribute-traffic-to-consumers) when one of the project's
+   bindings recognises it; otherwise it is counted under **anonymous**. It is never dropped.
 5. **Ledger.** One ledger row per batch records how many events were accepted, sampled out,
    unmatched or rejected, and how many strings scrubbing rewrote. The response echoes it.
 
@@ -165,7 +167,7 @@ only: that setting covers documents you upload, not tokens that came along in li
   "batchId": "0c4e…",
   "sourceId": "6f1c9a52-4a5e-4c1b-9d0e-1f2a3b4c5d6e",
   "receivedAt": "2026-10-18T14:03:15.002Z",
-  "received": 1, "accepted": 1, "sampledOut": 0, "unmatched": 0, "rejected": 0,
+  "received": 1, "accepted": 1, "attributed": 1, "sampledOut": 0, "unmatched": 0, "rejected": 0,
   "scrubFindings": 0,
   "basis": "complete", "samplingRate": 1.0,
   "samples": {"stored": 0, "dropped": 0},
@@ -173,7 +175,8 @@ only: that setting covers documents you upload, not tokens that came along in li
 }
 ```
 
-`rejections` lists up to 100 rejected events by index and reason, never by content:
+`attributed` counts the accepted events a consumer binding recognised. The rest of `accepted` is
+anonymous. `rejections` lists up to 100 rejected events by index and reason, never by content:
 
 | Reason | Meaning |
 | --- | --- |
@@ -194,6 +197,83 @@ only: that setting covers documents you upload, not tokens that came along in li
 | `413` | `usage-batch-too-large` | Over 2 MiB or 5,000 events |
 | `422` | `usage-body-not-accepted` | A `sample` was sent while the source's sample window is closed |
 | `429` | `usage-quota-exceeded` | Over today's events-per-day cap |
+
+## Attribute traffic to consumers
+
+Traffic carries headers, API keys, JWT claims and user agents, not the consumer handles of the
+[consumer registry](../build/projects.mdx#consumers). A **binding** tells the index how to
+recognise a consumer, so a share such as "this change affects `billing-service` at 38%" can name
+it. Add bindings from a project's **Consumers** page (**Bindings and traffic**) or with the API.
+
+| Kind | Name | Value |
+| --- | --- | --- |
+| **Header** | The header, for example `x-client-id` | The header's value for this consumer |
+| **API key** | The header carrying the key, for example `x-api-key` | The consumer's key |
+| **JWT claim** | The claim, for example `azp` | The claim's value for this consumer |
+| **User agent** | A pattern such as `billing-service/*` (`*` and `?` are wildcards, case is ignored) | None |
+
+**A bound value is never stored.** The value is accepted once, when the binding is created, and
+hashed (HMAC-SHA256 under a key derived for your workspace) before anything is written. No page or
+response shows it again, not even as a hash. A user-agent pattern must name at least three literal
+characters, so it cannot match every caller.
+
+**How a call is matched.** An event's `consumer_hint` (`{"kind": "api_key", "hmac": "…"}`) is
+compared with the hashed bindings first. If none matches, its scrubbed user agent is compared with
+the patterns, most specific first. A call that matches nothing is counted under the reserved
+consumer **anonymous**, so no traffic is ever dropped and no share silently loses its unattributed
+part. The handle `anonymous` cannot be used for a real consumer.
+
+**One value names one consumer.** A workspace can bind a kind, name and value only once
+(`409 consumer-binding-exists`). Two bindings of the same consumer, such as an API key and a user
+agent, add up to that one consumer. A consumer can hold up to 50 bindings.
+
+**Deleting a binding** stops it matching from the next batch on. Calls it already attributed stay
+attributed to the consumer, so reports about the past do not change.
+
+### Declared vs observed
+
+For each consumer, Apiome compares the operations its contract **declares** with the operations its
+bindings show it **calls**, by UTC day over the last 30 days (up to 395):
+
+| Side | Meaning |
+| --- | --- |
+| **Declared and used** | In the contract and called |
+| **Declared, unused** | In the contract, never called in the window: a stale declaration, or a consumer whose traffic is not bound yet |
+| **Used, undeclared** | Called, but not in the contract: the dependency a breaking-change check would otherwise miss |
+
+A consumer with no contract reports everything it calls as **used, undeclared**. **“Add to
+contract”** on one of those operations stores a new contract revision: the current declaration
+plus that operation. The report reads the daily counters, so a call appears after the
+next [usage sweep](#for-operators) rolls its day up.
+
+### Bindings with the API
+
+All four calls take the `consumer_contracts` permissions of the consumer registry:
+
+| Call | Permission |
+| --- | --- |
+| `GET /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` | `consumer_contracts:view` (add `?include_deleted=true` for deleted bindings) |
+| `POST /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` | `consumer_contracts:create` |
+| `DELETE /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings/{id}` | `consumer_contracts:delete` |
+| `GET /v1/tenants/{t}/projects/{p}/consumers/{c}/runtime?days=30` | `consumer_contracts:view`. Use `anonymous` as `{c}` for unattributed traffic |
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/northwind/projects/pets/consumers/billing-service/bindings \
+  -H "Authorization: Bearer $APIOME_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"kind": "api_key", "name": "x-api-key", "value": "ak_live_…"}'
+```
+
+The consumer list (`GET …/consumers`) carries each consumer's counts in `runtime`, over
+`?runtime_days=` (default 30), and `consumer.runtime_last_seen_at` says when traffic was last
+attributed to it.
+
+| Status | Code | When |
+| --- | --- | --- |
+| `400` | `consumer-binding-invalid` | A malformed header or claim name, or a user-agent pattern that is too broad |
+| `404` | `consumer-binding-not-found` | No live binding with that id on this consumer |
+| `409` | `consumer-binding-exists`, `consumer-binding-limit` | The value is already bound in this workspace, or the consumer has 50 bindings |
+| `503` | `consumer-binding-key-unavailable` | The server has no `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS`, which the workspace key is derived from |
 
 ## How long it is kept
 
@@ -233,4 +313,5 @@ It prints what it did as JSON, or `{"skipped": true}` when another replica is al
 
 - [API keys](../workspace/api-keys.mdx) — the `usage:ingest` scope
 - [Dependency graph](./dependency-graph.mdx)
+- [Projects → Consumers](../build/projects.mdx#consumers)
 - [Licenses](../admin/licenses.mdx)

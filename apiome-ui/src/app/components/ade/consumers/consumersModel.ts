@@ -98,6 +98,19 @@ export interface Consumer {
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
+  /** When usage traffic last attributed to it through a binding (RDG-1.8). */
+  runtime_last_seen_at?: string | null;
+}
+
+/** Declared versus observed in counts, over the list's runtime window (RDG-1.8). */
+export interface RuntimeSummary {
+  declared_and_used: number;
+  declared_unused: number;
+  used_undeclared: number;
+  /** Every call its bindings attributed in the window. */
+  calls: number;
+  /** The newest UTC day with an attributed call. */
+  last_seen_day: string | null;
 }
 
 /** A consumer plus its current contract — one row of the list. */
@@ -106,6 +119,8 @@ export interface ConsumerSummary {
   contract: ConsumerContract | null;
   /** The consumer's owner team, in its wire shape (CDG-2.2/2.4); `consumer.owner` is free text. */
   owner?: unknown;
+  /** Declared versus observed (RDG-1.8); `null` when the usage index could not be read. */
+  runtime?: RuntimeSummary | null;
 }
 
 /** One field the picker may offer. */
@@ -550,7 +565,7 @@ export function selectionTotals(selection: PickerSelection): SelectionTotals {
 export interface SelectionPayloadOperation {
   method: string;
   path: string;
-  fields: Array<{ location: string; path: string; status?: string }>;
+  fields: Array<{ location: string; path: string; status?: string; media_type?: string }>;
 }
 
 /**

@@ -3,7 +3,7 @@
 import { OwnerCell } from '@/app/components/ade/owners';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
-import { Ellipsis, FileJson, Pencil, SquareStack, Trash2 } from 'lucide-react';
+import { Activity, Ellipsis, FileJson, Pencil, SquareStack, Trash2 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Badge } from '@/app/components/ui/Badge';
@@ -77,6 +77,8 @@ export interface ConsumersTableProps {
   onImport: (row: ConsumerSummary) => void;
   /** Retire a consumer. */
   onRetire: (row: ConsumerSummary) => void;
+  /** Open a consumer's bindings and declared-vs-observed traffic (RDG-1.8). */
+  onBindings?: (row: ConsumerSummary) => void;
   /** Whether the viewer may change a contract (`consumer_contracts:edit`). */
   canEdit: boolean;
   /** Whether the viewer may retire a consumer (`consumer_contracts:delete`). */
@@ -134,6 +136,7 @@ export default function ConsumersTable({
   onDeclare,
   onImport,
   onRetire,
+  onBindings,
   canEdit,
   canDelete,
   onOwnerChange,
@@ -230,6 +233,12 @@ export default function ConsumersTable({
                   <SquareStack aria-hidden="true" />
                   View declared surface
                 </DropdownMenu.Item>
+                {onBindings && (
+                  <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={() => onBindings(row)}>
+                    <Activity aria-hidden="true" />
+                    Bindings and traffic
+                  </DropdownMenu.Item>
+                )}
                 {canEdit && (
                   <>
                     <DropdownMenu.Item
@@ -267,7 +276,7 @@ export default function ConsumersTable({
         ),
       },
     ],
-    [canDelete, canEdit, onDeclare, onEdit, onImport, onOpen, onOwnerChange, onRetire],
+    [canDelete, canEdit, onBindings, onDeclare, onEdit, onImport, onOpen, onOwnerChange, onRetire],
   );
 
   return (

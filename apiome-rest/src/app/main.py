@@ -34,6 +34,7 @@ from .comment_routes import router as comment_router
 from .compatibility_routes import router as compatibility_router
 from .config import settings
 from .consumer_contract_routes import router as consumer_contract_router
+from .consumer_binding_routes import router as consumer_binding_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
@@ -172,7 +173,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.243.0",
+    version="1.244.0",
 )
 
 
@@ -368,6 +369,9 @@ app.include_router(agent_usage_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
+# consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
+# /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
+app.include_router(consumer_binding_router)
 app.include_router(team_router)
 app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)

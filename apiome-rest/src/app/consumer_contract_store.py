@@ -25,9 +25,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .consumer_contract import (
+    ANONYMOUS_CONSUMER_SLUG,
     CODE_CONSUMER_NOT_FOUND,
     CODE_CONTRACT_NOT_FOUND,
     CODE_PROJECT_NOT_FOUND,
+    CODE_SLUG_RESERVED,
     CODE_SLUG_TAKEN,
     CODE_VERSION_NOT_FOUND,
     SOURCE_MANUAL,
@@ -264,9 +266,15 @@ def create_consumer(
 
     Raises:
         ConsumerValidationError: ``consumer-invalid-slug`` for a malformed handle,
+            ``consumer-slug-reserved`` for the handle unattributed traffic is reported under,
             ``consumer-slug-taken`` when the project already has a live consumer with it.
     """
     slug = validate_slug(definition.slug or slugify_consumer_name(definition.name))
+    if slug == ANONYMOUS_CONSUMER_SLUG:
+        raise ConsumerValidationError(
+            CODE_SLUG_RESERVED,
+            f"'{slug}' is reserved: usage traffic no binding attributes is reported under it",
+        )
 
     if db.get_consumer_by_slug(project_id, tenant_id, slug) is not None:
         raise ConsumerValidationError(

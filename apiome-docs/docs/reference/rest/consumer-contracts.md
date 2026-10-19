@@ -1,6 +1,6 @@
 ---
 title: "Consumer contracts"
-description: "REST endpoints tagged consumer-contracts: 10 operations."
+description: "REST endpoints tagged consumer-contracts: 14 operations."
 sidebar_position: 18
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.243.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.244.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `consumer-contracts` · 10 operations
+Tag: `consumer-contracts` · 14 operations
 
 ## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports` {#import-pact-contract-v1-tenants-tenant-slug-projects-project-ref-consumer-pact-imports-post}
 
@@ -88,6 +88,8 @@ Every live consumer of the project, newest first, each with its **current** cont
 
 A consumer that has never declared a contract is still listed, with `contract: null`. That is the state a newly registered consumer is in, and hiding it would make the registration look like it failed.
 
+Each row's `runtime` counts its declared-and-used, declared-unused and used-undeclared operations over `runtime_days`, from the traffic its bindings attribute.
+
 Requires `consumer_contracts:view`.
 
 Operation id: `list_project_consumers_v1_tenants__tenant_slug__projects__project_ref__consumers_get`
@@ -99,6 +101,7 @@ Operation id: `list_project_consumers_v1_tenants__tenant_slug__projects__project
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `team` | query | string or null | no | Only consumers whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
+| `runtime_days` | query | integer | no | Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -232,6 +235,101 @@ Operation id: `delete_consumer_v1_tenants__tenant_slug__projects__project_ref__c
 | 204 | Successful response for retire a consumer. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings` {#list-consumer-bindings-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-bindings-get}
+
+**List a consumer's bindings**
+
+How this consumer is recognised in usage traffic: a header, an API key, a JWT claim, or a user-agent glob. A bound value is never returned — not even as a hash.
+
+Deleted bindings are listed with `include_deleted=true`; they no longer match traffic but keep the history they attributed.
+
+Requires `consumer_contracts:view`.
+
+Operation id: `list_consumer_bindings_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `include_deleted` | query | boolean | no | Also list deleted bindings. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a consumer's bindings. | `application/json` [`ConsumerBindingBindingListResponse`](#schema-consumerbindingbindinglistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings` {#create-consumer-binding-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-bindings-post}
+
+**Bind a header, API key, JWT claim or user agent to a consumer**
+
+Attribute usage traffic to this consumer. `header`, `api_key` and `jwt_claim` take the `value` to recognise: it is accepted **once**, hashed (HMAC-SHA256 under a key derived for this workspace) before anything is stored, and never returned. `user_agent` takes no value; its `name` is a glob such as `billing-service/*`.
+
+Matching starts with the next ingested batch. One kind, name and value can identify only one consumer per workspace (`409 consumer-binding-exists`).
+
+Requires `consumer_contracts:create`.
+
+Operation id: `create_consumer_binding_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for bind a header, api key, jwt claim or user agent to a consumer.
+
+- `application/json` — [`BindingInput`](#schema-bindinginput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for bind a header, api key, jwt claim or user agent to a consumer. | `application/json` [`BindingRecord`](#schema-bindingrecord) |
+| 409 | `consumer-binding-exists` or `consumer-binding-limit`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | `consumer-binding-key-unavailable`: no envelope master key is configured. | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings/{binding_id}` {#delete-consumer-binding-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-bindings-binding-id-delete}
+
+**Delete a consumer binding**
+
+Stop attributing traffic through this binding, from the next ingested batch on. Traffic it already attributed **stays attributed** to the consumer.
+
+Requires `consumer_contracts:delete`.
+
+Operation id: `delete_consumer_binding_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings__binding_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `binding_id` | path | string | yes | Path parameter identifying the binding id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a consumer binding. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/contract` {#read-contract-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-contract-get}
 
 **Read a consumer's contract**
@@ -328,6 +426,40 @@ Operation id: `list_contract_revisions_v1_tenants__tenant_slug__projects__projec
 | 200 | Successful response for list a consumer's contract history. | `application/json` [`ContractRevisionsResponse`](#schema-contractrevisionsresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/runtime` {#read-consumer-runtime-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-runtime-get}
+
+**Compare a consumer's contract with its observed traffic**
+
+Per operation, what the consumer **declares** (its current contract) next to what its bindings show it **calls** (the usage index, by UTC day):
+
+* `declared_and_used` — declared and called in the window;
+* `declared_unused` — declared, never called in the window;
+* `used_undeclared` — called, not declared. To add one to the contract, submit the current selection plus that operation to `PUT …/consumers/{consumer_ref}/contract`.
+
+A consumer with no contract (`contract_state: undeclared`) reports everything it calls as `used_undeclared`. `anonymous` reports the traffic no binding attributes.
+
+Requires `consumer_contracts:view`.
+
+Operation id: `read_consumer_runtime_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__runtime_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `days` | query | integer | no | Window in UTC days, ending today. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for compare a consumer's contract with its observed traffic. | `application/json` [`ConsumerRuntime`](#schema-consumerruntime) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `AvailableSurfaceResponse` {#schema-availablesurfaceresponse}
@@ -341,6 +473,58 @@ The picker's catalogue for one stored version.
 | `operations` | array of `AvailableOperationOut` | no | Operations. |
 | `count` | integer | yes | How many operations the specification declares. |
 | `truncated` | boolean | no | True when any operation's field list was cut short by the walk limits. |
+
+### `BindingInput` {#schema-bindinginput}
+
+A binding to create.
+
+Attributes:
+    kind: ``header``, ``api_key``, ``jwt_claim`` or ``user_agent``.
+    name: The header name, the API-key header name, the JWT claim name, or the user-agent glob.
+    value: The value to recognise (not for ``user_agent``). Accepted once, hashed, and never
+        stored or returned.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | enum `"header"`, `"api_key"`, `"jwt_claim"`, `"user_agent"` | yes | What identifies the consumer in traffic. |
+| `name` | string | yes | The header name (`x-client-id`), the header carrying the API key (`x-api-key`), the JWT claim (`azp`), or for `user_agent` a glob such as `billing-service/*`. |
+| `value` | string (password) or null | no | The value to recognise. Required for `header`, `api_key` and `jwt_claim`; refused for `user_agent`. Hashed before it is stored and never returned. |
+
+### `BindingRecord` {#schema-bindingrecord}
+
+A stored binding as every response shows it — never with its value or its hash.
+
+Attributes:
+    id: Row id.
+    consumer_id: The consumer it attributes traffic to.
+    kind: The binding kind.
+    name: The header or claim name, or the user-agent glob.
+    hashed: Whether a value is bound (every kind but ``user_agent``).
+    key_version: The master-key version the value was hashed under.
+    last_matched_at: When traffic last matched it.
+    created_at: When it was created.
+    deleted_at: When it was deleted (it stops matching; history keeps it).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `consumer_id` | string | yes | Consumer ID. |
+| `kind` | string | yes | Kind. |
+| `name` | string | yes | Human-readable name. |
+| `hashed` | boolean | yes | True when a value is bound; the value itself is never returned. |
+| `key_version` | integer or null | no | Key Version. |
+| `last_matched_at` | string or null | no | Last Matched At timestamp (ISO 8601). |
+| `created_at` | string or null | no | Creation timestamp (ISO 8601). |
+| `deleted_at` | string or null | no | Deleted At timestamp (ISO 8601). |
+
+### `ConsumerBindingBindingListResponse` {#schema-consumerbindingbindinglistresponse}
+
+A consumer's bindings.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `bindings` | array of [`BindingRecord`](#schema-bindingrecord) | no | Newest first. |
+| `count` | integer | yes | How many bindings were returned. |
 
 ### `ConsumerContractRecord` {#schema-consumercontractrecord}
 
@@ -456,6 +640,7 @@ Attributes:
     created_at: When it was registered.
     updated_at: When it was last changed.
     deleted_at: Retirement stamp, when retired.
+    runtime_last_seen_at: When usage traffic last attributed to it through a binding (RDG-1.8).
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -471,6 +656,24 @@ Attributes:
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
 | `deleted_at` | string or null | no | Deleted At timestamp (ISO 8601). |
+| `runtime_last_seen_at` | string or null | no | Runtime Last Seen At timestamp (ISO 8601). |
+
+### `ConsumerRuntime` {#schema-consumerruntime}
+
+Declared versus observed for one consumer.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_id` | string or null | no | Null for the anonymous consumer. |
+| `slug` | string | yes | URL-safe identifier. |
+| `name` | string | yes | Human-readable name. |
+| `contract_state` | string | yes | declared, undeclared, or none (anonymous). |
+| `since_day` | string | yes | First UTC day of the window. |
+| `until_day` | string | yes | Last UTC day of the window. |
+| `summary` | `RuntimeSummary` | yes | Short summary suitable for navigation and reference docs. |
+| `declared_and_used` | array of `RuntimeOperation` | no | Declared And Used. |
+| `declared_unused` | array of `RuntimeOperation` | no | Declared Unused. |
+| `used_undeclared` | array of `RuntimeOperation` | no | Used Undeclared. |
 
 ### `ContractResponse` {#schema-contractresponse}
 

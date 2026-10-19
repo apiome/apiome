@@ -37,6 +37,7 @@ from .consumer_contract import (
     CODE_CONTRACT_NOT_FOUND,
     CODE_PACT_TOO_LARGE,
     CODE_PROJECT_NOT_FOUND,
+    CODE_SLUG_RESERVED,
     CODE_SLUG_TAKEN,
     CODE_VERSION_NOT_FOUND,
     SOURCE_MANUAL,
@@ -82,6 +83,7 @@ _STATUS_BY_CODE = {
     CODE_CONTRACT_NOT_FOUND: 404,
     CODE_PROJECT_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
+    CODE_SLUG_RESERVED: 409,
     CODE_SLUG_TAKEN: 409,
     CODE_PACT_TOO_LARGE: 413,
 }
@@ -299,6 +301,8 @@ def _spec_index(tenant_id: str, tenant_slug: str, version_row: Dict[str, Any]) -
         "A consumer that has never declared a contract is still listed, with `contract: null`. "
         "That is the state a newly registered consumer is in, and hiding it would make the "
         "registration look like it failed.\n\n"
+        "Each row's `runtime` counts its declared-and-used, declared-unused and used-undeclared "
+        "operations over `runtime_days`, from the traffic its bindings attribute.\n\n"
         "Requires `consumer_contracts:view`."
     ),
 )
@@ -310,6 +314,12 @@ async def list_project_consumers(
         max_length=128,
         description="Only consumers whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
     ),
+    runtime_days: int = Query(
+        default=30,
+        ge=1,
+        le=395,
+        description="Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ConsumerListResponse:
     """List the project's consumers with their current contracts.
@@ -317,6 +327,8 @@ async def list_project_consumers(
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what actually scopes it).
         project_ref: Project slug or id.
+        team: Only consumers owned by this team.
+        runtime_days: The window of each row's runtime counts.
         auth_data: The authenticated principal.
 
     Returns:
@@ -333,6 +345,11 @@ async def list_project_consumers(
         summaries = list_consumer_summaries(tenant_id, str(project["id"]), team=team)
     except ConsumerValidationError as exc:
         raise _http_error(exc) from exc
+    # RDG-1.8: each row carries its declared-versus-observed counts. Imported here because the
+    # binding routes import this module's helpers.
+    from .consumer_binding_routes import attach_runtime_summaries
+
+    summaries = attach_runtime_summaries(tenant_id, str(project["id"]), summaries, days=runtime_days)
     return ConsumerListResponse(consumers=summaries, count=len(summaries))
 
 

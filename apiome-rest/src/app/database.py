@@ -30363,7 +30363,7 @@ class Database:
         id::text AS id, tenant_id::text AS tenant_id, project_id::text AS project_id,
         slug, name, description, owner, contact, metadata,
         created_by::text AS created_by, updated_by::text AS updated_by,
-        created_at, updated_at, deleted_at
+        created_at, updated_at, deleted_at, runtime_last_seen_at
     """
 
     #: Columns every contract read returns, for
