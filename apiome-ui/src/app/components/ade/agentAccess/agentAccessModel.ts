@@ -117,6 +117,8 @@ export interface AgentUsageAgent extends AgentUsageMetrics {
   name: string | null;
   keyPrefix: string | null;
   revoked: boolean;
+  /** The catalog agent using the key (CDG-5.2), when one does. */
+  agentSlug?: string | null;
 }
 
 /** The whole window, with errors broken down by outcome. */
@@ -380,6 +382,7 @@ export function parseAgentUsage(value: unknown): AgentUsage {
         name: str(ar.name),
         keyPrefix: str(ar.keyPrefix),
         revoked: ar.revoked === true,
+        agentSlug: str(ar.agentSlug),
       };
     }),
   };

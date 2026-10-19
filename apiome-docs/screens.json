@@ -823,6 +823,28 @@
       ]
     },
     {
+      "id": "agent-entity",
+      "route": "/ade/dashboard/catalog/agents/support-bot",
+      "waitFor": "[data-testid=\"agent-detail\"]",
+      "data": "fixture:hive-a11y/agent-entity.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/catalog/agents",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
+        "apiome-ui/lib/catalog-agents.ts"
+      ]
+    },
+    {
+      "id": "model-entity",
+      "route": "/ade/dashboard/catalog/models/claude-3",
+      "waitFor": "[data-testid=\"model-detail\"]",
+      "data": "fixture:hive-a11y/model-entity.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/catalog/models",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
+        "apiome-ui/lib/catalog-agents.ts"
+      ]
+    },
+    {
       "id": "catalog-item-subjects",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"catalog-subjects-panel\"]",

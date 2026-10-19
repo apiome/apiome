@@ -122,6 +122,12 @@ export default function AgentAccessClient() {
   const tenantId = (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id;
 
   const [tab, setTab] = React.useState<AgentTab>('toolsets');
+  // `?tab=usage` (a catalog agent's Usage link, CDG-5.2) opens that tab; read after mount so the
+  // server render and the first client render agree.
+  React.useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('tab');
+    if (requested === 'toolsets' || requested === 'keys' || requested === 'usage') setTab(requested);
+  }, []);
   const [overlay, setOverlay] = React.useState<Overlay>({ kind: 'none' });
   /** A failed immediate write (a switch with no dialog), shown above the tabs. */
   const [pageError, setPageError] = React.useState('');

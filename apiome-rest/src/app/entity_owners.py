@@ -96,7 +96,7 @@ class KindSpec:
     resource: str
 
 
-#: The five kinds. A catalog item and a project are both ``apiome.projects`` rows, told apart by
+#: The kinds that can have an owner team. A catalog item and a project are both ``apiome.projects`` rows, told apart by
 #: ``publishable``.
 KINDS: Dict[str, KindSpec] = {
     "project": KindSpec(
@@ -117,9 +117,16 @@ KINDS: Dict[str, KindSpec] = {
     "connector": KindSpec(
         "connector", "apiome.catalog_connectors", "e.deleted_at IS NULL", Resource.IMPORTS
     ),
+    # CDG-5.2 (V297): agents are consumers, and the models they run on are catalogued with them.
+    "agent": KindSpec(
+        "agent", "apiome.catalog_agents", "e.deleted_at IS NULL", Resource.CONSUMER_CONTRACTS
+    ),
+    "model": KindSpec(
+        "model", "apiome.catalog_models", "e.deleted_at IS NULL", Resource.CONSUMER_CONTRACTS
+    ),
 }
 
-EntityKind = Literal["project", "catalog_item", "mcp_endpoint", "consumer", "connector"]
+EntityKind = Literal["project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model"]
 
 
 class OwnerValidationError(ValueError):

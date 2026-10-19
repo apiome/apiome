@@ -1,7 +1,7 @@
 ---
 title: "Consumer contracts"
 description: "REST endpoints tagged consumer-contracts: 16 operations."
-sidebar_position: 19
+sidebar_position: 20
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.251.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.252.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `consumer-contracts` · 16 operations
 
@@ -598,7 +598,7 @@ Attributes:
     consumer_id: The consumer this revision belongs to.
     revision: Per-consumer counter, from 1.
     is_current: Whether this is the consumer's current revision.
-    source: ``pact`` or ``manual``.
+    source: ``pact``, ``manual`` or ``agent`` (CDG-5.2).
     version_id: The specification revision the pointers were resolved against.
     version_label: That revision's version label, snapshotted.
     surface: The declared surface.

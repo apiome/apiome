@@ -13,6 +13,8 @@ import {
 import { CatalogEntityList } from '@/app/components/ade/catalog/CatalogEntityList';
 import { CatalogKindsPanel } from '@/app/components/ade/catalog/CatalogKindsPanel';
 import { fetchEntitySummary } from '@/app/components/ade/catalog/catalogEntitiesApi';
+import { AddModelDialog, RegisterAgentDialog } from '@/app/components/ade/catalogAgents/CatalogAgentDialogs';
+import { agentHref, modelHref } from '@lib/catalog-agents';
 import { isRegistryFormat, subjectNamesByItem } from '@lib/schema-registry';
 import { fetchSubjects } from '@/app/components/ade/schemaRegistry/schemaRegistryApi';
 import Link from 'next/link';
@@ -23,6 +25,7 @@ import {
   LayoutGrid,
   Link2,
   List,
+  Plus,
   Rows3,
   Trash2,
   TriangleAlert,
@@ -347,6 +350,8 @@ export default function CatalogClient() {
    * out and the page is the catalog-items list it always was.
    */
   const [kindSummary, setKindSummary] = React.useState<CatalogEntitySummary | null>(null);
+  /** Which create dialog is open (CDG-5.2). */
+  const [creating, setCreating] = React.useState<'agent' | 'model' | null>(null);
   React.useEffect(() => {
     if (!currentTenantId) return;
     let live = true;
@@ -1081,7 +1086,25 @@ export default function CatalogClient() {
             ) : null}
 
             {kindSummary && kindFacet !== DEFAULT_CATALOG_KIND ? (
-              <CatalogEntityList kind={kindFacet} team={teamFilter} kinds={kindSummary.kinds} />
+              <CatalogEntityList
+                kind={kindFacet}
+                team={teamFilter}
+                kinds={kindSummary.kinds}
+                action={
+                  // CDG-5.2: agents and models are registered here, not imported.
+                  kindFacet === 'agent' ? (
+                    <Button size="sm" onClick={() => setCreating('agent')} data-testid="catalog-register-agent">
+                      <Plus aria-hidden />
+                      Register agent
+                    </Button>
+                  ) : kindFacet === 'model' ? (
+                    <Button size="sm" onClick={() => setCreating('model')} data-testid="catalog-add-model">
+                      <Plus aria-hidden />
+                      Add model
+                    </Button>
+                  ) : null
+                }
+              />
             ) : (
               <>
 
@@ -1226,6 +1249,17 @@ export default function CatalogClient() {
           </>
         )}
       </PageBody>
+
+      <RegisterAgentDialog
+        open={creating === 'agent'}
+        onOpenChange={(open) => setCreating(open ? 'agent' : null)}
+        onCreated={(agent) => router.push(agentHref(agent.slug))}
+      />
+      <AddModelDialog
+        open={creating === 'model'}
+        onOpenChange={(open) => setCreating(open ? 'model' : null)}
+        onCreated={(model) => router.push(modelHref(model.slug))}
+      />
 
       <ProjectQualityHistoryDialog
         key={qualityFor ? qualityFor.id : 'catalog-quality-closed'}

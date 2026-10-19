@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.251.0",
+    "version": "1.252.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -26648,6 +26648,1178 @@
         }
       }
     },
+    "/v1/tenants/{tenant_slug}/catalog-agents": {
+      "get": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "List agents",
+        "description": "The tenant's live agents with their model (and its deprecation) and owner (`consumer_contracts:view`).",
+        "operationId": "list_catalog_agents_v1_tenants__tenant_slug__catalog_agents_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listagentsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listagentsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listagents Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listagents Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list agents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentList",
+                  "description": "Response payload for listagentsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listagentsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Register an agent",
+        "description": "Register an agent, optionally with its agent keys (`consumer_contracts:create`, plus `api_keys:view` for keys).\n\nThe agent becomes a consumer of every project its keys' toolsets reach, with a contract (source\n`agent`) holding the operations those keys may call; the graph derives one `consumes` edge per\noperation. `slug` is derived from `name` when omitted. A key must be a live agent key of the\nworkspace that no other agent uses (409 `agent-key-taken`).",
+        "operationId": "create_catalog_agent_v1_tenants__tenant_slug__catalog_agents_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeranagentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeranagentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeranagent Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeranagent Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentInput",
+                "description": "Request body for registeranagentrequest."
+              }
+            }
+          },
+          "description": "Request body for register an agent."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for register an agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOut",
+                  "description": "Response payload for registeranagentresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for registeranagentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/catalog-agents/{slug}": {
+      "get": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Read an agent",
+        "description": "One agent: model, owner, keys (prefix and status only), and the consumer it is per project.",
+        "operationId": "read_catalog_agent_v1_tenants__tenant_slug__catalog_agents__slug__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readanagentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readanagentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readanagent Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readanagent Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read an agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOut",
+                  "description": "Response payload for readanagentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readanagentresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Change an agent",
+        "description": "Change an agent's name, description, runtime, model (`null` clears it) or status (`consumer_contracts:edit`).\n\nRetiring an agent (`status: retired`) records empty contracts, so its `consumes` edges go stale.",
+        "operationId": "update_catalog_agent_v1_tenants__tenant_slug__catalog_agents__slug__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanagentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanagentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanagent Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanagent Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentPatch",
+                "description": "Request body for changeanagentrequest."
+              }
+            }
+          },
+          "description": "Request body for change an agent."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change an agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOut",
+                  "description": "Response payload for changeanagentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for changeanagentresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Delete an agent",
+        "description": "Soft-delete an agent (`consumer_contracts:delete`); its contracts are emptied and its edges go stale.",
+        "operationId": "delete_catalog_agent_v1_tenants__tenant_slug__catalog_agents__slug__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteanagentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteanagentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteanagent Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteanagent Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete an agent."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteanagentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/catalog-agents/{slug}/keys/{key_id}": {
+      "put": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Link an agent key",
+        "description": "Add an agent key to the agent and re-derive its consumers (`consumer_contracts:edit` + `api_keys:view`).",
+        "operationId": "link_catalog_agent_key_v1_tenants__tenant_slug__catalog_agents__slug__keys__key_id__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Linkanagentkeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Linkanagentkeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Linkanagentkey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Linkanagentkey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for link an agent key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOut",
+                  "description": "Response payload for linkanagentkeyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for linkanagentkeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Unlink an agent key",
+        "description": "Remove an agent key from the agent (`consumer_contracts:edit`); what only it allowed goes stale.",
+        "operationId": "unlink_catalog_agent_key_v1_tenants__tenant_slug__catalog_agents__slug__keys__key_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unlinkanagentkeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unlinkanagentkeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unlinkanagentkey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unlinkanagentkey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for unlink an agent key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOut",
+                  "description": "Response payload for unlinkanagentkeyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for unlinkanagentkeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/catalog-models": {
+      "get": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "List models",
+        "description": "The tenant's live models with their deprecation and owner (`consumer_contracts:view`).",
+        "operationId": "list_catalog_models_v1_tenants__tenant_slug__catalog_models_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listmodelsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listmodelsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listmodels Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listmodels Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list models.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelList",
+                  "description": "Response payload for listmodelsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listmodelsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Register a model",
+        "description": "Register a model: provider, name and version, hosting (`api` or `self_hosted`), data handling, deprecation.",
+        "operationId": "create_catalog_model_v1_tenants__tenant_slug__catalog_models_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeramodelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeramodelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeramodel Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeramodel Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelInput",
+                "description": "Request body for registeramodelrequest."
+              }
+            }
+          },
+          "description": "Request body for register a model."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for register a model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelOut",
+                  "description": "Response payload for registeramodelresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for registeramodelresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/catalog-models/{slug}": {
+      "get": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Read a model",
+        "description": "One model with the live agents that run on it.",
+        "operationId": "read_catalog_model_v1_tenants__tenant_slug__catalog_models__slug__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readamodelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readamodelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readamodel Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readamodel Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelOut",
+                  "description": "Response payload for readamodelresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readamodelresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Change a model",
+        "description": "Change a model (`consumer_contracts:edit`); `deprecatedAt` shows on every agent that runs on it.",
+        "operationId": "update_catalog_model_v1_tenants__tenant_slug__catalog_models__slug__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeamodelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeamodelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeamodel Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeamodel Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelPatch",
+                "description": "Request body for changeamodelrequest."
+              }
+            }
+          },
+          "description": "Request body for change a model."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change a model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelOut",
+                  "description": "Response payload for changeamodelresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for changeamodelresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "catalog-agents"
+        ],
+        "summary": "Delete a model",
+        "description": "Soft-delete a model (`consumer_contracts:delete`); agents that ran on it show no model.",
+        "operationId": "delete_catalog_model_v1_tenants__tenant_slug__catalog_models__slug__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteamodelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteamodelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteamodel Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteamodel Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete a model."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteamodelresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{tenant_slug}/owners/{kind}/{entity_id}": {
       "get": {
         "tags": [
@@ -28811,7 +29983,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-19T19:40:26Z"
+                          "example": "2026-10-19T21:38:40Z"
                         },
                         "method": {
                           "type": "string",
@@ -98605,6 +99777,138 @@
         "title": "AffectedEntity",
         "description": "One entity a change reaches."
       },
+      "AgentConsumerRef": {
+        "properties": {
+          "consumerId": {
+            "type": "string",
+            "title": "Consumerid",
+            "description": "Consumer ID.",
+            "example": "example"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Consumer Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Consumer Ref schema."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "operationCount": {
+            "type": "integer",
+            "title": "Operationcount",
+            "description": "Operations in its current contract.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "consumerId",
+          "projectId"
+        ],
+        "title": "AgentConsumerRef",
+        "description": "The consumer the agent is in one project, and what it consumes there."
+      },
+      "AgentInput": {
+        "properties": {
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Agent Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Input schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "Derived from `name` when omitted."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000,
+                "description": "Agent Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Input schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Agent Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Input schema."
+              }
+            ],
+            "title": "Runtime",
+            "description": "Framework or host (LangGraph, a Lambda, \u2026)."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Agent Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Input schema."
+              }
+            ],
+            "title": "Model",
+            "description": "The slug of the model it runs on."
+          },
+          "keyIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Keyids",
+            "description": "Agent keys (AGX-3.1) the agent uses."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AgentInput",
+        "description": "Register an agent."
+      },
       "AgentKeyAllowlistUpdate": {
         "properties": {
           "toolAllowlist": {
@@ -99167,6 +100471,136 @@
         "title": "AgentKeyRateLimit",
         "description": "An agent key's sustained call rate limit.\n\nAttributes:\n    cap: Calls per second (token bucket, burst of one second's worth, at least one call);\n        ``None`` when the tier is unlimited."
       },
+      "AgentKeyRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "keyPrefix": {
+            "type": "string",
+            "title": "Keyprefix",
+            "description": "The lookup prefix (`ak_1a2b3c4d5\u2026`), never the secret.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`active`, `disabled`, `expired` or `revoked`.",
+            "example": "active"
+          },
+          "toolsetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Toolsetid",
+            "description": "Toolset ID."
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Projectid",
+            "description": "Project ID."
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "enabledTools": {
+            "type": "integer",
+            "title": "Enabledtools",
+            "description": "Enabled toolset tools this key may call.",
+            "default": 0,
+            "example": 1
+          },
+          "revokedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Revokedat",
+            "description": "Revoked At."
+          },
+          "lastUsedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Agent Key Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Ref schema."
+              }
+            ],
+            "title": "Lastusedat",
+            "description": "Last Used At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "keyPrefix",
+          "status"
+        ],
+        "title": "AgentKeyRef",
+        "description": "An agent key the agent uses. Never carries the secret or its hash."
+      },
       "AgentKeyUsageOut": {
         "properties": {
           "schemaVersion": {
@@ -99222,6 +100656,361 @@
         ],
         "title": "AgentKeyUsageOut",
         "description": "An agent key's current usage against its license-tier caps.\n\nAttributes:\n    schema_version: The projection's shape.\n    key_id: The key.\n    license_type: The tenant's license tier (``free`` / ``paid`` / ``sponsor``), or ``None``\n        without a license (Free caps apply).\n    rps: The rate limit.\n    daily_calls: The daily cap and today's usage.\n    as_of: When this was computed."
+      },
+      "AgentList": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentOut"
+            },
+            "type": "array",
+            "title": "Agents",
+            "description": "Agents.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "agents"
+        ],
+        "title": "AgentList",
+        "description": "The tenant's live agents."
+      },
+      "AgentModelRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Provider.",
+            "example": "example"
+          },
+          "modelVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Model Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Model Ref schema."
+              }
+            ],
+            "title": "Modelversion",
+            "description": "Model Version."
+          },
+          "deprecatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Agent Model Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Model Ref schema."
+              }
+            ],
+            "title": "Deprecatedat",
+            "description": "Deprecated At."
+          },
+          "deprecated": {
+            "type": "boolean",
+            "title": "Deprecated",
+            "description": "Deprecated.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "provider",
+          "deprecated"
+        ],
+        "title": "AgentModelRef",
+        "description": "The model an agent runs on, with its deprecation."
+      },
+      "AgentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for agent."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for agent."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "title": "Runtime",
+            "description": "Runtime."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentModelRef"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "description": "Model."
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityOwnerRef"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "description": "Owner."
+          },
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/AgentKeyRef"
+            },
+            "type": "array",
+            "title": "Keys",
+            "description": "Keys.",
+            "maxItems": 1000
+          },
+          "consumers": {
+            "items": {
+              "$ref": "#/components/schemas/AgentConsumerRef"
+            },
+            "type": "array",
+            "title": "Consumers",
+            "description": "Consumers.",
+            "maxItems": 1000
+          },
+          "usageHref": {
+            "type": "string",
+            "title": "Usagehref",
+            "description": "The agent usage page.",
+            "default": "/ade/dashboard/mcp/agents?tab=usage",
+            "example": "example"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for agent."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for agent."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status"
+        ],
+        "title": "AgentOut",
+        "description": "An agent."
+      },
+      "AgentPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Agent Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Patch schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000,
+                "description": "Agent Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Patch schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Agent Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Patch schema."
+              }
+            ],
+            "title": "Runtime",
+            "description": "Runtime."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Agent Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Patch schema."
+              }
+            ],
+            "title": "Model",
+            "description": "Model."
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Patch schema."
+              }
+            ],
+            "title": "Status",
+            "description": "`active` or `retired`; a retired agent consumes nothing."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AgentPatch",
+        "description": "Change an agent; an omitted field is kept, `model: null` clears the model."
+      },
+      "AgentRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status"
+        ],
+        "title": "AgentRef",
+        "description": "An agent, as a model lists the agents that run on it."
       },
       "AgentToolListResponse": {
         "properties": {
@@ -99897,6 +101686,20 @@
             "default": false,
             "description": "Revoked.",
             "example": false
+          },
+          "agentSlug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Usage Agent schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Agent schema."
+              }
+            ],
+            "title": "Agentslug",
+            "description": "The catalog agent using the key (CDG-5.2), when one does."
           }
         },
         "additionalProperties": false,
@@ -99908,7 +101711,7 @@
           "keyId"
         ],
         "title": "AgentUsageAgent",
-        "description": "One agent key's usage over the window.\n\nAttributes:\n    key_id: The agent key.\n    name: Its name, or ``None`` when the key row no longer exists.\n    key_prefix: Its lookup prefix, or ``None`` when the key row no longer exists.\n    revoked: Whether the key has been revoked since."
+        "description": "One agent key's usage over the window.\n\nAttributes:\n    key_id: The agent key.\n    name: Its name, or ``None`` when the key row no longer exists.\n    key_prefix: Its lookup prefix, or ``None`` when the key row no longer exists.\n    revoked: Whether the key has been revoked since.\n    agent_slug: The catalog agent that uses the key, when one does (CDG-5.2)."
       },
       "AgentUsageDay": {
         "properties": {
@@ -108270,7 +110073,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "completed_at": {
             "anyOf": [
@@ -110225,7 +112028,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "comment_count": {
             "type": "integer",
@@ -110453,7 +112256,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "comment_count": {
             "type": "integer",
@@ -110984,14 +112787,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -113419,7 +115222,7 @@
           "revision"
         ],
         "title": "ConsumerContractRecord",
-        "description": "One stored contract revision.\n\nAttributes:\n    id: Row id.\n    consumer_id: The consumer this revision belongs to.\n    revision: Per-consumer counter, from 1.\n    is_current: Whether this is the consumer's current revision.\n    source: ``pact`` or ``manual``.\n    version_id: The specification revision the pointers were resolved against.\n    version_label: That revision's version label, snapshotted.\n    surface: The declared surface.\n    operation_count: How many operations it declares.\n    field_count: How many fields it declares.\n    unresolved: Interactions that could not be placed.\n    unresolved_count: How many of those there are.\n    source_metadata: Pact provenance; empty for a manual declaration.\n    source_digest: ``sha256:<hex>`` of the uploaded Pact document, when there was one.\n    note: Free text explaining the revision.\n    actor_label: Who declared it, at the time.\n    created_at: When it was declared (ISO-8601)."
+        "description": "One stored contract revision.\n\nAttributes:\n    id: Row id.\n    consumer_id: The consumer this revision belongs to.\n    revision: Per-consumer counter, from 1.\n    is_current: Whether this is the consumer's current revision.\n    source: ``pact``, ``manual`` or ``agent`` (CDG-5.2).\n    version_id: The specification revision the pointers were resolved against.\n    version_label: That revision's version label, snapshotted.\n    surface: The declared surface.\n    operation_count: How many operations it declares.\n    field_count: How many fields it declares.\n    unresolved: Interactions that could not be placed.\n    unresolved_count: How many of those there are.\n    source_metadata: Pact provenance; empty for a manual declaration.\n    source_digest: ``sha256:<hex>`` of the uploaded Pact document, when there was one.\n    note: Free text explaining the revision.\n    actor_label: Who declared it, at the time.\n    created_at: When it was declared (ISO-8601)."
       },
       "ConsumerContractSurface": {
         "properties": {
@@ -114275,7 +116078,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "a3d47545-6ec3-49c1-9d97-bc1d72088549"
+            "example": "94c87378-3671-437b-b4a0-ef3bdd251a9c"
           },
           "method": {
             "type": "string",
@@ -116802,7 +118605,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -118698,7 +120501,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "browse_url": {
             "anyOf": [
@@ -120075,7 +121878,9 @@
               "catalog_item",
               "mcp_endpoint",
               "consumer",
-              "connector"
+              "connector",
+              "agent",
+              "model"
             ],
             "title": "Kind",
             "description": "Kind.",
@@ -147038,6 +148843,399 @@
         "title": "MockUsageResponse",
         "description": "Mock usage counters for a tenant (#4420, SIM-1.5)."
       },
+      "ModelInput": {
+        "properties": {
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Model Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Input schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "Derived from `name` when omitted."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Model Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Input schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Display name; defaults to `modelName`."
+          },
+          "provider": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Provider",
+            "description": "Anthropic, OpenAI, Mistral, an internal team\u2026",
+            "example": "example"
+          },
+          "modelName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Modelname",
+            "description": "Model Name.",
+            "example": "Example"
+          },
+          "modelVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "description": "Model Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Input schema."
+              }
+            ],
+            "title": "Modelversion",
+            "description": "Model Version."
+          },
+          "hosting": {
+            "type": "string",
+            "title": "Hosting",
+            "description": "`api` (a provider's API) or `self_hosted`.",
+            "default": "api",
+            "example": "example"
+          },
+          "dataHandling": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000,
+                "description": "Model Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Input schema."
+              }
+            ],
+            "title": "Datahandling",
+            "description": "What the provider retains, where data is processed, opt-outs."
+          },
+          "deprecatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Model Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Input schema."
+              }
+            ],
+            "title": "Deprecatedat",
+            "description": "When the model is (or was) deprecated."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "provider",
+          "modelName"
+        ],
+        "title": "ModelInput",
+        "description": "Register a model."
+      },
+      "ModelList": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelOut"
+            },
+            "type": "array",
+            "title": "Models",
+            "description": "Models.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "models"
+        ],
+        "title": "ModelList",
+        "description": "The tenant's live models."
+      },
+      "ModelOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Provider.",
+            "example": "example"
+          },
+          "modelName": {
+            "type": "string",
+            "title": "Modelname",
+            "description": "Model Name.",
+            "example": "Example"
+          },
+          "modelVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for model."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "title": "Modelversion",
+            "description": "Model Version."
+          },
+          "hosting": {
+            "type": "string",
+            "title": "Hosting",
+            "description": "Hosting.",
+            "example": "example"
+          },
+          "dataHandling": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for model."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "title": "Datahandling",
+            "description": "Data Handling."
+          },
+          "deprecatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for model."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "title": "Deprecatedat",
+            "description": "Deprecated At."
+          },
+          "deprecated": {
+            "type": "boolean",
+            "title": "Deprecated",
+            "description": "Whether `deprecatedAt` has arrived.",
+            "example": false
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityOwnerRef"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "description": "Owner."
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentRef"
+            },
+            "type": "array",
+            "title": "Agents",
+            "description": "Live agents that run on this model.",
+            "maxItems": 1000
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for model."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for model."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for model."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "provider",
+          "modelName",
+          "hosting",
+          "deprecated"
+        ],
+        "title": "ModelOut",
+        "description": "A model."
+      },
+      "ModelPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Provider",
+            "description": "Provider."
+          },
+          "modelName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Modelname",
+            "description": "Model Name."
+          },
+          "modelVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Modelversion",
+            "description": "Model Version."
+          },
+          "hosting": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Hosting",
+            "description": "Hosting."
+          },
+          "dataHandling": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000,
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Datahandling",
+            "description": "Data Handling."
+          },
+          "deprecatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Model Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Model Patch schema."
+              }
+            ],
+            "title": "Deprecatedat",
+            "description": "Deprecated At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ModelPatch",
+        "description": "Change a model; an omitted field is kept, `deprecatedAt: null` clears the date."
+      },
       "MutatingFixture": {
         "properties": {
           "operation_key": {
@@ -160642,7 +162840,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           }
         },
         "additionalProperties": false,
@@ -172008,13 +174206,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           }
         },
         "additionalProperties": false,
@@ -173518,7 +175716,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "detected_by": {
             "anyOf": [
@@ -181694,14 +183892,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-19T19:40:26Z"
+            "example": "2026-10-19T21:38:40Z"
           },
           "outcome": {
             "anyOf": [

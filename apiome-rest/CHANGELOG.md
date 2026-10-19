@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.388.0] - 2026-10-19
+
+### Added
+- **Agent and model entities (#5980, CDG-5.2)**: V297 adds `catalog_models` (provider, model name and version, hosting
+  `api|self_hosted`, data handling, `deprecated_at`), `catalog_agents` (runtime, model, status `active|retired`),
+  `catalog_agent_keys` (the AGX-3.1 agent keys an agent uses; a key belongs to one agent) and
+  `catalog_agent_consumers`. New routes under `/v1/tenants/{tenant}`: `GET|POST /catalog-agents`,
+  `GET|PATCH|DELETE /catalog-agents/{slug}`, `PUT|DELETE /catalog-agents/{slug}/keys/{keyId}`, `GET|POST
+  /catalog-models` and `GET|PATCH|DELETE /catalog-models/{slug}` (`consumer_contracts` RBAC; linking a key also needs
+  `api_keys:view`; writes audited as `catalog.agent.*` / `catalog.model.*`). An agent is a **consumer**: for each
+  project its live keys' enabled, allowlisted toolset tools reach, it gets a consumer (found by its slug, or created)
+  and a contract revision with the new source `agent`, so CTG impact, the blast radius and the `consumes` graph edges
+  include it. Revoking or unlinking a key, narrowing its allowlist, or retiring the agent records a new revision and
+  the dropped edges go stale. An agent shows its model's deprecation date; agent responses carry a key's name, prefix
+  and status, never its secret or hash. `agent` and `model` join the catalog entity registry and the owner kinds;
+  agent usage (`GET …/agent-usage`) names each key's `agentSlug`. OpenAPI 1.252.0.
+
 ## [1.387.0] - 2026-10-19
 
 ### Added

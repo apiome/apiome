@@ -103,12 +103,18 @@ class AgentUsageAgent(_Metrics):
         name: Its name, or ``None`` when the key row no longer exists.
         key_prefix: Its lookup prefix, or ``None`` when the key row no longer exists.
         revoked: Whether the key has been revoked since.
+        agent_slug: The catalog agent that uses the key, when one does (CDG-5.2).
     """
 
     key_id: str = Field(serialization_alias="keyId")
     name: Optional[str] = None
     key_prefix: Optional[str] = Field(default=None, serialization_alias="keyPrefix")
     revoked: bool = False
+    agent_slug: Optional[str] = Field(
+        default=None,
+        serialization_alias="agentSlug",
+        description="The catalog agent using the key (CDG-5.2), when one does.",
+    )
 
 
 class AgentUsageTotals(_Metrics):
@@ -236,7 +242,8 @@ def build_agent_usage(
     Args:
         rows: Rollup rows (see :meth:`Database.list_agent_usage_rollups`), each with ``day``,
             ``key_id``, ``tool_name``, the outcome counts, ``latency_sum_ms``,
-            ``latency_p95_ms`` and, optionally, ``key_name`` / ``key_prefix`` / ``key_revoked``.
+            ``latency_p95_ms`` and, optionally, ``key_name`` / ``key_prefix`` / ``key_revoked`` /
+            ``agent_slug``.
         start_day: First day of the window (inclusive).
         end_day: Last day of the window (inclusive).
         as_of: When the projection is computed.
@@ -268,6 +275,7 @@ def build_agent_usage(
                 "name": row.get("key_name"),
                 "key_prefix": row.get("key_prefix"),
                 "revoked": bool(row.get("key_revoked")),
+                "agent_slug": row.get("agent_slug"),
             },
         )
 

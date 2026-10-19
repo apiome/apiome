@@ -39,6 +39,8 @@ export interface CatalogEntityListProps {
   team: string | null;
   /** The registry's kinds, for labels. */
   kinds: readonly EntityKindSummary[];
+  /** An action beside the search box — **Register agent** or **Add model** (CDG-5.2). */
+  action?: React.ReactNode;
 }
 
 /** The list's read state. */
@@ -55,7 +57,7 @@ interface ListState {
  * @param props - See {@link CatalogEntityListProps}.
  * @returns The list.
  */
-export function CatalogEntityList({ kind, team, kinds }: CatalogEntityListProps) {
+export function CatalogEntityList({ kind, team, kinds, action }: CatalogEntityListProps) {
   const [query, setQuery] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [state, setState] = React.useState<ListState>({ items: [], nextCursor: null, loading: true, error: null });
@@ -108,6 +110,7 @@ export function CatalogEntityList({ kind, team, kinds }: CatalogEntityListProps)
           aria-label={`Filter ${title.toLowerCase()}`}
           data-testid="catalog-entity-search"
         />
+        {action}
       </div>
       {error && items.length === 0 ? (
         <EmptyState

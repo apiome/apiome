@@ -278,6 +278,17 @@ describe('the catalog home', () => {
     expect(screen.queryByTestId('catalog-cards')).not.toBeInTheDocument();
   });
 
+  it('offers Register agent and Add model on those kinds (CDG-5.2)', async () => {
+    searchParams = new URLSearchParams('kind=agent');
+    const { unmount } = render(<CatalogClient />);
+    expect(await screen.findByTestId('catalog-register-agent')).toHaveTextContent('Register agent');
+    unmount();
+    searchParams = new URLSearchParams('kind=model');
+    render(<CatalogClient />);
+    expect(await screen.findByTestId('catalog-add-model')).toHaveTextContent('Add model');
+    expect(screen.queryByTestId('catalog-register-agent')).not.toBeInTheDocument();
+  });
+
   it('leaves the panel out when the summary cannot be read', async () => {
     summaryFails = true;
     searchParams = new URLSearchParams('kind=all');

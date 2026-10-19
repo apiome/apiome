@@ -50,6 +50,7 @@ __all__ = [
     "CODE_VERSION_NOT_FOUND",
     "CONTRACT_SOURCES",
     "FIELD_LOCATIONS",
+    "SOURCE_AGENT",
     "SOURCE_MANUAL",
     "SOURCE_PACT",
     "UNRESOLVED_REASONS",
@@ -102,7 +103,9 @@ ANONYMOUS_CONSUMER_SLUG = "anonymous"
 
 SOURCE_PACT = "pact"
 SOURCE_MANUAL = "manual"
-CONTRACT_SOURCES = (SOURCE_PACT, SOURCE_MANUAL)
+#: Derived from an agent's keys' toolsets (CDG-5.2, V297): the operations the agent may call.
+SOURCE_AGENT = "agent"
+CONTRACT_SOURCES = (SOURCE_PACT, SOURCE_MANUAL, SOURCE_AGENT)
 
 #: Where a declared field lives in the exchange.
 FIELD_LOCATIONS = ("response", "request", "parameter")
@@ -442,7 +445,7 @@ class ConsumerContractRecord(BaseModel):
         consumer_id: The consumer this revision belongs to.
         revision: Per-consumer counter, from 1.
         is_current: Whether this is the consumer's current revision.
-        source: ``pact`` or ``manual``.
+        source: ``pact``, ``manual`` or ``agent`` (CDG-5.2).
         version_id: The specification revision the pointers were resolved against.
         version_label: That revision's version label, snapshotted.
         surface: The declared surface.

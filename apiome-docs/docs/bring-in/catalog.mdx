@@ -34,6 +34,8 @@ catalog items:
 | **MCP servers** | MCP endpoints Apiome discovers and grades (**Bring in → MCP servers**) | `mcp_server` |
 | **Consumers** | Applications registered as consumers of a project | `consumer` |
 | **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
+| **Agents** | AI agents and the keys they call with — see [Agents and models](./agents-and-models.mdx) | `agent` |
+| **Models** | The models agents run on | `model` |
 | **Teams** | The [teams](../workspace/teams.mdx) that own the rest | `team` |
 
 The tiles are the **Kind** filter:
@@ -58,7 +60,7 @@ deals with it:
 
 | Callout | Counts | Opens |
 | --- | --- | --- |
-| **Unowned** | Projects, catalog items, MCP servers, consumers and connectors with no confirmed owner team | **Ownership drift** on the [Teams](../workspace/teams.mdx) page |
+| **Unowned** | Projects, catalog items, MCP servers, consumers, connectors, agents and models with no confirmed owner team | **Ownership drift** on the [Teams](../workspace/teams.mdx) page |
 | **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence | **Connectors** |
 | **Shadow** | APIs a gateway serves that have no catalog entry | [Shadow APIs](../govern/shadow-apis.mdx) |
 

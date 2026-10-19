@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import { agentHref } from '@lib/catalog-agents';
+import Link from 'next/link';
 import { Activity } from 'lucide-react';
 
 import { EmptyState } from '@/app/components/ui/EmptyState';
@@ -58,12 +60,15 @@ function UsageTable<T extends AgentUsageMetrics>({
   heading,
   rows,
   label,
+  href,
   testId,
 }: {
   caption: string;
   heading: string;
   rows: readonly T[];
   label: (row: T) => string;
+  /** Where a row's name links to, when it has a page (a catalog agent, CDG-5.2). */
+  href?: (row: T) => string | null;
   testId: string;
 }) {
   return (
@@ -90,10 +95,17 @@ function UsageTable<T extends AgentUsageMetrics>({
         <tbody>
           {rows.map((row) => {
             const name = label(row);
+            const target = href?.(row) ?? null;
             return (
               <tr key={name}>
                 <th scope="row" className="agx-cell-mono mono">
-                  {name}
+                  {target ? (
+                    <Link className="agt-link" href={target}>
+                      {name}
+                    </Link>
+                  ) : (
+                    name
+                  )}
                 </th>
                 <td className="agx-num">{formatCount(row.calls)}</td>
                 <td className="agx-num">{formatRate(row.errorRate)}</td>
@@ -261,6 +273,7 @@ export default function AgentUsagePanel({
               heading="Agent key"
               rows={usage.agents}
               label={usageAgentLabel}
+              href={(row) => (row.agentSlug ? agentHref(row.agentSlug) : null)}
               testId="agx-usage-agents-table"
             />
           </ChartCard>

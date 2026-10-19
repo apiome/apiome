@@ -30835,7 +30835,7 @@ class Database:
             surface_pointers: Every pointer the surface touches, for the CTG-4.2 intersection.
             operation_count: How many operations the surface declares.
             field_count: How many fields it declares.
-            source: ``pact`` or ``manual``.
+            source: ``pact``, ``manual`` or ``agent`` (CDG-5.2).
             version_id: Specification revision the pointers were resolved against.
             version_label: That revision's label, snapshotted.
             unresolved: Interactions that could not be placed.
@@ -33071,10 +33071,14 @@ class Database:
                    MAX(d.latency_p95_ms) AS latency_p95_ms,
                    MAX(ak.name) AS key_name,
                    MAX(ak.key_prefix) AS key_prefix,
-                   BOOL_OR(ak.deleted_at IS NOT NULL) AS key_revoked
+                   BOOL_OR(ak.deleted_at IS NOT NULL) AS key_revoked,
+                   MAX(ca.slug) AS agent_slug
             FROM apiome.agent_invocation_daily AS d
             LEFT JOIN apiome.api_keys AS ak
               ON ak.id = d.key_id AND ak.tenant_id = d.tenant_id AND ak.kind = 'agent'
+            -- CDG-5.2: the catalog agent that uses the key, for the usage page's link.
+            LEFT JOIN apiome.catalog_agent_keys AS cak ON cak.api_key_id = d.key_id
+            LEFT JOIN apiome.catalog_agents AS ca ON ca.id = cak.agent_id AND ca.deleted_at IS NULL
             WHERE d.tenant_id = %s::uuid AND d.day BETWEEN %s::date AND %s::date
             GROUP BY d.day, d.key_id, d.tool_name
             ORDER BY d.day

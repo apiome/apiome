@@ -105,6 +105,8 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
         "mcp_server": ["Docs MCP", "Orders MCP"],
         "consumer": ["Checkout web", "Orders API"],
         "connector": ["Kong prod", "Apigee"],
+        "agent": ["Support bot", "Orders agent"],
+        "model": ["Claude", "Llama self-hosted"],
         "team": ["Payments", "Catalog team"],
     }
     rows: Dict[str, List[Dict[str, Any]]] = {}
@@ -127,8 +129,10 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
 # ---------------------------------------------------------------------------------------------
 
 
-def test_the_registry_lists_six_kinds_in_order() -> None:
-    assert catalog_entities.kind_keys() == ("api", "spec", "mcp_server", "consumer", "connector", "team")
+def test_the_registry_lists_its_kinds_in_order() -> None:
+    assert catalog_entities.kind_keys() == (
+        "api", "spec", "mcp_server", "consumer", "connector", "agent", "model", "team",
+    )
 
 
 def test_api_and_spec_are_distinct_projects_rows() -> None:
@@ -237,7 +241,8 @@ def _page_through(db: FakeDb, limit: int) -> List[Tuple[str, str]]:
 def test_paging_visits_every_entity_once_in_name_order(limit: int) -> None:
     db = FakeDb(_catalog())
     seen = _page_through(db, limit)
-    assert len(seen) == 12 and len(set(seen)) == 12
+    total = 2 * len(REGISTRY)  # two of every kind
+    assert len(seen) == total and len(set(seen)) == total
     one_page = catalog_entity_store.list_entities(FakeDb(_catalog()), _TENANT, REGISTRY, limit=50).rows
     assert seen == [(row["kind"].key, row["id"]) for row in one_page]
     names = [row["name"].lower() for row in one_page]
@@ -305,7 +310,8 @@ def test_unowned_counts_confirmed_live_teams_only() -> None:
     db = FakeDb()
     total = catalog_entity_store.unowned_count(db, _TENANT, REGISTRY)
     sql, params = db.statements[0]
-    assert len(db.statements) == 1 and total == 5  # five owner kinds, one each from the fake
+    owner_kinds = sum(1 for entry in REGISTRY if entry.owner_kind)
+    assert len(db.statements) == 1 and total == owner_kinds  # one each from the fake
     assert "eo.status = 'confirmed'" in sql and "t.deleted_at IS NULL" in sql
     assert "apiome.teams e" not in sql
 
@@ -409,7 +415,8 @@ def test_the_summary_counts_kinds_and_computes_the_callouts(authed) -> None:
         body = _get(authed, f"/v1/catalog/{_TENANT}/entities/summary", db).json()
     assert [k["kind"] for k in body["kinds"]] == list(catalog_entities.kind_keys())
     assert all(k["count"] == 2 for k in body["kinds"])
-    assert body["callouts"] == {"unowned": 5, "stale": 2, "shadow": 4}
+    owner_kinds = sum(1 for entry in REGISTRY if entry.owner_kind)
+    assert body["callouts"] == {"unowned": owner_kinds, "stale": 2, "shadow": 4}
     report.assert_called_once()
     shadow.load_report_items.assert_called_once_with(db, ["c-1"])
     assert len(db.statements) == 3  # counts, unowned, stale

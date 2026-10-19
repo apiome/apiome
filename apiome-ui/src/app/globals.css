@@ -36605,3 +36605,194 @@ a.tm-fact:focus-visible {
   display: flex;
   justify-content: center;
 }
+
+/* ===========================================================================
+   AGENT AND MODEL PAGES (CDG-5.2, #5980) — `/ade/dashboard/catalog/agents/[slug]`
+   and `/models/[slug]`, their dialogs and owner section. `.agt-*`. Forms reuse
+   the Agent Access `.agx-*` classes. Tokens only.
+   =========================================================================== */
+.agt-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.agt-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.agt-facts dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+}
+
+.agt-facts dd {
+  margin: var(--space-1) 0 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.agt-section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.agt-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.agt-section__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.agt-muted,
+.agt-prose {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.agt-prose {
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.agt-strong {
+  display: block;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.agt-link {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.agt-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.agt-inline-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.agt-inline-icon svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+}
+
+.agt-owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agt-select {
+  inline-size: auto;
+  min-inline-size: 12rem;
+  max-inline-size: 24rem;
+  block-size: var(--control-h);
+  padding-inline: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.agt-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.agt-date {
+  inline-size: auto;
+}
+
+.agt-problem {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-xs);
+}
+
+.agt-keys-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.agt-key-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.agt-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.agt-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.agt-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.agt-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.agt-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.agt-table tr:last-child td {
+  border-block-end: 0;
+}
+
+.agt-num {
+  font-variant-numeric: tabular-nums;
+}
