@@ -35456,3 +35456,541 @@ a.tm-fact:focus-visible {
   align-items: flex-start;
   gap: var(--space-3);
 }
+
+/* ===========================================================================
+   DEPENDENCY GRAPH (CDG-3.4, #5969) — the Dependencies tab, the tenant graph
+   page and the blast-radius drawer. `.dg-*`.
+
+   The drawing follows the sunset timeline: an SVG picture of a list that stays
+   the source of truth. Nodes are links with a focus ring drawn in the
+   drawing's own units; the kind is a letter in the node and a stale edge is
+   dashed *and* labelled "(stale)", so colour is never the only signal. Every
+   heading and paragraph sets its own colour and size: the unlayered `h2`/`p`
+   base rules near the top of this file outrank `@layer utilities`.
+   =========================================================================== */
+
+.dg-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.dg-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dg-panel__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.dg-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dg-panel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent-fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-panel__link svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+}
+
+.dg-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-4);
+}
+
+.dg-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.dg-group__title,
+.dg-blast__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.dg-group__count {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.dg-group__stale {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.dg-edges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dg-edge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  min-inline-size: 0;
+}
+
+/* Dimmed, not hidden: a stale edge stays readable (its own text keeps full
+   contrast) while its border and surface step back. */
+.dg-edge[data-stale] {
+  border-style: dashed;
+  background: var(--bg-inset);
+}
+
+.dg-edge__kind {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--track-caps);
+}
+
+.dg-edge__name {
+  color: var(--accent-fg);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dg-edge__pointer {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.dg-edge__via {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.dg-edge__stale {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.dg-edge__seen {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.dg-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.dg-owner--none {
+  color: var(--fg-muted);
+}
+
+.dg-owner__team {
+  color: var(--accent-fg);
+  font-weight: 500;
+}
+
+.dg-owner__status {
+  color: var(--fg-muted);
+}
+
+.dg-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.dg-figure__caption {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.dg-plot {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.dg-svg {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  block-size: auto;
+  overflow: visible;
+}
+
+.dg-link {
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dg-link[data-provenance='declared'] {
+  stroke-dasharray: 6 3;
+}
+
+.dg-link[data-stale] {
+  stroke-dasharray: 2 4;
+  opacity: 0.6;
+}
+
+.dg-node__link {
+  cursor: pointer;
+  outline: none;
+}
+
+.dg-node__ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+
+.dg-node__link:focus-visible .dg-node__ring,
+.dg-expand:focus-visible .dg-expand__hit {
+  opacity: 1;
+}
+
+/* The shape is carried by a `--fg-muted` contour (≥3:1 on every surface, as
+   the sunset markers measured); the fill tints by kind on top of it. */
+.dg-node__disc {
+  fill: var(--bg-subtle);
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dg-node[data-column='0'] .dg-node__disc {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.dg-node[data-stale] .dg-node__disc {
+  stroke-dasharray: 3 3;
+}
+
+.dg-node__kind {
+  fill: var(--fg);
+  font-weight: 600;
+}
+
+.dg-node__caption {
+  fill: var(--fg);
+}
+
+.dg-node[data-stale] .dg-node__caption {
+  fill: var(--fg-muted);
+}
+
+.dg-expand {
+  cursor: pointer;
+  outline: none;
+}
+
+.dg-expand__hit {
+  fill: var(--bg-surface);
+  stroke: var(--fg-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dg-expand:focus-visible .dg-expand__hit {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.dg-expand__glyph {
+  fill: var(--fg);
+  font-weight: 600;
+}
+
+.dg-more {
+  fill: var(--fg-muted);
+}
+
+.dg-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.dg-filters__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dg-filters__search > input {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.dg-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dg-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-inline-size: 0;
+}
+
+.dg-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.dg-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-table th,
+.dg-table td {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.dg-table th {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--bg-subtle);
+}
+
+.dg-table tr[data-current] td {
+  background: var(--accent-soft);
+}
+
+/* `.dg-table th, .dg-table td` (0,1,1) would out-rank a bare class. */
+.dg-table th.dg-table__num,
+.dg-table td.dg-table__num {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.dg-table__name {
+  color: var(--accent-fg);
+  font-weight: 500;
+}
+
+.dg-table__stale {
+  margin-inline-start: var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.dg-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.dg-blast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dg-blast__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dg-blast__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.dg-blast__modes,
+.dg-blast__provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dg-blast__legend {
+  margin-block-end: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  inline-size: 100%;
+}
+
+.dg-blast__mode,
+.dg-blast__depth {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-blast__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  inline-size: 100%;
+}
+
+.dg-blast__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.dg-blast__error {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-blast__answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dg-blast__summary {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.dg-blast__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dg-blast__none {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.dg-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.dg-evidence__row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border);
+}
+
+.dg-evidence__label {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.dg-evidence__items {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.dg-evidence__items ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dg-evidence__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dg-evidence__item a {
+  color: var(--accent-fg);
+}
+
+.dg-evidence__detail {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}

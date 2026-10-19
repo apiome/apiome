@@ -160,7 +160,7 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5966](https://github.com/apiome/apiome/issues/5966) CDG-3.1 Graph edge store and materializer
 - [x] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
 - [x] [#5968](https://github.com/apiome/apiome/issues/5968) CDG-3.3 Blast-radius query
-- [ ] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
+- [x] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
 - [ ] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges
 - [ ] [#5971](https://github.com/apiome/apiome/issues/5971) CDG-3.6 Graph export and diff-gate annotation
 - [ ] [#5972](https://github.com/apiome/apiome/issues/5972) CDG-EPIC-4 Registry endpoints

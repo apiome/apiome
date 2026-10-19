@@ -337,3 +337,60 @@ def test_migration(repo_root) -> None:
         assert index in text
     for provenance in ("'declared'", "'derived'", "'runtime'"):
         assert provenance in text
+
+
+# ---------------------------------------------------------------------------------------------
+# labels and the tenant-wide entity search (CDG-3.4, #5969)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_the_edges_read_adds_labels_on_request(client, monkeypatch) -> None:
+    http, _ = client
+    edge = {k: v for k, v in _edge().items() if k != "total"}
+    monkeypatch.setattr(routes, "list_edges", lambda *a, **k: EdgePage(edges=[{**edge, "stale": False}], total=1,
+                                                                        truncated=False))
+    asked: List[Any] = []
+
+    def _labels(db, tenant, refs):
+        asked.append(refs)
+        return {_ENTITY: {"name": "Web", "slug": "web", "owner": None},
+                _TENANT: {"name": "Orders", "slug": "orders", "owner": {"slug": "payments"}}}
+
+    monkeypatch.setattr(routes, "node_labels_with_owners", _labels)
+    plain = http.get(_URL).json()["edges"][0]
+    assert plain["from_label"] is None and asked == []
+    labelled = http.get(_URL, params={"labels": "true"}).json()["edges"][0]
+    assert labelled["from_label"]["slug"] == "web" and labelled["to_label"]["owner"]["slug"] == "payments"
+    assert asked == [sorted({("consumer", _ENTITY), ("project", _TENANT)})]
+
+
+def test_the_entity_search_route(client, monkeypatch) -> None:
+    from app.graph_nodes import NodePage
+
+    http, asked = client
+    seen: Dict[str, Any] = {}
+
+    def _search(db, tenant, **kwargs):
+        seen.update(tenant=tenant, **kwargs)
+        return NodePage(entities=[{"kind": "project", "id": _ENTITY, "name": "Orders", "slug": "orders",
+                                   "owner": None, "in_count": 3, "out_count": 1, "stale_count": 0}],
+                        total=5, truncated=True)
+
+    monkeypatch.setattr(routes, "search_entities", _search)
+    response = http.get("/v1/graph/acme/entities", params=[("q", "ord"), ("kind", "project"), ("team", "payments"),
+                                                          ("provenance", "declared"), ("limit", "1")])
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["total"], body["truncated"], body["entities"][0]["in_count"]) == (5, True, 3)
+    assert seen == {"tenant": _TENANT, "query": "ord", "kinds": ("project",), "team": "payments",
+                    "provenances": ("declared",), "limit": 1, "offset": 0}
+    assert asked == ["projects:view"]
+    assert http.get("/v1/graph/acme/entities", params={"limit": 2001}).status_code == 422
+
+
+@pytest.mark.parametrize("kwargs", [{"kinds": ("galaxy",)}, {"provenances": ("rumoured",)}, {"limit": 0}])
+def test_entity_search_validation(kwargs) -> None:
+    from app.graph_nodes import search_entities
+
+    with pytest.raises(GraphValidationError):
+        search_entities(_Rows(), _TENANT, **kwargs)

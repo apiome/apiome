@@ -378,6 +378,14 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         requiresTenant: true,
       },
       {
+        // CDG-3.4: what depends on what, and the blast radius of a change.
+        id: 'dependency-graph',
+        label: 'Dependency graph',
+        href: `${DASHBOARD_HREF}/graph`,
+        icon: 'network',
+        requiresTenant: true,
+      },
+      {
         id: 'audit',
         label: 'Access audit',
         href: `${DASHBOARD_HREF}/audit`,

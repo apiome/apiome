@@ -214,11 +214,11 @@ describe('the page chrome', () => {
   });
 });
 
-describe('the eight panes', () => {
+describe('the nine panes', () => {
   it('wires every tab to its panel and starts on Overview', async () => {
     await renderDetail();
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(8);
+    expect(tabs).toHaveLength(9);
     for (const tab of tabs) {
       const panel = document.getElementById(tab.getAttribute('aria-controls')!);
       expect(panel).not.toBeNull();
@@ -238,11 +238,11 @@ describe('the eight panes', () => {
     first.focus();
     fireEvent.keyDown(first, { key: 'ArrowLeft' });
     // Wraps to the last tab.
-    expect(screen.getByTestId('catalog-detail-tab-versions')).toHaveAttribute(
+    expect(screen.getByTestId('catalog-detail-tab-dependencies')).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    fireEvent.keyDown(screen.getByTestId('catalog-detail-tab-versions'), { key: 'Home' });
+    fireEvent.keyDown(screen.getByTestId('catalog-detail-tab-dependencies'), { key: 'Home' });
     expect(first).toHaveAttribute('aria-selected', 'true');
   });
 

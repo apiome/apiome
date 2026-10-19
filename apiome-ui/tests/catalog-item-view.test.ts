@@ -254,7 +254,7 @@ describe('the converted strip', () => {
 });
 
 describe('the tabs', () => {
-  it('draws the eight panes in the mockup order, with the mockup labels', () => {
+  it('draws the nine panes in the mockup order, with the mockup labels', () => {
     expect(catalogDetailTabs().map((tab) => tab.id)).toEqual([...CATALOG_DETAIL_TAB_IDS]);
     expect(catalogDetailTabs().map((tab) => tab.label)).toEqual([
       'Overview',
@@ -265,6 +265,7 @@ describe('the tabs', () => {
       'Lint & score',
       'Test bench',
       'Versions',
+      'Dependencies',
     ]);
   });
 

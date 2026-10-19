@@ -328,7 +328,7 @@ export function catalogConvertedStrip(
 // The tabs
 // ---------------------------------------------------------------------------------------
 
-/** The eight panes, in the order the mockup's tab row draws them. */
+/** The nine panes, in the order the mockup's tab row draws them, then Dependencies (CDG-3.4). */
 export const CATALOG_DETAIL_TAB_IDS = [
   'overview',
   'format',
@@ -338,6 +338,7 @@ export const CATALOG_DETAIL_TAB_IDS = [
   'lint',
   'test-bench',
   'versions',
+  'dependencies',
 ] as const;
 
 export type CatalogDetailTabId = (typeof CATALOG_DETAIL_TAB_IDS)[number];
@@ -365,6 +366,7 @@ const TAB_META: Readonly<Record<CatalogDetailTabId, { label: string; icon: strin
   lint: { label: 'Lint & score', icon: 'lint' },
   'test-bench': { label: 'Test bench', icon: 'test-bench' },
   versions: { label: 'Versions', icon: 'versions' },
+  dependencies: { label: 'Dependencies', icon: 'dependencies' },
 };
 
 /** The counts a caller can hand the tab row; each is `null` until its pane has loaded. */
@@ -375,7 +377,7 @@ export interface CatalogDetailTabCounts {
 }
 
 /**
- * The eight tabs, with the three counts the mockup shows.
+ * The nine tabs, with the three counts the mockup shows.
  *
  * A count of `0` is still a count — "Conversions 0" is a fact the reader can act on, and the
  * mockup's empty-state copy says as much — but a count that has not *loaded* is `null` and

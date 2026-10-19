@@ -444,6 +444,7 @@ describe('the tab strip', () => {
       'Insight',
       'Versions',
       'Lint & score',
+      'Dependencies',
       'Settings',
       'Trust posture',
     ]);

@@ -49,6 +49,7 @@
  *    read is in flight.
  */
 
+import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -869,6 +870,15 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 loading={lintLoading}
                 error={lintError}
                 onNavigateToItem={navigateToItem}
+              />
+            </McpEndpointTabPanel>
+
+            <McpEndpointTabPanel value="dependencies" active={activeTab}>
+              <DependenciesPanel
+                kind="mcp_endpoint"
+                id={endpointId}
+                active={activeTab === 'dependencies'}
+                label={{ name: endpoint.name ?? null, slug: endpoint.slug ?? null, owner: null }}
               />
             </McpEndpointTabPanel>
 

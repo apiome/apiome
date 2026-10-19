@@ -61,10 +61,12 @@ import {
   GitMerge,
   Layers,
   LayoutDashboard,
+  Network,
   Route,
   ShieldCheck,
   Tags,
 } from 'lucide-react';
+import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
 import { useAuthSession } from '@lib/auth/session-client';
@@ -188,6 +190,7 @@ const TAB_GLYPH: Readonly<Record<string, typeof LayoutDashboard>> = {
   lint: ShieldCheck,
   'test-bench': FlaskConical,
   versions: GitBranch,
+  dependencies: Network,
 };
 
 /** The empty summary a payload without one degrades to. */
@@ -820,6 +823,14 @@ export function CatalogItemDetailClient({
             itemMetadata={item.metadata}
             active={activeTab === 'versions'}
             onCountChange={setVersionsCount}
+          />
+        </TabPanel>
+        <TabPanel id="dependencies" active={activeTab}>
+          <DependenciesPanel
+            kind="catalog_item"
+            id={item.id}
+            active={activeTab === 'dependencies'}
+            label={{ name: item.name, slug: item.slug ?? null, owner: null }}
           />
         </TabPanel>
       </PageBody>

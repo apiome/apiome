@@ -1,0 +1,18 @@
+---
+slug: dependency-graph-ui
+title: See the dependency graph
+description: A Dependencies tab, a Dependency graph page and a Blast radius drawer.
+authors: [apiome]
+---
+
+The [dependency graph](/govern/dependency-graph) now has screens.
+
+{/* truncate */}
+
+- **A Dependencies tab** on every project, catalog item and MCP server: what it depends on and what
+  depends on it, grouped by kind, with provenance and owner teams. Stale edges are dimmed and say
+  when they were last seen. A drawing follows; press **+** on a node to draw its own dependencies.
+- **Govern → Dependency graph**: search every connected entity and filter by kind, owner team and
+  provenance.
+- **A Blast radius drawer**: pick an operation or a schema and see who is affected, directly and
+  transitively, and every piece of evidence the change invalidates, with links.
