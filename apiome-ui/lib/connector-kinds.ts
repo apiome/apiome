@@ -5,7 +5,8 @@
  * never secrets) and the **credential** fields (sealed by REST on `PUT …/credentials`, never shown
  * again). The shapes mirror the REST scope validators (`app.kong_connector_source`,
  * `app.aws_apigateway_connector_source`, `app.azure_apim_connector_source`,
- * `app.apigee_connector_source`, `app.mcp_registry_connector_source`, `app.schema_registry_connector_source`),
+ * `app.apigee_connector_source`, `app.mcp_registry_connector_source`, `app.schema_registry_connector_source`,
+ * `app.registry_crawl`),
  * which stay the authority: this model only lays the form out and
  * turns its values into the request body.
  */
@@ -211,6 +212,45 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
       { key: 'apiKey', label: 'Apiome workspace API key', type: 'secret' },
     ],
     credentialNote: 'Leave both empty for a public registry. An Apiome workspace takes its API key.',
+  },
+  {
+    kind: 'registry',
+    label: 'Registry crawl',
+    description:
+      'Every artifact of a registry (A2A agents, xRegistry schemas, a FHIR server), each imported as its own catalog item.',
+    baseUrl: 'required',
+    baseUrlHelp:
+      'The registry root: an A2A agent registry listing, an xRegistry root (https://<host>/reg) or a FHIR server base.',
+    scope: [
+      {
+        key: 'protocol',
+        label: 'Protocol',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'a2a-registry', label: 'A2A agent registry' },
+          { value: 'xregistry', label: 'CNCF xRegistry (schemas)' },
+          { value: 'fhir-metadata', label: 'FHIR server /metadata' },
+        ],
+      },
+      {
+        key: 'groups',
+        label: 'Schema groups',
+        type: 'list',
+        help: 'xRegistry only: schema group ids, comma-separated. Leave empty for every group.',
+      },
+      {
+        key: 'includeProfiles',
+        label: 'Include profiles',
+        type: 'boolean',
+        help: 'FHIR only: also import every StructureDefinition the server’s resources declare.',
+      },
+    ],
+    credentials: [
+      { key: 'token', label: 'Bearer token', type: 'secret' },
+      { key: 'apiKey', label: 'API key (X-API-Key)', type: 'secret' },
+    ],
+    credentialNote: 'Leave both empty for a public registry.',
   },
 ];
 

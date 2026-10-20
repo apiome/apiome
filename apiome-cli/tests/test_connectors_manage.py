@@ -232,6 +232,43 @@ def test_add_dry_runs_then_creates_and_stores_credentials(
     assert json.loads(put.content) == {"credentials": {"token": "s3cret"}}
 
 
+def test_add_a_registry_crawl_connector(httpx_mock: HTTPXMock) -> None:
+    """MFI-18.5: a ``registry`` connector names its crawl in the scope."""
+    httpx_mock.add_response(
+        url=f"{_CONNECTORS}/dry-run",
+        method="POST",
+        json={"itemCount": 2, "items": [], "truncated": False, "findings": []},
+    )
+    httpx_mock.add_response(
+        url=_CONNECTORS,
+        method="POST",
+        status_code=201,
+        json=_connector(kind="registry"),
+    )
+    result = runner.invoke(
+        app,
+        [
+            "connectors",
+            "add",
+            "--kind",
+            "registry",
+            "--name",
+            "Schemas",
+            "--base-url",
+            "https://xreg.example.com/reg",
+            "--scope",
+            '{"protocol": "xregistry", "groups": ["orders"]}',
+        ],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    dry, create = httpx_mock.get_requests()
+    assert json.loads(dry.content)["kind"] == "registry"
+    assert json.loads(create.content)["scope"] == {
+        "protocol": "xregistry",
+        "groups": ["orders"],
+    }
+
+
 def test_add_failing_dry_run_saves_nothing(httpx_mock: HTTPXMock) -> None:
     httpx_mock.add_response(
         url=f"{_CONNECTORS}/dry-run",

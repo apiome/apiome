@@ -40,6 +40,7 @@ deployment** when you add a connector.
 | `url` | A specification published at a URL |
 | `schema-registry` | A Confluent, Karapace or Apicurio schema registry. Its subjects become [schema subjects](../ship/schema-registry.mdx) with their version history |
 | `mcp-registry` | An MCP registry: the official registry, Azure API Center, a Kong registry or another Apiome workspace. Its servers become MCP servers, not catalog items |
+| `registry` | A registry of artifacts, crawled by protocol: an A2A agent registry, a CNCF xRegistry, or a FHIR server's `/metadata`. Every artifact becomes its own catalog item. See [Registry crawl](#registry-crawl) |
 
 A connector has a **name**, an optional **base URL** (the control-plane or admin address), a
 **scope** (the kind's coordinates: control-plane ids, region and account, resource group, org and
@@ -749,6 +750,110 @@ the connector added (**Open the MCP server** on deployments where the MCP server
 on). MCP registry
 connectors are left out of [Shadow APIs](../govern/shadow-apis.mdx): MCP servers are not APIs a
 gateway serves.
+
+## Registry crawl
+
+The `registry` kind crawls a **registry** rather than one document: it lists every artifact the
+registry holds, fetches each one and **imports each as its own catalog item**, versioned on its own.
+The connector's scope names the **protocol**, which picks the importer that reads the artifacts:
+
+| Protocol | Base URL | What becomes a catalog item | Imported as |
+| --- | --- | --- | --- |
+| `a2a-registry` | The registry's listing URL | Each agent the registry lists | [A2A Agent Card](./a2a-agent-card-import.md) |
+| `xregistry` | The xRegistry root, for example `https://<host>/reg` | Each schema in each schema group | JSON Schema, Avro, Protobuf or XSD, from the schema's `format` |
+| `fhir-metadata` | The FHIR server base, for example `https://fhir.example.com/r4` | The server's CapabilityStatement and, with **Include profiles**, each profile its resources declare | FHIR |
+
+### Add a registry crawl
+
+1. **Go to Bring in → Connectors** and click **Add connector**.
+2. **Kind:** choose **Registry crawl** and click **Continue**.
+3. **Credentials:** leave both fields empty for a public registry. Enter a **Bearer token**, or an
+   **API key** sent as `X-API-Key`. Click **Continue**.
+4. **Scope:** enter the registry's **Base URL** and choose its **Protocol**. For an xRegistry, list
+   **Schema groups** to crawl only those (comma-separated), or leave it empty for every group. For a
+   FHIR server, tick **Include profiles** to import each StructureDefinition too.
+
+   <Screenshot id="connector-add-registry" alt="Add a connector, Scope step for a registry crawl: an xRegistry root as Base URL, Protocol CNCF xRegistry (schemas) and Schema groups orders, payments" />
+
+5. **Dry run** lists the artifacts the registry returns, and **Schedule** sets how often it is
+   crawled again. Nothing is stored until you click **Save connector**.
+
+With the API or the CLI, put the protocol in the scope:
+
+```json
+{
+  "kind": "registry",
+  "name": "Event schemas",
+  "baseUrl": "https://xreg.example.com/reg",
+  "scope": { "protocol": "xregistry", "groups": ["orders", "payments"], "requestsPerSecond": 2 }
+}
+```
+
+```bash
+apiome connectors add --kind registry --name "Event schemas" \
+  --base-url https://xreg.example.com/reg --scope '{"protocol": "xregistry"}'
+```
+
+### What a registry crawl does
+
+Each sync lists the whole registry, following its pages, and records one inventory row per artifact,
+keyed by the artifact's id in the registry (an Agent Card URL, `schemagroups/<group>/schemas/<id>`,
+a profile's canonical URL). For each artifact:
+
+- **A new artifact** is fetched and imported as a new catalog item.
+- **A changed artifact** is fetched again and imported as a **new revision of the same catalog
+  item**, with a change report against the previous one. An artifact counts as changed when its
+  revision in the registry moved (an A2A entry's `version` or `updatedAt`, an xRegistry schema's
+  version and `epoch`, a CapabilityStatement's `version` and `date`). An artifact the registry gives
+  no revision is fetched every sync and imported again only when its content differs.
+- **An unchanged artifact** is skipped, and nothing is fetched. A revision that moves while the
+  content stays the same is also not imported again.
+- **An artifact the registry no longer lists** turns **missing**. Its catalog item stays.
+
+Every revision records where it came from: the connector, the registry protocol, the artifact's id
+and revision in the registry, and its URL there. It shows on the catalog item's **Provenance** tab.
+
+**Limits.** Every request goes through the connector's [address rule](#base-urls-and-private-networks),
+on every redirect too. A crawl sends at most `requestsPerSecond` requests a second to one host (5 by
+default, 20 at most), at most 2,000 requests a sync, reads at most 100 pages of a listing and 5,000
+artifacts, and refuses a response over 5 MB. Each artifact fetched counts as one pull against the
+[workspace's polling quota](#quota-and-audit). An artifact that fails to fetch or import fails only
+itself: the rest of the registry is still imported.
+
+#### A2A agent registry
+
+A2A does not define a registry API yet, so the crawl reads the shape registries publish today.
+`GET <base URL>` answers either a JSON array of entries, or `{"agents": [entries], "nextPageToken": "…"}`.
+The next page is `GET <base URL>?pageToken=…`. An entry is one of these:
+
+- **An Agent Card URL** (`https://agent.example.com/.well-known/agent-card.json`), or an agent's
+  address (`https://agent.example.com`), whose card is read from `/.well-known/agent-card.json` and
+  then the legacy `/.well-known/agent.json`.
+- **An object** with `url` (or `cardUrl`), and optionally `name`, `version` and `updatedAt`.
+- **An object holding the Agent Card itself**, under `card` or as the entry.
+
+#### xRegistry
+
+The crawl reads `GET <base>/schemagroups` and, for each group, its `schemas` collection. Both follow
+`Link: <…>; rel="next"` pages. A schema's `format` picks the importer:
+
+- `JsonSchema/…` imports as JSON Schema.
+- `Avro/…` imports as Avro.
+- `Protobuf/…` imports as Protobuf.
+- `XSD/…` imports as XSD.
+
+A schema in any other format is skipped and listed in the run's findings. A schema whose listing
+carries the document (`schema` or `schemabase64`) is not fetched again; any other schema is read
+from `GET <base>/schemagroups/<group>/schemas/<id>`, or from its `schemaurl`.
+
+#### FHIR /metadata
+
+The crawl reads `GET <base>/metadata` and imports the CapabilityStatement. With **Include
+profiles**, every `profile` and `supportedProfile` of its resources is read from the same server
+with `GET <base>/StructureDefinition?url=<canonical>`. Requests ask for `application/fhir+json`.
+
+Registry connectors are left out of [Shadow APIs](../govern/shadow-apis.mdx): a registry's artifacts
+are published, not found on a gateway.
 
 ## Quota and audit
 

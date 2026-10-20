@@ -254,7 +254,9 @@ def add_connector(
         "--kind",
         help=(
             "Connector kind: kong-konnect, kong-admin, aws-apigateway, azure-apim, apigee, "
-            "url, schema-registry, mcp-registry."
+            "url, schema-registry, mcp-registry, registry. A registry connector crawls a "
+            'registry; its --scope names the crawl: \'{"protocol": "a2a-registry"}\', '
+            "xregistry or fhir-metadata."
         ),
     ),
     name: str = typer.Option(..., "--name", help="A name unique in the workspace."),

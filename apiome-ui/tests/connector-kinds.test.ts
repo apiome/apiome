@@ -27,6 +27,7 @@ describe('connector kinds', () => {
       'url',
       'schema-registry',
       'mcp-registry',
+      'registry',
     ]);
     expect(connectorKindLabel('apigee')).toBe('Apigee');
     expect(connectorKindLabel('mystery')).toBe('mystery');
@@ -54,6 +55,30 @@ describe('connector kinds', () => {
       username: 'KEY',
       password: 'SECRET',
     });
+  });
+
+  it('crawls a registry by protocol into individually versioned catalog items (MFI-18.5)', () => {
+    const registry = connectorKind('registry')!;
+    expect(landsInMcpCatalog('registry')).toBe(false);
+    expect(registry.baseUrl).toBe('required');
+    expect(registry.scope.map((f) => f.key)).toEqual(['protocol', 'groups', 'includeProfiles']);
+    expect(registry.scope[0].options?.map((o) => o.value)).toEqual(['a2a-registry', 'xregistry', 'fhir-metadata']);
+    expect(missingFields(registry, 'scope', {}, '')).toEqual(['Base URL', 'Protocol']);
+    expect(missingFields(registry, 'scope', { protocol: 'xregistry' }, 'https://reg.example')).toEqual([]);
+    expect(buildScope(registry, { protocol: 'xregistry', groups: 'orders, payments ', includeProfiles: false })).toEqual({
+      protocol: 'xregistry',
+      groups: ['orders', 'payments'],
+    });
+    expect(buildScope(registry, { protocol: 'fhir-metadata', includeProfiles: true })).toEqual({
+      protocol: 'fhir-metadata',
+      includeProfiles: true,
+    });
+    expect(scopeToValues(registry, { protocol: 'xregistry', groups: ['orders'] })).toEqual({
+      protocol: 'xregistry',
+      groups: 'orders',
+      includeProfiles: false,
+    });
+    expect(buildCredentials(registry, {})).toBeNull();
   });
 
   it('never puts a secret in the scope', () => {

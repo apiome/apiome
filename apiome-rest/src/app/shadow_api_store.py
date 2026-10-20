@@ -54,8 +54,9 @@ def load_report_connectors(db: Any, tenant_id: str, connector_id: Optional[str] 
                  WHERE j.connector_id = c.id AND j.status = 'succeeded') AS last_success_at
         FROM apiome.catalog_connectors c
         WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL
-          -- CDG-4.4 / MFI-12.3: registries list MCP servers and schema subjects, not APIs a gateway serves.
-          AND c.kind NOT IN ('mcp-registry', 'schema-registry')
+          -- CDG-4.4 / MFI-12.3 / MFI-18.5: registries list MCP servers, schema subjects and published
+          -- artifacts, not APIs a gateway serves.
+          AND c.kind NOT IN ('mcp-registry', 'schema-registry', 'registry')
           AND (%s::uuid IS NULL OR c.id = %s::uuid)
         ORDER BY lower(c.name)
         """,

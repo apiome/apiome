@@ -154,7 +154,7 @@ def test_create_returns_the_connector_without_credentials(store, audits):
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
     _create(kind="url", name="Spec URL", baseUrl="https://93.184.216.34/openapi.json", scope={})
     body = client.get(_BASE).json()
-    assert len(body["kinds"]) == 8
+    assert len(body["kinds"]) == 9
     assert body["syncableKinds"] == [
         "apigee",
         "aws-apigateway",
@@ -162,6 +162,7 @@ def test_list_reports_kinds_and_syncable_kinds(store, audits):
         "kong-admin",
         "kong-konnect",
         "mcp-registry",
+        "registry",
         "schema-registry",
     ]
     assert body["connectors"][0]["syncable"] is False
@@ -177,6 +178,7 @@ def test_list_reports_kinds_and_syncable_kinds(store, audits):
         "kong-admin",
         "kong-konnect",
         "mcp-registry",
+        "registry",
         "schema-registry",
         "url",
     ]

@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.403.0] - 2026-10-20
+
+### Added
+- **Registry-as-source ingestion (#3978, MFI-18.5)**: an import adapter can declare a **registry crawl**
+  (`ImportSource.registry_crawl`, exposed as `registry_crawl` on `GET /v1/import/sources`) — list → page → fetch
+  each → normalize → version — that runs on the CDG-1.1 connector engine as the new **`registry`** connector kind
+  (scope `{"protocol": …}`). Each artifact is one inventory row and one catalog item. A changed artifact is a
+  new revision of the same item, with a change report. Re-crawl skips artifacts whose revision is unchanged,
+  and those with no revision whose content is unchanged. Every revision records per-artifact provenance
+  (`format_metadata.connector_source` gains `registryProtocol`). Cadence, the tenant pull quota, the run
+  ledger and audit are the engine's.
+- `app.registry_crawl`: the `RegistryCrawl` SPI, a shared `paginate` loop (cursor, `Link: rel="next"`,
+  repeated-cursor guard, page limit), and `RegistryHttp`. `RegistryHttp` is the only network surface a
+  crawl gets: SSRF-guarded connector client on every hop, a per-host rate limit (`requestsPerSecond`,
+  default 5, max 20), a 2,000-request budget per sync, and a 5 MB response cap.
+- Three crawls:
+  - `a2a-registry` (declared by `a2a`): an agents list or array of card URLs, origins or inline cards, with
+    `nextPageToken` paging and the legacy well-known card fallback.
+  - `xregistry` (declared by `cloudevents`): CNCF xRegistry `schemagroups` → `schemas`, imported as JSON
+    Schema, Avro, Protobuf or XSD by `format`, revision `<version>+e<epoch>`; scope `groups`; unsupported
+    formats are reported as findings.
+  - `fhir-metadata` (declared by `fhir`): the server's CapabilityStatement, plus each declared profile
+    with `includeProfiles`.
+- apiome-db **V307** admits the `registry` kind in `catalog_connectors_kind_check`.
+
+### Changed
+- The connector engine calls a source's optional `close()` when a sync ends.
+- `registry` connectors are left out of Shadow APIs, like the MCP and schema registry kinds.
+
 ## [1.402.0] - 2026-10-20
 
 ### Added

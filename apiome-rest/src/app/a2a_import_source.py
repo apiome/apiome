@@ -74,6 +74,8 @@ class A2aImportSource(ImportSource, register=True):
     supports_live_discovery = True
     formats = (FORMAT_KEY,)
     file_extensions = (".agent-card.json", ".json")
+    #: Registry crawl (MFI-18.5, :mod:`app.a2a_registry_crawl`).
+    registry_crawl = "a2a-registry"
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         """Sniff a document for the Agent Card shape.

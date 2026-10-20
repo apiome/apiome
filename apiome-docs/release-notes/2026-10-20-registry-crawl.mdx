@@ -1,0 +1,22 @@
+---
+slug: registry-crawl
+title: Crawl a registry into the catalog
+description: Registry connectors import every artifact of an A2A registry, xRegistry or FHIR server.
+authors: [apiome]
+---
+
+A new connector kind, [**Registry crawl**](/bring-in/connectors#registry-crawl), reads a whole
+registry instead of one document. Every artifact it lists becomes its own catalog item, versioned on
+its own.
+
+{/* truncate */}
+
+- **Three registries to start.** An A2A agent registry (its Agent Cards), a CNCF xRegistry (its
+  JSON Schema, Avro, Protobuf and XSD schemas), and a FHIR server's `/metadata` (its
+  CapabilityStatement and, optionally, every profile it declares).
+- **Incremental re-crawls.** Only artifacts that changed since the last sync are fetched and
+  imported again, each as a new revision of the same item.
+- **Provenance on every revision.** Each one records the connector, the registry protocol and the
+  artifact's id, revision and URL in the registry.
+- **Polite and safe.** Crawls are rate-limited per host, capped per sync, and held to the connector
+  address rule on every redirect.

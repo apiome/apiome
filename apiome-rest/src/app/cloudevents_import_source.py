@@ -42,6 +42,8 @@ class CloudEventsImportSource(ImportSource, register=True):
     supports_live_discovery = False
     formats = ("cloudevents", "cloud-events")
     file_extensions = (".cloudevents.json", ".cloudevent.json", ".json")
+    #: Registry crawl (MFI-18.5, :mod:`app.xregistry_crawl`).
+    registry_crawl = "xregistry"
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         document = payload.document

@@ -52,6 +52,7 @@ KINDS: Tuple[str, ...] = (
     "url",
     "schema-registry",
     "mcp-registry",
+    "registry",
 )
 
 #: Connector statuses (mirror the V281 CHECK).
@@ -191,6 +192,7 @@ class ConnectorCreate(BaseModel):
         "url",
         "schema-registry",
         "mcp-registry",
+        "registry",
     ]
     name: str = Field(min_length=1, max_length=NAME_MAX_CHARS)
     base_url: Optional[str] = Field(default=None, alias="baseUrl", max_length=BASE_URL_MAX_CHARS)
@@ -331,6 +333,7 @@ class ConnectorDryRunRequest(BaseModel):
         "url",
         "schema-registry",
         "mcp-registry",
+        "registry",
     ]
     base_url: Optional[str] = Field(default=None, alias="baseUrl", max_length=BASE_URL_MAX_CHARS)
     scope: Dict[str, Any] = Field(default_factory=dict, description=SCOPE_DESCRIPTION)
@@ -733,7 +736,8 @@ def connector_provenance_metadata(
 
     Returns:
         ``{inputKind: "connector", connectorId, connectorKind, connectorName, remoteId,
-        remoteRevision[, remoteName][, sourceUri]}``.
+        remoteRevision[, remoteName][, sourceUri][, registryProtocol]}`` — ``registryProtocol``
+        for a ``registry`` connector (MFI-18.5).
     """
     meta: Dict[str, Any] = {
         "inputKind": INPUT_KIND_CONNECTOR,
@@ -747,6 +751,10 @@ def connector_provenance_metadata(
         meta["remoteName"] = remote_name
     if source_uri:
         meta["sourceUri"] = source_uri
+    scope = connector.get("scope")
+    if connector.get("kind") == "registry" and isinstance(scope, Mapping) and scope.get("protocol"):
+        # MFI-18.5: which crawl the artifact came from (``a2a-registry``, ``xregistry`` …).
+        meta["registryProtocol"] = scope["protocol"]
     return meta
 
 

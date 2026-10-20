@@ -202,6 +202,7 @@ def test_kinds_are_the_issue_vocabulary():
         "url",
         "schema-registry",
         "mcp-registry",
+        "registry",
     }
 
 
