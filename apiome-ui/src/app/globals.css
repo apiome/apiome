@@ -34529,6 +34529,154 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   REPOSITORY SOURCES  (REPO-5.7, #2792) — `components/ade/versions/RepositorySourcesPanel`
+   --------------------------------------------------------------------------
+   The Sources tab of the Versions screen: which repository files contribute
+   to a project's merged surface, in precedence order, and where each class
+   and path of a version came from.
+
+   The panel sits in the Versions screen's own `.ver-panel` card and borrows
+   rather than restates: `DataTable` for the provenance list, `Badge` for kind
+   and origin, `FormField`, `.hive-control` for the native pickers, `Alert`,
+   `EmptyState`, `LoadingState`, and `.mono` (HIVE-1.4) for repository names,
+   refs and pathnames. `.rsrc-*` is only the layout.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. Quiet text is
+   `--fg-muted`, never a fade.
+   ========================================================================== */
+
+.rsrc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  padding: var(--space-4);
+}
+
+.rsrc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.rsrc-select {
+  min-inline-size: 12rem;
+  max-inline-size: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.rsrc-summary {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.rsrc-state {
+  padding: var(--space-4);
+}
+
+.rsrc-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rsrc-section__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.rsrc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rsrc-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.rsrc-source__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding-inline: var(--space-1);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.rsrc-source__name {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.rsrc-source__counts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.rsrc-source__counts .rsrc-glyph:not(:first-child) {
+  margin-inline-start: var(--space-2);
+}
+
+.rsrc-source__last {
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.rsrc-glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.rsrc-cell-name,
+.rsrc-cell-source {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.rsrc-muted {
+  color: var(--fg-muted);
+}
+
+/* ==========================================================================
    AGENT ACCESS  (AGX-3.4, #4540) — `components/ade/agentAccess`
    --------------------------------------------------------------------------
    MCP → Agent access: the toolset editor, agent key management and the usage

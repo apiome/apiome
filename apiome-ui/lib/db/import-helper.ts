@@ -25,9 +25,24 @@ import { ImportSourceKind, getImporter, NormalizedClass, NormalizedProperty } fr
 import { randomUUID } from 'crypto';
 import { withRetry } from '../retry';
 import { permanentDeleteProject } from './helper';
-import { extractPaths, extractSecuritySchemes } from '../../src/app/utils/openapi-import';
+import { extractPaths, extractSecuritySchemes, type ParsedPath } from '../../src/app/utils/openapi-import';
 import { importOpenAPIPathsAndSecurity } from './import-openapi-paths-security';
 import { recordTenantRepositoryImport, upsertRepositoryImportSpec } from './repository-import-metrics';
+import {
+  applyRepositoryMerge,
+  loadCarriedPaths,
+  loadIncomingSource,
+  loadParentEntities,
+  type Queryable,
+} from './repository-merge';
+import {
+  RepositoryMergeConflictError,
+  describeMergePlan,
+  formatMergeSource,
+  planRepositoryMerge,
+  type MergeSource,
+  type RepositoryMergePlan,
+} from '../repository-merge';
 import { mergeOpenApiDocumentIntoCatalogTargets } from '../rest-spec-import-merge';
 
 export type ImportJobState = 'queued' | 'running' | 'pending-approval' | 'committing' | 'completed' | 'failed' | 'canceled' | 'rolled-back';
@@ -174,12 +189,16 @@ interface JobState {
   transactionPending?: boolean;
   // Per-phase / per-DB-op timing accumulator (see finalizeBenchmark).
   bench?: Bench;
+  /** Multi-repository merge state (REPO-5.7), set for a repository-file import into a project. */
+  merge?: JobRepositoryMerge;
   summary?: {
     classesCreated: number;
     propertiesCreated: number;
     pathsImported: number;
     warnings: number;
     failed: number;
+    /** Multi-repository merge (REPO-5.7): classes / paths carried forward from other files. */
+    repositoryMerge?: { sources: number; classesCarried: number; pathsCarried: number };
     totalTime?: number;
     sourceName?: string;
     projectName?: string;
@@ -211,7 +230,172 @@ interface JobState {
   };
 }
 
+/** What a repository-file import carries between planning and writing its merge (REPO-5.7). */
+interface JobRepositoryMerge {
+  incoming: MergeSource;
+  plan: RepositoryMergePlan;
+  parentVersionId: string | null;
+  incomingClasses: string[];
+  incomingPaths: string[];
+  /** The parent's carried paths, parsed; imported with the incoming paths. */
+  carriedPaths: ParsedPath[];
+}
+
 const jobs = new Map<string, JobState>();
+
+/**
+ * Plan the multi-repository merge of a repository-file import (REPO-5.7) before anything is written.
+ *
+ * No-op for an import that is not from a registered repository file. Otherwise reads the parent
+ * version's classes and paths with their provenance, plans the merge, and stores the plan on the
+ * job. A class or path another contributing file already defines fails the import here — in a
+ * dry run as much as in a real one — with a message naming both files.
+ *
+ * @param q - Query target (the import's client, or a read client for a dry run).
+ * @param job - The job; `job.merge` is set when the import is repository-sourced.
+ * @param projectId - The target project, or null when the import creates it.
+ * @param parentVersionId - The version the new one follows, or null.
+ * @param classNames - Class names the importing file produces.
+ * @throws RepositoryMergeConflictError when two files define the same class or path.
+ */
+async function prepareRepositoryMerge(
+  q: Queryable,
+  job: JobState,
+  projectId: string | null,
+  parentVersionId: string | null,
+  classNames: string[],
+): Promise<void> {
+  const input = job.input;
+  const src = input.repositorySource;
+  if (!src?.repositoryId?.trim()) return;
+  const incoming = await loadIncomingSource(q, input.tenantId, projectId, {
+    repositoryId: src.repositoryId.trim(),
+    branch: src.branch,
+    path: src.path,
+    blobSha: src.blobSha ?? null,
+  });
+  if (!incoming) return;
+
+  const incomingPaths =
+    input.sourceKind === 'openapi' && input.document ? extractPaths(input.document).map((p) => p.path) : [];
+  const parentEntities =
+    projectId && parentVersionId ? await loadParentEntities(q, input.tenantId, projectId, parentVersionId) : [];
+  const plan = planRepositoryMerge({ incoming, incomingClasses: classNames, incomingPaths, parentEntities });
+
+  if (plan.conflicts.length > 0) {
+    const error = new RepositoryMergeConflictError(plan.conflicts, input.project.name);
+    emit(job, 'error', 'REPOSITORY_MERGE_CONFLICT', error.message, {
+      conflicts: plan.conflicts.map((c) => ({
+        kind: c.kind,
+        key: c.key,
+        existing: formatMergeSource(c.existing),
+        incoming: formatMergeSource(c.incoming),
+      })),
+    });
+    throw error;
+  }
+
+  let carriedPaths: ParsedPath[] = [];
+  if (plan.mode === 'multi-source' && parentVersionId) {
+    emit(job, 'info', 'REPOSITORY_MERGE', describeMergePlan(plan), {
+      sources: plan.sources.map(formatMergeSource),
+    });
+    for (const entity of plan.superseded) {
+      emit(
+        job,
+        'warn',
+        'REPOSITORY_MERGE_SUPERSEDED',
+        `${entity.kind} "${entity.key}" was not defined by a repository; ${formatMergeSource(incoming)} now defines it and replaces it.`,
+      );
+    }
+    carriedPaths = await loadCarriedPaths(
+      parentVersionId,
+      plan.carried.filter((e) => e.kind === 'path').map((e) => e.key),
+    );
+  }
+
+  job.merge = { incoming, plan, parentVersionId, incomingClasses: classNames, incomingPaths, carriedPaths };
+  if (job.summary && plan.mode === 'multi-source') {
+    job.summary.repositoryMerge = {
+      sources: plan.sources.length,
+      classesCarried: plan.carried.filter((e) => e.kind === 'class').length,
+      pathsCarried: carriedPaths.length,
+    };
+  }
+}
+
+/**
+ * Write the planned merge into the version the import created (REPO-5.7): the contributing-file
+ * rows, the carried classes, and the provenance of every class and path. Runs in the import's
+ * transaction; a no-op when the job has no merge plan.
+ *
+ * @param client - The import's transaction client.
+ * @param job - The job, with `job.merge` from {@link prepareRepositoryMerge}.
+ * @param projectId - The target project.
+ * @param versionId - The new version.
+ */
+async function applyRepositoryMergeForJob(
+  client: PoolClient,
+  job: JobState,
+  projectId: string,
+  versionId: string,
+): Promise<void> {
+  const merge = job.merge;
+  if (!merge) return;
+  // Only classes that were actually written are attributed (a failed class has no row to describe).
+  const written = new Set(
+    (job.summary?.classes ?? []).filter((c) => c.status !== 'failed').map((c) => c.name),
+  );
+  const result = await applyRepositoryMerge(client as unknown as Queryable, {
+    tenantId: job.input.tenantId,
+    projectId,
+    userId: job.input.userId,
+    versionId,
+    parentVersionId: merge.parentVersionId,
+    incoming: merge.incoming,
+    plan: merge.plan,
+    incomingClasses: merge.incomingClasses.filter((name) => written.has(name)),
+    incomingPaths: merge.incomingPaths,
+  });
+  emit(
+    job,
+    'info',
+    'REPOSITORY_SOURCES_RECORDED',
+    `Recorded ${formatMergeSource(merge.incoming)} as a source of this project (${result.provenanceRows} provenance row(s)).`,
+    { sourceId: result.sourceId, classesCarried: result.classesCarried },
+  );
+}
+
+/**
+ * Import a job's paths and security schemes into its version: the importing document's (OpenAPI
+ * only) plus any paths carried forward by a multi-repository merge (REPO-5.7).
+ *
+ * @param job - The job.
+ * @param versionId - The version to write into.
+ */
+async function importJobPaths(job: JobState, versionId: string): Promise<void> {
+  const input = job.input;
+  const isOpenApi = input.sourceKind === 'openapi' && Boolean(input.document);
+  const incoming = isOpenApi ? extractPaths(input.document) : [];
+  const securitySchemes = isOpenApi ? extractSecuritySchemes(input.document) : [];
+  const carried = job.merge?.carriedPaths ?? [];
+  const paths = [...incoming, ...carried];
+  if (paths.length === 0 && securitySchemes.length === 0) return;
+  const carriedNote = carried.length > 0 ? ` (${carried.length} carried forward from other repository files)` : '';
+  emit(
+    job,
+    'info',
+    'IMPORTING_PATHS',
+    `Importing ${paths.length} path(s)${carriedNote} and ${securitySchemes.length} security scheme(s)...`,
+  );
+  const pathResult = await importOpenAPIPathsAndSecurity(versionId, paths, securitySchemes);
+  if (pathResult.success) {
+    if (job.summary) job.summary.pathsImported = incoming.length;
+    emit(job, 'info', 'PATHS_IMPORTED', 'Paths and security schemes imported.');
+  } else {
+    emit(job, 'warn', 'PATHS_IMPORT_WARN', `Paths/security import had issues: ${pathResult.error}`);
+  }
+}
 
 async function recordRepositoryImportMetricIfApplicable(job: JobState): Promise<void> {
   const src = job.input.repositorySource;
@@ -378,11 +562,18 @@ async function mergeOpenApiIntoExistingProjectIfNeeded(
   const specDesc = (input.project.description ?? '').trim();
   if (patchKeys.length === 0 && specDesc === '') return;
 
+  // Multi-repository merge (REPO-5.7): only the highest-precedence file sets the project's info;
+  // any other contributing file fills in what is missing.
+  const merge = job.merge;
+  const metadataFillOnly = Boolean(
+    merge && merge.plan.mode === 'multi-source' && merge.plan.sources[0] !== merge.incoming,
+  );
   const resRaw = await withRetry(
     () =>
       mergeProjectImportOpenApiFieldsTx(client, existing, {
         descriptionFromSpec: specDesc || null,
         metadataPatch: patch ?? undefined,
+        metadataFillOnly,
       }),
     { maxAttempts: 3, initialDelayMs: 500, label: 'mergeProjectImportOpenApiFields' },
   );
@@ -904,6 +1095,24 @@ export async function startImport(input: ImportJobInput) {
             ? `Dry run mode - simulating import into existing project "${input.project.name}" (no database changes)`
             : 'Dry run mode - simulating import (no database changes)'
         );
+        // A dry run reports a multi-repository conflict exactly as the real import would (REPO-5.7).
+        if (input.repositorySource?.repositoryId?.trim()) {
+          const readClient = await getTransactionClient();
+          try {
+            const dryProjectId =
+              existingDry || (await getProjectIdBySlugTx(readClient, input.tenantId, input.project.slug)) || null;
+            const dryParent = dryProjectId ? await getLatestVersionUuidForProjectTx(readClient, dryProjectId) : null;
+            await prepareRepositoryMerge(
+              readClient as unknown as Queryable,
+              job,
+              dryProjectId,
+              dryParent,
+              norm.classes.map((c) => c.name),
+            );
+          } finally {
+            await releaseClient(readClient);
+          }
+        }
         setProgress(job, 'creating-version', 2, 1, input.version.versionId);
 
         const propertyMap = new Map<string, { data: any; description?: string; names: Set<string> }>();
@@ -982,7 +1191,6 @@ export async function startImport(input: ImportJobInput) {
         if (existingInc) {
           projectId = existingInc;
           emit(job, 'info', 'EXISTING_PROJECT', `Using existing project: ${input.project.name}`, { projectId });
-          await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingInc);
         } else {
           const resProj = JSON.parse(
             await withRetry(
@@ -1009,6 +1217,14 @@ export async function startImport(input: ImportJobInput) {
         const parentVersionUuidInc = reuseLibraryInc
           ? await getLatestVersionUuidForProjectTx(client!, projectId)
           : null;
+        await prepareRepositoryMerge(
+          client! as unknown as Queryable,
+          job,
+          projectId,
+          parentVersionUuidInc,
+          norm.classes.map((c) => c.name),
+        );
+        if (existingInc) await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingInc);
         const resVer = JSON.parse(
           await withRetry(
             () =>
@@ -1117,6 +1333,20 @@ export async function startImport(input: ImportJobInput) {
         }
         recordPhase(job, 'phase:writeClasses', Date.now() - _writeClassesStart);
 
+        if (job.merge) {
+          // Multi-repository merge (REPO-5.7): carried classes and provenance, in one short transaction.
+          await benchTime(job.bench, 'db:beginTransaction', () => beginTransaction(client!));
+          try {
+            await applyRepositoryMergeForJob(client!, job, projectId, versionId);
+            await benchTime(job.bench, 'db:commitTransaction', () => commitTransaction(client!));
+          } catch (mergeErr) {
+            try {
+              await rollbackTransaction(client!);
+            } catch { /* ignore */ }
+            throw mergeErr;
+          }
+        }
+
         if (job.canceled) throw new Error('Import canceled');
         setProgress(job, 'verifying', 3 + norm.classes.length, 2 + norm.classes.length, 'Verifying import...');
         const verificationResultInc = await benchPhase(job, 'phase:verify', () =>
@@ -1125,22 +1355,7 @@ export async function startImport(input: ImportJobInput) {
         if (job.summary) job.summary.verification = verificationResultInc;
         if (!verificationResultInc.passed && job.summary) job.summary.warnings++;
 
-        if (input.sourceKind === 'openapi' && input.document) {
-          const paths = extractPaths(input.document);
-          const securitySchemes = extractSecuritySchemes(input.document);
-          if (paths.length > 0 || securitySchemes.length > 0) {
-            emit(job, 'info', 'IMPORTING_PATHS', `Importing ${paths.length} path(s) and ${securitySchemes.length} security scheme(s)...`);
-            const pathResult = await benchPhase(job, 'phase:importPaths', () =>
-              importOpenAPIPathsAndSecurity(versionId, paths, securitySchemes)
-            );
-            if (pathResult.success) {
-              if (job.summary) job.summary.pathsImported = paths.length;
-              emit(job, 'info', 'PATHS_IMPORTED', 'Paths and security schemes imported.');
-            } else {
-              emit(job, 'warn', 'PATHS_IMPORT_WARN', `Paths/security import had issues: ${pathResult.error}`);
-            }
-          }
-        }
+        await benchPhase(job, 'phase:importPaths', () => importJobPaths(job, versionId));
 
         job.result = { projectId, versionId };
         await recordRepositoryImportMetricIfApplicable(job);
@@ -1180,7 +1395,6 @@ export async function startImport(input: ImportJobInput) {
       if (existingTx) {
         projectId = existingTx;
         emit(job, 'info', 'EXISTING_PROJECT', `Using existing project: ${input.project.name}`, { projectId });
-        await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingTx);
       } else {
         const resProj = JSON.parse(
           await withRetry(
@@ -1209,6 +1423,14 @@ export async function startImport(input: ImportJobInput) {
       const parentVersionUuidTx = reuseLibraryTx
         ? await getLatestVersionUuidForProjectTx(client!, projectId)
         : null;
+      await prepareRepositoryMerge(
+        client! as unknown as Queryable,
+        job,
+        projectId,
+        parentVersionUuidTx,
+        norm.classes.map((c) => c.name),
+      );
+      if (existingTx) await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingTx);
       const resVer = JSON.parse(
         await withRetry(
           () =>
@@ -1292,6 +1514,9 @@ export async function startImport(input: ImportJobInput) {
         }
         classCount++;
       }
+
+      // Multi-repository merge (REPO-5.7): carried classes and provenance, in the import's transaction.
+      await applyRepositoryMergeForJob(client, job, projectId, versionId);
 
       // Verification phase - sanity check imported data matches schema
       if (job.canceled) throw new Error('Import canceled');
@@ -1402,19 +1627,8 @@ export async function commitImport(jobId: string): Promise<{ success: boolean; e
     job.transactionClient = undefined;
 
     const versionId = job.result?.versionId as string | undefined;
-    if (versionId && job.input.sourceKind === 'openapi' && job.input.document) {
-      const paths = extractPaths(job.input.document);
-      const securitySchemes = extractSecuritySchemes(job.input.document);
-      if (paths.length > 0 || securitySchemes.length > 0) {
-        emit(job, 'info', 'IMPORTING_PATHS', `Importing ${paths.length} path(s) and ${securitySchemes.length} security scheme(s)...`);
-        const pathResult = await importOpenAPIPathsAndSecurity(versionId, paths, securitySchemes);
-        if (pathResult.success) {
-          if (job.summary) job.summary.pathsImported = paths.length;
-          emit(job, 'info', 'PATHS_IMPORTED', 'Paths and security schemes imported.');
-        } else {
-          emit(job, 'warn', 'PATHS_IMPORT_WARN', `Paths/security import had issues: ${pathResult.error}`);
-        }
-      }
+    if (versionId) {
+      await importJobPaths(job, versionId);
     }
 
     await recordRepositoryImportMetricIfApplicable(job);

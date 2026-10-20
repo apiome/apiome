@@ -72,6 +72,7 @@ import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
 import { VersionBindingPanel } from '../../../components/ade/bindings';
+import { RepositorySourcesPanel } from '../../../components/ade/versions/RepositorySourcesPanel';
 import { isUuid } from '@lib/comment-discussion';
 import { useProjectUnresolvedTotal } from '../../../components/ade/discussion/useProjectUnresolvedTotal';
 import { getStudioWorkspaceRoute } from '@lib/external-links';
@@ -409,6 +410,7 @@ const Versions = () => {
     | 'conversion'
     | 'discussion'
     | 'repository'
+    | 'sources'
     | 'dependencies'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
@@ -827,6 +829,7 @@ const Versions = () => {
     appliedDeepLinkRef.current = applied;
     if (tab === 'discussion') setVersionsMainTab('discussion');
     if (tab === 'dependencies') setVersionsMainTab('dependencies');
+    if (tab === 'sources') setVersionsMainTab('sources');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
   }, [searchParams]);
 
@@ -3076,11 +3079,14 @@ const Versions = () => {
   const studioWorkspaceRoute = useMemo(() => getStudioWorkspaceRoute(), []);
   /** Every project has a Repository tab (GNC-2.1, #4737): a draft is bound to a branch from there. */
   const showRepositoryTab = Boolean(selectedProjectId);
+  /** Every project has a Sources tab (REPO-5.7, #2792): its contributing repositories and provenance. */
+  const showSourcesTab = Boolean(selectedProjectId);
   /** Every project has a Dependencies tab (CDG-3.4, #5969): its edges in the catalog graph. */
   const showDependenciesTab = Boolean(selectedProjectId);
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
     (versionsMainTab === 'repository' && !showRepositoryTab) ||
+    (versionsMainTab === 'sources' && !showSourcesTab) ||
     (versionsMainTab === 'dependencies' && !showDependenciesTab) ||
     (versionsMainTab === 'discussion' && !showDiscussionTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
@@ -3417,6 +3423,20 @@ const Versions = () => {
           Repository
         </button>
       ) : null}
+      {showSourcesTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'sources'}
+          data-testid="versions-tab-sources"
+          className={tabTriggerClass({ active: effectiveMainTab === 'sources' })}
+          title="Which repositories contribute to this project, and where each class and path came from"
+          onClick={() => setVersionsMainTab('sources')}
+        >
+          <GitMerge className="ver-tab-glyph" aria-hidden />
+          Sources
+        </button>
+      ) : null}
       {showDependenciesTab ? (
         <button
           type="button"
@@ -3698,6 +3718,19 @@ const Versions = () => {
              API review unit of, and what is waiting to be decided about it. */
           <Card className="ver-panel">
             <VersionBindingPanel
+              key={selectedProjectId}
+              projectId={selectedProjectId}
+              versions={versions}
+              initialVersionId={selectedVersion?.id ?? null}
+            />
+          </Card>
+        ) : null}
+
+        {showSourcesTab && effectiveMainTab === 'sources' && selectedProjectId ? (
+          /* Repository sources (REPO-5.7, #2792): the files merged into this project's surface and
+             the provenance of every class and path of a version. */
+          <Card className="ver-panel">
+            <RepositorySourcesPanel
               key={selectedProjectId}
               projectId={selectedProjectId}
               versions={versions}

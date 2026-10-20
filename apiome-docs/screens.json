@@ -115,6 +115,15 @@
       "data": "fixture:hive-versions/tab-repository.html"
     },
     {
+      "id": "versions-sources",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/tab-sources.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/RepositorySourcesPanel.tsx"
+      ]
+    },
+    {
       "id": "version-new-dialog",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

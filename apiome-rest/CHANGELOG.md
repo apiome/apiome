@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.396.0] - 2026-10-19
+
+### Added
+- **Multi-repository merge into one API surface (#2792, REPO-5.7)**: a project can source from several
+  repository files (one per service). Each import of a repository file into the project builds a version that
+  merges every contributing file — the importing file's classes and paths plus everything the other files
+  defined, carried forward unchanged; what the importing file no longer defines is dropped. Two files defining
+  the same class name or pathname fail the import (dry run included) with a message naming the entity and both
+  files, and nothing is written. Precedence (1 = the file that contributed first) orders the sources and keeps
+  the first file's project info (a later file only fills in missing metadata); it never resolves a conflict.
+  The merge runs in apiome-ui's import (`lib/repository-merge.ts`, `lib/db/repository-merge.ts`).
+  - **apiome-db V301**: `project_repository_sources` (the project's contributing files, one row per
+    repository / branch / path, with `precedence`) and `version_entity_sources` (per-version provenance of every
+    class and path: source, repository / branch / path snapshot, blob, `carried_from_version_id`). A version
+    imported from one repository before V301 is attributed to that file on the next merge.
+  - **`GET /v1/tenants/{tenant_slug}/projects/{project_ref}/repository-sources`** (`?version=` revision id or
+    label; newest when omitted, `projects:view`): the contributing files in precedence order with per-file class
+    and path counts, and every class and path of the version with its `source` (null when no repository defined
+    it) and `counts`. New tag `project-repository-sources`.
+
 ## [1.395.0] - 2026-10-19
 
 ### Added

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.259.0
+  version: 1.260.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23007,7 +23007,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-20T02:04:56Z'
+                        example: '2026-10-20T02:47:50Z'
                       method:
                         type: string
                         example: GET
@@ -25278,6 +25278,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for settleanoutstandingsynccandidateresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/repository-sources:
+    get:
+      tags:
+      - project-repository-sources
+      summary: List a project's contributing repositories and per-entity provenance
+      description: 'The repository files whose imports make up the project''s merged
+        API surface, in precedence order (1 contributed first), and every class and
+        path of one version with the file that defined it. `source` is null for a
+        class or path no repository defined (edited in Apiome, or imported before
+        multi-repository merge).
+
+
+        `version` is a revision id or version label; the project''s newest version
+        when omitted.
+
+
+        Requires `projects:view`.'
+      operationId: list_project_repository_sources_v1_tenants__tenant_slug__projects__project_ref__repository_sources_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectscontributingrepositoriesandversion schema.
+          - type: 'null'
+            description: Listaprojectscontributingrepositoriesandversion schema.
+          description: Revision id or version label.
+          title: Version
+        description: Revision id or version label.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectscontributingrepositoriesandauthorization schema.
+          - type: 'null'
+            description: Listaprojectscontributingrepositoriesandauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectscontributingrepositoriesand Xapikey schema.
+          - type: 'null'
+            description: Listaprojectscontributingrepositoriesand Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a project's contributing repositories
+            and per-entity provenance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectRepositorySourcesResponse'
+                description: Response payload for listaprojectscontributingrepositoriesandresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaprojectscontributingrepositoriesandresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/checks:
     get:
       tags:
@@ -82485,7 +82573,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         completed_at:
           anyOf:
           - type: string
@@ -83972,7 +84060,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -84145,7 +84233,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -84750,13 +84838,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -87273,7 +87361,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 8c7bada0-e88a-40d8-a4f3-fc2b5fa57921
+          example: afdaf684-1bad-43a4-8039-53b39736b83e
         method:
           type: string
           title: Method
@@ -89416,7 +89504,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         envelope:
           additionalProperties: true
           type: object
@@ -90907,7 +90995,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         browse_url:
           anyOf:
           - type: string
@@ -91963,6 +92051,34 @@ components:
       type: object
       title: EntityPagination
       description: Paging state.
+    EntityProvenance:
+      properties:
+        kind:
+          type: string
+          enum:
+          - class
+          - path
+          title: Kind
+          description: '`class` or `path`.'
+          example: class
+        key:
+          type: string
+          title: Key
+          description: The class name or the pathname.
+          example: example
+        source:
+          anyOf:
+          - $ref: '#/components/schemas/ProvenanceSource'
+          - type: 'null'
+            description: Entity Provenance schema.
+          description: Null when no repository defined it.
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - key
+      title: EntityProvenance
+      description: A class or path of the version and where it came from.
     EntityRef:
       properties:
         kind:
@@ -118404,6 +118520,157 @@ components:
       - attribute_name
       title: ProjectPropertyUsage
       description: One class attribute that uses a library property (#3224, CLI 6.2).
+    ProjectRepositorySource:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The source row id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        repository_id:
+          type: string
+          title: Repository Id
+          description: The registered tenant repository.
+          example: repository_01h2xcejqtf3fz5y5j0v8k9m2p
+        repository_full_name:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: Repository Full Name
+          description: '`owner/name` of the repository.'
+        provider:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: Provider
+          description: '`github`, `gitlab`, or `bitbucket`.'
+        branch:
+          type: string
+          title: Branch
+          description: Branch the file is imported from.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Repository-relative path of the file.
+          example: /resources/{id}
+        precedence:
+          type: integer
+          title: Precedence
+          description: 'Merge order: 1 contributed first. Orders the merged surface
+            and keeps the first source''s project info; it never resolves a conflict
+            — two files defining the same class or path fail the import.'
+          example: 1
+        first_version_id:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: First Version Id
+          description: The version this file first contributed to.
+        last_version_id:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: Last Version Id
+          description: The version this file was last imported into.
+        last_version_label:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: Last Version Label
+          description: That version's label, e.g. `1.2.0`.
+        last_blob_sha:
+          anyOf:
+          - type: string
+            description: Project Repository Source schema.
+          - type: 'null'
+            description: Project Repository Source schema.
+          title: Last Blob Sha
+          description: Blob of the last import.
+        class_count:
+          type: integer
+          title: Class Count
+          description: Classes of the reported version this file defines.
+          default: 0
+          example: 1
+        path_count:
+          type: integer
+          title: Path Count
+          description: Paths of the reported version this file defines.
+          default: 0
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - repository_id
+      - branch
+      - path
+      - precedence
+      - created_at
+      - updated_at
+      title: ProjectRepositorySource
+      description: One repository file contributing to the project's merged API surface.
+    ProjectRepositorySourcesResponse:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        sources:
+          items:
+            $ref: '#/components/schemas/ProjectRepositorySource'
+          type: array
+          title: Sources
+          description: Contributing files in precedence order.
+          maxItems: 1000
+        version:
+          anyOf:
+          - $ref: '#/components/schemas/ProvenanceVersion'
+          - type: 'null'
+            description: Response payload for project repository sources.
+          description: The version described; null when the project has none.
+        entities:
+          items:
+            $ref: '#/components/schemas/EntityProvenance'
+          type: array
+          title: Entities
+          description: Every live class (first) and path of the version, each ordered
+            by key.
+          maxItems: 1000
+        counts:
+          $ref: '#/components/schemas/ProvenanceCounts'
+          description: Counts.
+      additionalProperties: false
+      type: object
+      required:
+      - project_id
+      - counts
+      title: ProjectRepositorySourcesResponse
+      description: A project's contributing repository files and one version's provenance.
     ProjectSchema:
       properties:
         id:
@@ -119084,6 +119351,117 @@ components:
       title: PropertyRequiredEverywhereResult
       description: What ``required_everywhere`` changed on the class attributes using
         a property (#3226).
+    ProvenanceCounts:
+      properties:
+        classes:
+          type: integer
+          title: Classes
+          description: Classes.
+          example: 1
+        paths:
+          type: integer
+          title: Paths
+          description: Paths.
+          example: 1
+        attributed:
+          type: integer
+          title: Attributed
+          description: Attributed.
+          example: 1
+        unattributed:
+          type: integer
+          title: Unattributed
+          description: Unattributed.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - classes
+      - paths
+      - attributed
+      - unattributed
+      title: ProvenanceCounts
+      description: How much of the version is attributed to a repository.
+    ProvenanceSource:
+      properties:
+        source_id:
+          anyOf:
+          - type: string
+            description: Provenance Source schema.
+          - type: 'null'
+            description: Provenance Source schema.
+          title: Source Id
+          description: The contributing source row; null once that source was removed.
+        repository_id:
+          anyOf:
+          - type: string
+            description: Provenance Source schema.
+          - type: 'null'
+            description: Provenance Source schema.
+          title: Repository Id
+          description: Repository ID.
+        repository_full_name:
+          type: string
+          title: Repository Full Name
+          description: Repository Full Name.
+          example: Example
+        branch:
+          type: string
+          title: Branch
+          description: Branch.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Path.
+          example: /resources/{id}
+        blob_sha:
+          anyOf:
+          - type: string
+            description: Provenance Source schema.
+          - type: 'null'
+            description: Provenance Source schema.
+          title: Blob Sha
+          description: Blob Sha.
+        carried_from_version_id:
+          anyOf:
+          - type: string
+            description: Provenance Source schema.
+          - type: 'null'
+            description: Provenance Source schema.
+          title: Carried From Version Id
+          description: The version this entity was carried forward from by a merge;
+            null when this version's import wrote it.
+      additionalProperties: false
+      type: object
+      required:
+      - repository_full_name
+      - branch
+      - path
+      title: ProvenanceSource
+      description: The repository file a class or path came from (snapshotted at import
+        time).
+    ProvenanceVersion:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The revision id (`versions.id`).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Provenance Version schema.
+          - type: 'null'
+            description: Provenance Version schema.
+          title: Version Label
+          description: e.g. `1.2.0`.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      title: ProvenanceVersion
+      description: The version the provenance describes.
     ProviderConfigListResponse:
       properties:
         providers:
@@ -125384,7 +125762,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
       additionalProperties: false
       type: object
       required:
@@ -134257,12 +134635,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
       additionalProperties: false
       type: object
       required:
@@ -135391,7 +135769,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         detected_by:
           anyOf:
           - type: string
@@ -141689,13 +142067,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T02:04:56Z'
+          example: '2026-10-20T02:47:50Z'
         outcome:
           anyOf:
           - type: string

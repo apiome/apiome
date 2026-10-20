@@ -1,6 +1,6 @@
 ---
 title: Versions
-description: A project's timeline of versions, and the tabs for changes, testing and discussion.
+description: A project's timeline of versions, and the tabs for changes, testing, discussion and sources.
 sidebar_position: 1.2
 tags: [versions]
 ---
@@ -124,6 +124,30 @@ path**, and **click “Bind”**. Register repositories first under **Bring in �
 
 <Screenshot id="versions-repository" alt="The Repository tab: an unbound draft, with repository, branch and source path fields" />
 
+## Sources
+
+The **Sources** tab shows which repository files make up the project and where each class and path
+of a version came from. This is useful when the API is split across several repositories, one per
+service, and each is imported into the same project (see
+[Merge several repositories into one project](../bring-in/repositories.mdx#merge-several-repositories-into-one-project)).
+
+1. **Pick the Version.** The newest one is selected first.
+2. **Contributing repositories** lists each file in **precedence** order: **1** is the file that was
+   imported first. Each row shows how many of the version's classes and paths that file defines, and
+   which version it was last imported into.
+3. The table lists every class and path of the version, with its **Source** and its **Origin**:
+
+| Origin | Means |
+| --- | --- |
+| **Imported** | This version's import wrote it from that file |
+| **Carried forward** | Another file's import kept it unchanged from the previous version |
+| **Not from a repository** | No repository file defined it. It was edited in Apiome, or imported before multi-repository merge |
+
+Use the search box, the **All** / **Classes** / **Paths** chips and the source picker to narrow the
+table. Pick **Not from a repository** to see what no file owns.
+
+<Screenshot id="versions-sources" alt="The Sources tab: two contributing repositories in precedence order, and each class and path with its source and origin" />
+
 ## Dependencies
 
 The **Dependencies** tab lists what the project depends on and what depends on it — consumers,
@@ -155,6 +179,8 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
+  The **Sources** tab reads `GET /v1/tenants/{tenant}/projects/{project}/repository-sources?version=…`
+  — see [Project repository sources](../reference/rest/project-repository-sources.md).
 
 ### Fork a version into another project from the CLI
 

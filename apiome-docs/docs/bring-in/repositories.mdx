@@ -84,6 +84,40 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 
 <Screenshot id="repository-batch-import" alt="Import 2 selected files: each file's kind, resolution and target project" />
 
+### Merge several repositories into one project
+
+A large platform often splits one API across many repositories, one per service. To see it as one
+Apiome project, import each service's file into the **same project**:
+
+1. Import the first service's file with **Map & import** and **Create a new project**.
+2. For each other service, open its repository's **Files** tab, choose its file and **click
+   “Import selected”**. Pick **Existing project**, choose the same project and a new version.
+3. Each import creates a version that holds **every** contributing file: the classes and paths of
+   the file you just imported, plus those of the other files, carried forward unchanged.
+
+Rules of the merge:
+
+- **Each class and path comes from one file.** If the file you import defines a class name or a
+  pathname that another contributing file already defines, the import fails and nothing is written.
+  The error names the class or path and both files, for example: *class "User" is defined by
+  acme/users (main:openapi.yaml) and acme/billing (main:openapi.yaml)*. Rename or remove the
+  duplicate in one of the files, then import again. **Dry run** reports the same conflict.
+- **Re-importing a file replaces its own content.** A class or path the file no longer defines is
+  removed from the new version; the other files' content stays.
+- **Precedence** is the order the files first contributed (1 is the first). It orders the
+  contributing files, and the project keeps the first file's project information (its description,
+  contact and licence); a later file only fills in what is missing. It never settles a conflict.
+- **Tags are shared.** Operation tags with the same name from different files are one tag in the
+  project.
+- Classes and paths that no repository defined, such as ones edited in Apiome, are carried forward
+  too. If the file you import defines the same name, the file's version replaces it, and the import
+  log says so.
+- A version imported from one repository before this feature counts as coming from that file, so its
+  content is kept when the second repository is imported.
+
+The project's **Sources** tab on [Versions](../build/versions.mdx#sources) lists the contributing
+files and shows the source of every class and path.
+
 ### Backstage files
 
 Each scan also reads any Backstage `catalog-info.yaml` (or `catalog-info.yml`) in the branch, at any
@@ -149,6 +183,9 @@ change it.
 - REST: `GET` / `POST /v1/tenants/{tenant}/repositories`, `GET …/repositories/{repo}/files`,
   `POST …/repositories/{repo}/refresh`, `GET …/repository-quota-telemetry`,
   `GET …/repository-webhook-ip-allowlist` — see the [API reference](../reference/api-reference.md).
+  A project's contributing repositories and the source of each class and path:
+  `GET /v1/tenants/{tenant}/projects/{project}/repository-sources` — see
+  [Project repository sources](../reference/rest/project-repository-sources.md).
   The repository audit export (`GET …/repository-audit-export`) also lists connector changes and
   runs (`repository.connector.*`).
 
