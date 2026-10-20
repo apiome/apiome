@@ -66,6 +66,7 @@ from .models import (
     lint_axis_fields_from_evaluation,
     lint_evidence_response_from_rows,
     lint_finding_decision_out_from_row,
+    security_headline_fields,
 )
 from .permissions import Action, Resource, enforce_permission
 from .policy_evaluate import match_decision_for_fingerprint
@@ -103,6 +104,10 @@ async def list_lint_rules(
     rationale, and a docs anchor into the rule reference page. Sorted by rule id, so the
     payload is deterministic. The catalog is the same for every tenant — style guides
     (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.
+
+    Every rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)
+    and, for ``security``-category rules, the ``weight`` the security score applies to its
+    severity penalty (ASP-1.3, #5921) — the weights are public, not a server secret.
     """
     descriptors = builtin_rule_descriptors()
     rules = []
@@ -121,6 +126,8 @@ async def list_lint_rules(
                 false_positive_guidance=payload.get("false_positive_guidance"),
                 fixture_id=payload.get("fixture_id"),
                 scan_modes=payload.get("scan_modes"),
+                weight=payload.get("weight"),
+                owasp=payload.get("owasp"),
             )
         )
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)
@@ -501,6 +508,7 @@ def lint_report_response_from_persisted_dict(
             getattr(guide, "source", None) if guide is not None else report.get("guide_source")
         ),
         **lint_axis_fields_from_evaluation(axis_eval),
+        **security_headline_fields(axis_eval),
     )
 
 
@@ -769,6 +777,7 @@ async def build_lint_report(
         axis_report["base_revision_id"] = resolved_base_id
     if compatibility_overall:
         axis_report["compatibility_overall"] = compatibility_overall
+    axis_eval = catalog_axis_evaluation(axis_report).as_dict()
 
     return LintReportResponse(
         project_id=project_id,
@@ -793,7 +802,8 @@ async def build_lint_report(
         guide_name=guide.name,
         guide_source=guide.source,
         guide_revision_id=guide_revision_id,
-        **lint_axis_fields_from_evaluation(catalog_axis_evaluation(axis_report).as_dict()),
+        **lint_axis_fields_from_evaluation(axis_eval),
+        **security_headline_fields(axis_eval),
     )
 
 

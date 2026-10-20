@@ -10,6 +10,8 @@ Covers the three acceptance criteria:
 
 from pathlib import Path
 
+import pytest
+
 from app.lint_engine import (
     available_lint_formats,
     available_lint_paradigms,
@@ -178,3 +180,55 @@ def test_canonical_lint_findings_all_carry_registered_rule_ids():
     registered = set(builtin_rule_ids())
     for finding in result.findings:
         assert finding.rule in registered
+
+
+# ---------------------------------------------------------------------------
+# Security score fields (ASP-1.3, #5921): owasp ids and published weights
+# ---------------------------------------------------------------------------
+
+
+def test_descriptors_publish_validated_owasp_ids_and_security_weights():
+    from app.owasp_api import RISK_IDS
+    from app.security_score import security_rule_weight
+
+    for d in builtin_rule_descriptors():
+        assert isinstance(d.owasp_ids, tuple)
+        assert set(d.owasp_ids) <= set(RISK_IDS)
+        payload = d.as_dict()
+        assert payload["owasp"] == (list(d.owasp_ids) if d.owasp_ids else None)
+        if d.category == "security":
+            assert d.weight == payload["weight"] == security_rule_weight(d.rule_id)
+        else:
+            assert d.weight is None and payload["weight"] is None
+
+
+def test_pack_rules_carry_their_owasp_ids_into_the_registry():
+    """A pack rule's ``owasp_ids`` reach the descriptor in catalog order, validated."""
+    from app.lint_engine import LintRule
+    from app.lint_rule_registry import _pack_descriptor
+    from app.owasp_api import UnknownRiskError
+
+    rule = LintRule(
+        rule_id="security.example",
+        category="security",
+        severity="warning",
+        description="Example.",
+        check=lambda api: (),
+        owasp_ids=("API8", "API2"),
+    )
+    d = _pack_descriptor(rule, "security")
+    assert d.owasp_ids == ("API2", "API8")
+    assert d.pack == "security" and d.weight == 1.0
+
+    with pytest.raises(UnknownRiskError):
+        _pack_descriptor(
+            LintRule(
+                rule_id="security.bad",
+                category="security",
+                severity="warning",
+                description="Bad.",
+                check=lambda api: (),
+                owasp_ids=("MCP01",),
+            ),
+            "security",
+        )

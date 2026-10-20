@@ -3440,6 +3440,24 @@ class VersionSchema(BaseModel):
         serialization_alias="qualityGrade",
         description="Stored A-F grade matching qualityScore; null when unscored.",
     )
+    # Stored security headline (ASP-1.3, #5921): the `security` axis of the newest clx-axis-v1
+    # evaluation persisted for this revision — read with the row, never recomputed on list.
+    security_score: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices("securityScore", "security_score"),
+        serialization_alias="securityScore",
+        description=(
+            "Stored 0-100 security score for this revision (ASP-1.3), read from the newest "
+            "persisted clx-axis-v1 evaluation; null when the security axis is not assessed "
+            "(no security rule pack evaluated the revision, or its style guide disables the pack)."
+        ),
+    )
+    security_grade: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("securityGrade", "security_grade"),
+        serialization_alias="securityGrade",
+        description="Stored A-F grade matching securityScore; null when securityScore is null.",
+    )
     # Unpublish audit (#3213): the most recent unpublish, kept when the revision is re-published.
     unpublish_reason: Optional[str] = Field(
         default=None,
@@ -6042,6 +6060,21 @@ class LintReportResponse(BaseModel):
         serialization_alias="requiredCoverageMet",
         description="True when required axes (v1: quality) are assessed.",
     )
+    security_score: Optional[int] = Field(
+        default=None,
+        serialization_alias="securityScore",
+        description=(
+            "0-100 security score of this revision (ASP-1.3): the `security` axis of the "
+            "clx-axis-v1 evaluation, scored from the report's security findings under the "
+            "published per-rule weights. Null when the axis is not assessed — no security rule "
+            "pack evaluated the revision, or its style guide disables the pack."
+        ),
+    )
+    security_grade: Optional[str] = Field(
+        default=None,
+        serialization_alias="securityGrade",
+        description="A-F grade of securityScore; null when securityScore is null.",
+    )
 
 
 class LintRuleOut(BaseModel):
@@ -6096,6 +6129,21 @@ class LintRuleOut(BaseModel):
         default=None,
         serialization_alias="scanModes",
         description="Scan modes / evidence requirements (blocking rules, CLX-4.3).",
+    )
+    weight: Optional[float] = Field(
+        default=None,
+        description=(
+            "Published security-score weight (ASP-1.3): the multiplier applied to this rule's "
+            "severity penalty before the per-rule cap when the security axis is scored. Set for "
+            "`security`-category rules only (default 1.0); null for every other rule."
+        ),
+    )
+    owasp: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "OWASP API Security Top 10 (2023) category ids this rule cites (API1 … API10), in "
+            "catalog order; null when the rule cites none."
+        ),
     )
 
 
@@ -6412,6 +6460,35 @@ class LintEvidenceResponse(BaseModel):
     count: int = Field(description="Number of evidence runs (== len(runs)).")
 
 
+class LintAxisOwaspOut(BaseModel):
+    """The security axis seen through one OWASP API Security Top 10 category (ASP-1.3, #5921).
+
+    ``coverage="none"`` means no registered rule citing the category evaluated for the
+    revision (every one was skipped for its format, or none exists yet); its ``score`` is then
+    null and the category renders *not assessed* — never 100.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    risk_id: str = Field(
+        serialization_alias="riskId",
+        description="OWASP API Security Top 10 (2023) category id (API1 … API10).",
+    )
+    title: str = Field(description="The category's published short title.")
+    score: Optional[int] = Field(
+        default=None,
+        description="0-100 over the findings whose rule cites the category; null when coverage is none.",
+    )
+    finding_count: int = Field(
+        default=0,
+        serialization_alias="findingCount",
+        description="Security findings whose rule cites this category.",
+    )
+    coverage: str = Field(
+        description="full when at least one rule citing the category evaluated; none otherwise."
+    )
+
+
 class LintAxisOut(BaseModel):
     """One scoring axis with coverage and not-assessed semantics (CLX-1.2, #4849).
 
@@ -6444,6 +6521,28 @@ class LintAxisOut(BaseModel):
         default=None,
         serialization_alias="notAssessedReason",
         description="Why the axis was not assessed; required when assessed is false.",
+    )
+    ruleset: Optional[str] = Field(
+        default=None,
+        description=(
+            "Stable id of the rule pack that assessed the axis, when one did: `data-contract` "
+            "on supportability (FMT-5.5), `security` on an API revision's security axis (ASP-1.3)."
+        ),
+    )
+    owasp: Optional[List[LintAxisOwaspOut]] = Field(
+        default=None,
+        description=(
+            "Security axis of an API revision only (ASP-1.3): one sub-score per OWASP API "
+            "Security Top 10 category, API1 through API10. Null on every other axis."
+        ),
+    )
+    skipped_rules: Optional[List[str]] = Field(
+        default=None,
+        serialization_alias="skippedRules",
+        description=(
+            "Security axis of an API revision only (ASP-1.3): registered security rules the "
+            "newest run could not evaluate for the artifact's format (coverage is then partial)."
+        ),
     )
 
 
@@ -7938,6 +8037,15 @@ class LintWorkspaceAxisSummaryOut(BaseModel):
     severity_counts: Dict[str, int] = Field(
         default_factory=dict, serialization_alias="severityCounts"
     )
+    by_subject_type: Dict[str, Dict[str, int]] = Field(
+        default_factory=dict,
+        serialization_alias="bySubjectType",
+        description=(
+            "assessedCount / notAssessedCount of this axis split by subject type "
+            "(catalog_revision, mcp_endpoint_version) — ASP-1.3: how many catalog subjects "
+            "carry an assessed security axis."
+        ),
+    )
 
 
 class LintWorkspaceCoverageSubjectOut(BaseModel):
@@ -8356,6 +8464,27 @@ def lint_axis_out_from_dict(axis: Mapping[str, Any]) -> LintAxisOut:
         },
         coverage=coverage,
         not_assessed_reason=axis.get("not_assessed_reason"),
+        ruleset=axis.get("ruleset"),
+        owasp=(
+            [
+                LintAxisOwaspOut(
+                    risk_id=str(sub.get("risk_id") or ""),
+                    title=str(sub.get("title") or ""),
+                    score=sub.get("score"),
+                    finding_count=int(sub.get("finding_count") or 0),
+                    coverage=str(sub.get("coverage") or "none"),
+                )
+                for sub in axis["owasp"]
+                if isinstance(sub, Mapping)
+            ]
+            if isinstance(axis.get("owasp"), list)
+            else None
+        ),
+        skipped_rules=(
+            [str(r) for r in axis["skipped_rules"]]
+            if isinstance(axis.get("skipped_rules"), list)
+            else None
+        ),
     )
 
 
@@ -8405,6 +8534,19 @@ def lint_axis_fields_from_evaluation(
         "composite_grade": evaluation.get("composite_grade"),
         "required_coverage_met": evaluation.get("required_coverage_met"),
     }
+
+
+def security_headline_fields(evaluation: Mapping[str, Any]) -> Dict[str, Any]:
+    """Keyword args carrying a catalog revision's ``securityScore`` / ``securityGrade`` (ASP-1.3).
+
+    Read from the evaluation's security axis — the same evaluation the response already
+    carries in ``axes`` — so the headline and the axis can never disagree. Both are ``None``
+    when the axis is not assessed.
+    """
+    from .axis_score import security_headline
+
+    score, grade = security_headline(evaluation.get("axes") or [])
+    return {"security_score": score, "security_grade": grade}
 
 
 def lint_evidence_run_out_from_row(row: Mapping[str, Any]) -> LintEvidenceRunOut:

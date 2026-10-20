@@ -126,6 +126,11 @@ class LintRule:
         severity: ``"error"`` | ``"warning"`` | ``"info"``; drives the score penalty.
         description: One-line human description of what the rule checks (for docs / catalogs).
         check: Pure generator yielding ``(path, message)`` for each defect found.
+        owasp_ids: OWASP API Security Top 10 category ids (``API1`` … ``API10``,
+            :mod:`app.owasp_api`) the rule speaks to (ASP-1.3, #5921). Declared by the
+            ``security`` pack's rules so the security axis can publish one sub-score per
+            category and ``GET /v1/lint/rules`` can publish ``owasp`` per rule; validated
+            against the catalog when the rule registry is built. Empty for every other rule.
     """
 
     rule_id: str
@@ -133,6 +138,7 @@ class LintRule:
     severity: Severity
     description: str
     check: RuleCheck
+    owasp_ids: Tuple[str, ...] = ()
 
     def run(self, api: CanonicalApi) -> List[LintFinding]:
         """Run this rule over ``api`` and return its findings in the check's yield order.

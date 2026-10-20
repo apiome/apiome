@@ -7,6 +7,10 @@ Writes:
   - apiome-docs/docs/govern/mcp-surface-lint-rules.md
   - apiome-docs/docs/govern/mcp-conformance-rules.md
   - apiome-docs/docs/govern/mcp-trust-posture-rules.md
+  - the generated security-score block of apiome-docs/docs/build/axis-score.md (between the
+    ``security-score:begin`` / ``security-score:end`` markers): the formula constants, every
+    published per-rule weight and the OWASP API Top 10 categories — ASP-1.3 (#5921) requires
+    the weights to be documented from code, never typed by hand.
 
 Each page is a docs-site page (DOCS-1.2, #5619), so it opens with Docusaurus front matter.
 
@@ -24,8 +28,17 @@ src = project_root / "src"
 if str(src) not in sys.path:
     sys.path.insert(0, str(src))
 
+from app.axis_score import ALGORITHM_DOCS_PAGE  # noqa: E402
 from app.docs_site import render_front_matter  # noqa: E402
 from app.lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors  # noqa: E402
+from app.owasp_api import CATALOG_REFERENCE, CATALOG_REVISION, RISK_IDS, RISKS  # noqa: E402
+from app.schema_lint import GRADE_THRESHOLDS, PER_RULE_PENALTY_CAP, SEVERITY_PENALTY  # noqa: E402
+from app.security_score import (  # noqa: E402
+    DEFAULT_SECURITY_RULE_WEIGHT,
+    published_weights,
+    rule_owasp_ids,
+    rules_by_owasp_risk,
+)
 from app.mcp_conformance import RULE_REGISTRY as CONFORMANCE_RULES  # noqa: E402
 from app.mcp_lint import RULE_CATALOGUE  # noqa: E402
 import app.mcp_probe  # noqa: E402,F401  — registers proven posture bridge rules
@@ -38,6 +51,10 @@ from app.scanner_rule_transparency import (  # noqa: E402
 )
 
 MONOREPO = project_root.parent
+
+#: Markers delimiting the generated block inside the hand-written axis-score page.
+SECURITY_BLOCK_BEGIN = "<!-- security-score:begin -->"
+SECURITY_BLOCK_END = "<!-- security-score:end -->"
 
 
 HEADER_SCHEMA = render_front_matter(
@@ -110,11 +127,89 @@ def render_schema(descriptors) -> str:
             lines.append(f"- **Category:** {d.category}")
             lines.append(f"- **Default severity:** {d.default_severity}")
             lines.append(f"- **Rationale:** {d.rationale}")
+            if d.owasp_ids:
+                lines.append(f"- **OWASP API:** {', '.join(d.owasp_ids)}")
+            if d.weight is not None:
+                lines.append(f"- **Security weight:** {d.weight:.1f}")
             section = _transparency_section(d)
             lines.extend(section)
             if not section:
                 lines.append("")
     return "\n".join(lines)
+
+
+def render_security_score_block() -> str:
+    """Render the generated security-score block for the axis-score page (ASP-1.3, #5921).
+
+    Everything in it is read from code: the severity penalties, the per-rule cap and the
+    grade bands (:mod:`app.schema_lint`), the published per-rule weights
+    (:func:`app.security_score.published_weights`) and the OWASP API Security Top 10
+    categories with how many catalogued rules cite each (:mod:`app.owasp_api`).
+    """
+    lines = [
+        SECURITY_BLOCK_BEGIN,
+        "<!-- GENERATED BLOCK — do not edit by hand.",
+        "     Regenerate with: cd apiome-rest && uv run python scripts/generate_lint_rule_docs.py -->",
+        "",
+        "#### Constants",
+        "",
+        "| Constant | Value |",
+        "|---|---|",
+    ]
+    for severity in ("error", "warning", "info"):
+        lines.append(f"| `{severity}` penalty | {SEVERITY_PENALTY[severity]:g} |")
+    lines.append(f"| Per-rule penalty cap | {PER_RULE_PENALTY_CAP:g} |")
+    lines.append(f"| Default rule weight | {DEFAULT_SECURITY_RULE_WEIGHT:.1f} |")
+    bands = ", ".join(
+        f"{grade} ≥ {threshold}" for threshold, grade in GRADE_THRESHOLDS if grade != "F"
+    )
+    lines.append(f"| Grade bands | {bands}, else F |")
+    lines += [
+        "",
+        "#### Published rule weights",
+        "",
+        "| Rule | Weight | OWASP API | In the catalog |",
+        "|---|---|---|---|",
+    ]
+    for row in published_weights():
+        owasp = ", ".join(row["owasp"]) if row["owasp"] else "—"
+        status = "yes" if row["registered"] else "reserved — the rule has not shipped yet"
+        lines.append(f"| `{row['rule_id']}` | {row['weight']:.1f} | {owasp} | {status} |")
+    lines += [
+        "",
+        f"Every other `security` rule weighs {DEFAULT_SECURITY_RULE_WEIGHT:.1f}.",
+        "",
+        f"#### OWASP API Security Top 10 ({CATALOG_REVISION}) categories",
+        "",
+        f"Reference: {CATALOG_REFERENCE}",
+        "",
+        "| Id | Category | Rules in the catalog |",
+        "|---|---|---|",
+    ]
+    by_risk = rules_by_owasp_risk(rule_owasp_ids())
+    for risk_id in RISK_IDS:
+        risk = RISKS[risk_id]
+        lines.append(f"| {risk_id} | [{risk.title}]({risk.reference}) | {len(by_risk[risk_id])} |")
+    lines += ["", SECURITY_BLOCK_END]
+    return "\n".join(lines)
+
+
+def splice_security_score_block(page: Path) -> None:
+    """Replace the marked block of ``page`` with :func:`render_security_score_block`.
+
+    The axis-score page is hand-written around the block, so only the text between the
+    markers is regenerated.
+
+    Raises:
+        ValueError: when the page carries no marker pair to splice into.
+    """
+    text = page.read_text(encoding="utf-8")
+    begin = text.find(SECURITY_BLOCK_BEGIN)
+    end = text.find(SECURITY_BLOCK_END)
+    if begin < 0 or end < 0 or end < begin:
+        raise ValueError(f"{page} has no {SECURITY_BLOCK_BEGIN} … {SECURITY_BLOCK_END} block")
+    end += len(SECURITY_BLOCK_END)
+    page.write_text(text[:begin] + render_security_score_block() + text[end:], encoding="utf-8")
 
 
 def _mcp_header(title: str, description: str, position: int, body: str) -> str:
@@ -219,6 +314,10 @@ def main() -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(body, encoding="utf-8")
         print(f"Wrote {path}")
+
+    axis_page = MONOREPO / ALGORITHM_DOCS_PAGE
+    splice_security_score_block(axis_page)
+    print(f"Updated security-score block in {axis_page}")
 
 
 if __name__ == "__main__":

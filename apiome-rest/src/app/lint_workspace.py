@@ -721,6 +721,12 @@ def build_summary(
             "score_sum": 0,
             "grade_distribution": {g: 0 for g in GRADES},
             "severity_counts": {"error": 0, "warning": 0, "info": 0},
+            # ASP-1.3 (#5921): the same assessed / not-assessed split per subject type, so a
+            # caller can read how many *catalog* subjects carry an assessed security axis.
+            "by_subject_type": {
+                subject_type: {"assessed_count": 0, "not_assessed_count": 0}
+                for subject_type in (SUBJECT_CATALOG_REVISION, SUBJECT_MCP_ENDPOINT_VERSION)
+            },
         }
         for key in AXIS_KEYS
     }
@@ -735,13 +741,17 @@ def build_summary(
             grade_distribution[str(grade)] += 1
         else:
             grade_distribution["ungraded"] += 1
+        subject_type = str(subject.get("subject_type") or "")
         for axis in subject.get("axes") or []:
             key = str(axis.get("key") or "")
             rollup = axis_rollup.get(key)
             if not rollup:
                 continue
+            per_type = rollup["by_subject_type"].get(subject_type)
             if axis.get("assessed") is True:
                 rollup["assessed_count"] += 1
+                if per_type is not None:
+                    per_type["assessed_count"] += 1
                 if axis.get("score") is not None:
                     rollup["score_sum"] += int(axis["score"])
                 axis_grade = axis.get("grade")
@@ -753,6 +763,8 @@ def build_summary(
                         rollup["severity_counts"][sev] += int(counts.get(sev) or 0)
             else:
                 rollup["not_assessed_count"] += 1
+                if per_type is not None:
+                    per_type["not_assessed_count"] += 1
         missing = subject.get("missing_axes") or []
         if missing:
             coverage_subjects.append(
@@ -780,6 +792,7 @@ def build_summary(
                 ),
                 "grade_distribution": rollup["grade_distribution"],
                 "severity_counts": rollup["severity_counts"],
+                "by_subject_type": rollup["by_subject_type"],
             }
         )
 

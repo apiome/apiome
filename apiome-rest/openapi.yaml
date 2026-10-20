@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.258.0
+  version: 1.259.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23007,7 +23007,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-20T01:33:34Z'
+                        example: '2026-10-20T02:04:56Z'
                       method:
                         type: string
                         example: GET
@@ -27731,7 +27731,16 @@ paths:
         guides
 
         (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on
-        top of it.'
+        top of it.
+
+
+        Every rule also publishes the OWASP API Security Top 10 categories it cites
+        (``owasp``)
+
+        and, for ``security``-category rules, the ``weight`` the security score applies
+        to its
+
+        severity penalty (ASP-1.3, #5921) — the weights are public, not a server secret.'
       operationId: list_lint_rules_v1_lint_rules_get
       parameters:
       - name: authorization
@@ -82476,7 +82485,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         completed_at:
           anyOf:
           - type: string
@@ -83963,7 +83972,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -84136,7 +84145,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -84741,13 +84750,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -87264,7 +87273,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 6c5cc46d-fdd8-4870-ab34-bf6f7ac19eac
+          example: 8c7bada0-e88a-40d8-a4f3-fc2b5fa57921
         method:
           type: string
           title: Method
@@ -89407,7 +89416,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         envelope:
           additionalProperties: true
           type: object
@@ -90898,7 +90907,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         browse_url:
           anyOf:
           - type: string
@@ -101102,6 +101111,40 @@ components:
             description: Response payload for lint axis.
           title: Notassessedreason
           description: Why the axis was not assessed; required when assessed is false.
+        ruleset:
+          anyOf:
+          - type: string
+            description: Response payload for lint axis.
+          - type: 'null'
+            description: Response payload for lint axis.
+          title: Ruleset
+          description: 'Stable id of the rule pack that assessed the axis, when one
+            did: `data-contract` on supportability (FMT-5.5), `security` on an API
+            revision''s security axis (ASP-1.3).'
+        owasp:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LintAxisOwaspOut'
+            type: array
+            description: Response payload for lint axis.
+          - type: 'null'
+            description: Response payload for lint axis.
+          title: Owasp
+          description: 'Security axis of an API revision only (ASP-1.3): one sub-score
+            per OWASP API Security Top 10 category, API1 through API10. Null on every
+            other axis.'
+        skippedRules:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for lint axis.
+          - type: 'null'
+            description: Response payload for lint axis.
+          title: Skippedrules
+          description: 'Security axis of an API revision only (ASP-1.3): registered
+            security rules the newest run could not evaluate for the artifact''s format
+            (coverage is then partial).'
       type: object
       required:
       - key
@@ -101118,6 +101161,56 @@ components:
 
         score of 100 / zero findings. When assessed, empty findings legitimately score
         100.'
+    LintAxisOwaspOut:
+      properties:
+        riskId:
+          type: string
+          title: Riskid
+          description: OWASP API Security Top 10 (2023) category id (API1 … API10).
+          example: example
+        title:
+          type: string
+          title: Title
+          description: The category's published short title.
+          example: example
+        score:
+          anyOf:
+          - type: integer
+            description: Response payload for lint axis owasp.
+          - type: 'null'
+            description: Response payload for lint axis owasp.
+          title: Score
+          description: 0-100 over the findings whose rule cites the category; null
+            when coverage is none.
+        findingCount:
+          type: integer
+          title: Findingcount
+          description: Security findings whose rule cites this category.
+          default: 0
+          example: 1
+        coverage:
+          type: string
+          title: Coverage
+          description: full when at least one rule citing the category evaluated;
+            none otherwise.
+          example: example
+      type: object
+      required:
+      - riskId
+      - title
+      - coverage
+      title: LintAxisOwaspOut
+      description: 'The security axis seen through one OWASP API Security Top 10 category
+        (ASP-1.3, #5921).
+
+
+        ``coverage="none"`` means no registered rule citing the category evaluated
+        for the
+
+        revision (every one was skipped for its format, or none exists yet); its ``score``
+        is then
+
+        null and the category renders *not assessed* — never 100.'
     LintCategoryScoreOut:
       properties:
         name:
@@ -102147,6 +102240,26 @@ components:
             description: Response payload for lint report.
           title: Requiredcoveragemet
           description: 'True when required axes (v1: quality) are assessed.'
+        securityScore:
+          anyOf:
+          - type: integer
+            description: Response payload for lint report.
+          - type: 'null'
+            description: Response payload for lint report.
+          title: Securityscore
+          description: '0-100 security score of this revision (ASP-1.3): the `security`
+            axis of the clx-axis-v1 evaluation, scored from the report''s security
+            findings under the published per-rule weights. Null when the axis is not
+            assessed — no security rule pack evaluated the revision, or its style
+            guide disables the pack.'
+        securityGrade:
+          anyOf:
+          - type: string
+            description: Response payload for lint report.
+          - type: 'null'
+            description: Response payload for lint report.
+          title: Securitygrade
+          description: A-F grade of securityScore; null when securityScore is null.
       type: object
       required:
       - projectId
@@ -102264,6 +102377,28 @@ components:
             description: Response payload for lint rule.
           title: Scanmodes
           description: Scan modes / evidence requirements (blocking rules, CLX-4.3).
+        weight:
+          anyOf:
+          - type: number
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Weight
+          description: 'Published security-score weight (ASP-1.3): the multiplier
+            applied to this rule''s severity penalty before the per-rule cap when
+            the security axis is scored. Set for `security`-category rules only (default
+            1.0); null for every other rule.'
+        owasp:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Owasp
+          description: OWASP API Security Top 10 (2023) category ids this rule cites
+            (API1 … API10), in catalog order; null when the rule cites none.
       type: object
       required:
       - ruleId
@@ -102358,6 +102493,16 @@ components:
           type: object
           title: Severitycounts
           description: Severity Counts.
+        bySubjectType:
+          additionalProperties:
+            additionalProperties:
+              type: integer
+            type: object
+          type: object
+          title: Bysubjecttype
+          description: 'assessedCount / notAssessedCount of this axis split by subject
+            type (catalog_revision, mcp_endpoint_version) — ASP-1.3: how many catalog
+            subjects carry an assessed security axis.'
       type: object
       required:
       - key
@@ -125239,7 +125384,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
       additionalProperties: false
       type: object
       required:
@@ -134112,12 +134257,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
       additionalProperties: false
       type: object
       required:
@@ -135246,7 +135391,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         detected_by:
           anyOf:
           - type: string
@@ -141544,13 +141689,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T01:33:34Z'
+          example: '2026-10-20T02:04:56Z'
         outcome:
           anyOf:
           - type: string
@@ -145195,6 +145340,26 @@ components:
             description: Version schema.
           title: Qualitygrade
           description: Stored A-F grade matching qualityScore; null when unscored.
+        securityScore:
+          anyOf:
+          - type: integer
+            description: Version schema.
+          - type: 'null'
+            description: Version schema.
+          title: Securityscore
+          description: Stored 0-100 security score for this revision (ASP-1.3), read
+            from the newest persisted clx-axis-v1 evaluation; null when the security
+            axis is not assessed (no security rule pack evaluated the revision, or
+            its style guide disables the pack).
+        securityGrade:
+          anyOf:
+          - type: string
+            description: Version schema.
+          - type: 'null'
+            description: Version schema.
+          title: Securitygrade
+          description: Stored A-F grade matching securityScore; null when securityScore
+            is null.
         unpublishReason:
           anyOf:
           - type: string
@@ -145830,6 +145995,26 @@ components:
             description: Response payload for version unpublish.
           title: Qualitygrade
           description: Stored A-F grade matching qualityScore; null when unscored.
+        securityScore:
+          anyOf:
+          - type: integer
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Securityscore
+          description: Stored 0-100 security score for this revision (ASP-1.3), read
+            from the newest persisted clx-axis-v1 evaluation; null when the security
+            axis is not assessed (no security rule pack evaluated the revision, or
+            its style guide disables the pack).
+        securityGrade:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Securitygrade
+          description: Stored A-F grade matching securityScore; null when securityScore
+            is null.
         unpublishReason:
           anyOf:
           - type: string

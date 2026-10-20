@@ -200,6 +200,8 @@ def _list_row(**overrides: Any) -> Dict[str, Any]:
         "source_committed_at": None,
         "quality_score": 82,
         "quality_grade": "B",
+        "security_score": None,
+        "security_grade": None,
         "fork_source_version_string": None,
         "fork_source_project_name": None,
         "upstream_project_name": None,
@@ -234,8 +236,19 @@ def test_list_versions_carries_stored_quality_without_linting(client: TestClient
     m_recon.assert_not_called()
 
 
+def _security_headline_join_is_stored_first(query: str) -> None:
+    """The security headline (ASP-1.3) comes from the newest stored clx-axis-v1 evaluation."""
+    assert "sec.security_score, sec.security_grade" in query
+    assert "FROM apiome.lint_axis_evaluations e WHERE e.version_record_id = v.id" in query
+    assert "AND e.algorithm_id = 'clx-axis-v1' ORDER BY e.evaluated_at DESC, e.id DESC LIMIT 1" in query
+    assert "sa.axis->>'key' = 'security' AND (sa.axis->>'assessed')::boolean" in query
+    # Never the heavy stored report, never the lint engine: a list read is a row read.
+    assert "quality_report" not in query
+    assert "lint_openapi" not in query and "lint_canonical" not in query
+
+
 def test_get_versions_for_project_selects_stored_quality_columns():
-    """The list query reads the stored headline from ``apiome.versions`` (no lint join)."""
+    """The list query reads the stored headlines from the record (no re-lint, no report JSON)."""
     from app.database import Database
 
     inst = Database.__new__(Database)
@@ -248,12 +261,80 @@ def test_get_versions_for_project_selects_stored_quality_columns():
     inst.execute_query = fake_execute_query  # type: ignore[method-assign]
     inst.get_versions_for_project(PID, "t1")
     assert "v.quality_score, v.quality_grade" in seen["query"]
-    assert "lint" not in seen["query"].lower()
+    _security_headline_join_is_stored_first(seen["query"])
 
     seen.clear()
     # ``get_version_by_id`` guards on an RFC-4122 id before querying.
     inst.get_version_by_id("11111111-1111-4111-8111-111111111111", "t1")
     assert "v.quality_score, v.quality_grade" in seen["query"]
+    _security_headline_join_is_stored_first(seen["query"])
+
+
+def test_list_versions_carries_the_stored_security_headline_for_fifty_revisions(client: TestClient):
+    """ASP-1.3 acceptance: 50 revisions render securityScore/securityGrade with zero lint requests."""
+    rows = [
+        _list_row(
+            id=f"00000000-0000-0000-0000-0000000001{i:02d}",
+            version_id=f"1.0.{i}",
+            security_score=80 if i % 2 == 0 else None,
+            security_grade="B" if i % 2 == 0 else None,
+        )
+        for i in range(50)
+    ]
+    with patch("app.versions_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.versions_routes.db.get_versions_for_project", return_value=rows
+    ) as m_list, patch("app.lint_routes.guided_lint_openapi_spec") as m_lint, patch(
+        "app.lint_routes.openapi_for_revision"
+    ) as m_recon, patch("app.lint_routes.db.get_latest_axis_evaluation_for_version") as m_axis:
+        r = client.get(f"/v1/versions/acme/{PID}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert len(body) == 50
+    assert body[0]["securityScore"] == 80 and body[0]["securityGrade"] == "B"
+    # A revision whose security axis is not assessed reads as null, never 0 / F.
+    assert body[1]["securityScore"] is None and body[1]["securityGrade"] is None
+    assert body[1]["qualityScore"] == 82  # the quality headline is untouched
+    m_list.assert_called_once()
+    m_lint.assert_not_called()
+    m_recon.assert_not_called()
+    m_axis.assert_not_called()
+
+
+def test_record_axis_evaluation_dedupes_per_algorithm_revision():
+    """An unchanged report re-evaluated under a newer algorithm revision records a new row."""
+    from app.database import Database
+
+    inst = Database.__new__(Database)
+    seen: Dict[str, Any] = {}
+
+    def fake_execute_query(query, params=None):
+        seen["query"] = " ".join(query.split())
+        seen["params"] = params
+        return [{"id": "ev-1"}]
+
+    inst.execute_query = fake_execute_query  # type: ignore[method-assign]
+    assert (
+        inst.record_axis_evaluation(
+            {
+                "subject_type": "catalog_revision",
+                "version_record_id": VID,
+                "algorithm_id": "clx-axis-v1",
+                "algorithm_version": "3",
+                "axes": [],
+                "composite_score": None,
+                "composite_grade": None,
+                "required_coverage_met": False,
+                "source_report_fingerprint": "fp-stored",
+            }
+        )
+        == "ev-1"
+    )
+    assert (
+        "WHERE e.algorithm_id = %s AND e.algorithm_version = %s AND e.source_report_fingerprint = %s"
+        in seen["query"]
+    )
+    # Placeholder order follows the SQL text: the NOT EXISTS key is (id, version, fingerprint).
+    assert seen["params"][10:13] == ("clx-axis-v1", "3", "fp-stored")
 
 
 # ---------------------------------------------------------------------------
@@ -314,6 +395,46 @@ def test_lint_serves_current_stored_report_without_relinting(client: TestClient)
     assert body["scoreIsStale"] is False
     # Guide context stored with the report is echoed back (parity with the live report).
     assert (body["guideId"], body["guideName"], body["guideSource"]) == ("g1", "House", "custom")
+    # No security pack evaluated this stored report: the headline is null, not 0 / F (ASP-1.3).
+    assert body["securityScore"] is None and body["securityGrade"] is None
+    security = next(a for a in body["axes"] if a["key"] == "security")
+    assert security["assessed"] is False and security["owasp"] is None
+
+
+def test_lint_serves_the_security_headline_beside_the_grade(client: TestClient):
+    """ASP-1.3: a stored report with the security pack's bar carries securityScore / securityGrade."""
+    stored = _stored_report(
+        HEAD_SPEC,
+        findings=[
+            {
+                "id": "lint-sec",
+                "path": "paths./payments.post",
+                "category": "security",
+                "rule": "security.write-operation-missing-auth",
+                "severity": "error",
+                "message": "Write operation declares no authentication requirement.",
+            }
+        ],
+        categories=[{"name": "documentation", "score": 100}, {"name": "security", "score": 80}],
+    )
+    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", return_value=_version_row()
+    ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
+        "app.lint_routes.db.get_version_quality_score",
+        return_value=_captured(56, "C", "fp-stored", quality_report=stored),
+    ), patch("app.lint_routes.guided_lint_openapi_spec") as m_lint:
+        r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    m_lint.assert_not_called()
+    assert body["score"] == 56 and body["grade"] == "C"  # the quality headline is untouched
+    assert body["securityScore"] == 80 and body["securityGrade"] == "B"
+    security = next(a for a in body["axes"] if a["key"] == "security")
+    assert security["assessed"] is True and security["score"] == 80
+    assert security["ruleset"] == "security"
+    assert security["skippedRules"] == []
+    assert [sub["riskId"] for sub in security["owasp"]] == [f"API{n}" for n in range(1, 11)]
+    assert {"riskId", "title", "score", "findingCount", "coverage"} == set(security["owasp"][0])
 
 
 def test_lint_relints_and_repersists_when_content_changed(client: TestClient):

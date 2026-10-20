@@ -246,3 +246,70 @@ def test_not_assessed_never_serialized_as_zero_score():
             assert axis["grade"] is None
             assert axis["notAssessedReason"]
             assert axis["coverage"]["state"] == "none"
+
+
+def test_revision_axes_serializes_the_security_sub_scores():
+    """ASP-1.3: a stored API revision's security axis carries ruleset, OWASP sub-scores, skips."""
+    security_axis = {
+        "key": "security",
+        "label": "Security",
+        "weight": 1.0,
+        "assessed": True,
+        "score": 80,
+        "grade": "B",
+        "severity_counts": {"error": 1, "warning": 0, "info": 0},
+        "coverage": {"state": "partial"},
+        "not_assessed_reason": None,
+        "ruleset": "security",
+        "owasp": [
+            {
+                "risk_id": "API2",
+                "title": "Broken authentication",
+                "score": 80,
+                "finding_count": 1,
+                "coverage": "full",
+            },
+            {
+                "risk_id": "API9",
+                "title": "Improper inventory management",
+                "score": None,
+                "finding_count": 0,
+                "coverage": "none",
+            },
+        ],
+        "skipped_rules": ["security.deprecated-without-sunset"],
+    }
+    axes = [a if a["key"] != "security" else security_axis for a in _axes_payload()]
+    with patch("app.lint_routes.db") as mdb:
+        mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_version_by_id.return_value = {"id": _REV, "project_id": "proj-1", "version_id": "1.0.0"}
+        mdb.get_latest_axis_evaluation_for_version.return_value = _eval_row(
+            axes=axes, algorithm_version="3"
+        )
+        r = client.get(f"/v1/versions/acme/proj-1/{_REV}/lint/axes")
+    assert r.status_code == 200
+    ev = r.json()["evaluation"]
+    assert ev["algorithmVersion"] == "3"
+    security = next(a for a in ev["axes"] if a["key"] == "security")
+    assert security["ruleset"] == "security"
+    assert security["coverage"] == {"state": "partial"}
+    assert security["skippedRules"] == ["security.deprecated-without-sunset"]
+    assert security["owasp"] == [
+        {
+            "riskId": "API2",
+            "title": "Broken authentication",
+            "score": 80,
+            "findingCount": 1,
+            "coverage": "full",
+        },
+        {
+            "riskId": "API9",
+            "title": "Improper inventory management",
+            "score": None,
+            "findingCount": 0,
+            "coverage": "none",
+        },
+    ]
+    # Axes that no pack assessed carry none of the security-only fields.
+    quality = next(a for a in ev["axes"] if a["key"] == "quality")
+    assert quality["ruleset"] is None and quality["owasp"] is None and quality["skippedRules"] is None

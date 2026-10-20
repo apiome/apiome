@@ -9,7 +9,13 @@ a clean (zero-finding) score.
 Algorithm id ``clx-axis-v1``:
 
 * **quality** — backwards-compatible axis = the legacy ``score`` / ``grade`` when present.
-* **security** (MCP only) — scored from native findings whose ``category`` is ``security``.
+* **security** — scored from native findings whose ``category`` is ``security``. For an MCP
+  snapshot that is the surface lint's security rules under the plain house formula. For an
+  API-paradigm catalog revision (revision 3, ASP-1.3) it is the native ``security`` rule
+  pack's findings under the weighted formula of :mod:`app.security_score`, with one
+  sub-score per OWASP API Top 10 category; the axis is assessed only when the report carries
+  the pack's ``security`` category bar, so a revision no security pack evaluated — or whose
+  style guide disables the whole pack — reads *not assessed*, never 100.
 * **compatibility** (catalog only) — scored from findings whose ``category`` is
   ``compatibility`` when a base revision comparison produced them.
 * **supportability** — scored from a data-schema artifact's ``governance`` findings when
@@ -40,7 +46,12 @@ from .lint_evidence import (
     SUBJECT_CATALOG_REVISION,
     SUBJECT_MCP_ENDPOINT_VERSION,
 )
-from .schema_lint import GRADE_THRESHOLDS, PER_RULE_PENALTY_CAP, SEVERITY_PENALTY
+from .schema_lint import PER_RULE_PENALTY_CAP, SEVERITY_PENALTY
+from .security_score import (
+    SECURITY_RULESET_ID,
+    evaluate_security_findings,
+    grade_for_score,  # noqa: F401 - re-exported: the house A–F bands, shared with the axis model
+)
 
 # --- Algorithm identity ---------------------------------------------------------------------
 
@@ -56,7 +67,16 @@ ALGORITHM_ID = "clx-axis-v1"
 #: instead of quality, so an evaluation stored before this revision and one stored after
 #: are not directly comparable for a ``data_schema`` subject. Every other subject is
 #: byte-identical.
-ALGORITHM_VERSION = "2"
+#:
+#: ``3`` (ASP-1.3, #5921): the security axis became assessable for API-paradigm catalog
+#: revisions. The axis set, the equal composite weights and the composite formula are
+#: unchanged — which is why the algorithm id stays ``clx-axis-v1`` — but an API revision's
+#: ``security`` findings now score their own axis under the published per-rule weights of
+#: :mod:`app.security_score` (with OWASP API Top 10 sub-scores) instead of leaving it *not
+#: assessed*, so an evaluation stored before this revision and one stored after are not
+#: directly comparable for an API subject's security axis. The quality axis of every subject,
+#: and every axis of every MCP snapshot and data contract, is byte-identical.
+ALGORITHM_VERSION = "3"
 
 #: Repository-relative guide documenting :data:`ALGORITHM_ID` / :data:`ALGORITHM_VERSION`
 #: (CLX-4.3, #4861). Displayed algorithm chips in the UI link here.
@@ -98,7 +118,13 @@ AXIS_LABELS: Mapping[str, str] = {
 REASON_PROTOCOL = "No protocol-conformance scanner evidence yet"
 REASON_SUPPLY_CHAIN = "No supply-chain scanner evidence yet"
 REASON_SUPPORTABILITY = "No supportability scanner evidence yet"
-REASON_SECURITY_CATALOG = "No security scanner evidence for catalog revisions yet"
+#: Why an API-paradigm revision's security axis is not assessed: no security rule pack
+#: published its category bar on the report — none ran for the revision, or the style guide
+#: it was scored under disables every rule of the pack. Same constant name as before revision
+#: 3 so existing callers keep importing it.
+REASON_SECURITY_CATALOG = (
+    "No security rule pack evaluated this revision (none ran, or its style guide disables the pack)"
+)
 REASON_COMPAT_MCP = "Compatibility axis applies to catalog revisions"
 REASON_COMPAT_NO_BASE = "No base-revision compatibility evidence"
 REASON_QUALITY_MISSING = "No quality score has been captured for this subject yet"
@@ -148,14 +174,6 @@ class AxisEvaluation:
             "required_coverage_met": self.required_coverage_met,
             "source_report_fingerprint": self.source_report_fingerprint,
         }
-
-
-def grade_for_score(score: int) -> str:
-    """Map a 0–100 ``score`` to its A–F letter grade via the house thresholds."""
-    for threshold, grade in GRADE_THRESHOLDS:
-        if score >= threshold:
-            return grade
-    return "F"
 
 
 def score_from_finding_dicts(findings: Iterable[Mapping[str, Any]]) -> int:
@@ -439,14 +457,95 @@ def _supply_chain_axis(
 
 
 def _security_axis(
-    subject_type: str, findings: Sequence[Mapping[str, Any]]
+    subject_type: str,
+    report: Mapping[str, Any],
+    findings: Sequence[Mapping[str, Any]],
 ) -> Dict[str, Any]:
-    if subject_type != SUBJECT_MCP_ENDPOINT_VERSION:
-        return _not_assessed(AXIS_SECURITY, REASON_SECURITY_CATALOG)
+    """Assess the security axis from the report's ``security``-category findings.
+
+    **MCP snapshot** — unchanged since CLX-1.2: the surface lint's security rules score the
+    axis under the plain house formula, and the axis is assessed whenever the snapshot has a
+    native lint report (an empty set is clean).
+
+    **Catalog revision** (revision 3, ASP-1.3, #5921) — the axis is assessed only when the
+    report's per-category rollup carries the ``security`` bar, which the native ``security``
+    rule pack publishes as a base category when it runs for an API-paradigm artifact. That is
+    the same signal :func:`_supportability_axis` reads for the data-contract pack, and it
+    keeps three states apart that must never collapse into "clean":
+
+    * **No bar** — no security pack evaluated the revision: it predates the pack, the artifact
+      is not an API description, or the style guide it was scored under disables every rule
+      of the pack (:class:`app.style_guide_engine.CompiledStyleGuide` withdraws the bar in
+      that case). The axis stays *not assessed* with :data:`REASON_SECURITY_CATALOG`.
+    * **Bar, every rule evaluated** — assessed under the weighted formula of
+      :mod:`app.security_score`, coverage ``full``; an empty finding set is a clean 100.
+    * **Bar, some rules skipped** — the run reported security rules it could not evaluate for
+      the revision's format (``skipped_rules`` on the report, the key the MCP engines already
+      use). The axis is assessed but its coverage is ``partial``, and each OWASP category all
+      of whose rules were skipped carries coverage ``none`` in the stored ``owasp`` list.
+
+    Args:
+        subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.
+        report: The native report dict (read for its ``categories`` and ``skipped_rules``).
+        findings: The report's findings.
+
+    Returns:
+        The axis payload. For an assessed API subject it additionally carries ``ruleset``
+        (:data:`app.security_score.SECURITY_RULESET_ID`), ``owasp`` (one sub-score dict per
+        OWASP API category) and ``skipped_rules``.
+    """
     security_findings = _filter_by_category(findings, AXIS_SECURITY)
-    # Assessed whenever the MCP subject has a native lint report — empty set is clean.
-    score = score_from_finding_dicts(security_findings)
-    return _assessed(AXIS_SECURITY, score, findings=security_findings)
+    if subject_type == SUBJECT_MCP_ENDPOINT_VERSION:
+        # Assessed whenever the MCP subject has a native lint report — empty set is clean.
+        score = score_from_finding_dicts(security_findings)
+        return _assessed(AXIS_SECURITY, score, findings=security_findings)
+
+    if AXIS_SECURITY not in _report_categories(report):
+        return _not_assessed(AXIS_SECURITY, REASON_SECURITY_CATALOG)
+
+    skipped = report.get("skipped_rules") or []
+    evaluation = evaluate_security_findings(
+        security_findings,
+        skipped_rules=[str(r) for r in skipped] if isinstance(skipped, (list, tuple)) else [],
+    )
+    axis = _assessed(
+        AXIS_SECURITY,
+        evaluation.score,
+        evaluation.grade,
+        findings=security_findings,
+        coverage_state=evaluation.coverage,
+    )
+    axis["ruleset"] = SECURITY_RULESET_ID
+    axis["owasp"] = [sub.as_dict() for sub in evaluation.owasp]
+    axis["skipped_rules"] = list(evaluation.skipped_rules)
+    return axis
+
+
+def security_headline(
+    axes: Iterable[Mapping[str, Any]],
+) -> Tuple[Optional[int], Optional[str]]:
+    """Return ``(score, grade)`` of an evaluation's security axis, or ``(None, None)``.
+
+    The stored-first read every list surface uses (ASP-1.3): a versions list renders
+    ``securityScore`` / ``securityGrade`` from the newest persisted evaluation's axes without
+    re-linting, exactly as ``qualityScore`` is read from the version record. A not-assessed
+    axis yields ``(None, None)`` — never ``0`` / ``F``.
+
+    Args:
+        axes: The ``axes`` payload of a stored or computed evaluation.
+
+    Returns:
+        The security score and grade when the axis is assessed; otherwise ``(None, None)``.
+    """
+    for axis in axes:
+        if not isinstance(axis, Mapping) or axis.get("key") != AXIS_SECURITY:
+            continue
+        if not axis.get("assessed") or axis.get("score") is None:
+            return None, None
+        score = int(axis["score"])
+        grade = axis.get("grade")
+        return score, (str(grade) if grade else grade_for_score(score))
+    return None, None
 
 
 def _compatibility_axis(
@@ -511,7 +610,10 @@ def evaluate_axes(
     Args:
         report: Native report dict (``score``, ``grade``, ``findings``, optional
             ``severity_counts``, ``report_fingerprint``, optional ``base_revision_id`` /
-            ``compatibility_overall``).
+            ``compatibility_overall``, optional ``categories`` — the per-category rollup
+            whose ``security`` / ``governance`` bars gate the security and supportability
+            axes — and optional ``skipped_rules``, the rule ids the run could not evaluate
+            for the artifact's format).
         subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.
         compatibility_compared: When set, overrides whether the compatibility axis is
             considered assessed for catalog subjects. Defaults to True when the report
@@ -545,7 +647,7 @@ def evaluate_axes(
     axes: List[Dict[str, Any]] = [
         _quality_axis(report, findings=findings),
         _protocol_axis(subject_type, conformance_report),
-        _security_axis(subject_type, findings),
+        _security_axis(subject_type, report, findings),
         _supply_chain_axis(subject_type, posture_report),
         _supportability_axis(report, findings=findings),
         _compatibility_axis(

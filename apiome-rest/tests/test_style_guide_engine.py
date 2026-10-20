@@ -412,3 +412,71 @@ def test_get_style_guide_rules_scopes_by_tenant_and_guards_uuids():
     assert db.get_style_guide_rules("nope", TENANT) == []
     assert db.get_style_guide_rules(GUIDE, "t1") == []
     db.execute_query.assert_not_called()
+
+
+# ===========================================================================
+# Axis-gating bars (ASP-1.3, #5921)
+# ===========================================================================
+
+
+def test_apply_withdraws_the_security_bar_when_the_guide_disables_the_whole_pack(monkeypatch):
+    """A guide that enables no security rule leaves the security axis *not assessed*, not 100."""
+    from app import style_guide_engine
+    from app.schema_lint import assemble_lint_result
+
+    monkeypatch.setattr(
+        style_guide_engine,
+        "_builtin_rules_by_category",
+        lambda: {
+            "security": frozenset({"security.write-operation-missing-auth", "security.http-server-url"}),
+            "naming": frozenset({"naming.schema-pascal-case"}),
+        },
+    )
+    base = assemble_lint_result([], base_categories=("naming", "security"))
+    assert {c.name for c in base.categories} == {"naming", "security"}
+
+    nothing_enabled = compile_style_guide(GUIDE, "Empty", "custom", [])
+    assert nothing_enabled.withdraws_category_bar("security") is True
+    # Only axis-gating categories are ever withdrawn: naming stays even when fully disabled.
+    assert nothing_enabled.withdraws_category_bar("naming") is False
+    result = nothing_enabled.apply(base)
+    assert {c.name for c in result.categories} == {"naming"}
+
+    one_enabled = compile_style_guide(
+        GUIDE, "One", "custom", _rows(("security.http-server-url", True, "warning"))
+    )
+    assert one_enabled.withdraws_category_bar("security") is False
+    assert {c.name for c in one_enabled.apply(base).categories} == {"naming", "security"}
+
+
+def test_apply_keeps_the_security_bar_when_the_registry_has_no_security_rules(monkeypatch):
+    """Nothing to disable means nothing to withdraw: the engine's bar stands as it did."""
+    from app import style_guide_engine
+    from app.schema_lint import assemble_lint_result
+
+    monkeypatch.setattr(style_guide_engine, "_builtin_rules_by_category", lambda: {})
+    base = assemble_lint_result([], base_categories=("security",))
+    guide = compile_style_guide(GUIDE, "Empty", "custom", [])
+    assert guide.withdraws_category_bar("security") is False
+    assert {c.name for c in guide.apply(base).categories} == {"security"}
+
+
+def test_security_bar_withdrawal_flows_through_to_the_axis_model(monkeypatch):
+    from app import style_guide_engine
+    from app.axis_score import AXIS_SECURITY, catalog_axis_evaluation
+    from app.schema_lint import assemble_lint_result
+
+    monkeypatch.setattr(
+        style_guide_engine,
+        "_builtin_rules_by_category",
+        lambda: {"security": frozenset({"security.write-operation-missing-auth"})},
+    )
+    base = assemble_lint_result([], base_categories=("security",))
+    guide = compile_style_guide(GUIDE, "Empty", "custom", [])
+
+    assessed = catalog_axis_evaluation(base.report_dict())
+    disabled = catalog_axis_evaluation(guide.apply(base).report_dict())
+    by_key = lambda ev: {a["key"]: a for a in ev.axes}  # noqa: E731
+    assert by_key(assessed)[AXIS_SECURITY]["assessed"] is True
+    assert by_key(disabled)[AXIS_SECURITY]["assessed"] is False
+    assert by_key(disabled)[AXIS_SECURITY]["score"] is None

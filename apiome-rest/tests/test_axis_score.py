@@ -417,3 +417,163 @@ def test_protocol_and_supply_chain_axes_are_independent():
     axes = _by_key(ev)
     assert axes[AXIS_PROTOCOL]["score"] == 78
     assert axes[AXIS_SUPPLY_CHAIN]["score"] == 64
+
+
+# --- Security axis for API-paradigm catalog revisions (ASP-1.3, #5921; revision 3) -------------
+
+_SECURITY_BAR = [{"name": "security", "score": 100}]
+
+
+def _security_finding(rule: str, severity: str = "error") -> dict:
+    return {"rule": rule, "category": "security", "severity": severity, "message": rule}
+
+
+def test_revision_three_keeps_the_algorithm_id():
+    assert ALGORITHM_ID == "clx-axis-v1"
+    assert ALGORITHM_VERSION == "3"
+
+
+def test_catalog_security_is_assessed_from_the_pack_bar_with_published_weights():
+    """Acceptance: one error-severity weight-2 finding scores exactly 80 and grades B."""
+    ev = catalog_axis_evaluation(
+        _report(
+            score=90,
+            grade="A",
+            findings=[_security_finding("security.write-operation-missing-auth")],
+            categories=_SECURITY_BAR,
+        )
+    )
+    security = _by_key(ev)[AXIS_SECURITY]
+    assert security["assessed"] is True
+    assert (security["score"], security["grade"]) == (80, "B")
+    assert security["coverage"] == {"state": "full"}
+    assert security["severity_counts"] == {"error": 1, "warning": 0, "info": 0}
+    assert security["ruleset"] == "security"
+    assert security["skipped_rules"] == []
+    assert [sub["risk_id"] for sub in security["owasp"]] == [f"API{n}" for n in range(1, 11)]
+    for sub in security["owasp"]:
+        assert set(sub) == {"risk_id", "title", "score", "finding_count", "coverage"}
+        # A category none of whose rules evaluated is not assessed — never 100.
+        if sub["coverage"] == "none":
+            assert sub["score"] is None
+
+
+def test_catalog_security_with_the_bar_and_no_findings_is_a_clean_100():
+    ev = catalog_axis_evaluation(_report(findings=[], categories=_SECURITY_BAR))
+    security = _by_key(ev)[AXIS_SECURITY]
+    assert security["assessed"] is True
+    assert (security["score"], security["grade"]) == (100, "A")
+
+
+def test_catalog_security_without_the_bar_is_not_assessed_even_with_findings():
+    """No pack bar means no security pack evaluated the revision (or its guide disables it)."""
+    ev = catalog_axis_evaluation(
+        _report(findings=[_security_finding("security.write-operation-missing-auth")])
+    )
+    security = _by_key(ev)[AXIS_SECURITY]
+    assert security["assessed"] is False
+    assert security["score"] is None
+    assert security["coverage"]["state"] == "none"
+    assert security["not_assessed_reason"] == REASON_SECURITY_CATALOG
+    assert "owasp" not in security
+
+
+def test_catalog_security_bar_name_is_matched_case_insensitively():
+    ev = catalog_axis_evaluation(_report(categories=[{"name": " Security ", "score": 100}]))
+    assert _by_key(ev)[AXIS_SECURITY]["assessed"] is True
+
+
+def test_catalog_security_coverage_is_partial_when_the_run_skipped_a_registered_rule(monkeypatch):
+    from app import security_score
+
+    monkeypatch.setattr(
+        security_score,
+        "rule_owasp_ids",
+        lambda: {
+            "security.write-operation-missing-auth": ("API2",),
+            "security.deprecated-without-sunset": ("API9",),
+        },
+    )
+    ev = catalog_axis_evaluation(
+        _report(
+            findings=[_security_finding("security.write-operation-missing-auth")],
+            categories=_SECURITY_BAR,
+            skipped_rules=["security.deprecated-without-sunset", "naming.not-security"],
+        )
+    )
+    security = _by_key(ev)[AXIS_SECURITY]
+    assert security["assessed"] is True
+    assert security["score"] == 80
+    assert security["coverage"] == {"state": "partial"}
+    assert security["skipped_rules"] == ["security.deprecated-without-sunset"]
+    owasp = {sub["risk_id"]: sub for sub in security["owasp"]}
+    assert owasp["API2"] == {
+        "risk_id": "API2",
+        "title": "Broken authentication",
+        "score": 80,
+        "finding_count": 1,
+        "coverage": "full",
+    }
+    assert owasp["API9"]["coverage"] == "none" and owasp["API9"]["score"] is None
+    assert owasp["API1"]["coverage"] == "none"
+
+
+def test_quality_axis_and_score_are_byte_identical_with_or_without_the_security_axis():
+    """Security findings never enter the quality axis; the stored score/grade pass through."""
+    findings = [
+        _security_finding("security.write-operation-missing-auth"),
+        {"rule": "naming.schema-pascal-case", "category": "naming", "severity": "warning"},
+    ]
+    before = catalog_axis_evaluation(_report(score=96, grade="A", findings=findings))
+    after = catalog_axis_evaluation(
+        _report(score=96, grade="A", findings=findings, categories=_SECURITY_BAR)
+    )
+    assert _by_key(before)[AXIS_QUALITY] == _by_key(after)[AXIS_QUALITY]
+    assert _by_key(after)[AXIS_QUALITY]["score"] == 96
+    assert _by_key(after)[AXIS_QUALITY]["severity_counts"] == {"error": 0, "warning": 1, "info": 0}
+    assert before.source_report_fingerprint == after.source_report_fingerprint
+
+
+def test_composite_includes_an_assessed_catalog_security_axis_at_equal_weight():
+    ev = catalog_axis_evaluation(
+        _report(
+            score=90,
+            grade="A",
+            findings=[_security_finding("security.write-operation-missing-auth")],
+            categories=_SECURITY_BAR,
+        )
+    )
+    assert ev.composite_score == 85  # mean of quality 90 and security 80
+    assert ev.composite_grade == "B"
+
+
+def test_mcp_security_axis_is_unchanged_by_revision_three():
+    """MCP snapshots keep the plain formula: a weight-2 rule id costs 10 there, not 20."""
+    ev = mcp_axis_evaluation(
+        _report(
+            score=90,
+            grade="A",
+            findings=[_security_finding("security.write-operation-missing-auth")],
+        )
+    )
+    security = _by_key(ev)[AXIS_SECURITY]
+    assert security["assessed"] is True
+    assert security["score"] == 90
+    assert "owasp" not in security and "ruleset" not in security
+
+
+def test_security_headline_reads_the_assessed_axis_and_never_fakes_zero():
+    from app.axis_score import security_headline
+
+    assessed = catalog_axis_evaluation(
+        _report(
+            findings=[_security_finding("security.write-operation-missing-auth")],
+            categories=_SECURITY_BAR,
+        )
+    )
+    assert security_headline(assessed.axes) == (80, "B")
+    assert security_headline(catalog_axis_evaluation(_report()).axes) == (None, None)
+    assert security_headline([]) == (None, None)
+    # A stored axis without a grade (defensive) gets one from the house bands.
+    assert security_headline([{"key": "security", "assessed": True, "score": 72}]) == (72, "C")
+    assert security_headline([{"key": "security", "assessed": True, "score": None}]) == (None, None)

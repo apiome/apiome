@@ -37,6 +37,12 @@ Sources aggregated (all derived from the live engines, so the registry cannot dr
   describe the *source document as it arrived* rather than the model it produced (MFI-29.4's
   unresolved external references), which no model-driven pack can emit.
 
+Every descriptor also publishes the two fields the security score needs (ASP-1.3, #5921):
+``owasp`` — the OWASP API Security Top 10 category ids a rule cites (declared on the
+:class:`~app.lint_engine.LintRule`, validated against :mod:`app.owasp_api` here) — and, for
+every ``security``-category rule, its published scoring ``weight``
+(:func:`app.security_score.security_rule_weight`).
+
 The MCP *surface* linter (:mod:`app.mcp_lint`, V2-MCP-21.x) is intentionally **not**
 included: it lints an MCP capability surface, not a schema revision, and is not part of the
 governance style-guide surface (GOV-1.4 evaluates guides in the revision lint paths).
@@ -45,7 +51,7 @@ governance style-guide surface (GOV-1.4 evaluates guides in the revision lint pa
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .docs_site import guide_page
 from .intake_lint_rules import INTAKE_PACK, INTAKE_RULES
@@ -57,7 +63,9 @@ from .lint_engine import (
     load_format_rule_packs,
     unconditional_rule_packs,
 )
+from .owasp_api import validate_risk_ids
 from .schema_lint import OPENAPI_RULES
+from .security_score import SECURITY_CATEGORY, security_rule_weight
 
 __all__ = [
     "LINT_RULE_DOCS_PAGE",
@@ -106,6 +114,8 @@ class LintRuleDescriptor:
             carries when no style guide overrides it.
         rationale: One-line human explanation of why the rule exists.
         docs_anchor: Anchor slug into :data:`LINT_RULE_DOCS_PAGE` documenting the rule.
+        owasp_ids: OWASP API Security Top 10 category ids the rule cites (ASP-1.3), in
+            catalog order; empty for a rule that cites none.
     """
 
     rule_id: str
@@ -114,11 +124,21 @@ class LintRuleDescriptor:
     default_severity: str
     rationale: str
     docs_anchor: str
+    owasp_ids: Tuple[str, ...] = ()
+
+    @property
+    def weight(self) -> Optional[float]:
+        """The rule's published security-score weight; ``None`` unless it is a ``security`` rule."""
+        if self.category != SECURITY_CATEGORY:
+            return None
+        return security_rule_weight(self.rule_id)
 
     def as_dict(self) -> Dict[str, Any]:
         """Return the descriptor as a plain dict (snake_case keys).
 
-        Blocking (error) rules additionally carry CLX-4.3 transparency fields from
+        Carries ``weight`` (``security`` rules only, else ``None``) and ``owasp`` (the cited
+        category ids, or ``None`` when the rule cites none). Blocking (error) rules
+        additionally carry CLX-4.3 transparency fields from
         :mod:`app.scanner_rule_transparency`.
         """
         from .scanner_rule_transparency import enrich_rule_dict
@@ -130,12 +150,25 @@ class LintRuleDescriptor:
             "default_severity": self.default_severity,
             "rationale": self.rationale,
             "docs_anchor": self.docs_anchor,
+            "weight": self.weight,
+            "owasp": list(self.owasp_ids) if self.owasp_ids else None,
         }
         return enrich_rule_dict(base, self.rule_id)
 
 
-def _descriptor(rule_id: str, pack: str, category: str, severity: str, rationale: str) -> LintRuleDescriptor:
-    """Build one descriptor, deriving the docs anchor from the rule id."""
+def _descriptor(
+    rule_id: str,
+    pack: str,
+    category: str,
+    severity: str,
+    rationale: str,
+    owasp_ids: Tuple[str, ...] = (),
+) -> LintRuleDescriptor:
+    """Build one descriptor, deriving the docs anchor from the rule id.
+
+    :raises app.owasp_api.UnknownRiskError: when ``owasp_ids`` cites a category the OWASP API
+        catalog does not define — a pack bug surfaced where the catalog is built, not later.
+    """
     return LintRuleDescriptor(
         rule_id=rule_id,
         pack=pack,
@@ -143,6 +176,19 @@ def _descriptor(rule_id: str, pack: str, category: str, severity: str, rationale
         default_severity=severity,
         rationale=rationale,
         docs_anchor=docs_anchor_for(rule_id),
+        owasp_ids=validate_risk_ids(owasp_ids),
+    )
+
+
+def _pack_descriptor(rule: Any, pack_label: str) -> LintRuleDescriptor:
+    """Build the descriptor of one :class:`~app.lint_engine.LintRule` of ``pack_label``."""
+    return _descriptor(
+        rule.rule_id,
+        pack_label,
+        rule.category,
+        rule.severity,
+        rule.description,
+        tuple(getattr(rule, "owasp_ids", ()) or ()),
     )
 
 
@@ -168,9 +214,7 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
     for pack in unconditional_rule_packs():
         pack_label = pack.pack_id or type(pack).__name__
         for rule in pack.rules():
-            by_id[rule.rule_id] = _descriptor(
-                rule.rule_id, pack_label, rule.category, rule.severity, rule.description
-            )
+            by_id[rule.rule_id] = _pack_descriptor(rule, pack_label)
 
     # 3. The intake-stage catalogue: rules emitted while a source is being ingested
     #    (MFI-29.4 remote $ref resolution), which never run through a model rule pack.
@@ -188,10 +232,7 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
             continue
         pack_label = paradigm_cls.pack_id or paradigm_cls.__name__
         for rule in paradigm_cls().rules():
-            by_id.setdefault(
-                rule.rule_id,
-                _descriptor(rule.rule_id, pack_label, rule.category, rule.severity, rule.description),
-            )
+            by_id.setdefault(rule.rule_id, _pack_descriptor(rule, pack_label))
 
     # 5. Every registered per-format pack. Subclass registrations under extra format keys
     #    (same rules, different key) dedupe naturally through the by-id dict.
@@ -201,10 +242,7 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
             continue
         pack_label = pack_cls.pack_id or pack_cls.__name__
         for rule in pack_cls().rules():
-            by_id.setdefault(
-                rule.rule_id,
-                _descriptor(rule.rule_id, pack_label, rule.category, rule.severity, rule.description),
-            )
+            by_id.setdefault(rule.rule_id, _pack_descriptor(rule, pack_label))
 
     return tuple(by_id[rule_id] for rule_id in sorted(by_id))
 

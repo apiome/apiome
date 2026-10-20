@@ -4002,8 +4002,12 @@ class Database:
 
         Evaluations are immutable and append-only (``lint_axis_evaluations``, V168): a re-score
         inserts a NEW row. To keep unchanged re-scores from appending duplicates, the insert is
-        skipped when the same subject + ``algorithm_id`` already has a row with the same
-        ``source_report_fingerprint``.
+        skipped when the same subject + ``algorithm_id`` + ``algorithm_version`` already has a
+        row with the same ``source_report_fingerprint``. The version is part of the key (ASP-1.3,
+        #5921) because an implementation revision can change what the axes say about an
+        unchanged report — revision 3 assesses an API revision's security axis the previous one
+        left *not assessed* — and a stored-first reader must see the row the current revision
+        would write, not an older revision's reading of the same fingerprint.
 
         Args:
             evaluation: Column-name -> value dict from :func:`app.axis_score.evaluation_row`.
@@ -4021,6 +4025,7 @@ class Database:
             WHERE NOT EXISTS (
                 SELECT 1 FROM apiome.lint_axis_evaluations e
                 WHERE e.algorithm_id = %s
+                  AND e.algorithm_version = %s
                   AND e.source_report_fingerprint = %s
                   AND (
                         (%s::uuid IS NOT NULL AND e.version_record_id = %s::uuid)
@@ -4045,6 +4050,7 @@ class Database:
                 bool(evaluation.get("required_coverage_met")),
                 evaluation.get("source_report_fingerprint"),
                 evaluation.get("algorithm_id", ALGORITHM_ID),
+                evaluation.get("algorithm_version", "1"),
                 evaluation.get("source_report_fingerprint"),
                 version_record_id,
                 version_record_id,
@@ -8075,6 +8081,7 @@ class Database:
                    v.commit_author, v.commit_message, v.external_ref,
                    v.source_commit_sha, v.source_committed_at,
                    v.quality_score, v.quality_grade,
+                   sec.security_score, sec.security_grade,
                    v.unpublish_reason, v.unpublished_at, v.unpublished_by,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
@@ -8088,6 +8095,7 @@ class Database:
             LEFT JOIN apiome.projects pf ON pf.id = vf.project_id AND pf.deleted_at IS NULL
             LEFT JOIN apiome.projects up ON up.id = v.upstream_project_id AND up.deleted_at IS NULL
             LEFT JOIN apiome.users u ON v.creator_id = u.id
+            {self._SECURITY_HEADLINE_JOIN}
             WHERE v.project_id = %s
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL
@@ -8131,6 +8139,34 @@ class Database:
         """
         return self.execute_query(query, tuple(params))
 
+    #: Stored-first security headline (ASP-1.3, #5921): the ``security`` axis of the newest
+    #: ``clx-axis-v1`` evaluation of a revision, read with the version row so list surfaces
+    #: render ``securityScore`` / ``securityGrade`` from the record — the same rule
+    #: ``qualityScore`` follows — and a project with 50 revisions issues zero lint requests.
+    #: A not-assessed axis (no security pack evaluated the revision) yields NULLs, never 0 / F.
+    #: Two lateral steps on purpose: first the *newest* evaluation, then its security axis —
+    #: so an older evaluation whose axis was assessed can never shadow a newer one whose axis
+    #: is not. Served by V168's ``(version_record_id, evaluated_at DESC)`` index.
+    _SECURITY_HEADLINE_JOIN = f"""
+            LEFT JOIN LATERAL (
+                SELECT e.axes
+                FROM apiome.lint_axis_evaluations e
+                WHERE e.version_record_id = v.id
+                  AND e.algorithm_id = '{ALGORITHM_ID}'
+                ORDER BY e.evaluated_at DESC, e.id DESC
+                LIMIT 1
+            ) ax ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT (sa.axis->>'score')::int AS security_score,
+                       sa.axis->>'grade' AS security_grade
+                FROM jsonb_array_elements(ax.axes) AS sa(axis)
+                WHERE sa.axis->>'key' = 'security'
+                  AND (sa.axis->>'assessed')::boolean
+                  AND sa.axis->>'score' IS NOT NULL
+                LIMIT 1
+            ) sec ON TRUE
+    """
+
     def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific version by ID, ensuring it belongs to the tenant."""
         # A non-UUID identifier (e.g. a version string like '0.0.1' sent to a route that
@@ -8138,7 +8174,7 @@ class Database:
         # psycopg2 InvalidTextRepresentation -> a 500. Treat it as "not found" instead.
         if not version_id or not is_uuid_string(str(version_id)):
             return None
-        query = """
+        query = f"""
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
                    v.mock_enabled,
@@ -8149,6 +8185,7 @@ class Database:
                    v.commit_author, v.commit_message, v.external_ref,
                    v.source_commit_sha, v.source_committed_at,
                    v.quality_score, v.quality_grade,
+                   sec.security_score, sec.security_grade,
                    v.unpublish_reason, v.unpublished_at, v.unpublished_by,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
@@ -8162,6 +8199,7 @@ class Database:
             LEFT JOIN apiome.projects pf ON pf.id = vf.project_id AND pf.deleted_at IS NULL
             LEFT JOIN apiome.projects up ON up.id = v.upstream_project_id AND up.deleted_at IS NULL
             LEFT JOIN apiome.users u ON v.creator_id = u.id
+            {self._SECURITY_HEADLINE_JOIN}
             WHERE v.id = %s
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL
