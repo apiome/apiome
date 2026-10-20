@@ -1,6 +1,128 @@
 {
   "adapter": "a2a",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {
+          "extensions": [
+            {
+              "description": "Step-up authentication for money movement.",
+              "required": true,
+              "uri": "https://bank.example.com/a2a/ext/strong-customer-auth/v1"
+            }
+          ],
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "description": "Answers questions about account balances and moves money between a customer's own accounts.",
+        "extras": {},
+        "key": "Ledger Assistant",
+        "name": "Ledger Assistant",
+        "protocol": "a2a",
+        "protocol_version": "0.3.0",
+        "provider": {
+          "extras": {},
+          "organization": "Example Bank",
+          "url": "https://bank.example.com"
+        },
+        "security": [
+          {
+            "bank_oidc": [
+              "openid",
+              "accounts:read"
+            ]
+          },
+          {
+            "partner_mtls": []
+          }
+        ],
+        "security_schemes": [
+          {
+            "bearer_format": null,
+            "description": null,
+            "extras": {},
+            "flows": null,
+            "location": null,
+            "name": "bank_oidc",
+            "openid_connect_url": "https://id.bank.example.com/.well-known/openid-configuration",
+            "parameter_name": null,
+            "scheme": null,
+            "type": "openIdConnect"
+          },
+          {
+            "bearer_format": null,
+            "description": "Client certificate issued to registered partner agents.",
+            "extras": {},
+            "flows": null,
+            "location": null,
+            "name": "partner_mtls",
+            "openid_connect_url": null,
+            "parameter_name": null,
+            "scheme": null,
+            "type": "mutualTLS"
+          }
+        ],
+        "service_ref": "Ledger Assistant",
+        "skills": [
+          {
+            "description": "Reports the current and available balance of one of the customer's accounts.",
+            "examples": [],
+            "extras": {},
+            "id": "account-balance",
+            "input_modes": [],
+            "key": "Ledger Assistant.account-balance",
+            "name": "Account balance",
+            "operation_ref": "Ledger Assistant.account-balance",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "banking",
+              "accounts",
+              "read-only"
+            ]
+          },
+          {
+            "description": "Moves money between two accounts the customer owns. Requires step-up authentication.",
+            "examples": [
+              "Move 200 EUR from checking to savings"
+            ],
+            "extras": {},
+            "id": "transfer-funds",
+            "input_modes": [
+              "application/json"
+            ],
+            "key": "Ledger Assistant.transfer-funds",
+            "name": "Transfer funds",
+            "operation_ref": "Ledger Assistant.transfer-funds",
+            "output_modes": [
+              "application/json"
+            ],
+            "security": [
+              {
+                "bank_oidc": [
+                  "openid",
+                  "payments:write"
+                ]
+              }
+            ],
+            "tags": [
+              "banking",
+              "payments",
+              "money-movement"
+            ]
+          }
+        ],
+        "url": "https://ledger.agents.example.com/a2a/jsonrpc",
+        "version": "5.1.2"
+      }
+    ],
     "channels": [],
     "description": "Answers questions about account balances and moves money between a customer's own accounts.",
     "extras": {
@@ -328,7 +450,7 @@
     "confidence": 0.95,
     "format": "a2a"
   },
-  "fingerprint": "sha256:f2623e70805c7fd97265e8794baf64da6effad6fdd347fafed5733136d6dd805",
+  "fingerprint": "sha256:8ecd1f26d60a9dbdacefd0dfbeadf0662139744a2dd5ed9b18f844a1b1ec0102",
   "lint": {
     "findings": 0,
     "grade": "A",

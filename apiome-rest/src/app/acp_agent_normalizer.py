@@ -18,6 +18,9 @@ The mapping
   therefore an added / removed ``operation`` entry.
 * An agent list (``GET /agents``) becomes one model with one service per agent; a single manifest
   becomes a model with one service.
+* **Each agent** is also one first-class :class:`~app.canonical_model.AgentDescriptor` on
+  ``agents`` (MFI-18.4), with one :class:`~app.canonical_model.AgentSkill` per capability keyed
+  like its operation, so capability-level diffs are stable.
 * When the document came from a live server (its label is the ``…/agents`` URL), that server is
   the model's :class:`~app.canonical_model.Server`. A file carries no address, so none is invented.
 
@@ -37,6 +40,8 @@ from urllib.parse import urlsplit, urlunsplit
 from .acp_agent_parser import AcpAgent, AcpDocument, dumps_acp_for_raw
 from .agent_paradigm_keys import unique_keys
 from .canonical_model import (
+    AgentDescriptor,
+    AgentSkill,
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
@@ -108,12 +113,10 @@ class AcpAgentNormalizer(Normalizer, register=True):
                 "ACP source must be an AcpDocument (see app.acp_agent_parser.parse_acp)"
             )
 
+        agent_keys = unique_keys([Keys.type(agent.name, None) for agent in source.agents])
         services = [
             self._service(agent, service_key, duplicate_of)
-            for agent, (service_key, duplicate_of) in zip(
-                source.agents,
-                unique_keys([Keys.type(agent.name, None) for agent in source.agents]),
-            )
+            for agent, (service_key, duplicate_of) in zip(source.agents, agent_keys)
         ]
         server_url = acp_server_url(source.source_label)
         single = source.agents[0] if len(source.agents) == 1 else None
@@ -131,6 +134,10 @@ class AcpAgentNormalizer(Normalizer, register=True):
             if server_url
             else [],
             services=services,
+            agents=[
+                self._descriptor(agent, service_key, duplicate_of)
+                for agent, (service_key, duplicate_of) in zip(source.agents, agent_keys)
+            ],
             raw={FORMAT_KEY: dumps_acp_for_raw(source)} if include_raw else None,
             extras={
                 "shape": source.shape,
@@ -178,6 +185,51 @@ class AcpAgentNormalizer(Normalizer, register=True):
             name=agent.name,
             description=agent.description,
             operations=self._operations(agent, service_key),
+            extras=extras,
+        )
+
+    @staticmethod
+    def _descriptor(
+        agent: AcpAgent, service_key: str, duplicate_of: Optional[str]
+    ) -> AgentDescriptor:
+        """Build the first-class agent descriptor for one agent (MFI-18.4).
+
+        ACP declares content types per agent, not per capability, so they are the
+        descriptor's default modes and every skill inherits them (empty skill modes). ACP has
+        no capability flags or security schemes; the agent's tags and domains ride on the
+        descriptor's ``extras``.
+
+        Args:
+            agent: The parsed agent.
+            service_key: The agent's unique service key (also the descriptor key).
+            duplicate_of: The first agent's key when this one repeats a name.
+
+        Returns:
+            The descriptor, one skill per capability pointing at its operation.
+        """
+        keyed = unique_keys([Keys.operation_rpc(service_key, c.name) for c in agent.capabilities])
+        extras: Dict[str, Any] = {"tags": list(agent.tags), "domains": list(agent.domains)}
+        if duplicate_of is not None:
+            extras["duplicate_of"] = duplicate_of
+        return AgentDescriptor(
+            key=service_key,
+            name=agent.name,
+            description=agent.description,
+            protocol="acp",
+            default_input_modes=list(agent.input_content_types),
+            default_output_modes=list(agent.output_content_types),
+            skills=[
+                AgentSkill(
+                    key=key,
+                    id=capability.name,
+                    name=capability.name,
+                    description=capability.description,
+                    operation_ref=key,
+                    extras={"duplicate_of": first} if first else {},
+                )
+                for capability, (key, first) in zip(agent.capabilities, keyed)
+            ],
+            service_ref=service_key,
             extras=extras,
         )
 

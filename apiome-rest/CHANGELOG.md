@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.402.0] - 2026-10-20
+
+### Added
+- **Agent-descriptor paradigm in the canonical model (#3977, MFI-18.4)**: `CanonicalApi.agents` makes agents
+  first-class. One `AgentDescriptor` per agent carries identity, provider, version, URL, protocol and protocol
+  version, capability flags, typed `AgentSecurityScheme`s (type, scheme, location, parameter name, flows,
+  OpenID Connect URL; unmodelled keys in `extras`) and agent-level security requirements. Each `AgentSkill`
+  (id, name, description, tags, examples, input/output modes, its own security) is keyed
+  `<agent>.<skill id>`, so skill-level diffs are stable. The A2A normalizer fills one descriptor per card,
+  and the ACP normalizer one per agent (capability → skill). The existing service / operation projection
+  is unchanged; `service_ref` / `operation_ref` link the two.
+- `canonical_diff` reports `agent` and `skill` entities. A capability-flag or auth change is a changed
+  agent, and a skill is matched by id: a rename is a changed skill, not a remove + add.
+- Persistence: apiome-db **V306** adds `api_agent_descriptors` and `api_agent_skills`;
+  `canonical_persistence` writes and reloads them losslessly. A2A and ACP imports now land their canonical
+  tree in the MFI-2.2 tables, as AsyncAPI imports do.
+- Fidelity tests assert skill, capability and auth survival, plus a gap audit for the new entities.
+
+### Fixed
+- **Agent-paradigm models can be persisted relationally**: V135's `api_artifacts_paradigm_check` predated
+  the `agent` paradigm and rejected every MCP / LLM-tools / A2A / ACP / site-manifest artifact. V306 widens
+  it, and a test now pins the check to `ApiParadigm`.
+
+### Notes
+- `agents` is additive and omitted from serialization when empty, so no other format's model, fingerprint
+  or golden changes. A2A and ACP fingerprints change once, because the descriptor is now part of the model.
+
 ## [1.401.0] - 2026-10-20
 
 ### Added

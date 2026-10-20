@@ -37,6 +37,10 @@ import json
 import pytest
 
 from app.canonical_model import (
+    AgentDescriptor,
+    AgentProvider,
+    AgentSecurityScheme,
+    AgentSkill,
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
@@ -621,6 +625,15 @@ def test_load_bearing_fields_have_a_canonical_home() -> None:
         Channel: ["address", "protocol", "parameters", "bindings"],
         Message: ["role", "status_code", "content_types", "payload"],
         Parameter: ["location", "required"],
+        # Agent-descriptor paradigm (MFI-18.4): skills, capabilities and auth.
+        CanonicalApi: ["agents"],
+        AgentDescriptor: [
+            "key", "name", "version", "provider", "protocol", "protocol_version",
+            "capabilities", "default_input_modes", "default_output_modes",
+            "security_schemes", "security", "skills",
+        ],
+        AgentSkill: ["key", "id", "name", "tags", "input_modes", "output_modes", "security"],
+        AgentSecurityScheme: ["name", "type", "scheme", "location", "flows"],
     }
     for model, fields in required.items():
         for field in fields:
@@ -628,3 +641,57 @@ def test_load_bearing_fields_have_a_canonical_home() -> None:
                 f"MFI-2.1 gap: {model.__name__}.{field} is load-bearing for a "
                 f"paradigm but is no longer on the canonical model"
             )
+
+
+# ===========================================================================
+# Agent-descriptor paradigm (MFI-18.4): skills, capabilities and auth survive
+# ===========================================================================
+
+
+def _agent_sample() -> CanonicalApi:
+    """An agent with every load-bearing descriptor field set, in reverse source order."""
+    return CanonicalApi(
+        paradigm=ApiParadigm.AGENT,
+        format="a2a",
+        identity=ApiIdentity(name="Concierge"),
+        agents=[
+            AgentDescriptor(
+                key="Concierge",
+                name="Concierge",
+                version="2.0.0",
+                protocol="a2a",
+                protocol_version="0.3.0",
+                provider=AgentProvider(organization="Example", url="https://example.com"),
+                capabilities={"streaming": True, "pushNotifications": False},
+                default_input_modes=["text/plain"],
+                default_output_modes=["application/json"],
+                security_schemes=[
+                    AgentSecurityScheme(name="oauth", type="oauth2", flows={"implicit": {}}),
+                    AgentSecurityScheme(name="key", type="apiKey", location="header",
+                                        parameter_name="X-Key"),
+                ],
+                security=[{"oauth": ["read"]}, {"key": []}],
+                skills=[
+                    AgentSkill(key="Concierge.book", id="book", name="Book", tags=["travel"],
+                               input_modes=["application/json"], security=[{"oauth": ["write"]}]),
+                    AgentSkill(key="Concierge.search", id="search", name="Search",
+                               examples=["Flights to Lisbon"]),
+                ],
+            )
+        ],
+    )
+
+
+def test_agent_skills_capabilities_and_auth_survive_the_pipeline() -> None:
+    model = _agent_sample()
+    survived = _through_pipeline(model)
+    agent = survived.agents[0]
+    assert agent.capabilities == {"streaming": True, "pushNotifications": False}
+    assert agent.capabilities["pushNotifications"] is False  # a falsy flag is not dropped
+    assert [s.name for s in agent.security_schemes] == ["key", "oauth"]
+    assert agent.security_schemes[0].location == "header"
+    assert agent.security == [{"oauth": ["read"]}, {"key": []}]  # alternatives keep their order
+    assert [s.id for s in agent.skills] == ["book", "search"]
+    assert agent.skills[0].security == [{"oauth": ["write"]}]
+    assert agent.skills[1].security is None  # inherits — distinct from "no auth" ([])
+    assert agent.provider.organization == "Example"

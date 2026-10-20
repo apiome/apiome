@@ -1269,6 +1269,16 @@ def persist_adapter_import(
             model=model,
         )
 
+    # MFI-18.4 (#3977): an agent-descriptor import (A2A card, ACP listing) lands its agents and
+    # skills — beside their service / operation projection — in the MFI-2.2 tables.
+    if model.agents and creator_id:
+        db.persist_canonical_api(
+            tenant_id=tenant_id,
+            creator_id=creator_id,
+            version_id=version_record_id,
+            model=model,
+        )
+
     # REPO-3.4 (#2773): an Arazzo import lands its orchestration as Workflow/WorkflowStep rows
     # alongside the canonical artifact, resolving each step's operationRef against the OpenAPI
     # operations imported in the same scan.

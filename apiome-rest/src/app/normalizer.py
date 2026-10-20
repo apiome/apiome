@@ -718,8 +718,8 @@ def normalize_ordering(api: CanonicalApi) -> CanonicalApi:
 
     Returns:
         A new :class:`CanonicalApi` with services, operations, parameters,
-        messages, message headers, channels, types, and type fields sorted by
-        ``key`` (channels and types stable-sorted by ``key``).
+        messages, message headers, channels, types, type fields, agents and their
+        skills sorted by ``key`` (security schemes by ``name``).
     """
     ordered = api.model_copy(deep=True)
 
@@ -739,5 +739,10 @@ def normalize_ordering(api: CanonicalApi) -> CanonicalApi:
     ordered.types.sort(key=lambda t: t.key)
     for type_ in ordered.types:
         type_.fields.sort(key=lambda f: f.key)
+
+    ordered.agents.sort(key=lambda a: a.key)
+    for agent in ordered.agents:
+        agent.skills.sort(key=lambda sk: sk.key)
+        agent.security_schemes.sort(key=lambda sc: sc.name)
 
     return ordered

@@ -1,6 +1,149 @@
 {
   "adapter": "a2a",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {
+          "pushNotifications": true,
+          "stateTransitionHistory": false,
+          "streaming": true
+        },
+        "default_input_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "default_output_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "description": "Plans trips end to end: searches flights and hotels, builds itineraries and answers visa questions.",
+        "extras": {},
+        "key": "Travel Concierge",
+        "name": "Travel Concierge",
+        "protocol": "a2a",
+        "protocol_version": "0.3.0",
+        "provider": {
+          "extras": {},
+          "organization": "Example Travel Co.",
+          "url": "https://travel.example.com"
+        },
+        "security": [
+          {
+            "concierge_oauth": [
+              "trips:read"
+            ]
+          }
+        ],
+        "security_schemes": [
+          {
+            "bearer_format": null,
+            "description": "OAuth 2.0 client credentials for partner agents.",
+            "extras": {},
+            "flows": {
+              "clientCredentials": {
+                "scopes": {
+                  "trips:read": "Read itineraries",
+                  "trips:write": "Create and change bookings"
+                },
+                "tokenUrl": "https://auth.travel.example.com/oauth/token"
+              }
+            },
+            "location": null,
+            "name": "concierge_oauth",
+            "openid_connect_url": null,
+            "parameter_name": null,
+            "scheme": null,
+            "type": "oauth2"
+          }
+        ],
+        "service_ref": "Travel Concierge",
+        "skills": [
+          {
+            "description": "Assembles chosen flights, hotels and activities into a day-by-day itinerary document.",
+            "examples": [],
+            "extras": {},
+            "id": "build-itinerary",
+            "input_modes": [],
+            "key": "Travel Concierge.build-itinerary",
+            "name": "Build itinerary",
+            "operation_ref": "Travel Concierge.build-itinerary",
+            "output_modes": [
+              "application/json",
+              "application/pdf"
+            ],
+            "security": null,
+            "tags": [
+              "travel",
+              "itinerary",
+              "planning"
+            ]
+          },
+          {
+            "description": "Finds flights between two airports for given dates, cabin class and passenger count.",
+            "examples": [
+              "Find me a direct flight from SFO to NRT on 12 March, economy, 2 adults"
+            ],
+            "extras": {},
+            "id": "search-flights",
+            "input_modes": [],
+            "key": "Travel Concierge.search-flights",
+            "name": "Search flights",
+            "operation_ref": "Travel Concierge.search-flights",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "travel",
+              "flights",
+              "search"
+            ]
+          },
+          {
+            "description": "Finds hotels near a location for a date range, filtered by price and rating.",
+            "examples": [
+              "Four-star hotels within 1 km of Shibuya station, 12-16 March"
+            ],
+            "extras": {},
+            "id": "search-hotels",
+            "input_modes": [],
+            "key": "Travel Concierge.search-hotels",
+            "name": "Search hotels",
+            "operation_ref": "Travel Concierge.search-hotels",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "travel",
+              "hotels",
+              "search"
+            ]
+          },
+          {
+            "description": "Explains entry and visa requirements for a passport holder visiting a country.",
+            "examples": [
+              "Do US citizens need a visa for a two-week trip to Japan?"
+            ],
+            "extras": {},
+            "id": "visa-requirements",
+            "input_modes": [
+              "text/plain"
+            ],
+            "key": "Travel Concierge.visa-requirements",
+            "name": "Visa requirements",
+            "operation_ref": "Travel Concierge.visa-requirements",
+            "output_modes": [
+              "text/plain"
+            ],
+            "security": null,
+            "tags": [
+              "travel",
+              "visa",
+              "compliance"
+            ]
+          }
+        ],
+        "url": "https://travel.agents.example.com/a2a/v1",
+        "version": "2.4.0"
+      }
+    ],
     "channels": [],
     "description": "Plans trips end to end: searches flights and hotels, builds itineraries and answers visa questions.",
     "extras": {
@@ -465,7 +608,7 @@
     "confidence": 0.95,
     "format": "a2a"
   },
-  "fingerprint": "sha256:5ab35e32c496ab6c04ea226ea97c40fb8fb05aa043fb2b84a032bbebf183460b",
+  "fingerprint": "sha256:eb228e1b7633fc362ca76b07b77515f1c6c725802d570865595514786e4598e0",
   "lint": {
     "findings": 0,
     "grade": "A",

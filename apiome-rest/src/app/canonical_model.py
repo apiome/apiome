@@ -14,8 +14,11 @@ The model is a tree rooted at :class:`CanonicalApi` (the "artifact"):
       │         ├─ parameters[]   path/query/header/cookie inputs (REST-ish)
       │         └─ messages[]     in/out payloads (+ headers, status, media type)
       ├─ channels[]            event addresses / bindings (event-driven)
-      └─ types[]               records · enums · unions · scalars · aliases · maps
-           └─ fields[]         typed, nullable, defaulted, constrained members
+      ├─ types[]               records · enums · unions · scalars · aliases · maps
+      │    └─ fields[]         typed, nullable, defaulted, constrained members
+      └─ agents[]              agent descriptors (agent paradigm, MFI-18.4): identity,
+           │                   provider, version, capability flags, security schemes
+           └─ skills[]         what the agent can do (id, name, tags, input/output modes)
 
 Two design rules make the model durable:
 
@@ -44,7 +47,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
 
 # Envelope version for a persisted canonical model. Bumped by MFI-2.4 (or later)
 # when the canonical shape changes so readers can migrate older JSONB rows
@@ -463,6 +466,107 @@ class ApiIdentity(CanonicalBase):
     )
 
 
+class AgentProvider(CanonicalBase):
+    """The organization that operates an agent (A2A ``provider``)."""
+
+    organization: Optional[str] = None
+    url: Optional[str] = None
+
+
+class AgentSecurityScheme(CanonicalBase):
+    """One authentication scheme an agent declares (A2A ``securitySchemes`` entry).
+
+    The fields mirror the OpenAPI security-scheme object A2A reuses; anything else the
+    scheme carries is kept in ``extras``.
+    """
+
+    name: str = Field(description="The scheme's name — the key security requirements use.")
+    type: str = Field(
+        description="``apiKey``, ``http``, ``oauth2``, ``openIdConnect`` or ``mutualTLS``."
+    )
+    scheme: Optional[str] = Field(
+        default=None, description="HTTP auth scheme for ``type: http`` (``bearer``, ``basic``)."
+    )
+    location: Optional[str] = Field(
+        default=None, description="Where an ``apiKey`` goes: ``header``, ``query`` or ``cookie``."
+    )
+    parameter_name: Optional[str] = Field(
+        default=None, description="The header / query / cookie name of an ``apiKey``."
+    )
+    bearer_format: Optional[str] = None
+    openid_connect_url: Optional[str] = None
+    flows: Optional[Dict[str, Any]] = Field(
+        default=None, description="OAuth 2 flows, verbatim (``{authorizationCode: {...}}``)."
+    )
+    description: Optional[str] = None
+
+
+class AgentSkill(CanonicalBase):
+    """One thing an agent can do — an A2A skill or an ACP capability.
+
+    Skills are keyed ``<agent key>.<skill id>`` so a skill-level diff lines up by the id the
+    agent author chose, not by position. ``operation_ref`` points at the
+    :class:`Operation` the same skill is projected onto, so operation-centric consumers (lint,
+    emitters, browse) and skill-centric ones read one entity.
+    """
+
+    key: str = Field(description="Stable key, for example ``Travel Concierge.search-flights``.")
+    id: str = Field(description="The skill's own identifier (A2A ``id``, ACP capability name).")
+    name: str
+    description: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    examples: List[str] = Field(default_factory=list)
+    input_modes: List[str] = Field(
+        default_factory=list,
+        description="Media types the skill accepts; empty means the agent's defaults.",
+    )
+    output_modes: List[str] = Field(
+        default_factory=list,
+        description="Media types the skill produces; empty means the agent's defaults.",
+    )
+    security: Optional[List[Dict[str, List[str]]]] = Field(
+        default=None,
+        description="The skill's own requirements (``[{scheme: [scopes]}]``); ``None`` "
+        "inherits the agent's.",
+    )
+    operation_ref: Optional[str] = Field(
+        default=None, description="Key of the :class:`Operation` this skill is projected onto."
+    )
+
+
+class AgentDescriptor(CanonicalBase):
+    """One agent's self-description — the agent-descriptor paradigm (MFI-18.4).
+
+    An A2A Agent Card is one descriptor; an ACP ``GET /agents`` listing is one per agent.
+    """
+
+    key: str = Field(description="Stable key, for example ``Travel Concierge``.")
+    name: str
+    description: Optional[str] = None
+    version: Optional[str] = Field(
+        default=None, description="The agent's own version (not the protocol's)."
+    )
+    url: Optional[str] = Field(default=None, description="The agent's primary endpoint.")
+    protocol: str = Field(description="The agent protocol: ``a2a`` or ``acp``.")
+    protocol_version: Optional[str] = None
+    provider: Optional[AgentProvider] = None
+    capabilities: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Capability flags verbatim (A2A ``streaming``, ``pushNotifications`` …).",
+    )
+    default_input_modes: List[str] = Field(default_factory=list)
+    default_output_modes: List[str] = Field(default_factory=list)
+    security_schemes: List[AgentSecurityScheme] = Field(default_factory=list)
+    security: List[Dict[str, List[str]]] = Field(
+        default_factory=list,
+        description="Agent-level security requirements (``[{scheme: [scopes]}]``).",
+    )
+    skills: List[AgentSkill] = Field(default_factory=list)
+    service_ref: Optional[str] = Field(
+        default=None, description="Key of the :class:`Service` this agent is projected onto."
+    )
+
+
 class CanonicalApi(CanonicalBase):
     """The root artifact: one normalized API description at one version.
 
@@ -497,12 +601,36 @@ class CanonicalApi(CanonicalBase):
     services: List[Service] = Field(default_factory=list)
     channels: List[Channel] = Field(default_factory=list)
     types: List[Type] = Field(default_factory=list)
+    agents: List[AgentDescriptor] = Field(
+        default_factory=list,
+        description="Agent descriptors (agent paradigm, MFI-18.4). Additive: the same agents "
+        "are still projected onto ``services`` / ``operations``; empty for every other format.",
+    )
 
     raw: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Native AST / source document for full-fidelity round-tripping "
         "and per-format lint rules.",
     )
+
+    @model_serializer(mode="wrap")
+    def _omit_empty_agents(self, handler: SerializerFunctionWrapHandler) -> Dict[str, Any]:
+        """Serialize the model, leaving ``agents`` out when it is empty.
+
+        ``agents`` is additive (MFI-18.4): every model that has no agent descriptor must
+        serialize — and therefore fingerprint, diff and persist — exactly as it did before the
+        field existed, so an unchanged re-import of any other format is never a new version.
+
+        Args:
+            handler: Pydantic's default serializer.
+
+        Returns:
+            The serialized model.
+        """
+        data = handler(self)
+        if isinstance(data, dict) and not data.get("agents"):
+            data.pop("agents", None)
+        return data
 
     def type_by_key(self, key: str) -> Optional[Type]:
         """Return the named :class:`Type` with ``key``, or ``None`` if absent."""

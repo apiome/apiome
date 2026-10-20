@@ -1272,15 +1272,16 @@ def _entity_map(model: CanonicalApi) -> Dict[Tuple[str, str], str]:
 
     Granularity is one entry per identity-keyed entity — the artifact root, each
     service (its own fields, excluding nested operations), each operation, each
-    type, and each channel — so a diff reports add/remove/change at the level a
-    reviewer reasons about. ``raw``/``extras`` fidelity bags are excluded from the
+    type, each channel, each agent descriptor (its own fields, excluding nested
+    skills) and each skill (MFI-18.4) — so a diff reports add/remove/change at the
+    level a reviewer reasons about. ``raw``/``extras`` fidelity bags are excluded from the
     root so a diff is about *normalized* shape, not native re-serialization.
     """
     out: Dict[Tuple[str, str], str] = {}
 
     root = model.model_dump(
         mode="json",
-        exclude={"raw", "extras", "services", "channels", "types"},
+        exclude={"raw", "extras", "services", "channels", "types", "agents"},
     )
     out[("root", "")] = _entity_repr(root)
 
@@ -1296,6 +1297,11 @@ def _entity_map(model: CanonicalApi) -> Dict[Tuple[str, str], str]:
 
     for channel in model.channels:
         out[("channel", channel.key)] = _entity_repr(channel.model_dump(mode="json"))
+
+    for agent in model.agents:
+        out[("agent", agent.key)] = _entity_repr(agent.model_dump(mode="json", exclude={"skills"}))
+        for skill in agent.skills:
+            out[("skill", skill.key)] = _entity_repr(skill.model_dump(mode="json"))
 
     return out
 

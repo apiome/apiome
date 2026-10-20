@@ -65,7 +65,11 @@ Add `--dry-run` to preview the import without saving it. See [`apiome import`](.
 | `examples` | The skill's example prompts |
 | `securitySchemes` and `security` | The agent's **security**. A skill with its own `security` keeps it; every other skill inherits the card's. |
 | `url`, `preferredTransport`, `additionalInterfaces` | **Servers**, one per endpoint, labelled with the transport (`JSONRPC`, `GRPC`, `HTTP+JSON`) |
-| `capabilities.streaming` | Skills are marked as streaming |
+| `capabilities` | The agent's **capability flags**, every one kept (`streaming`, `pushNotifications`, `stateTransitionHistory` …). With `streaming: true` the skills are also marked as streaming. |
+
+Apiome keeps the card as an **agent descriptor**: the agent's identity, provider, version, capability
+flags and typed security schemes, with each skill as its own entry keyed by its `id`. The descriptor is
+stored with the version, so every field of the card above comes back exactly as imported.
 
 ## Browse the skills
 
@@ -81,7 +85,11 @@ version comparison reports:
 
 - a skill **added** or **removed** (by skill `id`);
 - a skill **changed** — a new description, tags, modes, examples or security;
-- an **auth change** to `securitySchemes` or the card's `security`, as a change to the agent itself.
+- an **auth change** to `securitySchemes` or the card's `security`, or a **capability flag** turned on
+  or off, as a change to the agent itself.
+
+A skill is matched by its `id`, so renaming a skill reports one changed skill, never a removed one and
+an added one.
 
 ## Lint rules
 

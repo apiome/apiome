@@ -1,6 +1,49 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/plain"
+        ],
+        "description": "Repeats the messages it receives back unchanged. Useful for testing ACP clients.",
+        "extras": {
+          "domains": [],
+          "tags": [
+            "testing"
+          ]
+        },
+        "key": "echo",
+        "name": "echo",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "echo",
+        "skills": [
+          {
+            "description": "Returns each message part unchanged.",
+            "examples": [],
+            "extras": {},
+            "id": "Echo",
+            "input_modes": [],
+            "key": "echo.Echo",
+            "name": "Echo",
+            "operation_ref": "echo.Echo",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": "Repeats the messages it receives back unchanged. Useful for testing ACP clients.",
     "extras": {
@@ -122,7 +165,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:7216d0c133406aba9310d468d31ebe8784cc9b0995c4d5c5171b50cb80c39296",
+  "fingerprint": "sha256:9386ba763b30ece9f333aadf1630d98692294b6b1ce05776115c64965965b045",
   "lint": {
     "findings": 0,
     "grade": "A",

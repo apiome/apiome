@@ -1,6 +1,189 @@
 {
   "adapter": "a2a",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {
+          "pushNotifications": true,
+          "stateTransitionHistory": false,
+          "streaming": true
+        },
+        "default_input_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "default_output_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "description": "Plans trips end to end: searches flights, hotels and rail, builds itineraries and books them.",
+        "extras": {},
+        "key": "Travel Concierge",
+        "name": "Travel Concierge",
+        "protocol": "a2a",
+        "protocol_version": "0.3.0",
+        "provider": {
+          "extras": {},
+          "organization": "Example Travel Co.",
+          "url": "https://travel.example.com"
+        },
+        "security": [
+          {
+            "concierge_oauth": [
+              "trips:read",
+              "trips:write"
+            ]
+          },
+          {
+            "partner_key": []
+          }
+        ],
+        "security_schemes": [
+          {
+            "bearer_format": null,
+            "description": "OAuth 2.0 client credentials for partner agents.",
+            "extras": {},
+            "flows": {
+              "clientCredentials": {
+                "scopes": {
+                  "trips:read": "Read itineraries",
+                  "trips:write": "Create and change bookings"
+                },
+                "tokenUrl": "https://auth.travel.example.com/oauth/token"
+              }
+            },
+            "location": null,
+            "name": "concierge_oauth",
+            "openid_connect_url": null,
+            "parameter_name": null,
+            "scheme": null,
+            "type": "oauth2"
+          },
+          {
+            "bearer_format": null,
+            "description": "Static key for legacy partner integrations.",
+            "extras": {},
+            "flows": null,
+            "location": "header",
+            "name": "partner_key",
+            "openid_connect_url": null,
+            "parameter_name": "X-Partner-Key",
+            "scheme": null,
+            "type": "apiKey"
+          }
+        ],
+        "service_ref": "Travel Concierge",
+        "skills": [
+          {
+            "description": "Books every item of an itinerary and returns the confirmation numbers.",
+            "examples": [],
+            "extras": {},
+            "id": "book-trip",
+            "input_modes": [
+              "application/json"
+            ],
+            "key": "Travel Concierge.book-trip",
+            "name": "Book trip",
+            "operation_ref": "Travel Concierge.book-trip",
+            "output_modes": [
+              "application/json"
+            ],
+            "security": [
+              {
+                "concierge_oauth": [
+                  "trips:write"
+                ]
+              }
+            ],
+            "tags": [
+              "travel",
+              "booking",
+              "payments"
+            ]
+          },
+          {
+            "description": "Assembles chosen flights, hotels and activities into a day-by-day itinerary document.",
+            "examples": [],
+            "extras": {},
+            "id": "build-itinerary",
+            "input_modes": [],
+            "key": "Travel Concierge.build-itinerary",
+            "name": "Build itinerary",
+            "operation_ref": "Travel Concierge.build-itinerary",
+            "output_modes": [
+              "application/json",
+              "application/pdf"
+            ],
+            "security": null,
+            "tags": [
+              "travel",
+              "itinerary",
+              "planning"
+            ]
+          },
+          {
+            "description": "Finds flights between two airports for given dates, cabin class and passenger count, including multi-city trips.",
+            "examples": [
+              "Find me a direct flight from SFO to NRT on 12 March, economy, 2 adults"
+            ],
+            "extras": {},
+            "id": "search-flights",
+            "input_modes": [],
+            "key": "Travel Concierge.search-flights",
+            "name": "Search flights",
+            "operation_ref": "Travel Concierge.search-flights",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "travel",
+              "flights",
+              "search",
+              "multi-city"
+            ]
+          },
+          {
+            "description": "Finds hotels near a location for a date range, filtered by price and rating.",
+            "examples": [
+              "Four-star hotels within 1 km of Shibuya station, 12-16 March"
+            ],
+            "extras": {},
+            "id": "search-hotels",
+            "input_modes": [],
+            "key": "Travel Concierge.search-hotels",
+            "name": "Search hotels",
+            "operation_ref": "Travel Concierge.search-hotels",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "travel",
+              "hotels",
+              "search"
+            ]
+          },
+          {
+            "description": "Finds train connections between two stations, including seat classes and passes.",
+            "examples": [
+              "Shinkansen from Tokyo to Kyoto on the morning of 14 March"
+            ],
+            "extras": {},
+            "id": "search-rail",
+            "input_modes": [],
+            "key": "Travel Concierge.search-rail",
+            "name": "Search rail",
+            "operation_ref": "Travel Concierge.search-rail",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "travel",
+              "rail",
+              "search"
+            ]
+          }
+        ],
+        "url": "https://travel.agents.example.com/a2a/v1",
+        "version": "3.0.0"
+      }
+    ],
     "channels": [],
     "description": "Plans trips end to end: searches flights, hotels and rail, builds itineraries and books them.",
     "extras": {
@@ -603,7 +786,7 @@
     "confidence": 0.95,
     "format": "a2a"
   },
-  "fingerprint": "sha256:fb86cea9d1c5eb18afd2c24c4d7458f101d2da7640f42774cca9f2eb787bd7b4",
+  "fingerprint": "sha256:35b54f63df4a533262f42c737cb6acc81a76d5f1333e751cd9040ce17a48d6bd",
   "lint": {
     "findings": 0,
     "grade": "A",

@@ -11,6 +11,9 @@ the queryable rows. These helpers fill that gap:
   inserts the full tree;
 * :func:`load_canonical_api` — reads the live artifact for a version back into a model.
 
+Agent descriptors (MFI-18.4, #3977) persist to ``api_agent_descriptors`` and their skills to
+``api_agent_skills`` (V306); a model with no agents writes no rows there.
+
 Message fields that are not first-class columns (today: ``required``) ride in
 ``api_messages.extras`` under reserved keys so reload reconstructs the Pydantic model.
 """
@@ -21,6 +24,10 @@ import json
 from typing import Any, Dict, List, Optional, Protocol, Sequence
 
 from .canonical_model import (
+    AgentDescriptor,
+    AgentProvider,
+    AgentSecurityScheme,
+    AgentSkill,
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
@@ -192,6 +199,46 @@ def dump_canonical_tree(model: CanonicalApi) -> Dict[str, Any]:
             }
         )
 
+    agents: List[Dict[str, Any]] = []
+    for ag_ord, agent in enumerate(model.agents):
+        agents.append(
+            {
+                "key": agent.key,
+                "name": agent.name,
+                "description": agent.description,
+                "version": agent.version,
+                "url": agent.url,
+                "protocol": agent.protocol,
+                "protocol_version": agent.protocol_version,
+                "provider": _dump_model(agent.provider),
+                "capabilities": _json(agent.capabilities) or {},
+                "default_input_modes": list(agent.default_input_modes),
+                "default_output_modes": list(agent.default_output_modes),
+                "security_schemes": _dump_model(agent.security_schemes) or [],
+                "security": _json(agent.security) or [],
+                "service_ref": agent.service_ref,
+                "ordinal": ag_ord,
+                "extras": dict(agent.extras or {}),
+                "skills": [
+                    {
+                        "key": skill.key,
+                        "skill_id": skill.id,
+                        "name": skill.name,
+                        "description": skill.description,
+                        "tags": list(skill.tags),
+                        "examples": list(skill.examples),
+                        "input_modes": list(skill.input_modes),
+                        "output_modes": list(skill.output_modes),
+                        "security": _json(skill.security),
+                        "operation_ref": skill.operation_ref,
+                        "ordinal": sk_ord,
+                        "extras": dict(skill.extras or {}),
+                    }
+                    for sk_ord, skill in enumerate(agent.skills)
+                ],
+            }
+        )
+
     return {
         "artifact": {
             "schema_version": model.schema_version,
@@ -211,7 +258,46 @@ def dump_canonical_tree(model: CanonicalApi) -> Dict[str, Any]:
         "services": services,
         "channels": channels,
         "types": types,
+        "agents": agents,
     }
+
+
+def _load_agent(row: Dict[str, Any]) -> AgentDescriptor:
+    """Rebuild one :class:`AgentDescriptor` from its dumped / SQL-row dict (skills nested)."""
+    provider = row.get("provider")
+    return AgentDescriptor(
+        key=row["key"],
+        name=row["name"],
+        description=row.get("description"),
+        version=row.get("version"),
+        url=row.get("url"),
+        protocol=row["protocol"],
+        protocol_version=row.get("protocol_version"),
+        provider=AgentProvider.model_validate(provider) if isinstance(provider, dict) else None,
+        capabilities=dict(row.get("capabilities") or {}),
+        default_input_modes=list(row.get("default_input_modes") or []),
+        default_output_modes=list(row.get("default_output_modes") or []),
+        security_schemes=_validate_list(AgentSecurityScheme, row.get("security_schemes")),
+        security=list(row.get("security") or []),
+        service_ref=row.get("service_ref"),
+        extras=dict(row.get("extras") or {}),
+        skills=[
+            AgentSkill(
+                key=skill["key"],
+                id=skill["skill_id"],
+                name=skill["name"],
+                description=skill.get("description"),
+                tags=list(skill.get("tags") or []),
+                examples=list(skill.get("examples") or []),
+                input_modes=list(skill.get("input_modes") or []),
+                output_modes=list(skill.get("output_modes") or []),
+                security=skill.get("security"),
+                operation_ref=skill.get("operation_ref"),
+                extras=dict(skill.get("extras") or {}),
+            )
+            for skill in row.get("skills") or []
+        ],
+    )
 
 
 def _validate_list(model_cls: Any, items: Any) -> List[Any]:
@@ -375,6 +461,7 @@ def load_canonical_tree(tree: Dict[str, Any]) -> CanonicalApi:
         services=services,
         channels=channels,
         types=types,
+        agents=[_load_agent(row) for row in tree.get("agents") or []],
         raw=art.get("raw"),
         extras=dict(art.get("extras") or {}),
     )
@@ -425,6 +512,20 @@ def _soft_delete_live_artifact(cursor: Any, *, tenant_id: str, version_id: str) 
     cursor.execute(
         """
         UPDATE apiome.api_channels SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE artifact_id = %s::uuid AND deleted_at IS NULL
+        """,
+        (artifact_id,),
+    )
+    cursor.execute(
+        """
+        UPDATE apiome.api_agent_skills SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE artifact_id = %s::uuid AND deleted_at IS NULL
+        """,
+        (artifact_id,),
+    )
+    cursor.execute(
+        """
+        UPDATE apiome.api_agent_descriptors SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE artifact_id = %s::uuid AND deleted_at IS NULL
         """,
         (artifact_id,),
@@ -676,6 +777,77 @@ def _insert_tree(
                 ),
             )
 
+    for agent in tree.get("agents") or []:
+        cursor.execute(
+            """
+            INSERT INTO apiome.api_agent_descriptors (
+                tenant_id, version_id, artifact_id, key, name, description, agent_version, url,
+                protocol, protocol_version, provider, capabilities, default_input_modes,
+                default_output_modes, security_schemes, security, service_ref, ordinal, extras
+            ) VALUES (
+                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s,
+                %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
+                %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb
+            )
+            RETURNING id
+            """,
+            (
+                tenant_id,
+                version_id,
+                artifact_id,
+                agent["key"],
+                agent["name"],
+                agent.get("description"),
+                agent.get("version"),
+                agent.get("url"),
+                agent["protocol"],
+                agent.get("protocol_version"),
+                json.dumps(agent["provider"]) if agent.get("provider") is not None else None,
+                json.dumps(agent.get("capabilities") or {}),
+                json.dumps(agent.get("default_input_modes") or []),
+                json.dumps(agent.get("default_output_modes") or []),
+                json.dumps(agent.get("security_schemes") or []),
+                json.dumps(agent.get("security") or []),
+                agent.get("service_ref"),
+                agent.get("ordinal") or 0,
+                json.dumps(agent.get("extras") or {}),
+            ),
+        )
+        agent_row = cursor.fetchone()
+        agent_id = str(agent_row["id"] if isinstance(agent_row, dict) else agent_row[0])
+        for skill in agent.get("skills") or []:
+            cursor.execute(
+                """
+                INSERT INTO apiome.api_agent_skills (
+                    tenant_id, version_id, artifact_id, agent_id, key, skill_id, name,
+                    description, tags, examples, input_modes, output_modes, security,
+                    operation_ref, ordinal, extras
+                ) VALUES (
+                    %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
+                    %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
+                    %s, %s, %s::jsonb
+                )
+                """,
+                (
+                    tenant_id,
+                    version_id,
+                    artifact_id,
+                    agent_id,
+                    skill["key"],
+                    skill["skill_id"],
+                    skill["name"],
+                    skill.get("description"),
+                    json.dumps(skill.get("tags") or []),
+                    json.dumps(skill.get("examples") or []),
+                    json.dumps(skill.get("input_modes") or []),
+                    json.dumps(skill.get("output_modes") or []),
+                    json.dumps(skill["security"]) if skill.get("security") is not None else None,
+                    skill.get("operation_ref"),
+                    skill.get("ordinal") or 0,
+                    json.dumps(skill.get("extras") or {}),
+                ),
+            )
+
     return artifact_id
 
 
@@ -920,6 +1092,46 @@ def load_canonical_api(
                     }
                 )
 
+            agent_rows = _fetch_all(
+                cursor,
+                """
+                SELECT * FROM apiome.api_agent_descriptors
+                WHERE artifact_id = %s::uuid AND deleted_at IS NULL
+                ORDER BY ordinal ASC, key ASC
+                """,
+                (artifact_id,),
+            )
+            agents: List[Dict[str, Any]] = []
+            for ag in agent_rows:
+                skill_rows = _fetch_all(
+                    cursor,
+                    """
+                    SELECT * FROM apiome.api_agent_skills
+                    WHERE agent_id = %s::uuid AND deleted_at IS NULL
+                    ORDER BY ordinal ASC, key ASC
+                    """,
+                    (str(ag["id"]),),
+                )
+                agents.append(
+                    {
+                        **{k: ag.get(k) for k in (
+                            "key", "name", "description", "url", "protocol", "protocol_version",
+                            "provider", "capabilities", "default_input_modes",
+                            "default_output_modes", "security_schemes", "security",
+                            "service_ref", "ordinal", "extras",
+                        )},
+                        "version": ag.get("agent_version"),
+                        "skills": [
+                            {k: sk.get(k) for k in (
+                                "key", "skill_id", "name", "description", "tags", "examples",
+                                "input_modes", "output_modes", "security", "operation_ref",
+                                "ordinal", "extras",
+                            )}
+                            for sk in skill_rows
+                        ],
+                    }
+                )
+
             tree = {
                 "artifact": {
                     "schema_version": art["schema_version"],
@@ -939,6 +1151,7 @@ def load_canonical_api(
                 "services": services,
                 "channels": channels,
                 "types": types,
+                "agents": agents,
             }
         conn.commit()
         return load_canonical_tree(tree)

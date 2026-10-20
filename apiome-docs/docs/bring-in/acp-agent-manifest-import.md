@@ -67,6 +67,10 @@ Add `--dry-run` to preview without saving. See [`apiome import`](../reference/cl
 stamps. They change on every deployment, so Apiome keeps them only in the stored source; they never
 make an unchanged agent look like a new version.
 
+Apiome also keeps each agent as an **agent descriptor** with one skill per capability, keyed by the
+capability name and stored with the version, so the agents and their capabilities come back exactly
+as imported.
+
 ## Browse the agents
 
 Open the item from **Bring in → Catalog**. The **Overview** tab lists an **Agents** group: each agent
