@@ -1,6 +1,83 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain",
+          "application/json",
+          "application/pdf"
+        ],
+        "default_output_modes": [
+          "text/markdown",
+          "application/json"
+        ],
+        "description": "Researches a question on the web and in uploaded PDFs, and writes a cited summary.",
+        "extras": {
+          "domains": [
+            "research"
+          ],
+          "tags": [
+            "search",
+            "summarization",
+            "rag",
+            "pdf"
+          ]
+        },
+        "key": "research-assistant",
+        "name": "research-assistant",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "research-assistant",
+        "skills": [
+          {
+            "description": "Extracts the text of uploaded PDF files as extra sources.",
+            "examples": [],
+            "extras": {},
+            "id": "Read PDFs",
+            "input_modes": [],
+            "key": "research-assistant.Read PDFs",
+            "name": "Read PDFs",
+            "operation_ref": "research-assistant.Read PDFs",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Condenses the chosen sources into a short answer in the asker's language.",
+            "examples": [],
+            "extras": {},
+            "id": "Summarize",
+            "input_modes": [],
+            "key": "research-assistant.Summarize",
+            "name": "Summarize",
+            "operation_ref": "research-assistant.Summarize",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Searches the public web and ranks sources by relevance.",
+            "examples": [],
+            "extras": {},
+            "id": "Web search",
+            "input_modes": [],
+            "key": "research-assistant.Web search",
+            "name": "Web search",
+            "operation_ref": "research-assistant.Web search",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": "Researches a question on the web and in uploaded PDFs, and writes a cited summary.",
     "extras": {
@@ -281,7 +358,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:f07f2634bc0d37ca7a8933e0bf172be3fbb9fcd0e40798d0c5a4d1bd4ef45e89",
+  "fingerprint": "sha256:d4cf1261b94c41068fdb8f9942cd7c572159b471e4d7ed0a83d9a4f4b12ea5ca",
   "lint": {
     "findings": 0,
     "grade": "A",

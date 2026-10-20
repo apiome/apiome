@@ -390,8 +390,10 @@ def test_an_auth_only_change_is_a_changed_service(adapter: A2aImportSource) -> N
     diff = adapter.diff(
         _model(adapter, json.dumps(card)), _model(adapter, json.dumps(secured))
     )
+    # The agent descriptor (MFI-18.4) reports the auth change too, beside its service projection.
     assert [(e.entity, e.change) for e in diff.entries] == [
-        ("service", DiffChangeKind.CHANGED)
+        ("agent", DiffChangeKind.CHANGED),
+        ("service", DiffChangeKind.CHANGED),
     ]
 
 

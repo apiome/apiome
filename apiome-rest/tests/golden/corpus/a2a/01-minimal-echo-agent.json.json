@@ -1,6 +1,49 @@
 {
   "adapter": "a2a",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/plain"
+        ],
+        "description": "Repeats back whatever text it is sent. Useful for testing A2A clients.",
+        "extras": {},
+        "key": "Echo Agent",
+        "name": "Echo Agent",
+        "protocol": "a2a",
+        "protocol_version": "0.3.0",
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "Echo Agent",
+        "skills": [
+          {
+            "description": "Returns the incoming message text unchanged.",
+            "examples": [
+              "Say hello back to me"
+            ],
+            "extras": {},
+            "id": "echo",
+            "input_modes": [],
+            "key": "Echo Agent.echo",
+            "name": "Echo",
+            "operation_ref": "Echo Agent.echo",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "testing",
+              "echo"
+            ]
+          }
+        ],
+        "url": "https://echo.agents.example.com/a2a/v1",
+        "version": "1.0.0"
+      }
+    ],
     "channels": [],
     "description": "Repeats back whatever text it is sent. Useful for testing A2A clients.",
     "extras": {
@@ -149,7 +192,7 @@
     "confidence": 0.95,
     "format": "a2a"
   },
-  "fingerprint": "sha256:9f372b62832eacb4022d0d71199215e4b5875cb824747f88a4877f3500a6ed6e",
+  "fingerprint": "sha256:e562f2c03a5a8905654c471d009e8ca340f7417b9b8245cfde8d6a83b7a306f0",
   "lint": {
     "findings": 1,
     "grade": "A",

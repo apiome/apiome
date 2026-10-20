@@ -1,6 +1,159 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "*/*"
+        ],
+        "default_output_modes": [
+          "*/*"
+        ],
+        "description": null,
+        "extras": {
+          "domains": [],
+          "tags": [
+            "ops"
+          ]
+        },
+        "key": "Bad Name_With Spaces",
+        "name": "Bad Name_With Spaces",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "Bad Name_With Spaces",
+        "skills": [
+          {
+            "description": null,
+            "examples": [],
+            "extras": {},
+            "id": "Anything",
+            "input_modes": [],
+            "key": "Bad Name_With Spaces.Anything",
+            "name": "Anything",
+            "operation_ref": "Bad Name_With Spaces.Anything",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Same capability declared twice.",
+            "examples": [],
+            "extras": {
+              "duplicate_of": "Bad Name_With Spaces.Anything"
+            },
+            "id": "Anything",
+            "input_modes": [],
+            "key": "Bad Name_With Spaces.Anything~2",
+            "name": "Anything",
+            "operation_ref": "Bad Name_With Spaces.Anything~2",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/markdown"
+        ],
+        "description": "Rédige des résumés — 日本語もOK.",
+        "extras": {
+          "domains": [],
+          "tags": [
+            "writing",
+            "多言語"
+          ]
+        },
+        "key": "résumé-writer",
+        "name": "résumé-writer",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "résumé-writer",
+        "skills": [
+          {
+            "description": "Écrit un résumé en français.",
+            "examples": [],
+            "extras": {},
+            "id": "Résumé",
+            "input_modes": [],
+            "key": "résumé-writer.Résumé",
+            "name": "Résumé",
+            "operation_ref": "résumé-writer.Résumé",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "*/*"
+        ],
+        "default_output_modes": [
+          "*/*"
+        ],
+        "description": "Accepts anything and returns anything.",
+        "extras": {
+          "domains": [],
+          "tags": []
+        },
+        "key": "wildcard",
+        "name": "wildcard",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "wildcard",
+        "skills": [],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "*/*"
+        ],
+        "description": "A second agent with the same name.",
+        "extras": {
+          "domains": [
+            "ops"
+          ],
+          "duplicate_of": "wildcard",
+          "tags": []
+        },
+        "key": "wildcard~2",
+        "name": "wildcard",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "wildcard~2",
+        "skills": [],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": null,
     "extras": {
@@ -332,7 +485,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:2466c09390aa68d396bcbc643fef3206d8f8e4f4d760d4882e3fbab35bc2bf4b",
+  "fingerprint": "sha256:0ed3c9ee917370a396ee2903090d5dbdbc5a42a03b9718f1cd0e57890a263c79",
   "lint": {
     "findings": 17,
     "grade": "F",

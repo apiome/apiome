@@ -432,6 +432,43 @@ def test_asyncapi_import_promotes_classes_and_persists_canonical(monkeypatch) ->
     assert model.operations()[0].messages[0].extras["payload_class_id"] == "class-1"
 
 
+def test_agent_descriptor_import_persists_canonical(monkeypatch) -> None:
+    """MFI-18.4 (#3977): an A2A card import lands its agents and skills in the api_* tree."""
+    from pathlib import Path
+
+    from app.import_source import get_import_source, load_builtin_import_sources
+
+    load_builtin_import_sources()
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    card = (
+        Path(__file__).resolve().parents[2]
+        / "apiome-ui/examples/a2a/02-typical-travel-concierge.json"
+    ).read_text(encoding="utf-8")
+    adapter = get_import_source("a2a")
+    model = adapter.normalize(adapter.parse(card))
+    routing = ImportRoutingDecision(
+        target=ImportTarget.CATALOG,
+        publishable=False,
+        schemas_only=False,
+        reason="a2a",
+        source="a2a",
+        paradigm="agent",
+        format="a2a",
+        operation_count=len(model.operations()),
+        type_count=0,
+        channel_count=0,
+    )
+    payload = _payload()
+    payload["filename"] = "agent-card.json"
+    payload["metadata"]["source_kind"] = "a2a"
+
+    assert persist_adapter_import(payload, model, _text_intake(card), routing) is not None
+    assert fake.persisted_canonical is not None
+    assert fake.persisted_canonical["format"] == "a2a"
+    assert fake.persisted_canonical["operation_count"] == len(model.operations())
+
+
 def test_non_asyncapi_skips_canonical_persist(monkeypatch) -> None:
     fake = _FakeDb()
     monkeypatch.setattr("app.database.db", fake)

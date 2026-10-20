@@ -1,6 +1,169 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "application/json"
+        ],
+        "default_output_modes": [
+          "application/json",
+          "text/plain"
+        ],
+        "description": "Routes an extracted invoice to the right approver by amount and cost centre.",
+        "extras": {
+          "domains": [
+            "finance",
+            "workflow"
+          ],
+          "tags": [
+            "approvals"
+          ]
+        },
+        "key": "approval-router",
+        "name": "approval-router",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "approval-router",
+        "skills": [
+          {
+            "description": "Chooses an approver and opens an approval task.",
+            "examples": [],
+            "extras": {},
+            "id": "Route for approval",
+            "input_modes": [],
+            "key": "approval-router.Route for approval",
+            "name": "Route for approval",
+            "operation_ref": "approval-router.Route for approval",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "application/json"
+        ],
+        "default_output_modes": [
+          "application/json"
+        ],
+        "description": "Converts amounts between currencies at the day's reference rate.",
+        "extras": {
+          "domains": [
+            "finance"
+          ],
+          "tags": [
+            "fx"
+          ]
+        },
+        "key": "currency-converter",
+        "name": "currency-converter",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "currency-converter",
+        "skills": [
+          {
+            "description": "Converts an amount from one ISO 4217 currency to another.",
+            "examples": [],
+            "extras": {},
+            "id": "Convert",
+            "input_modes": [],
+            "key": "currency-converter.Convert",
+            "name": "Convert",
+            "operation_ref": "currency-converter.Convert",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Returns the reference rate for a currency pair on a date.",
+            "examples": [],
+            "extras": {},
+            "id": "Rate lookup",
+            "input_modes": [],
+            "key": "currency-converter.Rate lookup",
+            "name": "Rate lookup",
+            "operation_ref": "currency-converter.Rate lookup",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "application/pdf",
+          "image/png",
+          "image/jpeg"
+        ],
+        "default_output_modes": [
+          "application/json"
+        ],
+        "description": "Extracts header fields and line items from invoice PDFs and images.",
+        "extras": {
+          "domains": [
+            "finance",
+            "accounts-payable"
+          ],
+          "tags": [
+            "ocr",
+            "extraction"
+          ]
+        },
+        "key": "invoice-extractor",
+        "name": "invoice-extractor",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "invoice-extractor",
+        "skills": [
+          {
+            "description": "Reads supplier, dates, totals and tax from an invoice.",
+            "examples": [],
+            "extras": {},
+            "id": "Extract fields",
+            "input_modes": [],
+            "key": "invoice-extractor.Extract fields",
+            "name": "Extract fields",
+            "operation_ref": "invoice-extractor.Extract fields",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Returns each line item with quantity, unit price and amount.",
+            "examples": [],
+            "extras": {},
+            "id": "Extract line items",
+            "input_modes": [],
+            "key": "invoice-extractor.Extract line items",
+            "name": "Extract line items",
+            "operation_ref": "invoice-extractor.Extract line items",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": null,
     "extras": {
@@ -424,7 +587,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:e2f963b0e66383ab3f26927a1c95d8366a3ff420930df121f250ee13647ab538",
+  "fingerprint": "sha256:15eeedb6415284e25e7f7ca112b242f873137074436c1127c0ccc6fbdf7fb6f1",
   "lint": {
     "findings": 1,
     "grade": "A",

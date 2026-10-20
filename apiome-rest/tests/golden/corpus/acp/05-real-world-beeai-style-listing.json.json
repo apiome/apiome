@@ -1,6 +1,123 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/plain"
+        ],
+        "description": "General-purpose conversational agent with tool use: web search, Wikipedia and weather.",
+        "extras": {
+          "domains": [
+            "general"
+          ],
+          "tags": [
+            "chat",
+            "tools",
+            "assistant"
+          ]
+        },
+        "key": "chat",
+        "name": "chat",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "chat",
+        "skills": [
+          {
+            "description": "Holds a multi-turn conversation with memory of earlier turns.",
+            "examples": [],
+            "extras": {},
+            "id": "Conversation",
+            "input_modes": [],
+            "key": "chat.Conversation",
+            "name": "Conversation",
+            "operation_ref": "chat.Conversation",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Calls web search, Wikipedia and weather tools when a question needs them.",
+            "examples": [],
+            "extras": {},
+            "id": "Tool use",
+            "input_modes": [],
+            "key": "chat.Tool use",
+            "name": "Tool use",
+            "operation_ref": "chat.Tool use",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      },
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain"
+        ],
+        "default_output_modes": [
+          "text/plain"
+        ],
+        "description": "Autonomous research agent that writes detailed, factual, unbiased reports with citations.",
+        "extras": {
+          "domains": [
+            "research"
+          ],
+          "tags": [
+            "research",
+            "reports"
+          ]
+        },
+        "key": "gpt-researcher",
+        "name": "gpt-researcher",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "gpt-researcher",
+        "skills": [
+          {
+            "description": "Writes a long-form report with references.",
+            "examples": [],
+            "extras": {},
+            "id": "Report writing",
+            "input_modes": [],
+            "key": "gpt-researcher.Report writing",
+            "name": "Report writing",
+            "operation_ref": "gpt-researcher.Report writing",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Breaks a topic into research questions.",
+            "examples": [],
+            "extras": {},
+            "id": "Research planning",
+            "input_modes": [],
+            "key": "gpt-researcher.Research planning",
+            "name": "Research planning",
+            "operation_ref": "gpt-researcher.Research planning",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": null,
     "extras": {
@@ -345,7 +462,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:72edb099460e229086c1e7416dfcb13c6c9d3bdd30aa3bc67cf8ae9414289f54",
+  "fingerprint": "sha256:ef4af7bf758f1c55d2708fc11227ea753459df0f3d109c719a1debba010127bb",
   "lint": {
     "findings": 1,
     "grade": "A",

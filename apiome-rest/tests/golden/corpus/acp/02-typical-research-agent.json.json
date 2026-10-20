@@ -1,6 +1,81 @@
 {
   "adapter": "acp",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {},
+        "default_input_modes": [
+          "text/plain",
+          "application/json"
+        ],
+        "default_output_modes": [
+          "text/markdown",
+          "application/json"
+        ],
+        "description": "Researches a question on the web and writes a cited summary.",
+        "extras": {
+          "domains": [
+            "research"
+          ],
+          "tags": [
+            "search",
+            "summarization",
+            "rag"
+          ]
+        },
+        "key": "research-assistant",
+        "name": "research-assistant",
+        "protocol": "acp",
+        "protocol_version": null,
+        "provider": null,
+        "security": [],
+        "security_schemes": [],
+        "service_ref": "research-assistant",
+        "skills": [
+          {
+            "description": "Adds numbered citations linking each claim to its source.",
+            "examples": [],
+            "extras": {},
+            "id": "Cite sources",
+            "input_modes": [],
+            "key": "research-assistant.Cite sources",
+            "name": "Cite sources",
+            "operation_ref": "research-assistant.Cite sources",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Condenses the chosen sources into a short answer.",
+            "examples": [],
+            "extras": {},
+            "id": "Summarize",
+            "input_modes": [],
+            "key": "research-assistant.Summarize",
+            "name": "Summarize",
+            "operation_ref": "research-assistant.Summarize",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": "Searches the public web and ranks sources by relevance.",
+            "examples": [],
+            "extras": {},
+            "id": "Web search",
+            "input_modes": [],
+            "key": "research-assistant.Web search",
+            "name": "Web search",
+            "operation_ref": "research-assistant.Web search",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          }
+        ],
+        "url": null,
+        "version": null
+      }
+    ],
     "channels": [],
     "description": "Researches a question on the web and writes a cited summary.",
     "extras": {
@@ -272,7 +347,7 @@
     "confidence": 0.93,
     "format": "acp"
   },
-  "fingerprint": "sha256:d7e75aa4cf4de88187dcece9c04a76257e563ac4680ef9fbe05cc95d7202121a",
+  "fingerprint": "sha256:f8445cab4264a847a8de06572af060bd5219ab6154cab215a8aead5ed56c66c7",
   "lint": {
     "findings": 0,
     "grade": "A",

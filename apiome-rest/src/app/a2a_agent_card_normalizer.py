@@ -27,6 +27,11 @@ The mapping
 * The card's identity: ``identity.name`` is the agent name, ``identity.namespace`` the
   provider organization, ``version`` the agent's own version (the A2A protocol version is
   recorded on ``extras.protocol_version``).
+* **The agent descriptor** (MFI-18.4): the same card is also one first-class
+  :class:`~app.canonical_model.AgentDescriptor` on ``agents`` — identity, provider, version,
+  capability flags, typed security schemes and one :class:`~app.canonical_model.AgentSkill`
+  per skill keyed like its operation — so skill- and auth-level diffs are stable and the card
+  round-trips without reading ``extras``.
 
 A skill ``id`` repeated in one card would collapse two skills onto one key, so a repeat is
 keyed ``<id>~2``, ``<id>~3`` … and marked ``extras.duplicate_of``; the lint pack reports it.
@@ -41,8 +46,12 @@ from .a2a_agent_card_parser import (
     A2aSkill,
     dumps_agent_card_for_raw,
 )
+from .agent_descriptor_schemes import agent_security_schemes
 from .agent_paradigm_keys import unique_keys
 from .canonical_model import (
+    AgentDescriptor,
+    AgentProvider,
+    AgentSkill,
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
@@ -141,12 +150,10 @@ class A2aAgentCardNormalizer(Normalizer, register=True):
             if source.capabilities.get("streaming") is True
             else StreamingMode.NONE
         )
+        skill_keys = unique_keys([Keys.operation_rpc(service_key, skill.id) for skill in source.skills])
         operations = [
             self._operation(skill, op_key, duplicate_of, source, card_security, streaming)
-            for skill, (op_key, duplicate_of) in zip(
-                source.skills,
-                unique_keys([Keys.operation_rpc(service_key, skill.id) for skill in source.skills]),
-            )
+            for skill, (op_key, duplicate_of) in zip(source.skills, skill_keys)
         ]
 
         service = Service(
@@ -183,6 +190,7 @@ class A2aAgentCardNormalizer(Normalizer, register=True):
                 for index, interface in enumerate(source.interfaces)
             ],
             services=[service],
+            agents=[self._descriptor(source, service_key, card_security, skill_keys)],
             raw={FORMAT_KEY: dumps_agent_card_for_raw(source)} if include_raw else None,
             extras={
                 "protocol_version": source.protocol_version,
@@ -207,6 +215,66 @@ class A2aAgentCardNormalizer(Normalizer, register=True):
             },
         )
         return normalize_ordering(api)
+
+    @staticmethod
+    def _descriptor(
+        card: A2aAgentCard,
+        service_key: str,
+        card_security: List[Dict[str, List[str]]],
+        skill_keys: Sequence[Tuple[str, Optional[str]]],
+    ) -> AgentDescriptor:
+        """Build the first-class agent descriptor for the card (MFI-18.4).
+
+        Skills keep their *declared* modes and security (empty / ``None`` means "the card's"),
+        so the descriptor round-trips the card; the projected operations carry the effective
+        values instead.
+
+        Args:
+            card: The parsed card.
+            service_key: The agent's service key (also the descriptor key).
+            card_security: The card-level requirements, already JSON-ready.
+            skill_keys: ``(unique key, duplicate_of)`` per skill, as the operations use.
+
+        Returns:
+            The descriptor, its skills pointing at their operations.
+        """
+        provider = card.provider
+        return AgentDescriptor(
+            key=service_key,
+            name=card.name,
+            description=card.description,
+            version=card.version,
+            url=card.url,
+            protocol="a2a",
+            protocol_version=card.protocol_version,
+            provider=AgentProvider(organization=provider.organization, url=provider.url)
+            if provider
+            else None,
+            capabilities=dict(card.capabilities),
+            default_input_modes=list(card.default_input_modes),
+            default_output_modes=list(card.default_output_modes),
+            security_schemes=agent_security_schemes(card.security_schemes),
+            security=card_security,
+            skills=[
+                AgentSkill(
+                    key=key,
+                    id=skill.id,
+                    name=skill.name,
+                    description=skill.description,
+                    tags=list(skill.tags),
+                    examples=list(skill.examples),
+                    input_modes=list(skill.input_modes),
+                    output_modes=list(skill.output_modes),
+                    security=security_requirements_as_extras(skill.security)
+                    if skill.security is not None
+                    else None,
+                    operation_ref=key,
+                    extras={"duplicate_of": duplicate_of} if duplicate_of else {},
+                )
+                for skill, (key, duplicate_of) in zip(card.skills, skill_keys)
+            ],
+            service_ref=service_key,
+        )
 
     @staticmethod
     def _operation(

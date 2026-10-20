@@ -1,6 +1,199 @@
 {
   "adapter": "a2a",
   "canonical": {
+    "agents": [
+      {
+        "capabilities": {
+          "extensions": [
+            {
+              "params": {
+                "currency": "USD"
+              },
+              "required": false,
+              "uri": "https://ops.example.com/ext/cost-hints/v2"
+            },
+            {
+              "uri": "https://ops.example.com/ext/audit/v1"
+            }
+          ],
+          "pushNotifications": false,
+          "stateTransitionHistory": true,
+          "streaming": true
+        },
+        "default_input_modes": [],
+        "default_output_modes": [
+          "text/plain"
+        ],
+        "description": "Grab-bag operations agent used to exercise every corner of the Agent Card shape.",
+        "extras": {},
+        "key": "Ops Swiss-Army Agent",
+        "name": "Ops Swiss-Army Agent",
+        "protocol": "a2a",
+        "protocol_version": "0.3.0",
+        "provider": null,
+        "security": [
+          {
+            "header_key": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "sso": [
+              "ops"
+            ]
+          }
+        ],
+        "security_schemes": [
+          {
+            "bearer_format": "JWT",
+            "description": null,
+            "extras": {},
+            "flows": null,
+            "location": null,
+            "name": "bearer",
+            "openid_connect_url": null,
+            "parameter_name": null,
+            "scheme": "bearer",
+            "type": "http"
+          },
+          {
+            "bearer_format": null,
+            "description": null,
+            "extras": {},
+            "flows": null,
+            "location": "header",
+            "name": "header_key",
+            "openid_connect_url": null,
+            "parameter_name": "X-Ops-Key",
+            "scheme": null,
+            "type": "apiKey"
+          },
+          {
+            "bearer_format": null,
+            "description": null,
+            "extras": {},
+            "flows": null,
+            "location": null,
+            "name": "kerberos",
+            "openid_connect_url": null,
+            "parameter_name": null,
+            "scheme": null,
+            "type": "negotiate"
+          },
+          {
+            "bearer_format": null,
+            "description": null,
+            "extras": {},
+            "flows": null,
+            "location": "query",
+            "name": "legacy_key",
+            "openid_connect_url": null,
+            "parameter_name": "api_key",
+            "scheme": null,
+            "type": "apiKey"
+          }
+        ],
+        "service_ref": "Ops Swiss-Army Agent",
+        "skills": [
+          {
+            "description": "Skill whose id is a number rather than a string.",
+            "examples": [],
+            "extras": {},
+            "id": "42",
+            "input_modes": [],
+            "key": "Ops Swiss-Army Agent.42",
+            "name": "Numeric id skill",
+            "operation_ref": "Ops Swiss-Army Agent.42",
+            "output_modes": [],
+            "security": null,
+            "tags": []
+          },
+          {
+            "description": null,
+            "examples": [
+              "What does error E1234 mean?"
+            ],
+            "extras": {},
+            "id": "explain",
+            "input_modes": [],
+            "key": "Ops Swiss-Army Agent.explain",
+            "name": "Explain",
+            "operation_ref": "Ops Swiss-Army Agent.explain",
+            "output_modes": [],
+            "security": [],
+            "tags": []
+          },
+          {
+            "description": "Restarts a named service on a host after a health check.",
+            "examples": [],
+            "extras": {},
+            "id": "restart-service",
+            "input_modes": [
+              "application/json"
+            ],
+            "key": "Ops Swiss-Army Agent.restart-service",
+            "name": "Restart service",
+            "operation_ref": "Ops Swiss-Army Agent.restart-service",
+            "output_modes": [
+              "application/json",
+              "text/event-stream"
+            ],
+            "security": [
+              {
+                "bearer": [
+                  "ops:write"
+                ]
+              },
+              {
+                "break_glass": []
+              }
+            ],
+            "tags": [
+              "ops",
+              "remediation"
+            ]
+          },
+          {
+            "description": "Reports what a restart would do without doing it.",
+            "examples": [],
+            "extras": {
+              "duplicate_of": "Ops Swiss-Army Agent.restart-service"
+            },
+            "id": "restart-service",
+            "input_modes": [],
+            "key": "Ops Swiss-Army Agent.restart-service~2",
+            "name": "Restart service (dry run)",
+            "operation_ref": "Ops Swiss-Army Agent.restart-service~2",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "ops",
+              "dry-run"
+            ]
+          },
+          {
+            "description": "Résume les incidents des dernières 24 heures — 日本語もOK.",
+            "examples": [],
+            "extras": {},
+            "id": "unicode-✓",
+            "input_modes": [],
+            "key": "Ops Swiss-Army Agent.unicode-✓",
+            "name": "Résumé des incidents",
+            "operation_ref": "Ops Swiss-Army Agent.unicode-✓",
+            "output_modes": [],
+            "security": null,
+            "tags": [
+              "ops",
+              "résumé",
+              "多言語"
+            ]
+          }
+        ],
+        "url": "http://ops.internal.example.com:8080/a2a",
+        "version": "7"
+      }
+    ],
     "channels": [],
     "description": "Grab-bag operations agent used to exercise every corner of the Agent Card shape.",
     "extras": {
@@ -560,7 +753,7 @@
     "confidence": 0.95,
     "format": "a2a"
   },
-  "fingerprint": "sha256:c90cb8cc1f28efac321847f64cd939d6ae9683cbf8e62e768362c1a92e184493",
+  "fingerprint": "sha256:d9a24503a675dfc390cda0e975796f68ce4ba6ae4bfbcd9fc0f07c2c2d2afd31",
   "lint": {
     "findings": 14,
     "grade": "F",

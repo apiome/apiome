@@ -1,0 +1,21 @@
+---
+slug: agent-descriptor-model
+title: Agents and skills as first-class catalog entities
+description: A2A and ACP agents keep their skills, capabilities and auth exactly.
+authors: [apiome]
+---
+
+[A2A Agent Cards](/bring-in/a2a-agent-card-import) and [ACP agents](/bring-in/acp-agent-manifest-import)
+are now stored as **agent descriptors**: an agent's identity, provider, version, capability flags and
+security schemes, with every skill as its own entry.
+
+{/* truncate */}
+
+- **Exact round trips.** An imported card comes back with every skill, capability flag and security
+  scheme it had.
+- **Steadier skill diffs.** Skills are matched by `id`, so renaming one reports a changed skill rather
+  than a removed and an added one.
+- **Capability changes show up.** Turning a capability flag such as `pushNotifications` on or off is
+  now reported as a change to the agent.
+- **Fix:** agent imports (MCP, LLM tools, A2A, ACP, site manifests) can now be stored in the
+  normalized model tables; a database check had been rejecting them.
