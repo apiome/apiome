@@ -141,6 +141,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   'llm-tools': 'LLM Tools',
   mcp: 'MCP Server Manifest',
   a2a: 'A2A Agent Card',
+  acp: 'ACP Agent Manifest',
 };
 
 /**

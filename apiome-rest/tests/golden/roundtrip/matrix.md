@@ -1,6 +1,7 @@
 | source \ emit | apiblueprint | arazzo | asn1 | asyncapi | avro | capnproto | cddl | cloudevents | cobolcopybook | connectrpc | corbaidl | edix12 | fhir | fix | flatbuffers | gateway-api | graphql | hl7v2 | http-file | iso20022 | iso8583 | json-schema | jtd | k8s-crd | kafka-connect | kong | llm-tools | odata | odcs | oncrpc | openapi | openrpc | postman | protobuf | raml | smithy | thrift | typespec | wadl | wit | wsdl | xmlrpc | xsd | zosconnect |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | a2a | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |
+| acp | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |
 | api-blueprint | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |
 | apigee | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |
 | arazzo | X | P | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |
@@ -63,4 +64,4 @@
 | xsd | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | P | X |
 | zosconnect | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | P |
 
-Legend: P=pass F=fail U=unsupported S=skipped X=xfail. Counts: pass=31, fail=0, unsupported=0, skipped=0, xfail=2697.
+Legend: P=pass F=fail U=unsupported S=skipped X=xfail. Counts: pass=31, fail=0, unsupported=0, skipped=0, xfail=2741.

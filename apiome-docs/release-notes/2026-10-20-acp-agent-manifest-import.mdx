@@ -1,0 +1,23 @@
+---
+slug: acp-agent-manifest-import
+title: Import ACP agent manifests
+description: ACP agents import with their capabilities, content types, tags and domains.
+authors: [apiome]
+---
+
+You can now [import ACP agent manifests](/bring-in/acp-agent-manifest-import): the descriptors an ACP
+(Agent Communication Protocol) server publishes for its agents, one manifest at a time or the whole
+`GET /agents` listing.
+
+{/* truncate */}
+
+- **Agents beside A2A cards.** Each agent and its capabilities land in the Catalog under the
+  **Agent** paradigm, with an **Agents** group you can filter by name, tag or domain.
+- **Live discovery.** `apiome import acp --discover https://acp.example.com` imports the server's
+  `/agents` listing.
+- **Stable versions.** Runtime `status` numbers and timestamps are ignored, so only a real change —
+  an agent or capability added, removed or edited — makes a new version.
+- **Hygiene lint.** Nine `acp.*` rules flag duplicate or invalid agent names, missing descriptions,
+  untyped content and agents nobody can find by tag.
+- **Fix:** the A2A lint rules from the previous release now count toward scores on the built-in
+  style guide.

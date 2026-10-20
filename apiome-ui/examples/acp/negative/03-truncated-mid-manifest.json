@@ -1,0 +1,7 @@
+{
+  "name": "echo",
+  "description": "Repeats the input messages back unchanged.",
+  "input_content_types": ["text/plain"],
+  "metadata": {
+    "capabilities": [
+      { "name": "Echo", "description": "Returns every input mess

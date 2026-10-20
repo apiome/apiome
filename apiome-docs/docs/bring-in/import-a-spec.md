@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 55<!--format-count:importable--> formats**, spanning all
+**Apiome imports 56<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 44<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -235,6 +235,7 @@ check is server-side, so a client cannot grant itself one.
 - [Import an Azure API Management API](./azure-api-management-import.md) — what an APIM API's policies become
 - [Import an Apigee proxy bundle](./apigee-proxy-bundle-import.md) — what a bundle's flows, targets and policies become
 - [Import an A2A Agent Card](./a2a-agent-card-import.md) — catalog an agent's skills, tags and security, from a file or its well-known URI
+- [Import ACP agent manifests](./acp-agent-manifest-import.md) — catalog an ACP server's agents and capabilities, from a file or its `/agents` listing
 - [Read a catalog item's format details](./catalog-format-details.md) — what a catalog item records per format
 - [Convert a catalog item to OpenAPI](./convert-to-openapi.md) — promote a catalog item to a publishable Project
 - [Edit classes and properties](../build/edit-classes-and-properties.md) — refine what you imported

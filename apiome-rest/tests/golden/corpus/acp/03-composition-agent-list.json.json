@@ -1,0 +1,440 @@
+{
+  "adapter": "acp",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "agent_count": 3,
+      "agent_tags": [
+        "approvals",
+        "extraction",
+        "fx",
+        "ocr"
+      ],
+      "capability_count": 5,
+      "domains": [
+        "accounts-payable",
+        "finance",
+        "workflow"
+      ],
+      "shape": "agent-list"
+    },
+    "format": "acp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "03-composition-agent-list",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "acp",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "Routes an extracted invoice to the right approver by amount and cost centre.",
+        "extras": {
+          "agent_name": "approval-router",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [
+            {
+              "name": "invoice-extractor",
+              "type": "agent"
+            },
+            {
+              "name": "currency-converter",
+              "type": "agent"
+            }
+          ],
+          "documentation": null,
+          "domains": [
+            "finance",
+            "workflow"
+          ],
+          "framework": "LangGraph",
+          "input_content_types": [
+            "application/json"
+          ],
+          "license": "MIT",
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "application/json",
+            "text/plain"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": [
+            "approvals"
+          ]
+        },
+        "key": "approval-router",
+        "name": "approval-router",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Chooses an approver and opens an approval task.",
+            "extras": {
+              "capability": "Route for approval"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "approval-router.Route for approval",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "approval-router.Route for approval#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json",
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "approval-router.Route for approval#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Route for approval",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "approvals"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Converts amounts between currencies at the day's reference rate.",
+        "extras": {
+          "agent_name": "currency-converter",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [
+            "finance"
+          ],
+          "framework": "LangGraph",
+          "input_content_types": [
+            "application/json"
+          ],
+          "license": "MIT",
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "application/json"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": [
+            "fx"
+          ]
+        },
+        "key": "currency-converter",
+        "name": "currency-converter",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Converts an amount from one ISO 4217 currency to another.",
+            "extras": {
+              "capability": "Convert"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "currency-converter.Convert",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "currency-converter.Convert#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "currency-converter.Convert#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Convert",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "fx"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Returns the reference rate for a currency pair on a date.",
+            "extras": {
+              "capability": "Rate lookup"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "currency-converter.Rate lookup",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "currency-converter.Rate lookup#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "currency-converter.Rate lookup#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Rate lookup",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "fx"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Extracts header fields and line items from invoice PDFs and images.",
+        "extras": {
+          "agent_name": "invoice-extractor",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [
+            {
+              "name": "currency-converter",
+              "type": "agent"
+            }
+          ],
+          "documentation": null,
+          "domains": [
+            "finance",
+            "accounts-payable"
+          ],
+          "framework": "LangGraph",
+          "input_content_types": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "license": "MIT",
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "application/json"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": [
+            "ocr",
+            "extraction"
+          ]
+        },
+        "key": "invoice-extractor",
+        "name": "invoice-extractor",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Reads supplier, dates, totals and tax from an invoice.",
+            "extras": {
+              "capability": "Extract fields"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "invoice-extractor.Extract fields",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/pdf",
+                  "image/png",
+                  "image/jpeg"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "invoice-extractor.Extract fields#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "invoice-extractor.Extract fields#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Extract fields",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "ocr",
+              "extraction"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Returns each line item with quantity, unit price and amount.",
+            "extras": {
+              "capability": "Extract line items"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "invoice-extractor.Extract line items",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/pdf",
+                  "image/png",
+                  "image/jpeg"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "invoice-extractor.Extract line items#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "invoice-extractor.Extract line items#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Extract line items",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "ocr",
+              "extraction"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "03-composition-agent-list",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "acp/03-composition-agent-list.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "acp"
+  },
+  "fingerprint": "sha256:e2f963b0e66383ab3f26927a1c95d8366a3ff420930df121f250ee13647ab538",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "9b4caaeff606a3e0fcd1ed2180a86711f79e941f368a664a6610d9bc4130dff5",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

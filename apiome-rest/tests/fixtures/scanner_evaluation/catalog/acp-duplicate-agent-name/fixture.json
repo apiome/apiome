@@ -1,0 +1,54 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/acp-duplicate-agent-name",
+  "source_format": "acp",
+  "description": "ACP agent listing with exactly one blocking defect: two agents named `lookup`.",
+  "document": {
+    "agents": [
+      {
+        "name": "lookup",
+        "description": "Looks things up.",
+        "input_content_types": [
+          "text/plain"
+        ],
+        "output_content_types": [
+          "text/plain"
+        ],
+        "metadata": {
+          "capabilities": [
+            {
+              "name": "Lookup",
+              "description": "Finds a record."
+            }
+          ],
+          "tags": [
+            "fixture"
+          ],
+          "license": "Apache-2.0"
+        }
+      },
+      {
+        "name": "lookup",
+        "description": "A second agent reusing the name.",
+        "input_content_types": [
+          "text/plain"
+        ],
+        "output_content_types": [
+          "text/plain"
+        ],
+        "metadata": {
+          "capabilities": [
+            {
+              "name": "Lookup",
+              "description": "Finds a record."
+            }
+          ],
+          "tags": [
+            "fixture"
+          ],
+          "license": "Apache-2.0"
+        }
+      }
+    ]
+  }
+}

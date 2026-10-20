@@ -671,6 +671,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['agent2agent', 'well-known', 'skills', 'agent-card.json', 'discover'],
   },
   {
+    id: 'acp-agent-manifest-import',
+    title: 'Import ACP agent manifests',
+    summary: "Catalog an ACP server's agents, capabilities, content types and tags.",
+    page: 'apiome-docs/docs/bring-in/acp-agent-manifest-import.md',
+    section: 'reference',
+    keywords: ['agent communication protocol', 'beeai', '/agents', 'capabilities', 'discover'],
+  },
+  {
     id: 'compare-published-versions',
     title: 'Compare published versions',
     summary: 'Diff two published versions from the CLI, for people and CI.',

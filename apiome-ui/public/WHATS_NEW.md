@@ -22,6 +22,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Azure API Management (definitions and policies) import
     - Apigee proxy bundle import
     - A2A Agent Card import (skills and tags, live discovery from `/.well-known/agent-card.json`)
+    - ACP agent manifest import (agents and capabilities, live discovery from a server's `/agents`)
     - Protobuf editions 2023/2024 normalization parity
     - RELAX NG import
     - DTD import

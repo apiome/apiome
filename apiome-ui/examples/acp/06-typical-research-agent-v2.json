@@ -1,0 +1,82 @@
+{
+  "name": "research-assistant",
+  "description": "Researches a question on the web and in uploaded PDFs, and writes a cited summary.",
+  "input_content_types": [
+    "text/plain",
+    "application/json",
+    "application/pdf"
+  ],
+  "output_content_types": [
+    "text/markdown",
+    "application/json"
+  ],
+  "metadata": {
+    "documentation": "## Research assistant\n\nSend a question; the agent searches, reads the top sources and answers with citations.",
+    "license": "Apache-2.0",
+    "programming_language": "Python",
+    "natural_languages": [
+      "en",
+      "de"
+    ],
+    "framework": "BeeAI",
+    "capabilities": [
+      {
+        "name": "Web search",
+        "description": "Searches the public web and ranks sources by relevance."
+      },
+      {
+        "name": "Summarize",
+        "description": "Condenses the chosen sources into a short answer in the asker's language."
+      },
+      {
+        "name": "Read PDFs",
+        "description": "Extracts the text of uploaded PDF files as extra sources."
+      }
+    ],
+    "domains": [
+      "research"
+    ],
+    "tags": [
+      "search",
+      "summarization",
+      "rag",
+      "pdf"
+    ],
+    "created_at": "2026-03-02T09:00:00Z",
+    "updated_at": "2026-10-18T08:00:00Z",
+    "author": {
+      "name": "Example Research Team",
+      "email": "research@example.com",
+      "url": "https://example.com/research"
+    },
+    "links": [
+      {
+        "type": "source-code",
+        "url": "https://github.com/example/research-assistant"
+      },
+      {
+        "type": "documentation",
+        "url": "https://example.com/research/docs"
+      }
+    ],
+    "dependencies": [
+      {
+        "type": "tool",
+        "name": "web-search"
+      },
+      {
+        "type": "model",
+        "name": "granite-3.3-8b-instruct"
+      }
+    ],
+    "recommended_models": [
+      "granite-3.3-8b-instruct",
+      "llama-3.3-70b-instruct"
+    ]
+  },
+  "status": {
+    "avg_run_tokens": 5302,
+    "avg_run_time_seconds": 21.0,
+    "success_rate": 96.8
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "echo",
+  "description": "Repeats the input messages back unchanged.",
+  "input_content_types": ["text/plain"],
+  "output_content_types": ["text/plain"],
+}

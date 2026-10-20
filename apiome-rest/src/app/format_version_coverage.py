@@ -802,6 +802,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
             )
         ],
     ),
+    "acp": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="agent manifest / `GET /agents` listing (ACP 0.x)",
+                format_key="acp",
+                support=VersionSupport.UNGATED,
+                note="An ACP manifest carries no protocol version; a single manifest and a "
+                "server's agent listing read the same way, one service per agent.",
+            )
+        ],
+    ),
     "a2a": VersionCoverage(
         reads=[
             FormatVersion(

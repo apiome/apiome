@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1432 files** across **104 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1443 files** across **105 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -152,6 +152,7 @@ The corpus holds **1432 files** across **104 format directories**. Every file ha
 | Directory | Format | Paradigm | Marker / shape | Files |
 | --- | --- | --- | --- | --- |
 | `a2a/` | A2A Agent Card | agent | `name` + `skills[].id` beside `capabilities` / `defaultInputModes` / `protocolVersion` | 11 |
+| `acp/` | ACP agent manifest | agent | `name` + `input_content_types` / ACP `metadata`, or `{"agents": [...]}` | 11 |
 | `llm-tools/` | LLM Tools | agent | OpenAI / Anthropic / bare tool-array shape | 13 |
 | `mcp/` | MCP server manifest | agent | `mcpVersion` + `tools[].inputSchema` | 12 |
 
@@ -180,6 +181,28 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/05-encoding-utf16.json` ⚠ | — | `a2a` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 
 > ⚠ **`06-typical-travel-concierge-v3.json`** — The next release of 02-typical-travel-concierge.json: a skill added, one removed, one edited and the security requirements changed — the diff fixture.
+
+> ⚠ **`negative/05-encoding-utf16.json`** — 01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).
+
+### `acp/` — ACP agent manifest
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-echo-agent.json` | minimal | `acp` ≥ 0.9 | valid | `manifest`, `single-capability`, `content-types` |
+| `02-typical-research-agent.json` | typical | `acp` ≥ 0.9 | valid | `manifest`, `capabilities`, `tags`, `domains`, `author`, `links`, `dependencies`, `status` |
+| `03-composition-agent-list.json` | composition | `acp` ≥ 0.9 | valid | `agent-list`, `multi-agent`, `agent-dependencies` |
+| `04-stress-edge-cases.json` | stress | `acp` ≥ 0.9 | valid | `agent-list`, `duplicate-agent-name`, `duplicate-capability`, `invalid-agent-name`, `wildcard-content-types`, `unicode`, `vendor-keys` |
+| `05-real-world-beeai-style-listing.json` | real-world | `acp` ≥ 0.9 | valid | `agent-list`, `annotations`, `container-image`, `recommended-models` |
+| `06-typical-research-agent-v2.json` ⚠ | typical | `acp` ≥ 0.9 | valid | `manifest`, `release-2`, `capability-added`, `capability-removed` |
+| `negative/01-syntactic-trailing-comma.json` | — | `acp` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma` |
+| `negative/02-semantic-empty-agent-list.json` | — | `acp` (no guarantee) | invalid | `negative`, `semantic`, `agent-list` |
+| `negative/03-truncated-mid-manifest.json` | — | `acp` (no guarantee) | invalid | `negative`, `truncated` |
+| `negative/04-wrong-format-a2a-card.json` ⚠ | — | `acp` (no guarantee) | invalid | `negative`, `wrong-format`, `a2a` |
+| `negative/05-encoding-utf16.json` ⚠ | — | `acp` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+
+> ⚠ **`06-typical-research-agent-v2.json`** — The next release of 02-typical-research-agent.json: a capability added, one removed, one edited, new content type and tag, and moved runtime status/timestamps that must not affect the fingerprint.
+
+> ⚠ **`negative/04-wrong-format-a2a-card.json`** — An A2A Agent Card — the neighbouring agent format the ACP adapter must not claim.
 
 > ⚠ **`negative/05-encoding-utf16.json`** — 01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).
 
@@ -2608,6 +2631,7 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 | Adapter | Rung | Justification |
 | --- | --- | --- |
 | `a2a` | multi-file | An Agent Card is a single self-contained JSON document with no cross-document references; A2aImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file. |
+| `acp` | multi-file | An ACP manifest or GET /agents listing is one self-contained JSON document with no cross-document references; AcpImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file. |
 | `apiblueprint` | multi-file | The API Blueprint adapter's parse_fileset only parses the root document and never resolves references across fileset members, so a multi-file set would exercise nothing beyond a single file. |
 | `asn1` | multi-file | Asn1ImportSource.parse_fileset only parses the root member (and the parser rejects more than one module per document), so cross-member resolution genuinely does not exist. |
 | `capnproto` | multi-file | CapnpImportSource.parse_fileset only parses the fileset root and never resolves imported members, so a multi-file set demonstrates nothing beyond a single file. |
@@ -2645,7 +2669,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1432 | `Apache-2.0` |
+| `hand-authored` | 1443 | `Apache-2.0` |
 
 ## Trying an import
 

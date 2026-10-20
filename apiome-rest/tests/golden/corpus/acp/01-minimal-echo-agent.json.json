@@ -1,0 +1,138 @@
+{
+  "adapter": "acp",
+  "canonical": {
+    "channels": [],
+    "description": "Repeats the messages it receives back unchanged. Useful for testing ACP clients.",
+    "extras": {
+      "agent_count": 1,
+      "agent_tags": [
+        "testing"
+      ],
+      "capability_count": 1,
+      "domains": [],
+      "shape": "manifest"
+    },
+    "format": "acp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "echo",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "acp",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "Repeats the messages it receives back unchanged. Useful for testing ACP clients.",
+        "extras": {
+          "agent_name": "echo",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [],
+          "framework": null,
+          "input_content_types": [
+            "text/plain"
+          ],
+          "license": "Apache-2.0",
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "text/plain"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": [
+            "testing"
+          ]
+        },
+        "key": "echo",
+        "name": "echo",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Returns each message part unchanged.",
+            "extras": {
+              "capability": "Echo"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "echo.Echo",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "echo.Echo#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "echo.Echo#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Echo",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "testing"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "echo",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "acp/01-minimal-echo-agent.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "acp"
+  },
+  "fingerprint": "sha256:7216d0c133406aba9310d468d31ebe8784cc9b0995c4d5c5171b50cb80c39296",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

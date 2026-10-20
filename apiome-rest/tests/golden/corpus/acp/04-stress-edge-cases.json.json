@@ -1,0 +1,348 @@
+{
+  "adapter": "acp",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "agent_count": 4,
+      "agent_tags": [
+        "ops",
+        "writing",
+        "多言語"
+      ],
+      "capability_count": 3,
+      "domains": [
+        "ops"
+      ],
+      "shape": "agent-list"
+    },
+    "format": "acp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "04-stress-edge-cases",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "acp",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "agent_name": "Bad Name_With Spaces",
+          "author": null,
+          "content_types_declared": false,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [],
+          "framework": null,
+          "input_content_types": [
+            "*/*"
+          ],
+          "license": null,
+          "links": [],
+          "natural_languages": [
+            "en",
+            "日本語"
+          ],
+          "output_content_types": [
+            "*/*"
+          ],
+          "programming_language": "TypeScript",
+          "recommended_models": [],
+          "tags": [
+            "ops"
+          ]
+        },
+        "key": "Bad Name_With Spaces",
+        "name": "Bad Name_With Spaces",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "capability": "Anything"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Bad Name_With Spaces.Anything",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "*/*"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "Bad Name_With Spaces.Anything#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "*/*"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "Bad Name_With Spaces.Anything#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Anything",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "ops"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Same capability declared twice.",
+            "extras": {
+              "capability": "Anything",
+              "duplicate_of": "Bad Name_With Spaces.Anything"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Bad Name_With Spaces.Anything~2",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "*/*"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "Bad Name_With Spaces.Anything~2#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "*/*"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "Bad Name_With Spaces.Anything~2#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Anything",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "ops"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Rédige des résumés — 日本語もOK.",
+        "extras": {
+          "agent_name": "résumé-writer",
+          "author": {
+            "email": "writer@example.com"
+          },
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [],
+          "framework": null,
+          "input_content_types": [
+            "text/plain"
+          ],
+          "license": "CC-BY-4.0",
+          "links": [
+            {
+              "type": "homepage"
+            },
+            {
+              "type": "container-image",
+              "url": "ghcr.io/example/writer:1.2"
+            }
+          ],
+          "natural_languages": [],
+          "output_content_types": [
+            "text/markdown"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": [
+            "writing",
+            "多言語"
+          ]
+        },
+        "key": "résumé-writer",
+        "name": "résumé-writer",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Écrit un résumé en français.",
+            "extras": {
+              "capability": "Résumé"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "résumé-writer.Résumé",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "résumé-writer.Résumé#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/markdown"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "résumé-writer.Résumé#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Résumé",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "writing",
+              "多言語"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Accepts anything and returns anything.",
+        "extras": {
+          "agent_name": "wildcard",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [],
+          "framework": null,
+          "input_content_types": [
+            "*/*"
+          ],
+          "license": null,
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "*/*"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": []
+        },
+        "key": "wildcard",
+        "name": "wildcard",
+        "operations": []
+      },
+      {
+        "description": "A second agent with the same name.",
+        "extras": {
+          "agent_name": "wildcard",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": null,
+          "domains": [
+            "ops"
+          ],
+          "duplicate_of": "wildcard",
+          "framework": "custom",
+          "input_content_types": [
+            "text/plain"
+          ],
+          "license": null,
+          "links": [],
+          "natural_languages": [],
+          "output_content_types": [
+            "*/*"
+          ],
+          "programming_language": null,
+          "recommended_models": [],
+          "tags": []
+        },
+        "key": "wildcard~2",
+        "name": "wildcard",
+        "operations": []
+      }
+    ],
+    "title": "04-stress-edge-cases",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "acp/04-stress-edge-cases.json",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 4,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "acp"
+  },
+  "fingerprint": "sha256:2466c09390aa68d396bcbc643fef3206d8f8e4f4d760d4882e3fbab35bc2bf4b",
+  "lint": {
+    "findings": 17,
+    "grade": "F",
+    "report_fingerprint": "e64307506d273468bf47d5f160dac552834da871c3583a1d4e1e9367aa839c5f",
+    "score": 56,
+    "severity_counts": {
+      "error": 1,
+      "info": 10,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}
