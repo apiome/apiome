@@ -62,7 +62,10 @@ one catalog item. A revision another row already imported is linked, not importe
 **Sources that sync items themselves** (CDG-4.4). A source with ``sync_item(db, candidate, row,
 actor_id) -> ItemSyncOutcome`` takes over the fetch-and-import step for each fresh candidate: the
 ``mcp-registry`` source (:mod:`app.mcp_registry_connector_source`) turns a registry server into an
-MCP server of the catalog (``mcp_endpoints``), not a catalog item. Its outcome names the MCP server
+MCP server of the catalog (``mcp_endpoints``), not a catalog item, and the ``schema-registry``
+source (:mod:`app.schema_registry_connector_source`, MFI-12.3) mirrors an upstream subject, one
+catalog revision per new upstream version, so its outcome names the catalog item and how many
+documents it pulled. Its outcome names the MCP server
 and, when the entry could not be imported (no reachable remote), the reason it stays
 ``discovered``; an entry that stays discovered is settled, not a failure. Such a source may set
 ``reports_shadow_apis = False``: MCP servers are not APIs a gateway serves, so they raise no
@@ -311,10 +314,21 @@ class ItemSyncOutcome:
         mcp_endpoint_id: The MCP server created or refreshed for the candidate, if any.
         discovered_reason: Why the candidate stays ``discovered`` (no reachable remote, a refused
             address, discovery could not reach it), or ``None`` when it was imported.
+        project_id: The catalog item the candidate backs, if any (MFI-12.3: a mirrored subject's item).
+        pulls: Documents the hook fetched from the remote; ``None`` counts one pull when an MCP
+            server was created or refreshed, none otherwise.
     """
 
     mcp_endpoint_id: Optional[str] = None
     discovered_reason: Optional[str] = None
+    project_id: Optional[str] = None
+    pulls: Optional[int] = None
+
+    def pull_count(self) -> int:
+        """Documents this outcome fetched (see :attr:`pulls`)."""
+        if self.pulls is not None:
+            return int(self.pulls)
+        return 1 if self.mcp_endpoint_id else 0
 
 
 @dataclass
@@ -587,6 +601,7 @@ def _sync_item_with_source(
         discovered_reason=outcome.discovered_reason,
         revision=candidate.revision,
         remote_updated_at=candidate.updated_at,
+        project_id=outcome.project_id,
     )
     if outcome.discovered_reason is None:
         summary["imported"] += 1
@@ -905,10 +920,11 @@ def run_connector_sync(
                     failures.append((ERROR_CLASS_IMPORT_FAILED, None, f"{type(exc).__name__}: {exc}"))
                     summary["failed"] += 1
                     continue
-                if outcome.mcp_endpoint_id:
-                    pulls += 1
-                    summary["fetched"] += 1
+                pulls += outcome.pull_count()
+                summary["fetched"] += outcome.pull_count()
                 rows[candidate.remote_id] = {**rows[candidate.remote_id], "mcp_endpoint_id": outcome.mcp_endpoint_id}
+                if outcome.project_id:
+                    rows[candidate.remote_id]["project_id"] = outcome.project_id
                 settled += 1
                 continue
             try:
@@ -1125,4 +1141,5 @@ from . import (  # noqa: E402,F401
     azure_apim_connector_source,
     kong_connector_source,
     mcp_registry_connector_source,
+    schema_registry_connector_source,
 )

@@ -85,6 +85,14 @@ class SubjectOut(_CamelModel):
     project_id: Optional[str] = Field(default=None, description="The catalog item new versions are registered into.")
     version_count: int = 0
     latest_version: Optional[int] = None
+    source_ref: Optional[str] = Field(
+        default=None,
+        description="`registry:<url>` when a `schema-registry` connector mirrors this subject from an upstream "
+        "registry (MFI-12.3); `null` for a subject registered or attached in Apiome.",
+    )
+    source_connector_id: Optional[str] = Field(
+        default=None, description="The `schema-registry` connector that mirrors this subject, if any."
+    )
     created_at: datetime
     updated_at: datetime
 
@@ -106,6 +114,12 @@ class SubjectVersionOut(_CamelModel):
     references: List[Any] = Field(default_factory=list)
     project_id: str = Field(description="The catalog item holding the schema.")
     version_record_id: str = Field(description="The catalog item revision holding the schema.")
+    upstream_version: Optional[int] = Field(
+        default=None, description="The upstream registry's version number of a mirrored version (MFI-12.3)."
+    )
+    upstream_schema_id: Optional[int] = Field(
+        default=None, description="The upstream registry's schema id of a mirrored version (MFI-12.3)."
+    )
     created_at: datetime
     schema_text: Optional[str] = Field(
         default=None, alias="schema", description="The schema text (single-version reads only)."
@@ -200,6 +214,8 @@ def _subject_out(row: Mapping[str, Any], tenant_level: str) -> SubjectOut:
         project_id=str(row["project_id"]) if row.get("project_id") else None,
         version_count=int(row.get("version_count") or 0),
         latest_version=row.get("latest_version"),
+        source_ref=row.get("source_ref"),
+        source_connector_id=str(row["source_connector_id"]) if row.get("source_connector_id") else None,
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -216,6 +232,8 @@ def _version_out(subject: str, row: Mapping[str, Any], *, text: Optional[str] = 
         "references": list(row.get("references") or []),
         "project_id": str(row["project_id"]),
         "version_record_id": str(row["version_record_id"]),
+        "upstream_version": row.get("upstream_version"),
+        "upstream_schema_id": row.get("upstream_schema_id"),
         "created_at": row["created_at"],
         "schema_text": text,
     }

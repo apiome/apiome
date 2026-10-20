@@ -228,9 +228,11 @@ class FakeConnectorStore:
         )
 
     def mark_item_mcp_server(
-        self, db, item_id, *, mcp_endpoint_id, discovered_reason, revision, remote_updated_at
+        self, db, item_id, *, mcp_endpoint_id, discovered_reason, revision, remote_updated_at, project_id=None
     ):
         imported = discovered_reason is None
+        if project_id:
+            self.items[item_id]["project_id"] = project_id
         self.items[item_id].update(
             status=ITEM_IMPORTED if imported else ITEM_DISCOVERED,
             mcp_endpoint_id=mcp_endpoint_id,
@@ -387,6 +389,7 @@ def restore_builtin_sources() -> None:
     from app import aws_apigateway_connector_source as aws
     from app import azure_apim_connector_source as azure
     from app import kong_connector_source as kong
+    from app import schema_registry_connector_source as schema_registry
     from app.catalog_connector_sync import register_connector_source
 
     register_connector_source(
@@ -401,3 +404,8 @@ def restore_builtin_sources() -> None:
     register_connector_source(apigee.KIND, apigee.ApigeeSource, scope_validator=apigee.validate_apigee_scope)
     register_connector_source(kong.KIND_KONNECT, kong.KongKonnectSource, scope_validator=kong.validate_konnect_scope)
     register_connector_source(kong.KIND_ADMIN, kong.KongAdminSource, scope_validator=kong.validate_admin_scope)
+    register_connector_source(
+        schema_registry.KIND,
+        schema_registry.SchemaRegistrySource,
+        scope_validator=schema_registry.validate_schema_registry_scope,
+    )

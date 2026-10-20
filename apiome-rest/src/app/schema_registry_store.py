@@ -19,20 +19,21 @@ Rules the queries enforce (see the V294 header for the why):
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .schema_registry import FINGERPRINT_KIND, MODE_READWRITE, SchemaRegistryError
 
 #: Columns of a subject, in a stable order shared by every read.
 SUBJECT_COLUMNS = (
     "s.id, s.tenant_id, s.name, s.strategy, s.compatibility_level, s.mode, s.project_id, "
-    "s.created_by, s.created_at, s.updated_at, s.deleted_at"
+    "s.source_ref, s.source_connector_id, s.created_by, s.created_at, s.updated_at, s.deleted_at"
 )
 
 #: Columns of a subject version.
 VERSION_COLUMNS = (
     "v.id, v.subject_id, v.version, v.schema_id, v.project_id, v.version_record_id, v.schema_type, "
-    "v.fingerprint, v.\"references\", v.created_by, v.created_at, v.deleted_at"
+    "v.fingerprint, v.\"references\", v.upstream_version, v.upstream_schema_id, v.created_by, v.created_at, "
+    "v.deleted_at"
 )
 
 #: Tenant defaults when no ``schema_registry_config`` row exists yet (the V294 column defaults).
@@ -384,6 +385,7 @@ def record_version(
     strategy: Optional[str] = None,
     subject_project_id: Optional[str] = None,
     require_empty_subject: bool = False,
+    mirror: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Register ``fingerprint`` under ``subject`` in one transaction and return the version.
 
@@ -409,6 +411,10 @@ def record_version(
         strategy: The strategy a newly created subject records.
         subject_project_id: The catalog item to back the subject with, when it has none.
         require_empty_subject: Refuse when the subject already has a version (attach).
+        mirror: For a version mirrored from an upstream registry (MFI-12.3): ``connector_id``,
+            ``source_ref`` (``registry:<url>``), ``upstream_version`` and ``upstream_schema_id``. A
+            subject this call creates records the connector and source; an existing subject must
+            already be mirrored by that connector. The version keeps the upstream coordinates.
 
     Returns:
         The version row plus ``created`` (``False`` when the subject already held the schema),
@@ -417,21 +423,25 @@ def record_version(
     Raises:
         SchemaRegistryError: ``subject-has-versions`` (409) when ``require_empty_subject`` and the
             subject is not empty; ``subject-attached-elsewhere`` (409) when attaching a subject that
-            is already backed by another catalog item.
+            is already backed by another catalog item; ``subject-not-mirrored`` (409) when ``mirror``
+            names a connector that does not own the subject.
     """
     refs_json = json.dumps(references or [])
+    mirror = dict(mirror or {})
+    mirror_connector = str(mirror["connector_id"]) if mirror.get("connector_id") else None
 
     def work(cursor: Any) -> Dict[str, Any]:
         cursor.execute(
             """
-            INSERT INTO apiome.schema_subjects (tenant_id, name, strategy, mode, created_by)
+            INSERT INTO apiome.schema_subjects
+                   (tenant_id, name, strategy, mode, created_by, source_ref, source_connector_id)
             VALUES (%s, %s, %s,
                     COALESCE((SELECT mode FROM apiome.schema_registry_config WHERE tenant_id = %s),
                              'READWRITE'),
-                    %s)
+                    %s, %s, %s)
             ON CONFLICT (tenant_id, name) WHERE deleted_at IS NULL DO NOTHING
             """,
-            (tenant_id, subject, strategy, tenant_id, actor_id),
+            (tenant_id, subject, strategy, tenant_id, actor_id, mirror.get("source_ref"), mirror_connector),
         )
         row = _fetch_one(
             cursor,
@@ -447,6 +457,12 @@ def record_version(
                 "subject-not-found", f"Subject {subject!r} was deleted meanwhile.", status_code=409
             )
         subject_id = row["id"]
+        if mirror_connector and str(row.get("source_connector_id") or "") != mirror_connector:
+            raise SchemaRegistryError(
+                "subject-not-mirrored",
+                f"Subject {subject!r} is not mirrored by this connector; it was left unchanged.",
+                status_code=409,
+            )
 
         if require_empty_subject:
             if row.get("project_id") and str(row["project_id"]) != str(subject_project_id):
@@ -532,6 +548,16 @@ def record_version(
                     (existing["id"],),
                 )
                 existing["deleted_at"] = None
+            if mirror_connector and mirror.get("upstream_version") is not None:
+                # The same schema under a later upstream version (re-registered after a delete):
+                # the local version now stands for that upstream version.
+                cursor.execute(
+                    "UPDATE apiome.schema_subject_versions SET upstream_version = %s, upstream_schema_id = %s "
+                    "WHERE id = %s",
+                    (mirror.get("upstream_version"), mirror.get("upstream_schema_id"), existing["id"]),
+                )
+                existing["upstream_version"] = mirror.get("upstream_version")
+                existing["upstream_schema_id"] = mirror.get("upstream_schema_id")
             return {**existing, "created": False, "subject": subject, "subject_id": subject_id}
 
         next_version = _fetch_one(
@@ -545,8 +571,9 @@ def record_version(
             f"""
             INSERT INTO apiome.schema_subject_versions AS v
                    (tenant_id, subject_id, version, schema_id, project_id, version_record_id,
-                    schema_type, fingerprint, "references", created_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+                    schema_type, fingerprint, "references", created_by, upstream_version,
+                    upstream_schema_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
             RETURNING {VERSION_COLUMNS}
             """,
             (
@@ -560,11 +587,98 @@ def record_version(
                 fingerprint,
                 refs_json,
                 actor_id,
+                mirror.get("upstream_version"),
+                mirror.get("upstream_schema_id"),
             ),
         )
         return {**inserted, "created": True, "subject": subject, "subject_id": subject_id}
 
     return db._guarded_tx(work)
+
+
+# --------------------------------------------------------------------------- mirrors (MFI-12.3)
+
+
+def find_mirrored_schema(
+    db: Any, tenant_id: str, connector_id: str, upstream_schema_id: int
+) -> Optional[Dict[str, Any]]:
+    """Return a version this connector already mirrored for an upstream schema id, if any.
+
+    An upstream registry names content by its global schema id, so a schema id the connector has
+    seen under any of its subjects needs no second parse or import: its fingerprint and catalog
+    revision are reused.
+
+    Args:
+        db: The database handle.
+        tenant_id: The tenant.
+        connector_id: The ``schema-registry`` connector.
+        upstream_schema_id: The upstream registry's schema id.
+
+    Returns:
+        ``{schema_type, fingerprint, project_id, version_record_id, references}``, or ``None``.
+    """
+    return _one(
+        db.execute_query(
+            """
+            SELECT v.schema_type, v.fingerprint, v.project_id, v.version_record_id, v."references"
+              FROM apiome.schema_subject_versions v
+              JOIN apiome.schema_subjects s ON s.id = v.subject_id
+             WHERE s.tenant_id = %s AND s.source_connector_id = %s AND v.upstream_schema_id = %s
+             ORDER BY v.created_at
+             LIMIT 1
+            """,
+            (tenant_id, connector_id, upstream_schema_id),
+        )
+    )
+
+
+def update_mirrored_subject(
+    db: Any, subject_id: str, *, compatibility_level: Optional[str], strategy: Optional[str]
+) -> None:
+    """Copy the upstream settings onto a mirrored subject.
+
+    Args:
+        db: The database handle.
+        subject_id: The mirrored subject.
+        compatibility_level: The upstream level; ``None`` keeps the stored one (upstream gave none).
+        strategy: The inferred naming strategy; it only fills a subject that states none.
+    """
+    db._execute_write(
+        """
+        UPDATE apiome.schema_subjects
+           SET compatibility_level = COALESCE(%s, compatibility_level),
+               strategy = COALESCE(strategy, %s),
+               updated_at = CURRENT_TIMESTAMP
+         WHERE id = %s
+        """,
+        (compatibility_level, strategy, subject_id),
+    )
+
+
+def retire_mirrored_versions(db: Any, subject_id: str, keep_upstream_versions: Sequence[int]) -> List[int]:
+    """Soft-delete the mirrored versions whose upstream version the registry no longer lists.
+
+    Only versions with an ``upstream_version`` are touched; the catalog revisions behind them stay.
+
+    Args:
+        db: The database handle.
+        subject_id: The mirrored subject.
+        keep_upstream_versions: The upstream versions the registry still lists.
+
+    Returns:
+        The local version numbers that were soft-deleted (ascending).
+    """
+    rows = db.execute_query(
+        """
+        UPDATE apiome.schema_subject_versions
+           SET deleted_at = CURRENT_TIMESTAMP
+         WHERE subject_id = %s AND deleted_at IS NULL AND upstream_version IS NOT NULL
+           AND NOT (upstream_version = ANY(%s::int[]))
+        RETURNING version
+        """,
+        (subject_id, [int(v) for v in keep_upstream_versions]),
+    )
+    return sorted(int(r["version"]) for r in rows or [])
 
 
 # --------------------------------------------------------------------------- Confluent API (CDG-4.3)

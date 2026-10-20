@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.255.0",
+    "version": "1.256.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-20T00:16:17Z"
+                          "example": "2026-10-20T00:43:32Z"
                         },
                         "method": {
                           "type": "string",
@@ -111146,7 +111146,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "completed_at": {
             "anyOf": [
@@ -113101,7 +113101,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "comment_count": {
             "type": "integer",
@@ -113329,7 +113329,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114096,14 +114096,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -114997,7 +114997,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). `schema-registry`: `{}` (no scope), with the registry's REST address as the base URL \u2014 Confluent, Karapace, or Apicurio's `/apis/ccompat/v7` (an optional `{\"username\": \"\u2026\", \"password\": \"\u2026\"}` for basic auth or `{\"token\": \"\u2026\"}` bearer token goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -115253,7 +115253,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). `schema-registry`: `{}` (no scope), with the registry's REST address as the base URL \u2014 Confluent, Karapace, or Apicurio's `/apis/ccompat/v7` (an optional `{\"username\": \"\u2026\", \"password\": \"\u2026\"}` for basic auth or `{\"token\": \"\u2026\"}` bearer token goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "credentials": {
             "anyOf": [
@@ -115549,7 +115549,7 @@
               }
             ],
             "title": "Discoveredreason",
-            "description": "`mcp-registry` only: why the entry is still `discovered` \u2014 `no-remote`, `remote-templated`, `remote-refused` or `remote-unreachable`, then the explanation (CDG-4.4)."
+            "description": "`mcp-registry` and `schema-registry` only: why the entry is still `discovered` \u2014 for an MCP registry `no-remote`, `remote-templated`, `remote-refused` or `remote-unreachable` (CDG-4.4); for a schema registry `subject-name-taken`, `references-unsupported` or `schema-type-unavailable` (MFI-12.3) \u2014 then the explanation."
           }
         },
         "type": "object",
@@ -116022,7 +116022,7 @@
               }
             ],
             "title": "Scope",
-            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
+            "description": "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", \u2026]}` (no control planes = every control plane the token can read). `kong-admin`: `{\"workspace\": \"\u2026\", \"environment\": \"\u2026\"}`, both optional. `aws-apigateway`: `{\"roleArn\": \"arn:aws:iam::<account>:role/\u2026\", \"externalId\": \"\u2026\", \"regions\": [\"eu-west-1\", \u2026]}` (no base URL, no credential: Apiome assumes the role). `azure-apim`: `{\"tenantId\": \"<guid>\", \"clientId\": \"<guid>\", \"subscriptionId\": \"<guid>\", \"resourceGroup\": \"\u2026\", \"serviceName\": \"\u2026\", \"authMethod\": \"client-secret\"|\"federated\", \"includeNonCurrentRevisions\": false}` (no base URL; the client secret goes in `PUT \u2026/credentials` as `{\"clientSecret\": \"\u2026\"}`). `apigee`: `{\"organization\": \"\u2026\", \"environments\": [\"test\", \u2026]}` (environments optional; the service-account key or workload-identity configuration goes in `PUT \u2026/credentials` as `{\"credentialJson\": \"\u2026\"}`). `mcp-registry`: `{\"search\": \"\u2026\", \"updatedSince\": \"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional `{\"token\": \"\u2026\"}` bearer token or `{\"apiKey\": \"\u2026\"}` goes in `PUT \u2026/credentials`). `schema-registry`: `{}` (no scope), with the registry's REST address as the base URL \u2014 Confluent, Karapace, or Apicurio's `/apis/ccompat/v7` (an optional `{\"username\": \"\u2026\", \"password\": \"\u2026\"}` for basic auth or `{\"token\": \"\u2026\"}` bearer token goes in `PUT \u2026/credentials`). Kinds with a source check their scope on every write, and some dry-run it."
           },
           "refreshIntervalSeconds": {
             "anyOf": [
@@ -117387,7 +117387,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "2e46cd22-ccf6-46a5-9245-6cb7c2c8f1e3"
+            "example": "3a54ffcd-e761-4a8e-b6fe-9212515d6bb6"
           },
           "method": {
             "type": "string",
@@ -119914,7 +119914,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -121810,7 +121810,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "browse_url": {
             "anyOf": [
@@ -161086,6 +161086,34 @@
             "description": "The catalog item revision holding the schema.",
             "example": "1.0.0"
           },
+          "upstreamVersion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for register."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for register."
+              }
+            ],
+            "title": "Upstreamversion",
+            "description": "The upstream registry's version number of a mirrored version (MFI-12.3)."
+          },
+          "upstreamSchemaId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for register."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for register."
+              }
+            ],
+            "title": "Upstreamschemaid",
+            "description": "The upstream registry's schema id of a mirrored version (MFI-12.3)."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -164917,7 +164945,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           }
         },
         "additionalProperties": false,
@@ -176033,6 +176061,34 @@
             "title": "Latestversion",
             "description": "Latest Version."
           },
+          "sourceRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Sourceref",
+            "description": "`registry:<url>` when a `schema-registry` connector mirrors this subject from an upstream registry (MFI-12.3); `null` for a subject registered or attached in Apiome."
+          },
+          "sourceConnectorId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for subject."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject."
+              }
+            ],
+            "title": "Sourceconnectorid",
+            "description": "The `schema-registry` connector that mirrors this subject, if any."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -176185,6 +176241,34 @@
             "description": "The catalog item revision holding the schema.",
             "example": "1.0.0"
           },
+          "upstreamVersion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for subject version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject version."
+              }
+            ],
+            "title": "Upstreamversion",
+            "description": "The upstream registry's version number of a mirrored version (MFI-12.3)."
+          },
+          "upstreamSchemaId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for subject version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for subject version."
+              }
+            ],
+            "title": "Upstreamschemaid",
+            "description": "The upstream registry's schema id of a mirrored version (MFI-12.3)."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -176283,13 +176367,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           }
         },
         "additionalProperties": false,
@@ -177793,7 +177877,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "detected_by": {
             "anyOf": [
@@ -185999,14 +186083,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T00:16:17Z"
+            "example": "2026-10-20T00:43:32Z"
           },
           "outcome": {
             "anyOf": [

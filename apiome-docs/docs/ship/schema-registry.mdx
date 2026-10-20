@@ -247,6 +247,16 @@ curl -X POST https://<your-apiome-host>/v1/tenants/acme/schema-registry/subjects
 
 The subject must have no versions yet. You need the **Imports — edit** permission.
 
+## Mirror an existing registry
+
+Already run Confluent Schema Registry, Karapace or Apicurio? Add a
+[schema registry connector](../bring-in/connectors.mdx#schema-registry) and Apiome mirrors every
+subject on a schedule: each upstream version becomes a version here and a revision of a catalog
+item, and the upstream compatibility level is copied. A mirrored subject has a `sourceRef` of
+`registry:<registry URL>`, and its versions keep their `upstreamVersion` and `upstreamSchemaId`. The
+connector never takes over a subject that already exists in your workspace, and never writes to the
+upstream registry.
+
 ## Read, change and delete subjects
 
 | Route | Does |
@@ -268,4 +278,5 @@ version 1.
 
 - [Schema registry](/reference/rest/schema-registry) REST reference
 - [Catalog](../bring-in/catalog.mdx) — where subject versions live as catalog item revisions
+- [Connectors](../bring-in/connectors.mdx#schema-registry) — mirror subjects from an existing registry
 - [Export a spec](./export-a-spec.md) — exporting to Avro and other formats

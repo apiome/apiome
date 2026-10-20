@@ -23,8 +23,8 @@ found that the catalog does not describe.
 
 :::note
 Each kind needs a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway),
-[Azure API Management](#azure-api-management), [Apigee](#apigee) and the [MCP registry](#mcp-registry)
-sync today; the URL and schema registry sources follow. A kind your deployment cannot sync yet is shown as **Not available on this
+[Azure API Management](#azure-api-management), [Apigee](#apigee), the [schema registry](#schema-registry)
+and the [MCP registry](#mcp-registry) sync today; the URL source follows. A kind your deployment cannot sync yet is shown as **Not available on this
 deployment** when you add a connector.
 :::
 
@@ -38,7 +38,7 @@ deployment** when you add a connector.
 | `azure-apim` | Azure API Management, by resource group |
 | `apigee` | Apigee, by organization and environment |
 | `url` | A specification published at a URL |
-| `schema-registry` | A schema registry |
+| `schema-registry` | A Confluent, Karapace or Apicurio schema registry. Its subjects become [schema subjects](../ship/schema-registry.mdx) with their version history |
 | `mcp-registry` | An MCP registry: the official registry, Azure API Center, a Kong registry or another Apiome workspace. Its servers become MCP servers, not catalog items |
 
 A connector has a **name**, an optional **base URL** (the control-plane or admin address), a
@@ -158,6 +158,9 @@ An [Azure API Management](#azure-api-management) connector stores its applicatio
 An [Apigee](#apigee) connector stores a Google service-account key, or a workload identity federation
 configuration, as `{"credentials": {"credentialJson": "…"}}`.
 
+A [schema registry](#schema-registry) connector stores `{"credentials": {"username": "…", "password": "…"}}`
+for basic auth, `{"credentials": {"token": "…"}}` for a bearer token, or nothing for an open registry.
+
 ## Base URLs and private networks
 
 Apiome calls the base URL itself, so it must be `http` or `https`, carry no `user:password@`, and
@@ -185,7 +188,7 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 
 | Item status | Meaning |
 | --- | --- |
-| **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design). An MCP registry server Apiome cannot reach stays here with its `discoveredReason` |
+| **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design). An MCP registry server Apiome cannot reach, or a schema registry subject Apiome cannot mirror, stays here with its `discoveredReason` |
 | **imported** | Imported; `catalogItemId` is its catalog item (`mcpEndpointId`, its MCP server, for an MCP registry) |
 | **ignored** | Never fetched. Ignored from [Shadow APIs](../govern/shadow-apis.mdx), with a reason |
 | **missing** | No longer in the inventory |
@@ -589,6 +592,83 @@ Apiome asks for an access token with the `https://www.googleapis.com/auth/cloud-
   (`invalid_grant` …). A missing IAM permission is named, for example
   `Missing permission apigee.deployments.list`. A token without the `cloud-platform` scope says so
   (`ACCESS_TOKEN_SCOPE_INSUFFICIENT`).
+
+## Schema registry
+
+The `schema-registry` kind crawls a registry that speaks the Confluent Schema Registry REST API:
+Confluent Platform or Confluent Cloud, Karapace, or Apicurio Registry's compatibility API. **Each
+subject becomes a [schema subject](../ship/schema-registry.mdx)** of your workspace, with its
+versions, schema ids and compatibility level, and every version becomes a revision of a catalog
+item. The connector only reads: nothing is ever written to the upstream registry.
+
+### Add a schema registry
+
+1. **Go to Bring in → Connectors** and click **Add connector**.
+2. **Kind:** choose **Schema registry** and click **Continue**.
+3. **Credentials:** leave every field empty for an open registry. For basic auth, enter a
+   **Username or API key** and a **Password or API secret**; Confluent Cloud takes its Schema
+   Registry API key and secret here. For a registry behind a token, enter a **Bearer token**. Click
+   **Continue**.
+
+   <Screenshot id="connector-add-schema-registry" alt="Add a connector, Credentials step for a schema registry: Username or API key and Password or API secret filled in, Bearer token empty" />
+
+4. **Scope:** enter the registry's REST address as the **Base URL**, for example
+   `https://psrc-123.eu-west-1.aws.confluent.cloud`. For Apicurio, use its compatibility API:
+   `https://<apicurio>/apis/ccompat/v7`. A schema registry takes no other scope.
+5. **Dry run** and **Schedule** work as for every other kind: the dry run lists the subjects the
+   registry returns, and nothing is stored until you click **Save connector**.
+
+With the API, register it with an empty scope:
+
+```json
+{
+  "kind": "schema-registry",
+  "name": "Prod schema registry",
+  "baseUrl": "https://psrc-123.eu-west-1.aws.confluent.cloud",
+  "scope": {}
+}
+```
+
+### What a schema registry sync does
+
+Each sync lists the registry with `GET /subjects`, then, for each subject, `GET
+/subjects/{subject}/versions` and `GET /config/{subject}?defaultToGlobal=true`. A registry that
+answers `404` there, such as Apicurio for a subject with no level of its own, falls back to `GET
+/config`. Each subject is one inventory row. A subject is fetched again only when it has a new or
+deleted version or a different compatibility level. For each one:
+
+1. **It reads each version it has not mirrored yet**, oldest first, with `GET
+   /subjects/{subject}/versions/{version}`. When the answer has no schema text, `GET
+   /schemas/ids/{id}` supplies it.
+2. **It deduplicates by schema id.** A schema id the connector has already seen, under any subject
+   and in any sync, is not parsed or imported again. A schema your workspace already holds keeps
+   its Apiome schema id and revision. Only new content is imported, as a new revision of the
+   subject's catalog item, labelled with the upstream version number.
+3. **It copies the subject's settings.** The upstream compatibility level is copied onto the
+   subject. When the subject states no **strategy**, it is read from the name: `<topic>-key` or
+   `<topic>-value` is `topic`, the record name alone is `record`, and `<topic>-<record name>` is
+   `topic_record`.
+4. **It mirrors deletions.** A version the registry no longer lists is deleted from the subject.
+   The catalog revision behind it stays.
+
+A mirrored subject shows where it came from: `sourceRef` is `registry:<base URL>` and
+`sourceConnectorId` names the connector. Each mirrored version keeps the upstream `upstreamVersion`
+and `upstreamSchemaId` beside Apiome's own version number and schema id. Compatibility checks are
+not run on mirrored versions, because the upstream registry already admitted them.
+
+Each version read counts as one pull against the workspace's polling quota, and so does each
+`/schemas/ids/{id}` call. A subject Apiome cannot mirror stays **discovered**, and the **Items** tab
+shows why under its status:
+
+| `discoveredReason` | What it means | What to do |
+| --- | --- | --- |
+| `subject-name-taken` | Your workspace already has a subject with this name, registered in Apiome or mirrored by another connector. It is never overwritten | Rename or delete the other subject |
+| `references-unsupported` | A version refers to schemas in other subjects and cannot be read on its own | Nothing yet: the versions before it are mirrored |
+| `schema-type-unavailable` | The deployment cannot read this schema type (Protobuf without the bundled `buf`) | An operator can install the toolchain |
+
+Any other schema the importer refuses fails that subject for this run. The versions mirrored before
+it stay, and the next sync carries on from there. Schema registry connectors are left out of
+[Shadow APIs](../govern/shadow-apis.mdx): schema subjects are not APIs a gateway serves.
 
 ## MCP registry
 

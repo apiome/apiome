@@ -84,6 +84,7 @@ def _import_revision(
     filename: str,
     existing_project_id: Optional[str],
     version_number: int,
+    connector_source: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, str]:
     """Import ``schema`` as a new catalog item revision through the in-process import pipeline.
 
@@ -91,6 +92,10 @@ def _import_revision(
     an unrelated item that happens to share the name); later imports add a revision to
     ``existing_project_id``. The revision label is the subject version number, made unique within
     the item (an attached item may already use it).
+
+    ``connector_source`` is the connector provenance descriptor
+    (:func:`app.catalog_connectors.connector_provenance_metadata`) of a version mirrored from an
+    upstream registry (MFI-12.3); the revision's Provenance tab then names the connector.
 
     Returns:
         ``{"project_id", "version_record_id"}``.
@@ -127,6 +132,8 @@ def _import_revision(
             "existing_project_id": existing_project_id,
         },
     }
+    if connector_source:
+        payload["connector_source"] = connector_source
     final = asyncio.run(run_adapter_import_job(adapter, payload))
     result = final.result
     if final.state != "completed" or result is None or not result.version_record_id:

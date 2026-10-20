@@ -1,0 +1,27 @@
+---
+slug: schema-registry-connector
+title: Mirror an existing schema registry into Apiome
+description: A schema registry connector mirrors Confluent, Karapace or Apicurio subjects into Apiome.
+authors: [apiome]
+---
+
+Add the Confluent, Karapace or Apicurio schema registry you already run as a connector, and its
+subjects arrive in Apiome as schema subjects, with their whole version history, on the connector's
+schedule.
+
+{/* truncate */}
+
+- **One more connector kind.** Choose **Schema registry** under **Bring in → Connectors → Add
+  connector** and enter the registry's REST address (for Apicurio, `/apis/ccompat/v7`). Basic auth
+  (Confluent Cloud's API key and secret), a bearer token, or nothing for an open registry.
+- **Subjects with their history.** Every upstream version becomes a version of the subject and a
+  revision of a catalog item. The compatibility level is copied, and the naming strategy is read from
+  the subject name.
+- **Each schema once.** Schemas are deduplicated by their upstream schema id, so a schema shared by
+  several subjects is read and imported once. A later sync fetches only new versions, and a version
+  deleted upstream is deleted from the mirror.
+- **Nothing overwritten.** A subject that already exists in your workspace is never taken over. It
+  stays **discovered**, and the connector's **Items** tab says why. The connector never writes to the
+  upstream registry.
+
+See [Schema registry](/bring-in/connectors#schema-registry).
