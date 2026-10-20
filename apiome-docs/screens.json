@@ -1443,6 +1443,12 @@
       "data": "fixture:hive-a11y/connector-add-mcp-registry.html"
     },
     {
+      "id": "connector-add-registry",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-step-scope\"]",
+      "data": "fixture:hive-a11y/connector-add-registry.html"
+    },
+    {
       "id": "connector-add-schema-registry",
       "route": "/ade/dashboard/connectors/new",
       "waitFor": "[data-testid=\"connector-step-credentials\"]",

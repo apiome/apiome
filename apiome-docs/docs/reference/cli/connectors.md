@@ -34,7 +34,7 @@ apiome connectors add [OPTIONS]
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
-| `--kind` | text |  | yes | Connector kind: kong-konnect, kong-admin, aws-apigateway, azure-apim, apigee, url, schema-registry, mcp-registry. |
+| `--kind` | text |  | yes | Connector kind: kong-konnect, kong-admin, aws-apigateway, azure-apim, apigee, url, schema-registry, mcp-registry, registry. A registry connector crawls a registry; its --scope names the crawl: '{"protocol": "a2a-registry"}', xregistry or fhir-metadata. |
 | `--name` | text |  | yes | A name unique in the workspace. |
 | `--base-url` | text |  |  | The provider's URL, for kinds that take one. |
 | `--scope` | text |  |  | What to sync, as a JSON object or @file (for example '{"region": "eu"}'). |

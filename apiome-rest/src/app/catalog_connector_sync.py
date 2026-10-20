@@ -1036,6 +1036,14 @@ def run_connector_sync(
             error_message=_redact(f"{type(exc).__name__}: {exc}", credentials),
         )
 
+    close = getattr(source, "close", None)
+    if callable(close):
+        # A source that holds a client across the run (MFI-18.5 registry crawls) releases it here.
+        try:
+            close()
+        except Exception:  # noqa: BLE001 - closing must never change the run's outcome
+            _logger.warning("connector source close failed connector_id=%s", connector_id)
+
     result.pull_count = pulls
     result.summary = summary
     store.finish_run(
@@ -1141,5 +1149,6 @@ from . import (  # noqa: E402,F401
     azure_apim_connector_source,
     kong_connector_source,
     mcp_registry_connector_source,
+    registry_crawl,
     schema_registry_connector_source,
 )

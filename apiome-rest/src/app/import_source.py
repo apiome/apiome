@@ -214,6 +214,13 @@ class ImportSourceDescriptor(BaseModel):
         "import can opt into SSRF-guarded remote ``$ref`` resolution (MFI-29.4) via the "
         "``resolve_remote_refs`` option. ``false`` sources ignore the option entirely.",
     )
+    registry_crawl: Optional[str] = Field(
+        default=None,
+        description="The registry crawl this adapter declares (MFI-18.5) — the ``protocol`` a "
+        "``registry`` connector names to bulk-import every artifact of a registry as its own "
+        "versioned catalog item (``a2a-registry``, ``xregistry``, ``fhir-metadata``), or ``null`` "
+        "when the adapter imports single documents only.",
+    )
 
 
 # ===========================================================================
@@ -545,6 +552,11 @@ class ImportSource(ABC):
     )
     #: Whether the adapter can introspect a live endpoint (discovery).
     supports_live_discovery: ClassVar[bool] = False
+    #: The registry crawl this adapter declares (MFI-18.5): a protocol registered with
+    #: :func:`app.registry_crawl.register_registry_crawl`. A ``registry`` connector whose scope names
+    #: it lists the registry and imports every artifact as its own versioned catalog item through
+    #: the CDG-1.1 connector engine. ``None`` for an adapter that imports single documents only.
+    registry_crawl: ClassVar[Optional[str]] = None
     #: Normalizer format keys this adapter can emit.
     formats: ClassVar[Tuple[str, ...]] = ()
     #: Lower-case filename extensions this format's documents normally carry (FMT-1.1), each with
@@ -954,6 +966,7 @@ class ImportSource(ABC):
             available=available,
             unavailable_reason=unavailable_reason,
             supports_remote_refs=cls.supports_remote_refs,
+            registry_crawl=cls.registry_crawl,
         )
 
 

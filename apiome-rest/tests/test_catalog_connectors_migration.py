@@ -48,11 +48,15 @@ def test_connector_single_flight_is_a_partial_unique_index(repo_root: Path) -> N
 
 
 def test_kind_check_matches_the_app_vocabulary(repo_root: Path) -> None:
+    """The latest migration that re-creates the kind check (V307, MFI-18.5) lists every kind."""
     from app.catalog_connectors import KINDS
 
-    text = (repo_root / _MIGRATION).read_text()
+    text = (repo_root / "apiome-db/scripts/V307__registry_connector_kind_3978.sql").read_text()
+    assert "ADD CONSTRAINT catalog_connectors_kind_check" in text
     for kind in KINDS:
         assert f"'{kind}'" in text
+    original = (repo_root / _MIGRATION).read_text()
+    assert all(f"'{kind}'" in original for kind in KINDS if kind != "registry")
 
 
 def test_v282_adds_the_deployment_bag_to_inventory_rows(repo_root: Path) -> None:

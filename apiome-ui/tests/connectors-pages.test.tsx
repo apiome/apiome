@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
@@ -368,6 +368,49 @@ describe('MCP registry connector (CDG-4.4)', () => {
       kind: 'mcp-registry',
       baseUrl: 'https://registry.modelcontextprotocol.io',
       scope: { search: 'io.github.acme', updatedSince: '2026-01-01T00:00:00Z' },
+    });
+  });
+
+  it('crawls a registry: protocol, root and schema groups, dumped and dry-run (MFI-18.5)', async () => {
+    routes.push((url, init) => {
+      if (url === '/api/connectors' && (init?.method ?? 'GET') === 'GET') {
+        return { body: { connectors: [], kinds: ['registry'], syncableKinds: ['registry'] } };
+      }
+      if (url === '/api/connectors/dry-run') {
+        return {
+          body: {
+            itemCount: 2,
+            items: [
+              { remoteId: 'schemagroups/orders/schemas/order', name: 'order', environment: null, revision: '1+e4' },
+            ],
+            truncated: false,
+            findings: [],
+          },
+        };
+      }
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(<AddConnectorClient />);
+    const kind = await screen.findByTestId('connector-kind-registry');
+    await waitFor(() => expect(kind).not.toBeDisabled());
+    await user.click(kind);
+    await user.click(screen.getByTestId('connector-next'));
+    await user.click(screen.getByTestId('connector-next')); // both credentials are optional
+    expect(screen.getByTestId('connector-missing')).toHaveTextContent('Base URL');
+    expect(screen.getByTestId('connector-missing')).toHaveTextContent('Protocol');
+    await user.type(screen.getByTestId('connector-base-url'), 'https://xreg.example.com/reg');
+    fireEvent.click(screen.getByTestId('connector-scope-protocol'));
+    fireEvent.click(await screen.findByRole('option', { name: 'CNCF xRegistry (schemas)' }));
+    await user.type(screen.getByTestId('connector-scope-groups'), 'orders, payments');
+    writeA11yFixture('connector-add-registry', liveMarkup(document.body));
+    await user.click(screen.getByTestId('connector-next'));
+    await user.click(screen.getByTestId('connector-dry-run'));
+    expect(await screen.findByTestId('connector-dry-run-result')).toHaveTextContent('order');
+    expect(calls.find((call) => call.url === '/api/connectors/dry-run')?.body).toMatchObject({
+      kind: 'registry',
+      baseUrl: 'https://xreg.example.com/reg',
+      scope: { protocol: 'xregistry', groups: ['orders', 'payments'] },
     });
   });
 

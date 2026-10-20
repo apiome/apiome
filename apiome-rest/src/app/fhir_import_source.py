@@ -36,6 +36,8 @@ class FhirImportSource(ImportSource, register=True):
     supports_live_discovery = False
     formats = ("fhir", "fhirr4", "structuredefinition")
     file_extensions = (".fhir.json", ".structuredefinition.json", ".json")
+    #: Registry crawl (MFI-18.5, :mod:`app.fhir_metadata_crawl`).
+    registry_crawl = "fhir-metadata"
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         text = payload.text
