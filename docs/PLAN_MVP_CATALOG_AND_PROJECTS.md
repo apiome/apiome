@@ -80,7 +80,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 - [x] [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 Catalog UX & Look-and-Feel Improvements — after #4121, #4122, #4124
 - [x] [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 Catalog Detail View Parity — after #4093
 - [x] [#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 Catalog → OpenAPI Conversion & Fidelity Preview — after #4009
-- [ ] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — all children done (last, #4021, closed); epic still open on GitHub
+- [x] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — all children done (last, #4021); epic closed
 
 ### 1.2 Should finish (Projects CLI parity)
 
@@ -208,8 +208,8 @@ Multi-repo merge and PR-back sync.
 Roadmap candidates.
 
 - [ ] [#3970](https://github.com/apiome/apiome/issues/3970) MFI-EPIC-18 Agent Descriptor Cataloging (A2A / ACP / agentic-web)
-- [ ] [#3978](https://github.com/apiome/apiome/issues/3978) MFI-18.5 Registry-as-source ingestion mode (crawl a catalog, not a doc)
-- [ ] [#3980](https://github.com/apiome/apiome/issues/3980) MFI-19.2 CloudEvents + xRegistry (CNCF event catalog)
+- [x] [#3978](https://github.com/apiome/apiome/issues/3978) MFI-18.5 Registry-as-source ingestion mode (crawl a catalog, not a doc)
+- [x] [#3980](https://github.com/apiome/apiome/issues/3980) MFI-19.2 CloudEvents + xRegistry (CNCF event catalog)
 
 #### MCP catalog
 
