@@ -216,7 +216,7 @@ Roadmap candidates.
 MCP is held back.
 
 - [ ] [#3637](https://github.com/apiome/apiome/issues/3637) V2-MCP External MCP Catalog (consume third-party MCP servers)
-- [ ] [#3714](https://github.com/apiome/apiome/issues/3714) V2-MCP-27.4 Catalog analytics dashboard
+- [x] [#3714](https://github.com/apiome/apiome/issues/3714) V2-MCP-27.4 Catalog analytics dashboard — delivered by #4645
 - [x] [#5724](https://github.com/apiome/apiome/issues/5724) AAU-5.3 MCP Registry API endpoint over the MCP server catalog
 
 #### Format-expansion catalog epics
