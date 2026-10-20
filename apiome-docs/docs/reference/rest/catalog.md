@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.258.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.259.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -882,6 +882,8 @@ Server-computed quality score + itemized findings for one project version (#3609
 | `compositeScore` | integer or null | no | Weighted composite when required coverage is met; null otherwise. |
 | `compositeGrade` | string or null | no | A-F grade of the composite; null when compositeScore is null. |
 | `requiredCoverageMet` | boolean or null | no | True when required axes (v1: quality) are assessed. |
+| `securityScore` | integer or null | no | 0-100 security score of this revision (ASP-1.3): the `security` axis of the clx-axis-v1 evaluation, scored from the report's security findings under the published per-rule weights. Null when the axis is not assessed — no security rule pack evaluated the revision, or its style guide disables the pack. |
+| `securityGrade` | string or null | no | A-F grade of securityScore; null when securityScore is null. |
 
 ### `PayloadAnalysisRecord` {#schema-payloadanalysisrecord}
 

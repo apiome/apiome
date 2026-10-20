@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.258.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.259.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 54 operations
 
@@ -2482,6 +2482,8 @@ Schema revision: shortMessage = commit-style note; changelog = release notes (ma
 | `lifecycle` | string | no | Governance lifecycle tag: stable \| beta \| deprecated \| archived (#739); aligns with metadata.lifecycle and #507 deprecation when unset. |
 | `qualityScore` | integer or null | no | Stored 0-100 quality score for this revision (#5259); null when the revision has not been linted yet. Open GET .../lint to compute and store it. |
 | `qualityGrade` | string or null | no | Stored A-F grade matching qualityScore; null when unscored. |
+| `securityScore` | integer or null | no | Stored 0-100 security score for this revision (ASP-1.3), read from the newest persisted clx-axis-v1 evaluation; null when the security axis is not assessed (no security rule pack evaluated the revision, or its style guide disables the pack). |
+| `securityGrade` | string or null | no | Stored A-F grade matching securityScore; null when securityScore is null. |
 | `unpublishReason` | string or null | no | Reason recorded with the most recent unpublish (#3213); null when never unpublished or no reason was given. |
 | `unpublishedAt` | string (date-time) or string or null | no | When the revision was most recently unpublished (#3213). |
 | `unpublishedBy` | string or null | no | User id that most recently unpublished the revision (#3213). |
@@ -2545,6 +2547,8 @@ On a dry run, the revision is returned as it is now (still published) and nothin
 | `lifecycle` | string | no | Governance lifecycle tag: stable \| beta \| deprecated \| archived (#739); aligns with metadata.lifecycle and #507 deprecation when unset. |
 | `qualityScore` | integer or null | no | Stored 0-100 quality score for this revision (#5259); null when the revision has not been linted yet. Open GET .../lint to compute and store it. |
 | `qualityGrade` | string or null | no | Stored A-F grade matching qualityScore; null when unscored. |
+| `securityScore` | integer or null | no | Stored 0-100 security score for this revision (ASP-1.3), read from the newest persisted clx-axis-v1 evaluation; null when the security axis is not assessed (no security rule pack evaluated the revision, or its style guide disables the pack). |
+| `securityGrade` | string or null | no | Stored A-F grade matching securityScore; null when securityScore is null. |
 | `unpublishReason` | string or null | no | Reason recorded with the most recent unpublish (#3213); null when never unpublished or no reason was given. |
 | `unpublishedAt` | string (date-time) or string or null | no | When the revision was most recently unpublished (#3213). |
 | `unpublishedBy` | string or null | no | User id that most recently unpublished the revision (#3213). |

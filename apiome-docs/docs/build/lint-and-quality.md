@@ -45,6 +45,21 @@ Returns the numeric score, the letter grade, and a list of findings (e.g. undocu
 breaking changes when `baseRevisionId` is supplied). Every finding carries a stable `rule` id
 attributable to the built-in rule catalog.
 
+### The security score beside the grade
+
+The same response carries `securityScore` / `securityGrade`: the revision's 0–100 **security
+score** and its A–F grade, computed from the report's `security`-category findings under the
+published per-rule weights of the [axis score algorithm](./axis-score.md#security-for-api-descriptions)
+(revision 3). It is a separate number from the quality `score` — security findings never
+enter the quality score, and the quality score never enters it. Both are null when the
+security axis is **not assessed**: no security rule pack evaluated the revision, or the style
+guide it was scored under disables the whole pack. A null is not a 0 or an F.
+
+The full picture is in `axes`: the `security` axis carries `ruleset`, one `owasp` sub-score
+per OWASP API Security Top 10 category (score, finding count and coverage — a category none of
+whose rules evaluated reads coverage `none`, never 100) and the `skippedRules` the run could
+not evaluate for the format.
+
 ### When linting runs (and when it does not)
 
 The report is **stored on the version record** and served from there — reading it does not
@@ -65,6 +80,10 @@ revision that has never been scored shows *Lint —*; clicking it lints (and sto
 demand. A `baseRevisionId` comparison is always computed live and never stored, since its
 findings depend on the chosen base.
 
+Each row also carries `securityScore` / `securityGrade`, read the same way: from the newest
+multi-axis evaluation persisted for the revision (every stored report is mirrored into one),
+never recomputed on list. They are null until a security rule pack has evaluated the revision.
+
 ### List the built-in rule catalog
 
 ```http
@@ -78,6 +97,12 @@ rules also include reference, remediation, false-positive guidance, and corpus f
 (CLX-4.3); so do the rules of the `data-contract` pack, which publishes its own remediation
 and fixture for every rule even though none of them blocks. The catalog is the same for every
 tenant; style guides layer per-tenant overrides on top of it.
+
+Every entry also publishes `owasp` — the OWASP API Security Top 10 (2023) category ids the
+rule cites, or null — and, for `security`-category rules, `weight`: the multiplier the
+[security score](./axis-score.md#security-for-api-descriptions) applies to the rule's severity
+penalty (1.0 unless published otherwise). The weights are public, not a server secret; the
+table on the axis-score page is generated from the same constants.
 
 ### Data contracts score against their own rules
 

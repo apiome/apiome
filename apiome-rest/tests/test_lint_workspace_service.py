@@ -526,3 +526,71 @@ def test_transition_error_field_requirements():
     assert transition_error("waiver_requested", rationale="please") is None
     assert transition_error("acknowledged") is None
     assert transition_error("waived", rationale="ok", expires_at=NOW) is None
+
+
+def test_summary_splits_axis_counts_by_subject_type():
+    """ASP-1.3: the summary reports how many *catalog* subjects carry an assessed security axis."""
+    axis_rows = [
+        {
+            "id": "ax-cat",
+            "subject_type": "catalog_revision",
+            "version_record_id": "v1",
+            "mcp_version_id": None,
+            "axes": [
+                {"key": "quality", "assessed": True, "score": 90, "grade": "A"},
+                {"key": "security", "assessed": True, "score": 80, "grade": "B"},
+            ],
+            "composite_score": 85,
+            "composite_grade": "B",
+            "required_coverage_met": True,
+            "evaluated_at": NOW,
+            "project_id": "p1",
+            "project_name": "Petstore",
+            "subject_label": "1.0.0",
+        },
+        {
+            "id": "ax-cat-2",
+            "subject_type": "catalog_revision",
+            "version_record_id": "v2",
+            "mcp_version_id": None,
+            "axes": [
+                {"key": "quality", "assessed": True, "score": 70, "grade": "C"},
+                {"key": "security", "assessed": False},
+            ],
+            "composite_score": 70,
+            "composite_grade": "C",
+            "required_coverage_met": True,
+            "evaluated_at": NOW,
+            "project_id": "p2",
+            "project_name": "Orders",
+            "subject_label": "2.0.0",
+        },
+        {
+            "id": "ax-mcp",
+            "subject_type": "mcp_endpoint_version",
+            "version_record_id": None,
+            "mcp_version_id": "m1",
+            "axes": [{"key": "security", "assessed": True, "score": 100, "grade": "A"}],
+            "composite_score": None,
+            "composite_grade": None,
+            "required_coverage_met": False,
+            "evaluated_at": NOW,
+            "project_id": None,
+            "project_name": None,
+            "subject_label": "weather-mcp",
+        },
+    ]
+    index = build_index_from_rows(evidence_rows=[], axis_rows=axis_rows, policy_rows=[], decisions=[], now=NOW)
+    summary = build_summary(index, now=NOW)
+    security = next(a for a in summary["axes"] if a["key"] == "security")
+    assert security["assessed_count"] == 2 and security["not_assessed_count"] == 1
+    assert security["by_subject_type"] == {
+        "catalog_revision": {"assessed_count": 1, "not_assessed_count": 1},
+        "mcp_endpoint_version": {"assessed_count": 1, "not_assessed_count": 0},
+    }
+    quality = next(a for a in summary["axes"] if a["key"] == "quality")
+    assert quality["by_subject_type"]["catalog_revision"] == {"assessed_count": 2, "not_assessed_count": 0}
+    assert quality["by_subject_type"]["mcp_endpoint_version"] == {"assessed_count": 0, "not_assessed_count": 0}
+    # Every axis carries both subject types, even when no subject of a type was seen.
+    for axis in summary["axes"]:
+        assert set(axis["by_subject_type"]) == {"catalog_revision", "mcp_endpoint_version"}

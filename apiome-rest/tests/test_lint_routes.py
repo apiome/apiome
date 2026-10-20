@@ -327,6 +327,9 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             "falsePositiveGuidance",
             "fixtureId",
             "scanModes",
+            # ASP-1.3 security-score fields: weight for `security` rules, OWASP ids when cited.
+            "weight",
+            "owasp",
         }
         assert rule["ruleId"] and rule["pack"] and rule["category"]
         assert rule["defaultSeverity"] in {"error", "warning", "info"}
@@ -336,6 +339,25 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             assert rule["reference"]
             assert rule["remediation"]
             assert rule["scanModes"]
+        if rule["category"] == "security":
+            assert rule["weight"] is not None and rule["weight"] >= 1.0
+        else:
+            assert rule["weight"] is None
+        if rule["owasp"] is not None:
+            assert rule["owasp"] and set(rule["owasp"]) <= {f"API{n}" for n in range(1, 11)}
+
+
+def test_lint_rules_catalog_publishes_the_security_weights():
+    """ASP-1.3: the per-rule weights are public — a `security` rule's weight is on its entry."""
+    from app.security_score import SECURITY_RULE_WEIGHTS, security_rule_weight
+
+    body = client.get("/v1/lint/rules").json()
+    for rule in body["rules"]:
+        if rule["category"] != "security":
+            continue
+        assert rule["weight"] == security_rule_weight(rule["ruleId"])
+        if rule["ruleId"] in SECURITY_RULE_WEIGHTS:
+            assert rule["weight"] == 2.0
 
 
 def test_lint_rules_catalog_is_deterministic():

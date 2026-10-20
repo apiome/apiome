@@ -50,6 +50,7 @@ from .custom_rule_dsl import (
 )
 from .lint_rule_registry import builtin_rule_descriptors, builtin_rule_ids
 from .schema_lint import LintFinding, LintResult, assemble_lint_result, lint_openapi_spec
+from .security_score import SECURITY_CATEGORY
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,12 @@ FALLBACK_GUIDE_NAME = "Apiome Recommended"
 #: entry per *distinct guide content* across all tenants; 128 comfortably covers the working
 #: set of a node while bounding memory.
 _COMPILED_GUIDE_CACHE_SIZE = 128
+
+
+#: Report categories whose bar gates a scoring axis (ASP-1.3, #5921): ``security`` gates the
+#: security axis of :mod:`app.axis_score`. A guide that disables every registered rule of such a
+#: category withdraws its bar (see :meth:`CompiledStyleGuide.withdraws_category_bar`).
+AXIS_GATED_CATEGORIES: Tuple[str, ...] = (SECURITY_CATEGORY,)
 
 
 @dataclass(frozen=True)
@@ -184,9 +191,35 @@ class CompiledStyleGuide:
                 )
 
         # Preserve the entry point's always-on category bars (e.g. naming/documentation/
-        # structure for OpenAPI): the categories the base result surfaced stay surfaced.
-        base_categories = tuple(c.name for c in result.categories)
+        # structure for OpenAPI): the categories the base result surfaced stay surfaced —
+        # except a bar that gates a scoring axis (ASP-1.3, #5921). When this guide enables
+        # none of the registry's rules in such a category, the pack the bar stands for never
+        # evaluated the artifact under this guide, so the bar is withdrawn and the axis it
+        # gates reads *not assessed* instead of a clean 100.
+        base_categories = tuple(
+            c.name for c in result.categories if not self.withdraws_category_bar(c.name)
+        )
         return assemble_lint_result(findings, base_categories=base_categories)
+
+    def withdraws_category_bar(self, category: str) -> bool:
+        """Return whether this guide disables every registered rule of an axis-gating category.
+
+        Only the categories in :data:`AXIS_GATED_CATEGORIES` are ever withdrawn; every other
+        bar the entry point surfaced is preserved as before. A category the registry has no
+        rules for is never withdrawn (there is nothing for the guide to have disabled).
+
+        Args:
+            category: A category name from the engine result's rollup.
+
+        Returns:
+            True when ``category`` gates an axis and none of its registered rules is enabled.
+        """
+        if category not in AXIS_GATED_CATEGORIES:
+            return False
+        rules = _builtin_rules_by_category().get(category, frozenset())
+        if not rules:
+            return False
+        return not any(rule_id in self.rule_severities for rule_id in rules)
 
 
 @lru_cache(maxsize=1)
@@ -199,6 +232,15 @@ def _builtin_category_by_rule() -> Mapping[str, str]:
 def _builtin_registry_ids() -> frozenset:
     """Every registered built-in rule id — the set a guide is able to govern."""
     return frozenset(builtin_rule_ids())
+
+
+@lru_cache(maxsize=1)
+def _builtin_rules_by_category() -> Mapping[str, frozenset]:
+    """category -> registered built-in rule ids, for the axis-gating bar withdrawal."""
+    grouped: Dict[str, set] = {}
+    for descriptor in builtin_rule_descriptors():
+        grouped.setdefault(descriptor.category, set()).add(descriptor.rule_id)
+    return {category: frozenset(ids) for category, ids in grouped.items()}
 
 
 @lru_cache(maxsize=1)

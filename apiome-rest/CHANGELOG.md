@@ -5,6 +5,44 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.395.0] - 2026-10-19
+
+### Added
+- **Security axis and 0–100 security score for catalog revisions (#5921, ASP-1.3)**: `clx-axis-v1` moves to
+  implementation revision `3`. For an API-paradigm revision the `security` axis is now assessed from the newest
+  native run's `security`-category findings — before, it was assessed for MCP servers only — under a published,
+  deterministic formula: `100 − Σ_rule min(20, Σ_findings penalty(severity) × weight(rule))` with the house
+  penalties (`error` 10, `warning` 4, `info` 1), the per-rule cap of 20 and a public per-rule **weight** (default
+  `1.0`; `2.0` for `security.write-operation-missing-auth`, `security.credentials-in-server-url`,
+  `security.secret-in-document` and `security.pii-exposed-without-auth`). One `error` from a weight-2 rule scores
+  exactly 80 and grades B. The axis is assessed only when the report carries the security pack's `security`
+  category bar: a revision no security pack evaluated, or whose style guide disables every rule of the pack (the
+  guide now withdraws the bar), reads *not assessed* — never 100. Composite weights, the axis set and the
+  algorithm id are unchanged; the security axis of an API revision is not comparable across the bump, every other
+  axis and every MCP / data-contract subject is byte-identical.
+  - **OWASP sub-scores.** The stored axis carries `ruleset`, `skipped_rules` and `owasp`: one entry per OWASP API
+    Security Top 10 (2023) category (`API1` … `API10`, new `app.owasp_api` catalog) with `score`,
+    `finding_count` and `coverage` — `full` when at least one rule citing the category evaluated, `none` when every
+    such rule was skipped for the format or none cites it (rendered *not assessed*, never 100). The axis coverage
+    is `partial` when the run skipped registered security rules. Served on `LintAxisOut` as `ruleset`, `owasp[]`
+    (`riskId`, `title`, `score`, `findingCount`, `coverage`) and `skippedRules`.
+  - **`securityScore` / `securityGrade`** on `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint`
+    (read from the evaluation the response already carries) and on every row of
+    `GET /v1/versions/{tenant_slug}/{project_id}` and `GET …/{version_record_id}`, read stored-first from the
+    newest persisted `clx-axis-v1` evaluation (two lateral steps on V168's index: newest evaluation, then its
+    security axis) — a 50-revision list issues zero lint requests. Null when the axis is not assessed.
+  - **`GET /v1/lint/rules`** publishes `weight` (security rules; null otherwise) and `owasp` (the category ids a
+    rule cites, declared through the new `LintRule.owasp_ids` field and validated against the catalog when the
+    registry is built) on every entry.
+  - **`GET /v1/lint/workspace/summary`** adds `bySubjectType` to every axis rollup — assessed / not-assessed
+    counts split by `catalog_revision` and `mcp_endpoint_version`.
+  - `record_axis_evaluation` dedupes per `algorithm_version` as well as per fingerprint, so an unchanged report
+    re-evaluated under a newer revision records the row a stored-first reader expects.
+  - Decision recorded: the ASP-1.1 Spectral OWASP adapter findings do **not** score the axis (parity evidence
+    only; scoring them too would count one defect twice).
+  - Docs: the weights table and OWASP category table on *Axis score algorithm* are generated from code by
+    `scripts/generate_lint_rule_docs.py`; *Lint and check quality* documents the score beside the grade.
+
 ## [1.394.0] - 2026-10-19
 
 ### Added
