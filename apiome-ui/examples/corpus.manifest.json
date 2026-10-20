@@ -8,6 +8,12 @@
       "paradigm": "agent",
       "marker": "`name` + `skills[].id` beside `capabilities` / `defaultInputModes` / `protocolVersion`"
     },
+    "acp": {
+      "label": "ACP agent manifest",
+      "category": "agent",
+      "paradigm": "agent",
+      "marker": "`name` + `input_content_types` / ACP `metadata`, or `{\"agents\": [...]}`"
+    },
     "api-blueprint": {
       "label": "API Blueprint",
       "category": "rest-http",
@@ -855,6 +861,244 @@
       "validity_class": "invalid",
       "expected_detection": {
         "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
+      "path": "acp/01-minimal-echo-agent.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "manifest",
+        "single-capability",
+        "content-types"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "acp/02-typical-research-agent.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "manifest",
+        "capabilities",
+        "tags",
+        "domains",
+        "author",
+        "links",
+        "dependencies",
+        "status"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "acp/03-composition-agent-list.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agent-list",
+        "multi-agent",
+        "agent-dependencies"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "acp/04-stress-edge-cases.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agent-list",
+        "duplicate-agent-name",
+        "duplicate-capability",
+        "invalid-agent-name",
+        "wildcard-content-types",
+        "unicode",
+        "vendor-keys"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "acp/05-real-world-beeai-style-listing.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agent-list",
+        "annotations",
+        "container-image",
+        "recommended-models"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Reconstruction of a BeeAI platform GET /agents listing (chat and gpt-researcher agents), authored in-repo.",
+      "rung": "real-world"
+    },
+    {
+      "path": "acp/06-typical-research-agent-v2.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "manifest",
+        "release-2",
+        "capability-added",
+        "capability-removed"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The next release of 02-typical-research-agent.json: a capability added, one removed, one edited, new content type and tag, and moved runtime status/timestamps that must not affect the fingerprint."
+    },
+    {
+      "path": "acp/negative/01-syntactic-trailing-comma.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "trailing-comma"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "acp/negative/02-semantic-empty-agent-list.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "agent-list"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "acp/negative/03-truncated-mid-manifest.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "acp/negative/04-wrong-format-a2a-card.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "acp",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "a2a"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "An A2A Agent Card \u2014 the neighbouring agent format the ACP adapter must not claim.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "acp/negative/05-encoding-utf16.json",
+      "format": "acp",
+      "adapter_key": "acp",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "acp",
         "min_confidence": 0.0
       },
       "features": [
@@ -32229,6 +32473,9 @@
   "rung_waivers": {
     "a2a": {
       "multi-file": "An Agent Card is a single self-contained JSON document with no cross-document references; A2aImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
+    },
+    "acp": {
+      "multi-file": "An ACP manifest or GET /agents listing is one self-contained JSON document with no cross-document references; AcpImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
     },
     "apiblueprint": {
       "multi-file": "The API Blueprint adapter's parse_fileset only parses the root document and never resolves references across fileset members, so a multi-file set would exercise nothing beyond a single file."

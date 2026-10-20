@@ -1,0 +1,56 @@
+{
+  "agents": [
+    {
+      "name": "invoice-extractor",
+      "description": "Extracts header fields and line items from invoice PDFs and images.",
+      "input_content_types": ["application/pdf", "image/png", "image/jpeg"],
+      "output_content_types": ["application/json"],
+      "metadata": {
+        "capabilities": [
+          { "name": "Extract fields", "description": "Reads supplier, dates, totals and tax from an invoice." },
+          { "name": "Extract line items", "description": "Returns each line item with quantity, unit price and amount." }
+        ],
+        "domains": ["finance", "accounts-payable"],
+        "tags": ["ocr", "extraction"],
+        "license": "MIT",
+        "framework": "LangGraph",
+        "dependencies": [{ "type": "agent", "name": "currency-converter" }]
+      }
+    },
+    {
+      "name": "currency-converter",
+      "description": "Converts amounts between currencies at the day's reference rate.",
+      "input_content_types": ["application/json"],
+      "output_content_types": ["application/json"],
+      "metadata": {
+        "capabilities": [
+          { "name": "Convert", "description": "Converts an amount from one ISO 4217 currency to another." },
+          { "name": "Rate lookup", "description": "Returns the reference rate for a currency pair on a date." }
+        ],
+        "domains": ["finance"],
+        "tags": ["fx"],
+        "license": "MIT",
+        "framework": "LangGraph"
+      }
+    },
+    {
+      "name": "approval-router",
+      "description": "Routes an extracted invoice to the right approver by amount and cost centre.",
+      "input_content_types": ["application/json"],
+      "output_content_types": ["application/json", "text/plain"],
+      "metadata": {
+        "capabilities": [
+          { "name": "Route for approval", "description": "Chooses an approver and opens an approval task." }
+        ],
+        "domains": ["finance", "workflow"],
+        "tags": ["approvals"],
+        "license": "MIT",
+        "framework": "LangGraph",
+        "dependencies": [
+          { "type": "agent", "name": "invoice-extractor" },
+          { "type": "agent", "name": "currency-converter" }
+        ]
+      }
+    }
+  ]
+}

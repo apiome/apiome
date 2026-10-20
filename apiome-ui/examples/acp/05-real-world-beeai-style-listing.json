@@ -1,0 +1,50 @@
+{
+  "agents": [
+    {
+      "name": "chat",
+      "description": "General-purpose conversational agent with tool use: web search, Wikipedia and weather.",
+      "input_content_types": ["text/plain"],
+      "output_content_types": ["text/plain"],
+      "metadata": {
+        "annotations": { "beeai_ui": { "ui_type": "chat", "user_greeting": "How can I help you?" } },
+        "documentation": "The chat agent answers questions and can call web search, Wikipedia and weather tools.",
+        "license": "Apache-2.0",
+        "programming_language": "Python",
+        "natural_languages": ["en"],
+        "framework": "BeeAI",
+        "capabilities": [
+          { "name": "Conversation", "description": "Holds a multi-turn conversation with memory of earlier turns." },
+          { "name": "Tool use", "description": "Calls web search, Wikipedia and weather tools when a question needs them." }
+        ],
+        "domains": ["general"],
+        "tags": ["chat", "tools", "assistant"],
+        "author": { "name": "IBM Research" },
+        "links": [
+          { "type": "source-code", "url": "https://github.com/i-am-bee/beeai-platform" },
+          { "type": "container-image", "url": "ghcr.io/i-am-bee/beeai-platform/official/beeai-framework/chat:latest" }
+        ],
+        "recommended_models": ["granite3.3:8b"]
+      }
+    },
+    {
+      "name": "gpt-researcher",
+      "description": "Autonomous research agent that writes detailed, factual, unbiased reports with citations.",
+      "input_content_types": ["text/plain"],
+      "output_content_types": ["text/plain"],
+      "metadata": {
+        "documentation": "Plans research questions, gathers sources in parallel and writes a report.",
+        "license": "Apache-2.0",
+        "programming_language": "Python",
+        "natural_languages": ["en"],
+        "framework": "Custom",
+        "capabilities": [
+          { "name": "Research planning", "description": "Breaks a topic into research questions." },
+          { "name": "Report writing", "description": "Writes a long-form report with references." }
+        ],
+        "domains": ["research"],
+        "tags": ["research", "reports"],
+        "links": [{ "type": "source-code", "url": "https://github.com/assafelovic/gpt-researcher" }]
+      }
+    }
+  ]
+}

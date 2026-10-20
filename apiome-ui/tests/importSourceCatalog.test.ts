@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { BotMessageSquare, FileCode, FileJson, Radio, Share2, Waypoints } from 'lucide-react';
+import { Bot, BotMessageSquare, FileCode, FileJson, Radio, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -224,6 +224,33 @@ describe('A2A Agent Card source card (MFI-18.1)', () => {
 
   it('resolves the descriptor `bot-message-square` icon to the Lucide component', () => {
     expect(resolveLucideIcon(A2A_DESCRIPTOR.icon)).toBe(BotMessageSquare);
+  });
+});
+
+/** The ACP agent-manifest source as the REST registry advertises it (MFI-18.2, #3975). */
+const ACP_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'acp',
+  label: 'ACP Agent Manifest',
+  description:
+    'Import ACP (Agent Communication Protocol) agent metadata — an agent manifest or a ' +
+    "server's GET /agents listing, with capabilities, content types, tags and domains — " +
+    'from a file, a URL, or live from the server.',
+  icon: 'bot',
+  paradigm: 'agent',
+  input_kinds: ['file', 'url', 'paste', 'discovery', 'fileset'],
+  supports_live_discovery: true,
+  formats: ['acp'],
+};
+
+describe('ACP agent manifest source card (MFI-18.2)', () => {
+  it('appears beside the A2A card as a usable Catalog card', () => {
+    const cards = mergeImportSourceCards([A2A_DESCRIPTOR, ACP_DESCRIPTOR]);
+    const keys = cards.filter((c) => !c.builtin).map((c) => c.key);
+    expect(keys).toEqual(['a2a', 'acp']);
+    const acp = cards.find((c) => c.key === 'acp');
+    expect(acp?.panel).toBe('file');
+    expect(acp?.scope).toBe('alternative');
+    expect(resolveLucideIcon(ACP_DESCRIPTOR.icon)).toBe(Bot);
   });
 });
 

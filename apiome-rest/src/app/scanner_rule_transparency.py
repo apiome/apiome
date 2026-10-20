@@ -257,6 +257,48 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/llm-tools-duplicate-tool-name",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    # --- Agent descriptors (MFI-18.1 A2A, MFI-18.2 ACP) ------------------------------------------
+    "a2a.duplicate-skill-id": _meta(
+        "a2a.duplicate-skill-id",
+        ENGINE_SCHEMA,
+        rationale="Two skills sharing an id leave neither with a stable identity: callers, versions "
+        "and diffs address a skill by its id.",
+        reference=_SCHEMA_REF + "#a2a-duplicate-skill-id",
+        remediation="Give each skill in `skills` a unique `id` (rename the repeat, or merge the two "
+        "skills if they are the same).",
+        false_positive_guidance="None expected: the A2A specification requires skill ids to be "
+        "unique within a card.",
+        scan_modes=("lint",),
+        fixture_id="catalog/a2a-duplicate-skill-id",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "a2a.security-undeclared-scheme": _meta(
+        "a2a.security-undeclared-scheme",
+        ENGINE_SCHEMA,
+        rationale="A security requirement that names a scheme `securitySchemes` does not define "
+        "cannot be satisfied by any client.",
+        reference=_SCHEMA_REF + "#a2a-security-undeclared-scheme",
+        remediation="Define the scheme under `securitySchemes`, or correct the name in the card's "
+        "or the skill's `security` list.",
+        false_positive_guidance="A card served to anonymous callers may omit schemes that only its "
+        "authenticated extended card declares; import the extended card instead.",
+        scan_modes=("lint",),
+        fixture_id="catalog/a2a-security-undeclared-scheme",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "acp.duplicate-agent-name": _meta(
+        "acp.duplicate-agent-name",
+        ENGINE_SCHEMA,
+        rationale="ACP runs address an agent by name (`agent_name`, `/agents/{name}`), so two agents "
+        "with one name on a server cannot both be reached.",
+        reference=_SCHEMA_REF + "#acp-duplicate-agent-name",
+        remediation="Rename one of the agents so every name in the `GET /agents` listing is unique.",
+        false_positive_guidance="A listing concatenated from two servers can repeat a name "
+        "legitimately; import each server's listing separately.",
+        scan_modes=("lint",),
+        fixture_id="catalog/acp-duplicate-agent-name",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     # --- MCP surface lint ----------------------------------------------------------------------
     "naming.item-name-missing": _meta(
         "naming.item-name-missing",

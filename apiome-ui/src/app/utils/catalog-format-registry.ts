@@ -322,6 +322,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   // ---- Agent ----
   { id: 'llm-tools', label: 'LLM Tools', icon: Bot, tone: 'amber', dataType: 'tools', origin: 'ai', importable: true, aliases: ['llmtools', 'function-calling', 'openai-tools', 'anthropic-tools'], description: 'OpenAI / Anthropic / bare LLM tool or function-calling schema bundle.' },
   { id: 'a2a', label: 'A2A Agent Card', icon: BotMessageSquare, tone: 'amber', dataType: 'tools', origin: 'ai', importable: true, aliases: ['agent-card', 'agent2agent', 'a2a-agent-card'], description: 'A2A (Agent2Agent) Agent Card — an agent’s skills, tags, modes and security schemes, from a file or its /.well-known/agent-card.json.' },
+  { id: 'acp', label: 'ACP Agent Manifest', icon: Bot, tone: 'amber', dataType: 'tools', origin: 'ai', importable: true, aliases: ['agent-communication-protocol', 'acp-agents', 'beeai'], description: 'ACP (Agent Communication Protocol) agent manifest or GET /agents listing — agents, capabilities, content types, tags and domains.' },
   { id: 'mcp', label: 'MCP Server Manifest', icon: Plug, tone: 'violet', dataType: 'tools', origin: 'ai', importable: true, aliases: ['mcp-manifest', 'modelcontextprotocol', 'model-context-protocol'], description: 'Static Model Context Protocol server descriptor — tools, resources, templates and prompts, catalogued without probing the server.' },
 
   // ---- Data schema ----

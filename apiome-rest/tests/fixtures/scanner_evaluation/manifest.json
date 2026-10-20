@@ -19,6 +19,27 @@
   ],
   "fixtures": [
     {
+      "id": "catalog/a2a-duplicate-skill-id",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "a2a.duplicate-skill-id"
+      ]
+    },
+    {
+      "id": "catalog/a2a-security-undeclared-scheme",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "a2a.security-undeclared-scheme"
+      ]
+    },
+    {
+      "id": "catalog/acp-duplicate-agent-name",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "acp.duplicate-agent-name"
+      ]
+    },
+    {
       "id": "catalog/arazzo-async-source-before-1-1",
       "kind": "catalog_arazzo",
       "expected_blocking_rule_ids": [

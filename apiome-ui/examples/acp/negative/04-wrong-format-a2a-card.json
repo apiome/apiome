@@ -1,0 +1,11 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Echo Agent",
+  "description": "An A2A Agent Card, not an ACP manifest.",
+  "url": "https://echo.agents.example.com/a2a/v1",
+  "version": "1.0.0",
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [{ "id": "echo", "name": "Echo", "description": "Echoes.", "tags": ["echo"] }]
+}

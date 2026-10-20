@@ -21,6 +21,146 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
 
 
+## Pack: `a2a`
+
+### `a2a.apikey-in-query` {#a2a-apikey-in-query}
+
+- **Category:** security
+- **Default severity:** warning
+- **Rationale:** Flag API keys sent in the query string.
+- **Security weight:** 1.0
+
+### `a2a.duplicate-skill-id` {#a2a-duplicate-skill-id}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** Flag skill ids repeated within one card.
+- **Reference:** https://apiome.github.io/apiome/build/lint-rules#a2a-duplicate-skill-id
+- **Remediation:** Give each skill in `skills` a unique `id` (rename the repeat, or merge the two skills if they are the same).
+- **False-positive guidance:** None expected: the A2A specification requires skill ids to be unique within a card.
+- **Fixture:** `catalog/a2a-duplicate-skill-id`
+- **Scan modes:** `lint`
+
+### `a2a.insecure-endpoint` {#a2a-insecure-endpoint}
+
+- **Category:** security
+- **Default severity:** warning
+- **Rationale:** Flag endpoints served over plain HTTP.
+- **Security weight:** 1.0
+
+### `a2a.missing-required-field` {#a2a-missing-required-field}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Flag cards missing a field the A2A spec requires.
+
+### `a2a.no-security` {#a2a-no-security}
+
+- **Category:** security
+- **Default severity:** warning
+- **Rationale:** Flag cards that declare no security at all.
+- **Security weight:** 1.0
+
+### `a2a.security-undeclared-scheme` {#a2a-security-undeclared-scheme}
+
+- **Category:** security
+- **Default severity:** error
+- **Rationale:** Flag security requirements that name an undefined scheme.
+- **Security weight:** 1.0
+- **Reference:** https://apiome.github.io/apiome/build/lint-rules#a2a-security-undeclared-scheme
+- **Remediation:** Define the scheme under `securitySchemes`, or correct the name in the card's or the skill's `security` list.
+- **False-positive guidance:** A card served to anonymous callers may omit schemes that only its authenticated extended card declares; import the extended card instead.
+- **Fixture:** `catalog/a2a-security-undeclared-scheme`
+- **Scan modes:** `lint`
+
+### `a2a.skill-missing-description` {#a2a-skill-missing-description}
+
+- **Category:** documentation
+- **Default severity:** warning
+- **Rationale:** Flag skills with no description.
+
+### `a2a.skill-missing-tags` {#a2a-skill-missing-tags}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** Flag skills with no tags.
+
+### `a2a.skill-without-modes` {#a2a-skill-without-modes}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** Flag skills with no input or output modes and no card default.
+
+### `a2a.unknown-scheme-type` {#a2a-unknown-scheme-type}
+
+- **Category:** security
+- **Default severity:** warning
+- **Rationale:** Flag security schemes whose type A2A does not define.
+- **Security weight:** 1.0
+
+
+## Pack: `acp`
+
+### `acp.agent-missing-description` {#acp-agent-missing-description}
+
+- **Category:** documentation
+- **Default severity:** warning
+- **Rationale:** Flag agents with no description.
+
+### `acp.capability-missing-description` {#acp-capability-missing-description}
+
+- **Category:** documentation
+- **Default severity:** warning
+- **Rationale:** Flag capabilities with no description.
+
+### `acp.duplicate-agent-name` {#acp-duplicate-agent-name}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** Flag agent names repeated within one listing.
+- **Reference:** https://apiome.github.io/apiome/build/lint-rules#acp-duplicate-agent-name
+- **Remediation:** Rename one of the agents so every name in the `GET /agents` listing is unique.
+- **False-positive guidance:** A listing concatenated from two servers can repeat a name legitimately; import each server's listing separately.
+- **Fixture:** `catalog/acp-duplicate-agent-name`
+- **Scan modes:** `lint`
+
+### `acp.duplicate-capability-name` {#acp-duplicate-capability-name}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** Flag capability names repeated within one agent.
+
+### `acp.invalid-agent-name` {#acp-invalid-agent-name}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** Flag agent names that are not RFC 1123 labels.
+
+### `acp.missing-license` {#acp-missing-license}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** Flag agents that declare no SPDX license.
+
+### `acp.missing-tags` {#acp-missing-tags}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** Flag agents with no tags and no domains.
+
+### `acp.no-capabilities` {#acp-no-capabilities}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** Flag agents that declare no capabilities.
+
+### `acp.untyped-content` {#acp-untyped-content}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** Flag agents whose input or output content types are undeclared or */*.
+
+
 ## Pack: `arazzo`
 
 ### `arazzo.async-source-before-1-1` {#arazzo-async-source-before-1-1}

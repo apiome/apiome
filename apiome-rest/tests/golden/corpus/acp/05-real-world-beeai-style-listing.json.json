@@ -1,0 +1,361 @@
+{
+  "adapter": "acp",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "agent_count": 2,
+      "agent_tags": [
+        "assistant",
+        "chat",
+        "reports",
+        "research",
+        "tools"
+      ],
+      "capability_count": 4,
+      "domains": [
+        "general",
+        "research"
+      ],
+      "shape": "agent-list"
+    },
+    "format": "acp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "05-real-world-beeai-style-listing",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "acp",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "General-purpose conversational agent with tool use: web search, Wikipedia and weather.",
+        "extras": {
+          "agent_name": "chat",
+          "author": {
+            "name": "IBM Research"
+          },
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": "The chat agent answers questions and can call web search, Wikipedia and weather tools.",
+          "domains": [
+            "general"
+          ],
+          "framework": "BeeAI",
+          "input_content_types": [
+            "text/plain"
+          ],
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "type": "source-code",
+              "url": "https://github.com/i-am-bee/beeai-platform"
+            },
+            {
+              "type": "container-image",
+              "url": "ghcr.io/i-am-bee/beeai-platform/official/beeai-framework/chat:latest"
+            }
+          ],
+          "natural_languages": [
+            "en"
+          ],
+          "output_content_types": [
+            "text/plain"
+          ],
+          "programming_language": "Python",
+          "recommended_models": [
+            "granite3.3:8b"
+          ],
+          "tags": [
+            "chat",
+            "tools",
+            "assistant"
+          ]
+        },
+        "key": "chat",
+        "name": "chat",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Holds a multi-turn conversation with memory of earlier turns.",
+            "extras": {
+              "capability": "Conversation"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "chat.Conversation",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "chat.Conversation#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "chat.Conversation#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Conversation",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "chat",
+              "tools",
+              "assistant"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Calls web search, Wikipedia and weather tools when a question needs them.",
+            "extras": {
+              "capability": "Tool use"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "chat.Tool use",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "chat.Tool use#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "chat.Tool use#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Tool use",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "chat",
+              "tools",
+              "assistant"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Autonomous research agent that writes detailed, factual, unbiased reports with citations.",
+        "extras": {
+          "agent_name": "gpt-researcher",
+          "author": null,
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [],
+          "documentation": "Plans research questions, gathers sources in parallel and writes a report.",
+          "domains": [
+            "research"
+          ],
+          "framework": "Custom",
+          "input_content_types": [
+            "text/plain"
+          ],
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "type": "source-code",
+              "url": "https://github.com/assafelovic/gpt-researcher"
+            }
+          ],
+          "natural_languages": [
+            "en"
+          ],
+          "output_content_types": [
+            "text/plain"
+          ],
+          "programming_language": "Python",
+          "recommended_models": [],
+          "tags": [
+            "research",
+            "reports"
+          ]
+        },
+        "key": "gpt-researcher",
+        "name": "gpt-researcher",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Writes a long-form report with references.",
+            "extras": {
+              "capability": "Report writing"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "gpt-researcher.Report writing",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "gpt-researcher.Report writing#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "gpt-researcher.Report writing#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Report writing",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "research",
+              "reports"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Breaks a topic into research questions.",
+            "extras": {
+              "capability": "Research planning"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "gpt-researcher.Research planning",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "gpt-researcher.Research planning#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "gpt-researcher.Research planning#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Research planning",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "research",
+              "reports"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "05-real-world-beeai-style-listing",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "acp/05-real-world-beeai-style-listing.json",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 0,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "acp"
+  },
+  "fingerprint": "sha256:72edb099460e229086c1e7416dfcb13c6c9d3bdd30aa3bc67cf8ae9414289f54",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "db1977986360a8c4e7f7db0a2b48eb6febc7220ea89a3de1a4fee45d194f7c5b",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

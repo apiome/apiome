@@ -211,7 +211,9 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
         ]
         return _blocking_rule_ids(findings), findings
 
-    if kind == "catalog_data_contract":
+    # ``catalog_import_source`` is the format-neutral spelling (MFI-18.1 / 18.2): any registered
+    # adapter named by ``source_format``, parsed from ``document`` and linted by the shared engine.
+    if kind in ("catalog_data_contract", "catalog_import_source"):
         from .import_source import get_import_source, load_builtin_import_sources
         from .lint_engine import lint_canonical_model
 

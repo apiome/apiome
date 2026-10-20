@@ -39,6 +39,7 @@ from .canonical_model import (
     Operation,
     OperationKind,
     Parameter,
+    Service,
     StreamingMode,
     Type,
     TypeKind,
@@ -425,12 +426,44 @@ def _skill_entity(operation: Operation) -> Dict[str, Any]:
     )
 
 
+def _acp_agent_entity(service: Service) -> Dict[str, Any]:
+    """One ACP agent as an entity: its tags and domains in ``meta`` (so the detail filter finds
+    them) and its description, capabilities, content types and provenance as rows."""
+    extras = service.extras
+    labels = list(extras.get("tags") or []) + list(extras.get("domains") or [])
+    author = extras.get("author") if isinstance(extras.get("author"), dict) else {}
+    rows = [
+        _detail_row("description", service.description),
+        _detail_row("capabilities", ", ".join(op.name for op in service.operations)),
+        _detail_row("tags", ", ".join(extras.get("tags") or [])),
+        _detail_row("domains", ", ".join(extras.get("domains") or [])),
+        _detail_row("input content types", ", ".join(extras.get("input_content_types") or [])),
+        _detail_row("output content types", ", ".join(extras.get("output_content_types") or [])),
+        _detail_row("framework", extras.get("framework")),
+        _detail_row("license", extras.get("license")),
+        _detail_row("author", author.get("name") if author else None),
+    ]
+    return _entity(
+        name=service.name,
+        tag="AGENT",
+        meta=f"tags: {', '.join(labels)}" if labels else None,
+        fields=[row for row in rows if row is not None],
+    )
+
+
 def _agent_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
     """Agent paradigm: an A2A Agent Card (MFI-18.1) reads as a *Skills* group — each skill with its
-    tags, modes and security. Every other agent format (MCP, LLM tools) keeps the generic view."""
-    if api.format != "a2a":
+    tags, modes and security — and an ACP manifest or listing (MFI-18.2) as an *Agents* group, one
+    entity per agent with its capabilities. Every other agent format (MCP, LLM tools) keeps the
+    generic view."""
+    if api.format == "a2a":
+        entities = [_skill_entity(op) for op in api.operations()]
+        group = _group("Skills", "what the agent can do", entities)
+    elif api.format == "acp":
+        entities = [_acp_agent_entity(service) for service in api.services]
+        group = _group("Agents", "agents and their capabilities", entities)
+    else:
         return _generic_groups(api)
-    group = _group("Skills", "what the agent can do", [_skill_entity(op) for op in api.operations()])
     return [group] if group is not None else []
 
 

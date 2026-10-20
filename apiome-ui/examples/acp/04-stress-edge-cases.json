@@ -1,0 +1,47 @@
+{
+  "agents": [
+    {
+      "name": "Bad Name_With Spaces",
+      "metadata": {
+        "capabilities": [
+          { "name": "Anything" },
+          { "name": "Anything", "description": "Same capability declared twice." },
+          { "description": "A capability with no name is skipped." },
+          "not-an-object"
+        ],
+        "tags": ["ops", "ops", " "],
+        "programming_language": "TypeScript",
+        "natural_languages": ["en", "日本語"],
+        "annotations": { "beeai_ui": { "ui_type": "chat" } },
+        "x-vendor": { "tier": "gold" }
+      }
+    },
+    {
+      "name": "wildcard",
+      "description": "Accepts anything and returns anything.",
+      "input_content_types": ["*/*"],
+      "output_content_types": ["*/*"],
+      "metadata": {}
+    },
+    {
+      "name": "wildcard",
+      "description": "A second agent with the same name.",
+      "input_content_types": ["text/plain"],
+      "metadata": { "framework": "custom", "domains": ["ops"] }
+    },
+    {
+      "name": "résumé-writer",
+      "description": "Rédige des résumés — 日本語もOK.",
+      "input_content_types": ["text/plain"],
+      "output_content_types": ["text/markdown"],
+      "metadata": {
+        "capabilities": [{ "name": "Résumé", "description": "Écrit un résumé en français." }],
+        "tags": ["writing", "多言語"],
+        "license": "CC-BY-4.0",
+        "author": { "name": "", "email": "writer@example.com" },
+        "links": [{ "type": "homepage" }, { "type": "container-image", "url": "ghcr.io/example/writer:1.2" }]
+      },
+      "status": { "avg_run_tokens": null, "success_rate": 100 }
+    }
+  ]
+}

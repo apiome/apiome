@@ -41,6 +41,7 @@ from .a2a_agent_card_parser import (
     A2aSkill,
     dumps_agent_card_for_raw,
 )
+from .agent_paradigm_keys import unique_keys
 from .canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -142,7 +143,10 @@ class A2aAgentCardNormalizer(Normalizer, register=True):
         )
         operations = [
             self._operation(skill, op_key, duplicate_of, source, card_security, streaming)
-            for skill, op_key, duplicate_of in _keyed_skills(service_key, source.skills)
+            for skill, (op_key, duplicate_of) in zip(
+                source.skills,
+                unique_keys([Keys.operation_rpc(service_key, skill.id) for skill in source.skills]),
+            )
         ]
 
         service = Service(
@@ -270,30 +274,3 @@ class A2aAgentCardNormalizer(Normalizer, register=True):
             ],
             extras=extras,
         )
-
-
-def _keyed_skills(
-    service_key: str, skills: Sequence[A2aSkill]
-) -> List[Tuple[A2aSkill, str, Optional[str]]]:
-    """Assign every skill a unique operation key.
-
-    Args:
-        service_key: The agent service's key.
-        skills: The card's skills in source order.
-
-    Returns:
-        ``(skill, op_key, duplicate_of)`` per skill; ``duplicate_of`` names the first skill's
-        key when this skill repeats an ``id``, else ``None``.
-    """
-    out: List[Tuple[A2aSkill, str, Optional[str]]] = []
-    first_key: Dict[str, str] = {}
-    counts: Dict[str, int] = {}
-    for skill in skills:
-        base = Keys.operation_rpc(service_key, skill.id)
-        counts[skill.id] = counts.get(skill.id, 0) + 1
-        if counts[skill.id] == 1:
-            first_key[skill.id] = base
-            out.append((skill, base, None))
-        else:
-            out.append((skill, f"{base}~{counts[skill.id]}", first_key[skill.id]))
-    return out

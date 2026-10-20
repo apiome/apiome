@@ -1,0 +1,297 @@
+{
+  "adapter": "acp",
+  "canonical": {
+    "channels": [],
+    "description": "Researches a question on the web and in uploaded PDFs, and writes a cited summary.",
+    "extras": {
+      "agent_count": 1,
+      "agent_tags": [
+        "pdf",
+        "rag",
+        "search",
+        "summarization"
+      ],
+      "capability_count": 3,
+      "domains": [
+        "research"
+      ],
+      "shape": "manifest"
+    },
+    "format": "acp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "research-assistant",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "acp",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "Researches a question on the web and in uploaded PDFs, and writes a cited summary.",
+        "extras": {
+          "agent_name": "research-assistant",
+          "author": {
+            "email": "research@example.com",
+            "name": "Example Research Team",
+            "url": "https://example.com/research"
+          },
+          "content_types_declared": true,
+          "contributors": [],
+          "dependencies": [
+            {
+              "name": "web-search",
+              "type": "tool"
+            },
+            {
+              "name": "granite-3.3-8b-instruct",
+              "type": "model"
+            }
+          ],
+          "documentation": "## Research assistant\n\nSend a question; the agent searches, reads the top sources and answers with citations.",
+          "domains": [
+            "research"
+          ],
+          "framework": "BeeAI",
+          "input_content_types": [
+            "text/plain",
+            "application/json",
+            "application/pdf"
+          ],
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "type": "source-code",
+              "url": "https://github.com/example/research-assistant"
+            },
+            {
+              "type": "documentation",
+              "url": "https://example.com/research/docs"
+            }
+          ],
+          "natural_languages": [
+            "en",
+            "de"
+          ],
+          "output_content_types": [
+            "text/markdown",
+            "application/json"
+          ],
+          "programming_language": "Python",
+          "recommended_models": [
+            "granite-3.3-8b-instruct",
+            "llama-3.3-70b-instruct"
+          ],
+          "tags": [
+            "search",
+            "summarization",
+            "rag",
+            "pdf"
+          ]
+        },
+        "key": "research-assistant",
+        "name": "research-assistant",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Extracts the text of uploaded PDF files as extra sources.",
+            "extras": {
+              "capability": "Read PDFs"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "research-assistant.Read PDFs",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json",
+                  "application/pdf"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Read PDFs#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/markdown",
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Read PDFs#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Read PDFs",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "search",
+              "summarization",
+              "rag",
+              "pdf"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Condenses the chosen sources into a short answer in the asker's language.",
+            "extras": {
+              "capability": "Summarize"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "research-assistant.Summarize",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json",
+                  "application/pdf"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Summarize#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/markdown",
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Summarize#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Summarize",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "search",
+              "summarization",
+              "rag",
+              "pdf"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Searches the public web and ranks sources by relevance.",
+            "extras": {
+              "capability": "Web search"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "research-assistant.Web search",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json",
+                  "application/pdf"
+                ],
+                "description": "The input messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Web search#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/markdown",
+                  "application/json"
+                ],
+                "description": "The output messages of a run.",
+                "extras": {},
+                "headers": [],
+                "key": "research-assistant.Web search#response.output",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "output"
+              }
+            ],
+            "name": "Web search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "search",
+              "summarization",
+              "rag",
+              "pdf"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "research-assistant",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "acp/06-typical-research-agent-v2.json",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "acp"
+  },
+  "fingerprint": "sha256:f07f2634bc0d37ca7a8933e0bf172be3fbb9fcd0e40798d0c5a4d1bd4ef45e89",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import time
+from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
@@ -84,6 +85,7 @@ from apiome_cli.import_.sources import (
     unknown_format_message,
 )
 from apiome_cli.import_.a2a import discover_agent_card_url
+from apiome_cli.import_.acp import acp_agents_url
 from apiome_cli.import_.json_schema import (
     JsonSchemaTarget,
 )
@@ -1849,31 +1851,140 @@ def import_a2a(
     then imported through the registered ``a2a`` adapter like any other source.
     """
     if discover is not None:
-        if any(value for value in (source, file_path, url)):
-            typer.echo(
-                "Provide only one input: --discover, or INPUT / --file / --url "
-                "(not more than one).",
-                err=True,
-            )
-            raise typer.Exit(EXIT_USAGE)
-        try:
-            url = discover_agent_card_url(
-                discover,
+        url = _resolve_discover_url(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            resolve=lambda base: discover_agent_card_url(
+                base,
                 timeout=_resolve_import_timeout(ctx, import_timeout),
                 verify=not insecure_from_context(ctx),
-            )
-        except ValueError as exc:
-            typer.echo(str(exc), err=True)
-            raise typer.Exit(EXIT_USAGE) from exc
-        except OSError as exc:
-            typer.echo(str(exc), err=True)
-            raise typer.Exit(EXIT_ERROR) from exc
-        if not no_progress_from_context(ctx):
-            typer.echo(f"Discovered Agent Card at {url}", err=True)
+            ),
+            found_label="Agent Card",
+        )
 
     _run_generic_adapter_import(
         ctx,
         source_format="a2a",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=None,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
+
+
+def _resolve_discover_url(
+    ctx: typer.Context,
+    discover: str,
+    *,
+    other_inputs: tuple[str | None, ...],
+    resolve: Callable[[str], str],
+    found_label: str,
+) -> str:
+    """Turn a ``--discover`` base URL into the descriptor URL to import (MFI-18.1 / MFI-18.2).
+
+    Shared by the agent-descriptor verbs (``import a2a``, ``import acp``): ``--discover`` must be
+    the only input, the format's ``resolve`` maps the base URL to the descriptor URL, and the
+    result is announced on stderr unless progress output is off.
+
+    Args:
+        ctx: The Click/Typer context.
+        discover: The ``--discover`` value.
+        other_inputs: INPUT / ``--file`` / ``--url``, which must all be empty.
+        resolve: Maps the base URL to the descriptor URL; raises ``ValueError`` for an unusable
+            URL and ``OSError`` for a fetch failure.
+        found_label: What was found, for the progress line (``"Agent Card"``).
+
+    Returns:
+        The descriptor URL to import.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` for a second input or a bad URL, ``EXIT_ERROR`` when the
+            descriptor cannot be fetched.
+    """
+    if any(value for value in other_inputs):
+        typer.echo(
+            "Provide only one input: --discover, or INPUT / --file / --url (not more than one).",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+    try:
+        url = resolve(discover)
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    except OSError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_ERROR) from exc
+    if not no_progress_from_context(ctx):
+        typer.echo(f"Discovered {found_label} at {url}", err=True)
+    return url
+
+
+@app.command("acp")
+def import_acp(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="ACP agent manifest or ``GET /agents`` listing: path, ``http``/``https`` URL, or ``-``.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="SERVER_URL",
+        help=(
+            "ACP server base URL (for example ``https://acp.example.com``) whose "
+            "``/agents`` listing is imported; a ``…/agents/<name>`` URL imports one agent."
+        ),
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import ACP (Agent Communication Protocol) agents from a file, URL, stdin, or a live server.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With
+    ``--discover`` the server's ``/agents`` listing URL is derived from its base URL and imported
+    through the registered ``acp`` adapter like any other source (MFI-18.2).
+    """
+    if discover is not None:
+        url = _resolve_discover_url(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            resolve=acp_agents_url,
+            found_label="ACP agent listing",
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="acp",
         source=source,
         file_path=file_path,
         url=url,

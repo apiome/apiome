@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.400.0] - 2026-10-20
+
+### Added
+- **ACP agent manifest import source (#3975, MFI-18.2)**: the `acp` adapter catalogs ACP (Agent Communication
+  Protocol) agents from a single agent manifest or a server's `GET /agents` listing (`{"agents": [...]}`), as a
+  file, URL, paste or fileset, or live from `<server>/agents` through the SSRF-guarded client
+  (`AcpImportSource.introspect`; a `…/agents/<name>` URL imports one agent). Normalizes to the `agent` paradigm
+  beside A2A: one service per agent (content types, tags, domains, framework, languages, license, author, links,
+  dependencies, recommended models on `extras`), one operation per `metadata.capabilities[]` entry keyed
+  `<agent>.<capability>` carrying the agent's tags and content types. Runtime `status` and `created_at` /
+  `updated_at` are kept in `raw` only, so they never change the fingerprint. A live listing's URL becomes the
+  model's server. New `acp` lint pack (9 rules: `acp.duplicate-agent-name`, `acp.invalid-agent-name`,
+  `acp.agent-missing-description`, `acp.duplicate-capability-name`, `acp.capability-missing-description`,
+  `acp.no-capabilities`, `acp.untyped-content`, `acp.missing-tags`, `acp.missing-license`). The catalog item
+  detail renders an ACP document as an **Agents** group.
+- Corpus: six valid and five negative `apiome-ui/examples/acp/` fixtures with goldens; multi-file rung waived.
+
+### Changed
+- The A2A and ACP adapters share one bounded, SSRF-guarded descriptor fetch (`app.agent_descriptor_fetch`) and
+  one duplicate-key helper (`app.agent_paradigm_keys`).
+
+### Fixed
+- **Agent rule packs are seeded into the built-in style guide**: the `a2a.*` pack (#3974) shipped without being
+  added to "Apiome Recommended", so its findings were dropped for tenants scoring against the seeded guide.
+  **apiome-db V304** re-seeds the guide with the `a2a.*` and `acp.*` packs. The two blocking `a2a.*` rules and
+  `acp.duplicate-agent-name` now carry scanner transparency (reference, remediation, false-positive guidance,
+  evidence fixture), and the lint-rule and axis-score docs list both packs.
+
 ## [1.399.0] - 2026-10-20
 
 ### Added

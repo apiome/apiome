@@ -1,0 +1,41 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/a2a-security-undeclared-scheme",
+  "source_format": "a2a",
+  "description": "A2A Agent Card with exactly one blocking defect: `security` names the undefined scheme `sso`.",
+  "document": {
+    "protocolVersion": "0.3.0",
+    "name": "Fixture Agent",
+    "description": "Agent used by the scanner evaluation corpus.",
+    "url": "https://agent.example.com/a2a/v1",
+    "version": "1.0.0",
+    "capabilities": {},
+    "securitySchemes": {
+      "oauth": {
+        "type": "oauth2",
+        "flows": {}
+      }
+    },
+    "security": [
+      {
+        "sso": []
+      }
+    ],
+    "defaultInputModes": [
+      "text/plain"
+    ],
+    "defaultOutputModes": [
+      "text/plain"
+    ],
+    "skills": [
+      {
+        "id": "lookup",
+        "name": "Lookup",
+        "description": "Skill lookup for the fixture.",
+        "tags": [
+          "fixture"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "echo",
+  "description": "Repeats the messages it receives back unchanged. Useful for testing ACP clients.",
+  "input_content_types": ["text/plain"],
+  "output_content_types": ["text/plain"],
+  "metadata": {
+    "capabilities": [
+      { "name": "Echo", "description": "Returns each message part unchanged." }
+    ],
+    "tags": ["testing"],
+    "license": "Apache-2.0"
+  }
+}
