@@ -1,0 +1,22 @@
+---
+slug: batch-export
+title: Export a whole project in one job
+description: One export job now covers several versions of a project, in one zip.
+authors: [apiome]
+---
+
+Exporting a project used to mean one job per version. An export job can now take a set of
+versions, so one job exports a whole project, or the versions you pick, to one or more formats.
+
+{/* truncate */}
+
+- **One job, one zip.** Send `versions` (or `"all_versions": true`) instead of `version` to
+  `POST /v1/export/{tenant}/jobs`. The download is one zip with a `<version>/<format>/` folder for
+  each item and a root `manifest.json` that lists every item.
+- **Failures stay with their item.** A version that does not load or a format that fails is
+  reported on that item, with the usual error code and remediation, and the rest of the batch
+  still ships. The job only fails when every item failed.
+- **Status per item.** The job result lists each version × format item with its state, fidelity
+  tier, delivery decision and files, plus a fidelity rollup over the completed items.
+
+See [Export a whole project or several versions in one job](/ship/export-a-spec#export-a-whole-project-or-several-versions-in-one-job).

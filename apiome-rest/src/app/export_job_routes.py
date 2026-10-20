@@ -71,7 +71,15 @@ router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
         "``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, "
         "validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The "
         "job is all-or-nothing: the first target that fails fails the job, naming it in "
-        "``error.context.target``."
+        "``error.context.target``.\n\n"
+        "**Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or "
+        "``all_versions: true`` instead of ``version`` to export several versions of the artifact "
+        "to the target(s) in one job. The download is one zip (``export-batch.zip``) with a "
+        "``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing "
+        "every item. Failures are per item: ``result.batch.items[]`` carries each item's state "
+        "and, for a failed one, its structured ``error``; the job only fails "
+        "(``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version × target items; "
+        "``acknowledged_snapshot`` is not accepted on a batch."
     ),
 )
 async def start_export_job(
@@ -275,10 +283,13 @@ def _attestation_path(tenant_slug: str, job_id: str) -> str:
         "``apiome lint verify-attestation`` verifies it as-is.\n\n"
         "A multi-target job (MFX-39.1) attests each target separately against the combined "
         "bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to "
-        "pick one.\n\n"
+        "pick one. A batch export (MFX-39.2) attests each completed item against the archive: "
+        "pass ``version`` (an item's requested version, revision id, or version label) and "
+        "``target``.\n\n"
         "404 when the job is unknown for this tenant; 409 when the job produced no attested "
-        "delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is "
-        "asked without a ``target`` or for a target it did not export."
+        "delivery (still running, canceled, failed, or a dry-run), when a multi-target job is "
+        "asked without a ``target`` or for a target it did not export, or when a batch export is "
+        "asked for an item it did not complete."
     ),
 )
 async def get_export_job_attestation(
@@ -287,8 +298,13 @@ async def get_export_job_attestation(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     target: Optional[str] = Query(
         None,
-        description="Multi-target jobs only: the resolved target format key whose attestation "
-        "to return. Ignored for a single-target job.",
+        description="Multi-target and batch jobs only: the resolved target format key whose "
+        "attestation to return. Ignored for a single-target job.",
+    ),
+    version: Optional[str] = Query(
+        None,
+        description="Batch jobs only: the item's version — as requested, its revision id, or its "
+        "version label. Ignored for any other job.",
     ),
 ) -> DeliveryAttestation:
     """Return the signed delivery attestation for a completed export job.
@@ -297,8 +313,10 @@ async def get_export_job_attestation(
         tenant_slug: The tenant slug the job was submitted under.
         job_id: The job id from the 202 acceptance payload.
         auth_data: Authenticated tenant context (JWT or API key).
-        target: For a multi-target job, the resolved target format key to return the
-            attestation of; ignored for a single-target job.
+        target: For a multi-target or batch job, the resolved target format key to return
+            the attestation of; ignored for a single-target job.
+        version: For a batch job, the item's version (requested reference, revision id, or
+            version label); ignored otherwise.
 
     Returns:
         The job's (or the selected target's) :class:`~app.export_delivery_gate.DeliveryAttestation`.
@@ -311,7 +329,27 @@ async def get_export_job_attestation(
     _ = auth_data
     status = await engine_get_export_job_status(tenant_slug, job_id)
     result = status.result
-    if result is not None and result.targets is not None:
+    if result is not None and result.batch is not None:
+        selected_item = next(
+            (
+                item
+                for item in result.batch.items
+                if item.state == "completed"
+                and item.target == target
+                and version in (item.version, item.version_record_id, item.version_label)
+            ),
+            None,
+        )
+        if selected_item is None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Export job {job_id} is a batch export; pass ?version= and ?target= naming "
+                    "one of its completed items (result.batch.items[])."
+                ),
+            )
+        delivery = selected_item.delivery
+    elif result is not None and result.targets is not None:
         exported = [entry.target for entry in result.targets]
         selected = next((entry for entry in result.targets if entry.target == target), None)
         if selected is None:

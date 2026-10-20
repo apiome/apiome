@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.257.0",
+    "version": "1.258.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-20T01:15:21Z"
+                          "example": "2026-10-20T01:33:34Z"
                         },
                         "method": {
                           "type": "string",
@@ -80071,7 +80071,7 @@
           "export-jobs"
         ],
         "summary": "Start an asynchronous export job",
-        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.\n\n**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.",
+        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.\n\n**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.\n\n**Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version \u00d7 target items; ``acknowledged_snapshot`` is not accepted on a batch.",
         "operationId": "start_export_job_v1_export__tenant_slug__jobs_post",
         "parameters": [
           {
@@ -80620,7 +80620,7 @@
           "export-jobs"
         ],
         "summary": "Fetch a delivered artifact's signed delivery attestation",
-        "description": "The delivery attestation for a completed export job (IXH-2.5): an **in-toto Statement v1** in a **DSSE envelope**, HMAC-SHA256 signed with the shared attestation secret (``APIOME_LINT_ATTESTATION_SIGNING_SECRET`` \u2014 the same key the CLX-4.2 lint gate attestations use, so a verifier needs no new configuration).\n\nThe statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons \u2014 everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.\n\nA multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one.\n\n404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is asked without a ``target`` or for a target it did not export.",
+        "description": "The delivery attestation for a completed export job (IXH-2.5): an **in-toto Statement v1** in a **DSSE envelope**, HMAC-SHA256 signed with the shared attestation secret (``APIOME_LINT_ATTESTATION_SIGNING_SECRET`` \u2014 the same key the CLX-4.2 lint gate attestations use, so a verifier needs no new configuration).\n\nThe statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons \u2014 everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.\n\nA multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one. A batch export (MFX-39.2) attests each completed item against the archive: pass ``version`` (an item's requested version, revision id, or version label) and ``target``.\n\n404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), when a multi-target job is asked without a ``target`` or for a target it did not export, or when a batch export is asked for an item it did not complete.",
         "operationId": "get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__attestation_get",
         "parameters": [
           {
@@ -80660,10 +80660,30 @@
                   "description": "Fetchadeliveredartifactssigneddeliveryattarget schema."
                 }
               ],
-              "description": "Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job.",
+              "description": "Multi-target and batch jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job.",
               "title": "Target"
             },
-            "description": "Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job."
+            "description": "Multi-target and batch jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Fetchadeliveredartifactssigneddeliveryatversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Fetchadeliveredartifactssigneddeliveryatversion schema."
+                }
+              ],
+              "description": "Batch jobs only: the item's version \u2014 as requested, its revision id, or its version label. Ignored for any other job.",
+              "title": "Version"
+            },
+            "description": "Batch jobs only: the item's version \u2014 as requested, its revision id, or its version label. Ignored for any other job."
           },
           {
             "name": "authorization",
@@ -111166,7 +111186,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "completed_at": {
             "anyOf": [
@@ -113121,7 +113141,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "comment_count": {
             "type": "integer",
@@ -113349,7 +113369,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114116,14 +114136,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -117407,7 +117427,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "19b3166f-3b9b-44ad-8116-22f4336fc310"
+            "example": "6c5cc46d-fdd8-4870-ab34-bf6f7ac19eac"
           },
           "method": {
             "type": "string",
@@ -119934,7 +119954,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -121830,7 +121850,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "browse_url": {
             "anyOf": [
@@ -123597,6 +123617,265 @@
         "title": "ExportAdvisory",
         "description": "The single user-facing advisory for one cross-format (or lossy) export.\n\nBuilt from a :class:`~app.lossiness.LossinessReport` and a human target label by\n:func:`build_export_advisory`, then carried verbatim in the export / dry-run REST\nresponse (MFX-2.5) so every surface \u2014 apiome-ui (MFX-6.2), apiome-browse\n(MFX-7.2), apiome-cli (MFX-8.2) \u2014 renders identical wording.\n\nThe two acceptance criteria of MFX-2.4 are properties of this model:\n\n* **reflects real counts** \u2014 ``dropped`` / ``approximated`` / ``synthesized`` and\n  the ``{constructs}`` woven into ``message`` come straight from the report's\n  per-kind counts, so the copy can never drift from the loss it describes;\n* **shown when lossy, hidden when lossless** \u2014 :attr:`show` is ``False`` for a\n  clean export (or one whose only losses fall below the caller's severity\n  threshold), and consumers gate their banner on it."
       },
+      "ExportBatchItem": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "The version as requested (a ``versions`` entry), or the revision id for an ``all_versions`` batch.",
+            "example": "1.0.0"
+          },
+          "version_record_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Version Record Id",
+            "description": "The resolved revision; null when the version did not load."
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "The resolved revision's version label (e.g. ``1.0.0``)."
+          },
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The resolved target format key, or the target as requested when it did not resolve.",
+            "example": "example"
+          },
+          "directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Directory",
+            "description": "The archive folder holding this item's files (``<version>/<target>``); null when the version did not load."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "title": "State",
+            "description": "``completed`` (emitted, or planned for a dry-run) or ``failed``.",
+            "example": "completed"
+          },
+          "snapshot_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Snapshot Hash",
+            "description": "This item's projection snapshot hash (EFP-2.1)."
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Options",
+            "description": "The emit options this item ran with; null for defaults."
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Tier",
+            "description": "This item's fidelity tier; null when it failed before fidelity."
+          },
+          "preserved_percent": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Preserved Percent",
+            "description": "Share of source constructs preserved for this item."
+          },
+          "guard": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscodeGuard"
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "description": "This item's transcoding guard (MFX-3.3)."
+          },
+          "validation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmittedValidationReport"
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "description": "This item's emitted-artifact validation report."
+          },
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryGateReport"
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "description": "This item's delivery decision, with an attestation whose subject is the combined archive; null for a dry-run or a failed item."
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ExportJobFile"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "The files this item contributed, at their archive paths; empty for a dry-run or a failed item.",
+            "maxItems": 1000
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "title": "Media Type",
+            "description": "This item's primary media type; null when nothing was emitted."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportJobError"
+              },
+              {
+                "type": "null",
+                "description": "Export Batch schema."
+              }
+            ],
+            "description": "Why the item failed; set only when ``state`` is ``failed``."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "target",
+          "state"
+        ],
+        "title": "ExportBatchItem",
+        "description": "One (version \u00d7 target) item of a batch export and how it ended (MFX-39.2).\n\nA batch export never fails because one item did: each item carries its own state, and a\nfailed item carries the same structured :class:`ExportJobError` a failed single-target job\nwould. A completed item contributed its files to the combined archive under ``directory``.\n\nThe fidelity is reduced to its tier and preserved share (a batch can run up to\n:data:`MAX_BATCH_ITEMS` items, so full envelopes would bloat the poll payload); a single-\nor multi-target job (or ``POST /export/preview``) of the same version gives the full report."
+      },
+      "ExportBatchSummary": {
+        "properties": {
+          "version_count": {
+            "type": "integer",
+            "title": "Version Count",
+            "description": "Versions the batch covered.",
+            "example": 1
+          },
+          "target_count": {
+            "type": "integer",
+            "title": "Target Count",
+            "description": "Targets each version was exported to.",
+            "example": 1
+          },
+          "item_count": {
+            "type": "integer",
+            "title": "Item Count",
+            "description": "Version \u00d7 target items the batch ran.",
+            "example": 1
+          },
+          "completed_count": {
+            "type": "integer",
+            "title": "Completed Count",
+            "description": "Items that completed.",
+            "example": 1
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "description": "Items that failed (see each item's ``error``).",
+            "example": 1
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExportBatchItem"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Every item, version by version, each version's targets in request order.",
+            "maxItems": 100
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version_count",
+          "target_count",
+          "item_count",
+          "completed_count",
+          "failed_count"
+        ],
+        "title": "ExportBatchSummary",
+        "description": "The per-item outcome table of a batch export (MFX-39.2)."
+      },
       "ExportBody": {
         "properties": {
           "id": {
@@ -124586,10 +124865,18 @@
             "example": "example"
           },
           "version_record_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Job schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
             "title": "Version Record Id",
-            "description": "The resolved revision (``versions.id``).",
-            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+            "description": "The resolved revision (``versions.id``); null for a batch export, whose revisions are on ``batch.items[]``."
           },
           "version_label": {
             "anyOf": [
@@ -124617,7 +124904,7 @@
               }
             ],
             "title": "Target",
-            "description": "The resolved target format key (e.g. ``openapi-3.1``); null for a multi-target job (see ``targets``)."
+            "description": "The resolved target format key (e.g. ``openapi-3.1``); null for a multi-target or batch job (see ``targets`` / ``batch``)."
           },
           "dry_run": {
             "type": "boolean",
@@ -124773,14 +125060,25 @@
                 "description": "Export Job schema."
               }
             ],
-            "description": "The merged fidelity summary across a multi-target job's targets (worst tier, preserved-% floor and mean, per-tier counts); null for a single-target job."
+            "description": "The merged fidelity summary across a multi-target job's targets (worst tier, preserved-% floor and mean, per-tier counts); null for a single-target job. For a batch export it covers the completed items, each labelled ``<version>/<target>``."
+          },
+          "batch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportBatchSummary"
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
+            "description": "Per-item outcomes of a batch export (MFX-39.2); null for any other job."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "artifact",
-          "version_record_id",
           "dry_run"
         ],
         "title": "ExportJobResult",
@@ -124888,6 +125186,32 @@
             "$ref": "#/components/schemas/LossinessSeverity",
             "description": "Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts.",
             "default": "info"
+          },
+          "versions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 50,
+                "minItems": 1,
+                "description": "Request body for export job start."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export job start."
+              }
+            ],
+            "title": "Versions",
+            "description": "A batch export over these versions of the artifact (MFX-39.2): revision UUIDs or version labels, 1\u201350 distinct entries. Every version is exported to every target into one archive, and a version or target that fails is reported on its item without failing the batch. Mutually exclusive with ``version`` and ``all_versions``."
+          },
+          "all_versions": {
+            "type": "boolean",
+            "title": "All Versions",
+            "description": "When true, a batch export over every version of the artifact (MFX-39.2), newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions \u00d7 targets exceeds 100. Mutually exclusive with ``version`` and ``versions``.",
+            "default": false,
+            "example": false
           }
         },
         "additionalProperties": false,
@@ -165326,7 +165650,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           }
         },
         "additionalProperties": false,
@@ -176748,13 +177072,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           }
         },
         "additionalProperties": false,
@@ -178258,7 +178582,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "detected_by": {
             "anyOf": [
@@ -186464,14 +186788,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T01:15:21Z"
+            "example": "2026-10-20T01:33:34Z"
           },
           "outcome": {
             "anyOf": [

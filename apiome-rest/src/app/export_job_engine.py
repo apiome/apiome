@@ -127,6 +127,10 @@ __all__ = [
     "ExportJobTargetResult",
     "ExportJobResult",
     "MAX_EXPORT_TARGETS",
+    "MAX_BATCH_VERSIONS",
+    "MAX_BATCH_ITEMS",
+    "ExportBatchItem",
+    "ExportBatchSummary",
     "ExportJobError",
     "ExportJobStatus",
     "ExportJobListItem",
@@ -144,7 +148,10 @@ __all__ = [
     "build_export_zip",
     "build_multi_target_manifest",
     "build_multi_target_zip",
+    "write_parts_zip",
     "target_directory",
+    "safe_bundle_segment",
+    "delivery_failure",
     "serialize_file_content",
     "ExportDownloadArtifact",
     "resolve_export_download",
@@ -213,6 +220,13 @@ class ExportJobProgress(BaseModel):
 #: Most targets one multi-target job may name (MFX-39.1). Each target is a full fidelity walk,
 #: emit, and re-parse, so the cap bounds one job's work and its combined bundle.
 MAX_EXPORT_TARGETS = 16
+
+#: Most versions a batch export may name in its ``versions`` list (MFX-39.2).
+MAX_BATCH_VERSIONS = 50
+
+#: Most (version × target) items one batch export may run (MFX-39.2). Checked at submit for an
+#: explicit ``versions`` list and when the job resolves ``all_versions``.
+MAX_BATCH_ITEMS = 100
 
 
 class ExportJobTargetSpec(BaseModel):
@@ -299,6 +313,22 @@ class ExportJobStartRequest(BaseModel):
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
         "the report or counts.",
     )
+    versions: Optional[List[str]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_BATCH_VERSIONS,
+        description="A batch export over these versions of the artifact (MFX-39.2): revision "
+        f"UUIDs or version labels, 1–{MAX_BATCH_VERSIONS} distinct entries. Every version is "
+        "exported to every target into one archive, and a version or target that fails is "
+        "reported on its item without failing the batch. Mutually exclusive with ``version`` "
+        "and ``all_versions``.",
+    )
+    all_versions: bool = Field(
+        default=False,
+        description="When true, a batch export over every version of the artifact (MFX-39.2), "
+        f"newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions × targets "
+        f"exceeds {MAX_BATCH_ITEMS}. Mutually exclusive with ``version`` and ``versions``.",
+    )
 
     @model_validator(mode="after")
     def _one_target_shape(self) -> "ExportJobStartRequest":
@@ -324,6 +354,66 @@ class ExportJobStartRequest(BaseModel):
                 "each 'targets' entry instead."
             )
         return self
+
+    @model_validator(mode="after")
+    def _batch_shape(self) -> "ExportJobStartRequest":
+        """Keep a batch export's version selection consistent (MFX-39.2).
+
+        Returns:
+            The validated request.
+
+        Raises:
+            ValueError: When ``versions`` / ``all_versions`` are combined with each other or with
+                ``version``; when a ``versions`` entry is blank or repeated; when an acknowledged
+                snapshot is set (a snapshot names one version, so it cannot be acknowledged for a
+                batch); or when an explicit ``versions`` list × targets exceeds
+                :data:`MAX_BATCH_ITEMS`.
+        """
+        if not self.is_batch:
+            return self
+        if self.version is not None:
+            raise ValueError(
+                "Set either 'version' or a batch selection ('versions' / 'all_versions'), not both."
+            )
+        if self.versions is not None and self.all_versions:
+            raise ValueError("Set either 'versions' or 'all_versions', not both.")
+        if self.acknowledged_snapshot is not None or any(
+            spec.acknowledged_snapshot is not None for spec in self.targets or []
+        ):
+            raise ValueError(
+                "'acknowledged_snapshot' names one version's preview and cannot be set on a "
+                "batch export."
+            )
+        if self.versions is not None:
+            cleaned = [entry.strip() for entry in self.versions]
+            if any(not entry for entry in cleaned):
+                raise ValueError("'versions' entries must not be blank.")
+            if len(set(cleaned)) != len(cleaned):
+                raise ValueError("'versions' entries must be distinct.")
+            self.versions = cleaned
+            items = len(cleaned) * len(self.target_specs)
+            if items > MAX_BATCH_ITEMS:
+                raise ValueError(
+                    f"A batch export runs at most {MAX_BATCH_ITEMS} version × target items; "
+                    f"this request names {items}."
+                )
+        return self
+
+    @property
+    def is_batch(self) -> bool:
+        """True when the job exports a set of versions (MFX-39.2): ``versions`` or ``all_versions``."""
+        return self.versions is not None or self.all_versions
+
+    @property
+    def target_specs(self) -> List[ExportJobTargetSpec]:
+        """The requested targets as specs, whichever shape was submitted.
+
+        The ``targets`` list as given, or the single ``target`` with its ``options`` as a
+        one-entry list — so a batch export treats both shapes alike.
+        """
+        if self.targets is not None:
+            return list(self.targets)
+        return [ExportJobTargetSpec(target=self.target or "", options=self.options)]
 
     @property
     def is_multi_target(self) -> bool:
@@ -422,14 +512,18 @@ class ExportJobResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     artifact: str = Field(description="The artifact (project) id the job exported.")
-    version_record_id: str = Field(description="The resolved revision (``versions.id``).")
+    version_record_id: Optional[str] = Field(
+        default=None,
+        description="The resolved revision (``versions.id``); null for a batch export, whose "
+        "revisions are on ``batch.items[]``.",
+    )
     version_label: Optional[str] = Field(
         default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
     )
     target: Optional[str] = Field(
         default=None,
         description="The resolved target format key (e.g. ``openapi-3.1``); null for a "
-        "multi-target job (see ``targets``).",
+        "multi-target or batch job (see ``targets`` / ``batch``).",
     )
     dry_run: bool = Field(description="True when the job stopped after the fidelity report.")
     snapshot_hash: str = Field(
@@ -495,7 +589,12 @@ class ExportJobResult(BaseModel):
     fidelity_rollup: Optional[ExportFidelityRollup] = Field(
         default=None,
         description="The merged fidelity summary across a multi-target job's targets (worst "
-        "tier, preserved-% floor and mean, per-tier counts); null for a single-target job.",
+        "tier, preserved-% floor and mean, per-tier counts); null for a single-target job. For a "
+        "batch export it covers the completed items, each labelled ``<version>/<target>``.",
+    )
+    batch: Optional["ExportBatchSummary"] = Field(
+        default=None,
+        description="Per-item outcomes of a batch export (MFX-39.2); null for any other job.",
     )
 
 
@@ -537,6 +636,100 @@ class ExportJobError(BaseModel):
         "equal to the X-Request-ID echoed on the submitting 202 response. Quote it in "
         "bug reports; it links the failure to every log line the job emitted.",
     )
+
+
+ExportBatchItemState = Literal["completed", "failed"]
+
+
+class ExportBatchItem(BaseModel):
+    """One (version × target) item of a batch export and how it ended (MFX-39.2).
+
+    A batch export never fails because one item did: each item carries its own state, and a
+    failed item carries the same structured :class:`ExportJobError` a failed single-target job
+    would. A completed item contributed its files to the combined archive under ``directory``.
+
+    The fidelity is reduced to its tier and preserved share (a batch can run up to
+    :data:`MAX_BATCH_ITEMS` items, so full envelopes would bloat the poll payload); a single-
+    or multi-target job (or ``POST /export/preview``) of the same version gives the full report.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    version: str = Field(
+        description="The version as requested (a ``versions`` entry), or the revision id for an "
+        "``all_versions`` batch.",
+    )
+    version_record_id: Optional[str] = Field(
+        default=None, description="The resolved revision; null when the version did not load."
+    )
+    version_label: Optional[str] = Field(
+        default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
+    )
+    target: str = Field(
+        description="The resolved target format key, or the target as requested when it did "
+        "not resolve.",
+    )
+    directory: Optional[str] = Field(
+        default=None,
+        description="The archive folder holding this item's files (``<version>/<target>``); "
+        "null when the version did not load.",
+    )
+    state: ExportBatchItemState = Field(
+        description="``completed`` (emitted, or planned for a dry-run) or ``failed``.",
+    )
+    snapshot_hash: Optional[str] = Field(
+        default=None, description="This item's projection snapshot hash (EFP-2.1)."
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None, description="The emit options this item ran with; null for defaults."
+    )
+    tier: Optional[str] = Field(
+        default=None, description="This item's fidelity tier; null when it failed before fidelity."
+    )
+    preserved_percent: Optional[int] = Field(
+        default=None, description="Share of source constructs preserved for this item."
+    )
+    guard: Optional[TranscodeGuard] = Field(
+        default=None, description="This item's transcoding guard (MFX-3.3)."
+    )
+    validation: Optional[EmittedValidationReport] = Field(
+        default=None, description="This item's emitted-artifact validation report."
+    )
+    delivery: Optional[DeliveryGateReport] = Field(
+        default=None,
+        description="This item's delivery decision, with an attestation whose subject is the "
+        "combined archive; null for a dry-run or a failed item.",
+    )
+    files: List[ExportJobFile] = Field(
+        default_factory=list,
+        description="The files this item contributed, at their archive paths; empty for a "
+        "dry-run or a failed item.",
+    )
+    media_type: Optional[str] = Field(
+        default=None, description="This item's primary media type; null when nothing was emitted."
+    )
+    error: Optional[ExportJobError] = Field(
+        default=None, description="Why the item failed; set only when ``state`` is ``failed``."
+    )
+
+
+class ExportBatchSummary(BaseModel):
+    """The per-item outcome table of a batch export (MFX-39.2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    version_count: int = Field(description="Versions the batch covered.")
+    target_count: int = Field(description="Targets each version was exported to.")
+    item_count: int = Field(description="Version × target items the batch ran.")
+    completed_count: int = Field(description="Items that completed.")
+    failed_count: int = Field(description="Items that failed (see each item's ``error``).")
+    items: List[ExportBatchItem] = Field(
+        default_factory=list,
+        description="Every item, version by version, each version's targets in request order.",
+    )
+
+
+ExportJobResult.model_rebuild()
 
 
 class ExportJobStatus(BaseModel):
@@ -1101,6 +1294,29 @@ async def _fail_delivery(
             carries.
         target_format: The resolved target format key.
     """
+    code, message, context = delivery_failure(delivery, validation, target_format)
+    await _fail(job_id, code, message, context)
+
+
+def delivery_failure(
+    delivery: DeliveryGateReport,
+    validation: EmittedArtifactValidation,
+    target_format: str,
+) -> Tuple[str, str, Dict[str, Any]]:
+    """The ``(code, message, context)`` of a blocked delivery (IXH-2.5).
+
+    Shared by :func:`_fail_delivery` (which fails the job) and a batch export (MFX-39.2), which
+    records the same failure on one item instead.
+
+    Args:
+        delivery: The blocking decision.
+        validation: The emitted-artifact validation, for the findings a validator rejection
+            carries.
+        target_format: The resolved target format key.
+
+    Returns:
+        The taxonomy code, the message, and the structured context.
+    """
     blocking = [
         reason for reason in delivery.reasons if reason.severity is DeliverySeverity.BLOCKING
     ]
@@ -1120,7 +1336,7 @@ async def _fail_delivery(
             }
         )
     code = "EMITTED_ARTIFACT_INVALID" if invalid_artifact else "EXPORT_DELIVERY_BLOCKED"
-    await _fail(job_id, code, delivery.message, context)
+    return code, delivery.message, context
 
 
 def serialize_file_content(content: Any) -> str:
@@ -1316,8 +1532,24 @@ def target_directory(target_format: str) -> str:
     Returns:
         A safe, non-empty directory name (``target`` when nothing usable remains).
     """
-    cleaned = _UNSAFE_DIRECTORY_CHARS.sub("-", target_format or "").strip(".-")
-    return cleaned or "target"
+    return safe_bundle_segment(target_format, "target")
+
+
+def safe_bundle_segment(value: Optional[str], fallback: str) -> str:
+    """Reduce ``value`` to one safe bundle path segment (MFX-39.1 / MFX-39.2).
+
+    Anything outside ``[A-Za-z0-9._-]`` becomes ``-`` and leading/trailing dots and dashes are
+    trimmed, so the segment can never be ``..`` or carry a path separator.
+
+    Args:
+        value: The raw name (a format key, a version label, a revision id).
+        fallback: The name to use when nothing usable remains.
+
+    Returns:
+        A safe, non-empty path segment.
+    """
+    cleaned = _UNSAFE_DIRECTORY_CHARS.sub("-", value or "").strip(".-")
+    return cleaned or fallback
 
 
 @dataclass
@@ -1434,6 +1666,24 @@ def build_multi_target_zip(
         version_label=version_label,
         rollup=rollup,
     )
+    return write_parts_zip(parts, manifest)
+
+
+def write_parts_zip(parts: List[MultiTargetBundlePart], manifest: Dict[str, Any]) -> bytes:
+    """Write bundle parts under their directories plus a root ``manifest.json`` (deterministic).
+
+    Each part's files land at ``<directory>/<path>``, serialized exactly as a single-target
+    download would be, followed by ``manifest``. Entries use the pinned zip timestamp, so the
+    same inputs always produce byte-identical bytes. Shared by the multi-target bundle
+    (MFX-39.1) and the batch archive (MFX-39.2).
+
+    Args:
+        parts: The parts to write, in order.
+        manifest: The root manifest document.
+
+    Returns:
+        The zip archive as raw bytes.
+    """
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for part in parts:
@@ -1737,7 +1987,12 @@ async def _drive_export_job(job_id: str) -> None:
             correlation_id = None
     bind_contextvars(request_id=correlation_id, export_job_id=job_id)
     try:
-        if rec is not None and rec.request.is_multi_target:
+        if rec is not None and rec.request.is_batch:
+            # Imported here: the batch driver builds on this module's pipeline helpers.
+            from .export_batch import drive_batch_job_inner
+
+            await drive_batch_job_inner(job_id)
+        elif rec is not None and rec.request.is_multi_target:
             await _drive_multi_target_job_inner(job_id)
         else:
             await _drive_export_job_inner(job_id)

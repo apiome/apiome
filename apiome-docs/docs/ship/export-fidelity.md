@@ -189,6 +189,10 @@ bound to the snapshot hash, not to the moment in time:
   separately (`acknowledged_snapshot` on each entry). A stale snapshot on any of them
   fails the whole job, and `error.context.target` names the format. See
   [Export to several formats in one job](./export-a-spec.md#export-to-several-formats-in-one-job).
+- **Several versions, one job**: a batch export (`versions` or `all_versions`) does not
+  accept `acknowledged_snapshot`, because a snapshot describes one version. Each item's
+  snapshot hash is recorded on `result.batch.items[]`. See
+  [Export a whole project or several versions in one job](./export-a-spec.md#export-a-whole-project-or-several-versions-in-one-job).
 
 ## From the CLI
 
@@ -290,6 +294,7 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Reviewed reason explanations + destination documentation | `GET /v1/export/{tenant}/capability-registry` |
 | Export job (accepts `acknowledged_snapshot`; fails `STALE_PREVIEW` on mismatch) | `POST /v1/export/{tenant}/jobs` |
 | Multi-format export job: one zip, per-format fidelity + a rollup (`targets` list) | `POST /v1/export/{tenant}/jobs` |
+| Batch export job: several versions × formats, one zip, per-item status (`versions` / `all_versions`) | `POST /v1/export/{tenant}/jobs` |
 
 All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 
