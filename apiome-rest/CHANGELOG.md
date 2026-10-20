@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.398.0] - 2026-10-19
+
+### Added
+- **Multi-repository federation: switch, merge history and per-source conflict diffs (#2806, V2-REPO-8.2)**:
+  on top of REPO-5.7's merge engine (deterministic precedence, per-entity provenance), a project can switch
+  federation off so each repository import replaces the surface instead of merging, and every import federation
+  acts on is recorded with its audit row. apiome-ui's import reports the merge after it commits (and a conflict
+  when it fails); a conflict carries the importing file's definition of each collision, and apiome-rest fills the
+  contributing file's side from the parent version's rendered spec.
+  - **apiome-db V303**: `projects.repository_federation` (default `true`) and `project_federation_merges`
+    (`merged` / `conflicted` / `replaced`, snapshot of the imported file, counts, `sources`, `conflicts` with every
+    source's definition, bounded at 20 KB each).
+  - **`GET` / `PUT /v1/tenants/{tenant_slug}/projects/{project_ref}/repository-federation`** (`projects:view` /
+    `projects:edit`; audited `repository.federation_toggled`).
+  - **`POST /v1/tenants/{tenant_slug}/projects/{project_ref}/federation-merges`** (`imports:create`, called by the
+    import): writes the history row and its audit row — `repository.federation_merged`,
+    `repository.federation_conflicted` or `repository.federation_replaced` — in one transaction.
+  - **`GET …/projects/{project_ref}/federation-merges`** (`projects:view`) and
+    **`GET /v1/tenants/{tenant_slug}/repositories/{repository_id}/federation-merges`** (`imports:view`, the
+    repository's sync history). New tag `repository-federation`.
+
 ## [1.397.0] - 2026-10-19
 
 ### Added

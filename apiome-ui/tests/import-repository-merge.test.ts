@@ -1,5 +1,6 @@
 /**
- * Multi-repository merge wiring in the import (REPO-5.7, #2792).
+ * Multi-repository merge wiring in the import (REPO-5.7, #2792), and the federation switch and
+ * merge-history reports on top of it (V2-REPO-8.2, #2806).
  *
  * Drives `startImport` for a repository file imported into a project that already holds another
  * repository's content. Storage is mocked (`lib/db/repository-merge` loaders and writer, the
@@ -86,7 +87,9 @@ let mockParent: ParentEntity[] = [];
 const mockLoadIncoming = jest.fn((..._args: any[]) => Promise.resolve(billing as MergeSource | null));
 const mockApply = jest.fn((..._args: any[]) => Promise.resolve({ sourceId: 'src-billing', classesCarried: 1, provenanceRows: 4 }));
 const carriedPath = { path: '/users', operations: [] };
+let mockFederation = true;
 jest.mock('../lib/db/repository-merge', () => ({
+  loadProjectFederation: jest.fn(() => Promise.resolve(mockFederation)),
   loadIncomingSource: (...args: any[]) => mockLoadIncoming(...args),
   loadParentEntities: jest.fn(() => Promise.resolve(mockParent)),
   loadCarriedPaths: jest.fn((_v: string, names: string[]) =>
@@ -94,6 +97,17 @@ jest.mock('../lib/db/repository-merge', () => ({
   ),
   applyRepositoryMerge: (...args: any[]) => mockApply(...args),
 }));
+
+jest.mock('../lib/db/helper', () => ({
+  getTenantById: jest.fn(() => Promise.resolve({ id: 'tenant-1', slug: 'acme' })),
+  permanentDeleteProject: jest.fn(),
+}));
+
+const mockPostFederation = jest.fn((..._args: any[]) => Promise.resolve(null as string | null));
+jest.mock('../lib/federation-merge-report', () => {
+  const actual = jest.requireActual('../lib/federation-merge-report') as Record<string, unknown>;
+  return { ...actual, postFederationMerge: (...args: any[]) => mockPostFederation(...args) };
+});
 
 const DOCUMENT = {
   openapi: '3.1.0',
@@ -141,6 +155,8 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     mockBegin.mockClear();
     mockCommit.mockClear();
     mockMergeProjectFields.mockClear();
+    mockPostFederation.mockClear();
+    mockFederation = true;
   });
   afterEach(() => jest.resetModules());
 
@@ -285,5 +301,104 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     const status = await settle(helper, jobId, terminal);
     expect(status.state).toBe('pending-approval');
     expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  // ---- Federation (V2-REPO-8.2) ------------------------------------------------------------
+
+  test('a conflict is reported to the merge history with the importing file\'s definition', async () => {
+    mockClassNames = ['User', 'Invoice'];
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input());
+    const status = await settle(helper, jobId, terminal);
+    expect(status.state).toBe('failed');
+    expect(mockPostFederation).toHaveBeenCalledTimes(1);
+    const [caller, projectId, report] = mockPostFederation.mock.calls[0] as any[];
+    expect(caller).toEqual({ userId: 'user-1', tenantId: 'tenant-1', tenantSlug: 'acme' });
+    expect(projectId).toBe('proj-1');
+    expect(report).toMatchObject({
+      status: 'conflicted',
+      parentVersionId: 'ver-1',
+      repositoryId: 'repo-billing',
+      repositoryFullName: 'acme/billing',
+      conflictCount: 1,
+    });
+    expect(report.versionId).toBeUndefined();
+    expect(report.conflicts).toEqual([
+      {
+        kind: 'class',
+        key: 'User',
+        sources: [
+          { role: 'existing', repositoryFullName: 'acme/users', branch: 'main', path: 'openapi.yaml' },
+          { role: 'incoming', repositoryFullName: 'acme/billing', branch: 'main', path: 'spec.yaml', definition: { type: 'object' } },
+        ],
+      },
+    ]);
+    expect(status.events.find((e: any) => e.code === 'REPOSITORY_FEDERATION_RECORDED')).toBeTruthy();
+  });
+
+  test('a dry run conflict is not recorded', async () => {
+    mockClassNames = ['User'];
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input({ options: { selectedSchemas: [], dryRun: true } }));
+    expect((await settle(helper, jobId, terminal)).state).toBe('failed');
+    expect(mockPostFederation).not.toHaveBeenCalled();
+  });
+
+  test('a merge is reported only after the import commits', async () => {
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input());
+    await settle(helper, jobId, terminal);
+    expect(mockPostFederation).not.toHaveBeenCalled();
+    await helper.commitImport(jobId);
+    await settle(helper, jobId, (s) => s === 'completed' || s === 'failed');
+    expect(mockPostFederation).toHaveBeenCalledTimes(1);
+    const report = (mockPostFederation.mock.calls[0] as any[])[2];
+    expect(report).toMatchObject({
+      status: 'merged',
+      versionId: 'ver-2',
+      sourceCount: 2,
+      classesCarried: 1,
+      pathsCarried: 1,
+      conflicts: [],
+      conflictCount: 0,
+    });
+    expect(report.sources.map((s: any) => s.repositoryFullName)).toEqual(['acme/users', 'acme/billing']);
+  });
+
+  test('federation off replaces the surface, warns, and reports the replacement', async () => {
+    mockFederation = false;
+    mockClassNames = ['User', 'Invoice'];
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input({ options: { selectedSchemas: [], incrementalMode: true } }));
+    const status = await settle(helper, jobId, (s) => s === 'completed' || s === 'failed');
+    expect(status.state).toBe('completed');
+    const applied = mockApply.mock.calls[0][1] as any;
+    expect(applied.plan.mode).toBe('single-source');
+    expect(applied.plan.carried).toEqual([]);
+    expect(status.events.find((e: any) => e.code === 'REPOSITORY_FEDERATION_OFF')?.message).toBe(
+      'Federation is off for this project: acme/billing (main:spec.yaml) replaces its surface, so 1 class(es) and 1 path(s) from other files are not carried forward.',
+    );
+    expect(mockImportPaths.mock.calls[0][1].map((p: any) => p.path)).toEqual(['/invoices']);
+    const report = (mockPostFederation.mock.calls[0] as any[])[2];
+    expect(report).toMatchObject({ status: 'replaced', removedCount: 2, sourceCount: 1, conflicts: [] });
+  });
+
+  test('a report that cannot be delivered only warns', async () => {
+    mockPostFederation.mockResolvedValueOnce('apiome-rest answered 503');
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input({ options: { selectedSchemas: [], incrementalMode: true } }));
+    const status = await settle(helper, jobId, (s) => s === 'completed' || s === 'failed');
+    expect(status.state).toBe('completed');
+    expect(status.events.find((e: any) => e.code === 'REPOSITORY_FEDERATION_HISTORY_FAILED')?.message).toBe(
+      "The merged merge could not be added to the project's merge history (apiome-rest answered 503).",
+    );
+  });
+
+  test('a single-file project reports nothing', async () => {
+    mockParent = [];
+    const helper = await import('../lib/db/import-helper');
+    const { jobId } = await helper.startImport(input({ options: { selectedSchemas: [], incrementalMode: true } }));
+    expect((await settle(helper, jobId, (s) => s === 'completed' || s === 'failed')).state).toBe('completed');
+    expect(mockPostFederation).not.toHaveBeenCalled();
   });
 });

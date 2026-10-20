@@ -1268,6 +1268,69 @@ const SOURCES_REPLY = {
   counts: { classes: 5, paths: 3, attributed: 7, unattributed: 1 },
 };
 
+/** The Sources tab's merge history for the docs fixture (V2-REPO-8.2): a conflict, then a merge. */
+const MERGE_HISTORY = [
+  {
+    id: 'fm-2',
+    projectId: 'project-1',
+    projectName: 'Payments API',
+    status: 'conflicted',
+    versionId: null,
+    versionLabel: null,
+    repositoryFullName: 'acme/payments-service',
+    branch: 'main',
+    path: 'openapi.yaml',
+    sourceCount: 2,
+    classesCarried: 0,
+    pathsCarried: 0,
+    removedCount: 0,
+    conflictCount: 1,
+    sources: [],
+    conflicts: [
+      {
+        kind: 'class',
+        key: 'Order',
+        sources: [
+          {
+            role: 'existing',
+            repositoryFullName: 'acme/orders-service',
+            branch: 'main',
+            path: 'openapi.yaml',
+            definition: { type: 'object', required: ['id'], properties: { id: { type: 'string' }, total: { type: 'number' } } },
+          },
+          {
+            role: 'incoming',
+            repositoryFullName: 'acme/payments-service',
+            branch: 'main',
+            path: 'openapi.yaml',
+            definition: { type: 'object', required: ['id', 'amount'], properties: { amount: { type: 'number' }, id: { type: 'string' } } },
+          },
+        ],
+      },
+    ],
+    createdAt: '2026-10-19T14:20:00Z',
+  },
+  {
+    id: 'fm-1',
+    projectId: 'project-1',
+    projectName: 'Payments API',
+    status: 'merged',
+    versionId: HEAD_ID,
+    versionLabel: '2.4.0',
+    repositoryFullName: 'acme/payments-service',
+    branch: 'main',
+    path: 'openapi.yaml',
+    sourceCount: 2,
+    classesCarried: 2,
+    pathsCarried: 2,
+    removedCount: 0,
+    conflictCount: 0,
+    sources: [],
+    conflicts: [],
+    createdAt: '2026-10-18T09:00:00Z',
+  },
+];
+
 /** The PR-back section's listing for the docs fixture (REPO-5.8). */
 const PR_BACK_REPOSITORIES = {
   projectId: 'project-1',
@@ -1378,6 +1441,9 @@ describe('the browser fixtures', () => {
       // Its PR-back section (REPO-5.8): one repository allows the project, one has no settings.
       { test: /\/pr-back\/repositories$/, reply: () => ({ success: true, ...PR_BACK_REPOSITORIES }) },
       { method: 'POST', test: /\/pr-back$/, reply: () => ({ success: true, ...PR_BACK_PREVIEW }) },
+      // Federation (V2-REPO-8.2): the switch is on, and the merge history holds a conflict and a merge.
+      { test: /\/repository-federation$/, reply: () => ({ success: true, projectId: 'project-1', enabled: true }) },
+      { test: /\/federation-merges$/, reply: () => ({ success: true, merges: MERGE_HISTORY }) },
     ]);
     await renderVersions();
 
@@ -1397,6 +1463,11 @@ describe('the browser fixtures', () => {
     fireEvent.click(within(prBackRow).getByTestId('pr-back-preview'));
     await within(prBackRow).findByTestId('pr-back-status-preview');
     write('tab-sources-pr-back', (document.querySelector('.page') as HTMLElement).outerHTML);
+    // …and the merge history with its conflict opened (V2-REPO-8.2).
+    const history = await screen.findByTestId('project-merge-history');
+    expect(within(history).getAllByTestId('federation-merge')).toHaveLength(2);
+    history.querySelectorAll('details.fed-details').forEach((details) => details.setAttribute('open', ''));
+    write('tab-sources-merge-history', (document.querySelector('.page') as HTMLElement).outerHTML);
     fireEvent.click(screen.getByTestId('versions-tab-timeline'));
 
     const draftMenu = await openRowMenu(HEAD_ID);

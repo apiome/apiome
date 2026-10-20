@@ -46,6 +46,26 @@ export interface RepositoryFileRef {
 }
 
 /**
+ * Read a project's federation switch (V2-REPO-8.2, #2806, apiome-db V303).
+ *
+ * @param q - Query target.
+ * @param projectId - The project, or null when the import creates it.
+ * @returns The switch; `true` (REPO-5.7's merge) for a new project, an unknown one, or a database
+ *   without the column yet.
+ */
+export async function loadProjectFederation(q: Queryable, projectId: string | null): Promise<boolean> {
+  if (!projectId) return true;
+  // `to_jsonb(p) -> …` reads NULL rather than erroring when the column does not exist yet, so the
+  // read can never abort the import's open transaction.
+  const { rows } = await q.query(
+    "SELECT to_jsonb(p) -> 'repository_federation' AS federation FROM apiome.projects p WHERE p.id = $1::uuid",
+    [projectId],
+  );
+  const value = rows[0]?.federation;
+  return typeof value === 'boolean' ? value : true;
+}
+
+/**
  * Describe the importing file as a merge source, with its source row when it already has one.
  *
  * @param q - Query target.

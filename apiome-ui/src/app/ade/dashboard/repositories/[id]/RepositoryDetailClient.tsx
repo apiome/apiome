@@ -4,7 +4,7 @@ import { useAuthSession } from '@lib/auth/session-client';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Eye, Files, History, RefreshCw, Settings2 } from 'lucide-react';
+import { Eye, Files, GitMerge, History, RefreshCw, Settings2 } from 'lucide-react';
 import { toast } from '../../../../components/ui/toast';
 
 import PageHeader from '@/app/components/shell/PageHeader';
@@ -21,7 +21,7 @@ import {
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
-import { Card, CardHeader } from '@/app/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/app/components/ui/Card';
 import { GatedState } from '@/app/components/ui/EmptyState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
@@ -45,6 +45,7 @@ import {
 } from '@/app/components/ade/dashboard/repositories/repositoryStoreUi';
 import { RepositoryConflictPolicy } from '@/app/components/ade/dashboard/repositories/RepositoryConflictPolicy';
 import { RepositoryPrBackSettings } from '@/app/components/ade/dashboard/repositories/RepositoryPrBackSettings';
+import { FederationMergeHistory } from '@/app/components/ade/versions/FederationMergeHistory';
 import { RepositoryHealthBadge } from '@/app/components/ade/dashboard/repositories/RepositoryHealthBadge';
 import { RepositoryFilesBrowser } from '@/app/components/ade/dashboard/repositories/RepositoryFilesBrowser';
 import { RepositorySpecsTab } from '@/app/components/ade/dashboard/repositories/RepositorySpecsTab';
@@ -585,6 +586,30 @@ export function RepositoryDetailClient() {
                   {repoImports.length === 1 ? '' : 's'}
                 </span>
               </div>
+            </Card>
+          ) : null}
+
+          {tab === 'imports' ? (
+            /* V2-REPO-8.2 (#2806): the merges, conflicts and replacements this repository's files took part in. */
+            <Card className="overflow-hidden" data-testid="repository-sync-history">
+              <CardHeader>
+                <h2 className="repo-det-card__title">
+                  <GitMerge aria-hidden />
+                  Sync history
+                </h2>
+                <p className="repo-det-note">
+                  Each import of this repository’s files into a project that merges several repositories.
+                  Open a conflict to compare both files’ definitions.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <FederationMergeHistory
+                  url={`/api/repositories/${encodeURIComponent(id)}/federation-merges`}
+                  scope="repository"
+                  emptyDescription="Nothing yet: this repository’s files have not been merged with another repository’s."
+                  data-testid="repository-merge-history"
+                />
+              </CardContent>
             </Card>
           ) : null}
 

@@ -76,6 +76,13 @@ beforeEach(() => {
     if (url.includes('/pr-back/')) {
       return { ok: true, status: 200, json: async () => ({ success: true, repositories: [] }) } as unknown as Response;
     }
+    // Federation (V2-REPO-8.2): the switch and the merge history.
+    if (url.endsWith('/repository-federation')) {
+      return { ok: true, status: 200, json: async () => ({ success: true, enabled: true }) } as unknown as Response;
+    }
+    if (url.endsWith('/federation-merges')) {
+      return { ok: true, status: 200, json: async () => ({ success: true, merges: [] }) } as unknown as Response;
+    }
     requested.push(url);
     const version = new URL(url, 'http://ui.test').searchParams.get('version') ?? '';
     const reply = replies[version] ?? { status: 200, body: { success: true, ...MERGED } };
@@ -157,5 +164,13 @@ describe('RepositorySourcesPanel', () => {
     render(<RepositorySourcesPanel projectId={PROJECT_ID} versions={[]} />);
     expect(screen.getByText('This project has no versions yet')).toBeInTheDocument();
     expect(requested).toEqual([]);
+  });
+
+  test('shows the federation switch and the merge history (V2-REPO-8.2)', async () => {
+    render(<RepositorySourcesPanel projectId={PROJECT_ID} versions={VERSIONS} />);
+    expect(await screen.findByTestId('federation-state')).toHaveTextContent('On');
+    expect(await screen.findByTestId('project-merge-history-empty')).toHaveTextContent(
+      'Merges appear here once a second repository file is imported into this project.',
+    );
   });
 });

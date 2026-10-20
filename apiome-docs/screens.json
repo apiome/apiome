@@ -121,7 +121,18 @@
       "data": "fixture:hive-versions/tab-sources.html",
       "sources": [
         "apiome-ui/src/app/components/ade/versions/RepositorySourcesPanel.tsx",
-        "apiome-ui/src/app/components/ade/versions/PrBackPanel.tsx"
+        "apiome-ui/src/app/components/ade/versions/PrBackPanel.tsx",
+        "apiome-ui/src/app/components/ade/versions/FederationSwitch.tsx"
+      ]
+    },
+    {
+      "id": "versions-merge-history",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/tab-sources-merge-history.html",
+      "scrollTo": "[data-testid=\"project-merge-history\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/FederationMergeHistory.tsx"
       ]
     },
     {
@@ -381,6 +392,16 @@
       "route": "/ade/dashboard/repositories/[id]",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-repository-detail/settings.html"
+    },
+    {
+      "id": "repository-sync-history",
+      "route": "/ade/dashboard/repositories/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-repository-detail/imports.html",
+      "scrollTo": "[data-testid=\"repository-sync-history\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/FederationMergeHistory.tsx"
+      ]
     },
     {
       "id": "repository-pr-back-settings",

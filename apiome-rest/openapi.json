@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.261.0",
+    "version": "1.262.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-20T03:17:05Z"
+                          "example": "2026-10-20T04:00:54Z"
                         },
                         "method": {
                           "type": "string",
@@ -34527,6 +34527,544 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Request body for openapullrequestsyncingaprojectversionbaresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/repository-federation": {
+      "get": {
+        "tags": [
+          "repository-federation"
+        ],
+        "summary": "Read a project's multi-repository federation switch",
+        "description": "`enabled: true` (the default) merges each repository file imported into the project with the other contributing files into one API surface. `false` makes each import replace the surface with the importing file alone.\n\nRequires `projects:view`.",
+        "operationId": "get_repository_federation_v1_tenants__tenant_slug__projects__project_ref__repository_federation_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprojectsmultirepositoryfederationswauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprojectsmultirepositoryfederationswauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprojectsmultirepositoryfederationsw Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprojectsmultirepositoryfederationsw Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a project's multi-repository federation switch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationSetting",
+                  "description": "Response payload for readaprojectsmultirepositoryfederationswresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaprojectsmultirepositoryfederationswresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "repository-federation"
+        ],
+        "summary": "Switch a project's multi-repository federation on or off",
+        "description": "Applies to the next import; existing versions are not changed. Requires `projects:edit`. Audited as `repository.federation_toggled`.",
+        "operationId": "put_repository_federation_v1_tenants__tenant_slug__projects__project_ref__repository_federation_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Switchaprojectsmultirepositoryfederationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Switchaprojectsmultirepositoryfederationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Switchaprojectsmultirepositoryfederation Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Switchaprojectsmultirepositoryfederation Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FederationSettingUpdate",
+                "description": "Request body for switchaprojectsmultirepositoryfederationrequest."
+              }
+            }
+          },
+          "description": "Request body for switch a project's multi-repository federation on or off."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for switch a project's multi-repository federation on or off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationSetting",
+                  "description": "Response payload for switchaprojectsmultirepositoryfederationresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for switchaprojectsmultirepositoryfederationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/federation-merges": {
+      "post": {
+        "tags": [
+          "repository-federation"
+        ],
+        "summary": "Record a federation merge (called by the import)",
+        "description": "Records what federation did to one repository-file import: `merged`, `conflicted` (nothing written; each conflict carries every source's definition \u2014 the contributing file's is read from `parentVersionId`'s rendered spec when not sent) or `replaced` (federation off). The row and its audit row (`repository.federation_merged`, `repository.federation_conflicted` or `repository.federation_replaced`) are written in one transaction.\n\nRequires `imports:create`.",
+        "operationId": "create_federation_merge_v1_tenants__tenant_slug__projects__project_ref__federation_merges_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordafederationmergecalledbytheimportauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordafederationmergecalledbytheimportauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordafederationmergecalledbytheimport Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordafederationmergecalledbytheimport Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FederationMergeCreate",
+                "description": "Request body for recordafederationmergecalledbytheimportrequest."
+              }
+            }
+          },
+          "description": "Request body for record a federation merge (called by the import)."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for record a federation merge (called by the import).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationMerge",
+                  "description": "Response payload for recordafederationmergecalledbytheimportresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for recordafederationmergecalledbytheimportresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "repository-federation"
+        ],
+        "summary": "List a project's federation merge history",
+        "description": "Newest first. Requires `projects:view`.",
+        "operationId": "list_project_federation_merges_v1_tenants__tenant_slug__projects__project_ref__federation_merges_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsfederationmergehistoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsfederationmergehistoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsfederationmergehistory Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsfederationmergehistory Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's federation merge history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationMergeList",
+                  "description": "Response payload for listaprojectsfederationmergehistoryresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojectsfederationmergehistoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/repositories/{repository_id}/federation-merges": {
+      "get": {
+        "tags": [
+          "repository-federation"
+        ],
+        "summary": "List the federation merges a repository's files were imported in",
+        "description": "The repository's sync history: every merge, conflict and replacement where one of its files was the imported file, newest first. Requires `imports:view`.",
+        "operationId": "list_repository_federation_merges_v1_tenants__tenant_slug__repositories__repository_id__federation_merges_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "repository_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repository Id",
+              "description": "Repository Id schema."
+            },
+            "description": "Connected repository identifier."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listthefederationmergesarepositorysfilesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listthefederationmergesarepositorysfilesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listthefederationmergesarepositorysfiles Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listthefederationmergesarepositorysfiles Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the federation merges a repository's files were imported in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationMergeList",
+                  "description": "Response payload for listthefederationmergesarepositorysfilesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listthefederationmergesarepositorysfilesresponse422."
                 }
               }
             }
@@ -111722,7 +112260,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "completed_at": {
             "anyOf": [
@@ -113677,7 +114215,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "comment_count": {
             "type": "integer",
@@ -113905,7 +114443,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114672,14 +115210,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -117963,7 +118501,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "24cc5fb9-3401-47e5-a21e-0c06dd3ef9f3"
+            "example": "f4b6cf85-e710-4460-8479-6424922f2097"
           },
           "method": {
             "type": "string",
@@ -120490,7 +121028,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -122386,7 +122924,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "browse_url": {
             "anyOf": [
@@ -128463,6 +129001,570 @@
         ],
         "title": "FactEvidence",
         "description": "Where to check a fact: a page in the app and/or the API that holds the data."
+      },
+      "FederationConflict": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "class",
+              "path"
+            ],
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "class"
+          },
+          "key": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Key",
+            "description": "The class name or pathname.",
+            "example": "example"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/FederationConflictSource"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Sources",
+            "description": "Sources."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "sources"
+        ],
+        "title": "FederationConflict",
+        "description": "A class or path two contributing files both define."
+      },
+      "FederationConflictSource": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "existing",
+              "incoming"
+            ],
+            "title": "Role",
+            "description": "`existing`: the contributing file that already defines it. `incoming`: the file imported.",
+            "example": "existing"
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name.",
+            "example": "Example"
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "definition": {
+            "title": "Definition",
+            "description": "That source's definition of the class (its schema) or path (its path item); null when it could not be read. A definition over 20 KB is `{\"$truncated\": true, \"bytes\": n}`."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role",
+          "repositoryFullName",
+          "branch",
+          "path"
+        ],
+        "title": "FederationConflictSource",
+        "description": "One source's side of a conflict."
+      },
+      "FederationMerge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "merged",
+              "conflicted",
+              "replaced"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "merged"
+          },
+          "versionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Versionid",
+            "description": "Version ID."
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "parentVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Parentversionid",
+            "description": "Parent Version ID."
+          },
+          "repositoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Repositoryid",
+            "description": "Repository ID."
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name.",
+            "example": "Example"
+          },
+          "branch": {
+            "type": "string",
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "sourceCount": {
+            "type": "integer",
+            "title": "Sourcecount",
+            "description": "Number of source.",
+            "example": 1
+          },
+          "classesCarried": {
+            "type": "integer",
+            "title": "Classescarried",
+            "description": "Classes Carried.",
+            "example": 1
+          },
+          "pathsCarried": {
+            "type": "integer",
+            "title": "Pathscarried",
+            "description": "Paths Carried.",
+            "example": 1
+          },
+          "removedCount": {
+            "type": "integer",
+            "title": "Removedcount",
+            "description": "Number of removed.",
+            "example": 1
+          },
+          "conflictCount": {
+            "type": "integer",
+            "title": "Conflictcount",
+            "description": "Number of conflict.",
+            "example": 1
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/FederationSourceRef"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/FederationConflict"
+            },
+            "type": "array",
+            "title": "Conflicts",
+            "description": "Conflicts.",
+            "maxItems": 1000
+          },
+          "actorId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Federation Merge schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge schema."
+              }
+            ],
+            "title": "Actorid",
+            "description": "Actor ID."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat",
+            "description": "Created At.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "status",
+          "repositoryFullName",
+          "branch",
+          "path",
+          "sourceCount",
+          "classesCarried",
+          "pathsCarried",
+          "removedCount",
+          "conflictCount",
+          "createdAt"
+        ],
+        "title": "FederationMerge",
+        "description": "One row of a project's merge history."
+      },
+      "FederationMergeCreate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "merged",
+              "conflicted",
+              "replaced"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "merged"
+          },
+          "versionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Federation Merge Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge Create schema."
+              }
+            ],
+            "title": "Versionid",
+            "description": "Version ID."
+          },
+          "parentVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Federation Merge Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge Create schema."
+              }
+            ],
+            "title": "Parentversionid",
+            "description": "Parent Version ID."
+          },
+          "repositoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Federation Merge Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge Create schema."
+              }
+            ],
+            "title": "Repositoryid",
+            "description": "Repository ID."
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name.",
+            "example": "Example"
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "sourceCount": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Sourcecount",
+            "default": 1,
+            "description": "Number of source.",
+            "example": 1
+          },
+          "classesCarried": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Classescarried",
+            "default": 0,
+            "description": "Classes Carried.",
+            "example": 1
+          },
+          "pathsCarried": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pathscarried",
+            "default": 0,
+            "description": "Paths Carried.",
+            "example": 1
+          },
+          "removedCount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Removedcount",
+            "default": 0,
+            "description": "Number of removed.",
+            "example": 1
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/FederationSourceRef"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Sources",
+            "description": "Sources."
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/FederationConflict"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Conflicts",
+            "description": "Conflicts."
+          },
+          "conflictCount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Federation Merge Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Merge Create schema."
+              }
+            ],
+            "title": "Conflictcount",
+            "description": "How many conflicts there were in all, when more than `conflicts` lists."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "repositoryFullName",
+          "branch",
+          "path"
+        ],
+        "title": "FederationMergeCreate",
+        "description": "What an import reports after federation acted on it."
+      },
+      "FederationMergeList": {
+        "properties": {
+          "merges": {
+            "items": {
+              "$ref": "#/components/schemas/FederationMerge"
+            },
+            "type": "array",
+            "title": "Merges",
+            "description": "Merges.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FederationMergeList",
+        "description": "A page of merge history, newest first."
+      },
+      "FederationSetting": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "True: each imported repository file is merged with the other contributing files. False: each import replaces the project's surface with the importing file alone.",
+            "example": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "projectId",
+          "enabled"
+        ],
+        "title": "FederationSetting",
+        "description": "A project's federation switch."
+      },
+      "FederationSettingUpdate": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "FederationSettingUpdate",
+        "description": "Body for switching federation on or off."
+      },
+      "FederationSourceRef": {
+        "properties": {
+          "repositoryFullName": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name.",
+            "example": "Example"
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "precedence": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Federation Source Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Federation Source Ref schema."
+              }
+            ],
+            "title": "Precedence",
+            "description": "Merge order (1 contributed first)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryFullName",
+          "branch",
+          "path"
+        ],
+        "title": "FederationSourceRef",
+        "description": "A repository file, as the history shows it."
       },
       "FirstTenantProvisionRequest": {
         "properties": {
@@ -167470,7 +168572,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           }
         },
         "additionalProperties": false,
@@ -178892,13 +179994,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           }
         },
         "additionalProperties": false,
@@ -180402,7 +181504,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "detected_by": {
             "anyOf": [
@@ -188608,14 +189710,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T03:17:05Z"
+            "example": "2026-10-20T04:00:54Z"
           },
           "outcome": {
             "anyOf": [
