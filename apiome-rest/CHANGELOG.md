@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.401.0] - 2026-10-20
+
+### Added
+- **Agentic-web site manifest import source (#3976, MFI-18.3)**: the `agents-manifest` adapter catalogs a site's
+  agentic-web manifest in four dialects — the agents.txt companion `agents.json` (`site`, `mcp` / `a2a` / `skills` /
+  `ucp` / `webmcp` endpoint lists, `payments`), the Agent Web Protocol `/.well-known/agent.json` (`protocols`,
+  `actions` with `via`, `auth`), `agents.txt` directives (`MCP:`, `A2A:`, `Skills:`, `UCP:`, `WebMCP:`, `X-…`,
+  `Protocols:`, `Authorization:`) and `llms.txt` (H1, summary, H2 link sections; each link classified as an Agent
+  Card, MCP endpoint, OpenAPI document, nested manifest, skill or docs) — as a file, URL, paste or fileset, or live
+  from the site (`AgentsManifestImportSource.introspect` tries `/agents.json`, `/.well-known/agent.json`,
+  `/agents.txt`, `/llms.txt` through the SSRF-guarded client, skipping an A2A card or an HTML shell). Normalizes to
+  the `agent` paradigm: one service per protocol, one operation per endpoint keyed `<protocol>.<url>` (relative
+  references resolved against the site) and per AWP action. Payment layers (x402, AP2, MPP, Skyfire) are
+  `extras.payments` metadata only. The A2A, ACP, MCP and nested-manifest endpoints are listed as
+  `extras.discovery_seeds` (`{protocol, url, importer}`) for MFI-18.5 or a person to follow. New
+  `agents-manifest` lint pack (6 rules: `agents-manifest.broken-endpoint-ref`, `agents-manifest.undeclared-via`,
+  `agents-manifest.insecure-endpoint`, `agents-manifest.duplicate-endpoint`, `agents-manifest.duplicate-action-id`,
+  `agents-manifest.no-agent-endpoints`); the two blocking rules carry scanner transparency and evidence fixtures.
+  The catalog item detail renders **Endpoints**, **Actions**, **Discovery seeds** and **Payments** groups.
+- Corpus: six valid and five negative `apiome-ui/examples/agents-manifest/` fixtures covering four sites, with
+  goldens; multi-file rung waived.
+- apiome-db V305 seeds the `agents-manifest.*` pack into the built-in style guide.
+
 ## [1.400.0] - 2026-10-20
 
 ### Added

@@ -18,7 +18,7 @@ Import OpenAPI, Swagger, Arazzo, JSON Schema, and JSON Schema type documents int
 apiome import [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger).
+Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`agents-manifest`](#import-agents-manifest), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger).
 
 **Options**
 
@@ -79,6 +79,36 @@ apiome import acp [OPTIONS] [INPUT]
 | `--file` | text |  |  | Local document path to import (alternative to the INPUT argument). |
 | `--url` | text |  |  | http/https document URL to import (alternative to the INPUT argument). |
 | `--discover` | text |  |  | ACP server base URL (for example ``https://acp.example.com``) whose ``/agents`` listing is imported; a ``…/agents/<name>`` URL imports one agent. |
+| `--dry-run` | flag |  |  | Validate and preview the import without persisting changes. |
+| `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
+| `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
+| `--poll-interval` | float range | `1.0` |  | Seconds between import job-status polls when waiting. |
+| `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
+| `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome import agents-manifest {#import-agents-manifest}
+
+Import a site's agentic-web manifest from a file, URL, stdin, or the live site.
+
+Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With ``--discover`` the site's well-known manifest paths are tried in order and the first one that serves a manifest is imported through the registered ``agents-manifest`` adapter (MFI-18.3). The catalog item lists the A2A, ACP and MCP descriptors the manifest points at as discovery seeds; import each with ``apiome import a2a --discover`` / ``apiome import acp --discover``.
+
+```text
+apiome import agents-manifest [OPTIONS] [INPUT]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SOURCE` | text |  | Site manifest — agents.json, agent.json, agents.txt or llms.txt: path, ``http``/``https`` URL, or ``-``. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--file` | text |  |  | Local document path to import (alternative to the INPUT argument). |
+| `--url` | text |  |  | http/https document URL to import (alternative to the INPUT argument). |
+| `--discover` | text |  |  | Site URL (for example ``https://example.com``) whose manifest is found at ``/agents.json``, ``/.well-known/agent.json``, ``/agents.txt`` or ``/llms.txt``, tried in that order. |
 | `--dry-run` | flag |  |  | Validate and preview the import without persisting changes. |
 | `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
 | `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |

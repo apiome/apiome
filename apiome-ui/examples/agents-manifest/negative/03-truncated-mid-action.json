@@ -1,0 +1,6 @@
+{
+  "awp_version": "0.2",
+  "domain": "cut.example",
+  "intent": "Truncated mid-action",
+  "actions": [
+    { "id": "search", "method": "GET", "endpoint": "/api/sea

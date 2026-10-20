@@ -1,15 +1,15 @@
 {
   "version": "1",
   "capability_registry_version": "14",
-  "total": 56,
-  "importable": 56,
+  "total": 57,
+  "importable": 57,
   "exportable": 44,
   "round_trip": 44,
-  "import_only": 12,
+  "import_only": 13,
   "export_only": 0,
-  "live_discovery": 7,
+  "live_discovery": 8,
   "publishable": 1,
-  "catalog": 55,
+  "catalog": 56,
   "toolchain_gated": 3,
   "paradigms": [
     {
@@ -50,8 +50,8 @@
     {
       "id": "agent",
       "label": "Agent",
-      "total": 4,
-      "importable": 4,
+      "total": 5,
+      "importable": 5,
       "exportable": 1
     }
   ]

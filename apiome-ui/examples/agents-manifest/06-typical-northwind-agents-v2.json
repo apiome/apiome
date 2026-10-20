@@ -1,0 +1,39 @@
+{
+  "$schema": "https://agents-txt.com/schema/agents-json/v1.0.json",
+  "version": "1.0",
+  "standard": "https://agents-txt.com",
+  "site": {
+    "name": "Northwind Store",
+    "url": "https://shop.northwind.example"
+  },
+  "mcp": [
+    {
+      "url": "https://shop.northwind.example/mcp",
+      "description": "Catalog search, cart and wishlist tools",
+      "transport": "streamable-http"
+    },
+    {
+      "url": "https://inventory.northwind.example/mcp",
+      "description": "Warehouse stock levels"
+    }
+  ],
+  "a2a": [
+    {
+      "url": "https://shop.northwind.example/.well-known/agent-card.json",
+      "description": "Order support agent"
+    }
+  ],
+  "skills": [
+    {
+      "name": "northwind-checkout",
+      "url": "https://shop.northwind.example/skills/checkout/SKILL.md",
+      "description": "Walks an agent through checkout"
+    }
+  ],
+  "authorization": ["agent-auth"],
+  "payments": {
+    "x402": {
+      "chains": ["eip155:8453", "eip155:1"]
+    }
+  }
+}

@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 56
+- **Formats gated:** 57
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -15,6 +15,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 |---|---|---|---:|---:|---:|---:|---:|---|---:|---|
 | `a2a` | A2A Agent Card | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `acp` | ACP Agent Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
+| `agents-manifest` | Agentic-web Site Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `apiblueprint` | API Blueprint | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `apiblueprint` |
 | `apigee` | Apigee proxy bundle | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `arazzo` | Arazzo | rest | 14 | 11 | 0 | 0 | 25 | 6/6 | 13 | `arazzo` |
@@ -78,6 +79,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 |---|:-:|:-:|:-:|:-:|:-:|
 | `a2a` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `acp` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `agents-manifest` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `apiblueprint` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `apigee` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `arazzo` | ✅ | ✅ | ✅ | ✅ | ✅ |

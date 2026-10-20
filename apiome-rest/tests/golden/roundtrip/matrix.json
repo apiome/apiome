@@ -3421,6 +3421,2178 @@
       "unexplained": []
     },
     {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 10,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'Northwind Store', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 12,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'a2a#https://returns.northwind.example/.well-known/agent-card.json', added operation 'a2a#https://shop.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'mcp#https://shop.northwind.example/mcp', removed operation 'mcp.https://shop.northwind.example/mcp', added operation 'skills#northwind-checkout', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', changed service 'a2a', changed service 'mcp', changed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "a2a#https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "a2a#https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "mcp#https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "skills#northwind-checkout"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: ASN.1 module `NorthwindStore` defines no types (observed: Re-import failed: ASN.1 module `NorthwindStore` defines no types)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Property \"attributes\" is not expected to be here (observed: Re-import failed: Property \"attributes\" is not expected to be here)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: EmitResult has no files (observed: Re-import failed: EmitResult has no files)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a Cap'n Proto .capnp schema (observed: Re-import failed: Content does not appear to be a Cap'n Proto .capnp schema)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: the CDDL document declares no rules (agents-manifest->cddl), so it describes no data (observed: Re-import failed: the CDDL document declares no rules (agents-manifest->cddl), so it describes no data)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: type object 'LossKind' has no attribute 'DROP' (observed: Emit failed: type object 'LossKind' has no attribute 'DROP')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 15,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'A2A_agents.https___returns_northwind_example__well_known_agent_card_json', added operation 'A2A_agents.https___shop_northwind_example__well_known_agent_card_json', added operation 'Agent_skills.northwind_checkout', added operation 'MCP_servers.https___shop_northwind_example_mcp', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'A2A_agents', added service 'Agent_skills', added service 'MCP_servers', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "A2A_agents.https___returns_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "A2A_agents.https___shop_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Agent_skills.northwind_checkout"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "MCP_servers.https___shop_northwind_example_mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "A2A_agents"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Agent_skills"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "MCP_servers"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No struct, exception, enum, or interface definitions found in the CORBA IDL file (agents-manifest->corbaidl) (observed: Re-import failed: No struct, exception, enum, or interface definitions found in the CORBA IDL file (agents-manifest->corbaidl))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 13,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /A2A agents', added operation 'GET /A2A agents/{id}', added operation 'POST /A2A agents', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'A2A agents.A2A agents', removed service 'a2a', removed service 'mcp', removed service 'skills', added type 'A2A agents.A2A agents'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /A2A agents"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /A2A agents/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /A2A agents"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "A2A agents.A2A agents"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "A2A agents.A2A agents"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing). (observed: Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing).)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 15,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Mutation.https___returns_northwind_example__well_known_agent_card_json', added operation 'Mutation.https___shop_northwind_example__well_known_agent_card_json', added operation 'Mutation.https___shop_northwind_example_mcp', added operation 'Mutation.northwind_checkout', added operation 'Query._', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'Mutation', added service 'Query', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.https___returns_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.https___shop_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.https___shop_northwind_example_mcp"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.northwind_checkout"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Mutation"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 1,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 9,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'a2a', removed service 'mcp', removed service 'skills', added type 'Northwind Store')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Northwind Store"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 9,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'a2a', removed service 'mcp', removed service 'skills', added type 'Northwind Store')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Northwind Store"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 10,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'a2a', removed service 'mcp', added service 'northwindstores.example.com', removed service 'skills', added type 'example.com/v1.NorthwindStore')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "northwindstores.example.com"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.NorthwindStore"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none. (observed: Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none.)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none). (observed: Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none).)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 17,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'agents-manifest->llm-tools.https_returns_northwind_example_well-known_agent-card_json', added operation 'agents-manifest->llm-tools.https_shop_northwind_example_mcp', added operation 'agents-manifest->llm-tools.https_shop_northwind_example_well-known_agent-card_json', added operation 'agents-manifest->llm-tools.northwind-checkout', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', removed service 'a2a', added service 'agents-manifest->llm-tools', removed service 'mcp', removed service 'skills', added type 'https_returns_northwind_example_well-known_agent-card_jsonParams', added type 'https_shop_northwind_example_mcpParams', added type 'https_shop_northwind_example_well-known_agent-card_jsonParams', added type 'northwind-checkoutParams'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "agents-manifest->llm-tools.https_returns_northwind_example_well-known_agent-card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "agents-manifest->llm-tools.https_shop_northwind_example_mcp"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "agents-manifest->llm-tools.https_shop_northwind_example_well-known_agent-card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "agents-manifest->llm-tools.northwind-checkout"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "agents-manifest->llm-tools"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "https_returns_northwind_example_well-known_agent-card_jsonParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "https_shop_northwind_example_mcpParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "https_shop_northwind_example_well-known_agent-card_jsonParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "northwind-checkoutParams"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 20,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /A2A agents', added operation 'GET /A2A agents({key})', added operation 'GET /Agent skills', added operation 'GET /Agent skills({key})', added operation 'GET /MCP servers', added operation 'GET /MCP servers({key})', added operation 'POST /A2A agents', added operation 'POST /Agent skills', added operation 'POST /MCP servers', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'Northwind Store.A2A agents', added service 'Northwind Store.Agent skills', added service 'Northwind Store.MCP servers', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /A2A agents"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /A2A agents({key})"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /Agent skills"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /Agent skills({key})"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /MCP servers"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /MCP servers({key})"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /A2A agents"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /Agent skills"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /MCP servers"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store.A2A agents"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store.Agent skills"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store.MCP servers"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 7,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none (observed: Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (agents-manifest->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (agents-manifest->oncrpc))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 13,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'POST /a2a.https://returns.northwind.example/.well-known/agent-card.json', added operation 'POST /a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'POST /mcp.https://shop.northwind.example/mcp', added operation 'POST /skills.https://shop.northwind.example/skills/checkout/SKILL.md', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', removed service 'a2a', added service 'default', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 13,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Northwind Store.https://returns.northwind.example/.well-known/agent-card.json', added operation 'Northwind Store.https://shop.northwind.example/.well-known/agent-card.json', added operation 'Northwind Store.https://shop.northwind.example/mcp', added operation 'Northwind Store.northwind-checkout', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'Northwind Store', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Northwind Store.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Northwind Store.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Northwind Store.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Northwind Store.northwind-checkout"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Postman requests found in collection (agents-manifest->postman) (observed: Re-import failed: No Postman requests found in collection (agents-manifest->postman))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 15,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'A2A_agents.https___returns_northwind_example__well_known_agent_card_json', added operation 'A2A_agents.https___shop_northwind_example__well_known_agent_card_json', added operation 'Agent_skills.northwind_checkout', added operation 'MCP_servers.https___shop_northwind_example_mcp', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'A2A_agents', added service 'Agent_skills', added service 'MCP_servers', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "A2A_agents.https___returns_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "A2A_agents.https___shop_northwind_example__well_known_agent_card_json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Agent_skills.northwind_checkout"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "MCP_servers.https___shop_northwind_example_mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "A2A_agents"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Agent_skills"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "MCP_servers"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 10,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /', removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', added service 'Northwind Store', removed service 'a2a', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Northwind Store"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Smithy shapes found in model (agents-manifest->smithy) (observed: Re-import failed: No Smithy shapes found in model (agents-manifest->smithy))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a Thrift IDL definition (observed: Re-import failed: Content does not appear to be a Thrift IDL definition)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (agents-manifest->typespec) (observed: Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (agents-manifest->typespec))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 16,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'apiome:northwind-store.a2-a-agents.https-returns-northwind-example-well-known-agent-card-json', added operation 'apiome:northwind-store.a2-a-agents.https-shop-northwind-example-well-known-agent-card-json', added operation 'apiome:northwind-store.agent-skills.northwind-checkout', added operation 'apiome:northwind-store.mcp-servers.https-shop-northwind-example-mcp', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', removed service 'a2a', added service 'apiome:northwind-store.a2-a-agents', added service 'apiome:northwind-store.agent-skills', added service 'apiome:northwind-store.mcp-servers', added service 'apiome:northwind-store.northwind-store', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:northwind-store.a2-a-agents.https-returns-northwind-example-well-known-agent-card-json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:northwind-store.a2-a-agents.https-shop-northwind-example-well-known-agent-card-json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:northwind-store.agent-skills.northwind-checkout"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:northwind-store.mcp-servers.https-shop-northwind-example-mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:northwind-store.a2-a-agents"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:northwind-store.agent-skills"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:northwind-store.mcp-servers"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:northwind-store.northwind-store"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 15,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'http://example.com/service.A2A agents.https://returns.northwind.example/.well-known/agent-card.json', added operation 'http://example.com/service.A2A agents.https://shop.northwind.example/.well-known/agent-card.json', added operation 'http://example.com/service.Agent skills.northwind-checkout', added operation 'http://example.com/service.MCP servers.https://shop.northwind.example/mcp', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', removed service 'a2a', added service 'http://example.com/service.A2A agents', added service 'http://example.com/service.Agent skills', added service 'http://example.com/service.MCP servers', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.A2A agents.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.A2A agents.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.Agent skills.northwind-checkout"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.MCP servers.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.A2A agents"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.Agent skills"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.MCP servers"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 10,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "a2a.https://returns.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to XML-RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+          "kind": "ok",
+          "message": "operation carried to XML-RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "mcp.https://shop.northwind.example/mcp",
+          "kind": "ok",
+          "message": "operation carried to XML-RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+          "kind": "ok",
+          "message": "operation carried to XML-RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'a2a.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'a2a.https://shop.northwind.example/.well-known/agent-card.json', added operation 'https://returns.northwind.example/.well-known/agent-card.json.https://returns.northwind.example/.well-known/agent-card.json', removed operation 'mcp.https://shop.northwind.example/mcp', removed operation 'skills.https://shop.northwind.example/skills/checkout/SKILL.md', changed root '', removed service 'a2a', added service 'https://returns.northwind.example/.well-known/agent-card.json', removed service 'mcp', removed service 'skills'; overclaim: OK 'a2a.https://returns.northwind.example/.well-known/agent-card.json', OK 'a2a.https://shop.northwind.example/.well-known/agent-card.json', OK 'mcp.https://shop.northwind.example/mcp', OK 'skills.https://shop.northwind.example/skills/checkout/SKILL.md')",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "https://returns.northwind.example/.well-known/agent-card.json.https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "mcp.https://shop.northwind.example/mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "a2a"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "https://returns.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "mcp"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "skills"
+        }
+      ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No XSD types or elements found (agents-manifest->xsd) (observed: Re-import failed: No XSD types or elements found (agents-manifest->xsd))",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "api-blueprint/01-simple-api.apib",
       "diff_count": 2,
       "emit_format": "apiblueprint",
@@ -157398,6 +159570,7 @@
   "source_formats": [
     "a2a",
     "acp",
+    "agents-manifest",
     "api-blueprint",
     "apigee",
     "arazzo",

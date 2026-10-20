@@ -1,0 +1,371 @@
+{
+  "adapter": "agents-manifest",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "action_count": 0,
+      "authorization": [
+        "agent-auth",
+        "oauth2"
+      ],
+      "dialect": "agents-txt",
+      "discovery_seeds": [
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "http://legacy.edge.example/mcp"
+        },
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://edge.example/mcp"
+        }
+      ],
+      "endpoint_count": 10,
+      "payments": [
+        {
+          "protocol": "ap2"
+        },
+        {
+          "protocol": "x-tipjar"
+        },
+        {
+          "protocol": "x402"
+        }
+      ],
+      "policies": {
+        "identity": "required",
+        "payments": "required"
+      },
+      "protocols": [
+        "a2a",
+        "mcp",
+        "skills",
+        "ucp",
+        "webmcp",
+        "x-weather"
+      ],
+      "site_url": null,
+      "spec_version": "1.0"
+    },
+    "format": "agents-manifest",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "agents.txt",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "agents-txt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 3,
+          "protocol": "a2a"
+        },
+        "key": "a2a",
+        "name": "A2A agents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": null,
+              "url": ""
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.(empty)",
+            "kind": "request_response",
+            "messages": [],
+            "name": "(empty)",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": null,
+              "url": "/.well-known/agent-card.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a./.well-known/agent-card.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "/.well-known/agent-card.json",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": null,
+              "url": "not a url"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.not a url",
+            "kind": "request_response",
+            "messages": [],
+            "name": "not a url",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 3,
+          "protocol": "mcp"
+        },
+        "key": "mcp",
+        "name": "MCP servers",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "http://legacy.edge.example/mcp",
+              "url": "http://legacy.edge.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.http://legacy.edge.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "http://legacy.edge.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://edge.example/mcp",
+              "url": "https://edge.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://edge.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://edge.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "duplicate_of": "mcp.https://edge.example/mcp",
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://edge.example/mcp",
+              "url": "https://edge.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://edge.example/mcp~2",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://edge.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "skills"
+        },
+        "key": "skills",
+        "name": "Agent skills",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "skills",
+              "resolved_url": null,
+              "url": "ftp://edge.example/skills/SKILL.md"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "skills.ftp://edge.example/skills/SKILL.md",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ftp://edge.example/skills/SKILL.md",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "ucp"
+        },
+        "key": "ucp",
+        "name": "UCP profiles",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "ucp",
+              "resolved_url": "https://edge.example/ucp/profile.json",
+              "url": "https://edge.example/ucp/profile.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ucp.https://edge.example/ucp/profile.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://edge.example/ucp/profile.json",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "webmcp"
+        },
+        "key": "webmcp",
+        "name": "WebMCP pages",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "webmcp",
+              "resolved_url": "https://edge.example/tools",
+              "url": "https://edge.example/tools"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "webmcp.https://edge.example/tools",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://edge.example/tools",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "x-weather"
+        },
+        "key": "x-weather",
+        "name": "x-weather",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "x-weather",
+              "resolved_url": "https://edge.example/x/weather",
+              "url": "https://edge.example/x/weather"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "x-weather.https://edge.example/x/weather",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://edge.example/x/weather",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "agents.txt",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "agents-manifest/04-stress-edge-cases.agents.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 10,
+    "servers": 0,
+    "services": 6,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "agents-manifest"
+  },
+  "fingerprint": "sha256:ac006a2e60ade66f61b402edac0956f63d6df2d846f35f4d3b7a80549fe79a3b",
+  "lint": {
+    "findings": 17,
+    "grade": "F",
+    "report_fingerprint": "f02f89ba9cfdd82557b66a9dd9f908b7d6461da19b01fbd93a3313815ddc3c5a",
+    "score": 51,
+    "severity_counts": {
+      "error": 4,
+      "info": 1,
+      "warning": 12
+    }
+  },
+  "snapshot_version": 1
+}

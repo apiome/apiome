@@ -117,3 +117,4 @@ addresses, and a server that answers with an error is reported rather than retri
 - [Import an A2A Agent Card](./a2a-agent-card-import.md): the other agent-to-agent protocol.
 - [Supported formats](./supported-formats.md): the versions this importer reads.
 - [Built-in lint rules](../build/lint-rules.md): every `acp.*` rule with its rationale.
+- [Import agentic-web site manifests](./agents-manifest-import.md): find a site's ACP servers from its manifest.

@@ -1,0 +1,29 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/agents-manifest-undeclared-via",
+  "source_format": "agents-manifest",
+  "description": "AWP agent.json with exactly one blocking defect: an action routed via `a2a`, which `protocols` does not declare.",
+  "document": {
+    "awp_version": "0.2",
+    "domain": "shop.example.com",
+    "intent": "Search and buy",
+    "protocols": {
+      "mcp": {
+        "version": "2025-06-18",
+        "endpoint": "https://shop.example.com/mcp"
+      }
+    },
+    "actions": [
+      {
+        "id": "search",
+        "method": "GET",
+        "endpoint": "/api/search"
+      },
+      {
+        "id": "purchase",
+        "via": "a2a",
+        "operation": "message/send"
+      }
+    ]
+  }
+}

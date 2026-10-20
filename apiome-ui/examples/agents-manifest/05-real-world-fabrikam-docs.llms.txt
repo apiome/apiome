@@ -1,0 +1,22 @@
+# Fabrikam Developer Platform
+
+> Fabrikam's payments API, its MCP server and its support agent. Start with the quickstart, then
+> the OpenAPI reference.
+
+All endpoints require an API key from the dashboard.
+
+## Docs
+
+- [Quickstart](https://docs.fabrikam.example/quickstart.md): Create a key and make a first call
+- [API reference](https://api.fabrikam.example/openapi.json): The OpenAPI 3.1 description
+- [Webhooks](https://docs.fabrikam.example/webhooks.md)
+
+## Agents
+
+- [MCP server](https://mcp.fabrikam.example/mcp): Tools for payments, refunds and payouts
+- [Support agent](https://support.fabrikam.example/.well-known/agent-card.json): A2A agent for account questions
+- [Site manifest](https://fabrikam.example/agents.json)
+
+## Optional
+
+- [Changelog](https://docs.fabrikam.example/changelog.md)

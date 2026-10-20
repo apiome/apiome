@@ -84,6 +84,7 @@ it cannot drift from what the server does.
 | `a2a.no-security` | 1.0 | — | yes |
 | `a2a.security-undeclared-scheme` | 1.0 | — | yes |
 | `a2a.unknown-scheme-type` | 1.0 | — | yes |
+| `agents-manifest.insecure-endpoint` | 1.0 | — | yes |
 | `security.credentials-in-server-url` | 2.0 | — | reserved — the rule has not shipped yet |
 | `security.pii-exposed-without-auth` | 2.0 | — | reserved — the rule has not shipped yet |
 | `security.secret-in-document` | 2.0 | — | reserved — the rule has not shipped yet |

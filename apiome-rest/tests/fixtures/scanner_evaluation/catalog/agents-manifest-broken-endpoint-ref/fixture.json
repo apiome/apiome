@@ -1,0 +1,24 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/agents-manifest-broken-endpoint-ref",
+  "source_format": "agents-manifest",
+  "description": "agents.json with exactly one blocking defect: an A2A entry whose `url` is not a URL.",
+  "document": {
+    "version": "1.0",
+    "site": {
+      "name": "Example",
+      "url": "https://example.com"
+    },
+    "mcp": [
+      {
+        "url": "https://example.com/mcp"
+      }
+    ],
+    "a2a": [
+      {
+        "url": "agent card coming soon",
+        "description": "Support agent"
+      }
+    ]
+  }
+}

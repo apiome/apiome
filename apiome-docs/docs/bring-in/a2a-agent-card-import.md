@@ -117,3 +117,4 @@ Live discovery also stops when the agent's address is private or internal: Apiom
 - [Import a specification](./import-a-spec.md): every way to bring a document in.
 - [Import ACP agent manifests](./acp-agent-manifest-import.md): the REST-native agent protocol.
 - [Agents and models](./agents-and-models.mdx): register the agents that call your APIs.
+- [Import agentic-web site manifests](./agents-manifest-import.md): find a site's Agent Cards from its agents.json or llms.txt.

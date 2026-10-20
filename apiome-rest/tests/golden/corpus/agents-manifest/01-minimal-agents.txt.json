@@ -1,0 +1,100 @@
+{
+  "adapter": "agents-manifest",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "action_count": 0,
+      "authorization": [],
+      "dialect": "agents-txt",
+      "discovery_seeds": [
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://example.com/mcp"
+        }
+      ],
+      "endpoint_count": 1,
+      "payments": [],
+      "policies": {},
+      "protocols": [
+        "mcp"
+      ],
+      "site_url": null,
+      "spec_version": null
+    },
+    "format": "agents-manifest",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "agents.txt",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "agents-txt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "mcp"
+        },
+        "key": "mcp",
+        "name": "MCP servers",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://example.com/mcp",
+              "url": "https://example.com/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://example.com/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://example.com/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "agents.txt",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "agents-manifest/01-minimal-agents.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "agents-manifest"
+  },
+  "fingerprint": "sha256:d2a6fde0eccf092e6f953a2d79d0eb046018871230bda8e77131cc8258f10295",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "b8c6d1d439d878a234e43277ec4a23936222138da6dd8bb264f01b1dd5d45373",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

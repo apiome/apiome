@@ -1,0 +1,220 @@
+{
+  "adapter": "agents-manifest",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "action_count": 0,
+      "authorization": [
+        "agent-auth"
+      ],
+      "dialect": "agents-json",
+      "discovery_seeds": [
+        {
+          "importer": "a2a",
+          "protocol": "a2a",
+          "url": "https://shop.northwind.example/.well-known/agent-card.json"
+        },
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://inventory.northwind.example/mcp"
+        },
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://shop.northwind.example/mcp"
+        }
+      ],
+      "endpoint_count": 4,
+      "payments": [
+        {
+          "details": {
+            "chains": [
+              "eip155:8453",
+              "eip155:1"
+            ]
+          },
+          "protocol": "x402"
+        }
+      ],
+      "policies": {},
+      "protocols": [
+        "a2a",
+        "mcp",
+        "skills"
+      ],
+      "site_url": "https://shop.northwind.example",
+      "spec_version": "1.0"
+    },
+    "format": "agents-manifest",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Northwind Store",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "agents-json",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "Site",
+        "protocol": "https",
+        "url": "https://shop.northwind.example",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "a2a"
+        },
+        "key": "a2a",
+        "name": "A2A agents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Order support agent",
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": "https://shop.northwind.example/.well-known/agent-card.json",
+              "url": "https://shop.northwind.example/.well-known/agent-card.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.https://shop.northwind.example/.well-known/agent-card.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://shop.northwind.example/.well-known/agent-card.json",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 2,
+          "protocol": "mcp"
+        },
+        "key": "mcp",
+        "name": "MCP servers",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Warehouse stock levels",
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://inventory.northwind.example/mcp",
+              "url": "https://inventory.northwind.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://inventory.northwind.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://inventory.northwind.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Catalog search, cart and wishlist tools",
+            "extras": {
+              "attributes": {
+                "transport": "streamable-http"
+              },
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://shop.northwind.example/mcp",
+              "url": "https://shop.northwind.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://shop.northwind.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://shop.northwind.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "skills"
+        },
+        "key": "skills",
+        "name": "Agent skills",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Walks an agent through checkout",
+            "extras": {
+              "attributes": {},
+              "endpoint": true,
+              "protocol": "skills",
+              "resolved_url": "https://shop.northwind.example/skills/checkout/SKILL.md",
+              "url": "https://shop.northwind.example/skills/checkout/SKILL.md"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "skills.https://shop.northwind.example/skills/checkout/SKILL.md",
+            "kind": "request_response",
+            "messages": [],
+            "name": "northwind-checkout",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Northwind Store",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "agents-manifest/06-typical-northwind-agents-v2.json",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.92,
+    "format": "agents-manifest"
+  },
+  "fingerprint": "sha256:11a45e342c7162df001718c84f858587c971c43e254f1f78b9bbadee626eb5b4",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "4d16417bade25b1500d252ab4d7ab7060ab0194e4864d2d5019d118f6d3d6f52",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

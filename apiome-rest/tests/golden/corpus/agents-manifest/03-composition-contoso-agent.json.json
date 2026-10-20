@@ -1,0 +1,309 @@
+{
+  "adapter": "agents-manifest",
+  "canonical": {
+    "channels": [],
+    "description": "Book flights and hotels, and manage existing trips",
+    "extras": {
+      "action_count": 3,
+      "authorization": [
+        "oauth2"
+      ],
+      "dialect": "awp",
+      "discovery_seeds": [
+        {
+          "importer": "a2a",
+          "protocol": "a2a",
+          "url": "https://travel.contoso.example/.well-known/agent-card.json"
+        },
+        {
+          "importer": "acp",
+          "protocol": "acp",
+          "url": "https://agents.contoso.example/acp"
+        },
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://travel.contoso.example/mcp"
+        }
+      ],
+      "endpoint_count": 3,
+      "payments": [
+        {
+          "details": {
+            "endpoint": "https://travel.contoso.example/ap2",
+            "version": "0.1"
+          },
+          "protocol": "ap2"
+        },
+        {
+          "details": {
+            "version": "1",
+            "wallet": "0x0000000000000000000000000000000000000402"
+          },
+          "protocol": "x402"
+        }
+      ],
+      "policies": {},
+      "protocols": [
+        "a2a",
+        "acp",
+        "actions",
+        "mcp"
+      ],
+      "site_url": "https://travel.contoso.example",
+      "spec_version": "0.2"
+    },
+    "format": "agents-manifest",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "travel.contoso.example",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "awp",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "Site",
+        "protocol": "https",
+        "url": "https://travel.contoso.example",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 2,
+          "protocol": "a2a"
+        },
+        "key": "a2a",
+        "name": "A2A agents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Book a flight and hotel package",
+            "extras": {
+              "action": true,
+              "auth_required": true,
+              "inputs": {},
+              "operation": "message/send",
+              "resolved_url": null,
+              "url": null,
+              "via": "a2a",
+              "via_declared": true
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.book_trip",
+            "kind": "request_response",
+            "messages": [],
+            "name": "book_trip",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "agent_card": "/.well-known/agent-card.json",
+                "version": "0.3.0"
+              },
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": "https://travel.contoso.example/a2a",
+              "url": "https://travel.contoso.example/a2a"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.https://travel.contoso.example/a2a",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://travel.contoso.example/a2a",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "acp"
+        },
+        "key": "acp",
+        "name": "ACP agents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "version": "0.2"
+              },
+              "endpoint": true,
+              "protocol": "acp",
+              "resolved_url": "https://agents.contoso.example/acp",
+              "url": "https://agents.contoso.example/acp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "acp.https://agents.contoso.example/acp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://agents.contoso.example/acp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 2,
+          "protocol": "actions"
+        },
+        "key": "actions",
+        "name": "Actions",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Cancel a booked trip",
+            "extras": {
+              "action": true,
+              "auth_required": true,
+              "inputs": {},
+              "operation": null,
+              "resolved_url": "https://travel.contoso.example/api/trips/cancel",
+              "url": "/api/trips/cancel",
+              "via": null,
+              "via_declared": true
+            },
+            "http_method": "POST",
+            "http_path": null,
+            "key": "actions.cancel_trip",
+            "kind": "request_response",
+            "messages": [],
+            "name": "cancel_trip",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Search flights between two airports",
+            "extras": {
+              "action": true,
+              "auth_required": false,
+              "inputs": {
+                "date": {
+                  "required": true,
+                  "type": "string"
+                },
+                "from": {
+                  "description": "IATA code",
+                  "required": true,
+                  "type": "string"
+                },
+                "to": {
+                  "description": "IATA code",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "operation": null,
+              "resolved_url": "https://travel.contoso.example/api/flights",
+              "url": "/api/flights",
+              "via": null,
+              "via_declared": true
+            },
+            "http_method": "GET",
+            "http_path": null,
+            "key": "actions.search_flights",
+            "kind": "request_response",
+            "messages": [],
+            "name": "search_flights",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "mcp"
+        },
+        "key": "mcp",
+        "name": "MCP servers",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "transport": "streamable-http",
+                "version": "2025-06-18"
+              },
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://travel.contoso.example/mcp",
+              "url": "https://travel.contoso.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://travel.contoso.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "https://travel.contoso.example/mcp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "travel.contoso.example",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "agents-manifest/03-composition-contoso-agent.json",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 4,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "agents-manifest"
+  },
+  "fingerprint": "sha256:735f70add11544c564bf132d6b064d119624bdb7ff2b0960f39c3ab7fece4baf",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "cb4e4165c72e153649e93f8cb178575c1c0973069c2241c635b60d250458bb83",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,22 @@
+---
+slug: agents-manifest-import
+title: Import agentic-web site manifests
+description: agents.json, agent.json, agents.txt and llms.txt import as crawl seeds for agents.
+authors: [apiome]
+---
+
+You can now [import agentic-web site manifests](/bring-in/agents-manifest-import): the small files a
+site publishes to tell agents which protocols it speaks and where their descriptors live.
+
+{/* truncate */}
+
+- **Four dialects, one importer.** `agents.json`, the Agent Web Protocol `/.well-known/agent.json`,
+  `agents.txt` and `llms.txt` all land in the Catalog under the **Agent** paradigm, with
+  **Endpoints**, **Actions**, **Discovery seeds** and **Payments** groups.
+- **Discovery seeds.** Every A2A card, ACP server, MCP server and nested manifest the site points at
+  is listed with the importer that follows it.
+- **Live discovery.** `apiome import agents-manifest --discover https://example.com` finds the site's
+  manifest at its well-known paths.
+- **Payments as metadata.** x402, AP2 and MPP are recorded on the manifest, not as endpoints.
+- **Broken-reference lint.** Six `agents-manifest.*` rules flag endpoints that point nowhere, plain
+  `http`, duplicates, and AWP actions routed through an undeclared protocol.

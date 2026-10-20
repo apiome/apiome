@@ -1,0 +1,61 @@
+{
+  "awp_version": "0.2",
+  "domain": "travel.contoso.example",
+  "intent": "Book flights and hotels, and manage existing trips",
+  "protocols": {
+    "a2a": {
+      "version": "0.3.0",
+      "endpoint": "https://travel.contoso.example/a2a",
+      "agent_card": "/.well-known/agent-card.json"
+    },
+    "mcp": {
+      "version": "2025-06-18",
+      "endpoint": "https://travel.contoso.example/mcp",
+      "transport": "streamable-http"
+    },
+    "acp": {
+      "version": "0.2",
+      "endpoint": "https://agents.contoso.example/acp"
+    },
+    "x402": {
+      "version": "1",
+      "wallet": "0x0000000000000000000000000000000000000402"
+    },
+    "ap2": {
+      "version": "0.1",
+      "endpoint": "https://travel.contoso.example/ap2"
+    }
+  },
+  "auth": {
+    "type": "oauth2",
+    "required_for": ["book_trip", "cancel_trip"]
+  },
+  "actions": [
+    {
+      "id": "search_flights",
+      "description": "Search flights between two airports",
+      "method": "GET",
+      "endpoint": "/api/flights",
+      "auth_required": false,
+      "inputs": {
+        "from": { "type": "string", "required": true, "description": "IATA code" },
+        "to": { "type": "string", "required": true, "description": "IATA code" },
+        "date": { "type": "string", "required": true }
+      }
+    },
+    {
+      "id": "book_trip",
+      "description": "Book a flight and hotel package",
+      "via": "a2a",
+      "operation": "message/send",
+      "auth_required": true
+    },
+    {
+      "id": "cancel_trip",
+      "description": "Cancel a booked trip",
+      "method": "POST",
+      "endpoint": "/api/trips/cancel",
+      "auth_required": true
+    }
+  ]
+}

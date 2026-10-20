@@ -40,6 +40,20 @@
       ]
     },
     {
+      "id": "catalog/agents-manifest-broken-endpoint-ref",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "agents-manifest.broken-endpoint-ref"
+      ]
+    },
+    {
+      "id": "catalog/agents-manifest-undeclared-via",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "agents-manifest.undeclared-via"
+      ]
+    },
+    {
       "id": "catalog/arazzo-async-source-before-1-1",
       "kind": "catalog_arazzo",
       "expected_blocking_rule_ids": [

@@ -142,6 +142,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   mcp: 'MCP Server Manifest',
   a2a: 'A2A Agent Card',
   acp: 'ACP Agent Manifest',
+  'agents-manifest': 'Agentic-web Site Manifest',
 };
 
 /**
