@@ -1221,6 +1221,53 @@ describe('the states', () => {
  * there — so a change to a component that would leave the fixtures stale fails loudly here
  * before it fails quietly in the browser.
  */
+/** The Sources tab's reply for the docs fixture: two service repositories merged into one surface. */
+const SOURCES_SOURCE = (id: string, name: string, precedence: number, classes: number, paths: number) => ({
+  id,
+  repository_id: `repo-${id}`,
+  repository_full_name: name,
+  provider: 'github',
+  branch: 'main',
+  path: 'openapi.yaml',
+  precedence,
+  first_version_id: HEAD_ID,
+  last_version_id: HEAD_ID,
+  last_version_label: '2.4.0',
+  last_blob_sha: null,
+  class_count: classes,
+  path_count: paths,
+  created_at: '2026-10-19T12:00:00Z',
+  updated_at: '2026-10-19T12:00:00Z',
+});
+const SOURCES_PROV = (id: string, name: string, carried: boolean) => ({
+  source_id: id,
+  repository_id: `repo-${id}`,
+  repository_full_name: name,
+  branch: 'main',
+  path: 'openapi.yaml',
+  blob_sha: null,
+  carried_from_version_id: carried ? V231_ID : null,
+});
+const SOURCES_REPLY = {
+  project_id: 'project-1',
+  sources: [
+    SOURCES_SOURCE('s1', 'acme/orders-service', 1, 2, 2),
+    SOURCES_SOURCE('s2', 'acme/payments-service', 2, 2, 1),
+  ],
+  version: { id: HEAD_ID, version_label: '2.4.0' },
+  entities: [
+    { kind: 'class', key: 'Order', source: SOURCES_PROV('s1', 'acme/orders-service', true) },
+    { kind: 'class', key: 'OrderLine', source: SOURCES_PROV('s1', 'acme/orders-service', true) },
+    { kind: 'class', key: 'Payment', source: SOURCES_PROV('s2', 'acme/payments-service', false) },
+    { kind: 'class', key: 'Refund', source: SOURCES_PROV('s2', 'acme/payments-service', false) },
+    { kind: 'class', key: 'Problem', source: null },
+    { kind: 'path', key: '/orders', source: SOURCES_PROV('s1', 'acme/orders-service', true) },
+    { kind: 'path', key: '/orders/{orderId}', source: SOURCES_PROV('s1', 'acme/orders-service', true) },
+    { kind: 'path', key: '/payments', source: SOURCES_PROV('s2', 'acme/payments-service', false) },
+  ],
+  counts: { classes: 5, paths: 3, attributed: 7, unattributed: 1 },
+};
+
 describe('the browser fixtures', () => {
   const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-versions');
   const dump = process.env.VERSIONS_FIXTURE_DUMP === '1';
@@ -1282,10 +1329,12 @@ describe('the browser fixtures', () => {
         }),
       },
       { test: /^\/api\/repositories$/, reply: () => ({ success: true, repositories: [] }) },
+      // The Sources tab (REPO-5.7): a project merged from two service repositories.
+      { test: /\/repository-sources\?version=/, reply: () => ({ success: true, ...SOURCES_REPLY }) },
     ]);
     await renderVersions();
 
-    for (const tab of ['changes', 'repository']) {
+    for (const tab of ['changes', 'repository', 'sources']) {
       fireEvent.click(screen.getByTestId(`versions-tab-${tab}`));
       await waitFor(() =>
         expect(screen.getByTestId(`versions-tab-${tab}`)).toHaveAttribute('aria-selected', 'true'),

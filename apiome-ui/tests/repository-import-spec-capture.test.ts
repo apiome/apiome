@@ -59,6 +59,15 @@ jest.mock('../lib/db/import-transaction', () => ({
   listProjectLibraryPropertiesTx: jest.fn(() => Promise.resolve([])),
 }));
 
+// The repository is not a registered source here, so the REPO-5.7 merge is a no-op
+// (its storage is covered by repository-merge-store.test.ts).
+jest.mock('../lib/db/repository-merge', () => ({
+  loadIncomingSource: jest.fn(() => Promise.resolve(null)),
+  loadParentEntities: jest.fn(() => Promise.resolve([])),
+  loadCarriedPaths: jest.fn(() => Promise.resolve([])),
+  applyRepositoryMerge: jest.fn(),
+}));
+
 jest.mock('../lib/importers', () => ({
   getImporter: jest.fn(() => ({
     kind: 'openapi',

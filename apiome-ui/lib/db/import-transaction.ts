@@ -104,6 +104,10 @@ export async function createProjectTx(
 /**
  * When importing OpenAPI into an existing catalog project, persist enriched description
  * (fill-if-blank) and shallow-merge spec-derived metadata into `apiome.projects.metadata`.
+ *
+ * `metadataFillOnly` keeps every key the project already has and only adds missing ones — used
+ * when a lower-precedence repository file of a multi-repository project is imported (REPO-5.7),
+ * so the project information stays the first contributing file's.
  */
 export async function mergeProjectImportOpenApiFieldsTx(
   client: PoolClient,
@@ -111,6 +115,7 @@ export async function mergeProjectImportOpenApiFieldsTx(
   opts: {
     descriptionFromSpec?: string | null;
     metadataPatch?: Record<string, unknown> | null;
+    metadataFillOnly?: boolean;
   },
 ): Promise<string> {
   try {
@@ -145,7 +150,7 @@ export async function mergeProjectImportOpenApiFieldsTx(
       opts.metadataPatch !== undefined && opts.metadataPatch !== null && typeof opts.metadataPatch === 'object'
         ? opts.metadataPatch
         : {};
-    const mergedMeta = { ...metaObj, ...patch };
+    const mergedMeta = opts.metadataFillOnly ? { ...patch, ...metaObj } : { ...metaObj, ...patch };
 
     const incDesc = (opts.descriptionFromSpec ?? '').trim();
     const curDescTrim = typeof curDesc === 'string' ? curDesc.trim() : '';
