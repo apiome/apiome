@@ -55,6 +55,7 @@ from .export_routes import tenant_router as export_tenant_router
 from .format_matrix_routes import router as format_matrix_router
 from .git_import_routes import router as git_import_router
 from .gateway_config_routes import router as gateway_config_router
+from .catalog_migration_routes import router as catalog_migration_router
 from .graph_routes import router as graph_router
 from .identity_routes import router as identity_router
 from .import_sources_routes import router as import_sources_router
@@ -181,7 +182,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.254.0",
+    version="1.255.0",
 )
 
 
@@ -367,6 +368,7 @@ app.include_router(catalog_connector_router)
 app.include_router(shadow_api_router)
 # Gateway configs (CDG-5.3, #5981): `/v1/tenants/{t}/gateway-configs…`.
 app.include_router(gateway_config_router)
+app.include_router(catalog_migration_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(contract_suite_router)

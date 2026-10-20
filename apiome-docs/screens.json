@@ -856,6 +856,28 @@
       ]
     },
     {
+      "id": "backstage-import-report",
+      "route": "/ade/dashboard/catalog/imports/11111111-1111-4111-8111-111111111111",
+      "waitFor": "[data-testid=\"migration-report\"]",
+      "data": "fixture:hive-a11y/backstage-import-report.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/catalog/imports",
+        "apiome-ui/src/app/components/ade/catalogMigrations",
+        "apiome-ui/lib/catalog-migrations.ts"
+      ]
+    },
+    {
+      "id": "import-wizard-compass",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"migration-report\"]",
+      "data": "fixture:hive-a11y/import-wizard-compass.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogImportDialog.tsx",
+        "apiome-ui/src/app/components/ade/catalogMigrations",
+        "apiome-ui/lib/catalog-migrations.ts"
+      ]
+    },
+    {
       "id": "export-studio-gateway",
       "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
       "waitFor": "[data-testid=\"export-preserved-percent\"]",

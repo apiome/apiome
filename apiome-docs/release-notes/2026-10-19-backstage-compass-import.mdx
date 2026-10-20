@@ -1,0 +1,33 @@
+---
+slug: backstage-compass-import
+title: Migrate from Backstage or Compass
+description: Backstage catalog-info files and Compass exports arrive as reviewed suggestions.
+authors: [apiome]
+---
+
+Leaving Backstage or Atlassian Compass? Apiome now reads both catalogs and turns them into
+**suggestions** you review. Nothing becomes a team, a component or a confirmed owner without a click.
+
+{/* truncate */}
+
+- **Backstage.** Repository scans read every `catalog-info.yaml`:
+  - `kind: API` definitions are imported as catalog items.
+  - `Component`, `System` and `Domain` entities become component suggestions, with their links,
+    owner and `dependsOn` / `consumesApis`.
+  - `Group` entities and owners become team suggestions.
+- **Compass.** **Import to catalog** has a new **Compass export** source:
+  - Components become suggestions, with their `CHAT_CHANNEL`, `ON_CALL`, `DOCUMENT` and
+    `REPOSITORY` links and their `DEPENDS_ON` relationships.
+  - Owners become team suggestions.
+- **Import reports.** **Catalog → Import reports** lists each import. In a report:
+  - **Create team**, **Register component** or **Apply to** an existing Project.
+  - **Dismiss** what you do not want.
+  - **Unmapped fields** lists every field that did not come across (never its value).
+- **Components.** Accepted components are a new catalog kind with a page, an owner, facts and
+  declared dependencies. References to a component resolve once you accept it.
+- **API.** New routes:
+  - `GET|POST /v1/tenants/{tenant}/catalog-migrations…`
+  - `POST …/catalog-migration-suggestions/{id}/accept|dismiss`
+  - `GET …/catalog-components/{slug}`
+
+See [Migrate from Backstage or Compass](/bring-in/migrate-from-backstage-or-compass).

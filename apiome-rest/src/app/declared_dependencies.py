@@ -59,6 +59,8 @@ __all__ = [
     "backstage_name",
     "is_backstage_path",
     "parse_reference",
+    "promote_unresolved",
+    "reference_slug",
     "references_from_document",
     "replace_declared",
     "resolve_target",
@@ -304,8 +306,9 @@ def backstage_entities(text: str) -> List[BackstageEntity]:
 def resolve_target(cursor: Any, tenant_id: str, ref: DeclaredReference) -> Optional[Tuple[str, str]]:
     """The live entity a reference names, as ``(node kind, id)``, or ``None``.
 
-    A slug names a project or catalog item (its kind follows ``publishable``). An id names an
-    entity of ``ref.kind``; for a projects row the actual kind is returned whichever was asked.
+    A slug names a project or catalog item (its kind follows ``publishable``), or else an accepted
+    component (CDG-5.5). An id names an entity of ``ref.kind``; for a projects row the actual kind
+    is returned whichever was asked.
 
     Args:
         cursor: An open cursor.
@@ -337,6 +340,17 @@ def resolve_target(cursor: Any, tenant_id: str, ref: DeclaredReference) -> Optio
             "WHERE lower(slug) = %s AND tenant_id = %s::uuid AND deleted_at IS NULL",
             (ref.slug.lower(), tenant_id),
         )
+        row = cursor.fetchone()
+        if row:
+            return ("project" if row["publishable"] else "catalog_item", str(row["id"]))
+        # CDG-5.5: a slug no Project or catalog item has may name an accepted component.
+        cursor.execute(
+            "SELECT id::text AS id FROM apiome.catalog_components "
+            "WHERE slug = %s AND tenant_id = %s::uuid AND deleted_at IS NULL",
+            (ref.slug.lower(), tenant_id),
+        )
+        row = cursor.fetchone()
+        return ("component", str(row["id"])) if row else None
     else:
         return None
     row = cursor.fetchone()
@@ -425,3 +439,68 @@ def replace_declared(
              ref.note[:_MAX_NOTE] if ref.note else None),
         )
     return {"declared": len(kept_ids), "removed": removed, "unresolved": len(unresolved)}
+
+
+def reference_slug(source_ref: str, reference: str) -> Optional[str]:
+    """The slug an unresolved reference names, read the way its source wrote it.
+
+    Backstage and Compass references are entity refs (``component:default/payments``); the others
+    use the ``<slug>[#<pointer>]`` grammar.
+
+    Args:
+        source_ref: The declaring source.
+        reference: The reference as written.
+
+    Returns:
+        The lowercased slug, or ``None``.
+    """
+    if source_ref.startswith(BACKSTAGE_PREFIX) or source_ref.startswith("compass:"):
+        return backstage_name(reference)
+    parsed = parse_reference(reference)
+    return parsed.slug if parsed else None
+
+
+def promote_unresolved(cursor: Any, tenant_id: str, to_kind: str, to_id: str, slug: str) -> int:
+    """Turn the unresolved references that name ``slug`` into declared edges to a new entity.
+
+    Called when someone accepts a component (CDG-5.5): until then a reference to it stayed visible
+    as unresolved; now it resolves, without waiting for its declaring source to run again. Runs on
+    the caller's transaction.
+
+    Args:
+        cursor: An open cursor.
+        tenant_id: The tenant.
+        to_kind: The new entity's node kind.
+        to_id: The new entity.
+        slug: Its slug.
+
+    Returns:
+        How many references became edges.
+    """
+    cursor.execute(
+        """
+        SELECT id::text AS id, from_kind, from_id::text AS from_id, source_ref, reference, pointer, edge_kind
+          FROM apiome.catalog_unresolved_dependencies
+         WHERE tenant_id = %s::uuid AND reason = 'not-found' AND strpos(lower(reference), %s) > 0
+        """,
+        (tenant_id, slug.lower()),
+    )
+    promoted = 0
+    for row in cursor.fetchall():
+        if reference_slug(row["source_ref"], row["reference"]) != slug.lower() or row["from_id"] == str(to_id):
+            continue
+        cursor.execute(
+            """
+            INSERT INTO apiome.catalog_edges
+                (tenant_id, from_kind, from_id, to_kind, to_id, edge_kind, pointer, provenance,
+                 source_ref, evidence)
+            VALUES (%s::uuid, %s, %s::uuid, %s, %s::uuid, %s, %s, 'declared', %s, %s::jsonb)
+            ON CONFLICT ON CONSTRAINT catalog_edges_identity_key DO UPDATE
+               SET last_seen_at = CURRENT_TIMESTAMP, stale_since = NULL
+            """,
+            (tenant_id, row["from_kind"], row["from_id"], to_kind, to_id, row["edge_kind"], row["pointer"],
+             row["source_ref"], json.dumps({"reference": row["reference"]})),
+        )
+        cursor.execute("DELETE FROM apiome.catalog_unresolved_dependencies WHERE id = %s::uuid", (row["id"],))
+        promoted += 1
+    return promoted

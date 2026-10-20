@@ -42,6 +42,7 @@ __all__ = [
     "confirm_owner",
     "read_owners",
     "record_suggestions",
+    "record_suggestions_on_cursor",
     "remove_owner",
 ]
 
@@ -439,6 +440,33 @@ def record_suggestions(
     if not is_uuid_string(tenant_id or "") or not is_uuid_string(entity_id or ""):
         return []
     kind_spec(kind)
+    return _run(lambda cursor: record_suggestions_on_cursor(cursor, tenant_id, kind, entity_id, source, suggestions))
+
+
+def record_suggestions_on_cursor(
+    cursor: Any,
+    tenant_id: str,
+    kind: str,
+    entity_id: str,
+    source: str,
+    suggestions: Sequence[Mapping[str, Any]],
+) -> List[str]:
+    """:func:`record_suggestions` on the caller's transaction (the Backstage/Compass import, CDG-5.5).
+
+    Args:
+        cursor: An open cursor; nothing is committed.
+        tenant_id: The entity's tenant.
+        kind: The entity kind.
+        entity_id: The entity.
+        source: A non-manual source.
+        suggestions: ``[{team, sourceRef}]`` — the complete current set for this source.
+
+    Returns:
+        The slugs that match no live team, in input order.
+    """
+    if source == SOURCE_MANUAL:
+        raise OwnerValidationError(CODE_INVALID, "manual owners are assigned, not suggested")
+    kind_spec(kind)
     wanted: Dict[str, Optional[str]] = {}
     for suggestion in suggestions or []:
         slug = str(suggestion.get("team") or "").strip().lower()
@@ -504,4 +532,4 @@ def record_suggestions(
                    {"source": source, "from": before, "to": after, "unknown": unknown})
         return unknown
 
-    return _run(work)
+    return work(cursor)

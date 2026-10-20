@@ -53,6 +53,7 @@ __all__ = [
     "create_team",
     "delete_team",
     "get_team",
+    "insert_team",
     "list_teams",
     "replace_team_members",
     "team_activity",
@@ -77,6 +78,7 @@ _OWNED_ENTITY_NAME_SQL = """
             WHEN 'agent' THEN (SELECT a.name FROM apiome.catalog_agents a WHERE a.id = eo.entity_id)
             WHEN 'model' THEN (SELECT m.name FROM apiome.catalog_models m WHERE m.id = eo.entity_id)
             WHEN 'gateway_config' THEN (SELECT g.name FROM apiome.catalog_gateway_configs g WHERE g.id = eo.entity_id)
+            WHEN 'component' THEN (SELECT c.name FROM apiome.catalog_components c WHERE c.id = eo.entity_id)
         END,
         eo.entity_id::text
     )
@@ -357,6 +359,26 @@ def create_team(tenant_id: str, body: TeamInput, *, actor: ConsumerActor) -> Tea
         TeamValidationError: ``team-invalid`` for a malformed field, ``team-slug-taken`` when a
             live team already has the slug.
     """
+    return _run(lambda cursor: insert_team(cursor, tenant_id, body, actor=actor))
+
+
+def insert_team(cursor: Any, tenant_id: str, body: TeamInput, *, actor: ConsumerActor) -> TeamRecord:
+    """:func:`create_team` on the caller's transaction (accepting a team suggestion, CDG-5.5).
+
+    A slug collision surfaces as ``psycopg2.errors.UniqueViolation``; the caller translates it.
+
+    Args:
+        cursor: An open cursor; nothing is committed.
+        tenant_id: The caller's tenant.
+        body: The team to create.
+        actor: Who is creating it.
+
+    Returns:
+        The stored team, with an empty member list.
+
+    Raises:
+        TeamValidationError: ``team-invalid`` for a malformed field.
+    """
     name = normalize_name(body.name)
     slug = resolve_slug(body.slug, name)
     values = {
@@ -394,7 +416,7 @@ def create_team(tenant_id: str, body: TeamInput, *, actor: ConsumerActor) -> Tea
         row = _lock_team(cursor, tenant_id, slug)
         return _record(row, [])
 
-    return _run(work)
+    return work(cursor)
 
 
 def update_team(

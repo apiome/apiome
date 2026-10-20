@@ -788,14 +788,21 @@ def apply_backstage(
     *,
     fetch_text: Optional[Any] = None,
     record: Optional[Callable[..., Any]] = None,
+    catalog: Optional[Callable[..., Any]] = None,
 ) -> Optional[Dict[str, int]]:
-    """Read the branch's Backstage ``catalog-info.yaml`` files into declared dependencies (CDG-3.2).
+    """Read the branch's Backstage ``catalog-info.yaml`` files (CDG-3.2, CDG-5.5).
 
     Runs once a walk completes, after CODEOWNERS. Every indexed ``catalog-info.yaml`` /
-    ``catalog-info.yml`` (at any depth) is downloaded and handed to
-    :func:`app.declared_dependency_store.record_backstage_dependencies`, which attaches its
-    ``consumesApis`` / ``dependsOn`` to the APIs imported from this branch. With no such file, earlier
-    Backstage declarations are removed. Advisory: any failure is logged and the scan goes on.
+    ``catalog-info.yml`` (at any depth) is downloaded and handed, in order, to
+
+    1. :func:`app.catalog_migration_store.record_backstage_catalog` (CDG-5.5), which imports each
+       ``kind: API`` definition as a catalog item and stages the branch's components, systems,
+       domains and groups as suggestions on its import report; then
+    2. :func:`app.declared_dependency_store.record_backstage_dependencies` (CDG-3.2), which
+       attaches ``consumesApis`` / ``dependsOn`` to the APIs imported from this branch.
+
+    With no such file, earlier Backstage declarations and the branch's report are removed.
+    Advisory: any failure is logged and the scan goes on.
 
     Args:
         db: Database handle.
@@ -807,10 +814,12 @@ def apply_backstage(
         token: Access token, if any.
         fetch_text: Replaces :func:`fetch_github_repository_file_text` (tests).
         record: Replaces ``record_backstage_dependencies`` (tests).
+        catalog: Replaces ``record_backstage_catalog`` (tests).
 
     Returns:
-        The recorder's counts, or ``None`` when skipped.
+        The declarations recorder's counts, or ``None`` when skipped.
     """
+    from .catalog_migration_store import record_backstage_catalog
     from .declared_dependency_store import record_backstage_dependencies
 
     fetch = fetch_text or fetch_github_repository_file_text
@@ -829,6 +838,19 @@ def apply_backstage(
         for row in rows or []:
             text, _ = fetch(owner, repo, str(row["path"]), branch, token, max_bytes=256_000)
             files[str(row["path"])] = text
+        creator = db.execute_query(
+            "SELECT created_by::text AS created_by FROM apiome.tenant_repositories WHERE id = %s::uuid",
+            (repository_id,),
+        )
+        (catalog or record_backstage_catalog)(
+            tenant_id,
+            repository_id,
+            branch,
+            files,
+            label=f"{owner}/{repo} · {branch}",
+            fetch_file=lambda path: fetch(owner, repo, path, branch, token, max_bytes=900_000)[0],
+            actor_id=(creator[0].get("created_by") if creator else None),
+        )
         return (record or record_backstage_dependencies)(tenant_id, repository_id, branch, files)
     except Exception as exc:  # noqa: BLE001 - declarations are advisory; never fail the scan
         _logger.warning(

@@ -29,6 +29,8 @@ export const OWNER_ENTITY_KINDS = [
   'model',
   // CDG-5.3: a gateway's environment.
   'gateway_config',
+  // CDG-5.5: an accepted Backstage or Compass component.
+  'component',
 ] as const;
 
 /** One of {@link OWNER_ENTITY_KINDS}. */
@@ -44,6 +46,7 @@ export const OWNER_ENTITY_KIND_LABELS: Readonly<Record<OwnerEntityKind, string>>
   agent: 'Agents',
   model: 'Models',
   gateway_config: 'Gateway configs',
+  component: 'Components',
 };
 
 /** The team an owner names. */
@@ -224,6 +227,8 @@ export function ownedEntityHref(entity: Pick<OwnedEntity, 'kind' | 'id'>): strin
       return `/ade/dashboard/catalog/models/${id}`;
     case 'gateway_config':
       return `/ade/dashboard/connectors/environments/${id}`;
+    case 'component':
+      return `/ade/dashboard/catalog/components/${id}`;
     default:
       return null;
   }

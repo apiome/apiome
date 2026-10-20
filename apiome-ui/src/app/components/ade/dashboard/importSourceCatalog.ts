@@ -18,6 +18,7 @@ import {
   FileJson,
   Network,
   FileCode,
+  Compass,
   type LucideIcon,
 } from 'lucide-react';
 // Namespace import is intentional: registry adapters name their icon (e.g. "file-json") and we
@@ -33,7 +34,9 @@ export type ImportPanelId =
   | 'git'
   | 'swaggerhub'
   | 'postman'
-  | 'mcp';
+  | 'mcp'
+  // CDG-5.5: the catalog importer's Compass export intake (never a Projects card).
+  | 'compass';
 
 /**
  * Which import surface a source card belongs to (MFI-23.12):
@@ -264,7 +267,7 @@ export function mergeImportFileExtensions(
  * imports it as a multi-file selection, so every registry adapter — not just the OpenAPI family —
  * can be imported straight from a repository.
  */
-export type BaseIntakeMethod = 'file' | 'url' | 'paste' | 'git';
+export type BaseIntakeMethod = 'file' | 'url' | 'paste' | 'git' | 'compass';
 
 /** A base intake tile: the source-method id the dialog uses, plus the card it renders from. */
 export interface BaseIntakeTile {
@@ -282,11 +285,30 @@ const BASE_INTAKE_METHODS: ReadonlyArray<{ key: string; method: BaseIntakeMethod
   { key: 'url', method: 'url' },
   { key: 'clipboard', method: 'paste' },
   { key: 'git', method: 'git' },
+  // CDG-5.5 (#5983): an Atlassian Compass export, staged as an import report instead of a spec.
+  { key: 'compass', method: 'compass' },
 ];
 
 /**
+ * Tiles only the catalog importer shows, with no registry card behind them. Kept out of
+ * {@link BASE_CARDS} so no other import surface ever renders them.
+ */
+const CATALOG_ONLY_CARDS: Readonly<Record<string, ImportSourceCard>> = {
+  compass: {
+    key: 'compass',
+    label: 'Compass export',
+    description: 'Migrate components and teams from Atlassian Compass',
+    icon: Compass,
+    panel: 'compass',
+    builtin: true,
+    scope: 'alternative',
+  },
+};
+
+/**
  * Resolve the catalog importer's source tiles — File Upload / URL Import / Clipboard paste /
- * Git Repository — in a fixed order, from the loaded source cards (MFI-26.1, #4094; MFI-29.3).
+ * Git Repository / Compass export — in a fixed order, from the loaded source cards (MFI-26.1,
+ * #4094; MFI-29.3; CDG-5.5 adds Compass from {@link CATALOG_ONLY_CARDS}).
  *
  * The grid is data-driven: each tile carries the label / description / icon reported by
  * `GET /v1/import/sources` (via the built-in fallback cards when the registry is unreachable), so it
@@ -301,7 +323,7 @@ export function baseIntakeTiles(cards: ReadonlyArray<ImportSourceCard>): BaseInt
   const byKey = new Map(cards.map((card) => [card.key, card] as const));
   const tiles: BaseIntakeTile[] = [];
   for (const { key, method } of BASE_INTAKE_METHODS) {
-    const card = byKey.get(key);
+    const card = byKey.get(key) ?? CATALOG_ONLY_CARDS[key];
     if (card) tiles.push({ method, card });
   }
   return tiles;

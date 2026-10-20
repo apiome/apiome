@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.391.0] - 2026-10-19
+
+### Added
+- **Backstage and Compass import (#5983, CDG-5.5)**: everything a Backstage or Atlassian Compass catalog describes
+  arrives as a suggestion with its provenance. Nothing becomes a team, a component or a confirmed owner without a click.
+  - **Backstage.** Repository scans read every `catalog-info.yaml`. A `kind: API` with `spec.definition` (inline, or a
+    `$text` / `$openapi` / `$json` / `$yaml` path beside the file) is imported through the import pipeline as a catalog
+    item; an unchanged definition is not imported again. `Component`, `System` and `Domain` entities become component
+    suggestions (links, type, lifecycle, parent, owner, `dependsOn` / `consumesApis`). `Group` entities and every
+    `spec.owner` become team suggestions.
+  - **Compass.** `POST /v1/tenants/{tenant}/catalog-migrations/compass` stages an export (`{components, teams}`, a
+    GraphQL `searchComponents` response or a list; at most 5 MB, 413 `migration-too-large`). Components become
+    component suggestions with `CHAT_CHANNEL` / `ON_CALL` / `DOCUMENT` / `REPOSITORY` / `DASHBOARD` links and
+    `DEPENDS_ON` relationships; `ownerId` becomes a team suggestion.
+  - **Reports.** `GET …/catalog-migrations` and `…/catalog-migrations/{id}` return each import report: counts, the
+    suggestions and every unmapped field (entity, path, reason; values are never stored).
+  - **Decisions.** `POST …/catalog-migration-suggestions/{id}/accept` (`{name, slug, asComponent}`) creates a team
+    (or links the live team with its slug), registers a component, or applies a component to the Project or catalog
+    item it matches. Imported owners are written only as `entity_owners` suggestions (sources `backstage` /
+    `compass`). `…/dismiss` keeps a suggestion out of later runs. 409 `migration-suggestion-decided` /
+    `migration-slug-taken`. Audited as `catalog.migration.*`.
+  - **Components.** A new `component` entity kind (apiome-db V299 `catalog_components`) in the catalog registry, the
+    graph, owners and facts; `GET …/catalog-components/{slug}`. Declared references to a component resolve when it
+    is accepted (`app.declared_dependencies.promote_unresolved`).
+  - RBAC: `imports:view` to read, `imports:create` to upload and decide, plus `teams:create` to accept a team.
+    OpenAPI 1.255.0.
+
 ## [1.390.0] - 2026-10-19
 
 ### Added

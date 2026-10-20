@@ -198,6 +198,21 @@ REGISTRY: Tuple[EntityKind, ...] = (
         detail_route="/ade/dashboard/connectors/environments/{slug}",
         list_route="/ade/dashboard/connectors",
     ),
+    # CDG-5.5 (V299): a Backstage or Compass component, system or domain someone accepted.
+    EntityKind(
+        key="component",
+        label="Component",
+        plural_label="Components",
+        table="apiome.catalog_components",
+        live_where="e.deleted_at IS NULL",
+        slug_sql="e.slug",
+        description_sql="e.description",
+        owner_kind="component",
+        graph_kind="component",
+        resource=Resource.IMPORTS,
+        detail_route="/ade/dashboard/catalog/components/{slug}",
+        list_route=None,
+    ),
     EntityKind(
         key="team",
         label="Team",
