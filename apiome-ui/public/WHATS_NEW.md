@@ -25,6 +25,7 @@ We continue to improve the platform based on your feedback with improvements and
     - ACP agent manifest import (agents and capabilities, live discovery from a server's `/agents`)
     - Agentic-web site manifest import (agents.json, agent.json, agents.txt, llms.txt): endpoints, actions, payment layers and the A2A / ACP / MCP descriptors to discover next
     - Registry crawl connectors: point a connector at an A2A agent registry, a CNCF xRegistry or a FHIR server, and every artifact becomes its own catalog item, re-crawled incrementally
+    - CNCF xRegistry import: CloudEvents schema groups, message definitions and endpoints (MQTT, AMQP, Kafka, NATS, HTTP) as one event catalog entry; registry crawls now bring in message groups and endpoints too
     - Protobuf editions 2023/2024 normalization parity
     - RELAX NG import
     - DTD import

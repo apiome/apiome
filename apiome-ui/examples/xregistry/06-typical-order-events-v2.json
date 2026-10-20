@@ -1,0 +1,205 @@
+{
+  "specversion": "1.0-rc1",
+  "registryid": "orders",
+  "name": "Order events",
+  "description": "Order lifecycle events published by the order service.",
+  "schemagroups": {
+    "com.example.orders": {
+      "schemagroupid": "com.example.orders",
+      "schemas": {
+        "OrderCreated": {
+          "schemaid": "OrderCreated",
+          "format": "JsonSchema/draft-07",
+          "defaultversionid": "2",
+          "versions": {
+            "1": {
+              "versionid": "1",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "orderId",
+                  "customerId",
+                  "total"
+                ]
+              }
+            },
+            "2": {
+              "versionid": "2",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "orderId",
+                  "customerId",
+                  "total",
+                  "currency"
+                ]
+              }
+            }
+          }
+        },
+        "OrderShipped": {
+          "schemaid": "OrderShipped",
+          "format": "JsonSchema/draft-07",
+          "versionid": "1",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "type": "string"
+              },
+              "carrier": {
+                "type": "string",
+                "enum": [
+                  "ups",
+                  "fedex",
+                  "dhl",
+                  "usps"
+                ]
+              }
+            },
+            "required": [
+              "orderId",
+              "carrier"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "messagegroups": {
+    "com.example.orders": {
+      "messagegroupid": "com.example.orders",
+      "envelope": "CloudEvents/1.0",
+      "messages": {
+        "com.example.orders.created": {
+          "messageid": "com.example.orders.created",
+          "description": "An order was placed.",
+          "envelopemetadata": {
+            "type": {
+              "value": "com.example.orders.created"
+            },
+            "source": {
+              "value": "/orders"
+            },
+            "subject": {
+              "type": "string",
+              "required": true,
+              "description": "The order id."
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemaxid": "/schemagroups/com.example.orders/schemas/OrderCreated"
+        },
+        "com.example.orders.shipped": {
+          "messageid": "com.example.orders.shipped",
+          "description": "An order left the warehouse.",
+          "envelopemetadata": {
+            "type": {
+              "value": "com.example.orders.shipped"
+            },
+            "source": {
+              "value": "/orders"
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemaxid": "/schemagroups/com.example.orders/schemas/OrderShipped"
+        },
+        "com.example.orders.cancelled": {
+          "messageid": "com.example.orders.cancelled",
+          "description": "An order was cancelled before shipping.",
+          "envelopemetadata": {
+            "type": {
+              "value": "com.example.orders.cancelled"
+            },
+            "source": {
+              "value": "/orders"
+            }
+          },
+          "datacontenttype": "application/json"
+        }
+      }
+    }
+  },
+  "endpoints": {
+    "orders.mqtt": {
+      "endpointid": "orders.mqtt",
+      "description": "Order events over the plant MQTT broker.",
+      "usage": [
+        "producer"
+      ],
+      "protocol": "MQTT/5.0",
+      "protocoloptions": {
+        "endpoints": [
+          {
+            "uri": "mqtts://broker.example.com:8883"
+          },
+          {
+            "uri": "mqtts://broker-dr.example.com:8883"
+          }
+        ],
+        "options": {
+          "topic": "orders/{subject}",
+          "qos": 1
+        }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": [
+        "/messagegroups/com.example.orders"
+      ]
+    },
+    "orders.kafka": {
+      "endpointid": "orders.kafka",
+      "description": "Order events mirrored to the analytics Kafka cluster.",
+      "usage": [
+        "consumer"
+      ],
+      "protocol": "KAFKA",
+      "protocoloptions": {
+        "endpoints": [
+          {
+            "uri": "kafka://analytics.example.com:9092"
+          }
+        ],
+        "options": {
+          "topic": "orders"
+        }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": [
+        "/messagegroups/com.example.orders"
+      ]
+    }
+  }
+}

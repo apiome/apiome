@@ -217,7 +217,7 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
     kind: 'registry',
     label: 'Registry crawl',
     description:
-      'Every artifact of a registry (A2A agents, xRegistry schemas, a FHIR server), each imported as its own catalog item.',
+      'Every artifact of a registry (A2A agents, xRegistry schemas, message groups and endpoints, a FHIR server), each imported as its own catalog item.',
     baseUrl: 'required',
     baseUrlHelp:
       'The registry root: an A2A agent registry listing, an xRegistry root (https://<host>/reg) or a FHIR server base.',
@@ -229,15 +229,15 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
         required: true,
         options: [
           { value: 'a2a-registry', label: 'A2A agent registry' },
-          { value: 'xregistry', label: 'CNCF xRegistry (schemas)' },
+          { value: 'xregistry', label: 'CNCF xRegistry (schemas, messages, endpoints)' },
           { value: 'fhir-metadata', label: 'FHIR server /metadata' },
         ],
       },
       {
         key: 'groups',
-        label: 'Schema groups',
+        label: 'Groups',
         type: 'list',
-        help: 'xRegistry only: schema group ids, comma-separated. Leave empty for every group.',
+        help: 'xRegistry only: schema and message group ids, comma-separated. Leave empty for every group.',
       },
       {
         key: 'includeProfiles',

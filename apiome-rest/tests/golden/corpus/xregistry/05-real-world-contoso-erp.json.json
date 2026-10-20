@@ -1,0 +1,1481 @@
+{
+  "adapter": "xregistry",
+  "canonical": {
+    "channels": [
+      {
+        "address": "Contoso.ERP.Events.InventoryUpdated",
+        "bindings": {},
+        "description": "Stock for an item changed.",
+        "extras": {
+          "cloudevents_source": "/erp/{tenantid}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "Contoso.ERP.Events.InventoryUpdated",
+        "name": "Contoso.ERP.Events.InventoryUpdated",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "Contoso.ERP.Events.PaymentsReceived",
+        "bindings": {},
+        "description": "A payment was received from a customer.",
+        "extras": {
+          "cloudevents_source": "/erp/{tenantid}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "Contoso.ERP.Events.PaymentsReceived",
+        "name": "Contoso.ERP.Events.PaymentsReceived",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "Contoso.ERP.Events.PurchaseOrderCreated",
+        "bindings": {},
+        "description": "A purchase order was raised with a supplier.",
+        "extras": {
+          "cloudevents_source": "/erp/{tenantid}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "Contoso.ERP.Events.PurchaseOrderCreated",
+        "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "Contoso.ERP.Events.ReservationPlaced",
+        "bindings": {},
+        "description": "Stock was reserved for an order.",
+        "extras": {
+          "cloudevents_source": "/erp/{tenantid}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "Contoso.ERP.Events.ReservationPlaced",
+        "name": "Contoso.ERP.Events.ReservationPlaced",
+        "parameters": [],
+        "protocol": "cloudevents"
+      }
+    ],
+    "description": "Reconstruction of the Contoso ERP sample registry: ERP events, their JSON schemas and the HTTP and AMQP endpoints that carry them.",
+    "extras": {
+      "xregistry_endpoint_count": 2,
+      "xregistry_message_count": 4,
+      "xregistry_schema_count": 4,
+      "xregistry_specversion": "1.0-rc1"
+    },
+    "format": "xregistry",
+    "identity": {
+      "extras": {},
+      "id": "contoso-erp",
+      "name": "Contoso ERP events",
+      "namespace": null
+    },
+    "paradigm": "event",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "The ERP publishes events to its AMQP topic.",
+        "extras": {},
+        "name": "Contoso.ERP.Amqp",
+        "protocol": "amqp",
+        "url": "amqps://erp.contoso.example/events",
+        "variables": []
+      },
+      {
+        "description": "Webhook deliveries of ERP events.",
+        "extras": {},
+        "name": "Contoso.ERP.Webhooks",
+        "protocol": "http",
+        "url": "https://erp.contoso.example/webhooks",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "The ERP publishes events to its AMQP topic.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "Contoso.ERP.Events"
+          ],
+          "xregistry_protocol": "AMQP/1.0",
+          "xregistry_protocol_options": {
+            "options": {
+              "node": "erp-events"
+            }
+          },
+          "xregistry_uris": [
+            "amqps://erp.contoso.example/events"
+          ],
+          "xregistry_usage": [
+            "producer"
+          ]
+        },
+        "key": "Contoso.ERP.Amqp",
+        "name": "Contoso.ERP.Amqp",
+        "operations": [
+          {
+            "channel_ref": "Contoso.ERP.Events.InventoryUpdated",
+            "deprecated": false,
+            "description": "Stock for an item changed.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.InventoryUpdated"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Stock for an item changed.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.InventoryUpdated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.InventoryUpdated"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.InventoryUpdated",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated",
+                "name": "Contoso.ERP.Events.InventoryUpdated",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.InventoryUpdated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.InventoryUpdated",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.PaymentsReceived",
+            "deprecated": false,
+            "description": "A payment was received from a customer.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.PaymentsReceived"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "A payment was received from a customer.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PaymentsReceived",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.PaymentsReceived"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.PaymentsReceived",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived",
+                "name": "Contoso.ERP.Events.PaymentsReceived",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.PaymentsReceived",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.PaymentsReceived",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.PurchaseOrderCreated",
+            "deprecated": false,
+            "description": "A purchase order was raised with a supplier.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.PurchaseOrderCreated"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "A purchase order was raised with a supplier.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PurchaseOrderCreated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.PurchaseOrderCreated"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.PurchaseOrderCreated",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated",
+                "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.ReservationPlaced",
+            "deprecated": false,
+            "description": "Stock was reserved for an order.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.ReservationPlaced"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Stock was reserved for an order.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.ReservationPlaced",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.ReservationPlaced"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.ReservationPlaced",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Amqp.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced",
+                "name": "Contoso.ERP.Events.ReservationPlaced",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.ReservationPlaced",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.ReservationPlaced",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "Webhook deliveries of ERP events.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "Contoso.ERP.Events"
+          ],
+          "xregistry_protocol": "HTTP",
+          "xregistry_protocol_options": {
+            "options": {
+              "method": "POST"
+            }
+          },
+          "xregistry_uris": [
+            "https://erp.contoso.example/webhooks"
+          ],
+          "xregistry_usage": [
+            "subscriber"
+          ]
+        },
+        "key": "Contoso.ERP.Webhooks",
+        "name": "Contoso.ERP.Webhooks",
+        "operations": [
+          {
+            "channel_ref": "Contoso.ERP.Events.InventoryUpdated",
+            "deprecated": false,
+            "description": "Stock for an item changed.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.InventoryUpdated"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Stock for an item changed.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.InventoryUpdated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.InventoryUpdated"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.InventoryUpdated",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.InventoryUpdated#event.Contoso.ERP.Events.InventoryUpdated",
+                "name": "Contoso.ERP.Events.InventoryUpdated",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.InventoryUpdated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.InventoryUpdated",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.PaymentsReceived",
+            "deprecated": false,
+            "description": "A payment was received from a customer.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.PaymentsReceived"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "A payment was received from a customer.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PaymentsReceived",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.PaymentsReceived"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.PaymentsReceived",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PaymentsReceived#event.Contoso.ERP.Events.PaymentsReceived",
+                "name": "Contoso.ERP.Events.PaymentsReceived",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.PaymentsReceived",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.PaymentsReceived",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.PurchaseOrderCreated",
+            "deprecated": false,
+            "description": "A purchase order was raised with a supplier.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.PurchaseOrderCreated"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "A purchase order was raised with a supplier.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PurchaseOrderCreated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.PurchaseOrderCreated"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.PurchaseOrderCreated",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.PurchaseOrderCreated#event.Contoso.ERP.Events.PurchaseOrderCreated",
+                "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "Contoso.ERP.Events.ReservationPlaced",
+            "deprecated": false,
+            "description": "Stock was reserved for an order.",
+            "extras": {
+              "cloudevents_type": "Contoso.ERP.Events.ReservationPlaced"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "Stock was reserved for an order.",
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.ReservationPlaced",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/Contoso.ERP.Events/messages/Contoso.ERP.Events.ReservationPlaced"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.id",
+                    "name": "id",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/erp/{tenantid}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "1.0",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.specversion",
+                    "name": "specversion",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.time",
+                    "name": "time",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "Contoso.ERP.Events.ReservationPlaced",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "Contoso.ERP.Webhooks.Contoso.ERP.Events.Contoso.ERP.Events.ReservationPlaced#event.Contoso.ERP.Events.ReservationPlaced",
+                "name": "Contoso.ERP.Events.ReservationPlaced",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Contoso.ERP.Events.ReservationPlaced",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Contoso.ERP.Events.ReservationPlaced",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Contoso ERP events",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Stock for an item changed.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.InventoryUpdated.itemId",
+            "name": "itemId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.InventoryUpdated.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.InventoryUpdated.warehouseId",
+            "name": "warehouseId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Contoso.ERP.Events.InventoryUpdated",
+        "key_type": null,
+        "kind": "record",
+        "name": "Contoso.ERP.Events.InventoryUpdated",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A payment was received from a customer.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PaymentsReceived.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PaymentsReceived.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PaymentsReceived.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PaymentsReceived.paymentId",
+            "name": "paymentId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Contoso.ERP.Events.PaymentsReceived",
+        "key_type": null,
+        "kind": "record",
+        "name": "Contoso.ERP.Events.PaymentsReceived",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A purchase order was raised with a supplier.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PurchaseOrderCreated.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PurchaseOrderCreated.purchaseOrderId",
+            "name": "purchaseOrderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.PurchaseOrderCreated.supplierId",
+            "name": "supplierId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Contoso.ERP.Events.PurchaseOrderCreated",
+        "key_type": null,
+        "kind": "record",
+        "name": "Contoso.ERP.Events.PurchaseOrderCreated",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Stock was reserved for an order.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.ReservationPlaced.expiresAt",
+            "name": "expiresAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.ReservationPlaced.itemId",
+            "name": "itemId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.ReservationPlaced.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Contoso.ERP.Events.ReservationPlaced.reservationId",
+            "name": "reservationId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Contoso.ERP.Events.ReservationPlaced",
+        "key_type": null,
+        "kind": "record",
+        "name": "Contoso.ERP.Events.ReservationPlaced",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "xregistry/05-real-world-contoso-erp.json",
+  "counts": {
+    "channels": 4,
+    "operations": 8,
+    "servers": 2,
+    "services": 2,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "xregistry"
+  },
+  "fingerprint": "sha256:784b8de9e616fec9c0956c81f8f78edd27acb4ba5946f489eea2d5c43369dd94",
+  "lint": {
+    "findings": 14,
+    "grade": "B",
+    "report_fingerprint": "48673cd533a32ec50fcec1d0efc17476ecad6015384d202d9b9496172e9bec67",
+    "score": 86,
+    "severity_counts": {
+      "error": 0,
+      "info": 14,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

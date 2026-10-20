@@ -49,6 +49,7 @@ const FORMAT_LANGUAGE: Readonly<Record<string, string>> = {
   smithy: 'plaintext',
   typespec: 'typescript',
   cloudevents: 'json',
+  xregistry: 'json',
   // Data schema
   jsonschema: 'json',
   jtd: 'json',

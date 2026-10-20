@@ -409,6 +409,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[FormatVersion(version="1.0", format_key="cloudevents", support=VersionSupport.FULL)],
         default_write="1.0",
     ),
+    "xregistry": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="xRegistry 1.0 (CloudEvents schema, message and endpoint registries)",
+                format_key="xregistry",
+                support=VersionSupport.UNGATED,
+                note="The document's `specversion` is recorded but not branched on; the earlier "
+                "draft names (`definitiongroups`, `definitions`, `metadata`) read the same way.",
+            )
+        ],
+    ),
     "cobolcopybook": VersionCoverage(
         reads=[
             FormatVersion(

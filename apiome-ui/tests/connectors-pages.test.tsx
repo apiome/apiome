@@ -401,7 +401,7 @@ describe('MCP registry connector (CDG-4.4)', () => {
     expect(screen.getByTestId('connector-missing')).toHaveTextContent('Protocol');
     await user.type(screen.getByTestId('connector-base-url'), 'https://xreg.example.com/reg');
     fireEvent.click(screen.getByTestId('connector-scope-protocol'));
-    fireEvent.click(await screen.findByRole('option', { name: 'CNCF xRegistry (schemas)' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'CNCF xRegistry (schemas, messages, endpoints)' }));
     await user.type(screen.getByTestId('connector-scope-groups'), 'orders, payments');
     writeA11yFixture('connector-add-registry', liveMarkup(document.body));
     await user.click(screen.getByTestId('connector-next'));

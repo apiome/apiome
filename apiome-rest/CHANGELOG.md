@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.404.0] - 2026-10-20
+
+### Added
+- **CNCF xRegistry import (#3980, MFI-19.2)**: the new **`xregistry`** import source (formats `xregistry`,
+  `cloudevents-registry`; file / URL / paste / fileset) reads an xRegistry document — `schemagroups`,
+  `messagegroups` and `endpoints`, with the earlier draft names `definitiongroups` / `definitions` / `metadata` —
+  into the event paradigm:
+  - schemas → types: JSON Schema (and its `definitions` / `$defs`) by schema id, Avro / Protobuf / XSD through
+    their own adapters, anything else an opaque `SCALAR` type recording its format and reason;
+  - messages → operations carrying one `EVENT` message on the channel named by the CloudEvents `type`, with
+    the envelope attributes as headers and the referenced or inline schema as payload;
+  - endpoints → services (`publish` for a producer, `subscribe` for a consumer / subscriber) and their URIs
+    → servers; a message group no endpoint carries is a service of its own.
+  Registry bookkeeping (`epoch`, `createdat`, `modifiedat`) never reaches the model; fingerprint, diff and
+  lint are the SPI defaults. Fixtures under `apiome-ui/examples/xregistry/` (six valid, five negative), goldens
+  and the round-trip matrix row.
+
+### Changed
+- The `xregistry` registry crawl now also crawls the **message registry** (`messagegroups/<id>`, one catalog
+  item per group) and the **endpoint registry** (`endpoints/<id>`, one item per endpoint, holding the groups it
+  references), both imported with the `xregistry` adapter and compared by content digest. A collection the
+  registry answers `404` for is treated as absent (a root serving none of them fails the sync). Scope `groups`
+  now limits schema and message groups; new scope `include` (`schemas`, `messages`, `endpoints`) picks the
+  registries to crawl.
+
 ## [1.403.0] - 2026-10-20
 
 ### Added

@@ -679,6 +679,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['agent communication protocol', 'beeai', '/agents', 'capabilities', 'discover'],
   },
   {
+    id: 'xregistry-import',
+    title: 'Import a CNCF xRegistry',
+    summary: 'Catalog CloudEvents schemas, message definitions and endpoints from an xRegistry.',
+    page: 'apiome-docs/docs/bring-in/xregistry-import.md',
+    section: 'reference',
+    keywords: ['cloudevents', 'schemagroups', 'messagegroups', 'endpoints', 'event catalog'],
+  },
+  {
     id: 'agents-manifest-import',
     title: 'Import agentic-web site manifests',
     summary: "Catalog a site's agents.json, agent.json, agents.txt or llms.txt and its discovery seeds.",

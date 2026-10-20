@@ -50,6 +50,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('httproute')?.sourceKind).toBe('gateway-api');
     expect(catalogAdapterForFormat('cloudevents')?.sourceKind).toBe('cloudevents');
     expect(catalogAdapterForFormat('cloud-events')?.sourceKind).toBe('cloudevents');
+    expect(catalogAdapterForFormat('xregistry')?.sourceKind).toBe('xregistry');
+    expect(catalogAdapterForFormat('cloudevents-registry')?.sourceKind).toBe('xregistry');
     expect(catalogAdapterForFormat('smithy')?.sourceKind).toBe('smithy');
     expect(catalogAdapterForFormat('apiblueprint')?.sourceKind).toBe('apiblueprint');
     expect(catalogAdapterForFormat('api-blueprint')?.sourceKind).toBe('apiblueprint');
@@ -106,7 +108,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -198,6 +200,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('cloudevents')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'cloudevents' },
+    });
+    expect(decideCatalogImportRouting('xregistry')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'xregistry' },
     });
     expect(decideCatalogImportRouting('smithy')).toMatchObject({
       destination: 'catalog',
@@ -406,6 +412,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('httproute')).toBe('rest');
     expect(paradigmForFormat('cloudevents')).toBe('event');
     expect(paradigmForFormat('cloud-events')).toBe('event');
+    expect(paradigmForFormat('xregistry')).toBe('event');
     expect(paradigmForFormat('smithy')).toBe('rpc');
     expect(paradigmForFormat('api-blueprint')).toBe('rest');
     expect(paradigmForFormat('apib')).toBe('rest');

@@ -760,7 +760,7 @@ The connector's scope names the **protocol**, which picks the importer that read
 | Protocol | Base URL | What becomes a catalog item | Imported as |
 | --- | --- | --- | --- |
 | `a2a-registry` | The registry's listing URL | Each agent the registry lists | [A2A Agent Card](./a2a-agent-card-import.md) |
-| `xregistry` | The xRegistry root, for example `https://<host>/reg` | Each schema in each schema group | JSON Schema, Avro, Protobuf or XSD, from the schema's `format` |
+| `xregistry` | The xRegistry root, for example `https://<host>/reg` | Each schema in each schema group, each message group and each endpoint | A schema: JSON Schema, Avro, Protobuf or XSD, from its `format`. A message group or endpoint: [CNCF xRegistry](./xregistry-import.md) |
 | `fhir-metadata` | The FHIR server base, for example `https://fhir.example.com/r4` | The server's CapabilityStatement and, with **Include profiles**, each profile its resources declare | FHIR |
 
 ### Add a registry crawl
@@ -770,10 +770,10 @@ The connector's scope names the **protocol**, which picks the importer that read
 3. **Credentials:** leave both fields empty for a public registry. Enter a **Bearer token**, or an
    **API key** sent as `X-API-Key`. Click **Continue**.
 4. **Scope:** enter the registry's **Base URL** and choose its **Protocol**. For an xRegistry, list
-   **Schema groups** to crawl only those (comma-separated), or leave it empty for every group. For a
-   FHIR server, tick **Include profiles** to import each StructureDefinition too.
+   **Groups** to crawl only those schema and message groups (comma-separated), or leave it empty for
+   every group. For a FHIR server, tick **Include profiles** to import each StructureDefinition too.
 
-   <Screenshot id="connector-add-registry" alt="Add a connector, Scope step for a registry crawl: an xRegistry root as Base URL, Protocol CNCF xRegistry (schemas) and Schema groups orders, payments" />
+   <Screenshot id="connector-add-registry" alt="Add a connector, Scope step for a registry crawl: an xRegistry root as Base URL, Protocol CNCF xRegistry (schemas, messages, endpoints) and Groups orders, payments" />
 
 5. **Dry run** lists the artifacts the registry returns, and **Schedule** sets how often it is
    crawled again. Nothing is stored until you click **Save connector**.
@@ -798,7 +798,7 @@ apiome connectors add --kind registry --name "Event schemas" \
 
 Each sync lists the whole registry, following its pages, and records one inventory row per artifact,
 keyed by the artifact's id in the registry (an Agent Card URL, `schemagroups/<group>/schemas/<id>`,
-a profile's canonical URL). For each artifact:
+`messagegroups/<group>`, `endpoints/<id>`, a profile's canonical URL). For each artifact:
 
 - **A new artifact** is fetched and imported as a new catalog item.
 - **A changed artifact** is fetched again and imported as a **new revision of the same catalog
@@ -834,8 +834,11 @@ The next page is `GET <base URL>?pageToken=…`. An entry is one of these:
 
 #### xRegistry
 
-The crawl reads `GET <base>/schemagroups` and, for each group, its `schemas` collection. Both follow
-`Link: <…>; rel="next"` pages. A schema's `format` picks the importer:
+An xRegistry holds three registries, and the crawl reads each one the registry serves. Every
+collection follows `Link: <…>; rel="next"` pages.
+
+**Schemas.** The crawl reads `GET <base>/schemagroups` and, for each group, its `schemas`
+collection. A schema's `format` picks the importer:
 
 - `JsonSchema/…` imports as JSON Schema.
 - `Avro/…` imports as Avro.
@@ -845,6 +848,28 @@ The crawl reads `GET <base>/schemagroups` and, for each group, its `schemas` col
 A schema in any other format is skipped and listed in the run's findings. A schema whose listing
 carries the document (`schema` or `schemabase64`) is not fetched again; any other schema is read
 from `GET <base>/schemagroups/<group>/schemas/<id>`, or from its `schemaurl`.
+
+**Message groups.** The crawl reads `GET <base>/messagegroups` and each group's `messages`
+(`GET <base>/messagegroups/<group>/messages`, unless the listing carries them). Each group becomes one
+catalog item, imported as a [CNCF xRegistry](./xregistry-import.md) document: its messages are
+operations on the channels their CloudEvents `type` names. A group with no messages is skipped
+and listed in the run's findings.
+
+**Endpoints.** The crawl reads `GET <base>/endpoints` and each endpoint's own `messages`. Each endpoint
+becomes one catalog item holding the endpoint, its messages and the message groups it references, so
+its operations, payloads and broker URIs read on their own.
+
+A registry that answers `404` for one of the three collections simply has none of it; a base URL that
+serves none of them fails the sync. Message groups and endpoints carry no revision, so they are
+imported again only when their content changes; the `epoch`, `createdat` and `modifiedat` stamps are
+left out of the document, so a stamp that moves alone imports nothing.
+
+Two scope keys narrow the crawl:
+
+- `groups` — the schema and message group ids to crawl. Endpoints are always crawled, with the groups
+  they reference.
+- `include` — which registries to crawl: any of `schemas`, `messages`, `endpoints` (all three when
+  left out). For example `{"protocol": "xregistry", "include": ["messages", "endpoints"]}`.
 
 #### FHIR /metadata
 

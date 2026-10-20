@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 57
+- **Formats gated:** 58
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -68,6 +68,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `wit` | WIT (WebAssembly) | rpc | 11 | 5 | 0 | 0 | 16 | 6/6 | 9 | `wit` |
 | `wsdl` | WSDL | rest | 13 | 11 | 2 | 0 | 26 | 6/6 | 12 | `wsdl` |
 | `xmlrpc` | XML-RPC | rpc | 6 | 5 | 2 | 0 | 13 | 5/6 (+1 waived) | 6 | `xmlrpc` |
+| `xregistry` | CNCF xRegistry | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `xsd` | XSD | data_schema | 6 | 5 | 2 | 0 | 13 | 5/6 (+1 waived) | 6 | `xsd` |
 | `zosconnect` | z/OS Connect | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `zosconnect` |
 
@@ -132,6 +133,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `wit` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wsdl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xmlrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xregistry` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xsd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `zosconnect` | ✅ | ✅ | ✅ | ✅ | ✅ |
 

@@ -2755,6 +2755,50 @@
       "waivers": {}
     },
     {
+      "format_key": "xregistry",
+      "label": "CNCF xRegistry",
+      "paradigm": "event",
+      "corpus_formats": [
+        "xregistry"
+      ],
+      "corpus_directories": [
+        "xregistry"
+      ],
+      "fixtures": {
+        "valid": 6,
+        "negative": 5,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 11
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [
+        "multi-file"
+      ],
+      "goldens": 6,
+      "golden_directories": [
+        "xregistry"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "xsd",
       "label": "XSD",
       "paradigm": "data_schema",

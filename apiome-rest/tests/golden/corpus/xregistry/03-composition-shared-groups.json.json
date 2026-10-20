@@ -1,0 +1,776 @@
+{
+  "adapter": "xregistry",
+  "canonical": {
+    "channels": [
+      {
+        "address": "com.example.fleet.diagnostics",
+        "bindings": {},
+        "description": null,
+        "extras": {
+          "cloudevents_source": "/vehicles/{vehicleId}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.fleet.diagnostics",
+        "name": "com.example.fleet.diagnostics",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "com.example.fleet.geofence.breach",
+        "bindings": {},
+        "description": null,
+        "extras": {
+          "cloudevents_source": "/geofence",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.fleet.geofence.breach",
+        "name": "com.example.fleet.geofence.breach",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "com.example.fleet.position",
+        "bindings": {},
+        "description": null,
+        "extras": {
+          "cloudevents_source": "/vehicles/{vehicleId}",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.fleet.position",
+        "name": "com.example.fleet.position",
+        "parameters": [],
+        "protocol": "cloudevents"
+      }
+    ],
+    "description": "Two endpoints share the telemetry and alert message groups; payloads reference Avro and Protobuf schemas by xid.",
+    "extras": {
+      "xregistry_endpoint_count": 2,
+      "xregistry_message_count": 3,
+      "xregistry_schema_count": 3,
+      "xregistry_specversion": "1.0-rc1"
+    },
+    "format": "xregistry",
+    "identity": {
+      "extras": {},
+      "id": "fleet",
+      "name": "Fleet telemetry",
+      "namespace": null
+    },
+    "paradigm": "event",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Vehicles publish telemetry and alerts to the fleet AMQP hub.",
+        "extras": {},
+        "name": "vehicles.amqp",
+        "protocol": "amqp",
+        "url": "amqps://hub.example.com/fleet",
+        "variables": []
+      },
+      {
+        "description": "The dispatch console subscribes to alerts over NATS.",
+        "extras": {},
+        "name": "dispatch.nats",
+        "protocol": "nats",
+        "url": "nats://dispatch.example.com:4222",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "The dispatch console subscribes to alerts over NATS.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "alerts"
+          ],
+          "xregistry_protocol": "NATS",
+          "xregistry_protocol_options": {
+            "options": {
+              "subject": "fleet.alerts"
+            }
+          },
+          "xregistry_uris": [
+            "nats://dispatch.example.com:4222"
+          ],
+          "xregistry_usage": [
+            "subscriber"
+          ]
+        },
+        "key": "dispatch.nats",
+        "name": "dispatch.nats",
+        "operations": [
+          {
+            "channel_ref": "com.example.fleet.geofence.breach",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.fleet.geofence.breach"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "dispatch.nats.alerts.fleet.geofence.breach",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/alerts/schemas/GeofenceBreach",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/alerts/messages/fleet.geofence.breach"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": "1 (info) to 5 (critical).",
+                    "extras": {},
+                    "field_number": null,
+                    "key": "dispatch.nats.alerts.fleet.geofence.breach#event.fleet.geofence.breach.severity",
+                    "name": "severity",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "integer",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/geofence",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "dispatch.nats.alerts.fleet.geofence.breach#event.fleet.geofence.breach.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.fleet.geofence.breach",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "dispatch.nats.alerts.fleet.geofence.breach#event.fleet.geofence.breach.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "dispatch.nats.alerts.fleet.geofence.breach#event.fleet.geofence.breach",
+                "name": "fleet.geofence.breach",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GeofenceBreach",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "fleet.geofence.breach",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "Vehicles publish telemetry and alerts to the fleet AMQP hub.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "telemetry",
+            "alerts"
+          ],
+          "xregistry_protocol": "AMQP/1.0",
+          "xregistry_protocol_options": {
+            "options": {
+              "node": "fleet"
+            }
+          },
+          "xregistry_uris": [
+            "amqps://hub.example.com/fleet"
+          ],
+          "xregistry_usage": [
+            "producer"
+          ]
+        },
+        "key": "vehicles.amqp",
+        "name": "vehicles.amqp",
+        "operations": [
+          {
+            "channel_ref": "com.example.fleet.geofence.breach",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.fleet.geofence.breach"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "vehicles.amqp.alerts.fleet.geofence.breach",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/alerts/schemas/GeofenceBreach",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/alerts/messages/fleet.geofence.breach"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": "1 (info) to 5 (critical).",
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.alerts.fleet.geofence.breach#event.fleet.geofence.breach.severity",
+                    "name": "severity",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "integer",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/geofence",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.alerts.fleet.geofence.breach#event.fleet.geofence.breach.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.fleet.geofence.breach",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.alerts.fleet.geofence.breach#event.fleet.geofence.breach.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "vehicles.amqp.alerts.fleet.geofence.breach#event.fleet.geofence.breach",
+                "name": "fleet.geofence.breach",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GeofenceBreach",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "fleet.geofence.breach",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.fleet.diagnostics",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.fleet.diagnostics"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "vehicles.amqp.telemetry.fleet.diagnostics",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/protobuf"
+                ],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/telemetry/schemas/Diagnostics",
+                  "xregistry_dataschemaformat": "Protobuf/3",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/telemetry/messages/fleet.diagnostics"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/vehicles/{vehicleId}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.telemetry.fleet.diagnostics#event.fleet.diagnostics.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.fleet.diagnostics",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.telemetry.fleet.diagnostics#event.fleet.diagnostics.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "vehicles.amqp.telemetry.fleet.diagnostics#event.fleet.diagnostics",
+                "name": "fleet.diagnostics",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "fleet.diag.Diagnostics",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "fleet.diagnostics",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.fleet.position",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.fleet.position"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "vehicles.amqp.telemetry.fleet.position",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/avro"
+                ],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/telemetry/schemas/Position/versions/3",
+                  "xregistry_dataschemaformat": "Avro/1.11.0",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/telemetry/messages/fleet.position"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/vehicles/{vehicleId}",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.telemetry.fleet.position#event.fleet.position.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.fleet.position",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "vehicles.amqp.telemetry.fleet.position#event.fleet.position.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "vehicles.amqp.telemetry.fleet.position#event.fleet.position",
+                "name": "fleet.position",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "com.example.fleet.Position",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "fleet.position",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Fleet telemetry",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GeofenceBreach.vehicleId",
+            "name": "vehicleId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GeofenceBreach.zone",
+            "name": "zone",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Zone",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GeofenceBreach",
+        "key_type": null,
+        "kind": "record",
+        "name": "GeofenceBreach",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Zone.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "depot",
+                "restricted"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Zone.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Zone",
+        "key_type": null,
+        "kind": "record",
+        "name": "Zone",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "avro_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "com.example.fleet.Position.lat",
+            "name": "lat",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "com.example.fleet.Position.lon",
+            "name": "lon",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "has_default": true
+            },
+            "field_number": 4,
+            "key": "com.example.fleet.Position.speedKph",
+            "name": "speedKph",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "com.example.fleet.Position.vehicleId",
+            "name": "vehicleId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "com.example.fleet.Position",
+        "key_type": null,
+        "kind": "record",
+        "name": "Position",
+        "namespace": "com.example.fleet",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 2,
+            "key": "fleet.diag.Diagnostics.engine_rpm",
+            "name": "engine_rpm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "repeated"
+            },
+            "field_number": 3,
+            "key": "fleet.diag.Diagnostics.fault_codes",
+            "name": "fault_codes",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": true
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 1,
+            "key": "fleet.diag.Diagnostics.vehicle_id",
+            "name": "vehicle_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "fleet.diag.Diagnostics",
+        "key_type": null,
+        "kind": "record",
+        "name": "Diagnostics",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "xregistry/03-composition-shared-groups.json",
+  "counts": {
+    "channels": 3,
+    "operations": 4,
+    "servers": 2,
+    "services": 2,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "xregistry"
+  },
+  "fingerprint": "sha256:5767f35d302545fc9ac7438eafe791915c6a9236d148298673170600d6eceeaa",
+  "lint": {
+    "findings": 26,
+    "grade": "F",
+    "report_fingerprint": "2355ea39ad595ce374abf53d4f3e59a464fcb8ef2b2da89864ad6f7ea34d5aae",
+    "score": 50,
+    "severity_counts": {
+      "error": 0,
+      "info": 18,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

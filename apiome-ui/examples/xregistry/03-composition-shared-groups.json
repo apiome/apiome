@@ -1,0 +1,133 @@
+{
+  "specversion": "1.0-rc1",
+  "registryid": "fleet",
+  "name": "Fleet telemetry",
+  "description": "Two endpoints share the telemetry and alert message groups; payloads reference Avro and Protobuf schemas by xid.",
+  "schemagroups": {
+    "telemetry": {
+      "schemagroupid": "telemetry",
+      "schemas": {
+        "Position": {
+          "schemaid": "Position",
+          "format": "Avro/1.11.0",
+          "versionid": "3",
+          "schema": {
+            "type": "record",
+            "name": "Position",
+            "namespace": "com.example.fleet",
+            "fields": [
+              { "name": "vehicleId", "type": "string" },
+              { "name": "lat", "type": "double" },
+              { "name": "lon", "type": "double" },
+              { "name": "speedKph", "type": ["null", "float"], "default": null }
+            ]
+          }
+        },
+        "Diagnostics": {
+          "schemaid": "Diagnostics",
+          "format": "Protobuf/3",
+          "versionid": "1",
+          "schema": "syntax = \"proto3\";\npackage fleet.diag;\n\nmessage Diagnostics {\n  string vehicle_id = 1;\n  uint32 engine_rpm = 2;\n  repeated string fault_codes = 3;\n}\n"
+        }
+      }
+    },
+    "alerts": {
+      "schemagroupid": "alerts",
+      "schemas": {
+        "GeofenceBreach": {
+          "schemaid": "GeofenceBreach",
+          "format": "JsonSchema/draft-07",
+          "versionid": "1",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "vehicleId": { "type": "string" },
+              "zone": { "$ref": "#/definitions/Zone" }
+            },
+            "required": ["vehicleId", "zone"],
+            "definitions": {
+              "Zone": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "kind": { "type": "string", "enum": ["depot", "restricted"] }
+                },
+                "required": ["id"]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "messagegroups": {
+    "telemetry": {
+      "messagegroupid": "telemetry",
+      "envelope": "CloudEvents/1.0",
+      "messages": {
+        "fleet.position": {
+          "messageid": "fleet.position",
+          "envelopemetadata": {
+            "type": { "value": "com.example.fleet.position" },
+            "source": { "value": "/vehicles/{vehicleId}", "type": "uritemplate" }
+          },
+          "datacontenttype": "application/avro",
+          "dataschemaformat": "Avro/1.11.0",
+          "dataschemaxid": "/schemagroups/telemetry/schemas/Position/versions/3"
+        },
+        "fleet.diagnostics": {
+          "messageid": "fleet.diagnostics",
+          "envelopemetadata": {
+            "type": { "value": "com.example.fleet.diagnostics" },
+            "source": { "value": "/vehicles/{vehicleId}", "type": "uritemplate" }
+          },
+          "datacontenttype": "application/protobuf",
+          "dataschemaformat": "Protobuf/3",
+          "dataschemaxid": "/schemagroups/telemetry/schemas/Diagnostics"
+        }
+      }
+    },
+    "alerts": {
+      "messagegroupid": "alerts",
+      "envelope": "CloudEvents/1.0",
+      "messages": {
+        "fleet.geofence.breach": {
+          "messageid": "fleet.geofence.breach",
+          "envelopemetadata": {
+            "type": { "value": "com.example.fleet.geofence.breach" },
+            "source": { "value": "/geofence" },
+            "severity": { "type": "integer", "required": true, "description": "1 (info) to 5 (critical)." }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaxid": "/schemagroups/alerts/schemas/GeofenceBreach"
+        }
+      }
+    }
+  },
+  "endpoints": {
+    "vehicles.amqp": {
+      "endpointid": "vehicles.amqp",
+      "description": "Vehicles publish telemetry and alerts to the fleet AMQP hub.",
+      "usage": ["producer"],
+      "protocol": "AMQP/1.0",
+      "protocoloptions": {
+        "endpoints": [{ "uri": "amqps://hub.example.com/fleet" }],
+        "options": { "node": "fleet" }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": ["/messagegroups/telemetry", "/messagegroups/alerts"]
+    },
+    "dispatch.nats": {
+      "endpointid": "dispatch.nats",
+      "description": "The dispatch console subscribes to alerts over NATS.",
+      "usage": ["subscriber"],
+      "protocol": "NATS",
+      "protocoloptions": {
+        "endpoints": [{ "uri": "nats://dispatch.example.com:4222" }],
+        "options": { "subject": "fleet.alerts" }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": ["/messagegroups/alerts"]
+    }
+  }
+}

@@ -301,6 +301,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   // ---- Event ----
   { id: 'asyncapi', label: 'AsyncAPI', icon: Radio, tone: 'violet', dataType: 'events', origin: 'cloud', importable: true, aliases: ['async'], description: 'Event-driven API (AsyncAPI 2.x/3.x).' },
   { id: 'cloudevents', label: 'CloudEvents', icon: Cloud, tone: 'sky', dataType: 'events', origin: 'cloud', importable: true, aliases: ['cloud-events'], description: 'CloudEvents 1.0 structured-mode event envelope.' },
+  { id: 'xregistry', label: 'CNCF xRegistry', icon: Cloud, tone: 'sky', dataType: 'events', origin: 'cloud', importable: true, aliases: ['cloudevents-registry'], description: 'CNCF xRegistry document — CloudEvents schema groups, message definitions and endpoints (MQTT, AMQP, Kafka, NATS, HTTP).' },
 
   // ---- REST (non-OpenAPI) ----
   { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', dataType: 'rest', origin: 'web', importable: true, description: 'RAML 1.0 REST API definition.' },

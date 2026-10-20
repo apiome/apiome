@@ -620,6 +620,12 @@
       "paradigm": "rpc",
       "marker": "`<methodCall>` / `<methodResponse>` root"
     },
+    "xregistry": {
+      "label": "CNCF xRegistry",
+      "category": "event-messaging",
+      "paradigm": "event",
+      "marker": "`schemagroups` / `messagegroups` / `endpoints` collections keyed by id"
+    },
     "xsd": {
       "label": "XML Schema (XSD)",
       "category": "data-schema",
@@ -31862,6 +31868,246 @@
       "expected_error_code": "INPUT_ENCODING_INVALID"
     },
     {
+      "path": "xregistry/01-minimal-schema-registry.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "schema-registry",
+        "json-schema"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "xregistry/02-typical-order-events.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "schema-registry",
+        "message-registry",
+        "endpoint-registry",
+        "mqtt",
+        "schema-versions"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "xregistry/03-composition-shared-groups.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "shared-message-groups",
+        "avro",
+        "protobuf",
+        "json-schema-definitions",
+        "amqp",
+        "nats",
+        "subscriber"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "xregistry/04-stress-edge-cases.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "draft-names",
+        "schemabase64",
+        "xsd",
+        "unknown-format",
+        "schemauri-only",
+        "unresolved-group",
+        "inline-dataschema",
+        "deprecated",
+        "unicode",
+        "duplicate-schema-ids"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "xregistry/05-real-world-contoso-erp.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "message-registry",
+        "endpoint-registry",
+        "http",
+        "amqp",
+        "uritemplate"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Hand-authored reconstruction of the shape of the Contoso ERP sample registry from the xRegistry project; no third-party text copied.",
+      "rung": "real-world"
+    },
+    {
+      "path": "xregistry/06-typical-order-events-v2.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "release-2",
+        "message-added",
+        "endpoint-added",
+        "schema-version-added"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The next release of 02-typical-order-events.json: a new default schema version, an enum value, a cancelled message, a second broker URI and a Kafka consumer endpoint \u2014 the diff fixture."
+    },
+    {
+      "path": "xregistry/negative/01-syntactic-trailing-comma.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "trailing-comma"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "xregistry/negative/02-semantic-empty-registry.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "empty-registry"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "xregistry/negative/03-truncated-mid-message.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "xregistry/negative/04-wrong-format-asyncapi.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "asyncapi"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "xregistry/negative/05-encoding-utf16.json",
+      "format": "xregistry",
+      "adapter_key": "xregistry",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "xregistry",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
       "path": "xsd/01-purchase-order.xsd",
       "format": "xsd",
       "adapter_key": "xsd",
@@ -32814,6 +33060,9 @@
     },
     "llm-tools": {
       "multi-file": "LlmToolsImportSource.parse_fileset only parses the root member and tool bundles do not resolve cross-file references, so a multi-file set demonstrates nothing beyond a single document."
+    },
+    "xregistry": {
+      "multi-file": "An xRegistry document is one self-contained JSON document whose references are xids into the same document; XRegistryImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
     }
   }
 }
