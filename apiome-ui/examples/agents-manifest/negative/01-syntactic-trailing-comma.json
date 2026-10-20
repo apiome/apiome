@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "site": { "name": "Broken", "url": "https://broken.example" },
+  "mcp": [ { "url": "https://broken.example/mcp" }, ],
+}

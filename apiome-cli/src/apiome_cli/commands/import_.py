@@ -86,6 +86,7 @@ from apiome_cli.import_.sources import (
 )
 from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
+from apiome_cli.import_.agents_manifest import discover_site_manifest_url
 from apiome_cli.import_.json_schema import (
     JsonSchemaTarget,
 )
@@ -1887,11 +1888,12 @@ def _resolve_discover_url(
     resolve: Callable[[str], str],
     found_label: str,
 ) -> str:
-    """Turn a ``--discover`` base URL into the descriptor URL to import (MFI-18.1 / MFI-18.2).
+    """Turn a ``--discover`` base URL into the descriptor URL to import (MFI-18.1 / 18.2 / 18.3).
 
-    Shared by the agent-descriptor verbs (``import a2a``, ``import acp``): ``--discover`` must be
-    the only input, the format's ``resolve`` maps the base URL to the descriptor URL, and the
-    result is announced on stderr unless progress output is off.
+    Shared by the agent-descriptor verbs (``import a2a``, ``import acp``,
+    ``import agents-manifest``): ``--discover`` must be the only input, the format's ``resolve``
+    maps the base URL to the descriptor URL, and the result is announced on stderr unless
+    progress output is off.
 
     Args:
         ctx: The Click/Typer context.
@@ -1985,6 +1987,87 @@ def import_acp(
     _run_generic_adapter_import(
         ctx,
         source_format="acp",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=None,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
+
+
+@app.command("agents-manifest")
+def import_agents_manifest(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help=(
+            "Site manifest — agents.json, agent.json, agents.txt or llms.txt: path, "
+            "``http``/``https`` URL, or ``-``."
+        ),
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="SITE_URL",
+        help=(
+            "Site URL (for example ``https://example.com``) whose manifest is found at "
+            "``/agents.json``, ``/.well-known/agent.json``, ``/agents.txt`` or ``/llms.txt``, "
+            "tried in that order."
+        ),
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import a site's agentic-web manifest from a file, URL, stdin, or the live site.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With
+    ``--discover`` the site's well-known manifest paths are tried in order and the first one that
+    serves a manifest is imported through the registered ``agents-manifest`` adapter (MFI-18.3).
+    The catalog item lists the A2A, ACP and MCP descriptors the manifest points at as discovery
+    seeds; import each with ``apiome import a2a --discover`` / ``apiome import acp --discover``.
+    """
+    if discover is not None:
+        url = _resolve_discover_url(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            resolve=lambda base: discover_site_manifest_url(
+                base,
+                timeout=_resolve_import_timeout(ctx, import_timeout),
+                verify=not insecure_from_context(ctx),
+            ),
+            found_label="site manifest",
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="agents-manifest",
         source=source,
         file_path=file_path,
         url=url,

@@ -1217,6 +1217,11 @@ def load_builtin_import_sources() -> None:
     # its own imports, the ACP normalizer under ``acp``.
     from . import acp_import_source as _acp  # noqa: F401
 
+    # ``agents_manifest_import_source`` (MFI-18.3) self-registers the ``agents-manifest`` adapter —
+    # a site's agents.json, AWP agent.json, agents.txt or llms.txt, as a file / URL / paste or
+    # discovered live at the site's well-known paths — and its normalizer.
+    from . import agents_manifest_import_source as _agents_manifest  # noqa: F401
+
     # ``aws_apigateway_import_source`` (FMT-7.1) self-registers the ``aws-apigateway`` adapter;
     # it normalizes through the OpenAPI normalizer and interprets the AWS extensions itself.
     from . import aws_apigateway_import_source as _aws_apigateway  # noqa: F401

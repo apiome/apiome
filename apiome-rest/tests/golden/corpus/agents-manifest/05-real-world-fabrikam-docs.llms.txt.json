@@ -1,0 +1,299 @@
+{
+  "adapter": "agents-manifest",
+  "canonical": {
+    "channels": [],
+    "description": "Fabrikam's payments API, its MCP server and its support agent. Start with the quickstart, then the OpenAPI reference.",
+    "extras": {
+      "action_count": 0,
+      "authorization": [],
+      "dialect": "llms-txt",
+      "discovery_seeds": [
+        {
+          "importer": "a2a",
+          "protocol": "a2a",
+          "url": "https://support.fabrikam.example/.well-known/agent-card.json"
+        },
+        {
+          "importer": "agents-manifest",
+          "protocol": "manifest",
+          "url": "https://fabrikam.example/agents.json"
+        },
+        {
+          "importer": "mcp-probe",
+          "protocol": "mcp",
+          "url": "https://mcp.fabrikam.example/mcp"
+        }
+      ],
+      "endpoint_count": 7,
+      "payments": [],
+      "policies": {},
+      "protocols": [
+        "a2a",
+        "docs",
+        "manifest",
+        "mcp",
+        "openapi"
+      ],
+      "site_url": null,
+      "spec_version": null
+    },
+    "format": "agents-manifest",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Fabrikam Developer Platform",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "llms-txt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "a2a"
+        },
+        "key": "a2a",
+        "name": "A2A agents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "A2A agent for account questions",
+            "extras": {
+              "attributes": {
+                "section": "Agents"
+              },
+              "endpoint": true,
+              "protocol": "a2a",
+              "resolved_url": "https://support.fabrikam.example/.well-known/agent-card.json",
+              "url": "https://support.fabrikam.example/.well-known/agent-card.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "a2a.https://support.fabrikam.example/.well-known/agent-card.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Support agent",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 3,
+          "protocol": "docs"
+        },
+        "key": "docs",
+        "name": "Documentation",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "optional": true,
+                "section": "Optional"
+              },
+              "endpoint": true,
+              "protocol": "docs",
+              "resolved_url": "https://docs.fabrikam.example/changelog.md",
+              "url": "https://docs.fabrikam.example/changelog.md"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "docs.https://docs.fabrikam.example/changelog.md",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Changelog",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Create a key and make a first call",
+            "extras": {
+              "attributes": {
+                "section": "Docs"
+              },
+              "endpoint": true,
+              "protocol": "docs",
+              "resolved_url": "https://docs.fabrikam.example/quickstart.md",
+              "url": "https://docs.fabrikam.example/quickstart.md"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "docs.https://docs.fabrikam.example/quickstart.md",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Quickstart",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "section": "Docs"
+              },
+              "endpoint": true,
+              "protocol": "docs",
+              "resolved_url": "https://docs.fabrikam.example/webhooks.md",
+              "url": "https://docs.fabrikam.example/webhooks.md"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "docs.https://docs.fabrikam.example/webhooks.md",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Webhooks",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "manifest"
+        },
+        "key": "manifest",
+        "name": "Site manifests",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "attributes": {
+                "section": "Agents"
+              },
+              "endpoint": true,
+              "protocol": "manifest",
+              "resolved_url": "https://fabrikam.example/agents.json",
+              "url": "https://fabrikam.example/agents.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "manifest.https://fabrikam.example/agents.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Site manifest",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "mcp"
+        },
+        "key": "mcp",
+        "name": "MCP servers",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Tools for payments, refunds and payouts",
+            "extras": {
+              "attributes": {
+                "section": "Agents"
+              },
+              "endpoint": true,
+              "protocol": "mcp",
+              "resolved_url": "https://mcp.fabrikam.example/mcp",
+              "url": "https://mcp.fabrikam.example/mcp"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "mcp.https://mcp.fabrikam.example/mcp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "MCP server",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "endpoint_count": 1,
+          "protocol": "openapi"
+        },
+        "key": "openapi",
+        "name": "OpenAPI documents",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "The OpenAPI 3.1 description",
+            "extras": {
+              "attributes": {
+                "section": "Docs"
+              },
+              "endpoint": true,
+              "protocol": "openapi",
+              "resolved_url": "https://api.fabrikam.example/openapi.json",
+              "url": "https://api.fabrikam.example/openapi.json"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "openapi.https://api.fabrikam.example/openapi.json",
+            "kind": "request_response",
+            "messages": [],
+            "name": "API reference",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Fabrikam Developer Platform",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "agents-manifest/05-real-world-fabrikam-docs.llms.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 7,
+    "servers": 0,
+    "services": 5,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "agents-manifest"
+  },
+  "fingerprint": "sha256:37bc059023afe2603eb83043f3ef9a900efce444b3cb677b956758ad7911247a",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "9cd77970cc0c94938a5bf613ec37014c7ee3da3bf8252a42eb2f75e5678fa2af",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

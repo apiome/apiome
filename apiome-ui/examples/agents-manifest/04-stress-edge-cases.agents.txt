@@ -1,0 +1,23 @@
+# agents.txt — stress fixture: every way an endpoint reference can go wrong
+# JSON: https://edge.example/agents.json
+
+Version: 1.0
+Protocols: x402, ap2, x-tipjar
+Payments: required
+
+Authorization: agent-auth, oauth2
+Identity: required
+
+MCP: https://edge.example/mcp
+MCP: https://edge.example/mcp
+MCP: http://legacy.edge.example/mcp
+A2A: /.well-known/agent-card.json
+A2A:
+A2A: not a url
+Skills: ftp://edge.example/skills/SKILL.md
+UCP: https://edge.example/ucp/profile.json
+WebMCP: https://edge.example/tools
+X-Weather: https://edge.example/x/weather
+Crawl-Delay: 10
+this line is not a directive
+Agente: https://edge.example/ünïcødé

@@ -14,6 +14,12 @@
       "paradigm": "agent",
       "marker": "`name` + `input_content_types` / ACP `metadata`, or `{\"agents\": [...]}`"
     },
+    "agents-manifest": {
+      "label": "Agentic-web site manifest",
+      "category": "agent",
+      "paradigm": "agent",
+      "marker": "agents.json `site` + endpoint lists, AWP `awp_version`, agents.txt `MCP:` / `A2A:` directives, or an llms.txt H1 + link sections"
+    },
     "api-blueprint": {
       "label": "API Blueprint",
       "category": "rest-http",
@@ -1111,6 +1117,249 @@
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "notes": "01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
+      "path": "agents-manifest/01-minimal-agents.txt",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agents-txt",
+        "single-endpoint",
+        "mcp"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "agents-manifest/02-typical-northwind-agents.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agents-json",
+        "mcp",
+        "a2a",
+        "skills",
+        "payments",
+        "authorization"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "agents-manifest/03-composition-contoso-agent.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "awp",
+        "protocols",
+        "actions",
+        "via",
+        "payments",
+        "relative-endpoints"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "agents-manifest/04-stress-edge-cases.agents.txt",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agents-txt",
+        "duplicate-endpoint",
+        "relative-endpoint",
+        "broken-endpoint",
+        "insecure-endpoint",
+        "x-protocol",
+        "unknown-directive",
+        "non-directive-line",
+        "unicode",
+        "policies"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "agents-manifest/05-real-world-fabrikam-docs.llms.txt",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "llms-txt",
+        "link-sections",
+        "optional-section",
+        "link-classification"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "real-world"
+    },
+    {
+      "path": "agents-manifest/06-typical-northwind-agents-v2.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "agents-json",
+        "release-2",
+        "endpoint-added",
+        "endpoint-removed"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The next crawl of 02-typical-northwind-agents.json: an MCP endpoint added, an A2A agent removed, an MCP description edited and a payment layer dropped."
+    },
+    {
+      "path": "agents-manifest/negative/01-syntactic-trailing-comma.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "trailing-comma"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "agents-manifest/negative/02-semantic-no-declarations.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "agents-json"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "agents-manifest/negative/03-truncated-mid-action.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated",
+        "awp"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "agents-manifest/negative/04-wrong-format-a2a-card.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "a2a"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "An A2A Agent Card \u2014 the per-agent descriptor a site manifest points at, which the manifest adapter must not claim.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "agents-manifest/negative/05-encoding-utf16.json",
+      "format": "agents-manifest",
+      "adapter_key": "agents-manifest",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "agents-manifest",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "02-typical-northwind-agents.json re-encoded as UTF-16 (BOM + NUL bytes).",
       "failure_class": "encoding",
       "expected_error_code": "INPUT_ENCODING_INVALID"
     },
@@ -32476,6 +32725,9 @@
     },
     "acp": {
       "multi-file": "An ACP manifest or GET /agents listing is one self-contained JSON document with no cross-document references; AcpImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
+    },
+    "agents-manifest": {
+      "multi-file": "A site manifest (agents.json, agent.json, agents.txt or llms.txt) is one self-contained document whose references point at other sites' descriptors, not at sibling files; AgentsManifestImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
     },
     "apiblueprint": {
       "multi-file": "The API Blueprint adapter's parse_fileset only parses the root document and never resolves references across fileset members, so a multi-file set would exercise nothing beyond a single file."

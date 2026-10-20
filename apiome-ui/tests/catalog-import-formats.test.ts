@@ -106,7 +106,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -158,6 +158,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('acp')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'acp' },
+    });
+    expect(decideCatalogImportRouting('agents-txt')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'agents-manifest' },
     });
     expect(decideCatalogImportRouting('http-file')).toMatchObject({
       destination: 'catalog',
@@ -353,6 +357,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('a2a')).toBe('agent');
     expect(paradigmForFormat('agent-card')).toBe('agent');
     expect(paradigmForFormat('acp')).toBe('agent');
+    expect(paradigmForFormat('agents-manifest')).toBe('agent');
     expect(paradigmForFormat('openrpc')).toBe('rpc');
     expect(paradigmForFormat('jsonrpc')).toBe('rpc');
     expect(paradigmForFormat('avro')).toBe('dataschema');

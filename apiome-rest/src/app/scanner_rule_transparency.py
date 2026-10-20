@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
-from .axis_score import ALGORITHM_DOCS_PAGE
 from .docs_site import guide_page, site_url
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, docs_anchor_for
 from .mcp_owasp import CATALOG_REFERENCE as OWASP_REFERENCE
@@ -257,7 +256,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/llm-tools-duplicate-tool-name",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
-    # --- Agent descriptors (MFI-18.1 A2A, MFI-18.2 ACP) ------------------------------------------
+    # --- Agent descriptors (MFI-18.1 A2A, MFI-18.2 ACP, MFI-18.3 site manifests) ------------------
     "a2a.duplicate-skill-id": _meta(
         "a2a.duplicate-skill-id",
         ENGINE_SCHEMA,
@@ -297,6 +296,34 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "legitimately; import each server's listing separately.",
         scan_modes=("lint",),
         fixture_id="catalog/acp-duplicate-agent-name",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "agents-manifest.broken-endpoint-ref": _meta(
+        "agents-manifest.broken-endpoint-ref",
+        ENGINE_SCHEMA,
+        rationale="A site manifest is a crawl seed: an endpoint or action address that is empty, "
+        "not a URL, or relative with no site to resolve it against points agents nowhere.",
+        reference=_SCHEMA_REF + "#agents-manifest-broken-endpoint-ref",
+        remediation="Write the endpoint as an absolute https URL, or give the manifest its site "
+        "(`site.url` in agents.json, `domain` in agent.json) so relative paths resolve.",
+        false_positive_guidance="An agents.txt or llms.txt imported from a file has no site, so a "
+        "relative path cannot resolve; import it from its URL (or with discovery) instead.",
+        scan_modes=("lint",),
+        fixture_id="catalog/agents-manifest-broken-endpoint-ref",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "agents-manifest.undeclared-via": _meta(
+        "agents-manifest.undeclared-via",
+        ENGINE_SCHEMA,
+        rationale="An AWP action routed `via` a protocol the manifest does not declare cannot be "
+        "called: the agent has no endpoint for that protocol.",
+        reference=_SCHEMA_REF + "#agents-manifest-undeclared-via",
+        remediation="Declare the protocol under `protocols` with its `endpoint`, or correct the "
+        "action's `via`.",
+        false_positive_guidance="None expected: the Agent Web Protocol requires every `via` to name "
+        "a declared protocol.",
+        scan_modes=("lint",),
+        fixture_id="catalog/agents-manifest-undeclared-via",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
     # --- MCP surface lint ----------------------------------------------------------------------
@@ -630,6 +657,7 @@ def live_blocking_rule_ids() -> Set[str]:
     """Collect every rule id the live engines currently emit at error severity."""
     # Ensure probe→posture bridge rules are registered before reading RULE_REGISTRY.
     import app.mcp_probe  # noqa: F401
+
     from .lint_rule_registry import builtin_rule_descriptors
     from .mcp_conformance import RULE_REGISTRY as CONFORMANCE_RULES
     from .mcp_lint import RULE_CATALOGUE

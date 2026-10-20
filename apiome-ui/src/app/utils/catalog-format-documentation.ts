@@ -49,6 +49,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   'llm-tools': 'https://platform.openai.com/docs/guides/function-calling',
   a2a: 'https://a2a-protocol.org/latest/specification/',
   acp: 'https://agentcommunicationprotocol.dev/',
+  'agents-manifest': 'https://agents-txt.com/',
   mcp: 'https://modelcontextprotocol.io/specification/2025-06-18/server',
 
   // Data schema

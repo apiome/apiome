@@ -28,6 +28,7 @@ needs the canonical model types and the reconstruction needs the import-source a
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
 from .canonical_model import (
@@ -451,11 +452,92 @@ def _acp_agent_entity(service: Service) -> Dict[str, Any]:
     )
 
 
+def _manifest_operation_entity(operation: Operation) -> Dict[str, Any]:
+    """One site-manifest endpoint or AWP action as an entity: its protocol in ``meta`` (so the
+    detail filter finds every ``a2a`` / ``mcp`` … entry) and its address, description and routing
+    as rows."""
+    extras = operation.extras
+    is_action = bool(extras.get("action"))
+    protocol = extras.get("via") if is_action else extras.get("protocol")
+    attributes = extras.get("attributes") if isinstance(extras.get("attributes"), dict) else {}
+    rows = [
+        _detail_row("description", operation.description),
+        _detail_row("url", extras.get("url")),
+        _detail_row(
+            "resolves to",
+            extras.get("resolved_url") if extras.get("resolved_url") != extras.get("url") else None,
+        ),
+        _detail_row("method", operation.http_method),
+        _detail_row("operation", extras.get("operation")),
+        _detail_row("version", str(attributes["version"]) if attributes.get("version") else None),
+        _detail_row("transport", attributes.get("transport")),
+        _detail_row("agent card", attributes.get("agent_card")),
+        _detail_row("section", attributes.get("section")),
+    ]
+    return _entity(
+        name=operation.name,
+        tag="ACTION" if is_action else "ENDPOINT",
+        meta=f"protocol: {protocol}" if protocol else None,
+        fields=[row for row in rows if row is not None],
+    )
+
+
+def _manifest_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
+    """An agentic-web site manifest (MFI-18.3): its *Endpoints* (one entity per declared address,
+    filterable by protocol), AWP *Actions*, the *Discovery seeds* it hands to other importers, and
+    the *Payments* layers it accepts (metadata only)."""
+    operations = list(api.operations())
+    endpoints = [_manifest_operation_entity(op) for op in operations if not op.extras.get("action")]
+    actions = [_manifest_operation_entity(op) for op in operations if op.extras.get("action")]
+    seeds = [
+        _entity(
+            name=seed["url"],
+            tag="SEED",
+            meta=f"protocol: {seed['protocol']}",
+            fields=[row for row in [_detail_row("follow with", seed.get("importer"))] if row],
+        )
+        for seed in api.extras.get("discovery_seeds") or []
+        if isinstance(seed, dict)
+    ]
+    payments = [
+        _entity(
+            name=str(payment.get("protocol")),
+            tag="PAYMENT",
+            meta=None,
+            fields=[
+                row
+                for key, value in sorted((payment.get("details") or {}).items())
+                if (row := _detail_row(str(key), _compact(value)))
+            ],
+        )
+        for payment in api.extras.get("payments") or []
+        if isinstance(payment, dict)
+    ]
+    groups = [
+        _group("Endpoints", "protocols and addresses the site declares", endpoints),
+        _group("Actions", "operations agents may call", actions),
+        _group("Discovery seeds", "descriptors to import next", seeds),
+        _group("Payments", "payment layers the site accepts", payments),
+    ]
+    return [group for group in groups if group is not None]
+
+
+def _compact(value: Any) -> str:
+    """A short display string for a payment detail: lists comma-joined, other values as JSON."""
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value)
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, sort_keys=True)
+
+
 def _agent_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
     """Agent paradigm: an A2A Agent Card (MFI-18.1) reads as a *Skills* group — each skill with its
-    tags, modes and security — and an ACP manifest or listing (MFI-18.2) as an *Agents* group, one
-    entity per agent with its capabilities. Every other agent format (MCP, LLM tools) keeps the
-    generic view."""
+    tags, modes and security — an ACP manifest or listing (MFI-18.2) as an *Agents* group, one
+    entity per agent with its capabilities, and a site manifest (MFI-18.3) as endpoint, action,
+    seed and payment groups. Every other agent format (MCP, LLM tools) keeps the generic view."""
+    if api.format == "agents-manifest":
+        return _manifest_groups(api)
     if api.format == "a2a":
         entities = [_skill_entity(op) for op in api.operations()]
         group = _group("Skills", "what the agent can do", entities)

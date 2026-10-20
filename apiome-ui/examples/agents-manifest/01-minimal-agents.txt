@@ -1,0 +1,2 @@
+# agents.txt
+MCP: https://example.com/mcp

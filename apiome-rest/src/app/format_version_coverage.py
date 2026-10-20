@@ -813,6 +813,31 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
             )
         ],
     ),
+    "agents-manifest": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="agents.json 1.0 / agents.txt 1.0",
+                format_key="agents-manifest",
+                support=VersionSupport.UNGATED,
+                note="The agents.txt directives and their agents.json companion (agents-txt.com); "
+                "unknown directives and `x-` protocols are kept, never rejected.",
+            ),
+            FormatVersion(
+                version="Agent Web Protocol agent.json 0.2",
+                format_key="agents-manifest",
+                support=VersionSupport.UNGATED,
+                note="`protocols`, `actions` (with `via`) and `auth`; payment protocols (x402, "
+                "AP2 …) are kept as metadata only.",
+            ),
+            FormatVersion(
+                version="llms.txt",
+                format_key="agents-manifest",
+                support=VersionSupport.UNGATED,
+                note="H1 title, `>` summary and H2 link sections; each link is classified by "
+                "what it points at (Agent Card, MCP endpoint, OpenAPI, manifest, docs).",
+            ),
+        ],
+    ),
     "a2a": VersionCoverage(
         reads=[
             FormatVersion(

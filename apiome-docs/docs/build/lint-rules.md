@@ -161,6 +161,56 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Flag agents whose input or output content types are undeclared or */*.
 
 
+## Pack: `agents-manifest`
+
+### `agents-manifest.broken-endpoint-ref` {#agents-manifest-broken-endpoint-ref}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Flag endpoint and action addresses that do not resolve to a URL.
+- **Reference:** https://apiome.github.io/apiome/build/lint-rules#agents-manifest-broken-endpoint-ref
+- **Remediation:** Write the endpoint as an absolute https URL, or give the manifest its site (`site.url` in agents.json, `domain` in agent.json) so relative paths resolve.
+- **False-positive guidance:** An agents.txt or llms.txt imported from a file has no site, so a relative path cannot resolve; import it from its URL (or with discovery) instead.
+- **Fixture:** `catalog/agents-manifest-broken-endpoint-ref`
+- **Scan modes:** `lint`
+
+### `agents-manifest.duplicate-action-id` {#agents-manifest-duplicate-action-id}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** Flag AWP action ids used by more than one action.
+
+### `agents-manifest.duplicate-endpoint` {#agents-manifest-duplicate-endpoint}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** Flag a protocol endpoint declared more than once.
+
+### `agents-manifest.insecure-endpoint` {#agents-manifest-insecure-endpoint}
+
+- **Category:** security
+- **Default severity:** warning
+- **Rationale:** Flag agent endpoints served over plain http.
+- **Security weight:** 1.0
+
+### `agents-manifest.no-agent-endpoints` {#agents-manifest-no-agent-endpoints}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** Flag manifests that declare no A2A, ACP or MCP endpoint.
+
+### `agents-manifest.undeclared-via` {#agents-manifest-undeclared-via}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Flag AWP actions routed via a protocol the manifest does not declare.
+- **Reference:** https://apiome.github.io/apiome/build/lint-rules#agents-manifest-undeclared-via
+- **Remediation:** Declare the protocol under `protocols` with its `endpoint`, or correct the action's `via`.
+- **False-positive guidance:** None expected: the Agent Web Protocol requires every `via` to name a declared protocol.
+- **Fixture:** `catalog/agents-manifest-undeclared-via`
+- **Scan modes:** `lint`
+
+
 ## Pack: `arazzo`
 
 ### `arazzo.async-source-before-1-1` {#arazzo-async-source-before-1-1}

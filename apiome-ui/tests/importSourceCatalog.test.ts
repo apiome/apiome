@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Bot, BotMessageSquare, FileCode, FileJson, Radio, Share2, Waypoints } from 'lucide-react';
+import { Bot, BotMessageSquare, FileCode, FileJson, Globe, Radio, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -251,6 +251,33 @@ describe('ACP agent manifest source card (MFI-18.2)', () => {
     expect(acp?.panel).toBe('file');
     expect(acp?.scope).toBe('alternative');
     expect(resolveLucideIcon(ACP_DESCRIPTOR.icon)).toBe(Bot);
+  });
+});
+
+/** The agentic-web site-manifest source as the REST registry advertises it (MFI-18.3, #3976). */
+const AGENTS_MANIFEST_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'agents-manifest',
+  label: 'Agentic-web Site Manifest',
+  description:
+    "Import a site's agentic-web manifest — agents.json, agent.json (Agent Web Protocol), " +
+    'agents.txt or llms.txt — cataloging the agent protocols and endpoints it declares and ' +
+    'listing the A2A, ACP and MCP descriptors to discover next.',
+  icon: 'globe',
+  paradigm: 'agent',
+  input_kinds: ['file', 'url', 'paste', 'discovery', 'fileset'],
+  supports_live_discovery: true,
+  formats: ['agents-manifest'],
+};
+
+describe('Agentic-web site manifest source card (MFI-18.3)', () => {
+  it('appears beside the A2A and ACP cards as a usable Catalog card', () => {
+    const cards = mergeImportSourceCards([AGENTS_MANIFEST_DESCRIPTOR, ACP_DESCRIPTOR, A2A_DESCRIPTOR]);
+    const keys = cards.filter((c) => !c.builtin).map((c) => c.key);
+    expect(keys).toEqual(['a2a', 'acp', 'agents-manifest']);
+    const manifest = cards.find((c) => c.key === 'agents-manifest');
+    expect(manifest?.panel).toBe('file');
+    expect(manifest?.scope).toBe('alternative');
+    expect(resolveLucideIcon(AGENTS_MANIFEST_DESCRIPTOR.icon)).toBe(Globe);
   });
 });
 

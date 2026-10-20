@@ -679,6 +679,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['agent communication protocol', 'beeai', '/agents', 'capabilities', 'discover'],
   },
   {
+    id: 'agents-manifest-import',
+    title: 'Import agentic-web site manifests',
+    summary: "Catalog a site's agents.json, agent.json, agents.txt or llms.txt and its discovery seeds.",
+    page: 'apiome-docs/docs/bring-in/agents-manifest-import.md',
+    section: 'reference',
+    keywords: ['agents.json', 'agents.txt', 'llms.txt', 'agent web protocol', 'discovery seeds', 'x402'],
+  },
+  {
     id: 'compare-published-versions',
     title: 'Compare published versions',
     summary: 'Diff two published versions from the CLI, for people and CI.',
