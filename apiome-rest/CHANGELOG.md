@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.393.0] - 2026-10-19
+
+### Added
+- **Multi-target export (#4333, MFX-39.1)**: `POST /v1/export/{tenant_slug}/jobs` accepts a `targets` list
+  (`[{target, options?, acknowledged_snapshot?}]`, 1–16 entries) in place of `target`, and one job emits the version
+  to every listed target. Sending both `target` and `targets`, or top-level `options` / `acknowledged_snapshot` with
+  `targets`, is a `422`; two targets resolving to the same format (`openapi` and `openapi-3.1`) are a `400`.
+  - **One bundle.** The download is one `application/zip` (`export-multi-target.zip`) with each target's files under a
+    subdirectory named after its resolved format key and a root `manifest.json` (`kind: "multi-target"`) listing every
+    target's files, fidelity tier, preserved share and snapshot/version provenance, plus the rollup.
+  - **Per-target reports + rollup.** `ExportJobResult.targets[]` (`ExportJobTargetResult`) carries each target's
+    fidelity envelope, transcode guard, validation report, delivery decision and bundle files;
+    `ExportJobResult.fidelity_rollup` (`ExportFidelityRollup`) carries the worst tier, the minimum and mean preserved
+    percent, per-tier counts, and the lossy and confirmation-requiring targets. The single-target fields `target`,
+    `fidelity` and `guard` are now nullable and are null on a multi-target result.
+  - **All-or-nothing.** The source loads once; every target's fidelity, stale-snapshot check and guard run before
+    anything is emitted, so a severe target without `confirm` fails the job (`TRANSCODE_CONFIRMATION_REQUIRED`) up
+    front. The first target that fails emit, validation or the delivery gate fails the job with `error.context.target`
+    naming it, and no bundle is stored. `dry_run` returns every target's report plus the rollup.
+  - **Attestation.** Each target's delivery is attested against the combined bundle's digest;
+    `GET …/jobs/{job_id}/attestation` takes `?target=<format key>` to pick one (409 without it on a multi-target job).
+  - List rows and metrics label a multi-target job with its comma-joined targets.
+
 ## [1.392.0] - 2026-10-19
 
 ### Added

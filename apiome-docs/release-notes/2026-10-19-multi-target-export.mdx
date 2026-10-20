@@ -1,0 +1,21 @@
+---
+slug: multi-target-export
+title: Export one version to several formats in one job
+description: One export job now emits a version to several formats in one zip.
+authors: [apiome]
+---
+
+Publishing a version usually means shipping it in more than one format. An export job can now take
+a list of formats, so one job does what used to take a job per format.
+
+{/* truncate */}
+
+- **One job, one zip.** Send `targets` instead of `target` to `POST /v1/export/{tenant}/jobs`. The
+  download is one zip with a folder per format and a root `manifest.json` that lists them all.
+- **Fidelity per format, plus a rollup.** The job result carries each format's full fidelity
+  report, guard, validation and delivery decision, and a rollup with the worst tier and the lowest
+  and average preserved share.
+- **All or nothing.** A format that needs confirmation stops the job before anything is generated.
+  A format that fails stops the job and is named in the error, and no partial zip is kept.
+
+See [Export to several formats in one job](/ship/export-a-spec#export-to-several-formats-in-one-job).

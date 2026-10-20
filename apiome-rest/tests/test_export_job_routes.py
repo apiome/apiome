@@ -571,3 +571,75 @@ def test_attestation_of_a_dry_run_job_is_409():
 
 def test_attestation_of_unknown_job_is_404():
     assert client.get("/v1/export/acme/jobs/does-not-exist/attestation").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Multi-target export — MFX-39.1 (#4333)
+# ---------------------------------------------------------------------------
+def _submit_multi(targets: list, **extra) -> dict:
+    """POST a multi-target job for ``artifact-1`` and wait for its terminal status."""
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs",
+            json={"artifact": "artifact-1", "targets": targets, **extra},
+        )
+        assert r.status_code == 202, r.text
+        return _wait_terminal(r.json()["job_id"])
+
+
+def test_multi_target_job_downloads_one_zip_with_a_manifest():
+    import io
+    import json
+    import zipfile
+
+    body = _submit_multi([{"target": "openapi"}, {"target": "graphql"}])
+
+    assert body["state"] == "completed", body["error"]
+    result = body["result"]
+    assert len(result["targets"]) == 2
+    assert result["fidelity_rollup"]["target_count"] == 2
+    dl = client.get(result["download_path"])
+    assert dl.status_code == 200
+    assert dl.headers["content-type"] == "application/zip"
+    assert "export-multi-target.zip" in dl.headers["content-disposition"]
+    with zipfile.ZipFile(io.BytesIO(dl.content)) as archive:
+        manifest = json.loads(archive.read("manifest.json"))
+    assert [t["target"] for t in manifest["targets"]] == [t["target"] for t in result["targets"]]
+
+
+def test_multi_target_attestation_is_selected_by_target():
+    body = _submit_multi([{"target": "openapi"}, {"target": "graphql"}])
+    job_id = body["job_id"]
+    path = f"/v1/export/acme/jobs/{job_id}/attestation"
+
+    unselected = client.get(path)
+    assert unselected.status_code == 409
+    assert "?target=" in unselected.json()["detail"]
+    assert client.get(path, params={"target": "nope"}).status_code == 409
+
+    for entry in body["result"]["targets"]:
+        response = client.get(path, params={"target": entry["target"]})
+        assert response.status_code == 200, response.text
+        assert response.json() == entry["delivery"]["attestation"]
+
+
+def test_multi_target_submit_rejects_mixed_shapes_with_422():
+    r = client.post(
+        "/v1/export/acme/jobs",
+        json={"artifact": "a", "target": "openapi", "targets": [{"target": "graphql"}]},
+    )
+    assert r.status_code == 422
+
+
+def test_multi_target_submit_rejects_duplicate_formats_with_400():
+    from app.export_service import resolve_emit_format
+
+    r = client.post(
+        "/v1/export/acme/jobs",
+        json={
+            "artifact": "a",
+            "targets": [{"target": "openapi"}, {"target": resolve_emit_format("openapi")}],
+        },
+    )
+    assert r.status_code == 400
+    assert "distinct format" in r.json()["detail"]

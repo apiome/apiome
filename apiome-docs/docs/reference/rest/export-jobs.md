@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.256.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.257.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-jobs` · 6 operations
 
@@ -46,6 +46,8 @@ Operation id: `list_export_jobs_v1_export__tenant_slug__jobs_get`
 **Start an asynchronous export job**
 
 Submit an export of one artifact/version to one target through the async job pipeline: load source → fidelity report → emit → validate → package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST …/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.
+
+**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.
 
 Operation id: `start_export_job_v1_export__tenant_slug__jobs_post`
 
@@ -126,7 +128,9 @@ The delivery attestation for a completed export job (IXH-2.5): an **in-toto Stat
 
 The statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons — everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.
 
-404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run).
+A multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one.
+
+404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is asked without a ``target`` or for a target it did not export.
 
 Operation id: `get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__attestation_get`
 
@@ -136,6 +140,7 @@ Operation id: `get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `job_id` | path | string | yes | Asynchronous job identifier. |
+| `target` | query | string or null | no | Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -206,21 +211,27 @@ Paginated tenant-scoped export jobs (IXH-6.3).
 
 ### `ExportJobStartRequest` {#schema-exportjobstartrequest}
 
-Submit an export job: source coordinates + target + options + dry-run flag.
+Submit an export job: source coordinates + target(s) + options + dry-run flag.
 
 The source half matches ``POST /export/preview`` / ``POST /export/document``
 (MFX-2.5/11.5); ``dry_run`` selects the preview-only path (fidelity report, no
 artifact), the async twin of the synchronous ``/export/preview`` endpoint.
 
+Name **either** one ``target`` (with optional ``options`` / ``acknowledged_snapshot``) **or**
+a ``targets`` list (MFX-39.1) — one job then emits the version to every listed target into a
+single zip bundle with per-target subdirectories and a root manifest, and its result carries
+per-target fidelity reports plus a merged rollup.
+
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `artifact` | string | yes | The artifact (project) id to export. |
 | `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
-| `target` | string | yes | Target emitter key (``openapi``) or format key (``openapi-3.1``). |
-| `options` | object or null | no | Per-target emit options (MFX-1.4); null or empty applies the target defaults. |
+| `target` | string or null | no | Target emitter key (``openapi``) or format key (``openapi-3.1``) for a single-target export. Required unless ``targets`` is given; never both. |
+| `targets` | array of `ExportJobTargetSpec` or null | no | The targets of a multi-target export (MFX-39.1), each with its own options and acknowledged snapshot; 1–16 entries, each resolving to a distinct format. Mutually exclusive with ``target`` / ``options`` / ``acknowledged_snapshot``. |
+| `options` | object or null | no | Per-target emit options (MFX-1.4); null or empty applies the target defaults. Single-target only — a multi-target job sets options per ``targets`` entry. |
 | `dry_run` | boolean | no | When true, stop after the fidelity report: no artifact is emitted. |
 | `confirm` | boolean | no | When true, proceed with a **severe** conversion (MFX-3.3) the transcoding guard would otherwise fail the job on. Ignored for non-severe conversions and dry-runs. |
-| `acknowledged_snapshot` | string or null | no | The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check. |
+| `acknowledged_snapshot` | string or null | no | The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check. Single-target only — a multi-target job acknowledges per ``targets`` entry. |
 | `min_severity` | `LossinessSeverity` | no | Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts. |
 
 ### `ExportJobStatus` {#schema-exportjobstatus}

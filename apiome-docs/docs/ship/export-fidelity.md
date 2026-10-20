@@ -185,6 +185,10 @@ bound to the snapshot hash, not to the moment in time:
 - **Completed jobs record their provenance**: the snapshot hash and submitted options
   are stored with the result, so an artifact is always attributable to the evidence
   that was accepted for it.
+- **Several formats, one job**: a job with a `targets` list acknowledges each format
+  separately (`acknowledged_snapshot` on each entry). A stale snapshot on any of them
+  fails the whole job, and `error.context.target` names the format. See
+  [Export to several formats in one job](./export-a-spec.md#export-to-several-formats-in-one-job).
 
 ## From the CLI
 
@@ -285,6 +289,7 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Bounded, cursor-paginated projection evidence | `POST /v1/export/{tenant}/projection-evidence` |
 | Reviewed reason explanations + destination documentation | `GET /v1/export/{tenant}/capability-registry` |
 | Export job (accepts `acknowledged_snapshot`; fails `STALE_PREVIEW` on mismatch) | `POST /v1/export/{tenant}/jobs` |
+| Multi-format export job: one zip, per-format fidelity + a rollup (`targets` list) | `POST /v1/export/{tenant}/jobs` |
 
 All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 
