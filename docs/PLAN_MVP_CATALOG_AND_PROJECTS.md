@@ -142,7 +142,7 @@ Recommendation: leave them out of the MVP. None of them carries the `mvp` label 
 Gateway connectors, ownership, dependency graph, registries.
 
 - [ ] [#5950](https://github.com/apiome/apiome/issues/5950) CDG Roadmap — Catalog Discovery Graph
-- [ ] [#5951](https://github.com/apiome/apiome/issues/5951) CDG-EPIC-1 Gateway and cloud connectors (absorbs RAR-EPIC-6 #3511)
+- [x] [#5951](https://github.com/apiome/apiome/issues/5951) CDG-EPIC-1 Gateway and cloud connectors (absorbs RAR-EPIC-6 #3511)
 - [x] [#5952](https://github.com/apiome/apiome/issues/5952) CDG-1.1 Refresh-source protocol and connector registry
 - [x] [#5953](https://github.com/apiome/apiome/issues/5953) CDG-1.2 Kong connector (Konnect control planes and Admin API)
 - [x] [#5954](https://github.com/apiome/apiome/issues/5954) CDG-1.3 AWS API Gateway connector
@@ -150,7 +150,7 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5956](https://github.com/apiome/apiome/issues/5956) CDG-1.5 Apigee connector
 - [x] [#5957](https://github.com/apiome/apiome/issues/5957) CDG-1.6 Shadow-API report
 - [x] [#5958](https://github.com/apiome/apiome/issues/5958) CDG-1.7 Connectors UI and CLI
-- [ ] [#5959](https://github.com/apiome/apiome/issues/5959) CDG-EPIC-2 Ownership and routing
+- [x] [#5959](https://github.com/apiome/apiome/issues/5959) CDG-EPIC-2 Ownership and routing
 - [x] [#5960](https://github.com/apiome/apiome/issues/5960) CDG-2.1 Teams model and RBAC resource
 - [x] [#5961](https://github.com/apiome/apiome/issues/5961) CDG-2.2 Ownership on catalog entities
 - [x] [#5962](https://github.com/apiome/apiome/issues/5962) CDG-2.3 Owner routing of findings
@@ -161,20 +161,20 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
 - [x] [#5968](https://github.com/apiome/apiome/issues/5968) CDG-3.3 Blast-radius query
 - [x] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
-- [ ] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges
-- [ ] [#5971](https://github.com/apiome/apiome/issues/5971) CDG-3.6 Graph export and diff-gate annotation
+- [x] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges
+- [x] [#5971](https://github.com/apiome/apiome/issues/5971) CDG-3.6 Graph export and diff-gate annotation
 - [ ] [#5972](https://github.com/apiome/apiome/issues/5972) CDG-EPIC-4 Registry endpoints
-- [ ] [#5973](https://github.com/apiome/apiome/issues/5973) CDG-4.1 MCP Registry API over the MCP server catalog
-- [ ] [#5974](https://github.com/apiome/apiome/issues/5974) CDG-4.2 Schema subject model
-- [ ] [#5975](https://github.com/apiome/apiome/issues/5975) CDG-4.3 Confluent-compatible subject REST API
-- [ ] [#5976](https://github.com/apiome/apiome/issues/5976) CDG-4.4 Upstream MCP registry connector
-- [ ] [#5977](https://github.com/apiome/apiome/issues/5977) CDG-4.5 Registry UI and CLI
+- [x] [#5973](https://github.com/apiome/apiome/issues/5973) CDG-4.1 MCP Registry API over the MCP server catalog
+- [x] [#5974](https://github.com/apiome/apiome/issues/5974) CDG-4.2 Schema subject model
+- [x] [#5975](https://github.com/apiome/apiome/issues/5975) CDG-4.3 Confluent-compatible subject REST API
+- [x] [#5976](https://github.com/apiome/apiome/issues/5976) CDG-4.4 Upstream MCP registry connector
+- [x] [#5977](https://github.com/apiome/apiome/issues/5977) CDG-4.5 Registry UI and CLI
 - [ ] [#5978](https://github.com/apiome/apiome/issues/5978) CDG-EPIC-5 Catalog entity kinds and scorecards
-- [ ] [#5979](https://github.com/apiome/apiome/issues/5979) CDG-5.1 Entity-kind registry and unified entity list
-- [ ] [#5980](https://github.com/apiome/apiome/issues/5980) CDG-5.2 Agent and model entities
-- [ ] [#5981](https://github.com/apiome/apiome/issues/5981) CDG-5.3 Gateway configs as entities
-- [ ] [#5982](https://github.com/apiome/apiome/issues/5982) CDG-5.4 Catalog facts for per-kind scorecards
-- [ ] [#5983](https://github.com/apiome/apiome/issues/5983) CDG-5.5 Backstage and Compass import
+- [x] [#5979](https://github.com/apiome/apiome/issues/5979) CDG-5.1 Entity-kind registry and unified entity list
+- [x] [#5980](https://github.com/apiome/apiome/issues/5980) CDG-5.2 Agent and model entities
+- [x] [#5981](https://github.com/apiome/apiome/issues/5981) CDG-5.3 Gateway configs as entities
+- [x] [#5982](https://github.com/apiome/apiome/issues/5982) CDG-5.4 Catalog facts for per-kind scorecards
+- [x] [#5983](https://github.com/apiome/apiome/issues/5983) CDG-5.5 Backstage and Compass import
 
 #### Security posture on catalog
 
@@ -217,7 +217,7 @@ MCP is held back.
 
 - [ ] [#3637](https://github.com/apiome/apiome/issues/3637) V2-MCP External MCP Catalog (consume third-party MCP servers)
 - [ ] [#3714](https://github.com/apiome/apiome/issues/3714) V2-MCP-27.4 Catalog analytics dashboard
-- [ ] [#5724](https://github.com/apiome/apiome/issues/5724) AAU-5.3 MCP Registry API endpoint over the MCP server catalog
+- [x] [#5724](https://github.com/apiome/apiome/issues/5724) AAU-5.3 MCP Registry API endpoint over the MCP server catalog
 
 #### Format-expansion catalog epics
 
