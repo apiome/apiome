@@ -99,6 +99,8 @@ describe('catalog-format-registry — formats', () => {
     expect(resolveCatalogFormat('agent-card')?.id).toBe('a2a');
     expect(resolveCatalogFormat('agent2agent')?.id).toBe('a2a');
     expect(resolveCatalogFormat('acp')?.label).toBe('ACP Agent Manifest');
+    expect(resolveCatalogFormat('xregistry')?.label).toBe('CNCF xRegistry');
+    expect(resolveCatalogFormat('cloudevents-registry')?.id).toBe('xregistry');
     expect(resolveCatalogFormat('agent-communication-protocol')?.id).toBe('acp');
     expect(resolveCatalogFormat('agents-manifest')?.label).toBe('Agentic-web Site Manifest');
     expect(resolveCatalogFormat('llms-txt')?.id).toBe('agents-manifest');
@@ -153,7 +155,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect'].sort(),
+      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect'].sort(),
     );
   });
 
@@ -226,6 +228,7 @@ describe('catalog-format-registry — format traits (CATP-1.1)', () => {
     expect(traits('mcp')).toEqual(['Tools', 'AI']);
     expect(traits('a2a')).toEqual(['Tools', 'AI']);
     expect(traits('acp')).toEqual(['Tools', 'AI']);
+    expect(traits('xregistry')).toEqual(traits('cloudevents'));
     expect(traits('agents-manifest')).toEqual(['Tools', 'AI']);
     // The three the paradigm alone would flatten: all `rest`, and none of them a REST contract.
     expect(traits('postman')).toEqual(['Requests', 'Web']);

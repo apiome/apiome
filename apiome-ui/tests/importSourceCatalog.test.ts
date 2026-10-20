@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Bot, BotMessageSquare, FileCode, FileJson, Globe, Radio, Share2, Waypoints } from 'lucide-react';
+import { Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Radio, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -418,5 +418,31 @@ describe('resolveLucideIcon', () => {
     expect(resolveLucideIcon('definitely-not-an-icon')).toBe(FileCode);
     expect(resolveLucideIcon('')).toBe(FileCode);
     expect(resolveLucideIcon(undefined)).toBe(FileCode);
+  });
+});
+
+/** The xRegistry source as the REST registry advertises it (MFI-19.2, #3980). */
+const XREGISTRY_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'xregistry',
+  label: 'CNCF xRegistry',
+  description:
+    'Import a CNCF xRegistry document — CloudEvents schema groups, message definitions and ' +
+    'endpoints over MQTT, AMQP, Kafka, NATS or HTTP — as one event catalog entry.',
+  icon: 'cloud',
+  paradigm: 'event',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['xregistry', 'cloudevents-registry'],
+};
+
+describe('CNCF xRegistry source card (MFI-19.2)', () => {
+  it('is a usable Catalog file card with the cloud icon', () => {
+    const cards = mergeImportSourceCards([XREGISTRY_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'xregistry');
+    expect(card?.builtin).toBeFalsy();
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(card?.label).toBe('CNCF xRegistry');
+    expect(resolveLucideIcon(XREGISTRY_DESCRIPTOR.icon)).toBe(Cloud);
   });
 });

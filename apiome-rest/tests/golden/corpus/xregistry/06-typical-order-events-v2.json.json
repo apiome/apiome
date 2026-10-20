@@ -1,0 +1,828 @@
+{
+  "adapter": "xregistry",
+  "canonical": {
+    "channels": [
+      {
+        "address": "com.example.orders.cancelled",
+        "bindings": {},
+        "description": "An order was cancelled before shipping.",
+        "extras": {
+          "cloudevents_source": "/orders",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.orders.cancelled",
+        "name": "com.example.orders.cancelled",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "com.example.orders.created",
+        "bindings": {},
+        "description": "An order was placed.",
+        "extras": {
+          "cloudevents_source": "/orders",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.orders.created",
+        "name": "com.example.orders.created",
+        "parameters": [],
+        "protocol": "cloudevents"
+      },
+      {
+        "address": "com.example.orders.shipped",
+        "bindings": {},
+        "description": "An order left the warehouse.",
+        "extras": {
+          "cloudevents_source": "/orders",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.orders.shipped",
+        "name": "com.example.orders.shipped",
+        "parameters": [],
+        "protocol": "cloudevents"
+      }
+    ],
+    "description": "Order lifecycle events published by the order service.",
+    "extras": {
+      "xregistry_endpoint_count": 2,
+      "xregistry_message_count": 3,
+      "xregistry_schema_count": 2,
+      "xregistry_specversion": "1.0-rc1"
+    },
+    "format": "xregistry",
+    "identity": {
+      "extras": {},
+      "id": "orders",
+      "name": "Order events",
+      "namespace": null
+    },
+    "paradigm": "event",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Order events mirrored to the analytics Kafka cluster.",
+        "extras": {},
+        "name": "orders.kafka",
+        "protocol": "kafka",
+        "url": "kafka://analytics.example.com:9092",
+        "variables": []
+      },
+      {
+        "description": "Order events over the plant MQTT broker.",
+        "extras": {},
+        "name": "orders.mqtt",
+        "protocol": "mqtt",
+        "url": "mqtts://broker-dr.example.com:8883",
+        "variables": []
+      },
+      {
+        "description": "Order events over the plant MQTT broker.",
+        "extras": {},
+        "name": "orders.mqtt",
+        "protocol": "mqtt",
+        "url": "mqtts://broker.example.com:8883",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Order events mirrored to the analytics Kafka cluster.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "com.example.orders"
+          ],
+          "xregistry_protocol": "KAFKA",
+          "xregistry_protocol_options": {
+            "options": {
+              "topic": "orders"
+            }
+          },
+          "xregistry_uris": [
+            "kafka://analytics.example.com:9092"
+          ],
+          "xregistry_usage": [
+            "consumer"
+          ]
+        },
+        "key": "orders.kafka",
+        "name": "orders.kafka",
+        "operations": [
+          {
+            "channel_ref": "com.example.orders.cancelled",
+            "deprecated": false,
+            "description": "An order was cancelled before shipping.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.cancelled"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.kafka.com.example.orders.com.example.orders.cancelled",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order was cancelled before shipping.",
+                "extras": {
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.cancelled"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.cancelled",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.kafka.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled",
+                "name": "com.example.orders.cancelled",
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.cancelled",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.orders.created",
+            "deprecated": false,
+            "description": "An order was placed.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.created"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.kafka.com.example.orders.com.example.orders.created",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order was placed.",
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/com.example.orders/schemas/OrderCreated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.created"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.created#event.com.example.orders.created.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": "The order id.",
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.created#event.com.example.orders.created.subject",
+                    "name": "subject",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.created",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.created#event.com.example.orders.created.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.kafka.com.example.orders.com.example.orders.created#event.com.example.orders.created",
+                "name": "com.example.orders.created",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OrderCreated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.created",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.orders.shipped",
+            "deprecated": false,
+            "description": "An order left the warehouse.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.shipped"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.kafka.com.example.orders.com.example.orders.shipped",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order left the warehouse.",
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/com.example.orders/schemas/OrderShipped",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.shipped"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.shipped",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.kafka.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.kafka.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped",
+                "name": "com.example.orders.shipped",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OrderShipped",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.shipped",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "Order events over the plant MQTT broker.",
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "com.example.orders"
+          ],
+          "xregistry_protocol": "MQTT/5.0",
+          "xregistry_protocol_options": {
+            "options": {
+              "qos": 1,
+              "topic": "orders/{subject}"
+            }
+          },
+          "xregistry_uris": [
+            "mqtts://broker.example.com:8883",
+            "mqtts://broker-dr.example.com:8883"
+          ],
+          "xregistry_usage": [
+            "producer"
+          ]
+        },
+        "key": "orders.mqtt",
+        "name": "orders.mqtt",
+        "operations": [
+          {
+            "channel_ref": "com.example.orders.cancelled",
+            "deprecated": false,
+            "description": "An order was cancelled before shipping.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.cancelled"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.mqtt.com.example.orders.com.example.orders.cancelled",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order was cancelled before shipping.",
+                "extras": {
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.cancelled"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.cancelled",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.mqtt.com.example.orders.com.example.orders.cancelled#event.com.example.orders.cancelled",
+                "name": "com.example.orders.cancelled",
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.cancelled",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.orders.created",
+            "deprecated": false,
+            "description": "An order was placed.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.created"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.mqtt.com.example.orders.com.example.orders.created",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order was placed.",
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/com.example.orders/schemas/OrderCreated",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.created"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.created#event.com.example.orders.created.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": null,
+                    "deprecated": false,
+                    "description": "The order id.",
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.created#event.com.example.orders.created.subject",
+                    "name": "subject",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": false
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.created",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.created#event.com.example.orders.created.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.mqtt.com.example.orders.com.example.orders.created#event.com.example.orders.created",
+                "name": "com.example.orders.created",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OrderCreated",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.created",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.orders.shipped",
+            "deprecated": false,
+            "description": "An order left the warehouse.",
+            "extras": {
+              "cloudevents_type": "com.example.orders.shipped"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "orders.mqtt.com.example.orders.com.example.orders.shipped",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "An order left the warehouse.",
+                "extras": {
+                  "xregistry_dataschema": "/schemagroups/com.example.orders/schemas/OrderShipped",
+                  "xregistry_dataschemaformat": "JsonSchema/draft-07",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/com.example.orders/messages/com.example.orders.shipped"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/orders",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.orders.shipped",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "orders.mqtt.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "orders.mqtt.com.example.orders.com.example.orders.shipped#event.com.example.orders.shipped",
+                "name": "com.example.orders.shipped",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OrderShipped",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "com.example.orders.shipped",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Order events",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Z]{3}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderCreated.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderCreated.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderCreated.orderId",
+            "name": "orderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderCreated.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OrderCreated",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderCreated",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": [
+                "ups",
+                "fedex",
+                "dhl",
+                "usps"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderShipped.carrier",
+            "name": "carrier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderShipped.orderId",
+            "name": "orderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OrderShipped",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderShipped",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "xregistry/06-typical-order-events-v2.json",
+  "counts": {
+    "channels": 3,
+    "operations": 6,
+    "servers": 3,
+    "services": 2,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "xregistry"
+  },
+  "fingerprint": "sha256:5f03cdceddf2eeb053a810eba7688dfd88e3dbb4286b35766f5aaedfe65e3557",
+  "lint": {
+    "findings": 8,
+    "grade": "B",
+    "report_fingerprint": "749708b218650726e717ef09ca90082d27de97d60d361d3874e43fefdff122d0",
+    "score": 86,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

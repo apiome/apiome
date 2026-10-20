@@ -1,0 +1,325 @@
+{
+  "$schema": "https://xregistry.io/schemas/registry",
+  "specversion": "1.0-rc1",
+  "registryid": "contoso-erp",
+  "name": "Contoso ERP events",
+  "description": "Reconstruction of the Contoso ERP sample registry: ERP events, their JSON schemas and the HTTP and AMQP endpoints that carry them.",
+  "endpoints": {
+    "Contoso.ERP.Webhooks": {
+      "endpointid": "Contoso.ERP.Webhooks",
+      "description": "Webhook deliveries of ERP events.",
+      "usage": [
+        "subscriber"
+      ],
+      "protocol": "HTTP",
+      "protocoloptions": {
+        "endpoints": [
+          {
+            "uri": "https://erp.contoso.example/webhooks"
+          }
+        ],
+        "options": {
+          "method": "POST"
+        }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": [
+        "#/messagegroups/Contoso.ERP.Events"
+      ]
+    },
+    "Contoso.ERP.Amqp": {
+      "endpointid": "Contoso.ERP.Amqp",
+      "description": "The ERP publishes events to its AMQP topic.",
+      "usage": [
+        "producer"
+      ],
+      "protocol": "AMQP/1.0",
+      "protocoloptions": {
+        "endpoints": [
+          {
+            "uri": "amqps://erp.contoso.example/events"
+          }
+        ],
+        "options": {
+          "node": "erp-events"
+        }
+      },
+      "envelope": "CloudEvents/1.0",
+      "messagegroups": [
+        "#/messagegroups/Contoso.ERP.Events"
+      ]
+    }
+  },
+  "messagegroups": {
+    "Contoso.ERP.Events": {
+      "messagegroupid": "Contoso.ERP.Events",
+      "envelope": "CloudEvents/1.0",
+      "messages": {
+        "Contoso.ERP.Events.PaymentsReceived": {
+          "messageid": "Contoso.ERP.Events.PaymentsReceived",
+          "description": "A payment was received from a customer.",
+          "envelope": "CloudEvents/1.0",
+          "envelopemetadata": {
+            "specversion": {
+              "value": "1.0"
+            },
+            "type": {
+              "value": "Contoso.ERP.Events.PaymentsReceived"
+            },
+            "source": {
+              "value": "/erp/{tenantid}",
+              "type": "uritemplate"
+            },
+            "time": {
+              "type": "timestamp",
+              "required": true
+            },
+            "id": {
+              "type": "string",
+              "required": true
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemauri": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PaymentsReceived"
+        },
+        "Contoso.ERP.Events.InventoryUpdated": {
+          "messageid": "Contoso.ERP.Events.InventoryUpdated",
+          "description": "Stock for an item changed.",
+          "envelope": "CloudEvents/1.0",
+          "envelopemetadata": {
+            "specversion": {
+              "value": "1.0"
+            },
+            "type": {
+              "value": "Contoso.ERP.Events.InventoryUpdated"
+            },
+            "source": {
+              "value": "/erp/{tenantid}",
+              "type": "uritemplate"
+            },
+            "time": {
+              "type": "timestamp",
+              "required": true
+            },
+            "id": {
+              "type": "string",
+              "required": true
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemauri": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.InventoryUpdated"
+        },
+        "Contoso.ERP.Events.ReservationPlaced": {
+          "messageid": "Contoso.ERP.Events.ReservationPlaced",
+          "description": "Stock was reserved for an order.",
+          "envelope": "CloudEvents/1.0",
+          "envelopemetadata": {
+            "specversion": {
+              "value": "1.0"
+            },
+            "type": {
+              "value": "Contoso.ERP.Events.ReservationPlaced"
+            },
+            "source": {
+              "value": "/erp/{tenantid}",
+              "type": "uritemplate"
+            },
+            "time": {
+              "type": "timestamp",
+              "required": true
+            },
+            "id": {
+              "type": "string",
+              "required": true
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemauri": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.ReservationPlaced"
+        },
+        "Contoso.ERP.Events.PurchaseOrderCreated": {
+          "messageid": "Contoso.ERP.Events.PurchaseOrderCreated",
+          "description": "A purchase order was raised with a supplier.",
+          "envelope": "CloudEvents/1.0",
+          "envelopemetadata": {
+            "specversion": {
+              "value": "1.0"
+            },
+            "type": {
+              "value": "Contoso.ERP.Events.PurchaseOrderCreated"
+            },
+            "source": {
+              "value": "/erp/{tenantid}",
+              "type": "uritemplate"
+            },
+            "time": {
+              "type": "timestamp",
+              "required": true
+            },
+            "id": {
+              "type": "string",
+              "required": true
+            }
+          },
+          "datacontenttype": "application/json",
+          "dataschemaformat": "JsonSchema/draft-07",
+          "dataschemauri": "#/schemagroups/Contoso.ERP.Events/schemas/Contoso.ERP.Events.PurchaseOrderCreated"
+        }
+      }
+    }
+  },
+  "schemagroups": {
+    "Contoso.ERP.Events": {
+      "schemagroupid": "Contoso.ERP.Events",
+      "schemas": {
+        "Contoso.ERP.Events.PaymentsReceived": {
+          "schemaid": "Contoso.ERP.Events.PaymentsReceived",
+          "format": "JsonSchema/draft-07",
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "versionid": "1",
+              "description": "A payment was received from a customer.",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "title": "PaymentsReceived",
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "paymentId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency",
+                  "customerId",
+                  "paymentId"
+                ]
+              }
+            }
+          }
+        },
+        "Contoso.ERP.Events.InventoryUpdated": {
+          "schemaid": "Contoso.ERP.Events.InventoryUpdated",
+          "format": "JsonSchema/draft-07",
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "versionid": "1",
+              "description": "Stock for an item changed.",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "title": "InventoryUpdated",
+                "type": "object",
+                "properties": {
+                  "itemId": {
+                    "type": "string"
+                  },
+                  "warehouseId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "itemId",
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "Contoso.ERP.Events.ReservationPlaced": {
+          "schemaid": "Contoso.ERP.Events.ReservationPlaced",
+          "format": "JsonSchema/draft-07",
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "versionid": "1",
+              "description": "Stock was reserved for an order.",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "title": "ReservationPlaced",
+                "type": "object",
+                "properties": {
+                  "reservationId": {
+                    "type": "string"
+                  },
+                  "itemId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "reservationId",
+                  "itemId",
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "Contoso.ERP.Events.PurchaseOrderCreated": {
+          "schemaid": "Contoso.ERP.Events.PurchaseOrderCreated",
+          "format": "JsonSchema/draft-07",
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "versionid": "1",
+              "description": "A purchase order was raised with a supplier.",
+              "schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "title": "PurchaseOrderCreated",
+                "type": "object",
+                "properties": {
+                  "purchaseOrderId": {
+                    "type": "string"
+                  },
+                  "supplierId": {
+                    "type": "string"
+                  },
+                  "lines": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "purchaseOrderId",
+                  "supplierId"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

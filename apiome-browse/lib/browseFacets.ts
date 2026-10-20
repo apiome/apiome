@@ -92,6 +92,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   arazzo: 'Arazzo',
   asyncapi: 'AsyncAPI',
   cloudevents: 'CloudEvents',
+  xregistry: 'CNCF xRegistry',
   graphql: 'GraphQL',
   protobuf: 'gRPC / Protobuf',
   grpc: 'gRPC / Protobuf',

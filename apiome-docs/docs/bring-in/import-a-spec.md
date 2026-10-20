@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 57<!--format-count:importable--> formats**, spanning all
+**Apiome imports 58<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 44<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -237,6 +237,7 @@ check is server-side, so a client cannot grant itself one.
 - [Import an A2A Agent Card](./a2a-agent-card-import.md) — catalog an agent's skills, tags and security, from a file or its well-known URI
 - [Import ACP agent manifests](./acp-agent-manifest-import.md) — catalog an ACP server's agents and capabilities, from a file or its `/agents` listing
 - [Import agentic-web site manifests](./agents-manifest-import.md) — catalog a site's agents.json, agent.json, agents.txt or llms.txt and the agent descriptors it points at
+- [Import a CNCF xRegistry](./xregistry-import.md) — catalog CloudEvents schemas, message definitions and endpoints from an xRegistry document or a live registry
 - [Read a catalog item's format details](./catalog-format-details.md) — what a catalog item records per format
 - [Convert a catalog item to OpenAPI](./convert-to-openapi.md) — promote a catalog item to a publishable Project
 - [Edit classes and properties](../build/edit-classes-and-properties.md) — refine what you imported

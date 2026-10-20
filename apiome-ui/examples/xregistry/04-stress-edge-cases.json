@@ -1,0 +1,153 @@
+{
+  "specversion": "0.5-wip",
+  "registryid": "legacy-sap-bridge",
+  "name": "Legacy bridge — Ünïcødé ✓",
+  "schemagroups": {
+    "billing": {
+      "schemas": {
+        "Invoice": {
+          "format": "XSD/1.1",
+          "versionid": "7",
+          "epoch": 12,
+          "modifiedat": "2026-10-01T00:00:00Z",
+          "schemabase64": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHhzOnNjaGVtYSB4bWxuczp4cz0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEiIHRhcmdldE5hbWVzcGFjZT0iaHR0cDovL2V4YW1wbGUuY29tL2JpbGxpbmciIHhtbG5zOmI9Imh0dHA6Ly9leGFtcGxlLmNvbS9iaWxsaW5nIj4KICA8eHM6ZWxlbWVudCBuYW1lPSJpbnZvaWNlIiB0eXBlPSJiOkludm9pY2UiLz4KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iSW52b2ljZSI+CiAgICA8eHM6c2VxdWVuY2U+CiAgICAgIDx4czplbGVtZW50IG5hbWU9Im51bWJlciIgdHlwZT0ieHM6c3RyaW5nIi8+CiAgICAgIDx4czplbGVtZW50IG5hbWU9ImFtb3VudCIgdHlwZT0ieHM6ZGVjaW1hbCIvPgogICAgPC94czpzZXF1ZW5jZT4KICA8L3hzOmNvbXBsZXhUeXBlPgo8L3hzOnNjaGVtYT4K"
+        },
+        "Ledger": {
+          "format": "JsonStructure/draft-04",
+          "versionid": "1",
+          "schema": {
+            "type": "object"
+          }
+        },
+        "Remote": {
+          "format": "JsonSchema/draft-07",
+          "schemauri": "https://schemas.example.com/remote.json"
+        },
+        "Amount": {
+          "format": "JsonSchema/draft-07",
+          "schema": "{\"type\": \"number\", \"minimum\": 0}"
+        }
+      }
+    },
+    "shipping": {
+      "schemas": {
+        "Amount": {
+          "format": "JsonSchema/draft-07",
+          "deprecated": {
+            "effective": "2026-01-01T00:00:00Z"
+          },
+          "schema": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "definitiongroups": {
+    "billing.events": {
+      "format": "CloudEvents/1.0",
+      "protocol": "HTTP",
+      "definitions": {
+        "invoice.issued": {
+          "metadata": {
+            "type": {
+              "value": "com.example.billing.invoice.issued"
+            },
+            "source": {
+              "value": "/billing"
+            },
+            "dataschema": {
+              "value": "/schemagroups/billing/schemas/Invoice",
+              "type": "uri"
+            }
+          },
+          "schemaformat": "XSD/1.1",
+          "schemaurl": "#/schemagroups/billing/schemas/Invoice",
+          "datacontenttype": "application/xml"
+        },
+        "invoice.voided": {
+          "deprecated": true,
+          "metadata": {
+            "type": {
+              "value": "com.example.billing.invoice.voided"
+            },
+            "source": {
+              "value": "/billing"
+            }
+          },
+          "dataschema": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "invoice.issued.dup": {
+          "metadata": {
+            "type": {
+              "value": "com.example.billing.invoice.issued"
+            }
+          },
+          "dataschemauri": "https://schemas.example.com/other.json"
+        }
+      }
+    },
+    "orphans": {
+      "definitions": {}
+    }
+  },
+  "endpoints": {
+    "webhook": {
+      "usage": "consumer",
+      "protocol": "HTTP",
+      "format": "CloudEvents/1.0",
+      "config": {
+        "protocol": "HTTP",
+        "endpoints": [
+          "https://hooks.example.com/billing",
+          "https://hooks.example.com/billing"
+        ],
+        "method": "POST"
+      },
+      "definitiongroups": [
+        "https://reg.example.com/definitiongroups/billing.events",
+        "/definitiongroups/missing.group"
+      ],
+      "definitions": {
+        "webhook.ping": {
+          "metadata": {
+            "type": {
+              "value": "com.example.webhook.ping"
+            }
+          },
+          "protocoloptions": {
+            "headers": {
+              "x-vendor": "acme"
+            }
+          }
+        }
+      }
+    },
+    "vendor-x": {
+      "usage": [
+        "producer",
+        "consumer"
+      ],
+      "protocol": "x-acme/2",
+      "x-acme-tenant": "t-42",
+      "messages": {
+        "x.heartbeat": {
+          "envelope": "none",
+          "protocolbinding": {
+            "channel": "hb"
+          }
+        }
+      }
+    }
+  },
+  "x-vendor-extension": {
+    "keep": true
+  }
+}

@@ -203,6 +203,8 @@ def test_the_registry_kind_is_a_syncable_connector_kind() -> None:
         ({"protocol": "nope"}, "https://r.example", "protocol"),
         ({"protocol": "a2a-registry", "groups": ["x"]}, "https://r.example", "Unknown scope"),
         ({"protocol": "xregistry", "groups": []}, "https://r.example", "groups"),
+        ({"protocol": "xregistry", "include": []}, "https://r.example", "include"),
+        ({"protocol": "xregistry", "include": ["schemas", "nope"]}, "https://r.example", "include"),
         ({"protocol": "fhir-metadata", "includeProfiles": "yes"}, "https://r.example", "includeProfiles"),
         ({"protocol": "a2a-registry", "requestsPerSecond": 0}, "https://r.example", "requestsPerSecond"),
         ({"protocol": "a2a-registry", "requestsPerSecond": 50}, "https://r.example", "requestsPerSecond"),
@@ -215,6 +217,7 @@ def test_scope_validation(scope: Dict[str, Any], base: Optional[str], message: s
 
 def test_valid_scopes_pass() -> None:
     validate_registry_scope({"protocol": "xregistry", "groups": ["orders"], "requestsPerSecond": 2}, "https://r.example")
+    validate_registry_scope({"protocol": "xregistry", "include": ["messages", "endpoints"]}, "https://r.example")
     validate_registry_scope({"protocol": "fhir-metadata", "includeProfiles": True}, "https://r.example")
 
 
@@ -455,6 +458,129 @@ def test_the_groups_scope_limits_the_crawl(store, registry) -> None:
     importer = _ParsingImporter()
     _sync(store, _XR, {"protocol": "xregistry", "groups": ["orders"]}, importer)
     assert [c["remote_id"] for c in importer.calls] == ["schemagroups/orders/schemas/order"]
+
+
+def _xregistry_messages(registry: FakeRegistry, *, created_description: str = "An order was placed.") -> None:
+    """A message registry (one group, messages listed separately) and an endpoint registry."""
+    registry.routes[f"{_XR}/messagegroups"] = {
+        "orders": {"messagegroupid": "orders", "envelope": "CloudEvents/1.0", "epoch": 3,
+                   "self": f"{_XR}/messagegroups/orders"},
+        "audit": {"messagegroupid": "audit", "messages": {
+            "audit.logged": {"messageid": "audit.logged", "envelopemetadata": {"type": {"value": "com.example.audit"}}},
+        }},
+    }
+    registry.routes[f"{_XR}/messagegroups/orders/messages"] = {
+        "orders.created": {
+            "messageid": "orders.created",
+            "description": created_description,
+            "epoch": 1,
+            "envelopemetadata": {"type": {"value": "com.example.orders.created"}, "source": {"value": "/orders"}},
+            "dataschemaxid": "/schemagroups/payments/schemas/payment",
+        },
+    }
+    registry.routes[f"{_XR}/endpoints"] = {
+        "orders.mqtt": {
+            "endpointid": "orders.mqtt",
+            "usage": ["producer"],
+            "protocol": "MQTT/5.0",
+            "protocoloptions": {"endpoints": [{"uri": "mqtts://broker.example.com"}]},
+            "messagegroups": ["/messagegroups/orders"],
+            "epoch": 2,
+        },
+    }
+    registry.routes[f"{_XR}/endpoints/orders.mqtt/messages"] = {
+        "orders.ping": {"messageid": "orders.ping", "envelopemetadata": {"type": {"value": "com.example.ping"}}},
+    }
+
+
+def test_an_xregistry_imports_each_message_group_and_endpoint_as_an_xregistry_item(store, registry) -> None:
+    _xregistry(registry)
+    _xregistry_messages(registry)
+    importer = _ParsingImporter()
+    _, result = _sync(store, _XR, {"protocol": "xregistry"}, importer)
+    assert result.status == "succeeded"
+    by_id = {c["remote_id"]: c for c in importer.calls}
+    assert {"messagegroups/orders", "messagegroups/audit", "endpoints/orders.mqtt"} <= set(by_id)
+    for remote_id in ("messagegroups/orders", "messagegroups/audit", "endpoints/orders.mqtt"):
+        assert by_id[remote_id]["kind"] == "xregistry" and by_id[remote_id]["format"] == "xregistry"
+        assert by_id[remote_id]["revision"] is None  # compared by content digest
+    # The audit group carried its messages inline, so they were not fetched.
+    assert f"{_XR}/messagegroups/audit/messages" not in registry.requests
+    assert by_id["endpoints/orders.mqtt"]["provenance"]["registryProtocol"] == "xregistry"
+
+
+def test_an_endpoint_item_resolves_its_referenced_groups_on_its_own(store, registry) -> None:
+    _xregistry(registry)
+    _xregistry_messages(registry)
+    captured: Dict[str, bytes] = {}
+
+    class _Capture(_ParsingImporter):
+        def __call__(self, connector, candidate, document, item_row, actor_id):
+            captured[candidate.remote_id] = document.content
+            return super().__call__(connector, candidate, document, item_row, actor_id)
+
+    _sync(store, _XR, {"protocol": "xregistry"}, _Capture())
+    adapter = get_import_source("xregistry")
+    endpoint = json.loads(captured["endpoints/orders.mqtt"])
+    assert set(endpoint["messagegroups"]) == {"orders"}
+    assert "epoch" not in endpoint["endpoints"]["orders.mqtt"]  # bookkeeping is dropped
+    model = adapter.normalize(adapter.parse(captured["endpoints/orders.mqtt"].decode()))
+    assert {op.key for op in model.operations()} == {"orders.mqtt.orders.orders.created", "orders.mqtt.orders.ping"}
+    group = json.loads(captured["messagegroups/orders"])
+    assert "self" not in group["messagegroups"]["orders"]
+    assert "epoch" not in group["messagegroups"]["orders"]["messages"]["orders.created"]
+
+
+def test_an_xregistry_recrawl_reimports_only_the_message_group_that_changed(store, registry) -> None:
+    _xregistry(registry)
+    _xregistry_messages(registry)
+    connector, _ = _sync(store, _XR, {"protocol": "xregistry", "include": ["messages"]}, _ParsingImporter())
+    _xregistry_messages(registry, created_description="An order was placed online.")
+    again = _ParsingImporter()
+    _sync(store, _XR, {"protocol": "xregistry", "include": ["messages"]}, again, connector=connector)
+    assert [c["remote_id"] for c in again.calls] == ["messagegroups/orders"]
+
+
+def test_include_and_groups_narrow_the_xregistry_crawl(store, registry) -> None:
+    _xregistry(registry)
+    _xregistry_messages(registry)
+    importer = _ParsingImporter()
+    _sync(store, _XR, {"protocol": "xregistry", "include": ["messages"], "groups": ["orders"]}, importer)
+    assert [c["remote_id"] for c in importer.calls] == ["messagegroups/orders"]
+    assert f"{_XR}/schemagroups" not in registry.requests and f"{_XR}/endpoints" not in registry.requests
+
+
+def test_a_message_only_xregistry_crawls_without_a_schema_registry(store, registry) -> None:
+    _xregistry_messages(registry)  # /schemagroups answers 404
+    importer = _ParsingImporter()
+    _, result = _sync(store, _XR, {"protocol": "xregistry"}, importer)
+    assert result.status == "succeeded"
+    assert {c["remote_id"] for c in importer.calls} == {
+        "messagegroups/orders", "messagegroups/audit", "endpoints/orders.mqtt",
+    }
+
+
+def test_an_empty_message_group_is_reported_not_imported(store, registry) -> None:
+    _xregistry_messages(registry)
+    registry.routes[f"{_XR}/messagegroups"]["empty"] = {"messagegroupid": "empty"}
+    registry.routes[f"{_XR}/messagegroups/empty/messages"] = {}
+    importer = _ParsingImporter()
+    _, result = _sync(store, _XR, {"protocol": "xregistry", "include": ["messages"]}, importer)
+    assert result.status == "succeeded"
+    assert "messagegroups/empty" not in {c["remote_id"] for c in importer.calls}
+    assert {"remoteId": "messagegroups/empty", "reason": "no-messages"} in result.summary["findings"]
+
+
+def test_a_root_that_serves_no_xregistry_collection_fails_the_sync(store, registry) -> None:
+    _, result = _sync(store, _XR, {"protocol": "xregistry"}, _ParsingImporter())
+    assert result.status == "failed" and "does not look like an xRegistry" in result.error_message
+
+
+def test_a_failing_xregistry_collection_is_not_mistaken_for_an_absent_one(store, registry) -> None:
+    _xregistry(registry)
+    registry.routes[f"{_XR}/messagegroups"] = (503, "down")
+    _, result = _sync(store, _XR, {"protocol": "xregistry"}, _ParsingImporter())
+    assert result.status == "failed" and "503" in result.error_message
 
 
 # ---------------------------------------------------------------------------

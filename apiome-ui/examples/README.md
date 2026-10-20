@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1454 files** across **106 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1465 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -78,6 +78,7 @@ The corpus holds **1454 files** across **106 format directories**. Every file ha
 | `asyncapi/` | AsyncAPI 2.x/3.0 | event | top-level `asyncapi:` version | 14 |
 | `cloudevents/` | CloudEvents 1.0 | event | `specversion` + `type` + `source` envelope | 11 |
 | `sparkplug/` | MQTT Sparkplug B (pending #5469) | event | `spBv1.0/...` topic namespace, or a Sparkplug protobuf `Payload` on the binary intake path | 15 |
+| `xregistry/` | CNCF xRegistry | event | `schemagroups` / `messagegroups` / `endpoints` collections keyed by id | 11 |
 
 ### Graph
 
@@ -2589,6 +2590,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`02-method-response.xml`** — Features list claims `fault` but the file contains no <fault> element (a fault is only described in the header comment); either drop the tag or add a dedicated fault-response example so feature-based fixture selection is not misled.
 
+### `xregistry/` — CNCF xRegistry
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-schema-registry.json` | minimal | `xregistry` ≥ 0.9 | valid | `schema-registry`, `json-schema` |
+| `02-typical-order-events.json` | typical | `xregistry` ≥ 0.9 | valid | `schema-registry`, `message-registry`, `endpoint-registry`, `mqtt`, `schema-versions` |
+| `03-composition-shared-groups.json` | composition | `xregistry` ≥ 0.9 | valid | `shared-message-groups`, `avro`, `protobuf`, `json-schema-definitions`, `amqp`, `nats`, `subscriber` |
+| `04-stress-edge-cases.json` | stress | `xregistry` ≥ 0.9 | valid | `draft-names`, `schemabase64`, `xsd`, `unknown-format`, `schemauri-only`, `unresolved-group`, `inline-dataschema`, `deprecated`, `unicode`, `duplicate-schema-ids` |
+| `05-real-world-contoso-erp.json` | real-world | `xregistry` ≥ 0.9 | valid | `message-registry`, `endpoint-registry`, `http`, `amqp`, `uritemplate` |
+| `06-typical-order-events-v2.json` ⚠ | typical | `xregistry` ≥ 0.9 | valid | `release-2`, `message-added`, `endpoint-added`, `schema-version-added` |
+| `negative/01-syntactic-trailing-comma.json` | — | `xregistry` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma` |
+| `negative/02-semantic-empty-registry.json` | — | `xregistry` (no guarantee) | invalid | `negative`, `semantic`, `empty-registry` |
+| `negative/03-truncated-mid-message.json` | — | `xregistry` (no guarantee) | invalid | `negative`, `truncated` |
+| `negative/04-wrong-format-asyncapi.json` | — | `xregistry` (no guarantee) | invalid | `negative`, `wrong-format`, `asyncapi` |
+| `negative/05-encoding-utf16.json` | — | `xregistry` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+
+> ⚠ **`06-typical-order-events-v2.json`** — The next release of 02-typical-order-events.json: a new default schema version, an enum value, a cancelled message, a second broker URI and a Kafka consumer endpoint — the diff fixture.
+
 ### `xsd/` — XML Schema (XSD)
 
 | File | Rung | Expected detection | Class | Features |
@@ -2684,6 +2703,7 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 | `typespec` | multi-file | The typespec adapter's parse_fileset parses only the root member and does not resolve relative import statements across members, so a multi-file set demonstrates nothing. |
 | `wadl` | multi-file | parse_fileset in wadl_import_source.py parses only the root member and never resolves references into other members (verified in source), so a multi-file set adds no coverage. |
 | `xmlrpc` | multi-file | XmlRpcImportSource.parse_fileset parses only the root member and XML-RPC has no cross-file reference mechanism, so a genuine multi-file set is not importable. |
+| `xregistry` | multi-file | An xRegistry document is one self-contained JSON document whose references are xids into the same document; XRegistryImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file. |
 | `xsd` | multi-file | parse_fileset in xsd_import_source.py parses only the root member; xs:include/xs:import across members is never resolved (verified in source), so a multi-file set adds no coverage. |
 | `zosconnect` | multi-file | The zosconnect adapter's parse_fileset only parses the root member and resolves no cross-file references (copybook structures are name references only), so a multi-file set exercises nothing. |
 
@@ -2693,7 +2713,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1454 | `Apache-2.0` |
+| `hand-authored` | 1465 | `Apache-2.0` |
 
 ## Trying an import
 

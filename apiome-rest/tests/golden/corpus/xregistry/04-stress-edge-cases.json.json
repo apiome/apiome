@@ -1,0 +1,620 @@
+{
+  "adapter": "xregistry",
+  "canonical": {
+    "channels": [
+      {
+        "address": "com.example.billing.invoice.issued",
+        "bindings": {},
+        "description": null,
+        "extras": {
+          "cloudevents_source": "/billing",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.billing.invoice.issued",
+        "name": "com.example.billing.invoice.issued",
+        "parameters": [],
+        "protocol": "http"
+      },
+      {
+        "address": "com.example.billing.invoice.voided",
+        "bindings": {},
+        "description": null,
+        "extras": {
+          "cloudevents_source": "/billing",
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.billing.invoice.voided",
+        "name": "com.example.billing.invoice.voided",
+        "parameters": [],
+        "protocol": "http"
+      },
+      {
+        "address": "com.example.webhook.ping",
+        "bindings": {
+          "http": {
+            "headers": {
+              "x-vendor": "acme"
+            }
+          }
+        },
+        "description": null,
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0"
+        },
+        "key": "com.example.webhook.ping",
+        "name": "com.example.webhook.ping",
+        "parameters": [],
+        "protocol": "http"
+      },
+      {
+        "address": "x.heartbeat",
+        "bindings": {
+          "x-acme": {
+            "channel": "hb"
+          }
+        },
+        "description": null,
+        "extras": {
+          "xregistry_envelope": "none"
+        },
+        "key": "x.heartbeat",
+        "name": "x.heartbeat",
+        "parameters": [],
+        "protocol": "x-acme"
+      }
+    ],
+    "description": null,
+    "extras": {
+      "xregistry_endpoint_count": 2,
+      "xregistry_message_count": 5,
+      "xregistry_schema_count": 5,
+      "xregistry_specversion": "0.5-wip"
+    },
+    "format": "xregistry",
+    "identity": {
+      "extras": {},
+      "id": "legacy-sap-bridge",
+      "name": "Legacy bridge — Ünïcødé ✓",
+      "namespace": null
+    },
+    "paradigm": "event",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "webhook",
+        "protocol": "http",
+        "url": "https://hooks.example.com/billing",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "xregistry_kind": "endpoint",
+          "xregistry_protocol": "x-acme/2",
+          "xregistry_usage": [
+            "producer",
+            "consumer"
+          ]
+        },
+        "key": "vendor-x",
+        "name": "vendor-x",
+        "operations": [
+          {
+            "channel_ref": "x.heartbeat",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "http_method": null,
+            "http_path": null,
+            "key": "vendor-x.x.heartbeat",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "xregistry_envelope": "none",
+                  "xregistry_message": "/endpoints/vendor-x/messages/x.heartbeat"
+                },
+                "headers": [],
+                "key": "vendor-x.x.heartbeat#event.x.heartbeat",
+                "name": "x.heartbeat",
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "x.heartbeat",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "xregistry_envelope": "CloudEvents/1.0",
+          "xregistry_kind": "endpoint",
+          "xregistry_messagegroups": [
+            "billing.events",
+            "missing.group"
+          ],
+          "xregistry_protocol": "HTTP",
+          "xregistry_protocol_options": {
+            "method": "POST"
+          },
+          "xregistry_unresolved_groups": [
+            "missing.group"
+          ],
+          "xregistry_uris": [
+            "https://hooks.example.com/billing"
+          ],
+          "xregistry_usage": [
+            "consumer"
+          ]
+        },
+        "key": "webhook",
+        "name": "webhook",
+        "operations": [
+          {
+            "channel_ref": "com.example.billing.invoice.issued",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.billing.invoice.issued"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "webhook.billing.events.invoice.issued",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [
+                  "application/xml"
+                ],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "#/schemagroups/billing/schemas/Invoice",
+                  "xregistry_dataschemaformat": "XSD/1.1",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/billing.events/messages/invoice.issued"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/schemagroups/billing/schemas/Invoice",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.issued#event.invoice.issued.dataschema",
+                    "name": "dataschema",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "/billing",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.issued#event.invoice.issued.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.billing.invoice.issued",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.issued#event.invoice.issued.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "webhook.billing.events.invoice.issued#event.invoice.issued",
+                "name": "invoice.issued",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/billing.Invoice",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "invoice.issued",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.billing.invoice.issued",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.billing.invoice.issued"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "webhook.billing.events.invoice.issued.dup",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "xregistry_dataschema": "https://schemas.example.com/other.json",
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/billing.events/messages/invoice.issued.dup"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "com.example.billing.invoice.issued",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.issued.dup#event.invoice.issued.dup.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "webhook.billing.events.invoice.issued.dup#event.invoice.issued.dup",
+                "name": "invoice.issued.dup",
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "invoice.issued.dup",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.billing.invoice.voided",
+            "deprecated": true,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.billing.invoice.voided"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "webhook.billing.events.invoice.voided",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/messagegroups/billing.events/messages/invoice.voided"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "/billing",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.voided#event.invoice.voided.source",
+                    "name": "source",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "constraints": null,
+                    "default": "com.example.billing.invoice.voided",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.billing.events.invoice.voided#event.invoice.voided.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "webhook.billing.events.invoice.voided#event.invoice.voided",
+                "name": "invoice.voided",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": null,
+                  "nullable": false
+                },
+                "payload_schema": {
+                  "properties": {
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "invoice.voided",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "com.example.webhook.ping",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cloudevents_type": "com.example.webhook.ping"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "webhook.webhook.ping",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "xregistry_envelope": "CloudEvents/1.0",
+                  "xregistry_message": "/endpoints/webhook/messages/webhook.ping"
+                },
+                "headers": [
+                  {
+                    "constraints": null,
+                    "default": "com.example.webhook.ping",
+                    "deprecated": false,
+                    "description": null,
+                    "extras": {},
+                    "field_number": null,
+                    "key": "webhook.webhook.ping#event.webhook.ping.type",
+                    "name": "type",
+                    "type": {
+                      "extras": {},
+                      "item": null,
+                      "name": "string",
+                      "nullable": true
+                    }
+                  }
+                ],
+                "key": "webhook.webhook.ping#event.webhook.ping",
+                "name": "webhook.ping",
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "webhook.ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Legacy bridge — Ünïcødé ✓",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xregistry_format": "JsonStructure/draft-04",
+          "xregistry_opaque": "unsupported-format",
+          "xregistry_schema": "/schemagroups/billing/schemas/Ledger",
+          "xregistry_version": "1"
+        },
+        "fields": [],
+        "key": "Ledger",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Ledger",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xregistry_format": "JsonSchema/draft-07",
+          "xregistry_opaque": "no-document",
+          "xregistry_schema": "/schemagroups/billing/schemas/Remote",
+          "xregistry_schema_uri": "https://schemas.example.com/remote.json"
+        },
+        "fields": [],
+        "key": "Remote",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Remote",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": null,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": 0.0,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "billing.Amount",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "billing.Amount",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "decimal"
+            },
+            "field_number": 2,
+            "key": "http://example.com/billing.Invoice.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "string"
+            },
+            "field_number": 1,
+            "key": "http://example.com/billing.Invoice.number",
+            "name": "number",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "http://example.com/billing.Invoice",
+        "key_type": null,
+        "kind": "record",
+        "name": "Invoice",
+        "namespace": "http://example.com/billing",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": true,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "shipping.Amount",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "shipping.Amount",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "xregistry/04-stress-edge-cases.json",
+  "counts": {
+    "channels": 4,
+    "operations": 5,
+    "servers": 1,
+    "services": 2,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "xregistry"
+  },
+  "fingerprint": "sha256:ea6b9f76e1a7df6c5aadb34775603cc8d54da6fd09afc5ec6c0ec99b0c5983f9",
+  "lint": {
+    "findings": 22,
+    "grade": "F",
+    "report_fingerprint": "5d68d8c0795a23b5c9bbfde6506162bbe444a3f4c15b88d8cd9e537113fe7519",
+    "score": 48,
+    "severity_counts": {
+      "error": 0,
+      "info": 12,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}
