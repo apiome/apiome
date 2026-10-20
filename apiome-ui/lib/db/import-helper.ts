@@ -33,8 +33,16 @@ import {
   loadCarriedPaths,
   loadIncomingSource,
   loadParentEntities,
+  loadProjectFederation,
   type Queryable,
 } from './repository-merge';
+import { getTenantById } from './helper';
+import {
+  buildFederationReport,
+  federationStatusFor,
+  postFederationMerge,
+  type FederationMergeStatus,
+} from '../federation-merge-report';
 import {
   RepositoryMergeConflictError,
   describeMergePlan,
@@ -189,6 +197,8 @@ interface JobState {
   transactionPending?: boolean;
   // Per-phase / per-DB-op timing accumulator (see finalizeBenchmark).
   bench?: Bench;
+  /** The normalized classes, kept for a merge conflict's per-source diff (V2-REPO-8.2). */
+  normalizedClasses?: NormalizedClass[];
   /** Multi-repository merge state (REPO-5.7), set for a repository-file import into a project. */
   merge?: JobRepositoryMerge;
   summary?: {
@@ -239,6 +249,8 @@ interface JobRepositoryMerge {
   incomingPaths: string[];
   /** The parent's carried paths, parsed; imported with the incoming paths. */
   carriedPaths: ParsedPath[];
+  /** The project the merge targets (V2-REPO-8.2: the merge is reported against it). */
+  projectId: string | null;
 }
 
 const jobs = new Map<string, JobState>();
@@ -280,7 +292,8 @@ async function prepareRepositoryMerge(
     input.sourceKind === 'openapi' && input.document ? extractPaths(input.document).map((p) => p.path) : [];
   const parentEntities =
     projectId && parentVersionId ? await loadParentEntities(q, input.tenantId, projectId, parentVersionId) : [];
-  const plan = planRepositoryMerge({ incoming, incomingClasses: classNames, incomingPaths, parentEntities });
+  const federation = await loadProjectFederation(q, projectId);
+  const plan = planRepositoryMerge({ incoming, incomingClasses: classNames, incomingPaths, parentEntities, federation });
 
   if (plan.conflicts.length > 0) {
     const error = new RepositoryMergeConflictError(plan.conflicts, input.project.name);
@@ -292,7 +305,23 @@ async function prepareRepositoryMerge(
         incoming: formatMergeSource(c.incoming),
       })),
     });
+    // V2-REPO-8.2: a real import's conflict is recorded in the project's merge history (a dry run's is not).
+    if (projectId && input.options?.dryRun !== true) {
+      await reportFederationMerge(job, 'conflicted', { plan, incoming, projectId, parentVersionId, pathsCarried: 0 });
+    }
     throw error;
+  }
+
+  if (plan.dropped.length > 0) {
+    const classes = plan.dropped.filter((e) => e.kind === 'class').length;
+    const paths = plan.dropped.length - classes;
+    emit(
+      job,
+      'warn',
+      'REPOSITORY_FEDERATION_OFF',
+      `Federation is off for this project: ${formatMergeSource(incoming)} replaces its surface, so ` +
+        `${classes} class(es) and ${paths} path(s) from other files are not carried forward.`,
+    );
   }
 
   let carriedPaths: ParsedPath[] = [];
@@ -314,7 +343,7 @@ async function prepareRepositoryMerge(
     );
   }
 
-  job.merge = { incoming, plan, parentVersionId, incomingClasses: classNames, incomingPaths, carriedPaths };
+  job.merge = { incoming, plan, parentVersionId, incomingClasses: classNames, incomingPaths, carriedPaths, projectId };
   if (job.summary && plan.mode === 'multi-source') {
     job.summary.repositoryMerge = {
       sources: plan.sources.length,
@@ -322,6 +351,105 @@ async function prepareRepositoryMerge(
       pathsCarried: carriedPaths.length,
     };
   }
+}
+
+/**
+ * The importing file's own definition of a class or path, for a conflict's per-source diff
+ * (V2-REPO-8.2): the path item or the `components.schemas` entry of the imported document, or the
+ * normalized class when the document has no such schema.
+ *
+ * @param job - The import job.
+ * @param kind - `class` or `path`.
+ * @param key - The class name or pathname.
+ * @returns The definition, or null when the import does not hold one.
+ */
+function incomingDefinition(job: JobState, kind: 'class' | 'path', key: string): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- an imported document is untyped JSON
+  const document = job.input.document as any;
+  if (kind === 'path') return document?.paths?.[key] ?? null;
+  const cls = job.normalizedClasses?.find((c) => c.name === key);
+  const schemaKey = cls?.originalSchemaKey ?? key;
+  const schema = cls?.schema ?? document?.components?.schemas?.[schemaKey] ?? document?.definitions?.[schemaKey];
+  if (schema) return schema;
+  return cls ? { description: cls.description ?? null, properties: cls.properties ?? [] } : null;
+}
+
+/**
+ * Record what federation did to this import in the project's merge history (V2-REPO-8.2, #2806).
+ *
+ * apiome-rest writes the history row and its audit row together. Best-effort: a report that cannot
+ * be delivered is a warning in the import log, never a failed import.
+ *
+ * @param job - The import job.
+ * @param status - What happened.
+ * @param merge - The plan, the importing file, the project, the versions and the carried paths.
+ */
+async function reportFederationMerge(
+  job: JobState,
+  status: FederationMergeStatus,
+  merge: {
+    plan: RepositoryMergePlan;
+    incoming: MergeSource;
+    projectId: string;
+    parentVersionId: string | null;
+    versionId?: string | null;
+    pathsCarried: number;
+  },
+): Promise<void> {
+  const report = buildFederationReport({
+    status,
+    plan: merge.plan,
+    incoming: merge.incoming,
+    versionId: merge.versionId,
+    parentVersionId: merge.parentVersionId,
+    pathsCarried: merge.pathsCarried,
+    incomingDefinition: (kind, key) => incomingDefinition(job, kind, key),
+  });
+  let problem: string | null;
+  try {
+    const tenant = await getTenantById(job.input.tenantId);
+    problem = tenant?.slug
+      ? await postFederationMerge(
+          { userId: job.input.userId, tenantId: job.input.tenantId, tenantSlug: tenant.slug },
+          merge.projectId,
+          report,
+        )
+      : 'the tenant has no slug';
+  } catch (error) {
+    problem = error instanceof Error ? error.message : 'unknown error';
+  }
+  if (problem) {
+    emit(
+      job,
+      'warn',
+      'REPOSITORY_FEDERATION_HISTORY_FAILED',
+      `The ${status} merge could not be added to the project's merge history (${problem}).`,
+    );
+  } else {
+    emit(job, 'info', 'REPOSITORY_FEDERATION_RECORDED', `Recorded this ${status} merge in the project's merge history.`);
+  }
+}
+
+/**
+ * After the import committed, record a multi-file merge or a federation-off replacement
+ * (V2-REPO-8.2). A no-op for an import federation did nothing to.
+ *
+ * @param job - The committed import job.
+ */
+async function reportCommittedFederationMerge(job: JobState): Promise<void> {
+  const merge = job.merge;
+  const versionId = job.result?.versionId as string | undefined;
+  if (!merge?.projectId || !versionId) return;
+  const status = federationStatusFor(merge.plan, { committed: true });
+  if (!status) return;
+  await reportFederationMerge(job, status, {
+    plan: merge.plan,
+    incoming: merge.incoming,
+    projectId: merge.projectId,
+    parentVersionId: merge.parentVersionId,
+    versionId,
+    pathsCarried: merge.carriedPaths.length,
+  });
 }
 
 /**
@@ -1069,6 +1197,7 @@ export async function startImport(input: ImportJobInput) {
           generateExamples: input.options.generateExamples,
         },
       });
+      job.normalizedClasses = norm.classes;
       recordPhase(job, 'parse:normalize', Date.now() - _normalizeStart);
       if (norm.warnings.length) emit(job, 'warn', 'NORMALIZE_WARN', norm.warnings.join('\n'));
 
@@ -1359,6 +1488,7 @@ export async function startImport(input: ImportJobInput) {
 
         job.result = { projectId, versionId };
         await recordRepositoryImportMetricIfApplicable(job);
+        await reportCommittedFederationMerge(job);
 
         setProgress(job, 'finalizing', 3 + norm.classes.length, 3 + norm.classes.length);
         job.state = 'completed';
@@ -1632,6 +1762,7 @@ export async function commitImport(jobId: string): Promise<{ success: boolean; e
     }
 
     await recordRepositoryImportMetricIfApplicable(job);
+    await reportCommittedFederationMerge(job);
 
     job.state = 'completed';
     emit(job, 'info', 'DONE', 'Import completed successfully', job.result);

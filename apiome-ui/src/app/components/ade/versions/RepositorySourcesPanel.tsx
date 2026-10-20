@@ -18,6 +18,10 @@
  * - **Sync back to repositories** (REPO-5.8, #2793) — {@link PrBackPanel}: render the chosen
  *   version and open a pull request into the files it was imported from.
  *
+ * - **Federation** (V2-REPO-8.2, #2806) — {@link FederationSwitch} at the top decides whether the
+ *   next import merges (on) or replaces (off), and **Merge history** lists every merge, conflict
+ *   (with both files' definitions) and replacement ({@link FederationMergeHistory}).
+ *
  * The provenance reads need `projects:view`; opening a pull request needs `versions:publish`.
  */
 
@@ -50,6 +54,8 @@ import {
   type SourceFilter,
 } from '@lib/repository-sources';
 
+import { FederationMergeHistory } from './FederationMergeHistory';
+import { FederationSwitch } from './FederationSwitch';
 import { PrBackPanel } from './PrBackPanel';
 
 /** The part of a version row the panel reads. */
@@ -149,6 +155,8 @@ export function RepositorySourcesPanel({
   const [kind, setKind] = React.useState<KindFilter>('all');
   const [source, setSource] = React.useState<SourceFilter>('all');
   const [query, setQuery] = React.useState('');
+  // Bumped when the federation switch moves, so the merge history re-reads.
+  const [federationKey, setFederationKey] = React.useState(0);
 
   React.useEffect(() => {
     if (!versionId) return;
@@ -213,6 +221,8 @@ export function RepositorySourcesPanel({
 
   return (
     <section className="rsrc" data-testid="repository-sources-panel">
+      <FederationSwitch projectId={projectId} onChanged={() => setFederationKey((key) => key + 1)} />
+
       <div className="rsrc-toolbar">
         <FormField label="Version" htmlFor="repository-sources-version">
           <select
@@ -282,6 +292,17 @@ export function RepositorySourcesPanel({
 
           {/* Hides itself when no repository holds the project's files (pre-REPO-5.7 imports included). */}
           <PrBackPanel projectId={projectId} versionId={versionId} versionLabel={reply.version?.version_label} />
+
+          <div className="rsrc-section">
+            <h3 className="rsrc-section__title">Merge history</h3>
+            <FederationMergeHistory
+              url={`/api/projects/${encodeURIComponent(projectId)}/federation-merges`}
+              scope="project"
+              refreshKey={federationKey}
+              emptyDescription="Merges appear here once a second repository file is imported into this project."
+              data-testid="project-merge-history"
+            />
+          </div>
 
           <DataTable
             caption="Where each class and path came from"

@@ -59,7 +59,8 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 - **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
   repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
   are refreshed by the same engine on the same cadence vocabulary.
-- **Imports** — the import history.
+- **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
+  and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).
 - **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
   conflict (**Hold for review**, **Overwrite** or **New branch**), which projects may open pull
   requests back into the repository (see [Send changes back as a pull request](#send-changes-back-as-a-pull-request)),
@@ -119,6 +120,47 @@ Rules of the merge:
 
 The project's **Sources** tab on [Versions](../build/versions.mdx#sources) lists the contributing
 files and shows the source of every class and path.
+
+#### Federation on or off
+
+Merging is called **federation**, and it is on for every project unless someone turns it off. The
+**Federation** switch is at the top of the project's **Sources** tab on
+[Versions](../build/versions.mdx#federation):
+
+- **On** — each repository file you import is merged with the other contributing files, as
+  described above.
+- **Off** — each repository file you import **replaces** the API. Classes and paths that other files
+  defined are not carried into the new version, and the import log says how many were dropped.
+
+The switch applies to the next import; versions already created do not change. Changing it needs
+the `projects:edit` permission and is recorded in the audit log as `repository.federation_toggled`.
+
+#### Merge history and conflicts
+
+Every import that federation acts on is recorded:
+
+| Result | Means |
+| --- | --- |
+| **Merged** | Several files were merged into a new version. The row says how many classes and paths were carried forward from the other files |
+| **Conflict** | Two files define the same class or path, so the import wrote nothing |
+| **Replaced** | Federation was off, and the import dropped content that other files defined |
+
+To see a conflict, open the history and **click “Show the conflict”**. For each class or path that
+collides, Apiome shows both files' definitions as one comparison: lines marked **−** (red) are only
+in the file that already contributes, lines marked **+** (green) are only in the file you imported,
+and unmarked lines are the same in both. Fix one of the files, then import again.
+
+<Screenshot id="repository-sync-history" alt="A repository's Sync history: a conflict on the class Customer, opened to compare both files' definitions, and an earlier merge" />
+
+The history is on two screens:
+
+- the project's **Sources** tab on [Versions](../build/versions.mdx#merge-history), under **Merge
+  history**;
+- the repository's **Imports** tab, under **Sync history** — the imports of this repository's files.
+
+A dry run is not recorded. Each merge is written to the audit log with its history row:
+`repository.federation_merged`, `repository.federation_conflicted` or
+`repository.federation_replaced`.
 
 ### Send changes back as a pull request
 
@@ -235,6 +277,9 @@ change it.
   A project's contributing repositories and the source of each class and path:
   `GET /v1/tenants/{tenant}/projects/{project}/repository-sources` — see
   [Project repository sources](../reference/rest/project-repository-sources.md).
+  Federation: `GET` / `PUT /v1/tenants/{tenant}/projects/{project}/repository-federation`,
+  `GET …/projects/{project}/federation-merges` and `GET …/repositories/{repo}/federation-merges` — see
+  [Repository federation](../reference/rest/repository-federation.md).
   PR-back: `GET` / `PUT …/repositories/{repo}/pr-back-settings`,
   `GET /v1/tenants/{tenant}/projects/{project}/pr-back/repositories` and
   `POST …/projects/{project}/pr-back` (`dryRun: true` previews without writing) — see

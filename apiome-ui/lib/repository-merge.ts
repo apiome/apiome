@@ -20,6 +20,11 @@
  * A project whose parent version holds nothing from another file is in **single-source** mode and
  * behaves exactly as before REPO-5.7: the new version holds only the importing file's content.
  *
+ * **Federation switch (V2-REPO-8.2, #2806).** A project whose federation is switched off is always
+ * planned in single-source mode: the importing file replaces the surface. When the parent held
+ * another file's content, that content is listed in `dropped` so the import can record the
+ * replacement in the project's merge history.
+ *
  * This module has no I/O; `lib/db/repository-merge.ts` reads the parent version and writes the
  * result.
  */
@@ -77,6 +82,11 @@ export interface RepositoryMergeInput {
   incomingPaths: readonly string[];
   /** Every class and path of the parent version (empty for a project's first version). */
   parentEntities: readonly ParentEntity[];
+  /**
+   * The project's federation switch (V2-REPO-8.2). `false` plans single-source whatever the parent
+   * holds. Defaults to `true`.
+   */
+  federation?: boolean;
 }
 
 /** The outcome of {@link planRepositoryMerge}. */
@@ -93,6 +103,12 @@ export interface RepositoryMergePlan {
   removed: CarriedEntity[];
   /** Every file the new version is built from, in precedence order (the importing file included). */
   sources: MergeSource[];
+  /**
+   * Federation off (V2-REPO-8.2): parent content that is not the importing file's and is dropped
+   * because the import replaces the surface. Non-empty only when the parent held another file's
+   * content. Ordered like `carried`.
+   */
+  dropped: CarriedEntity[];
 }
 
 /** Error thrown by the import when a merge plan has conflicts. */
@@ -162,7 +178,13 @@ export function planRepositoryMerge(input: RepositoryMergeInput): RepositoryMerg
   const multiSource = input.parentEntities.some(
     (entity) => entity.source !== null && !isSameSource(entity.source, incoming),
   );
-  if (!multiSource) {
+  if (!multiSource || input.federation === false) {
+    const dropped: CarriedEntity[] = multiSource
+      ? input.parentEntities
+          .filter((entity) => !entity.source || !isSameSource(entity.source, incoming))
+          .map((entity) => ({ kind: entity.kind, key: entity.key, source: entity.source }))
+          .sort(compareEntities)
+      : [];
     return {
       mode: 'single-source',
       conflicts: [],
@@ -170,6 +192,7 @@ export function planRepositoryMerge(input: RepositoryMergeInput): RepositoryMerg
       superseded: [],
       removed: [],
       sources: [incoming],
+      dropped,
     };
   }
 
@@ -213,7 +236,7 @@ export function planRepositoryMerge(input: RepositoryMergeInput): RepositoryMerg
   }
   const sources = [...byLineage.values()].sort(compareSources);
 
-  return { mode: 'multi-source', conflicts, carried, superseded, removed, sources };
+  return { mode: 'multi-source', conflicts, carried, superseded, removed, sources, dropped: [] };
 }
 
 /** How many conflicts the error message spells out before summarizing the rest. */

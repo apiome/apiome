@@ -226,6 +226,69 @@ const PROJECTS = [
   { id: 'p-2', name: 'Inventory Events', slug: 'inventory-events' },
 ];
 
+/** The Imports tab's sync history (V2-REPO-8.2): a merge, then a conflict with both definitions. */
+const SYNC_HISTORY = [
+  {
+    id: 'm2',
+    projectId: 'p-1',
+    projectName: 'Payments API',
+    status: 'conflicted',
+    versionId: null,
+    versionLabel: null,
+    repositoryFullName: 'acme/payments-specs',
+    branch: 'main',
+    path: 'specs/payments/openapi.yaml',
+    sourceCount: 2,
+    classesCarried: 0,
+    pathsCarried: 0,
+    removedCount: 0,
+    conflictCount: 1,
+    sources: [],
+    conflicts: [
+      {
+        kind: 'class',
+        key: 'Customer',
+        sources: [
+          {
+            role: 'existing',
+            repositoryFullName: 'acme/customers-service',
+            branch: 'main',
+            path: 'openapi.yaml',
+            definition: { type: 'object', required: ['id'], properties: { id: { type: 'string', format: 'uuid' }, email: { type: 'string' } } },
+          },
+          {
+            role: 'incoming',
+            repositoryFullName: 'acme/payments-specs',
+            branch: 'main',
+            path: 'specs/payments/openapi.yaml',
+            definition: { type: 'object', required: ['id'], properties: { id: { type: 'integer' }, email: { type: 'string' } } },
+          },
+        ],
+      },
+    ],
+    createdAt: '2026-10-19T14:20:00Z',
+  },
+  {
+    id: 'm1',
+    projectId: 'p-1',
+    projectName: 'Payments API',
+    status: 'merged',
+    versionId: 'v-2',
+    versionLabel: '2.3.0',
+    repositoryFullName: 'acme/payments-specs',
+    branch: 'main',
+    path: 'specs/payments/openapi.yaml',
+    sourceCount: 2,
+    classesCarried: 3,
+    pathsCarried: 2,
+    removedCount: 0,
+    conflictCount: 0,
+    sources: [],
+    conflicts: [],
+    createdAt: '2026-10-18T09:00:00Z',
+  },
+];
+
 /** Per-route responses, reset before each test and overridable per case. */
 let routes: Record<string, { status?: number; body: unknown }>;
 
@@ -376,6 +439,8 @@ beforeEach(() => {
         updatedAt: '2026-10-19T12:00:00Z',
       },
     },
+    // V2-REPO-8.2: this repository's sync history — one merge and one conflict.
+    '/api/repositories/repo-1/federation-merges': { body: { success: true, merges: SYNC_HISTORY } },
     '/api/repositories/repo-1': { body: { success: true, repository: REPOSITORY } },
     '/api/projects': { body: { success: true, projects: PROJECTS } },
     '/api/catalog/import/bulk/plan': { body: BULK_PLAN },
@@ -1264,5 +1329,19 @@ describe('the browser fixtures', () => {
     await screen.findByTestId('repository-file-detail');
     await screen.findByTestId('repository-file-importable-verdict');
     write('file-detail', page());
+  });
+
+  it('renders the Imports tab with its sync history (and writes its fixture on request)', async () => {
+    await renderScreen();
+    await openTab('imports');
+    const rows = await screen.findAllByTestId('federation-merge');
+    expect(rows.map((row) => row.getAttribute('data-status'))).toEqual(['conflicted', 'merged']);
+    expect(within(rows[0]).getByText('Payments API')).toBeInTheDocument();
+    expect(within(rows[0]).getByTestId('federation-diff').querySelector('[data-change="incoming"]')).toHaveTextContent(
+      '"type": "integer"',
+    );
+    // The fixture shows the conflict opened.
+    document.querySelectorAll('details.fed-details').forEach((details) => details.setAttribute('open', ''));
+    write('imports', page());
   });
 });

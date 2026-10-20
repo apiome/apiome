@@ -34677,6 +34677,201 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   FEDERATION  (V2-REPO-8.2, #2806) — `components/ade/versions/FederationSwitch`,
+   `components/ade/versions/FederationMergeHistory`
+   --------------------------------------------------------------------------
+   The federation switch at the top of the Versions → Sources tab, and the
+   merge history shown there and as a repository's Sync history. A conflict's
+   diff marks each line by who has it with a sign (− / +) *and* a tint, so the
+   difference never rides on colour alone.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. The diff block
+   scrolls on its own; long names and paths wrap.
+   ========================================================================== */
+
+.fed-switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.fed-switch__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.fed-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.fed-switch__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.fed-note,
+.fed-row__sentence {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.fed-muted {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.fed-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
+
+.fed-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.fed-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+}
+
+.fed-row__name {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.fed-row__when {
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.fed-details > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.fed-conflict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin-block-start: var(--space-2);
+}
+
+.fed-conflict__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.fed-conflict__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fed-legend {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.fed-legend > span:first-child {
+  display: inline-block;
+  inline-size: 1.25rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.fed-legend--existing > span:first-child {
+  color: var(--danger-fg);
+}
+
+.fed-legend--incoming > span:first-child {
+  color: var(--ok-fg);
+}
+
+.fed-diff {
+  max-block-size: 24rem;
+  margin: 0;
+  padding: var(--space-2) 0;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre;
+}
+
+.fed-diff__line {
+  display: block;
+  padding-inline: var(--space-2);
+}
+
+.fed-diff__line--existing {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.fed-diff__line--incoming {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+
+.fed-diff__mark {
+  display: inline-block;
+  inline-size: 1.25rem;
+  user-select: none;
+}
+
+/* ==========================================================================
    PR-BACK  (REPO-5.8, #2793) — `components/ade/versions/PrBackPanel`,
    `components/ade/dashboard/repositories/RepositoryPrBackSettings`
    --------------------------------------------------------------------------

@@ -146,7 +146,27 @@ service, and each is imported into the same project (see
 Use the search box, the **All** / **Classes** / **Paths** chips and the source picker to narrow the
 table. Pick **Not from a repository** to see what no file owns.
 
-<Screenshot id="versions-sources" alt="The Sources tab: two contributing repositories in precedence order, and each class and path with its source and origin" />
+<Screenshot id="versions-sources" alt="The Sources tab: the Federation switch, two contributing repositories in precedence order, and the sync-back and merge history sections" />
+
+### Federation
+
+The **Federation** switch at the top of the tab decides what the next repository import does:
+
+- **On** (the default) — the imported file is merged with the other contributing files.
+- **Off** — the imported file replaces the API; content other files defined is dropped.
+
+The sentence under the switch says what its current position does. Changing it needs
+`projects:edit`, applies to the next import, and does not change existing versions. See
+[Federation on or off](../bring-in/repositories.mdx#federation-on-or-off).
+
+### Merge history
+
+**Merge history** lists every import federation acted on, newest first: **Merged**, **Conflict**
+(nothing was written) or **Replaced** (federation was off). **Click “Show the conflict”** on a
+conflict to compare both files' definitions of each class or path that collides — **−** lines are
+only in the file that already contributes, **+** lines only in the file you imported.
+
+<Screenshot id="versions-merge-history" alt="Merge history: a conflict on the class Order opened to compare both files' definitions, and an earlier merge" />
 
 ### Sync back to repositories
 
@@ -212,7 +232,9 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
   The **Sources** tab reads `GET /v1/tenants/{tenant}/projects/{project}/repository-sources?version=…`
   — see [Project repository sources](../reference/rest/project-repository-sources.md). **Sync back to
   repositories** calls `POST /v1/tenants/{tenant}/projects/{project}/pr-back` — see
-  [PR-back](../reference/rest/pr-back.md).
+  [PR-back](../reference/rest/pr-back.md). The **Federation** switch and **Merge history** use
+  `…/projects/{project}/repository-federation` and `…/projects/{project}/federation-merges` — see
+  [Repository federation](../reference/rest/repository-federation.md).
 
 ### Fork a version into another project from the CLI
 

@@ -215,7 +215,7 @@ export async function callRestBinding(
 export async function callRestProject(
   auth: BindingsAuth,
   projectRef: string,
-  init: { method?: 'GET' | 'POST' | 'DELETE'; suffix?: string; body?: unknown } = {}
+  init: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; suffix?: string; body?: unknown } = {}
 ): Promise<unknown> {
   return callRestUrl(auth, restProjectUrl(auth.tenantSlug, projectRef, init.suffix ?? ''), init);
 }
