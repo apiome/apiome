@@ -5,8 +5,9 @@
  *
  * Authority: `docs/mockups/sources/repository-detail.html` §Settings — the *Source* card, the
  * *Scan cadence* switch over its disabled fieldset, *Refresh conflicts* (which stays
- * {@link RepositoryConflictPolicy}, its own RAR-4.5 panel), *Default importer mappings*, and
- * the danger zone.
+ * {@link RepositoryConflictPolicy}, its own RAR-4.5 panel), *Pull requests back* (REPO-5.8's
+ * {@link RepositoryPrBackSettings}, passed in the same way), *Default importer mappings*, and the
+ * danger zone.
  *
  * ### The one thing this fixes rather than restyles
  *
@@ -60,6 +61,8 @@ export interface RepositorySettingsTabProps {
   removing: boolean;
   /** The RAR-4.5 conflict-policy panel, passed in so this tab owns no data of its own. */
   conflictPolicy: React.ReactNode;
+  /** The REPO-5.8 PR-back settings card, passed in for the same reason. */
+  prBack?: React.ReactNode;
 }
 
 /** The importer-mappings table's four columns. */
@@ -78,6 +81,7 @@ export function RepositorySettingsTab({
   onRemove,
   removing,
   conflictPolicy,
+  prBack,
 }: RepositorySettingsTabProps) {
   const autoRefreshOn = repository.auto_refresh_enabled ?? true;
 
@@ -181,6 +185,8 @@ export function RepositorySettingsTab({
       </Card>
 
       {conflictPolicy}
+
+      {prBack}
 
       <Card data-testid="repository-settings-mappings">
         <CardContent className="flex flex-col gap-3">

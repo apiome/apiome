@@ -15,7 +15,10 @@
  *   there: *Imported* by this version's import, *Carried forward* by a merge, or *Not from a
  *   repository* (edited in Apiome, or imported before multi-repository merge).
  *
- * Reads only; apiome-rest enforces `projects:view`.
+ * - **Sync back to repositories** (REPO-5.8, #2793) — {@link PrBackPanel}: render the chosen
+ *   version and open a pull request into the files it was imported from.
+ *
+ * The provenance reads need `projects:view`; opening a pull request needs `versions:publish`.
  */
 
 import * as React from 'react';
@@ -46,6 +49,8 @@ import {
   type ProjectRepositorySourcesReply,
   type SourceFilter,
 } from '@lib/repository-sources';
+
+import { PrBackPanel } from './PrBackPanel';
 
 /** The part of a version row the panel reads. */
 export interface SourcesVersion {
@@ -274,6 +279,9 @@ export function RepositorySourcesPanel({
               </ol>
             )}
           </div>
+
+          {/* Hides itself when no repository holds the project's files (pre-REPO-5.7 imports included). */}
+          <PrBackPanel projectId={projectId} versionId={versionId} versionLabel={reply.version?.version_label} />
 
           <DataTable
             caption="Where each class and path came from"

@@ -120,7 +120,18 @@
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-versions/tab-sources.html",
       "sources": [
-        "apiome-ui/src/app/components/ade/versions/RepositorySourcesPanel.tsx"
+        "apiome-ui/src/app/components/ade/versions/RepositorySourcesPanel.tsx",
+        "apiome-ui/src/app/components/ade/versions/PrBackPanel.tsx"
+      ]
+    },
+    {
+      "id": "versions-pr-back-preview",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/tab-sources-pr-back.html",
+      "scrollTo": "[data-testid=\"pr-back-panel\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/PrBackPanel.tsx"
       ]
     },
     {
@@ -370,6 +381,16 @@
       "route": "/ade/dashboard/repositories/[id]",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-repository-detail/settings.html"
+    },
+    {
+      "id": "repository-pr-back-settings",
+      "route": "/ade/dashboard/repositories/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-repository-detail/settings.html",
+      "scrollTo": "[data-testid=\"repository-settings-pr-back\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/repositories/RepositoryPrBackSettings.tsx"
+      ]
     },
     {
       "id": "repositories-catalog",

@@ -1268,6 +1268,50 @@ const SOURCES_REPLY = {
   counts: { classes: 5, paths: 3, attributed: 7, unattributed: 1 },
 };
 
+/** The PR-back section's listing for the docs fixture (REPO-5.8). */
+const PR_BACK_REPOSITORIES = {
+  projectId: 'project-1',
+  repositories: [
+    {
+      repositoryId: 'repo-s1',
+      repositoryFullName: 'acme/orders-service',
+      files: [{ path: 'openapi.yaml', branch: 'main', precedence: 1 }],
+      eligible: true,
+      baseBranch: 'main',
+      reasonCode: null,
+      reason: null,
+    },
+    {
+      repositoryId: 'repo-s2',
+      repositoryFullName: 'acme/payments-service',
+      files: [{ path: 'openapi.yaml', branch: 'main', precedence: 2 }],
+      eligible: false,
+      baseBranch: null,
+      reasonCode: 'pr-back-not-configured',
+      reason:
+        'acme/payments-service has no PR-back settings, so no project may open pull requests into it. An administrator of the repository can allow projects in its Settings tab.',
+    },
+  ],
+};
+
+/** A PR-back dry run into the orders repository, for the docs fixture (REPO-5.8). */
+const PR_BACK_PREVIEW = {
+  status: 'preview',
+  dryRun: true,
+  versionLabel: '2.4.0',
+  repositoryFullName: 'acme/orders-service',
+  baseBranch: 'main',
+  branchName: 'apiome/pr-back-payments-api-main',
+  title: 'Apiome: sync Payments API 2.4.0',
+  commitMessage: 'Sync Payments API 2.4.0 from Apiome',
+  body: '## Payments API 2.4.0 — rendered from Apiome\n\nApiome rendered version **2.4.0** of **Payments API** and wrote 1 of 1 source file(s) back to `acme/orders-service`.\n\n### `openapi.yaml` — modified\n\n2 path(s) and 3 schema(s) rendered from Apiome.\n\n# Change report: Payments API\n\n- Schemas: 1 added, 0 removed, 1 modified\n',
+  files: [
+    { path: 'openapi.yaml', status: 'modified', paths: 2, schemas: 3, counts: { schemasAdded: 1, schemasModified: 1 }, foreignRefs: [], notes: [] },
+  ],
+  skipped: [],
+  reviewers: [],
+};
+
 describe('the browser fixtures', () => {
   const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-versions');
   const dump = process.env.VERSIONS_FIXTURE_DUMP === '1';
@@ -1331,6 +1375,9 @@ describe('the browser fixtures', () => {
       { test: /^\/api\/repositories$/, reply: () => ({ success: true, repositories: [] }) },
       // The Sources tab (REPO-5.7): a project merged from two service repositories.
       { test: /\/repository-sources\?version=/, reply: () => ({ success: true, ...SOURCES_REPLY }) },
+      // Its PR-back section (REPO-5.8): one repository allows the project, one has no settings.
+      { test: /\/pr-back\/repositories$/, reply: () => ({ success: true, ...PR_BACK_REPOSITORIES }) },
+      { method: 'POST', test: /\/pr-back$/, reply: () => ({ success: true, ...PR_BACK_PREVIEW }) },
     ]);
     await renderVersions();
 
@@ -1345,6 +1392,11 @@ describe('the browser fixtures', () => {
       });
       write(`tab-${tab}`, (document.querySelector('.page') as HTMLElement).outerHTML);
     }
+    // Still on Sources: preview a pull request back to the orders repository (REPO-5.8).
+    const [prBackRow] = await screen.findAllByTestId('pr-back-repository');
+    fireEvent.click(within(prBackRow).getByTestId('pr-back-preview'));
+    await within(prBackRow).findByTestId('pr-back-status-preview');
+    write('tab-sources-pr-back', (document.querySelector('.page') as HTMLElement).outerHTML);
     fireEvent.click(screen.getByTestId('versions-tab-timeline'));
 
     const draftMenu = await openRowMenu(HEAD_ID);

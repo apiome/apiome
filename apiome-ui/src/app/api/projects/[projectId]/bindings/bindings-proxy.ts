@@ -109,6 +109,21 @@ export function restProjectUrl(tenantSlug: string, projectRef: string, suffix = 
 }
 
 /**
+ * The apiome-rest URL of one of a registered repository's endpoints — REPO-5.8 (#2793).
+ *
+ * @param tenantSlug - The tenant slug.
+ * @param repositoryId - The repository id.
+ * @param suffix - A sub-resource, e.g. `/pr-back-settings`.
+ * @returns The absolute URL.
+ */
+export function restRepositoryUrl(tenantSlug: string, repositoryId: string, suffix = ''): string {
+  return (
+    `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenantSlug)}` +
+    `/repositories/${encodeURIComponent(repositoryId)}${suffix}`
+  );
+}
+
+/**
  * The apiome-rest URL of one version's binding endpoints.
  *
  * @param tenantSlug - The tenant slug.
@@ -214,10 +229,10 @@ export async function callRestProject(
  * @returns The parsed reply.
  * @throws RestBindingsError when apiome-rest refuses or answers with something unreadable.
  */
-async function callRestUrl(
+export async function callRestUrl(
   auth: BindingsAuth,
   url: string,
-  init: { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown }
+  init: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown }
 ): Promise<unknown> {
   const response = await fetch(url, {
     method: init.method ?? 'GET',

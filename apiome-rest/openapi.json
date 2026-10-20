@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.260.0",
+    "version": "1.261.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-20T02:47:50Z"
+                          "example": "2026-10-20T03:17:05Z"
                         },
                         "method": {
                           "type": "string",
@@ -34109,6 +34109,424 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for listaprojectscontributingrepositoriesandresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/repositories/{repository_id}/pr-back-settings": {
+      "get": {
+        "tags": [
+          "pr-back"
+        ],
+        "summary": "Read a repository's PR-back settings",
+        "description": "Which Apiome projects may open pull requests into the repository (`allow` list or `deny` list), the pull requests' target branch, the commit message template and the reviewers. `configured: false` means the repository has no settings, so no project may PR back.\n\nRequires `imports:view`.",
+        "operationId": "get_pr_back_settings_v1_tenants__tenant_slug__repositories__repository_id__pr_back_settings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "repository_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repository Id",
+              "description": "Repository Id schema."
+            },
+            "description": "Connected repository identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readarepositorys Prbacksettingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readarepositorys Prbacksettingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readarepositorys Prbacksettings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readarepositorys Prbacksettings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a repository's pr-back settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrBackSettingsResponse",
+                  "description": "Response payload for readarepositorys prbacksettingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readarepositorys prbacksettingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pr-back"
+        ],
+        "summary": "Save a repository's PR-back settings",
+        "description": "Replaces the repository's PR-back settings. `projectPolicy: allow` lets only `projectIds` open pull requests into the repository; `deny` lets every project except them. `targetBranch` blank uses the branch the files were imported from. `commitMessageTemplate` is Mustache over `project`, `version`, `repository`, `branch` and `fileCount`; blank uses the default. `reviewers` are GitHub logins or `org/team` slugs, requested on every pull request PR-back opens.\n\nRequires `imports:edit`. Audited as `repository.pr_back_settings.update`.",
+        "operationId": "put_pr_back_settings_v1_tenants__tenant_slug__repositories__repository_id__pr_back_settings_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "repository_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repository Id",
+              "description": "Repository Id schema."
+            },
+            "description": "Connected repository identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Savearepositorys Prbacksettingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Savearepositorys Prbacksettingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Savearepositorys Prbacksettings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Savearepositorys Prbacksettings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrBackSettingsPutRequest",
+                "description": "Request body for savearepositorys prbacksettingsrequest."
+              }
+            }
+          },
+          "description": "Request body for save a repository's pr-back settings."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for save a repository's pr-back settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrBackSettingsResponse",
+                  "description": "Response payload for savearepositorys prbacksettingsresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown repository."
+          },
+          "422": {
+            "description": "Invalid policy, branch, template, reviewer or project id."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/pr-back/repositories": {
+      "get": {
+        "tags": [
+          "pr-back"
+        ],
+        "summary": "List the repositories a project can PR back into",
+        "description": "Every repository the project was imported from, with its source files, whether the project may open pull requests into it (`eligible`) and, when it may not, why (`reasonCode`, `reason`).\n\nRequires `projects:view`.",
+        "operationId": "list_pr_back_repositories_v1_tenants__tenant_slug__projects__project_ref__pr_back_repositories_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtherepositoriesaprojectcan Prbackintoauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtherepositoriesaprojectcan Prbackintoauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtherepositoriesaprojectcan Prbackinto Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtherepositoriesaprojectcan Prbackinto Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the repositories a project can pr back into.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrBackRepositoriesResponse",
+                  "description": "Response payload for listtherepositoriesaprojectcan prbackintoresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listtherepositoriesaprojectcan prbackintoresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/pr-back": {
+      "post": {
+        "tags": [
+          "pr-back"
+        ],
+        "summary": "Open a pull request syncing a project version back to its repository",
+        "description": "Renders one version of the project and opens a pull request into the repository's source files on `apiome/pr-back-<project>-<base>`, built on the latest base branch. Each file gets back only the paths and schemas it defines (multi-repository projects); content no file defines belongs to the precedence-1 file. The description is each file's change report (the project's change report templates), and new pull requests get the repository's reviewers.\n\n**Idempotent.** One pull request per project and base branch: `updated` when the open one was refreshed, `unchanged` when it already carries exactly this sync, `up_to_date` when the base branch already holds the rendered files (nothing written), `opened` otherwise. `dryRun: true` answers `preview` with the title, description and commit message, writing nothing.\n\n**Failures are outcomes.** A revoked token, a refused push or a rate limit answers `200` with `status: failed`, an `errorCode` and an actionable log.\n\nRequires `versions:publish` (`projects:view` for a dry run). Every pull request opened is audited as `repository.pr_back_opened`, every one refreshed as `repository.pr_back_updated`.",
+        "operationId": "pr_back_project_v1_tenants__tenant_slug__projects__project_ref__pr_back_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for openapullrequestsyncingaprojectversionbaauthorization."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for openapullrequestsyncingaprojectversionbaauthorization."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for openapullrequestsyncingaprojectversionba xapikey."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for openapullrequestsyncingaprojectversionba xapikey."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrBackRequest",
+                "description": "Request body for openapullrequestsyncingaprojectversionbarequest."
+              }
+            }
+          },
+          "description": "Request body for open a pull request syncing a project version back to its repository."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for open a pull request syncing a project version back to its repository.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrBackOutcomeModel",
+                  "description": "Request body for openapullrequestsyncingaprojectversionbaresponse200."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The repository's settings do not let the project PR back."
+          },
+          "404": {
+            "description": "Unknown project, version or repository."
+          },
+          "409": {
+            "description": "The project has no source file the repository can receive."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Request body for openapullrequestsyncingaprojectversionbaresponse422."
                 }
               }
             }
@@ -111304,7 +111722,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "completed_at": {
             "anyOf": [
@@ -113259,7 +113677,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "comment_count": {
             "type": "integer",
@@ -113487,7 +113905,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114254,14 +114672,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -117545,7 +117963,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "afdaf684-1bad-43a4-8039-53b39736b83e"
+            "example": "24cc5fb9-3401-47e5-a21e-0c06dd3ef9f3"
           },
           "method": {
             "type": "string",
@@ -120072,7 +120490,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -121968,7 +122386,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "browse_url": {
             "anyOf": [
@@ -154869,6 +155287,714 @@
         "title": "PolicyTeam",
         "description": "The catch-all team."
       },
+      "PrBackFileRef": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "branch": {
+            "type": "string",
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "precedence": {
+            "type": "integer",
+            "title": "Precedence",
+            "description": "Precedence.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "branch",
+          "precedence"
+        ],
+        "title": "PrBackFileRef",
+        "description": "One source file of the project in a repository."
+      },
+      "PrBackFileReport": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`added`, `modified` or `unchanged`.",
+            "example": "active"
+          },
+          "paths": {
+            "type": "integer",
+            "title": "Paths",
+            "description": "Paths.",
+            "example": 1
+          },
+          "schemas": {
+            "type": "integer",
+            "title": "Schemas",
+            "description": "Schemas.",
+            "example": 1
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "foreignRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Foreignrefs",
+            "description": "Foreign Refs.",
+            "maxItems": 1000
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "Notes.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "status",
+          "paths",
+          "schemas"
+        ],
+        "title": "PrBackFileReport",
+        "description": "One rendered file and its change report."
+      },
+      "PrBackOutcomeModel": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`preview`, `opened`, `updated`, `unchanged`, `up_to_date` or `failed`.",
+            "example": "active"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "description": "Dry Run.",
+            "example": false
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "repositoryId": {
+            "type": "string",
+            "title": "Repositoryid",
+            "description": "Repository ID.",
+            "example": "example"
+          },
+          "repositoryFullName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name."
+          },
+          "baseBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Basebranch",
+            "description": "Base Branch."
+          },
+          "branchName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Branchname",
+            "description": "Branch Name."
+          },
+          "baseSha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Basesha",
+            "description": "Base Sha."
+          },
+          "commitSha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Commitsha",
+            "description": "Commit Sha."
+          },
+          "pullRequestNumber": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Pullrequestnumber",
+            "description": "Pull Request Number."
+          },
+          "pullRequestUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Pullrequesturl",
+            "description": "Pull Request URL."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Title",
+            "description": "Title."
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Body",
+            "description": "The pull request description (change report)."
+          },
+          "commitMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Commitmessage",
+            "description": "Commit Message."
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reviewers",
+            "description": "Reviewers.",
+            "maxItems": 1000
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/PrBackFileReport"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Files.",
+            "maxItems": 1000
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skipped",
+            "description": "Skipped.",
+            "maxItems": 1000
+          },
+          "log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Log",
+            "description": "Log.",
+            "maxItems": 1000
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Errorcode",
+            "description": "Error Code."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Outcome Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Outcome Model schema."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "dryRun",
+          "projectId",
+          "versionId",
+          "repositoryId"
+        ],
+        "title": "PrBackOutcomeModel",
+        "description": "What a PR-back did."
+      },
+      "PrBackProjectRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Project Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Project Ref schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Null when the project was deleted."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "PrBackProjectRef",
+        "description": "A project a repository's policy lists."
+      },
+      "PrBackRepositoriesResponse": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "repositories": {
+            "items": {
+              "$ref": "#/components/schemas/PrBackRepositoryEntry"
+            },
+            "type": "array",
+            "title": "Repositories",
+            "description": "Repositories.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "projectId"
+        ],
+        "title": "PrBackRepositoriesResponse",
+        "description": "The repositories a project was imported from."
+      },
+      "PrBackRepositoryEntry": {
+        "properties": {
+          "repositoryId": {
+            "type": "string",
+            "title": "Repositoryid",
+            "description": "Repository ID.",
+            "example": "example"
+          },
+          "repositoryFullName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Repository Entry schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Repository Entry schema."
+              }
+            ],
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name."
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/PrBackFileRef"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Files.",
+            "maxItems": 1000
+          },
+          "eligible": {
+            "type": "boolean",
+            "title": "Eligible",
+            "description": "Eligible.",
+            "example": false
+          },
+          "baseBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Repository Entry schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Repository Entry schema."
+              }
+            ],
+            "title": "Basebranch",
+            "description": "Base Branch."
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Repository Entry schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Repository Entry schema."
+              }
+            ],
+            "title": "Reasoncode",
+            "description": "Reason Code."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pr Back Repository Entry schema."
+              },
+              {
+                "type": "null",
+                "description": "Pr Back Repository Entry schema."
+              }
+            ],
+            "title": "Reason",
+            "description": "Why the project cannot PR back."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryId",
+          "eligible"
+        ],
+        "title": "PrBackRepositoryEntry",
+        "description": "A repository the project was imported from, and whether it can PR back into it."
+      },
+      "PrBackRequest": {
+        "properties": {
+          "repositoryId": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Repositoryid",
+            "description": "Repository ID.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Request body for pr back."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pr back."
+              }
+            ],
+            "title": "Version",
+            "description": "Revision id or version label; the newest when omitted."
+          },
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "description": "Compare and describe; write nothing.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryId"
+        ],
+        "title": "PrBackRequest",
+        "description": "Body for a PR-back."
+      },
+      "PrBackSettingsPutRequest": {
+        "properties": {
+          "projectPolicy": {
+            "type": "string",
+            "title": "Projectpolicy",
+            "description": "`allow` or `deny`.",
+            "default": "allow",
+            "example": "example"
+          },
+          "projectIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Projectids",
+            "description": "Project ids."
+          },
+          "targetBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Request body for pr back settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pr back settings put."
+              }
+            ],
+            "title": "Targetbranch",
+            "description": "Blank for the import branch."
+          },
+          "commitMessageTemplate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Request body for pr back settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pr back settings put."
+              }
+            ],
+            "title": "Commitmessagetemplate",
+            "description": "Mustache template with `{{project}}`, `{{version}}`, `{{repository}}`, `{{branch}}` and `{{fileCount}}`. Blank for the default."
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 15,
+            "title": "Reviewers",
+            "description": "GitHub logins (`octocat`) or teams (`acme/api-reviewers`)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PrBackSettingsPutRequest",
+        "description": "Body for saving a repository's PR-back settings (replaces them whole)."
+      },
+      "PrBackSettingsResponse": {
+        "properties": {
+          "repositoryId": {
+            "type": "string",
+            "title": "Repositoryid",
+            "description": "Repository ID.",
+            "example": "example"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "False when the repository has no settings \u2014 no project may PR back.",
+            "example": false
+          },
+          "projectPolicy": {
+            "type": "string",
+            "title": "Projectpolicy",
+            "description": "`allow`: only the listed projects may PR back. `deny`: every project except them.",
+            "example": "example"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/PrBackProjectRef"
+            },
+            "type": "array",
+            "title": "Projects",
+            "description": "Projects.",
+            "maxItems": 1000
+          },
+          "targetBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pr back settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pr back settings."
+              }
+            ],
+            "title": "Targetbranch",
+            "description": "Base branch of the pull requests; null for the branch the files were imported from."
+          },
+          "commitMessageTemplate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pr back settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pr back settings."
+              }
+            ],
+            "title": "Commitmessagetemplate",
+            "description": "Mustache template; null for the default."
+          },
+          "defaultCommitMessageTemplate": {
+            "type": "string",
+            "title": "Defaultcommitmessagetemplate",
+            "default": "Sync {{project}} {{version}} from Apiome",
+            "description": "Default Commit Message Template.",
+            "example": "Example validation message."
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reviewers",
+            "description": "Reviewers.",
+            "maxItems": 1000
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for pr back settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pr back settings."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryId",
+          "configured",
+          "projectPolicy"
+        ],
+        "title": "PrBackSettingsResponse",
+        "description": "A repository's PR-back settings."
+      },
       "PreservationClaimBody": {
         "properties": {
           "pointer": {
@@ -166344,7 +167470,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           }
         },
         "additionalProperties": false,
@@ -177766,13 +178892,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           }
         },
         "additionalProperties": false,
@@ -179276,7 +180402,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "detected_by": {
             "anyOf": [
@@ -187482,14 +188608,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T02:47:50Z"
+            "example": "2026-10-20T03:17:05Z"
           },
           "outcome": {
             "anyOf": [

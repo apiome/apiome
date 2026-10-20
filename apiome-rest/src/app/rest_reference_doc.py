@@ -70,6 +70,7 @@ _TITLE_WORDS: Mapping[str, str] = {
     "json": "JSON",
     "mcp": "MCP",
     "openapi": "OpenAPI",
+    "pr": "PR",
     "sdk": "SDK",
     "url": "URL",
 }
