@@ -2,6 +2,50 @@
   "report_version": 1,
   "formats": [
     {
+      "format_key": "a2a",
+      "label": "A2A Agent Card",
+      "paradigm": "agent",
+      "corpus_formats": [
+        "a2a"
+      ],
+      "corpus_directories": [
+        "a2a"
+      ],
+      "fixtures": {
+        "valid": 6,
+        "negative": 5,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 11
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [
+        "multi-file"
+      ],
+      "goldens": 6,
+      "golden_directories": [
+        "a2a"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "apiblueprint",
       "label": "API Blueprint",
       "paradigm": "rest",

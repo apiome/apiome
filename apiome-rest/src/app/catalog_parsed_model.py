@@ -392,10 +392,53 @@ def _generic_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
     return [g for g in groups if g is not None]
 
 
+def _detail_row(name: str, value: Optional[str]) -> Optional[Dict[str, Any]]:
+    """A label/value field row for a descriptive (non-schema) fact, or ``None`` when empty."""
+    if not value:
+        return None
+    return {"name": name, "type": value, "description": None, "required": False}
+
+
+def _skill_entity(operation: Operation) -> Dict[str, Any]:
+    """One A2A skill as an entity: its tags in ``meta`` (so the detail filter finds them) and its
+    description, id, modes, examples and security as rows."""
+    extras = operation.extras
+    security = ", ".join(
+        record["scheme"]
+        for record in extras.get("security") or []
+        if isinstance(record, dict) and isinstance(record.get("scheme"), str)
+    )
+    rows = [
+        _detail_row("description", operation.description),
+        _detail_row("id", extras.get("skill_id")),
+        _detail_row("tags", ", ".join(operation.tags)),
+        _detail_row("input modes", ", ".join(extras.get("input_modes") or [])),
+        _detail_row("output modes", ", ".join(extras.get("output_modes") or [])),
+        _detail_row("examples", " · ".join(extras.get("examples") or [])),
+        _detail_row("security", security or None),
+    ]
+    return _entity(
+        name=operation.name,
+        tag="SKILL",
+        meta=f"tags: {', '.join(operation.tags)}" if operation.tags else None,
+        fields=[row for row in rows if row is not None],
+    )
+
+
+def _agent_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
+    """Agent paradigm: an A2A Agent Card (MFI-18.1) reads as a *Skills* group — each skill with its
+    tags, modes and security. Every other agent format (MCP, LLM tools) keeps the generic view."""
+    if api.format != "a2a":
+        return _generic_groups(api)
+    group = _group("Skills", "what the agent can do", [_skill_entity(op) for op in api.operations()])
+    return [group] if group is not None else []
+
+
 _PARADIGM_BUILDERS = {
     ApiParadigm.GRAPH: _graph_groups,
     ApiParadigm.RPC: _rpc_groups,
     ApiParadigm.EVENT: _event_groups,
+    ApiParadigm.AGENT: _agent_groups,
 }
 
 

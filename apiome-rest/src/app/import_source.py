@@ -1207,6 +1207,11 @@ def load_builtin_import_sources() -> None:
     # effect of its own imports, the MCP manifest normalizer under ``mcp``.
     from . import mcp_import_source as _mcp  # noqa: F401
 
+    # ``a2a_import_source`` (MFI-18.1) self-registers the ``a2a`` adapter — an A2A Agent Card
+    # as a file / URL / paste or fetched live from ``/.well-known/agent-card.json`` — and, via
+    # its own imports, the Agent Card normalizer under ``a2a``.
+    from . import a2a_import_source as _a2a  # noqa: F401
+
     # ``aws_apigateway_import_source`` (FMT-7.1) self-registers the ``aws-apigateway`` adapter;
     # it normalizes through the OpenAPI normalizer and interprets the AWS extensions itself.
     from . import aws_apigateway_import_source as _aws_apigateway  # noqa: F401

@@ -1,0 +1,576 @@
+{
+  "adapter": "a2a",
+  "canonical": {
+    "channels": [],
+    "description": "Grab-bag operations agent used to exercise every corner of the Agent Card shape.",
+    "extras": {
+      "capabilities": {
+        "extensions": [
+          {
+            "params": {
+              "currency": "USD"
+            },
+            "required": false,
+            "uri": "https://ops.example.com/ext/cost-hints/v2"
+          },
+          {
+            "uri": "https://ops.example.com/ext/audit/v1"
+          }
+        ],
+        "pushNotifications": false,
+        "stateTransitionHistory": true,
+        "streaming": true
+      },
+      "default_input_modes": [],
+      "default_output_modes": [
+        "text/plain"
+      ],
+      "documentation_url": null,
+      "icon_url": null,
+      "preferred_transport": "HTTP+JSON",
+      "present_keys": [
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "description",
+        "name",
+        "preferredTransport",
+        "protocolVersion",
+        "security",
+        "securitySchemes",
+        "signatures",
+        "skills",
+        "url",
+        "version",
+        "x-ops-owner"
+      ],
+      "protocol_version": "0.3.0",
+      "provider": null,
+      "security_requirements": [
+        {
+          "header_key": []
+        },
+        {
+          "bearer": []
+        },
+        {
+          "sso": [
+            "ops"
+          ]
+        }
+      ],
+      "security_schemes": {
+        "bearer": {
+          "bearerFormat": "JWT",
+          "scheme": "bearer",
+          "type": "http"
+        },
+        "header_key": {
+          "in": "header",
+          "name": "X-Ops-Key",
+          "type": "apiKey"
+        },
+        "kerberos": {
+          "type": "negotiate"
+        },
+        "legacy_key": {
+          "in": "query",
+          "name": "api_key",
+          "type": "apiKey"
+        }
+      },
+      "signature_count": 2,
+      "skill_count": 5,
+      "skill_tags": [
+        "dry-run",
+        "ops",
+        "remediation",
+        "résumé",
+        "多言語"
+      ],
+      "supports_authenticated_extended_card": false
+    },
+    "format": "a2a",
+    "identity": {
+      "extras": {},
+      "id": "http://ops.internal.example.com:8080/a2a",
+      "name": "Ops Swiss-Army Agent",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "a2a",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Primary A2A endpoint",
+        "extras": {},
+        "name": "HTTP+JSON",
+        "protocol": "HTTP+JSON",
+        "url": "http://ops.internal.example.com:8080/a2a",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Grab-bag operations agent used to exercise every corner of the Agent Card shape.",
+        "extras": {
+          "security_requirements": [
+            {
+              "header_key": []
+            },
+            {
+              "bearer": []
+            },
+            {
+              "sso": [
+                "ops"
+              ]
+            }
+          ],
+          "security_schemes": {
+            "bearer": {
+              "bearerFormat": "JWT",
+              "scheme": "bearer",
+              "type": "http"
+            },
+            "header_key": {
+              "in": "header",
+              "name": "X-Ops-Key",
+              "type": "apiKey"
+            },
+            "kerberos": {
+              "type": "negotiate"
+            },
+            "legacy_key": {
+              "in": "query",
+              "name": "api_key",
+              "type": "apiKey"
+            }
+          }
+        },
+        "key": "Ops Swiss-Army Agent",
+        "name": "Ops Swiss-Army Agent",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Skill whose id is a number rather than a string.",
+            "extras": {
+              "examples": [],
+              "input_modes": [],
+              "output_modes": [
+                "text/plain"
+              ],
+              "security": [
+                {
+                  "scheme": "header_key",
+                  "scopes": []
+                },
+                {
+                  "scheme": "bearer",
+                  "scopes": []
+                },
+                {
+                  "scheme": "sso",
+                  "scopes": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "header_key": []
+                },
+                {
+                  "bearer": []
+                },
+                {
+                  "sso": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "42"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ops Swiss-Army Agent.42",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.42#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.42#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Numeric id skill",
+            "parameters": [],
+            "streaming": "server",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "examples": [
+                "What does error E1234 mean?"
+              ],
+              "input_modes": [],
+              "output_modes": [
+                "text/plain"
+              ],
+              "security": [],
+              "security_requirements": [],
+              "security_source": "skill",
+              "skill_id": "explain"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ops Swiss-Army Agent.explain",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.explain#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.explain#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Explain",
+            "parameters": [],
+            "streaming": "server",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Restarts a named service on a host after a health check.",
+            "extras": {
+              "examples": [],
+              "input_modes": [
+                "application/json"
+              ],
+              "output_modes": [
+                "application/json",
+                "text/event-stream"
+              ],
+              "security": [
+                {
+                  "scheme": "bearer",
+                  "scopes": [
+                    "ops:write"
+                  ]
+                },
+                {
+                  "scheme": "break_glass",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "bearer": [
+                    "ops:write"
+                  ]
+                },
+                {
+                  "break_glass": []
+                }
+              ],
+              "security_source": "skill",
+              "skill_id": "restart-service"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ops Swiss-Army Agent.restart-service",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.restart-service#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json",
+                  "text/event-stream"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.restart-service#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Restart service",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "ops",
+              "remediation"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Reports what a restart would do without doing it.",
+            "extras": {
+              "duplicate_of": "Ops Swiss-Army Agent.restart-service",
+              "examples": [],
+              "input_modes": [],
+              "output_modes": [
+                "text/plain"
+              ],
+              "security": [
+                {
+                  "scheme": "header_key",
+                  "scopes": []
+                },
+                {
+                  "scheme": "bearer",
+                  "scopes": []
+                },
+                {
+                  "scheme": "sso",
+                  "scopes": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "header_key": []
+                },
+                {
+                  "bearer": []
+                },
+                {
+                  "sso": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "restart-service"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ops Swiss-Army Agent.restart-service~2",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.restart-service~2#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.restart-service~2#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Restart service (dry run)",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "ops",
+              "dry-run"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Résume les incidents des dernières 24 heures — 日本語もOK.",
+            "extras": {
+              "examples": [],
+              "input_modes": [],
+              "output_modes": [
+                "text/plain"
+              ],
+              "security": [
+                {
+                  "scheme": "header_key",
+                  "scopes": []
+                },
+                {
+                  "scheme": "bearer",
+                  "scopes": []
+                },
+                {
+                  "scheme": "sso",
+                  "scopes": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "header_key": []
+                },
+                {
+                  "bearer": []
+                },
+                {
+                  "sso": [
+                    "ops"
+                  ]
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "unicode-✓"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ops Swiss-Army Agent.unicode-✓",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.unicode-✓#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ops Swiss-Army Agent.unicode-✓#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Résumé des incidents",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "ops",
+              "résumé",
+              "多言語"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Ops Swiss-Army Agent",
+    "types": [],
+    "version": "7"
+  },
+  "corpus_path": "a2a/04-stress-edge-cases.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "a2a"
+  },
+  "fingerprint": "sha256:c90cb8cc1f28efac321847f64cd939d6ae9683cbf8e62e768362c1a92e184493",
+  "lint": {
+    "findings": 14,
+    "grade": "F",
+    "report_fingerprint": "a7ecf46a90e7036f1691e2d5d3643bc1cb859135ec9d43520105e9b8a0571532",
+    "score": 44,
+    "severity_counts": {
+      "error": 3,
+      "info": 6,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

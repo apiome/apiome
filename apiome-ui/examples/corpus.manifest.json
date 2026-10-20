@@ -2,6 +2,12 @@
   "$schema": "./corpus.schema.json",
   "manifest_version": 1,
   "directories": {
+    "a2a": {
+      "label": "A2A Agent Card",
+      "category": "agent",
+      "paradigm": "agent",
+      "marker": "`name` + `skills[].id` beside `capabilities` / `defaultInputModes` / `protocolVersion`"
+    },
     "api-blueprint": {
       "label": "API Blueprint",
       "category": "rest-http",
@@ -622,6 +628,248 @@
     }
   },
   "entries": [
+    {
+      "path": "a2a/01-minimal-echo-agent.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "skills",
+        "single-skill",
+        "default-modes"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "a2a/02-typical-travel-concierge.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "skills",
+        "tags",
+        "examples",
+        "oauth2",
+        "provider",
+        "streaming",
+        "per-skill-modes"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "a2a/03-composition-multi-interface-skill-auth.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "additional-interfaces",
+        "openIdConnect",
+        "mutualTLS",
+        "per-skill-security",
+        "extensions",
+        "authenticated-extended-card"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "a2a/04-stress-edge-cases.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "duplicate-skill-id",
+        "numeric-ids",
+        "undeclared-scheme",
+        "apikey-in-query",
+        "http-endpoint",
+        "signatures",
+        "unicode",
+        "vendor-keys"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "a2a/05-real-world-georoute-planner.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "skills",
+        "additional-interfaces",
+        "openIdConnect",
+        "signatures",
+        "per-skill-modes"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Reconstruction of the sample Agent Card in the A2A Protocol specification, authored in-repo.",
+      "rung": "real-world"
+    },
+    {
+      "path": "a2a/06-typical-travel-concierge-v3.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "skills",
+        "release-2",
+        "skill-added",
+        "skill-removed",
+        "auth-changed"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The next release of 02-typical-travel-concierge.json: a skill added, one removed, one edited and the security requirements changed \u2014 the diff fixture."
+    },
+    {
+      "path": "a2a/negative/01-syntactic-trailing-comma.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "trailing-comma"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "a2a/negative/02-semantic-skill-without-id.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "skill-id"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "a2a/negative/03-truncated-mid-skill.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "a2a/negative/04-wrong-format-openapi.yaml",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "openapi"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "a2a/negative/05-encoding-utf16.json",
+      "format": "a2a",
+      "adapter_key": "a2a",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "a2a",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
     {
       "path": "api-blueprint/01-simple-api.apib",
       "format": "api-blueprint",
@@ -31979,6 +32227,9 @@
     }
   ],
   "rung_waivers": {
+    "a2a": {
+      "multi-file": "An Agent Card is a single self-contained JSON document with no cross-document references; A2aImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file."
+    },
     "apiblueprint": {
       "multi-file": "The API Blueprint adapter's parse_fileset only parses the root document and never resolves references across fileset members, so a multi-file set would exercise nothing beyond a single file."
     },

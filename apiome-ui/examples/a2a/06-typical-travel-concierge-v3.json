@@ -1,0 +1,82 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Travel Concierge",
+  "description": "Plans trips end to end: searches flights, hotels and rail, builds itineraries and books them.",
+  "url": "https://travel.agents.example.com/a2a/v1",
+  "preferredTransport": "JSONRPC",
+  "provider": {
+    "organization": "Example Travel Co.",
+    "url": "https://travel.example.com"
+  },
+  "iconUrl": "https://travel.example.com/static/concierge.png",
+  "version": "3.0.0",
+  "documentationUrl": "https://travel.example.com/docs/concierge",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": false
+  },
+  "securitySchemes": {
+    "concierge_oauth": {
+      "type": "oauth2",
+      "description": "OAuth 2.0 client credentials for partner agents.",
+      "flows": {
+        "clientCredentials": {
+          "tokenUrl": "https://auth.travel.example.com/oauth/token",
+          "scopes": {
+            "trips:read": "Read itineraries",
+            "trips:write": "Create and change bookings"
+          }
+        }
+      }
+    },
+    "partner_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-Partner-Key",
+      "description": "Static key for legacy partner integrations."
+    }
+  },
+  "security": [{ "concierge_oauth": ["trips:read", "trips:write"] }, { "partner_key": [] }],
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "search-flights",
+      "name": "Search flights",
+      "description": "Finds flights between two airports for given dates, cabin class and passenger count, including multi-city trips.",
+      "tags": ["travel", "flights", "search", "multi-city"],
+      "examples": ["Find me a direct flight from SFO to NRT on 12 March, economy, 2 adults"]
+    },
+    {
+      "id": "search-hotels",
+      "name": "Search hotels",
+      "description": "Finds hotels near a location for a date range, filtered by price and rating.",
+      "tags": ["travel", "hotels", "search"],
+      "examples": ["Four-star hotels within 1 km of Shibuya station, 12-16 March"]
+    },
+    {
+      "id": "search-rail",
+      "name": "Search rail",
+      "description": "Finds train connections between two stations, including seat classes and passes.",
+      "tags": ["travel", "rail", "search"],
+      "examples": ["Shinkansen from Tokyo to Kyoto on the morning of 14 March"]
+    },
+    {
+      "id": "build-itinerary",
+      "name": "Build itinerary",
+      "description": "Assembles chosen flights, hotels and activities into a day-by-day itinerary document.",
+      "tags": ["travel", "itinerary", "planning"],
+      "outputModes": ["application/json", "application/pdf"]
+    },
+    {
+      "id": "book-trip",
+      "name": "Book trip",
+      "description": "Books every item of an itinerary and returns the confirmation numbers.",
+      "tags": ["travel", "booking", "payments"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"],
+      "security": [{ "concierge_oauth": ["trips:write"] }]
+    }
+  ]
+}

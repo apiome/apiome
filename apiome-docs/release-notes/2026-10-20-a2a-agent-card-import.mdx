@@ -1,0 +1,21 @@
+---
+slug: a2a-agent-card-import
+title: Import A2A Agent Cards
+description: A2A agents import from their Agent Card, with skills, tags and security.
+authors: [apiome]
+---
+
+You can now [import an A2A Agent Card](/bring-in/a2a-agent-card-import): the descriptor every A2A
+(Agent2Agent) agent publishes, from a file, a URL or live from the agent's
+`/.well-known/agent-card.json`.
+
+{/* truncate */}
+
+- **Skills become operations.** Each skill keeps its tags, modes, examples and security, and the
+  catalog item lists them in a **Skills** group you can filter by name or tag.
+- **Live discovery.** `apiome import a2a --discover https://agent.example.com` finds the card at the
+  agent's well-known URI, falling back to the pre-0.3 `/.well-known/agent.json`.
+- **Versions show the skill delta.** A new release reports skills added, removed and changed, and any
+  change to the agent's security.
+- **Hygiene lint.** Ten `a2a.*` rules flag undeclared or unknown security schemes, API keys in the
+  query string, plain-HTTP endpoints, duplicate skill ids and missing descriptions or tags.

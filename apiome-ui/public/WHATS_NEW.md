@@ -21,6 +21,7 @@ We continue to improve the platform based on your feedback with improvements and
     - AWS API Gateway (REST and HTTP API exports) import
     - Azure API Management (definitions and policies) import
     - Apigee proxy bundle import
+    - A2A Agent Card import (skills and tags, live discovery from `/.well-known/agent-card.json`)
     - Protobuf editions 2023/2024 normalization parity
     - RELAX NG import
     - DTD import

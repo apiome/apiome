@@ -1,0 +1,11 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Echo Agent",
+  "description": "Repeats back whatever text it is sent.",
+  "url": "https://echo.agents.example.com/a2a/v1",
+  "version": "1.0.0",
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    { "id": "echo", "name": "Echo", "description": "Returns the incom

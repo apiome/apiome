@@ -146,6 +146,19 @@ describe('parsedEntityMatchesFilter / filterParsedEntities (MFI-28.3)', () => {
     expect(parsedEntityMatchesFilter(entities[2], 'mutation')).toBe(false);
   });
 
+  it('matches on meta, so an A2A skill is found by its own tags (MFI-18.1)', () => {
+    const skill: CatalogParsedEntity = {
+      name: 'Search flights',
+      tag: 'SKILL',
+      meta: 'tags: travel, flights, search',
+      fields: [],
+    };
+    expect(parsedEntityMatchesFilter(skill, 'flights')).toBe(true);
+    expect(parsedEntityMatchesFilter(skill, 'TRAVEL')).toBe(true);
+    expect(parsedEntityMatchesFilter(skill, 'hotels')).toBe(false);
+    expect(parsedEntityMatchesFilter({ ...skill, meta: null }, 'travel')).toBe(false);
+  });
+
   it('treats a blank query as "everything matches"', () => {
     expect(parsedEntityMatchesFilter(entities[2], '')).toBe(true);
     expect(parsedEntityMatchesFilter(entities[2], '   ')).toBe(true);

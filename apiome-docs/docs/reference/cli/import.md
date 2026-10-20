@@ -18,13 +18,43 @@ Import OpenAPI, Swagger, Arazzo, JSON Schema, and JSON Schema type documents int
 apiome import [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger).
+Subcommands: [`a2a`](#import-a2a), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger).
 
 **Options**
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--list` | flag |  |  | List the registered import sources (formats) and exit. |
+
+## apiome import a2a {#import-a2a}
+
+Import an A2A (Agent2Agent) Agent Card from a file, URL, stdin, or a live agent (MFI-18.1).
+
+Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the card. With ``--discover`` the card URL is resolved from the agent's well-known URI first; the card is then imported through the registered ``a2a`` adapter like any other source.
+
+```text
+apiome import a2a [OPTIONS] [INPUT]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SOURCE` | text |  | Agent Card path, ``http``/``https`` URL, or ``-`` for stdin. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--file` | text |  |  | Local document path to import (alternative to the INPUT argument). |
+| `--url` | text |  |  | http/https document URL to import (alternative to the INPUT argument). |
+| `--discover` | text |  |  | Agent origin (for example ``https://agent.example.com``) whose card is fetched from ``/.well-known/agent-card.json``, falling back to ``/.well-known/agent.json``. |
+| `--dry-run` | flag |  |  | Validate and preview the import without persisting changes. |
+| `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
+| `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
+| `--poll-interval` | float range | `1.0` |  | Seconds between import job-status polls when waiting. |
+| `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
+| `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
 
 ## apiome import arazzo {#import-arazzo}
 

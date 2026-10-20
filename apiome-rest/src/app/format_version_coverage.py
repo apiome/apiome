@@ -802,6 +802,18 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
             )
         ],
     ),
+    "a2a": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Agent Card (any `protocolVersion`)",
+                format_key="a2a",
+                support=VersionSupport.UNGATED,
+                note="The card's `protocolVersion` is recorded, but detection and normalization "
+                "do not branch on it; pre-0.3 cards served at `/.well-known/agent.json` read the "
+                "same way as current ones.",
+            )
+        ],
+    ),
     "odata": VersionCoverage(
         reads=[
             FormatVersion(

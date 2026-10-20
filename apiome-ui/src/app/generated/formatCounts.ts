@@ -64,15 +64,15 @@ export interface FormatCounts {
 export const FORMAT_COUNTS: FormatCounts = {
   version: '1',
   capabilityRegistryVersion: '14',
-  total: 54,
-  importable: 54,
+  total: 55,
+  importable: 55,
   exportable: 44,
   roundTrip: 44,
-  importOnly: 10,
+  importOnly: 11,
   exportOnly: 0,
-  liveDiscovery: 5,
+  liveDiscovery: 6,
   publishable: 1,
-  catalog: 53,
+  catalog: 54,
   toolchainGated: 3,
   paradigms: [
     { id: 'rest', label: 'REST', total: 18, importable: 18, exportable: 14 },
@@ -80,7 +80,7 @@ export const FORMAT_COUNTS: FormatCounts = {
     { id: 'event', label: 'Event-driven', total: 2, importable: 2, exportable: 2 },
     { id: 'graph', label: 'Graph', total: 1, importable: 1, exportable: 1 },
     { id: 'data_schema', label: 'Data schema', total: 21, importable: 21, exportable: 16 },
-    { id: 'agent', label: 'Agent', total: 2, importable: 2, exportable: 1 },
+    { id: 'agent', label: 'Agent', total: 3, importable: 3, exportable: 1 },
   ],
 };
 
