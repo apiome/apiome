@@ -100,6 +100,7 @@ from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
 from .primitives_routes import router as primitives_router
 from .project_repository_sources_routes import router as project_repository_sources_router
+from .pr_back_routes import router as pr_back_router
 from .project_tags_routes import router as project_tags_router
 from .projects_routes import router as projects_router
 from .properties_routes import router as properties_router
@@ -183,7 +184,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.260.0",
+    version="1.261.0",
 )
 
 
@@ -411,6 +412,7 @@ app.include_router(comment_router)
 app.include_router(review_router)
 app.include_router(draft_binding_router)
 app.include_router(project_repository_sources_router)
+app.include_router(pr_back_router)
 app.include_router(provider_check_router)
 app.include_router(spec_sync_router)
 app.include_router(api_check_suite_router)

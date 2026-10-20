@@ -85,7 +85,7 @@ _USER_AGENT = "apiome-sdk-git-delivery"
 #: How much of a GitHub error message is kept.
 _MESSAGE_MAX_CHARS = 400
 
-#: Largest blob read back (the previous delivery manifest).
+#: Largest blob read back (the previous delivery manifest; a PR-back file's base version).
 _BLOB_READ_MAX_BYTES = 1_000_000
 
 #: Stable failure codes. The pipeline records them on the run; a caller dispatches on them.
@@ -555,6 +555,61 @@ class GitHubGitClient:
             if entry.get("path")
         }
 
+    def find_file(self, root_tree_sha: str, path: str, *, ref_label: str) -> Optional[ExistingEntry]:
+        """Find one file in a commit's tree — REPO-5.8 (#2793).
+
+        Walks to the file one directory at a time without a recursive listing, so finding a file
+        in a large monorepo costs one small request per path segment.
+
+        Args:
+            root_tree_sha: The commit's root tree.
+            path: The repository-relative file path.
+            ref_label: How to name the branch in an error message.
+
+        Returns:
+            The entry, or ``None`` when nothing exists at ``path`` (or a parent is missing).
+
+        Raises:
+            GitProviderError: ``ERROR_TARGET_PATH_INVALID`` when a parent is a file or the path is
+                a directory; ``ERROR_TREE_TOO_LARGE`` when a directory is too large for GitHub to
+                list and the entry was not in the part it listed.
+        """
+        segments = [part for part in path.split("/") if part]
+        current = root_tree_sha
+        for index, segment in enumerate(segments):
+            entries, truncated = self._list_tree(current, recursive=False)
+            match = next((entry for entry in entries if entry.get("path") == segment), None)
+            walked = "/".join(segments[: index + 1])
+            if match is None:
+                if truncated:
+                    raise GitProviderError(
+                        ERROR_TREE_TOO_LARGE,
+                        f"`{'/'.join(segments[:index]) or '/'}` in {self._full_name}@{ref_label} has "
+                        "too many entries for GitHub to list.",
+                    )
+                return None
+            last = index == len(segments) - 1
+            if last:
+                if match.get("type") != "blob":
+                    raise GitProviderError(
+                        ERROR_TARGET_PATH_INVALID,
+                        f"`{walked}` is a directory in {self._full_name}@{ref_label}, not a file.",
+                    )
+                return ExistingEntry(
+                    path=walked,
+                    sha=str(match.get("sha") or ""),
+                    type="blob",
+                    mode=str(match.get("mode") or FILE_MODE),
+                )
+            if match.get("type") != "tree":
+                raise GitProviderError(
+                    ERROR_TARGET_PATH_INVALID,
+                    f"`{walked}` is a file in {self._full_name}@{ref_label}, so `{path}` cannot be "
+                    "written under it.",
+                )
+            current = str(match.get("sha") or "")
+        return None
+
     def get_blob_text(self, blob_sha: str) -> Optional[str]:
         """Read a small text blob.
 
@@ -565,7 +620,7 @@ class GitHubGitClient:
             Its UTF-8 text, or ``None`` when it is too large or not valid UTF-8.
         """
         response = self._request(
-            "GET", f"/git/blobs/{blob_sha}", what="reading the previous delivery manifest", kind=_KIND_READ
+            "GET", f"/git/blobs/{blob_sha}", what=f"reading blob {blob_sha[:12]}", kind=_KIND_READ
         )
         payload = response.json() or {}
         if int(payload.get("size") or 0) > _BLOB_READ_MAX_BYTES:
@@ -750,6 +805,30 @@ class GitHubGitClient:
             return None
         raise self._error(
             response, what=f"opening a pull request from {head!r} into {base!r}", kind=_KIND_PULL
+        )
+
+    def request_reviewers(self, number: int, *, reviewers: List[str], team_reviewers: List[str]) -> None:
+        """Request reviews on a pull request — REPO-5.8 (#2793).
+
+        Args:
+            number: The pull request.
+            reviewers: GitHub logins.
+            team_reviewers: Team slugs of the repository's organization.
+
+        Raises:
+            GitProviderError: ``ERROR_PULL_REQUEST_REFUSED`` when GitHub refuses (a login that is
+                not a collaborator, a team the token cannot see). Callers treat it as a warning:
+                the pull request is already open.
+        """
+        if not reviewers and not team_reviewers:
+            return
+        self._request(
+            "POST",
+            f"/pulls/{int(number)}/requested_reviewers",
+            what=f"requesting reviewers on pull request #{int(number)}",
+            kind=_KIND_PULL,
+            ok=(201,),
+            json={"reviewers": list(reviewers), "team_reviewers": list(team_reviewers)},
         )
 
     def update_pull(self, number: int, *, title: str, body: str, base: str) -> PullRequest:

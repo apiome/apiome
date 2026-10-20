@@ -44,6 +44,7 @@ import {
   type DashboardRepository,
 } from '@/app/components/ade/dashboard/repositories/repositoryStoreUi';
 import { RepositoryConflictPolicy } from '@/app/components/ade/dashboard/repositories/RepositoryConflictPolicy';
+import { RepositoryPrBackSettings } from '@/app/components/ade/dashboard/repositories/RepositoryPrBackSettings';
 import { RepositoryHealthBadge } from '@/app/components/ade/dashboard/repositories/RepositoryHealthBadge';
 import { RepositoryFilesBrowser } from '@/app/components/ade/dashboard/repositories/RepositoryFilesBrowser';
 import { RepositorySpecsTab } from '@/app/components/ade/dashboard/repositories/RepositorySpecsTab';
@@ -601,6 +602,10 @@ export function RepositoryDetailClient() {
                   repositoryId={repo.id}
                   defaultBranch={repo.default_branch}
                 />
+              }
+              prBack={
+                /* REPO-5.8 (#2793): which projects may open pull requests back into this repository. */
+                <RepositoryPrBackSettings repositoryId={repo.id} />
               }
             />
           ) : null}

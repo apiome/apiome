@@ -61,7 +61,9 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
   are refreshed by the same engine on the same cadence vocabulary.
 - **Imports** — the import history.
 - **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
-  conflict (**Hold for review**, **Overwrite** or **New branch**), and **Remove repository**.
+  conflict (**Hold for review**, **Overwrite** or **New branch**), which projects may open pull
+  requests back into the repository (see [Send changes back as a pull request](#send-changes-back-as-a-pull-request)),
+  and **Remove repository**.
 
 <Screenshot id="repository-preview" alt="A repository's Preview tab: files indexed, importable estimate, branches, recent scans and imports" />
 
@@ -117,6 +119,53 @@ Rules of the merge:
 
 The project's **Sources** tab on [Versions](../build/versions.mdx#sources) lists the contributing
 files and shows the source of every class and path.
+
+### Send changes back as a pull request
+
+Changes made in Apiome can go back to the repository: Apiome renders a version of the project and
+opens a pull request into the files the project was imported from. This is **PR-back**. It is off
+for every repository until someone allows it.
+
+**Allow projects** on the repository's page:
+
+1. Open the repository and **click the Settings tab**.
+2. In **Pull requests back to this repository**, choose who may open pull requests:
+   - **Only the projects listed** — tick each project that may.
+   - **Every project except those listed** — tick the projects that may not.
+3. Optionally set:
+   - **Target branch** — the branch the pull requests merge into. Leave it blank to use the branch
+     the files were imported from.
+   - **Reviewers** — GitHub logins or teams, separated by commas, for example
+     `octocat, acme/api-reviewers`. Each new pull request requests a review from them.
+   - **Commit message** — a template that can use `{{project}}`, `{{version}}`, `{{repository}}`,
+     `{{branch}}` and `{{fileCount}}`. Leave it blank for *Sync `{{project}}` `{{version}}` from Apiome*.
+4. **Click “Save PR-back settings”.**
+
+<Screenshot id="repository-pr-back-settings" alt="Pull requests back to this repository: an allow list with one project ticked, target branch, reviewers and commit message" />
+
+Saving needs the `imports:edit` permission and is recorded in the audit log as
+`repository.pr_back_settings.update`.
+
+**Open the pull request** from the project's **Sources** tab on
+[Versions](../build/versions.mdx#sync-back-to-repositories). What the pull request contains:
+
+- **The rendered spec.** Each source file gets back the paths and schemas it defines, written as
+  JSON or YAML to match the file's extension. In a project merged from several repositories, a
+  class or path that no file defines (one added in Apiome) goes to the file with precedence **1**.
+  A file that is not JSON or YAML (such as a `.graphql` file) is left as it is, and the pull
+  request says so.
+- **A change report as its description.** For each file, what changed between the file on the
+  target branch and the rendered spec, written with the project's change report template.
+- **One pull request per project and target branch.** It is opened from the branch
+  `apiome/pr-back-<project>-<target branch>`. Running PR-back again, for example after a new version,
+  updates the open pull request instead of opening another. Apiome rebuilds that branch each time, so
+  make review changes in Apiome, not on the branch.
+
+PR-back pushes with the GitHub account the repository was registered through. That account needs
+write access to the repository: a classic token with the `repo` scope, or a fine-grained token with
+write access to **Contents** and **Pull requests**. A repository registered from a public URL has no
+account, so it cannot receive pull requests. Every pull request PR-back opens is recorded in the
+audit log as `repository.pr_back_opened`, and every update as `repository.pr_back_updated`.
 
 ### Backstage files
 
@@ -186,6 +235,10 @@ change it.
   A project's contributing repositories and the source of each class and path:
   `GET /v1/tenants/{tenant}/projects/{project}/repository-sources` — see
   [Project repository sources](../reference/rest/project-repository-sources.md).
+  PR-back: `GET` / `PUT …/repositories/{repo}/pr-back-settings`,
+  `GET /v1/tenants/{tenant}/projects/{project}/pr-back/repositories` and
+  `POST …/projects/{project}/pr-back` (`dryRun: true` previews without writing) — see
+  [PR-back](../reference/rest/pr-back.md).
   The repository audit export (`GET …/repository-audit-export`) also lists connector changes and
   runs (`repository.connector.*`).
 

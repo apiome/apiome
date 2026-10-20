@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.397.0] - 2026-10-19
+
+### Added
+- **PR-back sync: Apiome → repository (#2793, REPO-5.8)**: render a project version and open a pull request into
+  the repository files the project was imported from. Each source file gets back only the paths and schemas it
+  defines (REPO-5.7 provenance); content no live file defines goes to the precedence-1 file; files are written as
+  JSON or YAML to match their extension (other files are skipped and listed). The pull request description is a
+  change report per file (base-branch file → rendered file, rendered with the project's change report template).
+  One pull request per project and base branch on `apiome/pr-back-<project>-<base>`, rebuilt from the latest base
+  and force-updated; re-running refreshes the open pull request (`updated` / `unchanged`) or reports `up_to_date`.
+  Pushes reuse the repository's linked-account credential and SDK-4.2's GitHub client (no new credential).
+  - **apiome-db V302** `repository_pr_back_settings`: per-repository allow/deny list of projects (no row = no
+    project may PR back), target branch, Mustache commit message template, reviewers (logins or `org/team`).
+  - **`GET` / `PUT /v1/tenants/{tenant_slug}/repositories/{repository_id}/pr-back-settings`** (`imports:view` /
+    `imports:edit`; audited `repository.pr_back_settings.update`).
+  - **`GET /v1/tenants/{tenant_slug}/projects/{project_ref}/pr-back/repositories`** (`projects:view`): the
+    repositories the project was imported from and whether it may PR back into each (`reasonCode` when not).
+  - **`POST /v1/tenants/{tenant_slug}/projects/{project_ref}/pr-back`** (`versions:publish`; `projects:view` with
+    `dryRun: true`): `preview` / `opened` / `updated` / `unchanged` / `up_to_date` / `failed`. Every pull request
+    opened is audited `repository.pr_back_opened`, every one refreshed `repository.pr_back_updated`. New tag
+    `pr-back`.
+  - `GitHubGitClient` gained `find_file` (segment-by-segment tree walk) and `request_reviewers`.
+
 ## [1.396.0] - 2026-10-19
 
 ### Added

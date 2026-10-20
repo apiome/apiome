@@ -361,6 +361,21 @@ beforeEach(() => {
         overrides: [],
       },
     },
+    // REPO-5.8: the repository allows one project to open pull requests back into it.
+    '/api/repositories/repo-1/pr-back-settings': {
+      body: {
+        success: true,
+        repositoryId: 'repo-1',
+        configured: true,
+        projectPolicy: 'allow',
+        projects: [{ id: 'p-1', name: 'Payments API' }],
+        targetBranch: null,
+        commitMessageTemplate: null,
+        defaultCommitMessageTemplate: 'Sync {{project}} {{version}} from Apiome',
+        reviewers: ['acme/api-reviewers'],
+        updatedAt: '2026-10-19T12:00:00Z',
+      },
+    },
     '/api/repositories/repo-1': { body: { success: true, repository: REPOSITORY } },
     '/api/projects': { body: { success: true, projects: PROJECTS } },
     '/api/catalog/import/bulk/plan': { body: BULK_PLAN },
@@ -1073,6 +1088,15 @@ describe('the Settings tab', () => {
     expect(screen.getByText(/You can add it again later/)).toBeInTheDocument();
   });
 
+  test('carries the PR-back settings card (REPO-5.8)', async () => {
+    await renderScreen();
+    await openTab('settings');
+    expect(await screen.findByTestId('pr-back-settings-summary')).toHaveTextContent(
+      '1 project may open pull requests.',
+    );
+    expect(screen.getByTestId('pr-back-reviewers')).toHaveValue('acme/api-reviewers');
+  });
+
   test('carries the conflict-policy panel rather than a copy of it', async () => {
     await renderScreen();
     await openTab('settings');
@@ -1200,6 +1224,7 @@ describe('the browser fixtures', () => {
     await renderScreen();
     await openTab('settings');
     await screen.findByTestId('conflict-policy');
+    await screen.findByTestId('pr-back-settings-form');
     write('settings', page());
   });
 

@@ -148,6 +148,36 @@ table. Pick **Not from a repository** to see what no file owns.
 
 <Screenshot id="versions-sources" alt="The Sources tab: two contributing repositories in precedence order, and each class and path with its source and origin" />
 
+### Sync back to repositories
+
+Under the contributing repositories, **Sync back to repositories** opens a pull request that writes
+the selected version back into each repository's files. Each repository decides in its own
+**Settings** tab whether this project may (see
+[Send changes back as a pull request](../bring-in/repositories.mdx#send-changes-back-as-a-pull-request)).
+A repository that does not allow it shows **Not allowed** and the reason.
+
+1. **Pick the Version** to send back.
+2. **Click “Preview”** on a repository. Nothing is written: you see which files would change, how
+   many paths and schemas each holds, and the pull request description. Open
+   **Pull request description** to read the change report and the commit message.
+3. **Click “Open pull request”.** Apiome opens the pull request and shows **View pull request #…**.
+
+<Screenshot id="versions-pr-back-preview" alt="Sync back to repositories: a preview for acme/orders-service with one modified file, and acme/payments-service not allowed" />
+
+What the result means:
+
+| Result | Means |
+| --- | --- |
+| **Preview** | Nothing was written; this is what a pull request would contain |
+| **Pull request opened** | A new pull request was opened |
+| **Pull request updated** | The project's open pull request now carries this version |
+| **Already up to date** | The open pull request already carries exactly this version |
+| **Nothing to sync** | The target branch already holds the rendered files, so nothing was written |
+| **Failed** | The pull request could not be opened; the message says why and what to do |
+
+Opening a pull request needs the `versions:publish` permission; **Preview** needs only
+`projects:view`.
+
 ## Dependencies
 
 The **Dependencies** tab lists what the project depends on and what depends on it — consumers,
@@ -180,7 +210,9 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
   The **Sources** tab reads `GET /v1/tenants/{tenant}/projects/{project}/repository-sources?version=…`
-  — see [Project repository sources](../reference/rest/project-repository-sources.md).
+  — see [Project repository sources](../reference/rest/project-repository-sources.md). **Sync back to
+  repositories** calls `POST /v1/tenants/{tenant}/projects/{project}/pr-back` — see
+  [PR-back](../reference/rest/pr-back.md).
 
 ### Fork a version into another project from the CLI
 

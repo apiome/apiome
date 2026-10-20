@@ -34677,6 +34677,249 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   PR-BACK  (REPO-5.8, #2793) — `components/ade/versions/PrBackPanel`,
+   `components/ade/dashboard/repositories/RepositoryPrBackSettings`
+   --------------------------------------------------------------------------
+   The way back from Apiome to a repository: the "Sync back to repositories"
+   section of the Versions → Sources tab, and the repository's PR-back card on
+   its Settings tab. The section sits inside `.rsrc` and borrows its section
+   title (`.rsrc-section`, `.rsrc-section__title`); the card borrows the
+   repository detail screen's `.repo-det-card__title` / `.repo-det-note`.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. Quiet text is
+   `--fg-muted`. Long repository names, paths and the pull request body wrap or
+   scroll on their own — nothing scrolls the page sideways.
+   ========================================================================== */
+
+.prb-list,
+.prb-files,
+.prb-skipped,
+.prb-projects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
+
+.prb-repo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.prb-repo__head,
+.prb-result__head,
+.prb-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-inline-size: 0;
+}
+
+.prb-repo__name {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.prb-repo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.prb-files__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.prb-files__note {
+  flex-basis: 100%;
+}
+
+.prb-note,
+.prb-summary {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.prb-summary {
+  font-size: var(--fs-sm);
+}
+
+.prb-muted {
+  color: var(--fg-muted);
+}
+
+.prb-result-slot:empty {
+  display: none;
+}
+
+.prb-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+}
+
+.prb-result__sentence {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.prb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.prb-glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.prb-details > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.prb-body {
+  max-block-size: 24rem;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Settings card ---------------------------------------------------------- */
+.prb-card,
+.prb-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.prb-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.prb-legend {
+  margin-block-end: var(--space-1);
+  padding: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.prb-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  cursor: pointer;
+}
+
+.prb-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.prb-choice__label {
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.prb-projects {
+  max-block-size: 14rem;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.prb-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.prb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.prb-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.prb-field--wide {
+  grid-column: 1 / -1;
+}
+
+.prb-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ==========================================================================
    AGENT ACCESS  (AGX-3.4, #4540) — `components/ade/agentAccess`
    --------------------------------------------------------------------------
    MCP → Agent access: the toolset editor, agent key management and the usage

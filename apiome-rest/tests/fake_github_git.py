@@ -1,7 +1,8 @@
 """An in-memory GitHub for SDK-4.2 git delivery tests (#4496).
 
 Implements just the REST endpoints :class:`app.sdk_git_delivery_github.GitHubGitClient` calls —
-repository, refs, commits, trees, blobs and pull requests — over real object semantics: blobs are
+repository, refs, commits, trees, blobs, pull requests and review requests (REPO-5.8 PR-back
+reuses it) — over real object semantics: blobs are
 named by their true git blob id (so a delivery's locally computed ids match), trees and commits by a
 deterministic digest (so identical content yields identical ids), and a tree write applies its
 entries on top of ``base_tree`` exactly as GitHub does, including deletion by ``sha: null``.
@@ -52,6 +53,8 @@ class FakePull:
     body: str
     state: str = "open"
     merged: bool = False
+    reviewers: List[str] = field(default_factory=list)
+    team_reviewers: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -393,6 +396,17 @@ class FakeGitHub:
                 body=body["body"],
             )
             self.pulls.append(pull)
+            return httpx.Response(201, json=self._pull_json(pull))
+
+        match = re.fullmatch(r"/pulls/(\d+)/requested_reviewers", route)
+        if method == "POST" and match:
+            pull = next((item for item in self.pulls if item.number == int(match.group(1))), None)
+            if pull is None:
+                return not_found
+            pull.reviewers.extend(r for r in body.get("reviewers") or [] if r not in pull.reviewers)
+            pull.team_reviewers.extend(
+                t for t in body.get("team_reviewers") or [] if t not in pull.team_reviewers
+            )
             return httpx.Response(201, json=self._pull_json(pull))
 
         match = re.fullmatch(r"/pulls/(\d+)", route)

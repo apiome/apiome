@@ -72,6 +72,10 @@ beforeEach(() => {
   replies = {};
   global.fetch = jest.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
+    // The PR-back section (REPO-5.8) asks which repositories can be synced to; none here.
+    if (url.includes('/pr-back/')) {
+      return { ok: true, status: 200, json: async () => ({ success: true, repositories: [] }) } as unknown as Response;
+    }
     requested.push(url);
     const version = new URL(url, 'http://ui.test').searchParams.get('version') ?? '';
     const reply = replies[version] ?? { status: 200, body: { success: true, ...MERGED } };

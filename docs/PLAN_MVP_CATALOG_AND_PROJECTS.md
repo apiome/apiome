@@ -200,7 +200,7 @@ Multi-repo merge and PR-back sync.
 
 - [ ] [#2749](https://github.com/apiome/apiome/issues/2749) REPO-EPIC-5 Sync Pipeline & Project Mapping
 - [x] [#2792](https://github.com/apiome/apiome/issues/2792) REPO-5.7 Multi-repo merge into single API surface
-- [ ] [#2793](https://github.com/apiome/apiome/issues/2793) REPO-5.8 PR-back sync (Apiome → repository)
+- [x] [#2793](https://github.com/apiome/apiome/issues/2793) REPO-5.8 PR-back sync (Apiome → repository)
 - [ ] [#2806](https://github.com/apiome/apiome/issues/2806) V2-REPO-8.2 Multi-repo federation (single project from N repos)
 
 #### Agent / registry cataloging
