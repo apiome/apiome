@@ -55,7 +55,7 @@ wheels = [
 
 [[package]]
 name = "apiome-mcp"
-version = "0.10.2"
+version = "0.10.4"
 source = { editable = "../apiome-mcp" }
 dependencies = [
     { name = "apiome-rest" },
@@ -156,7 +156,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.381.0"
+version = "1.392.0"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "asn1tools" },
@@ -236,6 +236,7 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "confluent-kafka", extras = ["avro", "json"], specifier = ">=2.5.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "moto", extras = ["apigateway", "apigatewayv2", "sts"], specifier = ">=5.0.0" },
     { name = "pytest", specifier = ">=8.0.0" },

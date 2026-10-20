@@ -482,8 +482,12 @@ def mark_item_mcp_server(
     discovered_reason: Optional[str],
     revision: Optional[str],
     remote_updated_at: Any,
+    project_id: Optional[str] = None,
 ) -> None:
-    """Record the outcome of syncing one ``mcp-registry`` entry (CDG-4.4).
+    """Record the outcome of syncing one entry through a source's ``sync_item`` hook (CDG-4.4).
+
+    Used by ``mcp-registry`` (an MCP server) and ``schema-registry`` (a mirrored subject's catalog
+    item, MFI-12.3).
 
     With no ``discovered_reason`` the server answered: the row is ``imported`` and the freshness
     anchor moves to ``revision``. With a reason the row stays ``discovered`` and keeps no anchor, so
@@ -497,12 +501,14 @@ def mark_item_mcp_server(
         discovered_reason: Why the entry is not imported, or ``None`` when it is.
         revision: The entry's remote revision (the anchor when imported).
         remote_updated_at: The registry's ``updatedAt`` for the entry.
+        project_id: The catalog item the entry backs, if any; ``None`` keeps the stored one.
     """
     imported = discovered_reason is None
     db._execute_write(
         """
         UPDATE apiome.catalog_connector_items
         SET status = %s, mcp_endpoint_id = %s::uuid, discovered_reason = %s,
+            project_id = COALESCE(%s::uuid, project_id),
             imported_revision = CASE WHEN %s THEN %s ELSE NULL END,
             imported_remote_updated_at = CASE WHEN %s THEN %s::timestamptz ELSE NULL END
         WHERE id = %s::uuid
@@ -511,6 +517,7 @@ def mark_item_mcp_server(
             ITEM_IMPORTED if imported else ITEM_DISCOVERED,
             mcp_endpoint_id,
             discovered_reason[:1000] if discovered_reason else None,
+            project_id,
             imported,
             revision,
             imported,

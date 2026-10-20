@@ -169,7 +169,10 @@ SCOPE_DESCRIPTION = (
     "(environments optional; the service-account key or workload-identity configuration goes in "
     "`PUT …/credentials` as `{\"credentialJson\": \"…\"}`). `mcp-registry`: `{\"search\": \"…\", \"updatedSince\": "
     "\"<RFC 3339 instant>\"}`, both optional, with the registry root as the base URL (an optional "
-    "`{\"token\": \"…\"}` bearer token or `{\"apiKey\": \"…\"}` goes in `PUT …/credentials`). Kinds with a "
+    "`{\"token\": \"…\"}` bearer token or `{\"apiKey\": \"…\"}` goes in `PUT …/credentials`). `schema-registry`: "
+    "`{}` (no scope), with the registry's REST address as the base URL — Confluent, Karapace, or Apicurio's "
+    "`/apis/ccompat/v7` (an optional `{\"username\": \"…\", \"password\": \"…\"}` for basic auth or "
+    "`{\"token\": \"…\"}` bearer token goes in `PUT …/credentials`). Kinds with a "
     "source check their scope on every write, and some dry-run it."
 )
 
@@ -306,8 +309,10 @@ class ConnectorItemOut(BaseModel):
         default=None,
         serialization_alias="discoveredReason",
         description=(
-            "`mcp-registry` only: why the entry is still `discovered` — `no-remote`, `remote-templated`, "
-            "`remote-refused` or `remote-unreachable`, then the explanation (CDG-4.4)."
+            "`mcp-registry` and `schema-registry` only: why the entry is still `discovered` — for an MCP "
+            "registry `no-remote`, `remote-templated`, `remote-refused` or `remote-unreachable` (CDG-4.4); for "
+            "a schema registry `subject-name-taken`, `references-unsupported` or `schema-type-unavailable` "
+            "(MFI-12.3) — then the explanation."
         ),
     )
 

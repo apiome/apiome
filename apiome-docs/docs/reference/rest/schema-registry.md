@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.255.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.256.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `schema-registry` · 32 operations
 
@@ -918,6 +918,8 @@ The registered version; ``created`` is ``false`` when the subject already held t
 | `references` | array of any | no | References. |
 | `projectId` | string | yes | The catalog item holding the schema. |
 | `versionRecordId` | string | yes | The catalog item revision holding the schema. |
+| `upstreamVersion` | integer or null | no | The upstream registry's version number of a mirrored version (MFI-12.3). |
+| `upstreamSchemaId` | integer or null | no | The upstream registry's schema id of a mirrored version (MFI-12.3). |
 | `createdAt` | string (date-time) | yes | Created At. |
 | `schema` | string or null | no | The schema text (single-version reads only). |
 | `created` | boolean | yes | Created. |
@@ -978,6 +980,8 @@ A schema subject.
 | `projectId` | string or null | no | The catalog item new versions are registered into. |
 | `versionCount` | integer | no | Number of version. |
 | `latestVersion` | integer or null | no | Latest Version. |
+| `sourceRef` | string or null | no | `registry:<url>` when a `schema-registry` connector mirrors this subject from an upstream registry (MFI-12.3); `null` for a subject registered or attached in Apiome. |
+| `sourceConnectorId` | string or null | no | The `schema-registry` connector that mirrors this subject, if any. |
 | `createdAt` | string (date-time) | yes | Created At. |
 | `updatedAt` | string (date-time) | yes | Updated At. |
 
@@ -1014,5 +1018,7 @@ One version of a subject: a schema id and the catalog item revision that holds i
 | `references` | array of any | no | References. |
 | `projectId` | string | yes | The catalog item holding the schema. |
 | `versionRecordId` | string | yes | The catalog item revision holding the schema. |
+| `upstreamVersion` | integer or null | no | The upstream registry's version number of a mirrored version (MFI-12.3). |
+| `upstreamSchemaId` | integer or null | no | The upstream registry's schema id of a mirrored version (MFI-12.3). |
 | `createdAt` | string (date-time) | yes | Created At. |
 | `schema` | string or null | no | The schema text (single-version reads only). |

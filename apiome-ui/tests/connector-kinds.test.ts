@@ -42,6 +42,20 @@ describe('connector kinds', () => {
     expect(buildCredentials(registry, {})).toBeNull();
   });
 
+  it('crawls a schema registry with optional basic or bearer credentials (MFI-12.3)', () => {
+    const registry = connectorKind('schema-registry')!;
+    expect(landsInMcpCatalog('schema-registry')).toBe(false);
+    expect(registry.scope).toEqual([]);
+    expect(registry.credentials.map((f) => f.key)).toEqual(['username', 'password', 'token']);
+    expect(registry.credentials.every((f) => !f.required)).toBe(true);
+    expect(missingFields(registry, 'scope', {}, '')).toEqual(['Base URL']);
+    expect(buildCredentials(registry, {})).toBeNull();
+    expect(buildCredentials(registry, { username: 'KEY', password: 'SECRET' })).toEqual({
+      username: 'KEY',
+      password: 'SECRET',
+    });
+  });
+
   it('never puts a secret in the scope', () => {
     for (const kind of CONNECTOR_KINDS) {
       for (const field of kind.scope) expect(field.type).not.toBe('secret');

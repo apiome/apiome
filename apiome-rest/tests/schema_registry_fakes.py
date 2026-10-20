@@ -212,7 +212,9 @@ class FakeStore:
         strategy=None,
         subject_project_id=None,
         require_empty_subject=False,
+        mirror=None,
     ):
+        mirror = dict(mirror or {})
         row = self.get_subject(db, tenant_id, subject)
         if row is None:
             row = {
@@ -222,11 +224,15 @@ class FakeStore:
                 "mode": self.config["mode"],
                 "compatibility_level": None,
                 "project_id": None,
+                "source_ref": mirror.get("source_ref"),
+                "source_connector_id": mirror.get("connector_id"),
                 "deleted_at": None,
                 "created_at": NOW,
                 "updated_at": NOW,
             }
             self.subjects.append(row)
+        if mirror.get("connector_id") and row.get("source_connector_id") != mirror["connector_id"]:
+            raise SchemaRegistryError("subject-not-mirrored", "x", status_code=409)
         if require_empty_subject:
             if row["project_id"] and row["project_id"] != subject_project_id:
                 raise SchemaRegistryError("subject-attached-elsewhere", "x", status_code=409)
@@ -251,6 +257,9 @@ class FakeStore:
         )
         if existing:
             existing["deleted_at"] = None
+            if mirror.get("upstream_version") is not None:
+                existing["upstream_version"] = mirror["upstream_version"]
+                existing["upstream_schema_id"] = mirror.get("upstream_schema_id")
             return {**existing, "created": False, "subject": subject, "subject_id": row["id"]}
         version = {
             "subject_id": row["id"],
@@ -261,8 +270,56 @@ class FakeStore:
             "references": references,
             "project_id": project_id,
             "version_record_id": version_record_id,
+            "upstream_version": mirror.get("upstream_version"),
+            "upstream_schema_id": mirror.get("upstream_schema_id"),
             "created_at": NOW,
             "deleted_at": None,
         }
         self.versions.append(version)
         return {**version, "created": True, "subject": subject, "subject_id": row["id"]}
+
+    # --- mirrors (MFI-12.3) ---
+    def find_mirrored_schema(self, db, tenant_id, connector_id, upstream_schema_id):
+        owned = {s["id"] for s in self.subjects if s.get("source_connector_id") == connector_id}
+        held = next(
+            (
+                v
+                for v in self.versions
+                if v["subject_id"] in owned and v.get("upstream_schema_id") == upstream_schema_id
+            ),
+            None,
+        )
+        if held is None:
+            return None
+        return {k: held[k] for k in ("schema_type", "fingerprint", "project_id", "version_record_id", "references")}
+
+    def update_mirrored_subject(self, db, subject_id, *, compatibility_level, strategy):
+        row = next(s for s in self.subjects if s["id"] == subject_id)
+        if compatibility_level is not None:
+            row["compatibility_level"] = compatibility_level
+        if row.get("strategy") is None:
+            row["strategy"] = strategy
+
+    def retire_mirrored_versions(self, db, subject_id, keep_upstream_versions):
+        keep = {int(v) for v in keep_upstream_versions}
+        retired = []
+        for v in self.versions:
+            if (
+                v["subject_id"] == subject_id
+                and not v["deleted_at"]
+                and v.get("upstream_version") is not None
+                and v["upstream_version"] not in keep
+            ):
+                v["deleted_at"] = NOW
+                retired.append(v["version"])
+        return sorted(retired)
+
+    def install(self, monkeypatch) -> "FakeStore":
+        """Patch every function of :mod:`app.schema_registry_store` this fake implements."""
+        from app import schema_registry_store as real
+
+        for name in dir(self):
+            if not name.startswith("_") and name not in ("catalog", "config", "subjects", "schemas", "versions",
+                                                          "install") and hasattr(real, name):
+                monkeypatch.setattr(real, name, getattr(self, name))
+        return self

@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.392.0] - 2026-10-19
+
+### Added
+- **Schema-registry discovery connector (#3784, MFI-12.3)**: `app.schema_registry_connector_source` registers a source
+  for the `schema-registry` connector kind on the CDG-1.1 protocol. It crawls a registry that speaks the Confluent
+  Schema Registry REST API (Confluent Platform / Cloud, Karapace, Apicurio's `/apis/ccompat/v7`): `GET /subjects`,
+  `GET /subjects/{s}/versions` and `GET /config/{s}?defaultToGlobal=true`, falling back to `GET /config` (read once per
+  sync) when the subject level answers `404`. A base URL is required and the scope must be `{}`. Optional credentials:
+  `{"username", "password"}` (basic) or `{"token"}` (bearer); every request goes through the SSRF-guarded connector
+  client. One inventory row per subject; its revision is the latest version plus a digest of the version list and the
+  level, so a new or deleted version or a changed level syncs the subject again.
+  - **Mirroring.** Each subject is mirrored into the CDG-4.2 subject model: every upstream version not mirrored yet is
+    read with `GET /subjects/{s}/versions/{v}` (`GET /schemas/ids/{id}` when the body has no schema text), deduplicated
+    by upstream schema id (within the sync and across syncs), fingerprinted by its import source, and — only when the
+    workspace does not hold the content yet — imported as a new revision of the subject's catalog item, labelled with
+    the upstream version and carrying the connector provenance. The upstream compatibility level is copied onto the
+    subject; the naming strategy is inferred from the subject name and the record name when the subject states none.
+    Versions the registry no longer lists are soft-deleted on the mirror (their revisions stay). Compatibility checks are
+    not run on mirrored versions.
+  - **Never overwritten.** A subject of the same name registered in Apiome or mirrored by another connector stays
+    `discovered` (`subject-name-taken`); `references-unsupported` and `schema-type-unavailable` are the other
+    `discoveredReason` codes. Any other refusal fails that subject for the run, keeping what was already mirrored.
+  - **Provenance (apiome-db V300).** `schema_subjects.source_ref` (`registry:<url>`) and `source_connector_id`;
+    `schema_subject_versions.upstream_version` and `upstream_schema_id` (unique per subject). Exposed as `sourceRef` /
+    `sourceConnectorId` on subjects and `upstreamVersion` / `upstreamSchemaId` on subject versions.
+  - **Engine.** `ItemSyncOutcome` gains `project_id` and `pulls`, so a `sync_item` source can link its inventory row to a
+    catalog item and count several pulls; each version or schema read counts against the polling quota. Schema registry
+    connectors raise no shadow-API notification and are left out of the shadow-API report.
+
 ## [1.391.0] - 2026-10-19
 
 ### Added

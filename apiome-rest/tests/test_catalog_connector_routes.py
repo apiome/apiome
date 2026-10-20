@@ -111,7 +111,7 @@ def test_each_route_enforces_its_imports_permission(store, audits, method, suffi
 
 
 def test_sync_enforces_imports_edit(store, audits):
-    existing = store.add_connector(_TENANT, kind="schema-registry")
+    existing = store.add_connector(_TENANT, kind="url")
     with patch("app.catalog_connector_routes.enforce_permission", return_value=_ACTOR) as guard:
         client.post(f"{_BASE}/{existing['id']}/sync")
     assert guard.call_args.args[2:] == (Resource.IMPORTS, Action.EDIT)
@@ -148,11 +148,11 @@ def test_create_returns_the_connector_without_credentials(store, audits):
     assert created["hasCredentials"] is False and created["refreshIntervalSeconds"] == 900
     assert created["syncable"] is True  # the Kong sources ship with CDG-1.2
     assert audits[-1]["action"] == AUDIT_CREATE
-    assert _create(kind="schema-registry", name="Registry", scope={})["syncable"] is False
+    assert _create(kind="url", name="Spec URL", scope={})["syncable"] is False
 
 
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
-    _create(kind="schema-registry", name="Registry", scope={})
+    _create(kind="url", name="Spec URL", baseUrl="https://93.184.216.34/openapi.json", scope={})
     body = client.get(_BASE).json()
     assert len(body["kinds"]) == 8
     assert body["syncableKinds"] == [
@@ -162,13 +162,14 @@ def test_list_reports_kinds_and_syncable_kinds(store, audits):
         "kong-admin",
         "kong-konnect",
         "mcp-registry",
+        "schema-registry",
     ]
     assert body["connectors"][0]["syncable"] is False
-    register_connector_source("schema-registry", ConnectorRefreshSource)
+    register_connector_source("url", ConnectorRefreshSource)
     try:
         body = client.get(_BASE).json()
     finally:
-        unregister_connector_source("schema-registry")
+        unregister_connector_source("url")
     assert body["syncableKinds"] == [
         "apigee",
         "aws-apigateway",
@@ -177,6 +178,7 @@ def test_list_reports_kinds_and_syncable_kinds(store, audits):
         "kong-konnect",
         "mcp-registry",
         "schema-registry",
+        "url",
     ]
     assert body["connectors"][0]["syncable"] is True
 
@@ -363,7 +365,7 @@ def test_a_failed_sync_is_a_200_carrying_the_provider_failure(store, audits, sou
 
 
 def test_sync_of_a_kind_without_a_source_is_a_409(store, audits):
-    created = _create(kind="schema-registry")
+    created = _create(kind="url")
     response = client.post(f"{_BASE}/{created['id']}/sync")
     assert response.status_code == 409 and response.json()["detail"]["code"] == "connector-kind-unsupported"
 

@@ -105,6 +105,7 @@ const ADDITIONAL: A11yRoute[] = [
         'connectors.html',
         'connector-add.html',
         'connector-add-mcp-registry.html',
+        'connector-add-schema-registry.html',
         'connector-detail.html',
         'connector-runs.html',
       ],

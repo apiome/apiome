@@ -371,6 +371,47 @@ describe('MCP registry connector (CDG-4.4)', () => {
     });
   });
 
+  it('takes a schema registry URL with optional basic or bearer credentials, and dry-runs it (MFI-12.3)', async () => {
+    routes.push((url, init) => {
+      if (url === '/api/connectors' && (init?.method ?? 'GET') === 'GET') {
+        return { body: { connectors: [], kinds: ['schema-registry'], syncableKinds: ['schema-registry'] } };
+      }
+      if (url === '/api/connectors/dry-run') {
+        return {
+          body: {
+            itemCount: 3,
+            items: [{ remoteId: 'orders-value', name: 'orders-value', environment: null, revision: 'v2+sha256.0a1b2c3d4e5f' }],
+            truncated: false,
+            findings: [],
+          },
+        };
+      }
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(<AddConnectorClient />);
+    const kind = await screen.findByTestId('connector-kind-schema-registry');
+    await waitFor(() => expect(kind).not.toBeDisabled());
+    await user.click(kind);
+    await user.click(screen.getByTestId('connector-next'));
+    expect(screen.getByTestId('connector-step-credentials')).toHaveTextContent('Confluent Cloud takes its API key');
+    await user.type(screen.getByTestId('connector-credential-username'), 'SRKEY123');
+    await user.type(screen.getByTestId('connector-credential-password'), 'sr-secret');
+    writeA11yFixture('connector-add-schema-registry', liveMarkup(document.body));
+    await user.click(screen.getByTestId('connector-next'));
+    expect(screen.getByTestId('connector-missing')).toHaveTextContent('Base URL');
+    await user.type(screen.getByTestId('connector-base-url'), 'https://psrc-123.eu-west-1.aws.confluent.cloud');
+    await user.click(screen.getByTestId('connector-next'));
+    await user.click(screen.getByTestId('connector-dry-run'));
+    expect(await screen.findByTestId('connector-dry-run-result')).toHaveTextContent('orders-value');
+    expect(calls.find((call) => call.url === '/api/connectors/dry-run')?.body).toMatchObject({
+      kind: 'schema-registry',
+      baseUrl: 'https://psrc-123.eu-west-1.aws.confluent.cloud',
+      scope: {},
+      credentials: { username: 'SRKEY123', password: 'sr-secret' },
+    });
+  });
+
   it('links each entry to its MCP server and says why an entry is still discovered', async () => {
     routes.push((url) => {
       if (url === '/api/connectors/c1') return { body: connector({ kind: 'mcp-registry', name: 'Official registry' }) };

@@ -5,7 +5,8 @@
  * never secrets) and the **credential** fields (sealed by REST on `PUT …/credentials`, never shown
  * again). The shapes mirror the REST scope validators (`app.kong_connector_source`,
  * `app.aws_apigateway_connector_source`, `app.azure_apim_connector_source`,
- * `app.apigee_connector_source`, `app.mcp_registry_connector_source`), which stay the authority: this model only lays the form out and
+ * `app.apigee_connector_source`, `app.mcp_registry_connector_source`, `app.schema_registry_connector_source`),
+ * which stay the authority: this model only lays the form out and
  * turns its values into the request body.
  */
 
@@ -166,10 +167,20 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
   {
     kind: 'schema-registry',
     label: 'Schema registry',
-    description: 'Schemas of a schema registry.',
+    description:
+      'Subjects of a Confluent, Karapace or Apicurio schema registry, mirrored as schema subjects with their versions.',
     baseUrl: 'required',
+    baseUrlHelp:
+      'The registry REST address, for example https://psrc-123.eu-west-1.aws.confluent.cloud. For Apicurio, its ' +
+      'compatibility API: https://<apicurio>/apis/ccompat/v7.',
     scope: [],
-    credentials: [],
+    credentials: [
+      { key: 'username', label: 'Username or API key', type: 'secret' },
+      { key: 'password', label: 'Password or API secret', type: 'secret' },
+      { key: 'token', label: 'Bearer token', type: 'secret' },
+    ],
+    credentialNote:
+      'Leave all empty for an open registry. Confluent Cloud takes its API key and secret as username and password.',
   },
   {
     kind: 'mcp-registry',
