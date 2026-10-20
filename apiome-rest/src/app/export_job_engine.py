@@ -66,19 +66,21 @@ responsive, and a cancel request takes effect at the next stage boundary.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import io
 import json
 import logging
+import re
 import threading
 import time
 import uuid
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
 from .delivery_error_taxonomy import delivery_error_fields
@@ -93,6 +95,7 @@ from .export_delivery_gate import (
     lint_delivery_source,
 )
 from .export_fidelity import ExportFidelity, build_export_fidelity
+from .export_fidelity_rollup import ExportFidelityRollup, build_fidelity_rollup
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
@@ -119,8 +122,11 @@ __all__ = [
     "ExportJobEvent",
     "ExportJobProgress",
     "ExportJobStartRequest",
+    "ExportJobTargetSpec",
     "ExportJobFile",
+    "ExportJobTargetResult",
     "ExportJobResult",
+    "MAX_EXPORT_TARGETS",
     "ExportJobError",
     "ExportJobStatus",
     "ExportJobListItem",
@@ -136,6 +142,9 @@ __all__ = [
     "build_result_manifest",
     "build_bundle_manifest",
     "build_export_zip",
+    "build_multi_target_manifest",
+    "build_multi_target_zip",
+    "target_directory",
     "serialize_file_content",
     "ExportDownloadArtifact",
     "resolve_export_download",
@@ -201,12 +210,45 @@ class ExportJobProgress(BaseModel):
     )
 
 
+#: Most targets one multi-target job may name (MFX-39.1). Each target is a full fidelity walk,
+#: emit, and re-parse, so the cap bounds one job's work and its combined bundle.
+MAX_EXPORT_TARGETS = 16
+
+
+class ExportJobTargetSpec(BaseModel):
+    """One entry of a multi-target export's ``targets`` list (MFX-39.1).
+
+    Options and the acknowledged preview snapshot are per target: emit options valid for one
+    emitter are usually invalid for another, and each target previews to its own snapshot hash.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    target: str = Field(
+        description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Emit options for this target (MFX-1.4); null or empty applies its defaults.",
+    )
+    acknowledged_snapshot: Optional[str] = Field(
+        default=None,
+        description="This target's previewed projection snapshot hash (EFP-2.1). When set and "
+        "it no longer matches, the whole job fails with `STALE_PREVIEW` naming this target.",
+    )
+
+
 class ExportJobStartRequest(BaseModel):
-    """Submit an export job: source coordinates + target + options + dry-run flag.
+    """Submit an export job: source coordinates + target(s) + options + dry-run flag.
 
     The source half matches ``POST /export/preview`` / ``POST /export/document``
     (MFX-2.5/11.5); ``dry_run`` selects the preview-only path (fidelity report, no
     artifact), the async twin of the synchronous ``/export/preview`` endpoint.
+
+    Name **either** one ``target`` (with optional ``options`` / ``acknowledged_snapshot``) **or**
+    a ``targets`` list (MFX-39.1) — one job then emits the version to every listed target into a
+    single zip bundle with per-target subdirectories and a root manifest, and its result carries
+    per-target fidelity reports plus a merged rollup.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -216,12 +258,23 @@ class ExportJobStartRequest(BaseModel):
         default=None,
         description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
     )
-    target: str = Field(
-        description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+    target: Optional[str] = Field(
+        default=None,
+        description="Target emitter key (``openapi``) or format key (``openapi-3.1``) for a "
+        "single-target export. Required unless ``targets`` is given; never both.",
+    )
+    targets: Optional[List[ExportJobTargetSpec]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_EXPORT_TARGETS,
+        description="The targets of a multi-target export (MFX-39.1), each with its own options "
+        f"and acknowledged snapshot; 1–{MAX_EXPORT_TARGETS} entries, each resolving to a distinct "
+        "format. Mutually exclusive with ``target`` / ``options`` / ``acknowledged_snapshot``.",
     )
     options: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Per-target emit options (MFX-1.4); null or empty applies the target defaults.",
+        description="Per-target emit options (MFX-1.4); null or empty applies the target defaults. "
+        "Single-target only — a multi-target job sets options per ``targets`` entry.",
     )
     dry_run: bool = Field(
         default=False,
@@ -238,13 +291,54 @@ class ExportJobStartRequest(BaseModel):
         "caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot "
         "for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the "
         "source revision, options, emitter version, or registry changed since the preview, so "
-        "the acknowledgement no longer describes what would be generated. Null skips the check.",
+        "the acknowledgement no longer describes what would be generated. Null skips the check. "
+        "Single-target only — a multi-target job acknowledges per ``targets`` entry.",
     )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
         "the report or counts.",
     )
+
+    @model_validator(mode="after")
+    def _one_target_shape(self) -> "ExportJobStartRequest":
+        """Require exactly one of ``target`` / ``targets`` and keep per-target fields consistent.
+
+        Returns:
+            The validated request.
+
+        Raises:
+            ValueError: When both or neither of ``target`` / ``targets`` is set, or a
+                single-target field (``options`` / ``acknowledged_snapshot``) accompanies
+                ``targets`` (surfaced by FastAPI as a 422).
+        """
+        if self.targets is None:
+            if self.target is None:
+                raise ValueError("Name a 'target', or a 'targets' list for a multi-target export.")
+            return self
+        if self.target is not None:
+            raise ValueError("Set either 'target' or 'targets', not both.")
+        if self.options is not None or self.acknowledged_snapshot is not None:
+            raise ValueError(
+                "'options' and 'acknowledged_snapshot' apply to a single target; set them on "
+                "each 'targets' entry instead."
+            )
+        return self
+
+    @property
+    def is_multi_target(self) -> bool:
+        """True when the job was submitted with a ``targets`` list (MFX-39.1)."""
+        return self.targets is not None
+
+    @property
+    def target_label(self) -> str:
+        """The requested target(s) as one string for list rows, logs, and metrics.
+
+        The single ``target`` as submitted, or the multi-target list joined with commas.
+        """
+        if self.targets is not None:
+            return ",".join(spec.target for spec in self.targets)
+        return self.target or ""
 
 
 class ExportJobFile(BaseModel):
@@ -267,12 +361,62 @@ class ExportJobFile(BaseModel):
     )
 
 
+class ExportJobTargetResult(BaseModel):
+    """One target's outcome inside a completed multi-target export (MFX-39.1).
+
+    The per-target half of what a single-target :class:`ExportJobResult` carries at its top
+    level: the resolved target, its snapshot hash and options, its full fidelity envelope and
+    transcode guard, and — for a real export — its validation report, delivery decision (with an
+    attestation naming the combined bundle), and the files it contributed to the bundle.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    target: str = Field(description="The resolved target format key (e.g. ``openapi-3.1``).")
+    directory: str = Field(
+        description="The bundle subdirectory holding this target's files (``<directory>/…``)."
+    )
+    snapshot_hash: str = Field(
+        description="This target's projection snapshot hash (EFP-2.1)."
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None, description="The emit options this target ran with; null for defaults."
+    )
+    fidelity: ExportFidelity = Field(
+        description="This target's full fidelity envelope (tier + report + advisory).",
+    )
+    guard: TranscodeGuard = Field(description="This target's transcoding guard (MFX-3.3).")
+    validation: Optional[EmittedValidationReport] = Field(
+        default=None,
+        description="This target's emitted-artifact validation report; null for a dry-run.",
+    )
+    delivery: Optional[DeliveryGateReport] = Field(
+        default=None,
+        description="This target's delivery gate decision, with an attestation whose subject is "
+        "the combined bundle; null for a dry-run.",
+    )
+    files: List[ExportJobFile] = Field(
+        default_factory=list,
+        description="The files this target contributed, at their bundle paths "
+        "(``<directory>/<path>``); empty for a dry-run.",
+    )
+    media_type: Optional[str] = Field(
+        default=None, description="This target's primary media type; null for a dry-run."
+    )
+
+
 class ExportJobResult(BaseModel):
     """What a terminal ``completed`` export job produced.
 
     Carries the resolved source coordinates, the resolved target, the full
     :class:`~app.export_fidelity.ExportFidelity` envelope (identical to a ``/export/preview``
     of the same inputs), and — for a real (non-dry-run) export — the emitted file manifest.
+
+    A multi-target job (MFX-39.1) leaves the single-target fields (``target``, ``snapshot_hash``,
+    ``options``, ``fidelity``, ``guard``, ``validation``, ``delivery``) empty and instead carries
+    one :class:`ExportJobTargetResult` per target on ``targets`` plus the merged
+    ``fidelity_rollup``; ``files`` then lists every bundle entry and ``media_type`` is
+    ``application/zip``.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -282,7 +426,11 @@ class ExportJobResult(BaseModel):
     version_label: Optional[str] = Field(
         default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
     )
-    target: str = Field(description="The resolved target format key (e.g. ``openapi-3.1``).")
+    target: Optional[str] = Field(
+        default=None,
+        description="The resolved target format key (e.g. ``openapi-3.1``); null for a "
+        "multi-target job (see ``targets``).",
+    )
     dry_run: bool = Field(description="True when the job stopped after the fidelity report.")
     snapshot_hash: str = Field(
         default="",
@@ -295,12 +443,16 @@ class ExportJobResult(BaseModel):
         description="The per-target emit options the job was submitted with (EFP-2.1) — the "
         "configuration half of the snapshot record; null when the target defaults applied.",
     )
-    fidelity: ExportFidelity = Field(
-        description="The full fidelity envelope (target + tier + report + advisory).",
+    fidelity: Optional[ExportFidelity] = Field(
+        default=None,
+        description="The full fidelity envelope (target + tier + report + advisory); null for a "
+        "multi-target job, whose envelopes are on ``targets[].fidelity``.",
     )
-    guard: TranscodeGuard = Field(
+    guard: Optional[TranscodeGuard] = Field(
+        default=None,
         description="The pre-flight transcoding guard (MFX-3.3): the conversion band and why. "
-        "A severe conversion only completes when it was submitted with ``confirm``.",
+        "A severe conversion only completes when it was submitted with ``confirm``. Null for a "
+        "multi-target job (see ``targets[].guard``).",
     )
     validation: Optional[EmittedValidationReport] = Field(
         default=None,
@@ -334,6 +486,16 @@ class ExportJobResult(BaseModel):
         description="Epoch-ms deadline after which the retained artifact is dropped and the "
         "download route returns 410 (MFX-4.3, temp artifact retention). Null for a dry-run "
         "(no artifact) or when retention is disabled (retained for the process lifetime).",
+    )
+    targets: Optional[List[ExportJobTargetResult]] = Field(
+        default=None,
+        description="Per-target outcomes of a multi-target job (MFX-39.1), in submission order; "
+        "null for a single-target job.",
+    )
+    fidelity_rollup: Optional[ExportFidelityRollup] = Field(
+        default=None,
+        description="The merged fidelity summary across a multi-target job's targets (worst "
+        "tier, preserved-% floor and mean, per-tier counts); null for a single-target job.",
     )
 
 
@@ -509,6 +671,9 @@ class _ExportJobRecord:
     artifact_expires_at_ms: Optional[int] = None
     # Snapshot + version provenance for multi-file zip manifests (EFP-3.1); set at packaging.
     bundle_provenance: Optional[Dict[str, Any]] = None
+    # The materialized combined bundle of a multi-target job (MFX-39.1), retained in place of
+    # ``emit_result`` (there is one emit result per target) and dropped on the same expiry.
+    retained_download: Optional[ExportDownloadArtifact] = None
     # IXH-6.6: correlation id of the request that started the job, stamped onto every
     # published status; plus the whole-job clock and the in-flight stage for metrics.
     correlation_id: Optional[str] = None
@@ -545,11 +710,12 @@ def _mirror_export_job(job_id: str) -> None:
         state = rec.state
         status_json = rec.status.model_dump(mode="json")
         request_json = rec.request.model_dump(mode="json")
+        rec_target_label = rec.request.target_label
     # List rows carry request metadata that isn't part of the poll payload; stash the fields
     # the list endpoint needs so any instance can render its rows from the shared store.
     extra = {
         "artifact": request_json.get("artifact"),
-        "target": request_json.get("target"),
+        "target": rec_target_label,
         "dry_run": request_json.get("dry_run"),
     }
     try:
@@ -643,8 +809,9 @@ def _expire_stale_artifacts(now_ms: int) -> None:
     """
     for rec in _jobs.values():
         exp = rec.artifact_expires_at_ms
-        if exp is not None and rec.emit_result is not None and now_ms >= exp:
+        if exp is not None and now_ms >= exp:
             rec.emit_result = None
+            rec.retained_download = None
 
 
 def _next_event(rec: _ExportJobRecord, level: str, code: str, message: str,
@@ -681,13 +848,16 @@ async def _publish(
     event: Optional[_EventTuple] = None,
     result: Optional[ExportJobResult] = None,
     error: Optional[ExportJobError] = None,
+    current_item: Optional[str] = None,
 ) -> bool:
     """Apply one snapshot update to the job record; return False if the job is gone/canceled.
 
     ``event`` is ``(level, code, message, context)``; ``stage`` updates the progress
     snapshot (its position in :data:`_STAGES` gives total/completed); ``error`` attaches the
     structured terminal failure (MFX-3.4). A job whose cancel flag is set is finalized to
-    ``canceled`` here — the single stage-boundary cancel point.
+    ``canceled`` here — the single stage-boundary cancel point. ``current_item`` overrides the
+    progress hint (default: the requested target) — a multi-target job names the target in
+    flight (MFX-39.1).
     """
     # Honor a cross-instance cancel request before applying this snapshot.
     await asyncio.to_thread(_sync_export_cancel_flag, job_id)
@@ -730,7 +900,7 @@ async def _publish(
                     phase=stage,  # type: ignore[arg-type]
                     total=len(_STAGES),
                     completed=_STAGES.index(stage),
-                    current_item=rec.request.target,
+                    current_item=current_item or rec.request.target_label,
                 )
                 # Stage transition: close the previous stage's clock (IXH-6.6).
                 if stage != rec.current_stage:
@@ -797,7 +967,7 @@ async def _fail(job_id: str, code: str, message: str,
     with _jobs_lock:
         rec = _jobs.get(job_id)
         correlation_id = (rec.correlation_id if rec is not None else None) or job_id
-        target = rec.request.target if rec is not None else ""
+        target = rec.request.target_label if rec is not None else ""
     fields = delivery_error_fields(
         code, message, context=context, correlation_id=correlation_id
     )
@@ -1120,6 +1290,431 @@ def _bundle_filename(target_format: str) -> str:
     return f"{stem}.zip"
 
 
+# ---------------------------------------------------------------------------
+# Multi-target bundle (MFX-39.1)
+# ---------------------------------------------------------------------------
+
+#: Download filename of a multi-target job's combined bundle.
+MULTI_TARGET_BUNDLE_FILENAME = "export-multi-target.zip"
+#: The ``kind`` a multi-target bundle manifest declares, so a reader can tell it from the
+#: single-target ``manifest.json`` (which has no ``kind``).
+MULTI_TARGET_MANIFEST_KIND = "multi-target"
+
+_UNSAFE_DIRECTORY_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def target_directory(target_format: str) -> str:
+    """The bundle subdirectory for one target of a multi-target export (MFX-39.1).
+
+    The resolved format key with anything outside ``[A-Za-z0-9._-]`` replaced by ``-`` and
+    leading/trailing dots and dashes trimmed, so the name can never escape the bundle root
+    (``..``) or carry a path separator.
+
+    Args:
+        target_format: The resolved target format key (e.g. ``openapi-3.1``).
+
+    Returns:
+        A safe, non-empty directory name (``target`` when nothing usable remains).
+    """
+    cleaned = _UNSAFE_DIRECTORY_CHARS.sub("-", target_format or "").strip(".-")
+    return cleaned or "target"
+
+
+@dataclass
+class MultiTargetBundlePart:
+    """One target's contribution to a multi-target bundle (MFX-39.1).
+
+    Attributes:
+        target: The resolved target format key.
+        directory: The bundle subdirectory (:func:`target_directory`).
+        emit_result: The target's emitted files.
+        fidelity: The target's fidelity envelope (its summary is recorded in the manifest).
+        provenance: The target's snapshot + version provenance (:func:`_bundle_provenance`).
+    """
+
+    target: str
+    directory: str
+    emit_result: EmitResult
+    fidelity: ExportFidelity
+    provenance: Dict[str, Any]
+
+
+def _part_files(part: MultiTargetBundlePart) -> List[ExportJobFile]:
+    """A part's manifest entries at their bundle paths (``<directory>/<path>``)."""
+    return [
+        f.model_copy(update={"path": f"{part.directory}/{f.path}"})
+        for f in build_result_manifest(part.emit_result)
+    ]
+
+
+def build_multi_target_manifest(
+    parts: List[MultiTargetBundlePart],
+    *,
+    artifact: str,
+    version_record_id: str,
+    version_label: Optional[str],
+    rollup: ExportFidelityRollup,
+) -> Dict[str, Any]:
+    """Build the root ``manifest.json`` of a multi-target bundle (MFX-39.1).
+
+    A table of contents for the combined zip: the source coordinates, one section per target
+    (its directory, media type, files at their bundle paths, fidelity tier and preserved share,
+    and its snapshot + version provenance), and the merged fidelity rollup. Every emitted file
+    lives under a target directory, so the root manifest can never collide with one.
+
+    Args:
+        parts: The targets' contributions, in submission order.
+        artifact: The exported artifact (project) id.
+        version_record_id: The resolved revision id.
+        version_label: The resolved revision's label.
+        rollup: The merged fidelity summary across the targets.
+
+    Returns:
+        The manifest as a JSON-serializable dict.
+    """
+    sections: List[Dict[str, Any]] = []
+    for part in parts:
+        files = _part_files(part)
+        sections.append(
+            {
+                "target": part.target,
+                "directory": part.directory,
+                "media_type": part.emit_result.media_type,
+                "file_count": len(files),
+                "files": [f.model_dump() for f in files],
+                "fidelity": {
+                    "tier": part.fidelity.summary.tier.value,
+                    "preserved_percent": part.fidelity.summary.preserved_percent,
+                },
+                "provenance": part.provenance,
+            }
+        )
+    return {
+        "kind": MULTI_TARGET_MANIFEST_KIND,
+        "manifest": _BUNDLE_MANIFEST_NAME,
+        "artifact": artifact,
+        "version_record_id": version_record_id,
+        "version_label": version_label,
+        "target_count": len(parts),
+        "file_count": sum(section["file_count"] for section in sections),
+        "targets": sections,
+        "fidelity_rollup": rollup.model_dump(mode="json"),
+    }
+
+
+def build_multi_target_zip(
+    parts: List[MultiTargetBundlePart],
+    *,
+    artifact: str,
+    version_record_id: str,
+    version_label: Optional[str],
+    rollup: ExportFidelityRollup,
+) -> bytes:
+    """Package every target of a multi-target export into one deterministic zip (MFX-39.1).
+
+    Each target's files are written under its own subdirectory (``openapi-3.1/openapi.json``,
+    ``protobuf-3/widgets.proto``, …), serialized exactly as a single-target download would be,
+    followed by the root ``manifest.json`` (:func:`build_multi_target_manifest`). Entries use the
+    pinned zip timestamp, so the same inputs always package to byte-identical bytes.
+
+    Args:
+        parts: The targets' contributions, in submission order.
+        artifact: The exported artifact (project) id.
+        version_record_id: The resolved revision id.
+        version_label: The resolved revision's label.
+        rollup: The merged fidelity summary across the targets.
+
+    Returns:
+        The zip archive as raw bytes, ready to serve as ``application/zip``.
+    """
+    manifest = build_multi_target_manifest(
+        parts,
+        artifact=artifact,
+        version_record_id=version_record_id,
+        version_label=version_label,
+        rollup=rollup,
+    )
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for part in parts:
+            for emitted in part.emit_result.files:
+                _write_zip_entry(
+                    archive,
+                    f"{part.directory}/{emitted.path}",
+                    serialize_file_content(emitted.content),
+                )
+        _write_zip_entry(
+            archive, _BUNDLE_MANIFEST_NAME, json.dumps(manifest, indent=2, ensure_ascii=False)
+        )
+    return buffer.getvalue()
+
+
+# ===========================================================================
+# Shared pipeline steps (single- and multi-target)
+# ===========================================================================
+
+
+def _bundle_provenance(
+    snapshot_hash: str,
+    source: ExportSource,
+    options: Optional[Dict[str, Any]],
+    fidelity: ExportFidelity,
+) -> Dict[str, Any]:
+    """The snapshot + version provenance block a bundle manifest records for one target (EFP-3.1).
+
+    Args:
+        snapshot_hash: The target's projection snapshot hash.
+        source: The loaded source revision.
+        options: The emit options the target ran with (null for defaults).
+        fidelity: The target's fidelity envelope (carries the tool versions).
+
+    Returns:
+        The JSON-serializable provenance dict — never any source content.
+    """
+    return {
+        "snapshot_hash": snapshot_hash,
+        "version_record_id": source.version_record_id,
+        "version_label": source.version_label,
+        "options": options,
+        "emitter_version": fidelity.projection.target.emitter_version,
+        "registry_version": fidelity.projection.target.registry_version,
+        "apiome_version": fidelity.projection.target.apiome_version,
+    }
+
+
+async def _gate_delivery(
+    *,
+    tenant_id: str,
+    tenant_slug: str,
+    source: ExportSource,
+    source_lint: Any,
+    target_format: str,
+    fidelity: ExportFidelity,
+    validation_report: EmittedValidationReport,
+) -> DeliveryGateReport:
+    """Run the delivery gate for one target and trend its grade (IXH-2.5 / IXH-2.7).
+
+    The quality-rank observation is recorded before the caller branches on a block, so a refused
+    delivery is trended too. Both calls block on the DB driver, so they run off-thread.
+
+    Args:
+        tenant_id: The authenticated tenant id.
+        tenant_slug: The tenant slug (policy + waiver lookup).
+        source: The loaded source revision.
+        source_lint: The source's lint report (:func:`lint_delivery_source`), computed once per
+            job because it depends only on the source.
+        target_format: The resolved target format key.
+        fidelity: The target's fidelity envelope (projected preserved share).
+        validation_report: The target's emitted-artifact validation report.
+
+    Returns:
+        The delivery decision for this target.
+    """
+    target_key = fidelity.target.key or target_format
+    delivery = await asyncio.to_thread(
+        evaluate_delivery,
+        tenant_id=tenant_id,
+        tenant_slug=tenant_slug,
+        target_format=target_format,
+        target_key=target_key,
+        version_record_id=source.version_record_id,
+        validation=validation_report,
+        lint=source_lint,
+        preserved_percent=fidelity.summary.preserved_percent,
+    )
+    # Append the delivery grade to the quality-rank series (IXH-2.7); best-effort by contract.
+    await asyncio.to_thread(
+        observe_delivery,
+        delivery,
+        tenant_id=tenant_id,
+        lint=source_lint,
+        adapter_key=target_key,
+        project_id=source.artifact_id,
+        version_record_id=source.version_record_id,
+    )
+    return delivery
+
+
+async def _persist_download(
+    job_id: str,
+    tenant_slug: str,
+    build_download: Callable[[], ExportDownloadArtifact],
+    expires_at_ms: Optional[int],
+) -> Optional[Tuple[ExportDownloadArtifact, Any]]:
+    """Materialize delivery bytes and persist them to the shared store (IXH-6.1).
+
+    A non-owning instance serves the download from this store, so a size-cap, store, or
+    materialization failure fails the job rather than completing it with an undeliverable
+    artifact. On success the store's content digest is stamped onto the download.
+
+    Args:
+        job_id: The job the artifact belongs to.
+        tenant_slug: The owning tenant slug.
+        build_download: Builds the download (filename, media type, body); called inside the
+            failure guard so a packaging fault fails the job like a store fault.
+        expires_at_ms: The retention deadline (MFX-4.3), or ``None`` for no expiry.
+
+    Returns:
+        ``(download, stored record)``, or ``None`` when packaging/persisting failed and the job
+        has already been moved to ``failed``.
+    """
+    from .export_artifact_store import (
+        ExportArtifactStoreNotConfigured,
+        ExportArtifactTooLarge,
+        body_as_bytes,
+        put_export_artifact,
+    )
+
+    try:
+        download = build_download()
+        stored = await asyncio.to_thread(
+            put_export_artifact,
+            job_id=job_id,
+            tenant_slug=tenant_slug,
+            body=body_as_bytes(download.body),
+            media_type=download.media_type,
+            filename=download.filename,
+            expires_at_ms=expires_at_ms,
+        )
+    except ExportArtifactTooLarge as exc:
+        await _fail(
+            job_id,
+            "EXPORT_ARTIFACT_TOO_LARGE",
+            str(exc),
+            {"size_bytes": exc.size_bytes, "max_bytes": exc.max_bytes},
+        )
+        return None
+    except ExportArtifactStoreNotConfigured as exc:
+        await _fail(
+            job_id,
+            "EXPORT_ARTIFACT_STORE_UNAVAILABLE",
+            str(exc),
+            {"size_bytes": exc.size_bytes, "db_max_bytes": exc.db_max_bytes},
+        )
+        return None
+    except Exception as exc:  # noqa: BLE001 - persist failure must fail the job, not hang
+        logger.exception("Failed to persist export artifact job=%s", job_id)
+        await _fail(
+            job_id,
+            "EXPORT_ARTIFACT_PERSIST_FAILED",
+            f"Failed to persist the export artifact for download: {exc}",
+            None,
+        )
+        return None
+    download.content_sha256 = stored.content_sha256
+    return download, stored
+
+
+def _attest_delivery(
+    delivery: DeliveryGateReport,
+    *,
+    job_id: str,
+    tenant_id: str,
+    tenant_slug: str,
+    source: ExportSource,
+    target_format: str,
+    snapshot_hash: str,
+    options: Optional[Dict[str, Any]],
+    fidelity: ExportFidelity,
+    validation_report: EmittedValidationReport,
+    download: ExportDownloadArtifact,
+    stored: Any,
+    files: List[str],
+) -> DeliveryGateReport:
+    """Attach the signed delivery attestation for one target's delivery (IXH-2.5).
+
+    The statement's subject is the exact bytes the download route serves — the target's own
+    document or bundle, or, for a multi-target job, the combined bundle (``files`` then names
+    the target's entries inside it).
+
+    Args:
+        delivery: The target's allowed delivery decision.
+        job_id: The job id.
+        tenant_id: The tenant id.
+        tenant_slug: The tenant slug.
+        source: The loaded source revision.
+        target_format: The resolved target format key.
+        snapshot_hash: The target's projection snapshot hash.
+        options: The emit options the target ran with.
+        fidelity: The target's fidelity envelope (tool versions).
+        validation_report: The target's validation report (validator tool version).
+        download: The served download (filename + media type).
+        stored: The persisted artifact record (digest + size).
+        files: The emitted file paths the attestation lists.
+
+    Returns:
+        The decision carrying its attestation (see :func:`build_delivery_attestation`).
+    """
+    from .export_artifact_store import content_sha256_hex_only
+
+    return build_delivery_attestation(
+        delivery,
+        tenant_id=tenant_id,
+        delivery={
+            "jobId": job_id,
+            "tenantSlug": tenant_slug,
+            "artifactId": source.artifact_id,
+            "versionRecordId": source.version_record_id,
+            "versionLabel": source.version_label,
+            "target": target_format,
+            "snapshotHash": snapshot_hash,
+            "options": options,
+            "downloadPath": _download_path(tenant_slug, job_id),
+        },
+        artifact={
+            "filename": download.filename,
+            # Plain hex, not the ``sha256:`` prefixed store form: an in-toto subject digest
+            # is the bare value a consumer gets from ``sha256sum`` on the downloaded file.
+            "contentSha256": content_sha256_hex_only(stored.content_sha256),
+            "sizeBytes": stored.size_bytes,
+            "mediaType": download.media_type,
+            "files": files,
+        },
+        tools=delivery_tool_versions(
+            target_format=target_format,
+            emitter_version=fidelity.projection.target.emitter_version,
+            registry_version=fidelity.projection.target.registry_version,
+            apiome_version=fidelity.projection.target.apiome_version,
+            validation=validation_report,
+        ),
+    )
+
+
+def _attestation_event(
+    delivery: DeliveryGateReport, stored: Any, *, target: Optional[str] = None
+) -> Optional[_EventTuple]:
+    """The ``DELIVERY_ATTESTED`` event for an attested delivery, or ``None`` when unattested.
+
+    Args:
+        delivery: The decision after :func:`_attest_delivery`.
+        stored: The persisted artifact record (digest).
+        target: The target format key, recorded in the context for a multi-target job.
+
+    Returns:
+        The event tuple, or ``None`` when no attestation could be built.
+    """
+    from .export_artifact_store import content_sha256_hex_only
+
+    if delivery.attestation is None:
+        return None
+    context: Dict[str, Any] = {
+        "predicate_type": delivery.attestation.predicate_type,
+        "signed": delivery.attestation.signed,
+        "content_sha256": content_sha256_hex_only(stored.content_sha256),
+    }
+    if target is not None:
+        context["target"] = target
+    return (
+        "info",
+        "DELIVERY_ATTESTED",
+        "Attached a signed delivery attestation to the artifact."
+        if delivery.attestation.signed
+        else "Attached an unsigned delivery attestation (no signing secret is "
+        "configured on this server).",
+        context,
+    )
+
+
 # ===========================================================================
 # Pipeline
 # ===========================================================================
@@ -1142,7 +1737,10 @@ async def _drive_export_job(job_id: str) -> None:
             correlation_id = None
     bind_contextvars(request_id=correlation_id, export_job_id=job_id)
     try:
-        await _drive_export_job_inner(job_id)
+        if rec is not None and rec.request.is_multi_target:
+            await _drive_multi_target_job_inner(job_id)
+        else:
+            await _drive_export_job_inner(job_id)
     finally:
         _record_terminal_export_metrics(job_id)
 
@@ -1155,7 +1753,7 @@ def _record_terminal_export_metrics(job_id: str) -> None:
             if rec is None:
                 return
             state = rec.state
-            target = rec.request.target
+            target = rec.request.target_label
             started = rec.started_monotonic
             result = rec.status.result
         if state == "completed":
@@ -1393,28 +1991,14 @@ async def _drive_export_job_inner(job_id: str) -> None:
             tenant_id=tenant_id,
             project_id=source.artifact_id,
         )
-        delivery = await asyncio.to_thread(
-            evaluate_delivery,
+        delivery = await _gate_delivery(
             tenant_id=tenant_id,
             tenant_slug=tenant_slug,
+            source=source,
+            source_lint=source_lint,
             target_format=target_format,
-            target_key=fidelity.target.key or target_format,
-            version_record_id=source.version_record_id,
-            validation=validation_report,
-            lint=source_lint,
-            preserved_percent=fidelity.summary.preserved_percent,
-        )
-        # Append the delivery grade to the quality-rank series (IXH-2.7), before the block
-        # branch so a refused delivery is trended too. Off-thread like the gate itself,
-        # because the DB driver blocks; best-effort by contract.
-        await asyncio.to_thread(
-            observe_delivery,
-            delivery,
-            tenant_id=tenant_id,
-            lint=source_lint,
-            adapter_key=fidelity.target.key or target_format,
-            project_id=source.artifact_id,
-            version_record_id=source.version_record_id,
+            fidelity=fidelity,
+            validation_report=validation_report,
         )
         if delivery.blocks_delivery:
             await _fail_delivery(job_id, delivery, validation, target_format)
@@ -1430,15 +2014,7 @@ async def _drive_export_job_inner(job_id: str) -> None:
         if not await _publish(job_id, percent=_STAGE_PERCENT["packaging"], stage="packaging"):
             return
         manifest = build_result_manifest(emit_result)
-        bundle_provenance = {
-            "snapshot_hash": snapshot_hash,
-            "version_record_id": source.version_record_id,
-            "version_label": source.version_label,
-            "options": request.options,
-            "emitter_version": fidelity.projection.target.emitter_version,
-            "registry_version": fidelity.projection.target.registry_version,
-            "apiome_version": fidelity.projection.target.apiome_version,
-        }
+        bundle_provenance = _bundle_provenance(snapshot_hash, source, request.options, fidelity)
 
         # Retain the artifact under a temp-retention window (MFX-4.3): compute the expiry once
         # so the record and the poller-facing result advertise the same deadline.
@@ -1447,107 +2023,40 @@ async def _drive_export_job_inner(job_id: str) -> None:
         # Materialize delivery bytes and persist to the shared artifact store (IXH-6.1) so a
         # non-owning instance can serve the download. Fail the job on size-cap / store errors
         # rather than completing with an undeliverable artifact.
-        try:
-            download = _materialize_download_artifact(
+        persisted = await _persist_download(
+            job_id,
+            tenant_slug,
+            lambda: _materialize_download_artifact(
                 emit_result,
                 target_format=target_format,
                 bundle_provenance=bundle_provenance,
-            )
-            from .export_artifact_store import (
-                ExportArtifactStoreNotConfigured,
-                ExportArtifactTooLarge,
-                body_as_bytes,
-                content_sha256_hex_only,
-                put_export_artifact,
-            )
-
-            stored = await asyncio.to_thread(
-                put_export_artifact,
-                job_id=job_id,
-                tenant_slug=tenant_slug,
-                body=body_as_bytes(download.body),
-                media_type=download.media_type,
-                filename=download.filename,
-                expires_at_ms=artifact_expires_at,
-            )
-            download.content_sha256 = stored.content_sha256
-        except ExportArtifactTooLarge as exc:
-            await _fail(
-                job_id,
-                "EXPORT_ARTIFACT_TOO_LARGE",
-                str(exc),
-                {"size_bytes": exc.size_bytes, "max_bytes": exc.max_bytes},
-            )
+            ),
+            artifact_expires_at,
+        )
+        if persisted is None:
             return
-        except ExportArtifactStoreNotConfigured as exc:
-            await _fail(
-                job_id,
-                "EXPORT_ARTIFACT_STORE_UNAVAILABLE",
-                str(exc),
-                {"size_bytes": exc.size_bytes, "db_max_bytes": exc.db_max_bytes},
-            )
-            return
-        except Exception as exc:  # noqa: BLE001 - persist failure must fail the job, not hang
-            logger.exception("Failed to persist export artifact job=%s", job_id)
-            await _fail(
-                job_id,
-                "EXPORT_ARTIFACT_PERSIST_FAILED",
-                f"Failed to persist the export artifact for download: {exc}",
-                None,
-            )
-            return
+        download, stored = persisted
 
         # The artifact now exists and has a content digest, so the delivery can be attested to
         # (IXH-2.5): the statement names the exact bytes the download route will serve.
-        delivery = build_delivery_attestation(
+        delivery = _attest_delivery(
             delivery,
+            job_id=job_id,
             tenant_id=tenant_id,
-            delivery={
-                "jobId": job_id,
-                "tenantSlug": tenant_slug,
-                "artifactId": source.artifact_id,
-                "versionRecordId": source.version_record_id,
-                "versionLabel": source.version_label,
-                "target": target_format,
-                "snapshotHash": snapshot_hash,
-                "options": request.options,
-                "downloadPath": _download_path(tenant_slug, job_id),
-            },
-            artifact={
-                "filename": download.filename,
-                # Plain hex, not the ``sha256:`` prefixed store form: an in-toto subject digest
-                # is the bare value a consumer gets from ``sha256sum`` on the downloaded file.
-                "contentSha256": content_sha256_hex_only(stored.content_sha256),
-                "sizeBytes": stored.size_bytes,
-                "mediaType": download.media_type,
-                "files": [f.path for f in emit_result.files],
-            },
-            tools=delivery_tool_versions(
-                target_format=target_format,
-                emitter_version=fidelity.projection.target.emitter_version,
-                registry_version=fidelity.projection.target.registry_version,
-                apiome_version=fidelity.projection.target.apiome_version,
-                validation=validation_report,
-            ),
+            tenant_slug=tenant_slug,
+            source=source,
+            target_format=target_format,
+            snapshot_hash=snapshot_hash,
+            options=request.options,
+            fidelity=fidelity,
+            validation_report=validation_report,
+            download=download,
+            stored=stored,
+            files=[f.path for f in emit_result.files],
         )
-        if delivery.attestation is not None:
-            if not await _publish(
-                job_id,
-                event=(
-                    "info",
-                    "DELIVERY_ATTESTED",
-                    "Attached a signed delivery attestation to the artifact."
-                    if delivery.attestation.signed
-                    else "Attached an unsigned delivery attestation (no signing secret is "
-                    "configured on this server).",
-                    {
-                        "predicate_type": delivery.attestation.predicate_type,
-                        "signed": delivery.attestation.signed,
-                        "content_sha256": content_sha256_hex_only(stored.content_sha256),
-                    },
-                ),
-            ):
-                return
+        attested = _attestation_event(delivery, stored)
+        if attested is not None and not await _publish(job_id, event=attested):
+            return
 
         result = ExportJobResult(
             artifact=source.artifact_id,
@@ -1586,6 +2095,414 @@ async def _drive_export_job_inner(job_id: str) -> None:
         )
     except Exception as exc:  # noqa: BLE001 - a background task must never raise
         logger.exception("export job crashed job=%s", job_id)
+        await _fail(job_id, "EXPORT_EXCEPTION", str(exc), None)
+
+
+# Percent bands of a multi-target job (MFX-39.1): every target's fidelity walk shares
+# 30–50%, every target's emit + validate shares 50–90%, so percent only ever rises.
+_MULTI_FIDELITY_BAND = (30, 50)
+_MULTI_EMIT_BAND = (50, 90)
+
+
+def _band_percent(band: Tuple[int, int], step: int, steps: int) -> int:
+    """The percent for sub-step ``step`` of ``steps`` within ``band`` (start inclusive)."""
+    low, high = band
+    return low + ((high - low) * step) // max(steps, 1)
+
+
+@dataclass
+class _PlannedTarget:
+    """One target of a multi-target job as it moves through the pipeline (MFX-39.1)."""
+
+    spec: ExportJobTargetSpec
+    target_format: str
+    directory: str
+    fidelity: ExportFidelity
+    guard: TranscodeGuard
+    snapshot_hash: str
+    emit_result: Optional[EmitResult] = None
+    validation_report: Optional[EmittedValidationReport] = None
+    delivery: Optional[DeliveryGateReport] = None
+
+
+def _target_result(planned: _PlannedTarget, files: List[ExportJobFile]) -> ExportJobTargetResult:
+    """The poll-payload view of one planned target (MFX-39.1)."""
+    return ExportJobTargetResult(
+        target=planned.target_format,
+        directory=planned.directory,
+        snapshot_hash=planned.snapshot_hash,
+        options=planned.spec.options,
+        fidelity=planned.fidelity,
+        guard=planned.guard,
+        validation=planned.validation_report,
+        delivery=planned.delivery,
+        files=files,
+        media_type=planned.emit_result.media_type if planned.emit_result else None,
+    )
+
+
+async def _drive_multi_target_job_inner(job_id: str) -> None:
+    """Run one multi-target export job (MFX-39.1): one source version → N targets, one bundle.
+
+    The source loads once. Then, in two passes:
+
+    1. **plan** — for every target: resolve it, compute its fidelity envelope, check its
+       acknowledged snapshot (EFP-2.1), and classify its transcode guard. A dry-run completes
+       here with every target's report plus the merged rollup. Otherwise a severe conversion on
+       *any* target fails the job (``TRANSCODE_CONFIRMATION_REQUIRED``) unless ``confirm`` was
+       set — before anything is emitted;
+    2. **emit** — for every target: emit, re-parse (MFX-5.1), and run the delivery gate
+       (IXH-2.5).
+
+    The job is all-or-nothing: the first target that fails any step fails the whole job, with
+    ``target`` in the error context, and no bundle is stored. Once every target passes, their
+    files are packaged into one zip (per-target subdirectories + root manifest), persisted for
+    download, and each target's delivery is attested against the combined bundle's digest.
+
+    Any fault is converted to a terminal ``failed`` status — this task never raises.
+    """
+    with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None:
+            return
+        request = rec.request
+        tenant_id = rec.tenant_id
+        tenant_slug = rec.tenant_slug
+    specs = request.targets or []
+    count = len(specs)
+
+    try:
+        if not await _publish(
+            job_id,
+            state="running",
+            percent=_STAGE_PERCENT["loading-source"],
+            stage="loading-source",
+            event=(
+                "info",
+                "EXPORT_STARTED",
+                f"Export to {count} targets ({request.target_label}) started"
+                + (" (dry-run: fidelity reports only)" if request.dry_run else ""),
+                {"artifact": request.artifact,
+                 "targets": [spec.target for spec in specs],
+                 "dry_run": request.dry_run},
+            ),
+        ):
+            return
+
+        try:
+            source: ExportSource = await asyncio.to_thread(
+                load_export_source, tenant_id, request.artifact, request.version
+            )
+        except ExportSourceError as exc:
+            await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc),
+                        {"status_code": exc.status_code})
+            return
+
+        if not await _publish(
+            job_id,
+            event=(
+                "info",
+                "SOURCE_LOADED",
+                f"Loaded revision {source.version_record_id} "
+                f"(version {source.version_label or 'latest'}) of artifact {source.artifact_id}",
+                {"version_record_id": source.version_record_id,
+                 "version_label": source.version_label},
+            ),
+        ):
+            return
+
+        # --- Pass 1: plan every target (fidelity, stale check, guard) ---------------
+        planned: List[_PlannedTarget] = []
+        for index, spec in enumerate(specs):
+            try:
+                emitter_cls = type(resolve_emitter(spec.target))
+                target_format = resolve_emit_format(spec.target)
+            except ExportError as exc:
+                await _fail(job_id, "UNSUPPORTED_TARGET", str(exc),
+                            {"status_code": exc.status_code, "target": spec.target})
+                return
+            if not await _publish(
+                job_id,
+                percent=_band_percent(_MULTI_FIDELITY_BAND, index, count),
+                stage="analyzing-fidelity",
+                current_item=f"{target_format} ({index + 1}/{count})",
+            ):
+                return
+            fidelity: ExportFidelity = await asyncio.to_thread(
+                build_export_fidelity,
+                source.api,
+                emitter_cls,
+                min_severity=request.min_severity,
+                options=spec.options,
+            )
+            snapshot_hash = fidelity.projection.manifest_hash
+            if (
+                spec.acknowledged_snapshot is not None
+                and spec.acknowledged_snapshot != snapshot_hash
+            ):
+                projection_telemetry.record("stale_acknowledgement")
+                await _fail(
+                    job_id,
+                    "STALE_PREVIEW",
+                    f"The acknowledged preview snapshot for target {target_format!r} no longer "
+                    "matches this export's inputs (the source revision, options, emitter, or "
+                    "capability registry changed). Request a new preview and acknowledge the "
+                    "current snapshot.",
+                    {
+                        "target": target_format,
+                        "acknowledged_snapshot": spec.acknowledged_snapshot,
+                        "current_snapshot": snapshot_hash,
+                    },
+                )
+                return
+            guard: TranscodeGuard = classify_transcode(
+                source.api, emitter_cls, report=fidelity.report
+            )
+            if not await _publish(
+                job_id,
+                event=(
+                    "info",
+                    "FIDELITY_COMPUTED",
+                    f"Fidelity for {target_format!r}: {fidelity.summary.tier.value}, "
+                    f"{fidelity.summary.preserved_percent}% preserved "
+                    f"({fidelity.summary.total} constructs); transcode guard: "
+                    f"{guard.verdict.value}",
+                    {"target": target_format,
+                     "tier": fidelity.summary.tier.value,
+                     "preserved_percent": fidelity.summary.preserved_percent,
+                     "guard": guard.verdict.value},
+                ),
+            ):
+                return
+            planned.append(
+                _PlannedTarget(
+                    spec=spec,
+                    target_format=target_format,
+                    directory=target_directory(target_format),
+                    fidelity=fidelity,
+                    guard=guard,
+                    snapshot_hash=snapshot_hash,
+                )
+            )
+
+        rollup = build_fidelity_rollup(
+            [(p.target_format, p.fidelity, p.guard) for p in planned]
+        )
+
+        if request.dry_run:
+            await _publish(
+                job_id,
+                state="completed",
+                percent=100,
+                result=ExportJobResult(
+                    artifact=source.artifact_id,
+                    version_record_id=source.version_record_id,
+                    version_label=source.version_label,
+                    dry_run=True,
+                    targets=[_target_result(p, []) for p in planned],
+                    fidelity_rollup=rollup,
+                ),
+                event=("info", "DRY_RUN_COMPLETED",
+                       f"Dry-run finished: fidelity reports for {count} targets attached, "
+                       "no artifact emitted.",
+                       {"tier": rollup.tier.value,
+                        "min_preserved_percent": rollup.min_preserved_percent}),
+            )
+            return
+
+        # --- Transcode guard gate (MFX-3.3), across every target, before any emit ----
+        severe = [p for p in planned if p.guard.requires_confirmation]
+        if severe and not request.confirm:
+            await _fail(
+                job_id,
+                "TRANSCODE_CONFIRMATION_REQUIRED",
+                severe[0].guard.message if len(severe) == 1 else (
+                    f"{len(severe)} targets are severe conversions "
+                    f"({', '.join(p.target_format for p in severe)}); resubmit with confirm "
+                    "to export them anyway."
+                ),
+                {"target": severe[0].target_format,
+                 "targets": [
+                     {"target": p.target_format,
+                      "verdict": p.guard.verdict.value,
+                      "reasons": p.guard.reasons,
+                      "preserved_percent": p.guard.preserved_percent}
+                     for p in severe
+                 ],
+                 "verdict": severe[0].guard.verdict.value,
+                 "reasons": severe[0].guard.reasons,
+                 "preserved_percent": severe[0].guard.preserved_percent},
+            )
+            return
+
+        # --- Pass 2: emit, validate, and gate every target ----------------------------
+        source_lint = await asyncio.to_thread(
+            lint_delivery_source,
+            source.api,
+            tenant_id=tenant_id,
+            project_id=source.artifact_id,
+        )
+        for index, item in enumerate(planned):
+            target_format = item.target_format
+            hint = f"{target_format} ({index + 1}/{count})"
+            if not await _publish(
+                job_id,
+                percent=_band_percent(_MULTI_EMIT_BAND, 2 * index, 2 * count),
+                stage="emitting",
+                current_item=hint,
+            ):
+                return
+            try:
+                emit_result: EmitResult = await asyncio.to_thread(
+                    emit_canonical,
+                    source.api,
+                    item.spec.target,
+                    opts=item.spec.options,
+                    persistence=ExportPersistenceContext(
+                        tenant_id=tenant_id, artifact_id=source.artifact_id
+                    ),
+                )
+            except ExportError as exc:
+                await _fail(job_id, "EMIT_FAILED", str(exc),
+                            {"status_code": exc.status_code, "target": target_format})
+                return
+            if not emit_result.files:
+                await _fail(
+                    job_id,
+                    "EMPTY_EMIT",
+                    f"Target {item.spec.target!r} produced no document for this source.",
+                    {"target": target_format},
+                )
+                return
+            if not await _publish(
+                job_id,
+                percent=_band_percent(_MULTI_EMIT_BAND, 2 * index + 1, 2 * count),
+                stage="validating",
+                current_item=hint,
+                event=("info", "EMITTED",
+                       f"Emitted {len(emit_result.files)} file(s) for {target_format!r}",
+                       {"target": target_format,
+                        "files": [f.path for f in emit_result.files]}),
+            ):
+                return
+
+            validation = await validate_emitted_artifact(
+                target_format, emit_result, api=source.api
+            )
+            validation_report = build_validation_report(validation)
+            delivery = await _gate_delivery(
+                tenant_id=tenant_id,
+                tenant_slug=tenant_slug,
+                source=source,
+                source_lint=source_lint,
+                target_format=target_format,
+                fidelity=item.fidelity,
+                validation_report=validation_report,
+            )
+            if delivery.blocks_delivery:
+                await _fail_delivery(job_id, delivery, validation, target_format)
+                return
+            for event in build_validation_events(validation) + build_delivery_events(delivery):
+                if not await _publish(job_id, event=event):
+                    return
+            item.emit_result = emit_result
+            item.validation_report = validation_report
+            item.delivery = delivery
+
+        # --- Package: one zip, per-target subdirectories + root manifest --------------
+        if not await _publish(
+            job_id, percent=_STAGE_PERCENT["packaging"], stage="packaging",
+            current_item=f"{count} targets",
+        ):
+            return
+        parts = [
+            MultiTargetBundlePart(
+                target=p.target_format,
+                directory=p.directory,
+                emit_result=p.emit_result,  # type: ignore[arg-type]  # set in pass 2
+                fidelity=p.fidelity,
+                provenance=_bundle_provenance(p.snapshot_hash, source, p.spec.options, p.fidelity),
+            )
+            for p in planned
+        ]
+        artifact_expires_at = _artifact_expiry_from(_now_ms())
+        persisted = await _persist_download(
+            job_id,
+            tenant_slug,
+            lambda: ExportDownloadArtifact(
+                filename=MULTI_TARGET_BUNDLE_FILENAME,
+                media_type=BUNDLE_MEDIA_TYPE,
+                body=build_multi_target_zip(
+                    parts,
+                    artifact=source.artifact_id,
+                    version_record_id=source.version_record_id,
+                    version_label=source.version_label,
+                    rollup=rollup,
+                ),
+            ),
+            artifact_expires_at,
+        )
+        if persisted is None:
+            return
+        download, stored = persisted
+
+        # Attest each target's delivery against the combined bundle's digest (IXH-2.5).
+        target_results: List[ExportJobTargetResult] = []
+        all_files: List[ExportJobFile] = []
+        for item, part in zip(planned, parts):
+            files = _part_files(part)
+            item.delivery = _attest_delivery(
+                item.delivery,  # type: ignore[arg-type]  # set in pass 2
+                job_id=job_id,
+                tenant_id=tenant_id,
+                tenant_slug=tenant_slug,
+                source=source,
+                target_format=item.target_format,
+                snapshot_hash=item.snapshot_hash,
+                options=item.spec.options,
+                fidelity=item.fidelity,
+                validation_report=item.validation_report,  # type: ignore[arg-type]
+                download=download,
+                stored=stored,
+                files=[f.path for f in files],
+            )
+            attested = _attestation_event(item.delivery, stored, target=item.target_format)
+            if attested is not None and not await _publish(job_id, event=attested):
+                return
+            target_results.append(_target_result(item, files))
+            all_files.extend(files)
+
+        result = ExportJobResult(
+            artifact=source.artifact_id,
+            version_record_id=source.version_record_id,
+            version_label=source.version_label,
+            dry_run=False,
+            files=all_files,
+            media_type=BUNDLE_MEDIA_TYPE,
+            download_path=_download_path(tenant_slug, job_id),
+            download_expires_at=artifact_expires_at,
+            targets=target_results,
+            fidelity_rollup=rollup,
+        )
+        with _jobs_lock:
+            rec = _jobs.get(job_id)
+            if rec is not None:
+                rec.retained_download = download
+                rec.artifact_expires_at_ms = artifact_expires_at
+
+        await _publish(
+            job_id,
+            state="completed",
+            percent=100,
+            result=result,
+            event=("info", "EXPORT_COMPLETED",
+                   f"Export to {count} targets completed "
+                   f"({len(all_files)} file(s), {sum(f.size_bytes for f in all_files)} bytes; "
+                   f"worst tier: {rollup.tier.value})",
+                   None),
+        )
+    except Exception as exc:  # noqa: BLE001 - a background task must never raise
+        logger.exception("multi-target export job crashed job=%s", job_id)
         await _fail(job_id, "EXPORT_EXCEPTION", str(exc), None)
 
 
@@ -1636,6 +2553,31 @@ def _current_export_correlation_id(job_id: str) -> str:
     return job_id
 
 
+def _validate_target_specs(specs: List[ExportJobTargetSpec]) -> None:
+    """Validate a multi-target job's targets at submit time (MFX-39.1).
+
+    Each target must resolve, its options must validate for it, and no two targets may land in
+    the same bundle directory (e.g. ``openapi`` and ``openapi-3.1`` resolve to one format).
+
+    Args:
+        specs: The submitted ``targets`` list.
+
+    Raises:
+        ExportError: 400 for an unknown or duplicate target; 422 for invalid options.
+    """
+    seen: Dict[str, str] = {}
+    for spec in specs:
+        resolve_emit_options(spec.target, spec.options)
+        directory = target_directory(resolve_emit_format(spec.target))
+        if directory in seen:
+            raise ExportError(
+                f"Target {spec.target!r} resolves to the same format as {seen[directory]!r}; "
+                "each target of a multi-target export must be a distinct format.",
+                status_code=400,
+            )
+        seen[directory] = spec.target
+
+
 async def schedule_export_job(
     tenant_slug: str,
     tenant_id: str,
@@ -1660,7 +2602,10 @@ async def schedule_export_job(
         ExportError: When the target is unknown (400) or its options are invalid (422).
     """
     # Fail fast on a bad target/options; also warms the emitter registry.
-    resolve_emit_options(request.target, request.options)
+    if request.targets is not None:
+        _validate_target_specs(request.targets)
+    else:
+        resolve_emit_options(request.target, request.options)
 
     job_id = str(uuid.uuid4())
     # IXH-6.6: capture the submitting request's correlation id here, on the request
@@ -1763,7 +2708,7 @@ async def list_export_jobs(
         logger.warning("Falling back to in-memory export job list for %s", tenant_slug, exc_info=True)
         with _jobs_lock:
             local = [
-                (r.status, r.request.artifact, r.request.target, r.request.dry_run)
+                (r.status, r.request.artifact, r.request.target_label, r.request.dry_run)
                 for r in _jobs.values()
                 if r.tenant_slug == tenant_slug and _state_matches(r.status.state)
             ]
@@ -1816,8 +2761,9 @@ async def cancel_export_job(tenant_slug: str, job_id: str) -> None:
 def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitResult]:
     """The retained raw emit result for a completed job, for the delivery routes (MFX-4.x).
 
-    Returns ``None`` while the job is running, after a failure/cancel, for a dry-run, or once
-    the retention window has elapsed (MFX-4.3) — in which case the expired bytes are dropped.
+    Returns ``None`` while the job is running, after a failure/cancel, for a dry-run, once
+    the retention window has elapsed (MFX-4.3) — in which case the expired bytes are dropped —
+    or for a multi-target job (MFX-39.1), which retains its combined bundle instead.
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant.
@@ -1972,7 +2918,8 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
     Delivery shape:
 
     * a **single-file** export is served inline (MFX-4.1);
-    * a **multi-file** export is served as a zip bundle (MFX-4.2).
+    * a **multi-file** export is served as a zip bundle (MFX-4.2);
+    * a **multi-target** export is served as its combined zip bundle (MFX-39.1).
 
     Args:
         tenant_slug: The tenant slug the job was submitted under (scopes the lookup).
@@ -1995,6 +2942,7 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
             state = rec.state
             request_dry_run = rec.request.dry_run
             emit_result = rec.emit_result
+            retained_download = rec.retained_download
             artifact_expired = (
                 rec.artifact_expires_at_ms is not None and now_ms >= rec.artifact_expires_at_ms
             )
@@ -2017,6 +2965,9 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
                 detail=f"Export job is not downloadable in state {state!r}; "
                 "no artifact has been emitted.",
             )
+        if retained_download is not None and not request_dry_run:
+            # A multi-target job (MFX-39.1) retains its already-packaged combined bundle.
+            return dataclasses.replace(retained_download)
         if request_dry_run or emit_result is None or not emit_result.files:
             raise HTTPException(
                 status_code=409,

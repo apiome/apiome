@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.256.0",
+    "version": "1.257.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-20T00:43:32Z"
+                          "example": "2026-10-20T01:15:21Z"
                         },
                         "method": {
                           "type": "string",
@@ -80071,7 +80071,7 @@
           "export-jobs"
         ],
         "summary": "Start an asynchronous export job",
-        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.",
+        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.\n\n**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.",
         "operationId": "start_export_job_v1_export__tenant_slug__jobs_post",
         "parameters": [
           {
@@ -80620,7 +80620,7 @@
           "export-jobs"
         ],
         "summary": "Fetch a delivered artifact's signed delivery attestation",
-        "description": "The delivery attestation for a completed export job (IXH-2.5): an **in-toto Statement v1** in a **DSSE envelope**, HMAC-SHA256 signed with the shared attestation secret (``APIOME_LINT_ATTESTATION_SIGNING_SECRET`` \u2014 the same key the CLX-4.2 lint gate attestations use, so a verifier needs no new configuration).\n\nThe statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons \u2014 everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.\n\n404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run).",
+        "description": "The delivery attestation for a completed export job (IXH-2.5): an **in-toto Statement v1** in a **DSSE envelope**, HMAC-SHA256 signed with the shared attestation secret (``APIOME_LINT_ATTESTATION_SIGNING_SECRET`` \u2014 the same key the CLX-4.2 lint gate attestations use, so a verifier needs no new configuration).\n\nThe statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons \u2014 everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.\n\nA multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one.\n\n404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is asked without a ``target`` or for a target it did not export.",
         "operationId": "get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__attestation_get",
         "parameters": [
           {
@@ -80644,6 +80644,26 @@
               "description": "Job Id schema."
             },
             "description": "Asynchronous job identifier."
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Fetchadeliveredartifactssigneddeliveryattarget schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Fetchadeliveredartifactssigneddeliveryattarget schema."
+                }
+              ],
+              "description": "Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job.",
+              "title": "Target"
+            },
+            "description": "Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job."
           },
           {
             "name": "authorization",
@@ -111146,7 +111166,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "completed_at": {
             "anyOf": [
@@ -113101,7 +113121,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "comment_count": {
             "type": "integer",
@@ -113329,7 +113349,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114096,14 +114116,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -117387,7 +117407,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "3a54ffcd-e761-4a8e-b6fe-9212515d6bb6"
+            "example": "19b3166f-3b9b-44ad-8116-22f4336fc310"
           },
           "method": {
             "type": "string",
@@ -119914,7 +119934,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -121810,7 +121830,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "browse_url": {
             "anyOf": [
@@ -124020,6 +124040,142 @@
         "title": "ExportFidelity",
         "description": "The full fidelity envelope for one (source, target) export (MFX-2.5).\n\nThe heavyweight half of the surface, returned by ``POST /export/preview`` and *embedded\nverbatim in an export job's result* (MFX-3.1/3.2): the target descriptor, the coarse\n:class:`TargetFidelity` summary, the whole :class:`~app.lossiness.LossinessReport`\n(per-construct detail), and the user-facing :class:`~app.fidelity_advisory.ExportAdvisory`.\nBecause every field is derived purely from the prediction engine, a preview and the export\nit previews carry identical fidelity."
       },
+      "ExportFidelityRollup": {
+        "properties": {
+          "target_count": {
+            "type": "integer",
+            "title": "Target Count",
+            "description": "Number of targets the job covered.",
+            "example": 1
+          },
+          "tier": {
+            "$ref": "#/components/schemas/ExportFidelityTier",
+            "description": "The worst tier across all targets (lossless < lossy < types-only)."
+          },
+          "min_preserved_percent": {
+            "type": "integer",
+            "title": "Min Preserved Percent",
+            "description": "The lowest preserved share across targets \u2014 the export's fidelity floor.",
+            "example": 100
+          },
+          "mean_preserved_percent": {
+            "type": "integer",
+            "title": "Mean Preserved Percent",
+            "description": "The preserved share averaged across targets, rounded to a whole percent.",
+            "example": 100
+          },
+          "tier_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Tier Counts",
+            "description": "How many targets landed in each tier, keyed by tier value; every tier is present (zero when unused)."
+          },
+          "lossy_targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lossy Targets",
+            "description": "Targets whose tier is not ``lossless``, in submission order.",
+            "maxItems": 1000
+          },
+          "severe_targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Severe Targets",
+            "description": "Targets whose transcode guard requires confirmation (a ``severe`` conversion that needs ``confirm``), in submission order.",
+            "maxItems": 1000
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/ExportFidelityRollupEntry"
+            },
+            "type": "array",
+            "title": "Targets",
+            "description": "One line per target, in submission order.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target_count",
+          "tier",
+          "min_preserved_percent",
+          "mean_preserved_percent",
+          "tier_counts"
+        ],
+        "title": "ExportFidelityRollup",
+        "description": "The merged fidelity summary across every target of a multi-target export."
+      },
+      "ExportFidelityRollupEntry": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The resolved target format key (e.g. ``openapi-3.1``).",
+            "example": "example"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/ExportFidelityTier",
+            "description": "The target's fidelity tier badge."
+          },
+          "preserved_percent": {
+            "type": "integer",
+            "title": "Preserved Percent",
+            "description": "Share of source constructs carried faithfully to this target, 0\u2013100.",
+            "example": 100
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Source constructs the prediction considered.",
+            "example": 1
+          },
+          "dropped": {
+            "type": "integer",
+            "title": "Dropped",
+            "description": "Constructs dropped entirely for this target.",
+            "example": 1
+          },
+          "approximated": {
+            "type": "integer",
+            "title": "Approximated",
+            "description": "Constructs represented imperfectly for this target.",
+            "example": 1
+          },
+          "guard": {
+            "type": "string",
+            "title": "Guard",
+            "description": "The target's transcode-guard verdict (MFX-3.3): ``clean`` / ``lossy`` / ``near-empty`` / ``severe``.",
+            "example": "example"
+          },
+          "requires_confirmation": {
+            "type": "boolean",
+            "title": "Requires Confirmation",
+            "description": "True when the target's guard needs ``confirm`` before a real export runs.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target",
+          "tier",
+          "preserved_percent",
+          "total",
+          "dropped",
+          "approximated",
+          "guard",
+          "requires_confirmation"
+        ],
+        "title": "ExportFidelityRollupEntry",
+        "description": "One target's line in the rollup: its tier, preserved share, and guard band."
+      },
       "ExportFidelityTier": {
         "type": "string",
         "enum": [
@@ -124450,10 +124606,18 @@
             "description": "The resolved revision's version label (e.g. ``1.0.0``)."
           },
           "target": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Job schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
             "title": "Target",
-            "description": "The resolved target format key (e.g. ``openapi-3.1``).",
-            "example": "example"
+            "description": "The resolved target format key (e.g. ``openapi-3.1``); null for a multi-target job (see ``targets``)."
           },
           "dry_run": {
             "type": "boolean",
@@ -124484,12 +124648,28 @@
             "description": "The per-target emit options the job was submitted with (EFP-2.1) \u2014 the configuration half of the snapshot record; null when the target defaults applied."
           },
           "fidelity": {
-            "$ref": "#/components/schemas/ExportFidelity",
-            "description": "The full fidelity envelope (target + tier + report + advisory)."
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportFidelity"
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
+            "description": "The full fidelity envelope (target + tier + report + advisory); null for a multi-target job, whose envelopes are on ``targets[].fidelity``."
           },
           "guard": {
-            "$ref": "#/components/schemas/TranscodeGuard",
-            "description": "The pre-flight transcoding guard (MFX-3.3): the conversion band and why. A severe conversion only completes when it was submitted with ``confirm``."
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscodeGuard"
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
+            "description": "The pre-flight transcoding guard (MFX-3.3): the conversion band and why. A severe conversion only completes when it was submitted with ``confirm``. Null for a multi-target job (see ``targets[].guard``)."
           },
           "validation": {
             "anyOf": [
@@ -124565,6 +124745,35 @@
             ],
             "title": "Download Expires At",
             "description": "Epoch-ms deadline after which the retained artifact is dropped and the download route returns 410 (MFX-4.3, temp artifact retention). Null for a dry-run (no artifact) or when retention is disabled (retained for the process lifetime)."
+          },
+          "targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExportJobTargetResult"
+                },
+                "type": "array",
+                "description": "Export Job schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
+            "title": "Targets",
+            "description": "Per-target outcomes of a multi-target job (MFX-39.1), in submission order; null for a single-target job."
+          },
+          "fidelity_rollup": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportFidelityRollup"
+              },
+              {
+                "type": "null",
+                "description": "Export Job schema."
+              }
+            ],
+            "description": "The merged fidelity summary across a multi-target job's targets (worst tier, preserved-% floor and mean, per-tier counts); null for a single-target job."
           }
         },
         "additionalProperties": false,
@@ -124572,13 +124781,10 @@
         "required": [
           "artifact",
           "version_record_id",
-          "target",
-          "dry_run",
-          "fidelity",
-          "guard"
+          "dry_run"
         ],
         "title": "ExportJobResult",
-        "description": "What a terminal ``completed`` export job produced.\n\nCarries the resolved source coordinates, the resolved target, the full\n:class:`~app.export_fidelity.ExportFidelity` envelope (identical to a ``/export/preview``\nof the same inputs), and \u2014 for a real (non-dry-run) export \u2014 the emitted file manifest."
+        "description": "What a terminal ``completed`` export job produced.\n\nCarries the resolved source coordinates, the resolved target, the full\n:class:`~app.export_fidelity.ExportFidelity` envelope (identical to a ``/export/preview``\nof the same inputs), and \u2014 for a real (non-dry-run) export \u2014 the emitted file manifest.\n\nA multi-target job (MFX-39.1) leaves the single-target fields (``target``, ``snapshot_hash``,\n``options``, ``fidelity``, ``guard``, ``validation``, ``delivery``) empty and instead carries\none :class:`ExportJobTargetResult` per target on ``targets`` plus the merged\n``fidelity_rollup``; ``files`` then lists every bundle entry and ``media_type`` is\n``application/zip``."
       },
       "ExportJobStartRequest": {
         "properties": {
@@ -124603,10 +124809,37 @@
             "description": "Revision UUID, version label (``1.0.0``), or null for the latest revision."
           },
           "target": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for export job start."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export job start."
+              }
+            ],
             "title": "Target",
-            "description": "Target emitter key (``openapi``) or format key (``openapi-3.1``).",
-            "example": "example"
+            "description": "Target emitter key (``openapi``) or format key (``openapi-3.1``) for a single-target export. Required unless ``targets`` is given; never both."
+          },
+          "targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExportJobTargetSpec"
+                },
+                "type": "array",
+                "maxItems": 16,
+                "minItems": 1,
+                "description": "Request body for export job start."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export job start."
+              }
+            ],
+            "title": "Targets",
+            "description": "The targets of a multi-target export (MFX-39.1), each with its own options and acknowledged snapshot; 1\u201316 entries, each resolving to a distinct format. Mutually exclusive with ``target`` / ``options`` / ``acknowledged_snapshot``."
           },
           "options": {
             "anyOf": [
@@ -124621,7 +124854,7 @@
               }
             ],
             "title": "Options",
-            "description": "Per-target emit options (MFX-1.4); null or empty applies the target defaults."
+            "description": "Per-target emit options (MFX-1.4); null or empty applies the target defaults. Single-target only \u2014 a multi-target job sets options per ``targets`` entry."
           },
           "dry_run": {
             "type": "boolean",
@@ -124649,7 +124882,7 @@
               }
             ],
             "title": "Acknowledged Snapshot",
-            "description": "The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ \u2014 the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check."
+            "description": "The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ \u2014 the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check. Single-target only \u2014 a multi-target job acknowledges per ``targets`` entry."
           },
           "min_severity": {
             "$ref": "#/components/schemas/LossinessSeverity",
@@ -124660,11 +124893,10 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "artifact",
-          "target"
+          "artifact"
         ],
         "title": "ExportJobStartRequest",
-        "description": "Submit an export job: source coordinates + target + options + dry-run flag.\n\nThe source half matches ``POST /export/preview`` / ``POST /export/document``\n(MFX-2.5/11.5); ``dry_run`` selects the preview-only path (fidelity report, no\nartifact), the async twin of the synchronous ``/export/preview`` endpoint."
+        "description": "Submit an export job: source coordinates + target(s) + options + dry-run flag.\n\nThe source half matches ``POST /export/preview`` / ``POST /export/document``\n(MFX-2.5/11.5); ``dry_run`` selects the preview-only path (fidelity report, no\nartifact), the async twin of the synchronous ``/export/preview`` endpoint.\n\nName **either** one ``target`` (with optional ``options`` / ``acknowledged_snapshot``) **or**\na ``targets`` list (MFX-39.1) \u2014 one job then emits the version to every listed target into a\nsingle zip bundle with per-target subdirectories and a root manifest, and its result carries\nper-target fidelity reports plus a merged rollup."
       },
       "ExportJobStatus": {
         "properties": {
@@ -124763,6 +124995,155 @@
         ],
         "title": "ExportJobStatus",
         "description": "Poll payload for an export job (same shape as the import job status).\n\nA terminal job is self-describing: ``completed`` carries ``result`` (with a\n``download_path`` for a real export), ``failed`` carries a structured ``error`` (MFX-3.4)."
+      },
+      "ExportJobTargetResult": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The resolved target format key (e.g. ``openapi-3.1``).",
+            "example": "example"
+          },
+          "directory": {
+            "type": "string",
+            "title": "Directory",
+            "description": "The bundle subdirectory holding this target's files (``<directory>/\u2026``).",
+            "example": "example"
+          },
+          "snapshot_hash": {
+            "type": "string",
+            "title": "Snapshot Hash",
+            "description": "This target's projection snapshot hash (EFP-2.1).",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Export Job Target schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target schema."
+              }
+            ],
+            "title": "Options",
+            "description": "The emit options this target ran with; null for defaults."
+          },
+          "fidelity": {
+            "$ref": "#/components/schemas/ExportFidelity",
+            "description": "This target's full fidelity envelope (tier + report + advisory)."
+          },
+          "guard": {
+            "$ref": "#/components/schemas/TranscodeGuard",
+            "description": "This target's transcoding guard (MFX-3.3)."
+          },
+          "validation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmittedValidationReport"
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target schema."
+              }
+            ],
+            "description": "This target's emitted-artifact validation report; null for a dry-run."
+          },
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryGateReport"
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target schema."
+              }
+            ],
+            "description": "This target's delivery gate decision, with an attestation whose subject is the combined bundle; null for a dry-run."
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ExportJobFile"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "The files this target contributed, at their bundle paths (``<directory>/<path>``); empty for a dry-run.",
+            "maxItems": 1000
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Job Target schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target schema."
+              }
+            ],
+            "title": "Media Type",
+            "description": "This target's primary media type; null for a dry-run."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target",
+          "directory",
+          "snapshot_hash",
+          "fidelity",
+          "guard"
+        ],
+        "title": "ExportJobTargetResult",
+        "description": "One target's outcome inside a completed multi-target export (MFX-39.1).\n\nThe per-target half of what a single-target :class:`ExportJobResult` carries at its top\nlevel: the resolved target, its snapshot hash and options, its full fidelity envelope and\ntranscode guard, and \u2014 for a real export \u2014 its validation report, delivery decision (with an\nattestation naming the combined bundle), and the files it contributed to the bundle."
+      },
+      "ExportJobTargetSpec": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+            "example": "example"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Export Job Target Spec schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target Spec schema."
+              }
+            ],
+            "title": "Options",
+            "description": "Emit options for this target (MFX-1.4); null or empty applies its defaults."
+          },
+          "acknowledged_snapshot": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Job Target Spec schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Job Target Spec schema."
+              }
+            ],
+            "title": "Acknowledged Snapshot",
+            "description": "This target's previewed projection snapshot hash (EFP-2.1). When set and it no longer matches, the whole job fails with `STALE_PREVIEW` naming this target."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "ExportJobTargetSpec",
+        "description": "One entry of a multi-target export's ``targets`` list (MFX-39.1).\n\nOptions and the acknowledged preview snapshot are per target: emit options valid for one\nemitter are usually invalid for another, and each target previews to its own snapshot hash."
       },
       "ExportManifestFile": {
         "properties": {
@@ -164945,7 +165326,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           }
         },
         "additionalProperties": false,
@@ -176367,13 +176748,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           }
         },
         "additionalProperties": false,
@@ -177877,7 +178258,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "detected_by": {
             "anyOf": [
@@ -186083,14 +186464,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-20T00:43:32Z"
+            "example": "2026-10-20T01:15:21Z"
           },
           "outcome": {
             "anyOf": [

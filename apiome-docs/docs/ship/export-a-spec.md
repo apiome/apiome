@@ -109,6 +109,49 @@ Other representations of the same version:
 For private versions, pass an in-scope API key via the `X-API-Key` header (or the `api_key` query
 parameter).
 
+### Export to several formats in one job
+
+To publish a version in several formats at once, send one export job with a `targets` list instead
+of a single `target`. Apiome emits the version to every listed format and hands back **one zip**.
+
+```http
+POST /v1/export/{tenant_slug}/jobs
+{
+  "artifact": "<project-id>",
+  "version": "1.0.0",
+  "targets": [
+    { "target": "openapi" },
+    { "target": "graphql" },
+    { "target": "protobuf", "options": { "package": "acme.payments.v1" } }
+  ]
+}
+```
+
+1. The `202` response carries a `status_path`. Poll it until `state` is `completed` or `failed`.
+2. Download the zip from `result.download_path`. Each format sits in its own folder, named after
+   the resolved format key (`openapi-3.1/`, `graphql/`, …), and a root `manifest.json` lists
+   every folder, its files, its fidelity tier and the version that produced it.
+3. Read the fidelity on the job result:
+   - `result.targets[]` has one entry per format, in the order you sent them: its full fidelity
+     report, transcoding guard, validation report, delivery decision and the files it added to
+     the zip.
+   - `result.fidelity_rollup` sums them up: the worst tier, the lowest and average preserved
+     share, how many formats landed in each tier, and which formats are lossy or need
+     confirmation.
+
+| Rule | Behavior |
+|---|---|
+| `target` vs `targets` | Send one or the other. Mixing them, or putting `options` / `acknowledged_snapshot` at the top level next to `targets`, is rejected with `422`. |
+| Per-format settings | `options` and `acknowledged_snapshot` go on each `targets` entry. |
+| How many | Up to 16 entries in `targets`. Two entries that resolve to the same format (`openapi` and `openapi-3.1`) are rejected with `400`. |
+| `dry_run: true` | Every format's fidelity report and the rollup, no zip. |
+| Severe conversions | If any format needs confirmation, the job fails with `TRANSCODE_CONFIRMATION_REQUIRED` before anything is generated. Resubmit with `"confirm": true`. |
+| Failures | All or nothing: the first format that fails fails the job, and `error.context.target` names it. No zip is kept. |
+| Attestation | Each format is attested separately against the zip. Fetch one with `GET …/jobs/{job_id}/attestation?target=<format key>`. |
+
+The same rules for snapshots and acknowledgements apply to each format; see
+[Understand export fidelity](./export-fidelity.md#snapshots-and-the-risk-acknowledgement).
+
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The

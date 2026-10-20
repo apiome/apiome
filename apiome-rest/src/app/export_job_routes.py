@@ -64,7 +64,14 @@ router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
         "pipeline: load source → fidelity report → emit → validate → package. "
         "``dry_run: true`` stops after the fidelity report (no artifact), the async twin "
         "of ``POST …/preview``. Poll the returned ``status_path`` for progress; the "
-        "status contract matches the spec-import job surface."
+        "status contract matches the spec-import job surface.\n\n"
+        "**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, "
+        "acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed "
+        "target in one job. The download is one zip with a subdirectory per target plus a root "
+        "``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, "
+        "validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The "
+        "job is all-or-nothing: the first target that fails fails the job, naming it in "
+        "``error.context.target``."
     ),
 )
 async def start_export_job(
@@ -83,8 +90,9 @@ async def start_export_job(
         The 202 acceptance payload (job id + poll path).
 
     Raises:
-        HTTPException: 400 when the target is unknown; 422 when the emit options are
-            invalid for the target. Source-related failures (unknown artifact/version,
+        HTTPException: 400 when a target is unknown or two targets of a multi-target job
+            resolve to the same format; 422 when the emit options are invalid for a target or
+            the request mixes ``target`` and ``targets``. Source-related failures (unknown artifact/version,
             no reconstructable source) surface asynchronously in the job status.
     """
     tenant_id = str(auth_data["tenant_id"])
@@ -265,14 +273,23 @@ def _attestation_path(tenant_slug: str, job_id: str) -> str:
         "fingerprint that were applied, any waiver the decision honoured, and the delivery "
         "decision with its named reasons — everything needed to reproduce the verdict offline. "
         "``apiome lint verify-attestation`` verifies it as-is.\n\n"
+        "A multi-target job (MFX-39.1) attests each target separately against the combined "
+        "bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to "
+        "pick one.\n\n"
         "404 when the job is unknown for this tenant; 409 when the job produced no attested "
-        "delivery (still running, canceled, failed, or a dry-run)."
+        "delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is "
+        "asked without a ``target`` or for a target it did not export."
     ),
 )
 async def get_export_job_attestation(
     tenant_slug: str,
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
+    target: Optional[str] = Query(
+        None,
+        description="Multi-target jobs only: the resolved target format key whose attestation "
+        "to return. Ignored for a single-target job.",
+    ),
 ) -> DeliveryAttestation:
     """Return the signed delivery attestation for a completed export job.
 
@@ -280,21 +297,35 @@ async def get_export_job_attestation(
         tenant_slug: The tenant slug the job was submitted under.
         job_id: The job id from the 202 acceptance payload.
         auth_data: Authenticated tenant context (JWT or API key).
+        target: For a multi-target job, the resolved target format key to return the
+            attestation of; ignored for a single-target job.
 
     Returns:
-        The job's :class:`~app.export_delivery_gate.DeliveryAttestation`.
+        The job's (or the selected target's) :class:`~app.export_delivery_gate.DeliveryAttestation`.
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant; 409 when the job carries no
-            attestation (not completed, a dry-run, or a server with attestation disabled).
+            attestation (not completed, a dry-run, or a server with attestation disabled), or a
+            multi-target job is asked without a known ``target``.
     """
     _ = auth_data
     status = await engine_get_export_job_status(tenant_slug, job_id)
-    attestation = (
-        status.result.delivery.attestation
-        if status.result and status.result.delivery
-        else None
-    )
+    result = status.result
+    if result is not None and result.targets is not None:
+        exported = [entry.target for entry in result.targets]
+        selected = next((entry for entry in result.targets if entry.target == target), None)
+        if selected is None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Export job {job_id} exported several targets; pass ?target= with one of: "
+                    f"{', '.join(exported)}."
+                ),
+            )
+        delivery = selected.delivery
+    else:
+        delivery = result.delivery if result else None
+    attestation = delivery.attestation if delivery else None
     if attestation is None:
         raise HTTPException(
             status_code=409,
