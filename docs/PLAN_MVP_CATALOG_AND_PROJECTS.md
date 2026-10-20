@@ -80,7 +80,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 - [x] [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 Catalog UX & Look-and-Feel Improvements — after #4121, #4122, #4124
 - [x] [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 Catalog Detail View Parity — after #4093
 - [x] [#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 Catalog → OpenAPI Conversion & Fidelity Preview — after #4009
-- [ ] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — one child left, #4021 (deferred, §1.3)
+- [ ] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — all children done (last, #4021, closed); epic still open on GitHub
 
 ### 1.2 Should finish (Projects CLI parity)
 
@@ -141,7 +141,7 @@ Recommendation: leave them out of the MVP. None of them carries the `mvp` label 
 
 Gateway connectors, ownership, dependency graph, registries.
 
-- [ ] [#5950](https://github.com/apiome/apiome/issues/5950) CDG Roadmap — Catalog Discovery Graph
+- [x] [#5950](https://github.com/apiome/apiome/issues/5950) CDG Roadmap — Catalog Discovery Graph
 - [x] [#5951](https://github.com/apiome/apiome/issues/5951) CDG-EPIC-1 Gateway and cloud connectors (absorbs RAR-EPIC-6 #3511)
 - [x] [#5952](https://github.com/apiome/apiome/issues/5952) CDG-1.1 Refresh-source protocol and connector registry
 - [x] [#5953](https://github.com/apiome/apiome/issues/5953) CDG-1.2 Kong connector (Konnect control planes and Admin API)
@@ -156,20 +156,20 @@ Gateway connectors, ownership, dependency graph, registries.
 - [x] [#5962](https://github.com/apiome/apiome/issues/5962) CDG-2.3 Owner routing of findings
 - [x] [#5963](https://github.com/apiome/apiome/issues/5963) CDG-2.4 Ownership surfaces
 - [x] [#5964](https://github.com/apiome/apiome/issues/5964) CDG-2.5 Unowned-entity policy and ownership drift
-- [ ] [#5965](https://github.com/apiome/apiome/issues/5965) CDG-EPIC-3 Dependency and supply-chain graph
+- [x] [#5965](https://github.com/apiome/apiome/issues/5965) CDG-EPIC-3 Dependency and supply-chain graph
 - [x] [#5966](https://github.com/apiome/apiome/issues/5966) CDG-3.1 Graph edge store and materializer
 - [x] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
 - [x] [#5968](https://github.com/apiome/apiome/issues/5968) CDG-3.3 Blast-radius query
 - [x] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
 - [x] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges
 - [x] [#5971](https://github.com/apiome/apiome/issues/5971) CDG-3.6 Graph export and diff-gate annotation
-- [ ] [#5972](https://github.com/apiome/apiome/issues/5972) CDG-EPIC-4 Registry endpoints
+- [x] [#5972](https://github.com/apiome/apiome/issues/5972) CDG-EPIC-4 Registry endpoints
 - [x] [#5973](https://github.com/apiome/apiome/issues/5973) CDG-4.1 MCP Registry API over the MCP server catalog
 - [x] [#5974](https://github.com/apiome/apiome/issues/5974) CDG-4.2 Schema subject model
 - [x] [#5975](https://github.com/apiome/apiome/issues/5975) CDG-4.3 Confluent-compatible subject REST API
 - [x] [#5976](https://github.com/apiome/apiome/issues/5976) CDG-4.4 Upstream MCP registry connector
 - [x] [#5977](https://github.com/apiome/apiome/issues/5977) CDG-4.5 Registry UI and CLI
-- [ ] [#5978](https://github.com/apiome/apiome/issues/5978) CDG-EPIC-5 Catalog entity kinds and scorecards
+- [x] [#5978](https://github.com/apiome/apiome/issues/5978) CDG-EPIC-5 Catalog entity kinds and scorecards
 - [x] [#5979](https://github.com/apiome/apiome/issues/5979) CDG-5.1 Entity-kind registry and unified entity list
 - [x] [#5980](https://github.com/apiome/apiome/issues/5980) CDG-5.2 Agent and model entities
 - [x] [#5981](https://github.com/apiome/apiome/issues/5981) CDG-5.3 Gateway configs as entities
@@ -180,7 +180,7 @@ Gateway connectors, ownership, dependency graph, registries.
 
 Security score for catalog revisions.
 
-- [ ] [#5921](https://github.com/apiome/apiome/issues/5921) ASP-1.3 Security axis and 0–100 security score for catalog revisions
+- [x] [#5921](https://github.com/apiome/apiome/issues/5921) ASP-1.3 Security axis and 0–100 security score for catalog revisions
 
 #### Designer view of catalog items
 
@@ -192,13 +192,13 @@ Designer is a commercial surface; non-MVP per its own body.
 
 Depends on the Export studio.
 
-- [ ] [#4334](https://github.com/apiome/apiome/issues/4334) MFX-39.2 Project / batch export
+- [x] [#4334](https://github.com/apiome/apiome/issues/4334) MFX-39.2 Project / batch export
 
 #### Repository → project mapping
 
 Multi-repo merge and PR-back sync.
 
-- [ ] [#2749](https://github.com/apiome/apiome/issues/2749) REPO-EPIC-5 Sync Pipeline & Project Mapping
+- [x] [#2749](https://github.com/apiome/apiome/issues/2749) REPO-EPIC-5 Sync Pipeline & Project Mapping
 - [x] [#2792](https://github.com/apiome/apiome/issues/2792) REPO-5.7 Multi-repo merge into single API surface
 - [x] [#2793](https://github.com/apiome/apiome/issues/2793) REPO-5.8 PR-back sync (Apiome → repository)
 - [x] [#2806](https://github.com/apiome/apiome/issues/2806) V2-REPO-8.2 Multi-repo federation (single project from N repos)
