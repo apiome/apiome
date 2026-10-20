@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.262.0
+  version: 1.263.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23007,7 +23007,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-20T04:00:54Z'
+                        example: '2026-10-20T16:23:28Z'
                       method:
                         type: string
                         example: GET
@@ -26697,7 +26697,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyncErrorDetail'
                 description: Response payload for mergeabounddraftagainstitsrepositoryrefresponse422.
-          description: Unprocessable Content
+          description: Unprocessable Entity
         '502':
           content:
             application/json:
@@ -83269,7 +83269,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         completed_at:
           anyOf:
           - type: string
@@ -84756,7 +84756,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -84929,7 +84929,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -85534,13 +85534,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -88057,7 +88057,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: f4b6cf85-e710-4460-8479-6424922f2097
+          example: 68588b60-fb6f-4c00-8bb7-b67654e32709
         method:
           type: string
           title: Method
@@ -90200,7 +90200,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         envelope:
           additionalProperties: true
           type: object
@@ -91691,7 +91691,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         browse_url:
           anyOf:
           - type: string
@@ -122139,9 +122139,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Request body for push webhook subscription create.
           - type: 'null'
             description: Request body for push webhook subscription create.
@@ -122182,9 +122182,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Response payload for push webhook subscription.
           - type: 'null'
             description: Response payload for push webhook subscription.
@@ -122248,9 +122248,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Request body for push webhook subscription update.
           - type: 'null'
             description: Request body for push webhook subscription update.
@@ -127386,7 +127386,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
       additionalProperties: false
       type: object
       required:
@@ -136259,12 +136259,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
       additionalProperties: false
       type: object
       required:
@@ -137393,7 +137393,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         detected_by:
           anyOf:
           - type: string
@@ -143691,13 +143691,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-20T04:00:54Z'
+          example: '2026-10-20T16:23:28Z'
         outcome:
           anyOf:
           - type: string

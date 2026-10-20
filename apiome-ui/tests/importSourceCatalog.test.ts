@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { FileCode, FileJson, Radio, Share2, Waypoints } from 'lucide-react';
+import { BotMessageSquare, FileCode, FileJson, Radio, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -193,6 +193,37 @@ describe('GraphQL source card (MFI-10.6)', () => {
 
   it('resolves the descriptor `waypoints` icon to the Lucide Waypoints component', () => {
     expect(resolveLucideIcon(GRAPHQL_DESCRIPTOR.icon)).toBe(Waypoints);
+  });
+});
+
+/** The A2A Agent Card source as the REST registry advertises it (MFI-18.1, #3974). */
+const A2A_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'a2a',
+  label: 'A2A Agent Card',
+  description:
+    "Import an A2A (Agent2Agent) Agent Card — the agent's skills, tags, input / output modes, " +
+    "capabilities and security schemes — from a file, a URL, or live from the agent's " +
+    '/.well-known/agent-card.json.',
+  icon: 'bot-message-square',
+  paradigm: 'agent',
+  input_kinds: ['file', 'url', 'paste', 'discovery', 'fileset'],
+  supports_live_discovery: true,
+  formats: ['a2a'],
+};
+
+describe('A2A Agent Card source card (MFI-18.1)', () => {
+  it('surfaces the registered A2A adapter as a usable Catalog card', () => {
+    const a2a = mergeImportSourceCards([A2A_DESCRIPTOR]).find((c) => c.key === 'a2a');
+    expect(a2a).toBeDefined();
+    expect(a2a?.builtin).toBe(false);
+    expect(a2a?.label).toBe('A2A Agent Card');
+    expect(a2a?.panel).toBe('file');
+    expect(a2a?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('a2a')).toBe(false);
+  });
+
+  it('resolves the descriptor `bot-message-square` icon to the Lucide component', () => {
+    expect(resolveLucideIcon(A2A_DESCRIPTOR.icon)).toBe(BotMessageSquare);
   });
 });
 

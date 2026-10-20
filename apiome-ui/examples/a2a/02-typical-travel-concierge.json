@@ -1,0 +1,69 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Travel Concierge",
+  "description": "Plans trips end to end: searches flights and hotels, builds itineraries and answers visa questions.",
+  "url": "https://travel.agents.example.com/a2a/v1",
+  "preferredTransport": "JSONRPC",
+  "provider": {
+    "organization": "Example Travel Co.",
+    "url": "https://travel.example.com"
+  },
+  "iconUrl": "https://travel.example.com/static/concierge.png",
+  "version": "2.4.0",
+  "documentationUrl": "https://travel.example.com/docs/concierge",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": false
+  },
+  "securitySchemes": {
+    "concierge_oauth": {
+      "type": "oauth2",
+      "description": "OAuth 2.0 client credentials for partner agents.",
+      "flows": {
+        "clientCredentials": {
+          "tokenUrl": "https://auth.travel.example.com/oauth/token",
+          "scopes": {
+            "trips:read": "Read itineraries",
+            "trips:write": "Create and change bookings"
+          }
+        }
+      }
+    }
+  },
+  "security": [{ "concierge_oauth": ["trips:read"] }],
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "search-flights",
+      "name": "Search flights",
+      "description": "Finds flights between two airports for given dates, cabin class and passenger count.",
+      "tags": ["travel", "flights", "search"],
+      "examples": ["Find me a direct flight from SFO to NRT on 12 March, economy, 2 adults"]
+    },
+    {
+      "id": "search-hotels",
+      "name": "Search hotels",
+      "description": "Finds hotels near a location for a date range, filtered by price and rating.",
+      "tags": ["travel", "hotels", "search"],
+      "examples": ["Four-star hotels within 1 km of Shibuya station, 12-16 March"]
+    },
+    {
+      "id": "build-itinerary",
+      "name": "Build itinerary",
+      "description": "Assembles chosen flights, hotels and activities into a day-by-day itinerary document.",
+      "tags": ["travel", "itinerary", "planning"],
+      "outputModes": ["application/json", "application/pdf"]
+    },
+    {
+      "id": "visa-requirements",
+      "name": "Visa requirements",
+      "description": "Explains entry and visa requirements for a passport holder visiting a country.",
+      "tags": ["travel", "visa", "compliance"],
+      "examples": ["Do US citizens need a visa for a two-week trip to Japan?"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["text/plain"]
+    }
+  ]
+}

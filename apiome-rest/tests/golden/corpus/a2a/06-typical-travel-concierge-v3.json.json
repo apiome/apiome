@@ -1,0 +1,619 @@
+{
+  "adapter": "a2a",
+  "canonical": {
+    "channels": [],
+    "description": "Plans trips end to end: searches flights, hotels and rail, builds itineraries and books them.",
+    "extras": {
+      "capabilities": {
+        "pushNotifications": true,
+        "stateTransitionHistory": false,
+        "streaming": true
+      },
+      "default_input_modes": [
+        "text/plain",
+        "application/json"
+      ],
+      "default_output_modes": [
+        "text/plain",
+        "application/json"
+      ],
+      "documentation_url": "https://travel.example.com/docs/concierge",
+      "icon_url": "https://travel.example.com/static/concierge.png",
+      "preferred_transport": "JSONRPC",
+      "present_keys": [
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "description",
+        "documentationUrl",
+        "iconUrl",
+        "name",
+        "preferredTransport",
+        "protocolVersion",
+        "provider",
+        "security",
+        "securitySchemes",
+        "skills",
+        "url",
+        "version"
+      ],
+      "protocol_version": "0.3.0",
+      "provider": {
+        "organization": "Example Travel Co.",
+        "url": "https://travel.example.com"
+      },
+      "security_requirements": [
+        {
+          "concierge_oauth": [
+            "trips:read",
+            "trips:write"
+          ]
+        },
+        {
+          "partner_key": []
+        }
+      ],
+      "security_schemes": {
+        "concierge_oauth": {
+          "description": "OAuth 2.0 client credentials for partner agents.",
+          "flows": {
+            "clientCredentials": {
+              "scopes": {
+                "trips:read": "Read itineraries",
+                "trips:write": "Create and change bookings"
+              },
+              "tokenUrl": "https://auth.travel.example.com/oauth/token"
+            }
+          },
+          "type": "oauth2"
+        },
+        "partner_key": {
+          "description": "Static key for legacy partner integrations.",
+          "in": "header",
+          "name": "X-Partner-Key",
+          "type": "apiKey"
+        }
+      },
+      "signature_count": 0,
+      "skill_count": 5,
+      "skill_tags": [
+        "booking",
+        "flights",
+        "hotels",
+        "itinerary",
+        "multi-city",
+        "payments",
+        "planning",
+        "rail",
+        "search",
+        "travel"
+      ],
+      "supports_authenticated_extended_card": false
+    },
+    "format": "a2a",
+    "identity": {
+      "extras": {},
+      "id": "https://travel.agents.example.com/a2a/v1",
+      "name": "Travel Concierge",
+      "namespace": "Example Travel Co."
+    },
+    "paradigm": "agent",
+    "protocol": "a2a",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Primary A2A endpoint",
+        "extras": {},
+        "name": "JSONRPC",
+        "protocol": "JSONRPC",
+        "url": "https://travel.agents.example.com/a2a/v1",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Plans trips end to end: searches flights, hotels and rail, builds itineraries and books them.",
+        "extras": {
+          "security_requirements": [
+            {
+              "concierge_oauth": [
+                "trips:read",
+                "trips:write"
+              ]
+            },
+            {
+              "partner_key": []
+            }
+          ],
+          "security_schemes": {
+            "concierge_oauth": {
+              "description": "OAuth 2.0 client credentials for partner agents.",
+              "flows": {
+                "clientCredentials": {
+                  "scopes": {
+                    "trips:read": "Read itineraries",
+                    "trips:write": "Create and change bookings"
+                  },
+                  "tokenUrl": "https://auth.travel.example.com/oauth/token"
+                }
+              },
+              "type": "oauth2"
+            },
+            "partner_key": {
+              "description": "Static key for legacy partner integrations.",
+              "in": "header",
+              "name": "X-Partner-Key",
+              "type": "apiKey"
+            }
+          }
+        },
+        "key": "Travel Concierge",
+        "name": "Travel Concierge",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Books every item of an itinerary and returns the confirmation numbers.",
+            "extras": {
+              "examples": [],
+              "input_modes": [
+                "application/json"
+              ],
+              "output_modes": [
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "concierge_oauth",
+                  "scopes": [
+                    "trips:write"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "concierge_oauth": [
+                    "trips:write"
+                  ]
+                }
+              ],
+              "security_source": "skill",
+              "skill_id": "book-trip"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Travel Concierge.book-trip",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.book-trip#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.book-trip#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Book trip",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "travel",
+              "booking",
+              "payments"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Assembles chosen flights, hotels and activities into a day-by-day itinerary document.",
+            "extras": {
+              "examples": [],
+              "input_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "output_modes": [
+                "application/json",
+                "application/pdf"
+              ],
+              "security": [
+                {
+                  "scheme": "concierge_oauth",
+                  "scopes": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "scheme": "partner_key",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "concierge_oauth": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "partner_key": []
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "build-itinerary"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Travel Concierge.build-itinerary",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.build-itinerary#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json",
+                  "application/pdf"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.build-itinerary#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Build itinerary",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "travel",
+              "itinerary",
+              "planning"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Finds flights between two airports for given dates, cabin class and passenger count, including multi-city trips.",
+            "extras": {
+              "examples": [
+                "Find me a direct flight from SFO to NRT on 12 March, economy, 2 adults"
+              ],
+              "input_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "output_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "concierge_oauth",
+                  "scopes": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "scheme": "partner_key",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "concierge_oauth": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "partner_key": []
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "search-flights"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Travel Concierge.search-flights",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-flights#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-flights#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Search flights",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "travel",
+              "flights",
+              "search",
+              "multi-city"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Finds hotels near a location for a date range, filtered by price and rating.",
+            "extras": {
+              "examples": [
+                "Four-star hotels within 1 km of Shibuya station, 12-16 March"
+              ],
+              "input_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "output_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "concierge_oauth",
+                  "scopes": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "scheme": "partner_key",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "concierge_oauth": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "partner_key": []
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "search-hotels"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Travel Concierge.search-hotels",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-hotels#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-hotels#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Search hotels",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "travel",
+              "hotels",
+              "search"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Finds train connections between two stations, including seat classes and passes.",
+            "extras": {
+              "examples": [
+                "Shinkansen from Tokyo to Kyoto on the morning of 14 March"
+              ],
+              "input_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "output_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "concierge_oauth",
+                  "scopes": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "scheme": "partner_key",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "concierge_oauth": [
+                    "trips:read",
+                    "trips:write"
+                  ]
+                },
+                {
+                  "partner_key": []
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "search-rail"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Travel Concierge.search-rail",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-rail#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Travel Concierge.search-rail#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Search rail",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "travel",
+              "rail",
+              "search"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Travel Concierge",
+    "types": [],
+    "version": "3.0.0"
+  },
+  "corpus_path": "a2a/06-typical-travel-concierge-v3.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "a2a"
+  },
+  "fingerprint": "sha256:fb86cea9d1c5eb18afd2c24c4d7458f101d2da7640f42774cca9f2eb787bd7b4",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

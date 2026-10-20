@@ -1,0 +1,68 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Ops Swiss-Army Agent",
+  "description": "Grab-bag operations agent used to exercise every corner of the Agent Card shape.",
+  "url": "http://ops.internal.example.com:8080/a2a",
+  "preferredTransport": "HTTP+JSON",
+  "version": 7,
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true,
+    "extensions": [
+      { "uri": "https://ops.example.com/ext/cost-hints/v2", "required": false, "params": { "currency": "USD" } },
+      { "uri": "https://ops.example.com/ext/audit/v1" }
+    ]
+  },
+  "securitySchemes": {
+    "legacy_key": { "type": "apiKey", "in": "query", "name": "api_key" },
+    "header_key": { "type": "apiKey", "in": "header", "name": "X-Ops-Key" },
+    "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+    "kerberos": { "type": "negotiate" }
+  },
+  "security": [{ "header_key": [] }, { "bearer": [] }, { "sso": ["ops"] }],
+  "defaultInputModes": [],
+  "defaultOutputModes": ["text/plain", "text/plain", " "],
+  "signatures": [
+    { "protected": "eyJhbGciOiJFUzI1NiJ9", "signature": "c2lnbmF0dXJlLTE" },
+    { "protected": "eyJhbGciOiJSUzI1NiJ9", "signature": "c2lnbmF0dXJlLTI" }
+  ],
+  "skills": [
+    {
+      "id": "restart-service",
+      "name": "Restart service",
+      "description": "Restarts a named service on a host after a health check.",
+      "tags": ["ops", "remediation", "ops"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json", "text/event-stream"],
+      "security": [{ "bearer": ["ops:write"] }, { "break_glass": [] }]
+    },
+    {
+      "id": "restart-service",
+      "name": "Restart service (dry run)",
+      "description": "Reports what a restart would do without doing it.",
+      "tags": ["ops", "dry-run"]
+    },
+    {
+      "id": 42,
+      "name": "Numeric id skill",
+      "description": "Skill whose id is a number rather than a string.",
+      "tags": []
+    },
+    {
+      "id": "explain",
+      "name": "Explain",
+      "description": "",
+      "examples": ["What does error E1234 mean?", "", "What does error E1234 mean?"],
+      "security": []
+    },
+    {
+      "id": "unicode-✓",
+      "name": "Résumé des incidents",
+      "description": "Résume les incidents des dernières 24 heures — 日本語もOK.",
+      "tags": ["ops", "résumé", "多言語"],
+      "x-vendor-hint": { "tier": "gold" }
+    }
+  ],
+  "x-ops-owner": "platform-team"
+}

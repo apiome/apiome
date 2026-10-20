@@ -1,0 +1,165 @@
+{
+  "adapter": "a2a",
+  "canonical": {
+    "channels": [],
+    "description": "Repeats back whatever text it is sent. Useful for testing A2A clients.",
+    "extras": {
+      "capabilities": {},
+      "default_input_modes": [
+        "text/plain"
+      ],
+      "default_output_modes": [
+        "text/plain"
+      ],
+      "documentation_url": null,
+      "icon_url": null,
+      "preferred_transport": null,
+      "present_keys": [
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "description",
+        "name",
+        "protocolVersion",
+        "skills",
+        "url",
+        "version"
+      ],
+      "protocol_version": "0.3.0",
+      "provider": null,
+      "security_requirements": [],
+      "security_schemes": {},
+      "signature_count": 0,
+      "skill_count": 1,
+      "skill_tags": [
+        "echo",
+        "testing"
+      ],
+      "supports_authenticated_extended_card": false
+    },
+    "format": "a2a",
+    "identity": {
+      "extras": {},
+      "id": "https://echo.agents.example.com/a2a/v1",
+      "name": "Echo Agent",
+      "namespace": null
+    },
+    "paradigm": "agent",
+    "protocol": "a2a",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Primary A2A endpoint",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://echo.agents.example.com/a2a/v1",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Repeats back whatever text it is sent. Useful for testing A2A clients.",
+        "extras": {
+          "security_requirements": [],
+          "security_schemes": {}
+        },
+        "key": "Echo Agent",
+        "name": "Echo Agent",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Returns the incoming message text unchanged.",
+            "extras": {
+              "examples": [
+                "Say hello back to me"
+              ],
+              "input_modes": [
+                "text/plain"
+              ],
+              "output_modes": [
+                "text/plain"
+              ],
+              "security": [],
+              "security_requirements": [],
+              "security_source": "card",
+              "skill_id": "echo"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Echo Agent.echo",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Echo Agent.echo#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Echo Agent.echo#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Echo",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "testing",
+              "echo"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Echo Agent",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "a2a/01-minimal-echo-agent.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "a2a"
+  },
+  "fingerprint": "sha256:9f372b62832eacb4022d0d71199215e4b5875cb824747f88a4877f3500a6ed6e",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "0402f4682efb48facfa420ce3962d5446ecc7e04d7b29bdcc1097f831fab549e",
+    "score": 96,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

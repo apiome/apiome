@@ -76,6 +76,7 @@ __all__ = [
     "dumps_manifest_for_raw",
     "is_mcp_manifest",
     "is_mcp_manifest_document",
+    "is_unclosed_json",
     "manifest_surface",
     "parse_mcp_manifest",
     "parse_mcp_manifest_fileset",
@@ -600,6 +601,11 @@ def _is_unclosed(content: str) -> bool:
         elif char in "}]":
             depth -= 1
     return in_string or depth > 0
+
+
+#: Public name for the truncation scan, shared with the A2A Agent Card parser (MFI-18.1),
+#: whose JSON-only failure path draws the same truncated-vs-malformed line.
+is_unclosed_json = _is_unclosed
 
 
 # ===========================================================================

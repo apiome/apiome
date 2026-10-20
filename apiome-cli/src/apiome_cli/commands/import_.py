@@ -83,6 +83,7 @@ from apiome_cli.import_.sources import (
     find_source,
     unknown_format_message,
 )
+from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.json_schema import (
     JsonSchemaTarget,
 )
@@ -1798,6 +1799,92 @@ def _resolve_generic_source(
         )
         raise typer.Exit(EXIT_USAGE)
     return provided[0]
+
+
+@app.command("a2a")
+def import_a2a(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="Agent Card path, ``http``/``https`` URL, or ``-`` for stdin.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="AGENT_URL",
+        help=(
+            "Agent origin (for example ``https://agent.example.com``) whose card is fetched "
+            "from ``/.well-known/agent-card.json``, falling back to "
+            "``/.well-known/agent.json``."
+        ),
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import an A2A (Agent2Agent) Agent Card from a file, URL, stdin, or a live agent (MFI-18.1).
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the card. With
+    ``--discover`` the card URL is resolved from the agent's well-known URI first; the card is
+    then imported through the registered ``a2a`` adapter like any other source.
+    """
+    if discover is not None:
+        if any(value for value in (source, file_path, url)):
+            typer.echo(
+                "Provide only one input: --discover, or INPUT / --file / --url "
+                "(not more than one).",
+                err=True,
+            )
+            raise typer.Exit(EXIT_USAGE)
+        try:
+            url = discover_agent_card_url(
+                discover,
+                timeout=_resolve_import_timeout(ctx, import_timeout),
+                verify=not insecure_from_context(ctx),
+            )
+        except ValueError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+        except OSError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_ERROR) from exc
+        if not no_progress_from_context(ctx):
+            typer.echo(f"Discovered Agent Card at {url}", err=True)
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="a2a",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=None,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
 
 
 @app.command("git")

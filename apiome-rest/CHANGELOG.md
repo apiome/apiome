@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.399.0] - 2026-10-20
+
+### Added
+- **A2A Agent Card import source (#3974, MFI-18.1)**: the `a2a` adapter catalogs an A2A (Agent2Agent)
+  agent from its Agent Card, as a file, URL, paste or fileset, or live from the agent's
+  `/.well-known/agent-card.json` (falling back to `/.well-known/agent.json`) through the SSRF-guarded client
+  (`A2aImportSource.introspect`). The card normalizes to the `agent` paradigm: one service per agent (its
+  `extras` carry `security_schemes` / `security_requirements`), one operation per skill keyed
+  `<agent>.<skill id>` with the skill's tags as operation `tags`, input / output modes as request / response
+  content types (falling back to the card defaults), and the effective security on `operation.extras.security`.
+  Fingerprint and diff are the SPI defaults, so a skill added, removed or edited is an `operation` entry and an
+  auth change is a changed `service` entry. New `a2a` lint pack: `a2a.security-undeclared-scheme`,
+  `a2a.duplicate-skill-id`, `a2a.no-security`, `a2a.unknown-scheme-type`, `a2a.apikey-in-query`,
+  `a2a.insecure-endpoint`, `a2a.missing-required-field`, `a2a.skill-missing-description`,
+  `a2a.skill-missing-tags`, `a2a.skill-without-modes`. `GET /v1/import/sources` lists the source with
+  `supports_live_discovery: true`.
+- The catalog item detail `parsed` model renders an A2A card as a **Skills** group (tags in `meta`; id,
+  description, modes, examples and security as rows).
+- Corpus: six valid and five negative `apiome-ui/examples/a2a/` fixtures with goldens; the multi-file rung is
+  waived (a card is one self-contained document).
+
 ## [1.398.0] - 2026-10-19
 
 ### Added

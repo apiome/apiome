@@ -663,6 +663,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['apiproxy', 'flow', 'route rule', 'verifyapikey', 'quota', 'spikearrest'],
   },
   {
+    id: 'a2a-agent-card-import',
+    title: 'Import an A2A Agent Card',
+    summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",
+    page: 'apiome-docs/docs/bring-in/a2a-agent-card-import.md',
+    section: 'reference',
+    keywords: ['agent2agent', 'well-known', 'skills', 'agent-card.json', 'discover'],
+  },
+  {
     id: 'compare-published-versions',
     title: 'Compare published versions',
     summary: 'Diff two published versions from the CLI, for people and CI.',

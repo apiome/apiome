@@ -1,0 +1,57 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Ledger Assistant",
+  "description": "Answers questions about account balances and moves money between a customer's own accounts.",
+  "url": "https://ledger.agents.example.com/a2a/jsonrpc",
+  "preferredTransport": "JSONRPC",
+  "additionalInterfaces": [
+    { "url": "https://ledger.agents.example.com/a2a/jsonrpc", "transport": "JSONRPC" },
+    { "url": "https://ledger.agents.example.com/a2a/grpc", "transport": "GRPC" },
+    { "url": "https://ledger.agents.example.com/a2a/rest", "transport": "HTTP+JSON" }
+  ],
+  "provider": { "organization": "Example Bank", "url": "https://bank.example.com" },
+  "version": "5.1.2",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extensions": [
+      {
+        "uri": "https://bank.example.com/a2a/ext/strong-customer-auth/v1",
+        "description": "Step-up authentication for money movement.",
+        "required": true
+      }
+    ]
+  },
+  "securitySchemes": {
+    "bank_oidc": {
+      "type": "openIdConnect",
+      "openIdConnectUrl": "https://id.bank.example.com/.well-known/openid-configuration"
+    },
+    "partner_mtls": {
+      "type": "mutualTLS",
+      "description": "Client certificate issued to registered partner agents."
+    }
+  },
+  "security": [{ "bank_oidc": ["openid", "accounts:read"] }, { "partner_mtls": [] }],
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "supportsAuthenticatedExtendedCard": true,
+  "skills": [
+    {
+      "id": "account-balance",
+      "name": "Account balance",
+      "description": "Reports the current and available balance of one of the customer's accounts.",
+      "tags": ["banking", "accounts", "read-only"]
+    },
+    {
+      "id": "transfer-funds",
+      "name": "Transfer funds",
+      "description": "Moves money between two accounts the customer owns. Requires step-up authentication.",
+      "tags": ["banking", "payments", "money-movement"],
+      "examples": ["Move 200 EUR from checking to savings"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"],
+      "security": [{ "bank_oidc": ["openid", "payments:write"] }]
+    }
+  ]
+}

@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1421 files** across **103 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1432 files** across **104 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -151,6 +151,7 @@ The corpus holds **1421 files** across **103 format directories**. Every file ha
 
 | Directory | Format | Paradigm | Marker / shape | Files |
 | --- | --- | --- | --- | --- |
+| `a2a/` | A2A Agent Card | agent | `name` + `skills[].id` beside `capabilities` / `defaultInputModes` / `protocolVersion` | 11 |
 | `llm-tools/` | LLM Tools | agent | OpenAI / Anthropic / bare tool-array shape | 13 |
 | `mcp/` | MCP server manifest | agent | `mcpVersion` + `tools[].inputSchema` | 12 |
 
@@ -161,6 +162,26 @@ Validity classes: `valid` imports cleanly · `invalid` must be rejected · `adve
 The `scale` tier is **not committed here**: documents that size would bloat the repository permanently, so `scripts/generate_scale_corpus.py` builds one large document per paradigm at test time and `apiome-rest/tests/test_scale_corpus.py` (IXH-1.5) holds each import and export stage to the budgets in `apiome-rest/tests/scale/scale_budgets.json`. The large `adversarial` fixtures are generated the same way, by `scripts/generate_adversarial_corpus.py`.
 
 Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic service · `composition` inheritance/refs/imports · `stress` less common grammar · `real-world` public spec or faithful reconstruction · `multi-file` a set imported together.
+
+### `a2a/` — A2A Agent Card
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-echo-agent.json` | minimal | `a2a` ≥ 0.9 | valid | `skills`, `single-skill`, `default-modes` |
+| `02-typical-travel-concierge.json` | typical | `a2a` ≥ 0.9 | valid | `skills`, `tags`, `examples`, `oauth2`, `provider`, `streaming`, `per-skill-modes` |
+| `03-composition-multi-interface-skill-auth.json` | composition | `a2a` ≥ 0.9 | valid | `additional-interfaces`, `openIdConnect`, `mutualTLS`, `per-skill-security`, `extensions`, `authenticated-extended-card` |
+| `04-stress-edge-cases.json` | stress | `a2a` ≥ 0.9 | valid | `duplicate-skill-id`, `numeric-ids`, `undeclared-scheme`, `apikey-in-query`, `http-endpoint`, `signatures`, `unicode`, `vendor-keys` |
+| `05-real-world-georoute-planner.json` | real-world | `a2a` ≥ 0.9 | valid | `skills`, `additional-interfaces`, `openIdConnect`, `signatures`, `per-skill-modes` |
+| `06-typical-travel-concierge-v3.json` ⚠ | typical | `a2a` ≥ 0.9 | valid | `skills`, `release-2`, `skill-added`, `skill-removed`, `auth-changed` |
+| `negative/01-syntactic-trailing-comma.json` | — | `a2a` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma` |
+| `negative/02-semantic-skill-without-id.json` | — | `a2a` (no guarantee) | invalid | `negative`, `semantic`, `skill-id` |
+| `negative/03-truncated-mid-skill.json` | — | `a2a` (no guarantee) | invalid | `negative`, `truncated` |
+| `negative/04-wrong-format-openapi.yaml` | — | `a2a` (no guarantee) | invalid | `negative`, `wrong-format`, `openapi` |
+| `negative/05-encoding-utf16.json` ⚠ | — | `a2a` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+
+> ⚠ **`06-typical-travel-concierge-v3.json`** — The next release of 02-typical-travel-concierge.json: a skill added, one removed, one edited and the security requirements changed — the diff fixture.
+
+> ⚠ **`negative/05-encoding-utf16.json`** — 01-minimal-echo-agent.json re-encoded as UTF-16 (BOM + NUL bytes).
 
 ### `api-blueprint/` — API Blueprint
 
@@ -2586,6 +2607,7 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 
 | Adapter | Rung | Justification |
 | --- | --- | --- |
+| `a2a` | multi-file | An Agent Card is a single self-contained JSON document with no cross-document references; A2aImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file. |
 | `apiblueprint` | multi-file | The API Blueprint adapter's parse_fileset only parses the root document and never resolves references across fileset members, so a multi-file set would exercise nothing beyond a single file. |
 | `asn1` | multi-file | Asn1ImportSource.parse_fileset only parses the root member (and the parser rejects more than one module per document), so cross-member resolution genuinely does not exist. |
 | `capnproto` | multi-file | CapnpImportSource.parse_fileset only parses the fileset root and never resolves imported members, so a multi-file set demonstrates nothing beyond a single file. |
@@ -2623,7 +2645,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1421 | `Apache-2.0` |
+| `hand-authored` | 1432 | `Apache-2.0` |
 
 ## Trying an import
 

@@ -410,6 +410,8 @@ def load_format_rule_packs() -> None:
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.
     from . import llm_tools_lint as _llm_tools_lint  # noqa: F401
+    # A2A Agent Card lint pack (MFI-18.1): registers under ``a2a``.
+    from . import a2a_agent_card_lint as _a2a_lint  # noqa: F401
 
     # Data-contract lint pack (FMT-5.5): registers under the ``data_schema`` *paradigm*,
     # so it runs for every data-schema artifact rather than for one format key.

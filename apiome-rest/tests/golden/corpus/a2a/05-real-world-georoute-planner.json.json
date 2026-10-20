@@ -1,0 +1,347 @@
+{
+  "adapter": "a2a",
+  "canonical": {
+    "channels": [],
+    "description": "Provides advanced route planning, traffic analysis, and custom map generation services. This agent can calculate optimal routes, estimate travel times considering real-time traffic, and create personalized maps with points of interest.",
+    "extras": {
+      "capabilities": {
+        "pushNotifications": true,
+        "stateTransitionHistory": false,
+        "streaming": true
+      },
+      "default_input_modes": [
+        "application/json",
+        "text/plain"
+      ],
+      "default_output_modes": [
+        "application/json",
+        "image/png"
+      ],
+      "documentation_url": "https://docs.examplegeoservices.com/georoute-agent/api",
+      "icon_url": "https://georoute-agent.example.com/icon.png",
+      "preferred_transport": "JSONRPC",
+      "present_keys": [
+        "additionalInterfaces",
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "description",
+        "documentationUrl",
+        "iconUrl",
+        "name",
+        "preferredTransport",
+        "protocolVersion",
+        "provider",
+        "security",
+        "securitySchemes",
+        "signatures",
+        "skills",
+        "supportsAuthenticatedExtendedCard",
+        "url",
+        "version"
+      ],
+      "protocol_version": "0.3.0",
+      "provider": {
+        "organization": "Example Geo Services Inc.",
+        "url": "https://www.examplegeoservices.com"
+      },
+      "security_requirements": [
+        {
+          "google": [
+            "openid",
+            "profile",
+            "email"
+          ]
+        }
+      ],
+      "security_schemes": {
+        "google": {
+          "openIdConnectUrl": "https://accounts.google.com/.well-known/openid-configuration",
+          "type": "openIdConnect"
+        }
+      },
+      "signature_count": 1,
+      "skill_count": 2,
+      "skill_tags": [
+        "cartography",
+        "customization",
+        "directions",
+        "maps",
+        "navigation",
+        "routing",
+        "traffic",
+        "visualization"
+      ],
+      "supports_authenticated_extended_card": true
+    },
+    "format": "a2a",
+    "identity": {
+      "extras": {},
+      "id": "https://georoute-agent.example.com/a2a/v1",
+      "name": "GeoSpatial Route Planner Agent",
+      "namespace": "Example Geo Services Inc."
+    },
+    "paradigm": "agent",
+    "protocol": "a2a",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Primary A2A endpoint",
+        "extras": {},
+        "name": "JSONRPC",
+        "protocol": "JSONRPC",
+        "url": "https://georoute-agent.example.com/a2a/v1",
+        "variables": []
+      },
+      {
+        "description": "Additional A2A interface",
+        "extras": {},
+        "name": "GRPC",
+        "protocol": "GRPC",
+        "url": "https://georoute-agent.example.com/a2a/grpc",
+        "variables": []
+      },
+      {
+        "description": "Additional A2A interface",
+        "extras": {},
+        "name": "HTTP+JSON",
+        "protocol": "HTTP+JSON",
+        "url": "https://georoute-agent.example.com/a2a/json",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Provides advanced route planning, traffic analysis, and custom map generation services. This agent can calculate optimal routes, estimate travel times considering real-time traffic, and create personalized maps with points of interest.",
+        "extras": {
+          "security_requirements": [
+            {
+              "google": [
+                "openid",
+                "profile",
+                "email"
+              ]
+            }
+          ],
+          "security_schemes": {
+            "google": {
+              "openIdConnectUrl": "https://accounts.google.com/.well-known/openid-configuration",
+              "type": "openIdConnect"
+            }
+          }
+        },
+        "key": "GeoSpatial Route Planner Agent",
+        "name": "GeoSpatial Route Planner Agent",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Creates custom map images or interactive map views based on user-defined points of interest, routes, and style preferences. Can overlay data layers.",
+            "extras": {
+              "examples": [
+                "Generate a map of my upcoming road trip with all planned stops highlighted.",
+                "Show me a map visualizing all coffee shops within a 1-mile radius of my current location."
+              ],
+              "input_modes": [
+                "application/json"
+              ],
+              "output_modes": [
+                "image/png",
+                "image/jpeg",
+                "application/json",
+                "text/html"
+              ],
+              "security": [
+                {
+                  "scheme": "google",
+                  "scopes": [
+                    "openid",
+                    "profile",
+                    "email"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "google": [
+                    "openid",
+                    "profile",
+                    "email"
+                  ]
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "custom-map-generator"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "GeoSpatial Route Planner Agent.custom-map-generator",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "GeoSpatial Route Planner Agent.custom-map-generator#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "image/png",
+                  "image/jpeg",
+                  "application/json",
+                  "text/html"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "GeoSpatial Route Planner Agent.custom-map-generator#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Personalized Map Generator",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "maps",
+              "customization",
+              "visualization",
+              "cartography"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Calculates the optimal driving route between two or more locations, taking into account real-time traffic conditions, road closures, and user preferences (e.g., avoid tolls, prefer highways).",
+            "extras": {
+              "examples": [
+                "Plan a route from '1600 Amphitheatre Parkway, Mountain View, CA' to 'San Francisco International Airport' avoiding tolls.",
+                "{\"origin\": {\"lat\": 37.422, \"lng\": -122.084}, \"destination\": {\"lat\": 37.7749, \"lng\": -122.4194}, \"preferences\": [\"avoid_ferries\"]}"
+              ],
+              "input_modes": [
+                "application/json",
+                "text/plain"
+              ],
+              "output_modes": [
+                "application/json",
+                "application/vnd.geo+json",
+                "text/html"
+              ],
+              "security": [
+                {
+                  "scheme": "google",
+                  "scopes": [
+                    "openid",
+                    "profile",
+                    "email"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "google": [
+                    "openid",
+                    "profile",
+                    "email"
+                  ]
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "route-optimizer-traffic"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "GeoSpatial Route Planner Agent.route-optimizer-traffic",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json",
+                  "text/plain"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "GeoSpatial Route Planner Agent.route-optimizer-traffic#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json",
+                  "application/vnd.geo+json",
+                  "text/html"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "GeoSpatial Route Planner Agent.route-optimizer-traffic#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Traffic-Aware Route Optimizer",
+            "parameters": [],
+            "streaming": "server",
+            "tags": [
+              "maps",
+              "routing",
+              "navigation",
+              "directions",
+              "traffic"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "GeoSpatial Route Planner Agent",
+    "types": [],
+    "version": "1.2.0"
+  },
+  "corpus_path": "a2a/05-real-world-georoute-planner.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 3,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "a2a"
+  },
+  "fingerprint": "sha256:29fe4b19089c47c0c3500d8507ff28f605af006ff9c8b5ada449dba4dd5ad124",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -11,7 +11,7 @@
  * MFI-28.3 turns each group into a scannable explorer rather than a wall of expanded entities:
  *   - every entity is a **lazy-mounting disclosure** — its field rows mount only on first expand
  *     (small entities in small groups default open), so a 200-entity model renders fast and collapsed;
- *   - each group carries a live **filter box** that narrows its entities by name or tag;
+ *   - each group carries a live **filter box** that narrows its entities by name, tag or meta;
  *   - each entity keeps its **stable anchor id** (`catalogEntityAnchorId`) so a lint finding can
  *     deep-link straight to it (MFI-28.2) — a deep-linked entity is force-expanded and never hidden
  *     by an active filter;
@@ -189,12 +189,17 @@ export function parsedEntityDefaultOpen(fieldCount: number, groupEntityCount: nu
   return fieldCount <= PARSED_SMALL_ENTITY_MAX_FIELDS;
 }
 
-/** Whether an entity matches a filter query (case-insensitive substring on name or tag). */
+/**
+ * Whether an entity matches a filter query (case-insensitive substring on name, tag or meta).
+ * Meta is included so an A2A skill is found by its own tags (`tags: travel, flights`, MFI-18.1).
+ */
 export function parsedEntityMatchesFilter(entity: CatalogParsedEntity, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   return (
-    entity.name.toLowerCase().includes(q) || (entity.tag ?? '').toLowerCase().includes(q)
+    entity.name.toLowerCase().includes(q) ||
+    (entity.tag ?? '').toLowerCase().includes(q) ||
+    (entity.meta ?? '').toLowerCase().includes(q)
   );
 }
 

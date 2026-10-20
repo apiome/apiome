@@ -1,0 +1,344 @@
+{
+  "adapter": "a2a",
+  "canonical": {
+    "channels": [],
+    "description": "Answers questions about account balances and moves money between a customer's own accounts.",
+    "extras": {
+      "capabilities": {
+        "extensions": [
+          {
+            "description": "Step-up authentication for money movement.",
+            "required": true,
+            "uri": "https://bank.example.com/a2a/ext/strong-customer-auth/v1"
+          }
+        ],
+        "pushNotifications": false,
+        "streaming": false
+      },
+      "default_input_modes": [
+        "text/plain"
+      ],
+      "default_output_modes": [
+        "text/plain",
+        "application/json"
+      ],
+      "documentation_url": null,
+      "icon_url": null,
+      "preferred_transport": "JSONRPC",
+      "present_keys": [
+        "additionalInterfaces",
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "description",
+        "name",
+        "preferredTransport",
+        "protocolVersion",
+        "provider",
+        "security",
+        "securitySchemes",
+        "skills",
+        "supportsAuthenticatedExtendedCard",
+        "url",
+        "version"
+      ],
+      "protocol_version": "0.3.0",
+      "provider": {
+        "organization": "Example Bank",
+        "url": "https://bank.example.com"
+      },
+      "security_requirements": [
+        {
+          "bank_oidc": [
+            "openid",
+            "accounts:read"
+          ]
+        },
+        {
+          "partner_mtls": []
+        }
+      ],
+      "security_schemes": {
+        "bank_oidc": {
+          "openIdConnectUrl": "https://id.bank.example.com/.well-known/openid-configuration",
+          "type": "openIdConnect"
+        },
+        "partner_mtls": {
+          "description": "Client certificate issued to registered partner agents.",
+          "type": "mutualTLS"
+        }
+      },
+      "signature_count": 0,
+      "skill_count": 2,
+      "skill_tags": [
+        "accounts",
+        "banking",
+        "money-movement",
+        "payments",
+        "read-only"
+      ],
+      "supports_authenticated_extended_card": true
+    },
+    "format": "a2a",
+    "identity": {
+      "extras": {},
+      "id": "https://ledger.agents.example.com/a2a/jsonrpc",
+      "name": "Ledger Assistant",
+      "namespace": "Example Bank"
+    },
+    "paradigm": "agent",
+    "protocol": "a2a",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Primary A2A endpoint",
+        "extras": {},
+        "name": "JSONRPC",
+        "protocol": "JSONRPC",
+        "url": "https://ledger.agents.example.com/a2a/jsonrpc",
+        "variables": []
+      },
+      {
+        "description": "Additional A2A interface",
+        "extras": {},
+        "name": "GRPC",
+        "protocol": "GRPC",
+        "url": "https://ledger.agents.example.com/a2a/grpc",
+        "variables": []
+      },
+      {
+        "description": "Additional A2A interface",
+        "extras": {},
+        "name": "HTTP+JSON",
+        "protocol": "HTTP+JSON",
+        "url": "https://ledger.agents.example.com/a2a/rest",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Answers questions about account balances and moves money between a customer's own accounts.",
+        "extras": {
+          "security_requirements": [
+            {
+              "bank_oidc": [
+                "openid",
+                "accounts:read"
+              ]
+            },
+            {
+              "partner_mtls": []
+            }
+          ],
+          "security_schemes": {
+            "bank_oidc": {
+              "openIdConnectUrl": "https://id.bank.example.com/.well-known/openid-configuration",
+              "type": "openIdConnect"
+            },
+            "partner_mtls": {
+              "description": "Client certificate issued to registered partner agents.",
+              "type": "mutualTLS"
+            }
+          }
+        },
+        "key": "Ledger Assistant",
+        "name": "Ledger Assistant",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Reports the current and available balance of one of the customer's accounts.",
+            "extras": {
+              "examples": [],
+              "input_modes": [
+                "text/plain"
+              ],
+              "output_modes": [
+                "text/plain",
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "bank_oidc",
+                  "scopes": [
+                    "openid",
+                    "accounts:read"
+                  ]
+                },
+                {
+                  "scheme": "partner_mtls",
+                  "scopes": []
+                }
+              ],
+              "security_requirements": [
+                {
+                  "bank_oidc": [
+                    "openid",
+                    "accounts:read"
+                  ]
+                },
+                {
+                  "partner_mtls": []
+                }
+              ],
+              "security_source": "card",
+              "skill_id": "account-balance"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ledger Assistant.account-balance",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "text/plain"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ledger Assistant.account-balance#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "text/plain",
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ledger Assistant.account-balance#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Account balance",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "banking",
+              "accounts",
+              "read-only"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Moves money between two accounts the customer owns. Requires step-up authentication.",
+            "extras": {
+              "examples": [
+                "Move 200 EUR from checking to savings"
+              ],
+              "input_modes": [
+                "application/json"
+              ],
+              "output_modes": [
+                "application/json"
+              ],
+              "security": [
+                {
+                  "scheme": "bank_oidc",
+                  "scopes": [
+                    "openid",
+                    "payments:write"
+                  ]
+                }
+              ],
+              "security_requirements": [
+                {
+                  "bank_oidc": [
+                    "openid",
+                    "payments:write"
+                  ]
+                }
+              ],
+              "security_source": "skill",
+              "skill_id": "transfer-funds"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "Ledger Assistant.transfer-funds",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message sent to the skill.",
+                "extras": {},
+                "headers": [],
+                "key": "Ledger Assistant.transfer-funds#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The message or task the skill answers with.",
+                "extras": {},
+                "headers": [],
+                "key": "Ledger Assistant.transfer-funds#response.result",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "result"
+              }
+            ],
+            "name": "Transfer funds",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "banking",
+              "payments",
+              "money-movement"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Ledger Assistant",
+    "types": [],
+    "version": "5.1.2"
+  },
+  "corpus_path": "a2a/03-composition-multi-interface-skill-auth.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 3,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "a2a"
+  },
+  "fingerprint": "sha256:f2623e70805c7fd97265e8794baf64da6effad6fdd347fafed5733136d6dd805",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
