@@ -269,7 +269,7 @@ def test_the_scan_hands_every_catalog_info_file_to_the_recorder() -> None:
     db = _ScanDb(["catalog-info.yaml", "svc/catalog-info.yml"])
     apply_backstage(
         db, _TENANT, "r", "main", "acme", "orders", None, fetch_text=_fetch,
-        record=lambda *a: recorded.append(a) or {"entities": 1},
+        record=lambda *a: recorded.append(a) or {"entities": 1}, catalog=lambda *a, **k: None,
     )
     assert fetched == ["catalog-info.yaml", "svc/catalog-info.yml"]
     assert recorded == [(_TENANT, "r", "main", {
@@ -280,7 +280,8 @@ def test_the_scan_hands_every_catalog_info_file_to_the_recorder() -> None:
 
 def test_without_catalog_info_files_the_recorder_still_runs_to_clear_old_ones() -> None:
     recorded: List[tuple] = []
-    apply_backstage(_ScanDb([]), _TENANT, "r", "main", "acme", "orders", None, record=lambda *a: recorded.append(a))
+    apply_backstage(_ScanDb([]), _TENANT, "r", "main", "acme", "orders", None, record=lambda *a: recorded.append(a),
+                    catalog=lambda *a, **k: None)
     assert recorded == [(_TENANT, "r", "main", {})]
 
 
@@ -290,7 +291,7 @@ def test_a_github_failure_never_fails_the_scan() -> None:
 
     assert apply_backstage(
         _ScanDb(["catalog-info.yaml"]), _TENANT, "r", "main", "acme", "orders", None, fetch_text=_broken,
-        record=lambda *a: pytest.fail("should not record"),
+        record=lambda *a: pytest.fail("should not record"), catalog=lambda *a, **k: pytest.fail("should not stage"),
     ) is None
 
 

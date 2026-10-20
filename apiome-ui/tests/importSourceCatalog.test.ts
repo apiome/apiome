@@ -293,15 +293,17 @@ describe('baseIntakeTiles (MFI-26.1, MFI-29.3)', () => {
     const cards = filterCardsForVariant(mergeImportSourceCards([ASYNCAPI_DESCRIPTOR]), 'catalog');
     const tiles = baseIntakeTiles(cards);
 
-    // File / URL / Clipboard(paste) / Git only, in fixed order — never a per-format or
-    // discovery tile. Git joined the base methods with MFI-29.3 (repo path/glob → fileset).
-    expect(tiles.map((t) => t.method)).toEqual(['file', 'url', 'paste', 'git']);
-    expect(tiles.map((t) => t.card.key)).toEqual(['file', 'url', 'clipboard', 'git']);
+    // File / URL / Clipboard(paste) / Git / Compass only, in fixed order — never a per-format or
+    // discovery tile. Git joined the base methods with MFI-29.3 (repo path/glob → fileset), and the
+    // Compass export with CDG-5.5 (staged as an import report, not stored as a spec).
+    expect(tiles.map((t) => t.method)).toEqual(['file', 'url', 'paste', 'git', 'compass']);
+    expect(tiles.map((t) => t.card.key)).toEqual(['file', 'url', 'clipboard', 'git', 'compass']);
     expect(tiles.map((t) => t.card.label)).toEqual([
       'File Upload',
       'URL Import',
       'Clipboard Paste',
       'Git Repository',
+      'Compass export',
     ]);
   });
 
@@ -314,7 +316,11 @@ describe('baseIntakeTiles (MFI-26.1, MFI-29.3)', () => {
 
   it('omits a base tile whose backing card is absent', () => {
     const withoutUrl = baseImportSourceCards().filter((c) => c.key !== 'url');
-    expect(baseIntakeTiles(withoutUrl).map((t) => t.method)).toEqual(['file', 'paste', 'git']);
+    expect(baseIntakeTiles(withoutUrl).map((t) => t.method)).toEqual(['file', 'paste', 'git', 'compass']);
+  });
+
+  it('keeps the Compass tile out of every other import surface (CDG-5.5)', () => {
+    expect(baseImportSourceCards().map((c) => c.key)).not.toContain('compass');
   });
 });
 

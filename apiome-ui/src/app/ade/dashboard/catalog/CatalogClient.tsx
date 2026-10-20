@@ -18,6 +18,7 @@ import { agentHref, modelHref } from '@lib/catalog-agents';
 import { isRegistryFormat, subjectNamesByItem } from '@lib/schema-registry';
 import { fetchSubjects } from '@/app/components/ade/schemaRegistry/schemaRegistryApi';
 import Link from 'next/link';
+import { IMPORT_REPORTS_ROUTE } from '@lib/catalog-migrations';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeftRight,
@@ -1057,6 +1058,12 @@ export default function CatalogClient() {
             </span>
             {/* Import is the only write this screen starts, and it needs a signed-in user to
                 attribute the revision to — so it is absent, not disabled, without one. */}
+            {/* CDG-5.5: what Backstage scans and Compass uploads staged, waiting for a decision. */}
+            {currentTenantId ? (
+              <Button variant="outline" asChild data-testid="catalog-import-reports">
+                <Link href={IMPORT_REPORTS_ROUTE}>Import reports</Link>
+              </Button>
+            ) : null}
             {currentUserId ? (
               <Button
                 kbd="I"

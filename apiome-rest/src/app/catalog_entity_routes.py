@@ -62,7 +62,7 @@ class CatalogEntity(_CamelModel):
 
     kind: str = Field(
         description="The registry kind: `api`, `spec`, `mcp_server`, `consumer`, `connector`, `agent`, `model`, "
-        "`gateway_config` or `team`."
+        "`gateway_config`, `component` or `team`."
     )
     id: str
     slug: Optional[str] = Field(default=None, description="`null` for a kind without slugs (connectors).")

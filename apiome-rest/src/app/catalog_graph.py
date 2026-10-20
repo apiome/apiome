@@ -73,6 +73,8 @@ NODE_KINDS = (
     "identity_group",
     # CDG-5.3 (V298): one (connector, environment) — what `deployed_on` edges point at.
     "gateway_config",
+    # CDG-5.5 (V299): an accepted Backstage or Compass component; declares its own edges.
+    "component",
 )
 
 EDGE_KINDS = (

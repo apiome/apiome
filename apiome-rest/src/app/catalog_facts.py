@@ -79,6 +79,7 @@ APPLICABLE_FACTS: Dict[str, Tuple[str, ...]] = {
     "agent": ("owner.present", "owner.contactable", "consumers.declared", "agent.readiness"),
     "model": ("owner.present", "owner.contactable"),
     "consumer": ("owner.present", "owner.contactable", "dependencies.declared"),
+    "component": ("owner.present", "owner.contactable", "dependencies.declared"),
 }
 
 

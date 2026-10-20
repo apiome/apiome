@@ -38,6 +38,10 @@ import {
 import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils/openapi-analyzer';
 import { generateSlug } from '../../../../utils/slug';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
+import { CompassImportIntake } from '../../catalogMigrations/CompassImportIntake';
+import { MigrationReport } from '../../catalogMigrations/MigrationReport';
+import { fetchImportReport, useCanImport } from '../../catalogMigrations/catalogMigrationsApi';
+import type { MigrationRun } from '@lib/catalog-migrations';
 import {
   catalogAdapterForFormat,
   decideCatalogImportRouting,
@@ -75,7 +79,7 @@ export interface JsonSchemaHandoffPayload {
   document: Record<string, unknown> | null;
 }
 
-type SourceMethod = 'file' | 'url' | 'paste' | 'git';
+type SourceMethod = 'file' | 'url' | 'paste' | 'git' | 'compass';
 
 /**
  * Repository provenance returned by `POST /api/catalog/import/git` (MFI-29.3) and echoed back
@@ -207,6 +211,9 @@ export function CatalogImportDialog({
   const [bulkPlan, setBulkPlan] = useState<BulkPlan | null>(null);
   const [bulkSource, setBulkSource] = useState<Record<string, unknown> | null>(null);
   const [bulkMode, setBulkMode] = useState(false);
+  // CDG-5.5: a Compass export is staged as an import report, shown on the Import step.
+  const [compassRun, setCompassRun] = useState<MigrationRun | null>(null);
+  const canDecideImports = useCanImport();
   const [metadata, setMetadata] = useState<FileMetadataPreview | null>(null);
   const [detection, setDetection] = useState<DetectionResult | null>(null);
   const [formatOverride, setFormatOverride] = useState<string | null>(null);
@@ -315,6 +322,7 @@ export function CatalogImportDialog({
   const reset = useCallback(() => {
     setStep('source');
     setSourceMethod('file');
+    setCompassRun(null);
     setState('idle');
     setFileName('');
     setContent('');
@@ -763,7 +771,7 @@ export function CatalogImportDialog({
       <DialogContent onCloseAutoFocus={returnFocus} size="full" className="imp-wizard">
         <ImportWizardHead
           title="Import to catalog"
-          description="File, URL, clipboard or a Git repository. Catalog imports are stored in their original format and converted only when you ask."
+          description="File, URL, clipboard, a Git repository or a Compass export. Catalog imports are stored in their original format and converted only when you ask."
         />
         <ImportWizardSteps
           steps={CATALOG_IMPORT_STEPS}
@@ -843,6 +851,17 @@ export function CatalogImportDialog({
                       }}
                     />
                   </label>
+                )}
+
+                {sourceMethod === 'compass' && (
+                  <CompassImportIntake
+                    onImported={(run) => {
+                      setCompassRun(run);
+                      setState('done');
+                      setStep('import');
+                      onSuccess?.();
+                    }}
+                  />
                 )}
 
                 {sourceMethod === 'url' && (
@@ -1201,7 +1220,8 @@ export function CatalogImportDialog({
               documentBase64={documentBase64 ?? toBase64(content)}
               label={fileName || 'Imported source'}
               sourceKind={commitSourceKind}
-              inputKind={sourceMethod === 'git' ? 'fileset' : sourceMethod}
+              // A Compass export never reaches the quality step (it is staged, not stored).
+              inputKind={sourceMethod === 'git' ? 'fileset' : sourceMethod === 'compass' ? 'file' : sourceMethod}
               archiveRoot={archiveRoot}
               onArchiveRootChange={handleArchiveRootChange}
               url={sourceMethod === 'url' ? fileName : null}
@@ -1227,7 +1247,17 @@ export function CatalogImportDialog({
             />
           )}
 
-          {step === 'import' && !bulkMode && (
+          {step === 'import' && compassRun && (
+            <MigrationReport
+              run={compassRun}
+              canDecide={canDecideImports}
+              onChanged={() => {
+                void fetchImportReport(compassRun.id).then(setCompassRun, () => undefined);
+              }}
+            />
+          )}
+
+          {step === 'import' && !bulkMode && !compassRun && (
             <div className="cat-imp-terminal">
               {state === 'done' ? (
                 <>

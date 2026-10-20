@@ -167,6 +167,13 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['entity-facts.html', 'scorecard-kind.html'] },
   },
+  {
+    // CDG-5.5 (#5983): a Backstage import report and the Import to catalog wizard's Compass step,
+    // dumped by `tests/catalog-migrations-ui.test.tsx`.
+    id: 'catalog-migrations',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['backstage-import-report.html', 'import-wizard-compass.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

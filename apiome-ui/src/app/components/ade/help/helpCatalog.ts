@@ -615,6 +615,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['llm', 'agent key', 'toolset', 'deprecation', 'consumer', 'provider'],
   },
   {
+    id: 'migrate-from-backstage-or-compass',
+    title: 'Migrate from Backstage or Compass',
+    summary: 'Bring catalog-info files and Compass exports in as suggestions, with every unmapped field listed.',
+    page: 'apiome-docs/docs/bring-in/migrate-from-backstage-or-compass.mdx',
+    section: 'reference',
+    keywords: ['catalog-info', 'atlassian', 'import report', 'component', 'suggestion', 'unmapped'],
+  },
+  {
     id: 'scorecards',
     title: 'Scorecards',
     summary: 'The catalog facts each entity carries for maturity scorecards, shown as a checklist.',

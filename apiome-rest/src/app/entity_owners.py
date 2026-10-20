@@ -128,10 +128,15 @@ KINDS: Dict[str, KindSpec] = {
     "gateway_config": KindSpec(
         "gateway_config", "apiome.catalog_gateway_configs", "e.deleted_at IS NULL", Resource.IMPORTS
     ),
+    # CDG-5.5 (V299): an accepted Backstage or Compass component, system or domain.
+    "component": KindSpec(
+        "component", "apiome.catalog_components", "e.deleted_at IS NULL", Resource.IMPORTS
+    ),
 }
 
 EntityKind = Literal[
-    "project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model", "gateway_config"
+    "project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model", "gateway_config",
+    "component",
 ]
 
 

@@ -39,6 +39,8 @@ def test_each_kind_is_gated_by_the_permission_that_edits_it() -> None:
         "model": Resource.CONSUMER_CONTRACTS,
         # CDG-5.3: a gateway's environment is connector data.
         "gateway_config": Resource.IMPORTS,
+        # CDG-5.5: an accepted Backstage or Compass component is imported catalog data.
+        "component": Resource.IMPORTS,
     }
 
 

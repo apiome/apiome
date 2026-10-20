@@ -23,6 +23,8 @@ export const GRAPH_NODE_KINDS = [
   'identity_group',
   // CDG-5.3 (V298): one (connector, environment) — what `deployed_on` edges point at.
   'gateway_config',
+  // CDG-5.5 (V299): an accepted Backstage or Compass component; declares its own edges.
+  'component',
 ] as const;
 export type GraphNodeKind = (typeof GRAPH_NODE_KINDS)[number];
 
@@ -53,6 +55,7 @@ export const NODE_KIND_LABELS: Readonly<Record<GraphNodeKind, string>> = {
   repository: 'Repository',
   identity_group: 'Identity group',
   gateway_config: 'Gateway config',
+  component: 'Component',
 };
 
 /** A short, text-only kind marker drawn inside a graph node (colour is never the only signal). */
@@ -66,6 +69,7 @@ export const NODE_KIND_ABBREVIATIONS: Readonly<Record<GraphNodeKind, string>> = 
   repository: 'R',
   identity_group: 'I',
   gateway_config: 'E',
+  component: 'K',
 };
 
 /** How an edge reads from its source's side (`out`) and from its target's side (`in`). */
@@ -258,7 +262,8 @@ export function graphNodeHref(kind: GraphNodeKind, id: string): string {
     kind === 'catalog_item' ||
     kind === 'mcp_endpoint' ||
     kind === 'connector' ||
-    kind === 'gateway_config'
+    kind === 'gateway_config' ||
+    kind === 'component'
   ) {
     return ownedEntityHref({ kind, id }) ?? graphPageHref(kind, id);
   }

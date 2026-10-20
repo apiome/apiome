@@ -100,6 +100,15 @@ A Backstage name (`api:default/payments`) matches the project or catalog item wi
 (`payments`). A name that matches nothing is still listed, as unresolved. The scan replaces what it
 recorded last time, so deleting the file or a line removes the dependency.
 
+The same files also feed a migration from Backstage:
+
+- `kind: API` entities with a `spec.definition` are **imported** as catalog items.
+- `Component`, `System`, `Domain` and `Group` entities, and `spec.owner`, are staged as component
+  and team **suggestions** on the branch's [import report](./migrate-from-backstage-or-compass.mdx#the-import-report).
+
+Every field Apiome cannot map is listed there. See
+[Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx).
+
 ## Discovered specs
 
 <Route path="/ade/dashboard/repositories/catalog" />
