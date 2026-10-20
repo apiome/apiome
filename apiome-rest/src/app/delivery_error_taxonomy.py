@@ -158,6 +158,21 @@ DELIVERY_ERROR_TAXONOMY: Dict[str, DeliveryErrorDescriptor] = {
             "if it persists, report the job id to support.",
         ),
         _d(
+            "EXPORT_BATCH_TOO_LARGE",
+            JobErrorCategory.RESOURCE,
+            False,
+            "This batch export covers more version × target items than one job allows. "
+            "Select specific versions (a 'versions' list) or fewer targets, then try again.",
+        ),
+        _d(
+            "EXPORT_BATCH_FAILED",
+            JobErrorCategory.INPUT,
+            False,
+            "Every item of this batch export failed, so there is nothing to download. Review "
+            "each item's error in the job's error context, fix the cause or narrow the batch, "
+            "then try again.",
+        ),
+        _d(
             "DELIVERY_FAILED",
             JobErrorCategory.TRANSPORT,
             True,

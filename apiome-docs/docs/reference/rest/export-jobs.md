@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.257.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.258.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-jobs` · 6 operations
 
@@ -48,6 +48,8 @@ Operation id: `list_export_jobs_v1_export__tenant_slug__jobs_get`
 Submit an export of one artifact/version to one target through the async job pipeline: load source → fidelity report → emit → validate → package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST …/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.
 
 **Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.
+
+**Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version × target items; ``acknowledged_snapshot`` is not accepted on a batch.
 
 Operation id: `start_export_job_v1_export__tenant_slug__jobs_post`
 
@@ -128,9 +130,9 @@ The delivery attestation for a completed export job (IXH-2.5): an **in-toto Stat
 
 The statement's subject is the delivered artifact, digested with a plain ``sha256`` over the exact bytes the download route serves, so ``sha256sum`` on the downloaded file is enough to tie the two together. Its predicate records the delivery identity, the tool versions, the source lint fingerprint, the policy version and content fingerprint that were applied, any waiver the decision honoured, and the delivery decision with its named reasons — everything needed to reproduce the verdict offline. ``apiome lint verify-attestation`` verifies it as-is.
 
-A multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one.
+A multi-target job (MFX-39.1) attests each target separately against the combined bundle: pass ``target`` (the resolved format key from ``result.targets[].target``) to pick one. A batch export (MFX-39.2) attests each completed item against the archive: pass ``version`` (an item's requested version, revision id, or version label) and ``target``.
 
-404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), or when a multi-target job is asked without a ``target`` or for a target it did not export.
+404 when the job is unknown for this tenant; 409 when the job produced no attested delivery (still running, canceled, failed, or a dry-run), when a multi-target job is asked without a ``target`` or for a target it did not export, or when a batch export is asked for an item it did not complete.
 
 Operation id: `get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__attestation_get`
 
@@ -140,7 +142,8 @@ Operation id: `get_export_job_attestation_v1_export__tenant_slug__jobs__job_id__
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `job_id` | path | string | yes | Asynchronous job identifier. |
-| `target` | query | string or null | no | Multi-target jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job. |
+| `target` | query | string or null | no | Multi-target and batch jobs only: the resolved target format key whose attestation to return. Ignored for a single-target job. |
+| `version` | query | string or null | no | Batch jobs only: the item's version — as requested, its revision id, or its version label. Ignored for any other job. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -233,6 +236,8 @@ per-target fidelity reports plus a merged rollup.
 | `confirm` | boolean | no | When true, proceed with a **severe** conversion (MFX-3.3) the transcoding guard would otherwise fail the job on. Ignored for non-severe conversions and dry-runs. |
 | `acknowledged_snapshot` | string or null | no | The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check. Single-target only — a multi-target job acknowledges per ``targets`` entry. |
 | `min_severity` | `LossinessSeverity` | no | Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts. |
+| `versions` | array of string or null | no | A batch export over these versions of the artifact (MFX-39.2): revision UUIDs or version labels, 1–50 distinct entries. Every version is exported to every target into one archive, and a version or target that fails is reported on its item without failing the batch. Mutually exclusive with ``version`` and ``all_versions``. |
+| `all_versions` | boolean | no | When true, a batch export over every version of the artifact (MFX-39.2), newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions × targets exceeds 100. Mutually exclusive with ``version`` and ``versions``. |
 
 ### `ExportJobStatus` {#schema-exportjobstatus}
 

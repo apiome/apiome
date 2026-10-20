@@ -152,6 +152,48 @@ POST /v1/export/{tenant_slug}/jobs
 The same rules for snapshots and acknowledgements apply to each format; see
 [Understand export fidelity](./export-fidelity.md#snapshots-and-the-risk-acknowledgement).
 
+### Export a whole project or several versions in one job
+
+To export more than one version of a project, send one export job with a `versions` list (version
+labels or revision ids) or `"all_versions": true` instead of `version`. Every version is exported
+to every target you name, and you get back **one zip**.
+
+```http
+POST /v1/export/{tenant_slug}/jobs
+{
+  "artifact": "<project-id>",
+  "versions": ["1.0.0", "1.1.0", "2.0.0"],
+  "targets": [
+    { "target": "openapi" },
+    { "target": "graphql" }
+  ]
+}
+```
+
+Each version × format pair is an **item**. An item that fails does not stop the others.
+
+1. The `202` response carries a `status_path`. Poll it until `state` is `completed` or `failed`.
+2. Read `result.batch` on the completed job:
+   - `completed_count` and `failed_count` say how many items made it into the zip.
+   - `items[]` has one entry per item: its version, format, `state`, folder in the zip, fidelity
+     tier and preserved share, delivery decision, files, and, for a failed item, an `error` with
+     the same `code`, `message` and `remediation` a failed single export carries.
+   - `result.fidelity_rollup` sums up the fidelity of the completed items.
+3. Download the zip from `result.download_path`. Each completed item sits in a
+   `<version>/<format>/` folder (`1.0.0/openapi-3.1/`, `1.0.0/graphql/`, …). The root
+   `manifest.json` lists every item, including the failed ones and why they failed.
+
+| Rule | Behavior |
+|---|---|
+| Choosing versions | Send `versions` (up to 50 distinct entries) or `"all_versions": true`, never together and never with `version`. `all_versions` takes every version of the project, newest first. |
+| Formats | Use `target` (with `options`) for one format, or a `targets` list for several. |
+| How many | Up to 100 items (versions × formats). A longer `versions` list is rejected with `422`; an `all_versions` job over a bigger project fails with `EXPORT_BATCH_TOO_LARGE`. |
+| Snapshots | `acknowledged_snapshot` is not accepted: a snapshot describes one version. Preview a version on its own to acknowledge it. |
+| Failures | Per item. A version that does not exist, a format that fails, a severe conversion without `"confirm": true` or a blocked delivery fails only that item, and the job still completes. The job fails with `EXPORT_BATCH_FAILED` only when every item failed; `error.context.items` lists each one. |
+| Same version twice | A label and its own revision id count as one version; the second is skipped with a `BATCH_VERSION_DUPLICATE` warning. |
+| `dry_run: true` | Every item's fidelity tier and the rollup, no zip. |
+| Attestation | Each completed item is attested against the zip. Fetch one with `GET …/jobs/{job_id}/attestation?version=<version>&target=<format key>`. |
+
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The

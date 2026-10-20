@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.394.0] - 2026-10-19
+
+### Added
+- **Project / batch export (#4334, MFX-39.2)**: `POST /v1/export/{tenant_slug}/jobs` accepts `versions` (1–50
+  distinct revision ids or version labels) or `all_versions: true` in place of `version`, and one job exports every
+  selected version to the target (`target`) or targets (`targets`). Combining `versions`, `all_versions` and
+  `version`, blank or repeated `versions` entries, any `acknowledged_snapshot`, or more than 100 version × target items
+  in an explicit list is a `422`.
+  - **Partial-failure semantics.** Each version × target pair is an item. A version that fails to load, a target that
+    does not resolve, a severe conversion without `confirm`, an emit fault, a blocked delivery, or an unexpected crash
+    fails only that item; its structured `ExportJobError` is on the item and a `BATCH_ITEM_FAILED` warning is logged.
+    The job completes when at least one item completed (with a `BATCH_PARTIAL` warning when some failed) and fails
+    with the new `EXPORT_BATCH_FAILED` code, listing every item's error in `error.context.items`, only when all failed.
+  - **One archive.** The download is `export-batch.zip`: each completed item's files under `<version>/<target>/`
+    (version folder from the label, or the revision id) and a root `manifest.json` (`kind: "batch"`) listing every
+    item — files, fidelity and provenance for completed ones, error code and message for failed ones.
+  - **Per-item status.** `ExportJobResult.batch` (`ExportBatchSummary`) carries version/target/item/completed/failed
+    counts and `items[]` (`ExportBatchItem`: version, revision, target, folder, state, snapshot hash, options, tier,
+    preserved percent, guard, validation, delivery, files, error). `fidelity_rollup` covers the completed items,
+    labelled `<version>/<target>`. `ExportJobResult.version_record_id` is now nullable and null on a batch result.
+  - **`all_versions`** takes every live version, newest first; a project with more than 100 items fails the job with
+    the new `EXPORT_BATCH_TOO_LARGE` code before anything runs. A label and its revision id count once
+    (`BATCH_VERSION_DUPLICATE` warning). `dry_run` reports each item's fidelity without emitting.
+  - **Attestation.** Each completed item is attested against the archive's digest;
+    `GET …/jobs/{job_id}/attestation` takes `?version=` (requested version, revision id, or label) with `?target=`.
+
 ## [1.393.0] - 2026-10-19
 
 ### Added
