@@ -13,6 +13,7 @@ When user invokes **implement** with issue number, treat number as **GitHub issu
 - Only change what ticket requires: avoid unnecessary refactors.
 - Never commit credentials or tokens.
 - If blocked, stop, explain.
+- Pull Request can be submitted before end-to-end or integration tests run.
 
 ## Phase 1: Fetch issue
 
