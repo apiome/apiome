@@ -138,6 +138,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   hl7v3: 'HL7 v3 / CDA',
   edix12: 'EDI X12',
   edifact: 'UN/EDIFACT',
+  tradacoms: 'TRADACOMS',
   idoc: 'SAP IDoc',
   'swift-mt': 'SWIFT MT',
   iso20022: 'ISO 20022',

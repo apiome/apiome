@@ -1,0 +1,986 @@
+{
+  "adapter": "tradacoms",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "tradacoms",
+        "evidence": [
+          "An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "tradacoms",
+        "label": "TRADACOMS"
+      },
+      "tradacoms_file": {
+        "generation": "00003",
+        "header_message_type": "INVFIL",
+        "transaction_code": "0700",
+        "transaction_name": "INVOICES",
+        "version": "1"
+      },
+      "tradacoms_message_type": "INVOIC",
+      "tradacoms_messages": [
+        {
+          "file_header": true,
+          "message_type": "INVFIL",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TYP01",
+                  "repetitions": [
+                    [
+                      "0700"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TYP02",
+                  "repetitions": [
+                    [
+                      "INVOICES"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TYP"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SDT01",
+                  "repetitions": [
+                    [
+                      "5012345678901",
+                      "EXAMPLE SUPPLIES"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SDT02",
+                  "repetitions": [
+                    [
+                      "SUP001"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "SDT03",
+                  "repetitions": [
+                    [
+                      "GB123456789"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CDT01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CDT02",
+                  "repetitions": [
+                    [
+                      "CUS001"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "CDT03",
+                  "repetitions": [
+                    [
+                      "GB987654321"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "FIL01",
+                  "repetitions": [
+                    [
+                      "00003"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "FIL02",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "FIL03",
+                  "repetitions": [
+                    [
+                      "260820"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "FIL"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "INVOIC",
+          "reference": "2",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CLO01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CLO02",
+                  "repetitions": [
+                    [
+                      "STORE-114"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CLO"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IRF01",
+                  "repetitions": [
+                    [
+                      "INV-10042"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IRF02",
+                  "repetitions": [
+                    [
+                      "260820"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IRF03",
+                  "repetitions": [
+                    [
+                      "260819"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IRF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PYT01",
+                  "repetitions": [
+                    [
+                      "30 DAYS NET"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PYT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ILD01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ILD02",
+                  "repetitions": [
+                    [
+                      "480"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ILD03",
+                  "repetitions": [
+                    [
+                      "5012345670001",
+                      "",
+                      "WIDGET-001"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "ILD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "ILD05",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "ILD06",
+                  "repetitions": [
+                    [
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "ILD07",
+                  "repetitions": [
+                    [
+                      "18000"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "ILD08",
+                  "repetitions": [
+                    [
+                      "86400"
+                    ]
+                  ]
+                },
+                {
+                  "position": "09",
+                  "reference": "ILD09",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ILD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ILD01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ILD02",
+                  "repetitions": [
+                    [
+                      "120"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ILD03",
+                  "repetitions": [
+                    [
+                      "5012345670002",
+                      "",
+                      "GADGET-007"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "ILD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "ILD05",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "ILD06",
+                  "repetitions": [
+                    [
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "ILD07",
+                  "repetitions": [
+                    [
+                      "4200"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "ILD08",
+                  "repetitions": [
+                    [
+                      "5040"
+                    ]
+                  ]
+                },
+                {
+                  "position": "09",
+                  "reference": "ILD09",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ILD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "STL01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "STL02",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "STL03",
+                  "repetitions": [
+                    [
+                      "91440"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "STL04",
+                  "repetitions": [
+                    [
+                      "18288"
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "STL05",
+                  "repetitions": [
+                    [
+                      "109728"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "STL"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "VATTLR",
+          "reference": "3",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "VRS01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "VRS02",
+                  "repetitions": [
+                    [
+                      "20.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "VRS03",
+                  "repetitions": [
+                    [
+                      "91440"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "VRS04",
+                  "repetitions": [
+                    [
+                      "18288"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "VRS"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "INVTLR",
+          "reference": "4",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TOT01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TOT02",
+                  "repetitions": [
+                    [
+                      "91440"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TOT03",
+                  "repetitions": [
+                    [
+                      "18288"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "TOT04",
+                  "repetitions": [
+                    [
+                      "109728"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TOT"
+            }
+          ],
+          "version": "9"
+        }
+      ],
+      "tradacoms_transmission": {
+        "application_reference": null,
+        "message_reference": "2",
+        "message_version": "9",
+        "recipient_code": "5087654321098",
+        "sender_code": "5012345678901",
+        "sender_reference": "00003",
+        "syntax_identifier": "ANAA",
+        "syntax_version": "1",
+        "transmission_count": 1
+      }
+    },
+    "format": "tradacoms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TRADACOMS INVOIC",
+      "namespace": "TRADACOMS-INVOIC"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TRADACOMS INVOIC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-INVOIC.ILD.ILD01",
+            "name": "ILD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-INVOIC.ILD.ILD02",
+            "name": "ILD02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5012345670001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-INVOIC.ILD.ILD03-1",
+            "name": "ILD03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-INVOIC.ILD.ILD03-3",
+            "name": "ILD03-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-INVOIC.ILD.ILD06",
+            "name": "ILD06",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "18000",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-INVOIC.ILD.ILD07",
+            "name": "ILD07",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "86400",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-INVOIC.ILD.ILD08",
+            "name": "ILD08",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-INVOIC.ILD.ILD09",
+            "name": "ILD09",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-INVOIC.ILD",
+        "key_type": null,
+        "kind": "record",
+        "name": "ILD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "5087654321098",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+            "name": "CLO01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACME RETAIL",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+            "name": "CLO01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "STORE-114",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+            "name": "CLO02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.ILD",
+            "name": "ILD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "TRADACOMS-INVOIC.ILD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "INV-10042",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+            "name": "IRF01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260820",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+            "name": "IRF02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260819",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+            "name": "IRF03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "30 DAYS NET",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+            "name": "PYT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.STL01",
+            "name": "STL01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.STL02",
+            "name": "STL02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "91440",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.STL03",
+            "name": "STL03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "18288",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.STL04",
+            "name": "STL04",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "109728",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "TRADACOMS-INVOIC.MessageINVOIC.STL05",
+            "name": "STL05",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-INVOIC.MessageINVOIC",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageINVOIC",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "tradacoms/03-typical-invoice-file.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tradacoms"
+  },
+  "fingerprint": "sha256:24d709d7588af73ab63e1f7c76e5b27bc406656ba8507df50387eb8da9d2829a",
+  "lint": {
+    "findings": 24,
+    "grade": "C",
+    "report_fingerprint": "84d17390ac5448ecaed16e49e4cd67e82a0341ababbd38309b9c1ff29b54fad6",
+    "score": 71,
+    "severity_counts": {
+      "error": 0,
+      "info": 22,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

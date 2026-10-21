@@ -640,7 +640,17 @@
             }
           ]
         }
-      ]
+      ],
+      "format_profile": {
+        "engine": "edifact",
+        "evidence": [
+          "An interchange party is identified with an ODETTE organisation code (`O` + digits).",
+          "Every message (DELFOR) is in the ODETTE/VDA message set."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "odette",
+        "label": "ODETTE/VDA"
+      }
     },
     "format": "edifact",
     "identity": {
@@ -1434,7 +1444,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:703cdfaa0e9e242ba242d133c60dbe8a36fc59f346566bfdb4f179abd6117211",
+  "fingerprint": "sha256:da611591ae49556e58cf75d18ce5e729729fe4b1eeee44bf761a93d9e635e8b8",
   "lint": {
     "findings": 46,
     "grade": "F",

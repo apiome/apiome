@@ -4,8 +4,8 @@ Fixtures for **FMT-6.5** ([#5449](https://github.com/apiome/apiome/issues/5449))
 dialect. TRADACOMS is a *profile on the EDIFACT engine* only in the sense that it shares the
 segment/element idea; its envelope is entirely its own (`STX` … `END`, `MHD`/`MTR` message brackets,
 `=` after the segment code), which is why it lives in its own directory rather than inside `edifact/`.
-The EANCOM and ODETTE dialect samples the same ticket needs are in `edifact/`. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+The EANCOM and ODETTE dialect samples the same ticket needs are in `edifact/`. Every entry is read
+by the `tradacoms` adapter (`apiome-rest/src/app/tradacoms_import_source.py`).
 
 **Detection marker.** An `STX=` transmission header and a closing `END=` — never `UNB`/`UNZ`.
 
@@ -24,7 +24,7 @@ message type) and `MTR` (its segment count); `END` carries the number of message
 | `06-typical-delivery-file.edi` | typical | DELHDR/DELIVR/DELTLR with ordered-versus-delivered quantities. |
 | `07-composition-nested-files.edi` | composition | Two files in one transmission — an order file and a delivery file — with nested message structure. |
 | `08-transmission-set/` | multi-file | An order transmission plus the acknowledgment transmission that answers it. |
-| `negative/` | — | A segment missing its `=`, a transmission with no `END`, truncation, an **EDIFACT** interchange, UTF-16, and `MHD`/`END` sequence numbers that do not agree with the messages present. |
+| `negative/` | — | A segment missing its `=`, a transmission with no `END`, truncation, an **EDIFACT** interchange (the misroute, refused as `FORMAT_MISMATCH`), UTF-16, and `MHD` message references that skip (2 → 7). |
 
 **The honesty contract this corpus assumes.** As with X12 and EDIFACT: declared-versus-observed
 counts (`MTR` segment counts, `END` message count), the same value-visibility policy, and an explicit

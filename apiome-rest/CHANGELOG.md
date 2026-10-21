@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.409.0] - 2026-10-20
+
+### Added
+- **TRADACOMS, ODETTE/VDA and EANCOM dialect profiles (#5449, FMT-6.5)**: regional EDI dialects as profiles on the
+  EDIFACT engine.
+  - `app/edi_dialect_profiles.py` — the four profiles (`un-edifact`, `eancom`, `odette`, `tradacoms`): governing
+    body, message set, bound code lists, recognition rule and reviewed boundaries; `detect_edifact_profile` /
+    `edifact_profile` recognise EANCOM (an `EAN` + three-digit association code) and ODETTE/VDA (an `OD`/`VDA`
+    subset designator, or an ODETTE organisation code *and* every message in the ODETTE/VDA set) on a parsed
+    interchange, else plain UN/EDIFACT.
+  - The **`edifact`** adapter records the profile: canonical extras `format_profile`, interchange attributes
+    `profile` / `profileLabel` / `implementationGuideConsulted`, per-message `inProfileMessageSet`, warnings
+    `edifact.dialect_profile_applied` and `edifact.message_outside_profile_set`, and the detection reason. Analyzer
+    `edifact@1.1.0`.
+  - The new **`tradacoms`** import source (format `tradacoms`; `.edi` / `.tra`; file / URL / paste / fileset):
+    `app/tradacoms_parser.py` reads segments with the EDIFACT lexical layer (now shared under public names) and
+    builds its own transmission (`STX` … `END`) → file (header message carrying `TYP`) → message (`MHD` … `MTR`)
+    structure, several transmissions per document. Refusals: mid-segment / mid-message `INPUT_TRUNCATED`, a tag
+    without `=` `INPUT_MALFORMED`, no `END`, no message, unnested envelopes or skipping `MHD` references
+    `INPUT_SEMANTIC_INVALID`; an EDIFACT interchange is left code-less so the pipeline names it `FORMAT_MISMATCH`.
+    `app/tradacoms_normalizer.py` (first detail message, `tradacoms_transmission` / `tradacoms_file` /
+    `tradacoms_messages` extras) and `app/tradacoms_analysis.py` (declared-versus-observed `MTR` / `END` counts).
+  - Import provenance: `format_metadata.formatProfile` now records the applied dialect profile for any model whose
+    canonical extras carry `format_profile`.
+  - Reviewed `tradacoms` capability entry and EDIFACT profile notes naming each profile and its boundaries
+    (registry contract `19`), version coverage, corpus activation of the 15 `apiome-ui/examples/tradacoms/`
+    entries plus the `edifact/negative/07-wrong-format-tradacoms.edi` misroute, goldens and the round-trip matrix
+    row (import-only, 45 xfails).
+
 ## [1.408.0] - 2026-10-20
 
 ### Added

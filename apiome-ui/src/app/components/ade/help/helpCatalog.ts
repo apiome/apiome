@@ -711,6 +711,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mt103', 'mt202', 'mt940', 'mx', 'pacs.008', 'camt.053', 'cbpr+', 'payments'],
   },
   {
+    id: 'tradacoms-import',
+    title: 'Import TRADACOMS transmissions',
+    summary: 'Catalog UK retail TRADACOMS order, invoice and delivery files, with the dialect profile recorded.',
+    page: 'apiome-docs/docs/bring-in/tradacoms-import.md',
+    section: 'reference',
+    keywords: ['stx', 'ordhdr', 'invfil', 'uk retail', 'eancom', 'odette', 'edi'],
+  },
+  {
     id: 'hl7v3-cda-import',
     title: 'Import HL7 v3 / CDA documents',
     summary: 'Catalog CCDs, discharge summaries and other C-CDA clinical documents.',

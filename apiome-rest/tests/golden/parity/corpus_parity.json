@@ -1014,10 +1014,10 @@
       ],
       "fixtures": {
         "valid": 10,
-        "negative": 6,
+        "negative": 7,
         "adversarial": 0,
         "scale": 0,
-        "total": 16
+        "total": 17
       },
       "rungs": [
         "composition",
@@ -2672,6 +2672,49 @@
       "waivers": {}
     },
     {
+      "format_key": "tradacoms",
+      "label": "TRADACOMS",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "tradacoms"
+      ],
+      "corpus_directories": [
+        "tradacoms"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 8,
+      "golden_directories": [
+        "tradacoms"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "typespec",
       "label": "TypeSpec",
       "paradigm": "rest",
@@ -3118,7 +3161,6 @@
     "soapui",
     "sparkplug",
     "thunder-client",
-    "tradacoms",
     "traefik",
     "trpc",
     "tyk",

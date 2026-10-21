@@ -21,7 +21,8 @@ item's **Format details** tab.
 | The interchange on your clipboard | A paste |
 
 An **X12** interchange (`ISA` / `GS` / `ST`) shares the `.edi` extension but is a different syntax:
-Apiome detects it as **EDI X12** instead.
+Apiome detects it as **EDI X12** instead. A **TRADACOMS** transmission (`STX=`) writes EDIFACT-style
+segments inside its own envelope, and is detected as [TRADACOMS](./tradacoms-import.md).
 
 ## Import it
 
@@ -35,6 +36,37 @@ Apiome detects it as **EDI X12** instead.
 
 Over the API, send the interchange to the import endpoints with the source kind `edifact`; see
 [Import sources](../reference/rest/import-sources.md).
+
+## Dialect profiles
+
+EANCOM (GS1 retail) and ODETTE/VDA (automotive) are subsets of UN/EDIFACT, so they are read by this
+importer and recognised as **dialect profiles** of it:
+
+| Profile | Recognised by |
+| --- | --- |
+| **EANCOM** | An EANCOM association assigned code — `EAN` and three digits (`EAN008`) — in a `UNH` message identifier or a `UNG` message version |
+| **ODETTE/VDA** | An ODETTE or VDA subset designator in an association code, or an interchange party identified with an ODETTE organisation code (`O` and digits) **and** every message in the ODETTE/VDA message set (`DELFOR`, `DELJIT`, `DESADV` …) |
+| **UN/EDIFACT** | Neither — the interchange is read as plain UN/EDIFACT |
+
+A weak resemblance is never enough: a GS1 party id alone does not make an interchange EANCOM.
+
+The profile applied is recorded in three places:
+
+- **Provenance** — the revision's import provenance carries `formatProfile`: the profile key and
+  label, the evidence it was recognised on, and `implementation_guide_consulted: false`. The
+  canonical model carries the same record under `format_profile`.
+- **The analysis** — the interchange row shows **profile** and **profileLabel**; each message shows
+  whether the profile's message set names it (**inProfileMessageSet**). The warning
+  `edifact.dialect_profile_applied` states the profile and its evidence, and
+  `edifact.message_outside_profile_set` names a message the set does not list — it is still read.
+- **The capability panel** — the format's entry names both profiles, how each is recognised, and
+  where each stops.
+
+**Detect & route** names the profile too: *`UNB` interchange header … — EANCOM profile*.
+
+Recognising a dialect is not validating against it: the EANCOM and ODETTE/VDA implementation guides,
+their segment status rules and their restricted code lists are not evaluated, and GS1 identifiers
+are recorded as written (check digits are not verified).
 
 ## Delimiters
 
@@ -85,9 +117,10 @@ read it:
 ## What Apiome does not check
 
 - **No implementation guide is consulted.** Only the UN/EDIFACT syntax is read — not the D.96A or
-  D.01B directory, not EANCOM or ODETTE. A structurally valid interchange is not claimed to be a
-  conformant one, and a message's directory (`D:96A`) and association code (`EAN008`) are recorded
-  as the sender's claim. The capability panel says the same.
+  D.01B directory, and not the EANCOM or ODETTE guide even when that
+  [profile](#dialect-profiles) is recognised. A structurally valid interchange is not claimed to be
+  a conformant one, and a message's directory (`D:96A`) and association code (`EAN008`) are
+  recorded as the sender's claim. The capability panel says the same.
 - **Segment groups** are shown as the flat segments they are, not as the nesting a directory gives
   them, and code values are recorded as written rather than looked up.
 - **One batch interchange per document.** Interactive EDIFACT (`UIB` / `UIH`), packages (`UNO` /
@@ -100,5 +133,5 @@ read it:
 | The file ends mid-segment, inside a message, or before `UNZ` | `INPUT_TRUNCATED` |
 | A segment terminator is missing, a segment tag is unreadable, or `UNA` is malformed | `INPUT_MALFORMED` |
 | A `UNH` has no `UNT`, a segment sits outside any message, or the interchange carries no message | `INPUT_SEMANTIC_INVALID` |
-| The file was sent as `edifact` but is X12, or some other format | `FORMAT_MISMATCH` |
+| The file was sent as `edifact` but is X12, TRADACOMS, or some other format | `FORMAT_MISMATCH` |
 | The file is not UTF-8 text (UTF-16, for example) | `INPUT_ENCODING_INVALID` |

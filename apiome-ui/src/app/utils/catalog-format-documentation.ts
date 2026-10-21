@@ -79,6 +79,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   // Finance / B2B
   edix12: 'https://x12.org/products/industry-data-standards',
   edifact: 'https://unece.org/trade/uncefact/introducing-unedifact',
+  tradacoms: 'https://www.gs1uk.org/knowledge-hub/standards/can-gs1-uk-support-me-with-tradacoms',
   idoc: 'https://help.sap.com/docs/SAP_ERP/7792d36f3fe04f5fb52bf0d7ee565a06/840cc253d0a4b54ce10000000a174cb4.html',
   iso20022: 'https://www.iso20022.org/iso-20022-message-definitions',
   'swift-mt': 'https://www.swift.com/standards',

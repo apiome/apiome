@@ -5,7 +5,7 @@
     "analyzer": {
       "key": "edifact",
       "toolVersions": {},
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "capabilities": {
       "limits": {
@@ -19,6 +19,7 @@
         "edifact.composite_elements",
         "edifact.control_references",
         "edifact.delimiters",
+        "edifact.dialect_profiles",
         "edifact.element",
         "edifact.empty_elements",
         "edifact.envelope_control_totals",
@@ -80,7 +81,10 @@
           "declaredMessageCount": 1,
           "elementSeparator": "+",
           "functionalGroupCount": 0,
+          "implementationGuideConsulted": false,
           "messageCount": 1,
+          "profile": "un-edifact",
+          "profileLabel": "UN/EDIFACT",
           "recipientId": "BUYER01",
           "recipientQualifier": "14",
           "releaseCharacter": "?",

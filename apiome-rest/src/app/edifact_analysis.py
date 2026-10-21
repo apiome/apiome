@@ -49,6 +49,13 @@ is no second reading to disagree with.
 
 Limits, stated rather than implied
 ----------------------------------
+Dialect profiles (FMT-6.5)
+--------------------------
+The interchange's dialect — EANCOM, ODETTE/VDA, or plain UN/EDIFACT (:mod:`app.edi_dialect_profiles`)
+— is recorded on the interchange node (``profile``, ``profileLabel``) with an informational warning
+stating the evidence it was recognised on; every message records whether the profile's message set
+names it. Recognising a dialect is not validating against it.
+
 No implementation guide or directory (D.96A, D.01B, EANCOM, ODETTE…) is consulted at any point:
 segment groups are described as the flat segments they are, not as the nesting a directory would
 give them, code values are not looked up, and a message's directory and association code are the
@@ -71,6 +78,7 @@ from .edi_analysis_base import (
     observed_value_node,
     segment_location,
 )
+from .edi_dialect_profiles import ProfileMatch, edifact_profile, messages_outside_set
 from .edifact_normalizer import canonical_message
 from .edifact_parser import (
     EdifactDelimiters,
@@ -108,15 +116,20 @@ __all__ = [
     "WARNING_CANONICAL_SUBSET",
     "WARNING_CONTROL_COUNT_MISMATCH",
     "WARNING_CONTROL_REFERENCE_MISMATCH",
+    "WARNING_DIALECT_PROFILE",
+    "WARNING_OUTSIDE_PROFILE_MESSAGE_SET",
     "WARNING_UNSPECIFIED_SYNTAX_VERSION",
     "analyze_edifact",
     "edifact_capabilities",
+    "element_node",
+    "profile_warnings",
+    "segment_node",
 ]
 
 #: Analyzer key recorded on every record this module produces.
 EDIFACT_ANALYZER_KEY = "edifact"
 #: Version of this extractor.
-EDIFACT_ANALYZER_VERSION = "1.0.0"
+EDIFACT_ANALYZER_VERSION = "1.1.0"
 
 #: The EDIFACT envelope, in nesting order. The leaf kinds are X12's, on purpose: an element is an
 #: element in both syntaxes, and an inspector should not need two words for it.
@@ -139,6 +152,10 @@ WARNING_CONTROL_COUNT_MISMATCH = "edifact.control_count_mismatch"
 WARNING_CONTROL_REFERENCE_MISMATCH = "edifact.control_reference_mismatch"
 #: Emitted when ``UNB`` names no syntax version, so the repetition separator could not be settled.
 WARNING_UNSPECIFIED_SYNTAX_VERSION = "edifact.syntax_version_unspecified"
+#: Emitted when a dialect profile (EANCOM, ODETTE/VDA) was applied — FMT-6.5.
+WARNING_DIALECT_PROFILE = "edifact.dialect_profile_applied"
+#: Emitted for every message type outside the applied profile's message set — FMT-6.5.
+WARNING_OUTSIDE_PROFILE_MESSAGE_SET = "edifact.message_outside_profile_set"
 
 #: The statement the capability declaration and the format registry both carry.
 EDIFACT_IMPLEMENTATION_GUIDE_STATEMENT = implementation_guide_statement(
@@ -180,6 +197,8 @@ def edifact_capabilities(*, max_nodes: int = MAX_TREE_NODES) -> AnalyzerCapabili
             "edifact.segment_ordinals",
             "edifact.segment_repeat_counts",
             "edifact.byte_offsets",
+            # FMT-6.5: EANCOM / ODETTE-VDA recognised and recorded, never validated against.
+            "edifact.dialect_profiles",
         ],
         unsupported=[
             # Segment groups are a directory concept; without one they are flat segments.
@@ -342,7 +361,9 @@ def _message_controls(message: EdifactMessage) -> ControlCount:
     )
 
 
-def _message_node(message: EdifactMessage, *, ordinal: int, parent_path: str) -> NativeNode:
+def _message_node(
+    message: EdifactMessage, *, ordinal: int, parent_path: str, profile: ProfileMatch
+) -> NativeNode:
     """Describe one message, its declared controls and its segments."""
     path = f"{parent_path}/UNH[{ordinal}]"
     controls = _message_controls(message)
@@ -352,6 +373,9 @@ def _message_node(message: EdifactMessage, *, ordinal: int, parent_path: str) ->
         "segmentCount": len(message.segments),
         "envelopeSegmentCount": controls.observed,
     }
+    if profile.profile.message_set:
+        # Recorded, never enforced: a message outside the set is read like any other.
+        attributes["inProfileMessageSet"] = profile.profile.covers(message.message_type)
     _set_if(attributes, "messageVersion", message.version)
     _set_if(attributes, "messageRelease", message.release)
     _set_if(attributes, "controllingAgency", message.agency)
@@ -405,7 +429,9 @@ def _group_controls(group: EdifactFunctionalGroup) -> ControlCount:
     )
 
 
-def _group_node(group: EdifactFunctionalGroup, *, ordinal: int) -> NativeNode:
+def _group_node(
+    group: EdifactFunctionalGroup, *, ordinal: int, profile: ProfileMatch
+) -> NativeNode:
     """Describe one functional group, its declared controls and its messages."""
     path = f"UNB/UNG[{ordinal}]"
     header = group.header
@@ -441,7 +467,7 @@ def _group_node(group: EdifactFunctionalGroup, *, ordinal: int) -> NativeNode:
         attributes=attributes,
         location=segment_location(header, ordinal=ordinal, path=path),
         children=lambda: [
-            _message_node(message, ordinal=index, parent_path=path)
+            _message_node(message, ordinal=index, parent_path=path, profile=profile)
             for index, message in enumerate(group.messages)
         ],
     )
@@ -480,7 +506,7 @@ def _delimiter_attributes(delimiters: EdifactDelimiters) -> Dict[str, object]:
     return attributes
 
 
-def _interchange_node(interchange: EdifactInterchange) -> NativeNode:
+def _interchange_node(interchange: EdifactInterchange, profile: ProfileMatch) -> NativeNode:
     """Describe the interchange envelope, its service characters and its groups or messages.
 
     Envelope identifiers, the service characters and the declared controls sit in ``attributes``:
@@ -500,6 +526,10 @@ def _interchange_node(interchange: EdifactInterchange) -> NativeNode:
         "functionalGroupCount": len(interchange.functional_groups),
         "messageCount": sum(1 for _ in interchange.all_messages()),
         **_delimiter_attributes(interchange.delimiters),
+        # FMT-6.5: the dialect profile applied, and that no implementation guide was consulted.
+        "profile": profile.profile.key,
+        "profileLabel": profile.profile.label,
+        "implementationGuideConsulted": False,
     }
     _set_if(attributes, "senderQualifier", interchange.sender_qualifier)
     _set_if(attributes, "recipientQualifier", interchange.recipient_qualifier)
@@ -530,11 +560,11 @@ def _interchange_node(interchange: EdifactInterchange) -> NativeNode:
         """Realise the groups, or the messages carried directly."""
         if grouped:
             return [
-                _group_node(group, ordinal=index)
+                _group_node(group, ordinal=index, profile=profile)
                 for index, group in enumerate(interchange.functional_groups)
             ]
         return [
-            _message_node(message, ordinal=index, parent_path="UNB")
+            _message_node(message, ordinal=index, parent_path="UNB", profile=profile)
             for index, message in enumerate(interchange.messages)
         ]
 
@@ -630,6 +660,54 @@ def _syntax_warnings(interchange: EdifactInterchange) -> List[AnalysisWarning]:
     ]
 
 
+def profile_warnings(
+    profile: ProfileMatch, message_types: Sequence[str], *, prefix: str
+) -> List[AnalysisWarning]:
+    """State the dialect profile that was applied, and every message outside its set.
+
+    Shared with the TRADACOMS analysis, which always applies its own profile. Informational: a
+    profile is a fact about the source, and nothing is dropped for a message the set does not name.
+
+    Args:
+        profile: The applied profile and its evidence.
+        message_types: Every message type observed, in source order.
+        prefix: The family's warning-code prefix (``edifact``, ``tradacoms``).
+
+    Returns:
+        Nothing for plain UN/EDIFACT; otherwise the profile statement, then one warning per message
+        type outside the profile's set.
+    """
+    if not profile.profile.message_set:
+        return []
+    sentences = [f"Read with the {profile.profile.label} profile.", *profile.evidence]
+    sentences.append(profile.profile.boundaries[0])
+    warnings = [
+        AnalysisWarning(
+            code=f"{prefix}.dialect_profile_applied",
+            severity=SEVERITY_INFO,
+            message=" ".join(sentences),
+        )
+    ]
+    for message_type in messages_outside_set(profile.profile, message_types):
+        warnings.append(
+            AnalysisWarning(
+                code=f"{prefix}.message_outside_profile_set",
+                severity=SEVERITY_INFO,
+                message=(
+                    f"Message type {message_type} is not in the {profile.profile.label} message "
+                    "set; it is read like any other message."
+                ),
+            )
+        )
+    return warnings
+
+
+# Node builders under public names, for the TRADACOMS analysis (FMT-6.5): its segments and elements
+# are EDIFACT's, so they are described by the same code and in the same vocabulary.
+element_node = _element_node
+segment_node = _segment_node
+
+
 # ===========================================================================
 # Entry point
 # ===========================================================================
@@ -660,16 +738,22 @@ def analyze_edifact(
     interchange = document.interchange
     text = source if source is not None else document.raw
     effective_nodes = envelope_node_budget(max_nodes, _envelope_node_count(interchange))
+    profile = edifact_profile(document)
 
     warnings = (
         _canonical_subset_warnings(document)
         + control_count_warnings(WARNING_CONTROL_COUNT_MISMATCH, _control_counts(interchange))
         + _reference_warnings(interchange)
         + _syntax_warnings(interchange)
+        + profile_warnings(
+            profile,
+            [message.message_type for message in interchange.all_messages()],
+            prefix="edifact",
+        )
     )
 
     return build_analysis_document(
-        roots=[_interchange_node(interchange)],
+        roots=[_interchange_node(interchange, profile)],
         analyzer=AnalyzerInfo(key=EDIFACT_ANALYZER_KEY, version=EDIFACT_ANALYZER_VERSION),
         capabilities=edifact_capabilities(max_nodes=effective_nodes),
         source=text,

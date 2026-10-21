@@ -50,6 +50,8 @@ from typing import Iterator, List, Optional, Sequence, Tuple
 
 __all__ = [
     "DEFAULT_DELIMITERS",
+    "ENCODING_FAULT_MARKERS",
+    "SourcePositions",
     "EdifactDelimiters",
     "EdifactDocument",
     "EdifactElement",
@@ -60,6 +62,9 @@ __all__ = [
     "EdifactSegment",
     "is_edifact",
     "parse_edifact",
+    "split_raw_segments",
+    "split_released",
+    "unescape_released",
 ]
 
 #: Service segments that open or close an envelope. Everything else is a message body segment.
@@ -474,7 +479,12 @@ def _unescape(text: str, release: Optional[str]) -> str:
 
 
 def _split_segments(
-    text: str, start: int, delimiters: EdifactDelimiters
+    text: str,
+    start: int,
+    delimiters: EdifactDelimiters,
+    *,
+    family: str = "EDIFACT",
+    unit: str = "interchange",
 ) -> List[Tuple[str, int, int]]:
     """Cut the text into raw segments on the (unreleased) segment terminator.
 
@@ -482,10 +492,15 @@ def _split_segments(
     that is followed by something shaped like the next segment's tag is a dropped terminator, and is
     refused rather than read as one long segment whose last element swallowed its neighbour.
 
+    Shared with the TRADACOMS parser (FMT-6.5), which writes segments with the same service
+    characters; ``family`` and ``unit`` only change how a refusal names the document.
+
     Args:
         text: The whole document.
         start: Offset to begin at (after any ``UNA``).
         delimiters: The service characters in force.
+        family: The syntax named in error messages (``EDIFACT``, ``TRADACOMS``).
+        unit: The document's word for itself in error messages (``interchange``, ``transmission``).
 
     Returns:
         ``(raw text, offset, length including terminator)`` per segment.
@@ -517,12 +532,12 @@ def _split_segments(
         if terminator == "\n" and body.endswith("\r"):
             # A newline terminator written with CRLF line ends: the CR is line formatting.
             body = body[:-1]
-        _refuse_dropped_terminator(body, text, begin)
+        _refuse_dropped_terminator(body, text, begin, family=family)
         if index >= length:
             tag = body[:3] if len(body) >= 3 else body
             raise EdifactParseError(
-                f"EDIFACT interchange ends mid-segment: the final `{tag}` segment has no segment "
-                f"terminator (`{terminator}`). The interchange was truncated.",
+                f"{family} {unit} ends mid-segment: the final `{tag}` segment has no segment "
+                f"terminator (`{terminator}`). The {unit} was truncated.",
                 code="INPUT_TRUNCATED",
             )
         segments.append((body, begin, index + 1 - begin))
@@ -530,13 +545,16 @@ def _split_segments(
     return segments
 
 
-def _refuse_dropped_terminator(body: str, text: str, begin: int) -> None:
+def _refuse_dropped_terminator(
+    body: str, text: str, begin: int, *, family: str = "EDIFACT"
+) -> None:
     """Refuse a segment that runs on into the next one across a line break.
 
     Args:
         body: The raw segment text.
         text: The whole document (for the line number).
         begin: The segment's offset.
+        family: The syntax named in the error message.
 
     Raises:
         EdifactParseError: ``INPUT_MALFORMED`` naming the line the terminator is missing on.
@@ -547,7 +565,7 @@ def _refuse_dropped_terminator(body: str, text: str, begin: int) -> None:
     line = text.count("\n", 0, begin) + 1
     tag = body[:3]
     raise EdifactParseError(
-        f"EDIFACT segment `{tag}` on line {line} has no segment terminator: it runs on into the "
+        f"{family} segment `{tag}` on line {line} has no segment terminator: it runs on into the "
         f"next line's `{body[match.end() - 3 : match.end()]}` segment.",
         code="INPUT_MALFORMED",
     )
@@ -864,6 +882,15 @@ def _build_interchange(
         functional_groups=tuple(groups),
         messages=tuple(ungrouped),
     )
+
+
+# The lexical layer, under public names for the TRADACOMS parser (FMT-6.5): TRADACOMS writes its
+# segments with EDIFACT's service characters, so it reads them with EDIFACT's code rather than a copy.
+ENCODING_FAULT_MARKERS = _ENCODING_FAULT_MARKERS
+SourcePositions = _Positions
+split_released = _split
+unescape_released = _unescape
+split_raw_segments = _split_segments
 
 
 def parse_edifact(content: str, *, source_label: Optional[str] = None) -> EdifactDocument:
