@@ -1,0 +1,985 @@
+{
+  "adapter": "edifact",
+  "corpus_path": "edifact/07-stress-control-count-mismatch.edi",
+  "document": {
+    "analyzer": {
+      "key": "edifact",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "edifact.byte_offsets",
+        "edifact.composite_elements",
+        "edifact.control_references",
+        "edifact.delimiters",
+        "edifact.element",
+        "edifact.empty_elements",
+        "edifact.envelope_control_totals",
+        "edifact.functional_group",
+        "edifact.interchange_envelope",
+        "edifact.message",
+        "edifact.release_character",
+        "edifact.repeating_elements",
+        "edifact.segment",
+        "edifact.segment_ordinals",
+        "edifact.segment_repeat_counts",
+        "edifact.service_string_advice"
+      ],
+      "unsupported": [
+        "edifact.code_list_validation",
+        "edifact.implementation_guide_validation",
+        "edifact.interactive_messages",
+        "edifact.multiple_interchanges",
+        "edifact.packages",
+        "edifact.segment_groups"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "component": 12,
+        "composite": 5,
+        "element": 7,
+        "interchange": 1,
+        "message": 1,
+        "segment": 7
+      },
+      "maxDepth": 5,
+      "nodeCount": 33,
+      "truncated": false,
+      "warningCount": 2
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "edifact",
+    "sourceHash": "sha256:eff2d5d3657190f313e698484d70c25e895c1b63029b0f91b62bafca4c5c259f",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "componentSeparator": ":",
+          "controlCountConsistent": false,
+          "controlReference": "000000007",
+          "controlReferenceConsistent": true,
+          "date": "260819",
+          "decimalMark": ".",
+          "declaredMessageCount": 7,
+          "elementSeparator": "+",
+          "functionalGroupCount": 0,
+          "messageCount": 1,
+          "recipientId": "RECEIVERID",
+          "recipientQualifier": "14",
+          "releaseCharacter": "?",
+          "releaseCharacterDeclared": true,
+          "repetitionSeparatorDeclared": false,
+          "segmentTerminator": "'",
+          "senderId": "SENDERID",
+          "senderQualifier": "14",
+          "serviceStringAdviceDeclared": false,
+          "syntaxIdentifier": "UNOC",
+          "syntaxVersion": "3",
+          "time": "1100",
+          "trailerControlReference": "000000007"
+        },
+        "children": [
+          {
+            "attributes": {
+              "controlCountConsistent": false,
+              "controlReferenceConsistent": true,
+              "controllingAgency": "UN",
+              "declaredSegmentCount": 99,
+              "envelopeSegmentCount": 9,
+              "messageReference": "1",
+              "messageRelease": "96A",
+              "messageType": "ORDERS",
+              "messageVersion": "D",
+              "segmentCount": 7,
+              "trailerControlReference": "1"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "elementCount": 3,
+                  "elementPositionCount": 3,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "BGM"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": "01",
+                      "reference": "BGM01"
+                    },
+                    "children": [],
+                    "id": "0.0.0.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/BGM[0]/BGM01"
+                    },
+                    "name": "BGM01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "220",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": "02",
+                      "reference": "BGM02"
+                    },
+                    "children": [],
+                    "id": "0.0.0.1",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "UNB/UNH[0]/BGM[0]/BGM02"
+                    },
+                    "name": "BGM02",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "PO-0009",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": "03",
+                      "reference": "BGM03"
+                    },
+                    "children": [],
+                    "id": "0.0.0.2",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "UNB/UNH[0]/BGM[0]/BGM03"
+                    },
+                    "name": "BGM03",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "9",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.0.0",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 18,
+                  "line": 3,
+                  "offset": 83,
+                  "ordinal": 0,
+                  "path": "UNB/UNH[0]/BGM[0]"
+                },
+                "name": "BGM",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 1,
+                  "elementPositionCount": 1,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "DTM"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "componentCount": 3,
+                      "position": "01",
+                      "reference": "DTM01"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DTM01-1"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "UNB/UNH[0]/DTM[1]/DTM01/DTM01-1"
+                        },
+                        "name": "DTM01-1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "137",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "DTM01-2"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "UNB/UNH[0]/DTM[1]/DTM01/DTM01-2"
+                        },
+                        "name": "DTM01-2",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "20260819",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "DTM01-3"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "UNB/UNH[0]/DTM[1]/DTM01/DTM01-3"
+                        },
+                        "name": "DTM01-3",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "102",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.0",
+                    "kind": "composite",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/DTM[1]/DTM01"
+                    },
+                    "name": "DTM01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.1",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 21,
+                  "line": 4,
+                  "offset": 102,
+                  "ordinal": 1,
+                  "path": "UNB/UNH[0]/DTM[1]"
+                },
+                "name": "DTM",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 2,
+                  "elementPositionCount": 2,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "NAD"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": "01",
+                      "reference": "NAD01"
+                    },
+                    "children": [],
+                    "id": "0.0.2.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/NAD[2]/NAD01"
+                    },
+                    "name": "NAD01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "BY",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "componentCount": 3,
+                      "position": "02",
+                      "reference": "NAD02"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "NAD02-1"
+                        },
+                        "children": [],
+                        "id": "0.0.2.1.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "UNB/UNH[0]/NAD[2]/NAD02/NAD02-1"
+                        },
+                        "name": "NAD02-1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "BUYER01",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "NAD02-2"
+                        },
+                        "children": [],
+                        "id": "0.0.2.1.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "UNB/UNH[0]/NAD[2]/NAD02/NAD02-2"
+                        },
+                        "name": "NAD02-2",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "NAD02-3"
+                        },
+                        "children": [],
+                        "id": "0.0.2.1.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "UNB/UNH[0]/NAD[2]/NAD02/NAD02-3"
+                        },
+                        "name": "NAD02-3",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "9",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.2.1",
+                    "kind": "composite",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "UNB/UNH[0]/NAD[2]/NAD02"
+                    },
+                    "name": "NAD02",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.2",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 18,
+                  "line": 5,
+                  "offset": 124,
+                  "ordinal": 2,
+                  "path": "UNB/UNH[0]/NAD[2]"
+                },
+                "name": "NAD",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 2,
+                  "elementPositionCount": 3,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "LIN"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": "01",
+                      "reference": "LIN01"
+                    },
+                    "children": [],
+                    "id": "0.0.3.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/LIN[3]/LIN01"
+                    },
+                    "name": "LIN01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": "02",
+                      "reference": "LIN02"
+                    },
+                    "children": [],
+                    "id": "0.0.3.1",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "UNB/UNH[0]/LIN[3]/LIN02"
+                    },
+                    "name": "LIN02",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "componentCount": 2,
+                      "position": "03",
+                      "reference": "LIN03"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "LIN03-1"
+                        },
+                        "children": [],
+                        "id": "0.0.3.2.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "UNB/UNH[0]/LIN[3]/LIN03/LIN03-1"
+                        },
+                        "name": "LIN03-1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "WIDGET-001",
+                        "valueLength": 10,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "LIN03-2"
+                        },
+                        "children": [],
+                        "id": "0.0.3.2.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "UNB/UNH[0]/LIN[3]/LIN03/LIN03-2"
+                        },
+                        "name": "LIN03-2",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "BP",
+                        "valueLength": 2,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.3.2",
+                    "kind": "composite",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "UNB/UNH[0]/LIN[3]/LIN03"
+                    },
+                    "name": "LIN03",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.3",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 21,
+                  "line": 6,
+                  "offset": 143,
+                  "ordinal": 3,
+                  "path": "UNB/UNH[0]/LIN[3]"
+                },
+                "name": "LIN",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 1,
+                  "elementPositionCount": 1,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "QTY"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "componentCount": 2,
+                      "position": "01",
+                      "reference": "QTY01"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "QTY01-1"
+                        },
+                        "children": [],
+                        "id": "0.0.4.0.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "UNB/UNH[0]/QTY[4]/QTY01/QTY01-1"
+                        },
+                        "name": "QTY01-1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "21",
+                        "valueLength": 2,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "QTY01-2"
+                        },
+                        "children": [],
+                        "id": "0.0.4.0.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "UNB/UNH[0]/QTY[4]/QTY01/QTY01-2"
+                        },
+                        "name": "QTY01-2",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "100",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.4.0",
+                    "kind": "composite",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/QTY[4]/QTY01"
+                    },
+                    "name": "QTY01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.4",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 11,
+                  "line": 7,
+                  "offset": 165,
+                  "ordinal": 4,
+                  "path": "UNB/UNH[0]/QTY[4]"
+                },
+                "name": "QTY",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 1,
+                  "elementPositionCount": 1,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "UNS"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": "01",
+                      "reference": "UNS01"
+                    },
+                    "children": [],
+                    "id": "0.0.5.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/UNS[5]/UNS01"
+                    },
+                    "name": "UNS01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "S",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.0.5",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 6,
+                  "line": 8,
+                  "offset": 177,
+                  "ordinal": 5,
+                  "path": "UNB/UNH[0]/UNS[5]"
+                },
+                "name": "UNS",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "elementCount": 1,
+                  "elementPositionCount": 1,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentId": "CNT"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "componentCount": 2,
+                      "position": "01",
+                      "reference": "CNT01"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "CNT01-1"
+                        },
+                        "children": [],
+                        "id": "0.0.6.0.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "UNB/UNH[0]/CNT[6]/CNT01/CNT01-1"
+                        },
+                        "name": "CNT01-1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "2",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "CNT01-2"
+                        },
+                        "children": [],
+                        "id": "0.0.6.0.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "UNB/UNH[0]/CNT[6]/CNT01/CNT01-2"
+                        },
+                        "name": "CNT01-2",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.6.0",
+                    "kind": "composite",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "UNB/UNH[0]/CNT[6]/CNT01"
+                    },
+                    "name": "CNT01",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.6",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 8,
+                  "line": 9,
+                  "offset": 184,
+                  "ordinal": 6,
+                  "path": "UNB/UNH[0]/CNT[6]"
+                },
+                "name": "CNT",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "message",
+            "label": "Message ORDERS (1)",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 22,
+              "line": 2,
+              "offset": 60,
+              "ordinal": 0,
+              "path": "UNB/UNH[0]"
+            },
+            "name": "ORDERS",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "interchange",
+        "label": "Interchange 000000007",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 59,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "UNB"
+        },
+        "name": "UNB",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "edifact.control_count_mismatch",
+        "location": null,
+        "message": "UNT declares 99 segments for message 1 (ORDERS), but 9 were observed. The interchange disagrees with itself; both figures are recorded.",
+        "nodeId": null,
+        "severity": "info"
+      },
+      {
+        "code": "edifact.control_count_mismatch",
+        "location": null,
+        "message": "UNZ declares 7 messages for interchange 000000007, but 1 were observed. The interchange disagrees with itself; both figures are recorded.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

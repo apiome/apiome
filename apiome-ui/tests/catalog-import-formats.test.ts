@@ -61,6 +61,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('edix12')?.sourceKind).toBe('edix12');
     expect(catalogAdapterForFormat('x12')?.sourceKind).toBe('edix12');
     expect(catalogAdapterForFormat('edi')?.sourceKind).toBe('edix12');
+    // FMT-6.1: UN/EDIFACT is its own adapter — `edi` stays X12's alias.
+    expect(catalogAdapterForFormat('edifact')?.sourceKind).toBe('edifact');
+    expect(catalogAdapterForFormat('un-edifact')?.sourceKind).toBe('edifact');
     expect(catalogAdapterForFormat('oncrpc')?.sourceKind).toBe('oncrpc');
     expect(catalogAdapterForFormat('sunrpc')?.sourceKind).toBe('oncrpc');
     expect(catalogAdapterForFormat('xdr')?.sourceKind).toBe('oncrpc');
@@ -108,7 +111,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'http-file', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'thrift', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -372,6 +375,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('asn1')).toBe('dataschema');
     expect(paradigmForFormat('asn')).toBe('dataschema');
     expect(paradigmForFormat('edix12')).toBe('dataschema');
+    expect(paradigmForFormat('edifact')).toBe('dataschema');
     expect(paradigmForFormat('x12')).toBe('dataschema');
     expect(paradigmForFormat('edi')).toBe('dataschema');
     expect(paradigmForFormat('oncrpc')).toBe('rpc');

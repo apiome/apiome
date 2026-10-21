@@ -72,6 +72,13 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
+from .edi_analysis_base import (
+    canonical_subset_warning,
+    envelope_node_budget,
+    int_or_none,
+    observed_value_node,
+    segment_location,
+)
 from .edix12_parser import (
     EdiX12Document,
     X12Element,
@@ -102,7 +109,6 @@ from .payload_analysis import (
     analyzer_capabilities,
 )
 from .payload_analyzer import (
-    MAX_VISITED_NODES,
     NativeNode,
     analysis_limits,
     build_analysis_document,
@@ -392,49 +398,12 @@ def _align_scan(interchange: X12Interchange, source: str) -> Optional[_AlignedSc
     )
 
 
-def _location(raw: Optional[X12RawSegment], *, ordinal: int, path: str) -> SourceLocation:
-    """Build a node's location, carrying source positions only where the scan supplied them.
-
-    Args:
-        raw: The aligned raw segment, when there is one.
-        ordinal: The node's sibling ordinal.
-        path: The node's envelope path.
-
-    Returns:
-        A :class:`~app.payload_analysis.SourceLocation` with offset/length/line/column when the scan
-        aligned, and with the CPDO-1.2 path-and-ordinal alone when it did not. Nothing in between is
-        emitted: a location either addresses bytes that were checked, or addresses structure.
-    """
-    if raw is None:
-        return SourceLocation(ordinal=ordinal, path=path)
-    return SourceLocation(
-        line=raw.line,
-        column=raw.column,
-        offset=raw.offset,
-        length=raw.length,
-        ordinal=ordinal,
-        path=path,
-    )
-
-
 def _element_value(raw: Optional[X12RawSegment], delimiters: X12Delimiters, position: int) -> str:
     """Return one raw element's text by 1-based position, or ``""`` when it is not there."""
     if raw is None:
         return ""
     parts = split_elements(raw.text, delimiters)
     return parts[position] if 0 < position < len(parts) else ""
-
-
-def _int_or_none(value: str) -> Optional[int]:
-    """Return ``value`` as an int, or ``None`` when it is not a plain integer.
-
-    A control total that is not a number is not reported as zero — an unreadable declaration and a
-    declaration of nothing are different facts, and only the first should ever look like a fault.
-    """
-    text = value.strip()
-    if not text or not text.lstrip("+-").isdigit():
-        return None
-    return int(text)
 
 
 # ===========================================================================
@@ -462,16 +431,12 @@ def _component_nodes(
     """
     components = split_components(value, delimiters)
     return [
-        NativeNode(
+        observed_value_node(
             kind=KIND_COMPONENT,
             name=f"{reference}-{index + 1}",
             ordinal=index,
             attributes={"position": f"{index + 1:02d}", "reference": f"{reference}-{index + 1}"},
-            location=SourceLocation(
-                ordinal=index, path=f"{parent_path}/{reference}-{index + 1}"
-            ),
-            value_present=True,
-            value_length=len(component),
+            path=f"{parent_path}/{reference}-{index + 1}",
             value=component,
         )
         for index, component in enumerate(components)
@@ -523,17 +488,12 @@ def _scanned_element_nodes(
                     attributes={**attributes, "repeatCount": len(occurrences)},
                     location=location,
                     children=[
-                        NativeNode(
+                        observed_value_node(
                             kind=KIND_REPETITION,
                             name=f"{reference}[{occurrence_index}]",
                             ordinal=occurrence_index,
                             attributes={"repeatIndex": occurrence_index},
-                            location=SourceLocation(
-                                ordinal=occurrence_index,
-                                path=f"{path}[{occurrence_index}]",
-                            ),
-                            value_present=True,
-                            value_length=len(occurrence),
+                            path=f"{path}[{occurrence_index}]",
                             value=occurrence,
                         )
                         for occurrence_index, occurrence in enumerate(occurrences)
@@ -559,16 +519,14 @@ def _scanned_element_nodes(
             continue
 
         nodes.append(
-            NativeNode(
+            # The position exists in the source: that is what the delimiter proves. Whether it
+            # carried anything is the length, and a zero length here means observed-and-empty.
+            observed_value_node(
                 kind=KIND_ELEMENT,
                 name=reference,
                 ordinal=index - 1,
                 attributes=attributes,
-                location=location,
-                # The position exists in the source: that is what the delimiter proves. Whether it
-                # carried anything is the length, and a zero length here means observed-and-empty.
-                value_present=True,
-                value_length=len(value),
+                path=path,
                 value=value,
             )
         )
@@ -719,7 +677,7 @@ def _segment_node(
         ),
         ordinal=ordinal,
         attributes=attributes,
-        location=_location(raw, ordinal=ordinal, path=path),
+        location=segment_location(raw, ordinal=ordinal, path=path),
         children=children,
     )
 
@@ -747,7 +705,7 @@ def _transaction_node(
         convention = _element_value(st, scan.delimiters, 3).strip()
         if convention:
             attributes["implementationConventionReference"] = convention
-        declared = _int_or_none(_element_value(se, scan.delimiters, 1))
+        declared = int_or_none(_element_value(se, scan.delimiters, 1))
         if declared is not None:
             # ``SE01`` counts ST through SE inclusive, so the comparable observed figure is the body
             # segment count plus those two envelope segments.
@@ -786,7 +744,7 @@ def _transaction_node(
         label=f"Transaction set {transaction.set_id} ({transaction.control_number})",
         ordinal=ordinal,
         attributes=attributes,
-        location=_location(st, ordinal=ordinal, path=path),
+        location=segment_location(st, ordinal=ordinal, path=path),
         children=children,
     )
 
@@ -820,7 +778,7 @@ def _group_node(
             attributes["time"] = time
         if agency:
             attributes["responsibleAgencyCode"] = agency
-        declared = _int_or_none(_element_value(ge, scan.delimiters, 1))
+        declared = int_or_none(_element_value(ge, scan.delimiters, 1))
         if declared is not None:
             attributes["declaredTransactionSetCount"] = declared
 
@@ -830,7 +788,7 @@ def _group_node(
         label=f"Functional group {group.functional_id} ({group.control_number})",
         ordinal=ordinal,
         attributes=attributes,
-        location=_location(gs, ordinal=ordinal, path=path),
+        location=segment_location(gs, ordinal=ordinal, path=path),
         children=lambda: [
             _transaction_node(
                 transaction,
@@ -884,7 +842,7 @@ def _interchange_node(interchange: X12Interchange, scan: Optional[_AlignedScan])
         if usage:
             attributes["usageIndicator"] = usage
             attributes["usageIndicatorLabel"] = _USAGE_INDICATORS.get(usage, "Unrecognised code")
-        declared = _int_or_none(_element_value(scan.trailer, delimiters, 1))
+        declared = int_or_none(_element_value(scan.trailer, delimiters, 1))
         if declared is not None:
             attributes["declaredFunctionalGroupCount"] = declared
 
@@ -894,7 +852,7 @@ def _interchange_node(interchange: X12Interchange, scan: Optional[_AlignedScan])
         label=f"Interchange {interchange.control_number}",
         ordinal=0,
         attributes=attributes,
-        location=_location(scan.interchange if scan else None, ordinal=0, path="ISA"),
+        location=segment_location(scan.interchange if scan else None, ordinal=0, path="ISA"),
         children=lambda: [
             _group_node(group, ordinal=index, interchange_path="ISA", scan=scan)
             for index, group in enumerate(interchange.functional_groups)
@@ -986,18 +944,15 @@ def _canonical_subset_warnings(interchange: X12Interchange) -> List[AnalysisWarn
     converted_label = (
         f"{converted.set_id} ({converted.control_number})" if converted else "the first"
     )
-    return [
-        AnalysisWarning(
-            code=WARNING_CANONICAL_SUBSET,
-            severity=SEVERITY_INFO,
-            message=(
-                f"The canonical model is derived from transaction set {converted_label} in "
-                f"functional group {first_group.functional_id} alone. This interchange carries "
-                f"{observed} transaction set(s) across {len(groups)} functional group(s); the "
-                f"remaining {observed - 1} are described here and nowhere else."
-            ),
-        )
-    ]
+    return canonical_subset_warning(
+        code=WARNING_CANONICAL_SUBSET,
+        derived_from=(
+            f"transaction set {converted_label} in functional group {first_group.functional_id}"
+        ),
+        observed=observed,
+        unit="transaction set",
+        scope=f" across {len(groups)} functional group(s)",
+    )
 
 
 def _scan_warnings(scan: Optional[_AlignedScan], *, scan_attempted: bool) -> List[AnalysisWarning]:
@@ -1092,7 +1047,7 @@ def analyze_edix12(
 
     # Never below the requested budget, never above what a single analysis may visit: an interchange
     # whose envelope alone exceeds the visit cap is bounded like anything else, and says so.
-    effective_nodes = min(MAX_VISITED_NODES, max(max_nodes, _envelope_node_count(interchange)))
+    effective_nodes = envelope_node_budget(max_nodes, _envelope_node_count(interchange))
 
     warnings = (
         _hierarchy_warnings(interchange)

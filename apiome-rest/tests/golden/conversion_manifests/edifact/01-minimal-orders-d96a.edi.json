@@ -1,0 +1,1766 @@
+{
+  "adapter": "edifact",
+  "conversion_mode": "lossy",
+  "corpus_path": "edifact/01-minimal-orders-d96a.edi",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 2,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.BGM01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM01"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.BGM01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM01",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.BGM02"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM02"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.BGM02",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM02",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM02"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.BGM03"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM03"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.BGM03",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM03",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM03"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.CNT01-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-1"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.CNT01-2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-2"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.DTM01-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-1"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.DTM01-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-1",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.DTM01-2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-2"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.DTM01-2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-2",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.DTM01-3"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-3"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.DTM01-3",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-3",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-3"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.LIN01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN01"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.LIN01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN01",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.LIN03-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-1"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.LIN03-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN03-1",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.LIN03-2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-2"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.LIN03-2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN03-2",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.NAD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/NAD"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.NAD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.NAD",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/NAD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.QTY01-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-1"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.QTY01-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.QTY01-1",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.QTY01-2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-2"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.QTY01-2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.QTY01-2",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS.UNS01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/UNS01"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.MessageORDERS.UNS01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS.UNS01",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/UNS01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.NAD.NAD01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD01"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.NAD.NAD01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.NAD.NAD01",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.NAD.NAD02-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-1"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.NAD.NAD02-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.NAD.NAD02-1",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.NAD.NAD02-3"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-3"
+          }
+        ],
+        "id": "construct:field:EDIFACT-ORDERS.NAD.NAD02-3",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.NAD.NAD02-3",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-3"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.MessageORDERS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.MessageORDERS"
+          }
+        ],
+        "id": "construct:type:EDIFACT-ORDERS.MessageORDERS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.MessageORDERS",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "EDIFACT-ORDERS.NAD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/EDIFACT-ORDERS.NAD"
+          }
+        ],
+        "id": "construct:type:EDIFACT-ORDERS.NAD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:EDIFACT-ORDERS.NAD",
+        "status": "retained",
+        "target": "target:/components/schemas/EDIFACT-ORDERS.NAD"
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.code_list_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.code_list_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.code_list_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.implementation_guide_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.implementation_guide_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.implementation_guide_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.interactive_messages, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.interactive_messages",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.interactive_messages",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.multiple_interchanges, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.multiple_interchanges",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.multiple_interchanges",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.packages, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.packages",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.packages",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the edifact analyzer does not model edifact.segment_groups, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:edifact.segment_groups",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:edifact.segment_groups",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "edifact.code_list_validation",
+        "id": "source:analysis:edifact.code_list_validation",
+        "kind": "source",
+        "label": "edifact.code_list_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.code_list_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "edifact.implementation_guide_validation",
+        "id": "source:analysis:edifact.implementation_guide_validation",
+        "kind": "source",
+        "label": "edifact.implementation_guide_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.implementation_guide_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "edifact.interactive_messages",
+        "id": "source:analysis:edifact.interactive_messages",
+        "kind": "source",
+        "label": "edifact.interactive_messages",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.interactive_messages",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "edifact.multiple_interchanges",
+        "id": "source:analysis:edifact.multiple_interchanges",
+        "kind": "source",
+        "label": "edifact.multiple_interchanges",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.multiple_interchanges",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "edifact.packages",
+        "id": "source:analysis:edifact.packages",
+        "kind": "source",
+        "label": "edifact.packages",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.packages",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "edifact.segment_groups",
+        "id": "source:analysis:edifact.segment_groups",
+        "kind": "source",
+        "label": "edifact.segment_groups",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "edifact.segment_groups",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS",
+        "kind": "source",
+        "label": "MessageORDERS",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MessageORDERS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM01",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM01",
+        "kind": "source",
+        "label": "BGM01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BGM01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM02",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM02",
+        "kind": "source",
+        "label": "BGM02",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BGM02",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM03",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.BGM03",
+        "kind": "source",
+        "label": "BGM03",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BGM03",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+        "kind": "source",
+        "label": "CNT01-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CNT01-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+        "kind": "source",
+        "label": "CNT01-2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CNT01-2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-1",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-1",
+        "kind": "source",
+        "label": "DTM01-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DTM01-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-2",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-2",
+        "kind": "source",
+        "label": "DTM01-2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DTM01-2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-3",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.DTM01-3",
+        "kind": "source",
+        "label": "DTM01-3",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DTM01-3",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN01",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN01",
+        "kind": "source",
+        "label": "LIN01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LIN01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN03-1",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN03-1",
+        "kind": "source",
+        "label": "LIN03-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LIN03-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN03-2",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.LIN03-2",
+        "kind": "source",
+        "label": "LIN03-2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LIN03-2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.NAD",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.NAD",
+        "kind": "source",
+        "label": "NAD",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NAD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.QTY01-1",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.QTY01-1",
+        "kind": "source",
+        "label": "QTY01-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "QTY01-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.QTY01-2",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.QTY01-2",
+        "kind": "source",
+        "label": "QTY01-2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "QTY01-2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.UNS01",
+        "id": "source:construct:EDIFACT-ORDERS.MessageORDERS.UNS01",
+        "kind": "source",
+        "label": "UNS01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "UNS01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD",
+        "id": "source:construct:EDIFACT-ORDERS.NAD",
+        "kind": "source",
+        "label": "NAD",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "NAD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD01",
+        "id": "source:construct:EDIFACT-ORDERS.NAD.NAD01",
+        "kind": "source",
+        "label": "NAD01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NAD01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD02-1",
+        "id": "source:construct:EDIFACT-ORDERS.NAD.NAD02-1",
+        "kind": "source",
+        "label": "NAD02-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NAD02-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD02-3",
+        "id": "source:construct:EDIFACT-ORDERS.NAD.NAD02-3",
+        "kind": "source",
+        "label": "NAD02-3",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NAD02-3",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM01",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM01",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM02",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM02",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM02",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM02",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.BGM03",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM03",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM03",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/BGM03",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-1",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-2",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/CNT01-2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-1",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-1",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-2",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-2",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.DTM01-3",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-3",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-3",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/DTM01-3",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN01",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN01",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN03-1",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-1",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.LIN03-2",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-2",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/LIN03-2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.NAD",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/NAD",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/NAD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/NAD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.QTY01-1",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-1",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.QTY01-2",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-2",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/QTY01-2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.MessageORDERS.UNS01",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/UNS01",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/UNS01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.MessageORDERS/properties/UNS01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.NAD",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.NAD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.NAD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD01",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD01",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD02-1",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-1",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "EDIFACT-ORDERS.NAD.NAD02-3",
+        "id": "target:/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-3",
+        "kind": "target",
+        "label": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-3",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/EDIFACT-ORDERS.NAD/properties/NAD02-3",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 20,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "edifact",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 39,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "edifact.code_list_validation",
+          "edifact.implementation_guide_validation",
+          "edifact.interactive_messages",
+          "edifact.multiple_interchanges",
+          "edifact.packages",
+          "edifact.segment_groups"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-edifact-01-minimal-orders-d96a-edi",
+      "source_format": "edifact",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 22,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 44,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 44,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 66,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 20,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "edifact",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 39,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "edifact.code_list_validation",
+          "edifact.implementation_guide_validation",
+          "edifact.interactive_messages",
+          "edifact.multiple_interchanges",
+          "edifact.packages",
+          "edifact.segment_groups"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-edifact-01-minimal-orders-d96a-edi",
+      "source_format": "edifact",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 22,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 44,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

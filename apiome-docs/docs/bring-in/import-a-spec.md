@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 58<!--format-count:importable--> formats**, spanning all
+**Apiome imports 59<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 44<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -33,7 +33,7 @@ Which importer handles a document is decided by the server, from the format it n
   editable class/property/path model, so an import becomes a **publishable Project** you can
   version, lint and publish. This is the path the rest of this page describes.
 - **The Catalog importer** takes **everything else** — Protobuf/gRPC, GraphQL, AsyncAPI, Arazzo,
-  JSON Schema, Thrift, Smithy, TypeSpec, WSDL, XSD, OData, EDI X12, HL7 v2, FHIR, COBOL copybooks,
+  JSON Schema, Thrift, Smithy, TypeSpec, WSDL, XSD, OData, EDI X12, UN/EDIFACT, HL7 v2, FHIR, COBOL copybooks,
   FIX, ISO 20022/8583 and the rest. A catalog import keeps the format's **own** structure rather
   than forcing it into the OpenAPI shape, so what you get back is what you put in. Catalog items
   are searchable, diffable and convertible; they are not publishable until converted.

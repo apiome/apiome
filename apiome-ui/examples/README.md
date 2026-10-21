@@ -133,7 +133,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | --- | --- | --- | --- | --- |
 | `dicom/` | DICOM (pending #5451) | data_schema | `DICM` magic at offset 128, or 8-hex-digit keys with `vr`/`Value` (DICOM JSON) | 15 |
 | `edi-x12/` | EDI ASC X12 | message | `ISA`/`GS`/`ST` envelopes | 12 |
-| `edifact/` | UN/EDIFACT (pending #5445) | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 16 |
+| `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 16 |
 | `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 11 |
 | `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 11 |
 | `fix-orchestra/` | FIX Orchestra (pending #5453) | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
@@ -817,26 +817,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/02-semantic-nested-gs.edi`** — The canonical semantic negative (SE segment-count mismatch, e.g. SE*9 over 6 segments) does NOT fail here: pyx12 treats the count mismatch as non-fatal and the import completes all the way to persist, so the nested-GS contradiction is used instead.
 
-### `edifact/` — UN/EDIFACT (pending #5445)
+### `edifact/` — UN/EDIFACT
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-orders-d96a.edi` | minimal | `edifact` ≥ 0.9 | valid | `ORDERS`, `D96A`, `default-delimiters`, `pending-adapter` |
-| `02-typical-invoic-d96a.edi` | typical | `edifact` ≥ 0.9 | valid | `INVOIC`, `D96A`, `UNA`, `NAD`, `TAX`, `MOA`, `CUX`, `pending-adapter` |
-| `03-typical-desadv-d01b.edi` | typical | `edifact` ≥ 0.9 | valid | `DESADV`, `D01B`, `PAC`, `MEA`, `GIN`, `TDT`, `CPS`, `pending-adapter` |
-| `04-stress-multi-message-group.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `UNG`, `UNE`, `multi-message`, `comma-decimal`, `release-character`, `empty-elements`, `pending-adapter` |
-| `05-real-world-eancom-orders.edi` | real-world | `edifact` ≥ 0.9 | valid | `EANCOM`, `ORDERS`, `GLN`, `PIA`, `IMD`, `LOC`, `association-code`, `pending-adapter` |
-| `06-typical-odette-delfor.edi` ⚠ | typical | `edifact` ≥ 0.9 | valid | `ODETTE`, `DELFOR`, `SCC`, `schedule-lines`, `UNOA`, `pending-adapter` |
-| `07-stress-control-count-mismatch.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `control-counts`, `declared-vs-observed`, `self-inconsistent`, `pending-adapter` |
-| `08-composition-nested-segment-groups.edi` | composition | `edifact` ≥ 0.9 | valid | `nested-segment-groups`, `contact-group`, `allowance-charge`, `tax-group`, `INVOIC`, `pending-adapter` |
-| `09-interchange-set/contrl.edi` ⚠ | multi-file (member) | `edifact` (no guarantee) | valid | `CONTRL`, `functional-acknowledgment`, `UCI`, `UCM`, `pending-adapter` |
-| `09-interchange-set/orders.edi` | multi-file (root) | `edifact` ≥ 0.9 | valid | `ORDERS`, `interchange`, `pending-adapter` |
-| `negative/01-syntactic-missing-segment-terminator.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `syntactic`, `missing-terminator`, `pending-adapter` |
-| `negative/02-semantic-no-message-in-interchange.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `semantic`, `no-message`, `pending-adapter` |
-| `negative/03-truncated-mid-segment.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `truncated`, `mid-segment`, `pending-adapter` |
-| `negative/04-wrong-format-x12.edi` ⚠ | — | `edifact` (no guarantee) | invalid | `negative`, `wrong-format`, `x12`, `pending-adapter` |
-| `negative/05-encoding-utf16.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-unh-without-unt.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `semantic`, `unterminated-message`, `pending-adapter` |
+| `01-minimal-orders-d96a.edi` | minimal | `edifact` ≥ 0.9 | valid | `ORDERS`, `D96A`, `default-delimiters` |
+| `02-typical-invoic-d96a.edi` | typical | `edifact` ≥ 0.9 | valid | `INVOIC`, `D96A`, `UNA`, `NAD`, `TAX`, `MOA`, `CUX` |
+| `03-typical-desadv-d01b.edi` | typical | `edifact` ≥ 0.9 | valid | `DESADV`, `D01B`, `PAC`, `MEA`, `GIN`, `TDT`, `CPS` |
+| `04-stress-multi-message-group.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `UNG`, `UNE`, `multi-message`, `comma-decimal`, `release-character`, `empty-elements` |
+| `05-real-world-eancom-orders.edi` | real-world | `edifact` ≥ 0.9 | valid | `EANCOM`, `ORDERS`, `GLN`, `PIA`, `IMD`, `LOC`, `association-code` |
+| `06-typical-odette-delfor.edi` ⚠ | typical | `edifact` ≥ 0.9 | valid | `ODETTE`, `DELFOR`, `SCC`, `schedule-lines`, `UNOA` |
+| `07-stress-control-count-mismatch.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `control-counts`, `declared-vs-observed`, `self-inconsistent` |
+| `08-composition-nested-segment-groups.edi` | composition | `edifact` ≥ 0.9 | valid | `nested-segment-groups`, `contact-group`, `allowance-charge`, `tax-group`, `INVOIC` |
+| `09-interchange-set/contrl.edi` ⚠ | multi-file (member) | `edifact` (no guarantee) | valid | `CONTRL`, `functional-acknowledgment`, `UCI`, `UCM` |
+| `09-interchange-set/orders.edi` | multi-file (root) | `edifact` ≥ 0.9 | valid | `ORDERS`, `interchange` |
+| `negative/01-syntactic-missing-segment-terminator.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `syntactic`, `missing-terminator` |
+| `negative/02-semantic-no-message-in-interchange.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `semantic`, `no-message` |
+| `negative/03-truncated-mid-segment.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `truncated`, `mid-segment` |
+| `negative/04-wrong-format-x12.edi` ⚠ | — | `edifact` (no guarantee) | invalid | `negative`, `wrong-format`, `x12` |
+| `negative/05-encoding-utf16.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-unh-without-unt.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `semantic`, `unterminated-message` |
 
 > ⚠ **`04-stress-multi-message-group.edi`** — Two functional groups and three messages: the canonical model is derived from the first group's first message and the extras must be reported, exactly as the X12 analyzer does.
 

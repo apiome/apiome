@@ -1,13 +1,13 @@
 ---
 title: "Read a catalog item's format details"
-description: "What a catalog item records about its native format: X12, COBOL copybooks, statuses."
+description: "What a catalog item records about its native format: X12, EDIFACT, copybooks, statuses."
 sidebar_position: 4
 tags: [catalog, formats]
 ---
 
 Every imported catalog item carries a **payload analysis**: a persisted, revision-scoped
-record of the payload's *native* structure — X12 envelopes and segments, copybook levels
-and PICTURE clauses — captured once at import time, in the format's own vocabulary. The
+record of the payload's *native* structure — X12 and UN/EDIFACT envelopes and segments,
+copybook levels and PICTURE clauses — captured once at import time, in the format's own vocabulary. The
 **Format details** tab renders that record. This page explains the status vocabulary,
 what redaction withholds, exactly where the X12 and copybook inspectors' knowledge ends,
 and — most importantly — how to read *absence*.
@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -154,6 +154,44 @@ their element position:
   trailer segments (SE/GE/IEA) are recorded as control totals, not tree nodes.
 - A repetition separator only exists where the interchange version defines one (ISA11
   at `00501` and later — never at `00401`).
+
+## The EDIFACT analysis
+
+For UN/EDIFACT sources ([how to import one](./edifact-import.md)) the tab renders the native
+hierarchy — **interchange → functional group → message → segment → element**, with composite
+components under their element and syntax-4 repetitions under the element they repeat. An
+interchange without functional groups has its messages directly under the interchange. It keeps
+the X12 inspector's contract:
+
+- **Envelope facts** on the interchange row: syntax identifier and version (`UNOC`, `3`), sender
+  and recipient with their qualifiers, preparation date and time, control reference, application
+  reference and test indicator — and the **service characters**, with whether a `UNA` declared them
+  (**serviceStringAdviceDeclared**) or the ISO 9735 defaults applied. The `UNB` recipient password
+  is never shown.
+- **Message facts**: message type (`ORDERS`), version and release (`D`, `96A`), controlling agency
+  and association code (`EAN008`), recorded as the sender's claim.
+- **Control counts**: what `UNT` (segments, `UNH` to `UNT` inclusive), `UNE` (messages) and `UNZ`
+  (groups, or messages when there are none) *declared* sits beside what was *observed*, with
+  **controlCountConsistent** saying whether they agree. The control reference each trailer repeats
+  is checked against its header (**controlReferenceConsistent**). Each disagreement is also a
+  warning — `edifact.control_count_mismatch`, `edifact.control_reference_mismatch` — so an
+  interchange that disagrees with itself is visibly so.
+- **Element presence** uses the same five facts as X12: *Has a value*, *Present, empty*,
+  *Withheld*, *Not present*, *Not recorded*. A segment's **elementPositionCount** counts every
+  position it wrote; **elementCount** counts the ones that carried a value.
+- **Conversion scope**: the canonical model is derived from the **first functional group's first
+  message**. An analysis of a multi-message interchange names the message it was derived from
+  (warning `edifact.canonical_projection_subset`).
+- **Source positions** are exact for every segment, group and message: the parser reads the text
+  itself, so there is no second reading to disagree with.
+
+**Where the EDIFACT analysis's knowledge ends** (also stated in the capability panel):
+
+- **No implementation guide is consulted** — not D.96A, D.01B, EANCOM or ODETTE. Only the
+  ISO 9735 syntax is read, so a structurally valid interchange is not claimed to be a conformant
+  one.
+- **Segment groups** are shown as flat segments; a directory would be needed to nest them.
+- The **decimal mark** is recorded, and values are never re-read as numbers.
 
 ## The COBOL copybook inspector
 

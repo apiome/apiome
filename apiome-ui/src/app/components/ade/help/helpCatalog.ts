@@ -173,10 +173,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'catalog-format-details',
     title: "Read a catalog item's format details",
     summary:
-      'Payload analysis for an imported item: X12 envelopes and segments, COBOL copybooks, statuses and redaction.',
+      'Payload analysis for an imported item: X12 and EDIFACT envelopes and segments, COBOL copybooks, statuses and redaction.',
     page: 'apiome-docs/docs/bring-in/catalog-format-details.md',
     section: 'spine',
-    keywords: ['x12', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
+    keywords: ['x12', 'edifact', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
   {
     id: 'convert-to-openapi',
@@ -685,6 +685,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     page: 'apiome-docs/docs/bring-in/xregistry-import.md',
     section: 'reference',
     keywords: ['cloudevents', 'schemagroups', 'messagegroups', 'endpoints', 'event catalog'],
+  },
+  {
+    id: 'edifact-import',
+    title: 'Import a UN/EDIFACT interchange',
+    summary: 'Catalog UN/EDIFACT interchanges — ORDERS, INVOIC, DESADV — beside EDI X12.',
+    page: 'apiome-docs/docs/bring-in/edifact-import.md',
+    section: 'reference',
+    keywords: ['una', 'unb', 'orders', 'invoic', 'desadv', 'eancom', 'iso 9735', 'b2b'],
   },
   {
     id: 'agents-manifest-import',

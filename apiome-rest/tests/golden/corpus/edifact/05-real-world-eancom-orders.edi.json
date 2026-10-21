@@ -1,0 +1,2007 @@
+{
+  "adapter": "edifact",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "edifact_directory": "D:96A",
+      "edifact_envelope": {
+        "association_code": "EAN008",
+        "component_separator": ":",
+        "controlling_agency": "UN",
+        "decimal_mark": ".",
+        "element_separator": "+",
+        "group_id": null,
+        "group_reference": null,
+        "interchange_control_reference": "000000005",
+        "message_reference": "1",
+        "recipient_id": "8798765000019",
+        "recipient_qualifier": "14",
+        "release_character": "?",
+        "repetition_separator": null,
+        "segment_terminator": "'",
+        "sender_id": "8712345000015",
+        "sender_qualifier": "14",
+        "service_string_advice": true,
+        "syntax_identifier": "UNOC",
+        "syntax_version": "3"
+      },
+      "edifact_message_type": "ORDERS",
+      "edifact_messages": [
+        {
+          "directory": "D:96A",
+          "message_type": "ORDERS",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "BGM01",
+                  "repetitions": [
+                    [
+                      "220"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "BGM02",
+                  "repetitions": [
+                    [
+                      "4500098231"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "BGM03",
+                  "repetitions": [
+                    [
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "BGM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "137",
+                      "20260818",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "20260825",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "FTX01",
+                  "repetitions": [
+                    [
+                      "DEL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "FTX02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "FTX03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "FTX04",
+                  "repetitions": [
+                    [
+                      "Deliver between 06",
+                      "00 and 10",
+                      "00 only"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "FTX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "CT",
+                      "FRAME-2026-114"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "BY"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "8798765000019",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "VA",
+                      "NL987654321B01"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CTA01",
+                  "repetitions": [
+                    [
+                      "PD"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CTA02",
+                  "repetitions": [
+                    [
+                      "",
+                      "A. Buyer"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CTA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "COM01",
+                  "repetitions": [
+                    [
+                      "a.buyer@example.com",
+                      "EM"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "COM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "SU"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "8712345000015",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "DP"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "8798765000027",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "IV"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "8798765000019",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CUX01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "EUR",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CUX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TDT01",
+                  "repetitions": [
+                    [
+                      "20"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TDT02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TDT03",
+                  "repetitions": [
+                    [
+                      "30"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "8712345001234",
+                      "SRV"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "WIDGET-001",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Stainless widget 40mm"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "21",
+                      "480"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "203",
+                      "86400.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PRI01",
+                  "repetitions": [
+                    [
+                      "AAA",
+                      "180.00",
+                      "CA",
+                      "",
+                      "",
+                      "1",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PRI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "LI",
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LOC01",
+                  "repetitions": [
+                    [
+                      "7"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LOC02",
+                  "repetitions": [
+                    [
+                      "8798765000027",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LOC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "8712345005678",
+                      "SRV"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "GADGET-007",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Gadget boxed, 12 per case"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "21",
+                      "120"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "203",
+                      "5040.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PRI01",
+                  "repetitions": [
+                    [
+                      "AAA",
+                      "42.00",
+                      "CA",
+                      "",
+                      "",
+                      "1",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PRI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "LI",
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "8712345009012",
+                      "SRV"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "BRACKET-020",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "21",
+                      "2000"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "203",
+                      "3000.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PRI01",
+                  "repetitions": [
+                    [
+                      "AAA",
+                      "1.50",
+                      "CA",
+                      "",
+                      "",
+                      "1",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PRI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "UNS01",
+                  "repetitions": [
+                    [
+                      "S"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "UNS"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CNT01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "3"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CNT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "86",
+                      "94440.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            }
+          ]
+        }
+      ]
+    },
+    "format": "edifact",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EDIFACT ORDERS",
+      "namespace": "EDIFACT-ORDERS"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EDIFACT ORDERS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "137",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.DTM.DTM01-1",
+            "name": "DTM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260818",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.DTM.DTM01-2",
+            "name": "DTM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "102",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.DTM.DTM01-3",
+            "name": "DTM01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.DTM",
+        "key_type": null,
+        "kind": "record",
+        "name": "DTM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "F",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.IMD.IMD01",
+            "name": "IMD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Stainless widget 40mm",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.IMD.IMD03-4",
+            "name": "IMD03-4",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.IMD",
+        "key_type": null,
+        "kind": "record",
+        "name": "IMD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.LIN.LIN01",
+            "name": "LIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "8712345001234",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.LIN.LIN03-1",
+            "name": "LIN03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SRV",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.LIN.LIN03-2",
+            "name": "LIN03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.LIN",
+        "key_type": null,
+        "kind": "record",
+        "name": "LIN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "203",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.MOA.MOA01-1",
+            "name": "MOA01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "86400.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.MOA.MOA01-2",
+            "name": "MOA01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.MOA",
+        "key_type": null,
+        "kind": "record",
+        "name": "MOA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "220",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.MessageORDERS.BGM01",
+            "name": "BGM01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "4500098231",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.MessageORDERS.BGM02",
+            "name": "BGM02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.MessageORDERS.BGM03",
+            "name": "BGM03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 30,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CNT01-1",
+            "name": "CNT01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "3",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 31,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CNT01-2",
+            "name": "CNT01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "a.buyer@example.com",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "EDIFACT-ORDERS.MessageORDERS.COM01-1",
+            "name": "COM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EM",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 14,
+            "key": "EDIFACT-ORDERS.MessageORDERS.COM01-2",
+            "name": "COM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PD",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CTA01",
+            "name": "CTA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "A. Buyer",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CTA02-2",
+            "name": "CTA02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 15,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CUX01-1",
+            "name": "CUX01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EUR",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 16,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CUX01-2",
+            "name": "CUX01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 17,
+            "key": "EDIFACT-ORDERS.MessageORDERS.CUX01-3",
+            "name": "CUX01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-ORDERS.MessageORDERS.DTM",
+            "name": "DTM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.DTM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DEL",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-ORDERS.MessageORDERS.FTX01",
+            "name": "FTX01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Deliver between 06",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "EDIFACT-ORDERS.MessageORDERS.FTX04-1",
+            "name": "FTX04-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "00 and 10",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "EDIFACT-ORDERS.MessageORDERS.FTX04-2",
+            "name": "FTX04-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "00 only",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "EDIFACT-ORDERS.MessageORDERS.FTX04-3",
+            "name": "FTX04-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 22,
+            "key": "EDIFACT-ORDERS.MessageORDERS.IMD",
+            "name": "IMD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.IMD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 20,
+            "key": "EDIFACT-ORDERS.MessageORDERS.LIN",
+            "name": "LIN",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.LIN",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "7",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 26,
+            "key": "EDIFACT-ORDERS.MessageORDERS.LOC01",
+            "name": "LOC01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "8798765000027",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 27,
+            "key": "EDIFACT-ORDERS.MessageORDERS.LOC02-1",
+            "name": "LOC02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 28,
+            "key": "EDIFACT-ORDERS.MessageORDERS.LOC02-3",
+            "name": "LOC02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 24,
+            "key": "EDIFACT-ORDERS.MessageORDERS.MOA",
+            "name": "MOA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.MOA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "EDIFACT-ORDERS.MessageORDERS.NAD",
+            "name": "NAD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.NAD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 21,
+            "key": "EDIFACT-ORDERS.MessageORDERS.PIA",
+            "name": "PIA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.PIA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 25,
+            "key": "EDIFACT-ORDERS.MessageORDERS.PRI",
+            "name": "PRI",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.PRI",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 23,
+            "key": "EDIFACT-ORDERS.MessageORDERS.QTY",
+            "name": "QTY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.QTY",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "EDIFACT-ORDERS.MessageORDERS.RFF",
+            "name": "RFF",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-ORDERS.RFF",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 18,
+            "key": "EDIFACT-ORDERS.MessageORDERS.TDT01",
+            "name": "TDT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "30",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 19,
+            "key": "EDIFACT-ORDERS.MessageORDERS.TDT03",
+            "name": "TDT03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "S",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 29,
+            "key": "EDIFACT-ORDERS.MessageORDERS.UNS01",
+            "name": "UNS01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.MessageORDERS",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageORDERS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "BY",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.NAD.NAD01",
+            "name": "NAD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "8798765000019",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.NAD.NAD02-1",
+            "name": "NAD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.NAD.NAD02-3",
+            "name": "NAD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.NAD",
+        "key_type": null,
+        "kind": "record",
+        "name": "NAD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.PIA.PIA01",
+            "name": "PIA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.PIA.PIA02-1",
+            "name": "PIA02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.PIA.PIA02-2",
+            "name": "PIA02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.PIA",
+        "key_type": null,
+        "kind": "record",
+        "name": "PIA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "AAA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.PRI.PRI01-1",
+            "name": "PRI01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "180.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.PRI.PRI01-2",
+            "name": "PRI01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-ORDERS.PRI.PRI01-3",
+            "name": "PRI01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-ORDERS.PRI.PRI01-6",
+            "name": "PRI01-6",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PCE",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-ORDERS.PRI.PRI01-7",
+            "name": "PRI01-7",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.PRI",
+        "key_type": null,
+        "kind": "record",
+        "name": "PRI",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "21",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.QTY.QTY01-1",
+            "name": "QTY01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.QTY.QTY01-2",
+            "name": "QTY01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.QTY",
+        "key_type": null,
+        "kind": "record",
+        "name": "QTY",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "CT",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-ORDERS.RFF.RFF01-1",
+            "name": "RFF01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "FRAME-2026-114",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-ORDERS.RFF.RFF01-2",
+            "name": "RFF01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-ORDERS.RFF",
+        "key_type": null,
+        "kind": "record",
+        "name": "RFF",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "edifact/05-real-world-eancom-orders.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 10
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "edifact"
+  },
+  "fingerprint": "sha256:96152486ba0f864f65af1e32d8626ebaa4b6611f4dd671723901e8e346c55f50",
+  "lint": {
+    "findings": 67,
+    "grade": "F",
+    "report_fingerprint": "c272e4f714a323adebeaefb00651d8470177a32bbfa71133e06aeb4b2a91dd42",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 57,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}

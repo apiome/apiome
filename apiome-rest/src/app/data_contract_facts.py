@@ -96,6 +96,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "cddl",
         "cobolcopybook",
         "dtd",
+        "edifact",
         "edix12",
         "fix",
         "flatbuffers",

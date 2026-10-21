@@ -1,0 +1,1450 @@
+{
+  "adapter": "edifact",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "edifact_directory": "D:97A",
+      "edifact_envelope": {
+        "association_code": null,
+        "component_separator": ":",
+        "controlling_agency": "UN",
+        "decimal_mark": ".",
+        "element_separator": "+",
+        "group_id": null,
+        "group_reference": null,
+        "interchange_control_reference": "000000006",
+        "message_reference": "1",
+        "recipient_id": "O0026000000ZZ",
+        "recipient_qualifier": "",
+        "release_character": "?",
+        "repetition_separator": null,
+        "segment_terminator": "'",
+        "sender_id": "O0013000000ZZ",
+        "sender_qualifier": "",
+        "service_string_advice": false,
+        "syntax_identifier": "UNOA",
+        "syntax_version": "2"
+      },
+      "edifact_message_type": "DELFOR",
+      "edifact_messages": [
+        {
+          "directory": "D:97A",
+          "message_type": "DELFOR",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "BGM01",
+                  "repetitions": [
+                    [
+                      "241"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "BGM02",
+                  "repetitions": [
+                    [
+                      "SCHED-2026-33"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "BGM03",
+                  "repetitions": [
+                    [
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "BGM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "137",
+                      "20260819",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "157",
+                      "20260824",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "SE"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "O0013000000",
+                      "",
+                      "92"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "BY"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "O0026000000",
+                      "",
+                      "92"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "ST"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "PLANT-INGOLSTADT",
+                      "",
+                      "92"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "GIS01",
+                  "repetitions": [
+                    [
+                      "37"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "GIS"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "4711-0815-A",
+                      "IN"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "8712345004711",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Bracket assembly left"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LOC01",
+                  "repetitions": [
+                    [
+                      "11"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LOC02",
+                  "repetitions": [
+                    [
+                      "DOCK-07",
+                      "",
+                      "92"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LOC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "LTV-2026-0091"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "70",
+                      "1200",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SCC01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SCC02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "SCC03",
+                  "repetitions": [
+                    [
+                      "1",
+                      "1",
+                      "D"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SCC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "20260824",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "113",
+                      "400",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "20260825",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "113",
+                      "400",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "20260826",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "113",
+                      "400",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "4711-0816-A",
+                      "IN"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "8712345004712",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Bracket assembly right"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "70",
+                      "1200",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SCC01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SCC02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "SCC03",
+                  "repetitions": [
+                    [
+                      "1",
+                      "1",
+                      "D"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SCC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "20260824",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "113",
+                      "1200",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            }
+          ]
+        }
+      ]
+    },
+    "format": "edifact",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EDIFACT DELFOR",
+      "namespace": "EDIFACT-DELFOR"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EDIFACT DELFOR",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "137",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.DTM.DTM01-1",
+            "name": "DTM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260819",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.DTM.DTM01-2",
+            "name": "DTM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "102",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.DTM.DTM01-3",
+            "name": "DTM01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.DTM",
+        "key_type": null,
+        "kind": "record",
+        "name": "DTM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "F",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.IMD.IMD01",
+            "name": "IMD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Bracket assembly left",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.IMD.IMD03-4",
+            "name": "IMD03-4",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.IMD",
+        "key_type": null,
+        "kind": "record",
+        "name": "IMD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.LIN.LIN01",
+            "name": "LIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "4711-0815-A",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.LIN.LIN03-1",
+            "name": "LIN03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "IN",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.LIN.LIN03-2",
+            "name": "LIN03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.LIN",
+        "key_type": null,
+        "kind": "record",
+        "name": "LIN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "241",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.BGM01",
+            "name": "BGM01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SCHED-2026-33",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.BGM02",
+            "name": "BGM02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.BGM03",
+            "name": "BGM03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.DTM",
+            "name": "DTM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.DTM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "37",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.GIS01",
+            "name": "GIS01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.IMD",
+            "name": "IMD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.IMD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.LIN",
+            "name": "LIN",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.LIN",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "11",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.LOC01",
+            "name": "LOC01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DOCK-07",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.LOC02-1",
+            "name": "LOC02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "92",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.LOC02-3",
+            "name": "LOC02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.NAD",
+            "name": "NAD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.NAD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.PIA",
+            "name": "PIA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.PIA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 15,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.QTY",
+            "name": "QTY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.QTY",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ON",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.RFF01-1",
+            "name": "RFF01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "LTV-2026-0091",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 14,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.RFF01-2",
+            "name": "RFF01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 16,
+            "key": "EDIFACT-DELFOR.MessageDELFOR.SCC",
+            "name": "SCC",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DELFOR.SCC",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.MessageDELFOR",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageDELFOR",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SE",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.NAD.NAD01",
+            "name": "NAD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "O0013000000",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.NAD.NAD02-1",
+            "name": "NAD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "92",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.NAD.NAD02-3",
+            "name": "NAD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.NAD",
+        "key_type": null,
+        "kind": "record",
+        "name": "NAD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.PIA.PIA01",
+            "name": "PIA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "8712345004711",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.PIA.PIA02-1",
+            "name": "PIA02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.PIA.PIA02-2",
+            "name": "PIA02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.PIA",
+        "key_type": null,
+        "kind": "record",
+        "name": "PIA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "70",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.QTY.QTY01-1",
+            "name": "QTY01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1200",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.QTY.QTY01-2",
+            "name": "QTY01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PCE",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.QTY.QTY01-3",
+            "name": "QTY01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.QTY",
+        "key_type": null,
+        "kind": "record",
+        "name": "QTY",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DELFOR.SCC.SCC01",
+            "name": "SCC01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DELFOR.SCC.SCC03-1",
+            "name": "SCC03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DELFOR.SCC.SCC03-2",
+            "name": "SCC03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "D",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-DELFOR.SCC.SCC03-3",
+            "name": "SCC03-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DELFOR.SCC",
+        "key_type": null,
+        "kind": "record",
+        "name": "SCC",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "edifact/06-typical-odette-delfor.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 8
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "edifact"
+  },
+  "fingerprint": "sha256:703cdfaa0e9e242ba242d133c60dbe8a36fc59f346566bfdb4f179abd6117211",
+  "lint": {
+    "findings": 46,
+    "grade": "F",
+    "report_fingerprint": "c1110b3d449913b666a17158e326df3831ba38d5cb7cf4b4d227f6a781ed25c8",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 38,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

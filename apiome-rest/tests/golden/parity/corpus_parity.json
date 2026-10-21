@@ -1003,6 +1003,49 @@
       "waivers": {}
     },
     {
+      "format_key": "edifact",
+      "label": "UN/EDIFACT",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "edifact"
+      ],
+      "corpus_directories": [
+        "edifact"
+      ],
+      "fixtures": {
+        "valid": 10,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 16
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 9,
+      "golden_directories": [
+        "edifact"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "edix12",
       "label": "EDI X12",
       "paradigm": "data_schema",
@@ -2914,7 +2957,6 @@
     "cue",
     "dhall",
     "dicom",
-    "edifact",
     "envoy-xds",
     "fix-orchestra",
     "haproxy",

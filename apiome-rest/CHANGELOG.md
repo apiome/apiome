@@ -5,6 +5,37 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.405.0] - 2026-10-20
+
+### Added
+- **UN/EDIFACT import (#5445, FMT-6.1)**: the new **`edifact`** import source (formats `edifact`, `un-edifact`;
+  `.edi` / `.edifact`; file / URL / paste / fileset) reads a UN/EDIFACT batch interchange (ISO 9735) into the
+  Catalog, beside EDI X12:
+  - `app/edifact_parser.py` — a hand-written reader of `UNA` service string advice (or the ISO 9735 defaults, or
+    the level-B control characters), release characters, syntax-4 repetition, and the `UNB`/`UNZ`, `UNG`/`UNE`,
+    `UNH`/`UNT` envelopes. Every segment keeps its exact offset, length, line and column. Refusals carry intake
+    codes: `INPUT_TRUNCATED` (ends mid-segment, inside a message, before `UNZ`), `INPUT_MALFORMED` (dropped
+    terminator, unreadable tag, bad `UNA`), `INPUT_SEMANTIC_INVALID` (`UNH` without `UNT`, a segment outside any
+    message, groups mixed with ungrouped messages, no message); encoding faults are left to the pipeline.
+  - `app/edifact_normalizer.py` — the canonical model from the first group's first message, exactly as X12: single
+    segments' values become fields (`BGM02`, `DTM01-2`), repeating segments their own record types, the envelope
+    and sibling messages `edifact_*` extras.
+  - `app/edifact_analysis.py` — the native analysis (analyzer `edifact@1.0.0`): interchange → functional group →
+    message → segment → element / composite / component / repetition, with declared-versus-observed `UNT`/`UNE`/`UNZ`
+    control counts and control references (warnings `edifact.control_count_mismatch`,
+    `edifact.control_reference_mismatch`), present-empty element positions, the value-visibility policy, and
+    `edifact.canonical_projection_subset` when the model was derived from one message of several.
+  - `app/edi_analysis_base.py` — the **shared EDI analysis base**: locations, control-count statements, the observed
+    value node, the envelope budget, the canonical-subset warning and the implementation-guide statement. The X12
+    extractor now uses it (its records are unchanged).
+  - A reviewed `edifact` capability entry stating that no implementation guide (D.96A, D.01B, EANCOM, ODETTE…) is
+    consulted; version coverage for syntax 1–4; corpus activation of the 16 `apiome-ui/examples/edifact/` fixtures
+    (four had miscounted `UNT` totals, now corrected), canonical, analysis and conversion goldens, and the round-trip
+    matrix row (import-only; the emitter is #4146).
+
+### Changed
+- Format capability registry contract `15` (review date 2026-10-20).
+
 ## [1.404.0] - 2026-10-20
 
 ### Added
