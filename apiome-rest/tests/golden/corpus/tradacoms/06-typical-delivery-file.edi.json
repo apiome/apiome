@@ -1,0 +1,802 @@
+{
+  "adapter": "tradacoms",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "tradacoms",
+        "evidence": [
+          "An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "tradacoms",
+        "label": "TRADACOMS"
+      },
+      "tradacoms_file": {
+        "generation": "00006",
+        "header_message_type": "DELHDR",
+        "transaction_code": "0530",
+        "transaction_name": "DELIVERY",
+        "version": "1"
+      },
+      "tradacoms_message_type": "DELIVR",
+      "tradacoms_messages": [
+        {
+          "file_header": true,
+          "message_type": "DELHDR",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TYP01",
+                  "repetitions": [
+                    [
+                      "0530"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TYP02",
+                  "repetitions": [
+                    [
+                      "DELIVERY"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TYP"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SDT01",
+                  "repetitions": [
+                    [
+                      "5012345678901",
+                      "EXAMPLE SUPPLIES"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SDT02",
+                  "repetitions": [
+                    [
+                      "SUP001"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CDT01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CDT02",
+                  "repetitions": [
+                    [
+                      "CUS001"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "FIL01",
+                  "repetitions": [
+                    [
+                      "00006"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "FIL02",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "FIL03",
+                  "repetitions": [
+                    [
+                      "260824"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "FIL"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "DELIVR",
+          "reference": "2",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DNA01",
+                  "repetitions": [
+                    [
+                      "DEL-88120"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DNA02",
+                  "repetitions": [
+                    [
+                      "260824"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "DNA03",
+                  "repetitions": [
+                    [
+                      "PO-0002"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DNA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CLO01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CLO02",
+                  "repetitions": [
+                    [
+                      "STORE-114"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CLO"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DNB01",
+                  "repetitions": [
+                    [
+                      "CARRIER01"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DNB02",
+                  "repetitions": [
+                    [
+                      "TRK-4471"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "DNB03",
+                  "repetitions": [
+                    [
+                      "260824",
+                      "0730"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DNB"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DLD01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DLD02",
+                  "repetitions": [
+                    [
+                      "5012345670001",
+                      "",
+                      "WIDGET-001"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "DLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "DLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "DLD05",
+                  "repetitions": [
+                    [
+                      "480",
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "DLD06",
+                  "repetitions": [
+                    [
+                      "480",
+                      "EA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DLD01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DLD02",
+                  "repetitions": [
+                    [
+                      "5012345670002",
+                      "",
+                      "GADGET-007"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "DLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "DLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "DLD05",
+                  "repetitions": [
+                    [
+                      "120",
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "DLD06",
+                  "repetitions": [
+                    [
+                      "118",
+                      "EA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTR01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTR"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "DELTLR",
+          "reference": "3",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DFT01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DFT02",
+                  "repetitions": [
+                    [
+                      "598"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DFT"
+            }
+          ],
+          "version": "9"
+        }
+      ],
+      "tradacoms_transmission": {
+        "application_reference": null,
+        "message_reference": "2",
+        "message_version": "9",
+        "recipient_code": "5087654321098",
+        "sender_code": "5012345678901",
+        "sender_reference": "00006",
+        "syntax_identifier": "ANAA",
+        "syntax_version": "1",
+        "transmission_count": 1
+      }
+    },
+    "format": "tradacoms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TRADACOMS DELIVR",
+      "namespace": "TRADACOMS-DELIVR"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TRADACOMS DELIVR",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-DELIVR.DLD.DLD01",
+            "name": "DLD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5012345670001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-DELIVR.DLD.DLD02-1",
+            "name": "DLD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-DELIVR.DLD.DLD02-3",
+            "name": "DLD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-DELIVR.DLD.DLD05-1",
+            "name": "DLD05-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-DELIVR.DLD.DLD05-2",
+            "name": "DLD05-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-DELIVR.DLD.DLD06-1",
+            "name": "DLD06-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-DELIVR.DLD.DLD06-2",
+            "name": "DLD06-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-DELIVR.DLD",
+        "key_type": null,
+        "kind": "record",
+        "name": "DLD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "5087654321098",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.CLO01-1",
+            "name": "CLO01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACME RETAIL",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.CLO01-2",
+            "name": "CLO01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "STORE-114",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.CLO02",
+            "name": "CLO02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DLD",
+            "name": "DLD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "TRADACOMS-DELIVR.DLD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DEL-88120",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNA01",
+            "name": "DNA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260824",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNA02",
+            "name": "DNA02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PO-0002",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNA03",
+            "name": "DNA03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CARRIER01",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNB01",
+            "name": "DNB01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "TRK-4471",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNB02",
+            "name": "DNB02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260824",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNB03-1",
+            "name": "DNB03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0730",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DNB03-2",
+            "name": "DNB03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "TRADACOMS-DELIVR.MessageDELIVR.DTR01",
+            "name": "DTR01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-DELIVR.MessageDELIVR",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageDELIVR",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "tradacoms/06-typical-delivery-file.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tradacoms"
+  },
+  "fingerprint": "sha256:8a00e940e143160c90c0e29f12e67f89062bf0d34be27831bd256d4d7826bd52",
+  "lint": {
+    "findings": 22,
+    "grade": "C",
+    "report_fingerprint": "bd072674dda983e290eb87db8899e4ab7522f34d25c506294c3f1bc6d360d2e3",
+    "score": 72,
+    "severity_counts": {
+      "error": 0,
+      "info": 20,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

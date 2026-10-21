@@ -188,6 +188,7 @@ def canonical_subset_warning(
     observed: int,
     unit: str,
     scope: str = "",
+    document: str = "interchange",
 ) -> List[AnalysisWarning]:
     """State, explicitly, when the canonical conversion read less than the analysis did.
 
@@ -202,6 +203,8 @@ def canonical_subset_warning(
         observed: How many such units the interchange carried.
         unit: The family's word for one unit (``transaction set``, ``message``).
         scope: Optional trailing phrase on the count (`` across 2 functional group(s)``).
+        document: The family's word for the whole document (``interchange``; TRADACOMS says
+            ``document``, which may carry several transmissions).
 
     Returns:
         A one-entry ``info`` list when more than one unit was observed, else empty. Informational
@@ -214,7 +217,7 @@ def canonical_subset_warning(
             code=code,
             severity=SEVERITY_INFO,
             message=(
-                f"The canonical model is derived from {derived_from} alone. This interchange "
+                f"The canonical model is derived from {derived_from} alone. This {document} "
                 f"carries {observed} {unit}(s){scope}; the remaining {observed - 1} are described "
                 "here and nowhere else."
             ),

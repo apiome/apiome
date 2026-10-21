@@ -864,7 +864,14 @@
             }
           ]
         }
-      ]
+      ],
+      "format_profile": {
+        "engine": "edifact",
+        "evidence": [],
+        "implementation_guide_consulted": false,
+        "key": "un-edifact",
+        "label": "UN/EDIFACT"
+      }
     },
     "format": "edifact",
     "identity": {
@@ -1894,7 +1901,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:4d37f3a4f553b16f450bb17406dd085e1b30ac6833dcce90ed64952251387e60",
+  "fingerprint": "sha256:6f549849a540374eaf1cc3771c02c26120b91b1aa672414438d4aab535beda0e",
   "lint": {
     "findings": 60,
     "grade": "F",

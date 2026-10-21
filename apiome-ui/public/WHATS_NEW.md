@@ -36,6 +36,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Kafka Connect schema import and export
     - dbt model and semantic-manifest import
     - SQL DDL import
+    - TRADACOMS import (order, invoice, delivery and acknowledgment files) and EDI dialect profiles: EANCOM and ODETTE/VDA interchanges recognised on the EDIFACT importer, the applied profile shown in provenance and the capability panel
     - HL7 v3 / CDA import (CCD, discharge summary, other C-CDA documents): header and section hierarchy, RIM data types as canonical types, template ids recorded as asserted claims marked not validated
     - SWIFT MT import (MT103, MT202 COV, MT940, MT942): blocks and fields with option letters and code words, MT↔MX correspondence shown as a documented note
     - SAP IDoc import and export: flat-file (EDI_DC40) and XML IDocs, segment definitions for flat fields, the hierarchy from segment numbers, IDoc XML export

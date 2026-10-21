@@ -67,6 +67,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .edi_dialect_profiles import EANCOM, ODETTE, TRADACOMS, profile_statement
 from .edifact_analysis import EDIFACT_IMPLEMENTATION_GUIDE_STATEMENT
 from .format_version_coverage import (
     UNDECLARED_VERSION_COVERAGE,
@@ -90,6 +91,7 @@ from .payload_analysis import (
 from .payload_analyzer import GENERIC_ANALYZER_KEY
 from .hl7v3_datatypes import TEMPLATE_CLAIM_STATEMENT
 from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
+from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     # Imported lazily at every call site: :mod:`app.import_source` imports the analysis
@@ -144,7 +146,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "18"
+REGISTRY_VERSION = "19"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1025,6 +1027,79 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "One batch interchange is read per document. Interactive EDIFACT (UIB/UIH), packages "
             "(UNO/UNP) and files carrying several interchanges are refused rather than read in "
             "part.",
+            # FMT-6.5 (#5449): the dialect profiles on the EDIFACT engine, and where each stops.
+            "Dialect profiles: every interchange is read with the EANCOM profile, the ODETTE/VDA "
+            "profile or plain UN/EDIFACT. The profile applied, and the evidence it was recognised "
+            "on, are recorded in the import's provenance, the canonical model's `format_profile` "
+            "extras and the analysis; each message records whether the profile's message set names "
+            "it. A TRADACOMS transmission (`STX=`) is not an EDIFACT interchange and is routed to "
+            "its own adapter.",
+            profile_statement(EANCOM),
+            profile_statement(ODETTE),
+        ],
+    ),
+    # FMT-6.5 (#5449): TRADACOMS, the UK retail dialect — EDIFACT-style segments read with the
+    # EDIFACT lexical layer inside an envelope of its own, so the panel must name the profile and
+    # say that the TRADACOMS manual was not consulted.
+    "tradacoms": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "Transmission (`STX` … `END`) → file (a header message carrying `TYP`, then its detail "
+            "and trailer messages) → message (`MHD` … `MTR`) → segment → element, with composite "
+            "components under their element position. Several transmissions in one document are "
+            "each their own root."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "The transmission text is read directly on TRADACOMS' fixed service characters "
+                "(`=` after the tag, `+`, `:`, `'` and the `?` release character), so every "
+                "segment, file and message carries the exact offset, length and line of the bytes "
+                "it was read from, alongside its envelope path (``STX[0]/FILE[0]/MHD[1]/OLD[3]``)."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Element values are observed, so the stored record carries whatever the "
+                "value-visibility policy in force allows — nothing more. A TRADACOMS element is "
+                "business data (trading-party codes, prices, quantities); the default withholds it "
+                "and keeps only presence and length. The `STX` recipient's reference, which "
+                "trading partners use as a password, is never lifted out of its element."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "tradacoms.empty_elements",
+                "tradacoms.message_control_totals",
+                "tradacoms.message_sequence",
+                "tradacoms.multiple_transmissions",
+                "tradacoms.segment_ordinals",
+                "tradacoms.segment_repeat_counts",
+                "tradacoms.transmission_control_totals",
+                "tradacoms.transmission_envelope",
+            ],
+            note=(
+                "The canonical model describes one schema, so normalization reads the first "
+                "transmission's first detail message — the first that is not a file header "
+                "(ORDERS rather than ORDHDR) — and records its transmission, its file and that "
+                "file's messages in extras. Every transmission, file and message is in the "
+                "analysis, and an analysis of a document carrying more than one message says so "
+                "explicitly, naming the message the conversion was derived from."
+            ),
+        ),
+        notes=[
+            TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT,
+            profile_statement(TRADACOMS),
+            "The segment counts declared by each `MTR` and the message count declared by `END` "
+            "are recorded beside what was observed, and every disagreement is stated as a warning "
+            "— read, not rejected. `MHD` message references must count 1, 2, 3 … through a "
+            "transmission; a document whose references skip is refused as semantically invalid.",
+            "A document that opens with an EDIFACT `UNB` interchange header is refused as a format "
+            "mismatch: TRADACOMS' `STX` envelope is parsed as its own structure, never as an "
+            "EDIFACT interchange.",
         ],
     ),
     # FMT-6.2 (#5446): SAP IDoc, seeded because the two transport forms differ in what they can

@@ -5,7 +5,7 @@
     "analyzer": {
       "key": "edifact",
       "toolVersions": {},
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "capabilities": {
       "limits": {
@@ -19,6 +19,7 @@
         "edifact.composite_elements",
         "edifact.control_references",
         "edifact.delimiters",
+        "edifact.dialect_profiles",
         "edifact.element",
         "edifact.empty_elements",
         "edifact.envelope_control_totals",
@@ -54,7 +55,7 @@
       "maxDepth": 5,
       "nodeCount": 198,
       "truncated": false,
-      "warningCount": 0
+      "warningCount": 1
     },
     "redaction": {
       "policySource": "default",
@@ -81,7 +82,10 @@
           "declaredMessageCount": 1,
           "elementSeparator": "+",
           "functionalGroupCount": 0,
+          "implementationGuideConsulted": false,
           "messageCount": 1,
+          "profile": "eancom",
+          "profileLabel": "EANCOM",
           "recipientId": "8798765000019",
           "recipientQualifier": "14",
           "releaseCharacter": "?",
@@ -105,6 +109,7 @@
               "controllingAgency": "UN",
               "declaredSegmentCount": 39,
               "envelopeSegmentCount": 39,
+              "inProfileMessageSet": true,
               "messageReference": "1",
               "messageRelease": "96A",
               "messageType": "ORDERS",
@@ -5270,7 +5275,15 @@
         "valuePresent": null
       }
     ],
-    "warnings": []
+    "warnings": [
+      {
+        "code": "edifact.dialect_profile_applied",
+        "location": null,
+        "message": "Read with the EANCOM profile. Association assigned code EAN008 names an EANCOM subset version. The EANCOM message implementation guide is not consulted: segment status (mandatory, required, dependent, not used) and EANCOM's restricted code lists are not evaluated, and the association code is recorded as the sender's claim.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
   },
   "snapshot_version": 1
 }

@@ -522,7 +522,23 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "The directory a message claims (`UNH` S009, e.g. D:96A) and any association "
                 "code (EANCOM's EAN008) are recorded as the sender's claim: the segment "
                 "grammar read is the same for every directory and no implementation guide is "
-                "consulted.",
+                "consulted. EANCOM and ODETTE/VDA interchanges are recognised as dialect "
+                "profiles of this one grammar (FMT-6.5), not as versions.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "tradacoms": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="TRADACOMS syntax ANAA:1 (STX/MHD/MTR/END), any message version",
+                format_key="tradacoms",
+                support=VersionSupport.UNGATED,
+                note="The syntax identifier `STX` declares (ANAA:1) and the version each `MHD` "
+                "names for its message (ORDERS:9) are recorded, not branched on: one envelope and "
+                "segment grammar is read for every message version, and the TRADACOMS manual's "
+                "message specifications are not consulted.",
             )
         ],
         writes=[],

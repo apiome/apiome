@@ -8,7 +8,7 @@ whole document, one golden per corpus fixture, the same way ``corpus_snapshot`` 
 model and ``projection_corpus`` pins the export manifest.
 
 Selection is by corpus tag, never by path (the corpus rule since IXH-1.1): every valid ``edix12``,
-``edifact``, ``idoc``, ``swift-mt`` and ``cobolcopybook`` entry — the format-native extractors — plus the
+``edifact``, ``tradacoms``, ``idoc``, ``swift-mt`` and ``cobolcopybook`` entry — the format-native extractors — plus the
 ``minimal``/``typical`` valid ``json-schema`` and ``graphql`` entries as generic-extractor controls.
 
 Goldens store the document under the **default** value-visibility policy (``structural``), value
@@ -55,7 +55,7 @@ ANALYSIS_SNAPSHOT_VERSION = 1
 VOLATILE = "[volatile]"
 
 #: Formats with a native analyzer — every valid entry of these is snapshotted.
-NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "idoc", "swift-mt", "cobolcopybook")
+NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "tradacoms", "idoc", "swift-mt", "cobolcopybook")
 
 #: Generic-extractor control formats, limited to the low rungs: the controls exist to prove the
 #: generic path stays stable, not to re-pin every fixture the canonical goldens already cover.

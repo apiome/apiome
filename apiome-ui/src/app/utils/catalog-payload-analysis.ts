@@ -264,6 +264,9 @@ const KIND_LABEL: Record<string, string> = {
   composite: 'Composite',
   component: 'Component',
   repetition: 'Repetition',
+  // TRADACOMS (tradacoms_analysis.py) — `message`, `segment` and the leaf kinds are EDIFACT's
+  transmission: 'Transmission',
+  file: 'File',
   // SAP IDoc (idoc_analysis.py) — `segment` and `field` share the labels above and below
   idoc: 'IDoc',
   // SWIFT MT (swift_mt_analysis.py) — `message`, `field`, `component` and `segment` are shared

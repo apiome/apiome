@@ -1,0 +1,1949 @@
+{
+  "adapter": "tradacoms",
+  "corpus_path": "tradacoms/06-typical-delivery-file.edi",
+  "document": {
+    "analyzer": {
+      "key": "tradacoms",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "tradacoms.byte_offsets",
+        "tradacoms.composite_elements",
+        "tradacoms.dialect_profile",
+        "tradacoms.element",
+        "tradacoms.empty_elements",
+        "tradacoms.file",
+        "tradacoms.message",
+        "tradacoms.message_control_totals",
+        "tradacoms.message_sequence",
+        "tradacoms.multiple_transmissions",
+        "tradacoms.release_character",
+        "tradacoms.segment",
+        "tradacoms.segment_ordinals",
+        "tradacoms.segment_repeat_counts",
+        "tradacoms.transmission_control_totals",
+        "tradacoms.transmission_envelope"
+      ],
+      "unsupported": [
+        "tradacoms.code_value_validation",
+        "tradacoms.message_specification_validation"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "component": 22,
+        "composite": 10,
+        "element": 22,
+        "file": 1,
+        "message": 3,
+        "segment": 11,
+        "transmission": 1
+      },
+      "maxDepth": 6,
+      "nodeCount": 70,
+      "truncated": false,
+      "warningCount": 2
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "tradacoms",
+    "sourceHash": "sha256:375e02df7b367692210fa6e10edec945e6c89de7a9c29ff4b206270d5bc69526",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "componentSeparator": ":",
+          "controlCountConsistent": true,
+          "date": "260824",
+          "declaredMessageCount": 3,
+          "elementSeparator": "+",
+          "fileCount": 1,
+          "implementationGuideConsulted": false,
+          "messageCount": 3,
+          "profile": "tradacoms",
+          "profileLabel": "TRADACOMS",
+          "recipientCode": "5087654321098",
+          "releaseCharacter": "?",
+          "segmentTerminator": "'",
+          "senderCode": "5012345678901",
+          "senderReference": "00006",
+          "syntaxIdentifier": "ANAA",
+          "syntaxVersion": "1",
+          "tagSeparator": "=",
+          "time": "0620"
+        },
+        "children": [
+          {
+            "attributes": {
+              "fileGenerationNumber": "00006",
+              "fileVersionNumber": "1",
+              "hasHeaderMessage": true,
+              "headerMessageType": "DELHDR",
+              "messageCount": 3,
+              "transactionCode": "0530",
+              "transactionName": "DELIVERY"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 6,
+                  "envelopeSegmentCount": 6,
+                  "fileHeader": true,
+                  "inProfileMessageSet": true,
+                  "messageReference": "1",
+                  "messageType": "DELHDR",
+                  "messageVersion": "9",
+                  "segmentCount": 4
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "TYP"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "TYP01"
+                        },
+                        "children": [],
+                        "id": "0.0.0.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]/TYP01"
+                        },
+                        "name": "TYP01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "0530",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "TYP02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.0.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]/TYP02"
+                        },
+                        "name": "TYP02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "DELIVERY",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 18,
+                      "line": 3,
+                      "offset": 112,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]"
+                    },
+                    "name": "TYP",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "SDT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "SDT01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "SDT01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.0.1.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01/SDT01-1"
+                            },
+                            "name": "SDT01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5012345678901",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "SDT01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.0.1.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01/SDT01-2"
+                            },
+                            "name": "SDT01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EXAMPLE SUPPLIES",
+                            "valueLength": 16,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.0.1.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01"
+                        },
+                        "name": "SDT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "SDT02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.1.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT02"
+                        },
+                        "name": "SDT02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "SUP001",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.1",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 42,
+                      "line": 4,
+                      "offset": 131,
+                      "ordinal": 1,
+                      "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]"
+                    },
+                    "name": "SDT",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "CDT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "CDT01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "CDT01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.0.2.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01/CDT01-1"
+                            },
+                            "name": "CDT01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5087654321098",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "CDT01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.0.2.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01/CDT01-2"
+                            },
+                            "name": "CDT01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "ACME RETAIL",
+                            "valueLength": 11,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.0.2.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01"
+                        },
+                        "name": "CDT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "CDT02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.2.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT02"
+                        },
+                        "name": "CDT02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "CUS001",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.2",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 37,
+                      "line": 5,
+                      "offset": 174,
+                      "ordinal": 2,
+                      "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]"
+                    },
+                    "name": "CDT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 3,
+                      "elementPositionCount": 3,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "FIL"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "FIL01"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL01"
+                        },
+                        "name": "FIL01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "00006",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "FIL02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL02"
+                        },
+                        "name": "FIL02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "FIL03"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL03"
+                        },
+                        "name": "FIL03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "260824",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.3",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 19,
+                      "line": 6,
+                      "offset": 212,
+                      "ordinal": 3,
+                      "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]"
+                    },
+                    "name": "FIL",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.0",
+                "kind": "message",
+                "label": "Message DELHDR (1)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 2,
+                  "offset": 96,
+                  "ordinal": 0,
+                  "path": "STX[0]/FILE[0]/MHD[0]"
+                },
+                "name": "DELHDR",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 8,
+                  "envelopeSegmentCount": 8,
+                  "fileHeader": false,
+                  "inProfileMessageSet": true,
+                  "messageReference": "2",
+                  "messageType": "DELIVR",
+                  "messageVersion": "9",
+                  "segmentCount": 6
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 3,
+                      "elementPositionCount": 3,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "DNA"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DNA01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNA[0]/DNA01"
+                        },
+                        "name": "DNA01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "DEL-88120",
+                        "valueLength": 9,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "DNA02"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNA[0]/DNA02"
+                        },
+                        "name": "DNA02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "260824",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "DNA03"
+                        },
+                        "children": [],
+                        "id": "0.0.1.0.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNA[0]/DNA03"
+                        },
+                        "name": "DNA03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "PO-0002",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 29,
+                      "line": 9,
+                      "offset": 255,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DNA[0]"
+                    },
+                    "name": "DNA",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "CLO"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "CLO01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "CLO01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.1.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/CLO[1]/CLO01/CLO01-1"
+                            },
+                            "name": "CLO01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5087654321098",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "CLO01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.1.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/CLO[1]/CLO01/CLO01-2"
+                            },
+                            "name": "CLO01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "ACME RETAIL",
+                            "valueLength": 11,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.1.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/CLO[1]/CLO01"
+                        },
+                        "name": "CLO01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "CLO02"
+                        },
+                        "children": [],
+                        "id": "0.0.1.1.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/CLO[1]/CLO02"
+                        },
+                        "name": "CLO02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "STORE-114",
+                        "valueLength": 9,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.1",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 40,
+                      "line": 10,
+                      "offset": 285,
+                      "ordinal": 1,
+                      "path": "STX[0]/FILE[0]/MHD[1]/CLO[1]"
+                    },
+                    "name": "CLO",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 3,
+                      "elementPositionCount": 3,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "DNB"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DNB01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.2.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]/DNB01"
+                        },
+                        "name": "DNB01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "CARRIER01",
+                        "valueLength": 9,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "DNB02"
+                        },
+                        "children": [],
+                        "id": "0.0.1.2.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]/DNB02"
+                        },
+                        "name": "DNB02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "TRK-4471",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "03",
+                          "reference": "DNB03"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DNB03-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.2.2.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]/DNB03/DNB03-1"
+                            },
+                            "name": "DNB03-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "260824",
+                            "valueLength": 6,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DNB03-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.2.2.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]/DNB03/DNB03-2"
+                            },
+                            "name": "DNB03-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "0730",
+                            "valueLength": 4,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.2.2",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]/DNB03"
+                        },
+                        "name": "DNB03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.1.2",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 35,
+                      "line": 11,
+                      "offset": 326,
+                      "ordinal": 2,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DNB[2]"
+                    },
+                    "name": "DNB",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 4,
+                      "elementPositionCount": 6,
+                      "repeatCount": 2,
+                      "repeatIndex": 0,
+                      "segmentId": "DLD"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DLD01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD01"
+                        },
+                        "name": "DLD01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 3,
+                          "position": "02",
+                          "reference": "DLD02"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD02-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD02/DLD02-1"
+                            },
+                            "name": "DLD02-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5012345670001",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD02-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD02/DLD02-2"
+                            },
+                            "name": "DLD02-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "",
+                            "valueLength": 0,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "03",
+                              "reference": "DLD02-3"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.2",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 2,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD02/DLD02-3"
+                            },
+                            "name": "DLD02-3",
+                            "ordinal": 2,
+                            "redacted": false,
+                            "value": "WIDGET-001",
+                            "valueLength": 10,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.3.1",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD02"
+                        },
+                        "name": "DLD02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "DLD03"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD03"
+                        },
+                        "name": "DLD03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "04",
+                          "reference": "DLD04"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.3",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD04"
+                        },
+                        "name": "DLD04",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "05",
+                          "reference": "DLD05"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD05-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.4.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD05/DLD05-1"
+                            },
+                            "name": "DLD05-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "480",
+                            "valueLength": 3,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD05-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.4.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD05/DLD05-2"
+                            },
+                            "name": "DLD05-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EA",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.3.4",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD05"
+                        },
+                        "name": "DLD05",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "06",
+                          "reference": "DLD06"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD06-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.5.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD06/DLD06-1"
+                            },
+                            "name": "DLD06-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "480",
+                            "valueLength": 3,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD06-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.5.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD06/DLD06-2"
+                            },
+                            "name": "DLD06-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EA",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.3.5",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]/DLD06"
+                        },
+                        "name": "DLD06",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.1.3",
+                    "kind": "segment",
+                    "label": "DLD (1 of 2)",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 48,
+                      "line": 12,
+                      "offset": 362,
+                      "ordinal": 3,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DLD[3]"
+                    },
+                    "name": "DLD",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 4,
+                      "elementPositionCount": 6,
+                      "repeatCount": 2,
+                      "repeatIndex": 1,
+                      "segmentId": "DLD"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DLD01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.4.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD01"
+                        },
+                        "name": "DLD01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "2",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 3,
+                          "position": "02",
+                          "reference": "DLD02"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD02-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.1.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD02/DLD02-1"
+                            },
+                            "name": "DLD02-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5012345670002",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD02-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.1.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD02/DLD02-2"
+                            },
+                            "name": "DLD02-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "",
+                            "valueLength": 0,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "03",
+                              "reference": "DLD02-3"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.1.2",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 2,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD02/DLD02-3"
+                            },
+                            "name": "DLD02-3",
+                            "ordinal": 2,
+                            "redacted": false,
+                            "value": "GADGET-007",
+                            "valueLength": 10,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.4.1",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD02"
+                        },
+                        "name": "DLD02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "DLD03"
+                        },
+                        "children": [],
+                        "id": "0.0.1.4.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD03"
+                        },
+                        "name": "DLD03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "04",
+                          "reference": "DLD04"
+                        },
+                        "children": [],
+                        "id": "0.0.1.4.3",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD04"
+                        },
+                        "name": "DLD04",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "05",
+                          "reference": "DLD05"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD05-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.4.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD05/DLD05-1"
+                            },
+                            "name": "DLD05-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "120",
+                            "valueLength": 3,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD05-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.4.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD05/DLD05-2"
+                            },
+                            "name": "DLD05-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EA",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.4.4",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD05"
+                        },
+                        "name": "DLD05",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "06",
+                          "reference": "DLD06"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "DLD06-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.5.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD06/DLD06-1"
+                            },
+                            "name": "DLD06-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "118",
+                            "valueLength": 3,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "DLD06-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.4.5.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD06/DLD06-2"
+                            },
+                            "name": "DLD06-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EA",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.4.5",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]/DLD06"
+                        },
+                        "name": "DLD06",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.1.4",
+                    "kind": "segment",
+                    "label": "DLD (2 of 2)",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 48,
+                      "line": 13,
+                      "offset": 411,
+                      "ordinal": 4,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DLD[4]"
+                    },
+                    "name": "DLD",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "DTR"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DTR01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.5.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DTR[5]/DTR01"
+                        },
+                        "name": "DTR01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "2",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.5",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 6,
+                      "line": 14,
+                      "offset": 460,
+                      "ordinal": 5,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DTR[5]"
+                    },
+                    "name": "DTR",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.1",
+                "kind": "message",
+                "label": "Message DELIVR (2)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 8,
+                  "offset": 239,
+                  "ordinal": 1,
+                  "path": "STX[0]/FILE[0]/MHD[1]"
+                },
+                "name": "DELIVR",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 3,
+                  "envelopeSegmentCount": 3,
+                  "fileHeader": false,
+                  "inProfileMessageSet": true,
+                  "messageReference": "3",
+                  "messageType": "DELTLR",
+                  "messageVersion": "9",
+                  "segmentCount": 1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "DFT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DFT01"
+                        },
+                        "children": [],
+                        "id": "0.0.2.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[2]/DFT[0]/DFT01"
+                        },
+                        "name": "DFT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "DFT02"
+                        },
+                        "children": [],
+                        "id": "0.0.2.0.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[2]/DFT[0]/DFT02"
+                        },
+                        "name": "DFT02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "598",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.2.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 10,
+                      "line": 17,
+                      "offset": 490,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[2]/DFT[0]"
+                    },
+                    "name": "DFT",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.2",
+                "kind": "message",
+                "label": "Message DELTLR (3)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 16,
+                  "offset": 474,
+                  "ordinal": 2,
+                  "path": "STX[0]/FILE[0]/MHD[2]"
+                },
+                "name": "DELTLR",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "file",
+            "label": "File DELHDR (00006)",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 15,
+              "line": 2,
+              "offset": 96,
+              "ordinal": 0,
+              "path": "STX[0]/FILE[0]"
+            },
+            "name": "DELHDR",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "transmission",
+        "label": "Transmission 00006",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 95,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "STX[0]"
+        },
+        "name": "STX",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "tradacoms.canonical_projection_subset",
+        "location": null,
+        "message": "The canonical model is derived from message DELIVR (2) in file DELHDR alone. This document carries 3 message(s) across 1 file(s); the remaining 2 are described here and nowhere else.",
+        "nodeId": null,
+        "severity": "info"
+      },
+      {
+        "code": "tradacoms.dialect_profile_applied",
+        "location": null,
+        "message": "Read with the TRADACOMS profile. An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`. The TRADACOMS manual's message specifications are not consulted: which segments a message may carry, their order and their code values are recorded as written, not checked.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

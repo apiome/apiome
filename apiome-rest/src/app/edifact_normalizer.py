@@ -11,7 +11,9 @@ Maps a parsed :class:`~app.edifact_parser.EdifactDocument` into a
 * a segment that occurs once contributes its element values as fields of the message type, named by
   reference (``BGM01``, ``DTM01-2`` for a composite's second component);
 * a segment that repeats becomes its own record type, referenced from the message type as a list,
-  with the first occurrence as its prototype.
+  with the first occurrence as its prototype;
+* the dialect profile the interchange is written in (EANCOM, ODETTE/VDA or plain UN/EDIFACT,
+  FMT-6.5 — :mod:`app.edi_dialect_profiles`) is recorded under ``format_profile`` with its evidence.
 
 Empty positions contribute no field — a field is a value the message carried — and the envelope
 (``UNB``/``UNG``/``UNH``/``UNT``/``UNE``/``UNZ``) is recorded in ``extras`` rather than as types.
@@ -20,7 +22,7 @@ Empty positions contribute no field — a field is a value the message carried �
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -31,6 +33,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .edi_dialect_profiles import PROFILE_EXTRAS_KEY, edifact_profile
 from .edifact_parser import (
     EdifactDocument,
     EdifactElement,
@@ -40,7 +43,13 @@ from .edifact_parser import (
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
 
-__all__ = ["EdifactNormalizer", "canonical_message", "element_values"]
+__all__ = [
+    "EdifactNormalizer",
+    "canonical_message",
+    "element_values",
+    "message_record_types",
+    "segment_template",
+]
 
 _FORMAT_KEY = "edifact"
 
@@ -105,20 +114,34 @@ def _segment_record_type(segment: EdifactSegment, *, namespace: str) -> Type:
     return Type(key=type_key, name=segment.tag, kind=TypeKind.RECORD, fields=fields)
 
 
-def _message_type(message: EdifactMessage, *, namespace: str) -> Tuple[Type, List[Type]]:
-    """Build the message's record type and the record types of its repeating segments."""
-    type_name = f"Message{message.message_type}"
+def message_record_types(
+    message_type: str, segments: Sequence[EdifactSegment], *, namespace: str
+) -> Tuple[Type, List[Type]]:
+    """Build a message's record type and the record types of its repeating segments.
+
+    Shared with the TRADACOMS normalizer (FMT-6.5), whose messages are EDIFACT-style segments
+    between their own ``MHD`` and ``MTR`` brackets.
+
+    Args:
+        message_type: The message type (``ORDERS``); the record is named ``Message`` + it.
+        segments: The message's body segments, envelope segments excluded, in source order.
+        namespace: The type-key namespace.
+
+    Returns:
+        ``(message record, repeating-segment records)``.
+    """
+    type_name = f"Message{message_type}"
     type_key = Keys.type(type_name, namespace)
-    counts = Counter(segment.tag for segment in message.segments)
+    counts = Counter(segment.tag for segment in segments)
     prototypes: Dict[str, EdifactSegment] = {}
-    for segment in message.segments:
+    for segment in segments:
         prototypes.setdefault(segment.tag, segment)
 
     segment_types: List[Type] = []
     fields: List[CanonicalField] = []
     field_number = 1
     seen: set[str] = set()
-    for segment in message.segments:
+    for segment in segments:
         if segment.tag in seen:
             continue
         seen.add(segment.tag)
@@ -162,8 +185,8 @@ def _element_template(segment_tag: str, element: EdifactElement) -> Dict[str, ob
     }
 
 
-def _segment_template(segment: EdifactSegment) -> Dict[str, object]:
-    """One segment as written, for the ``edifact_messages`` extras."""
+def segment_template(segment: EdifactSegment) -> Dict[str, object]:
+    """One segment as written, for the ``edifact_messages`` (and ``tradacoms_messages``) extras."""
     return {
         "tag": segment.tag,
         "elements": [_element_template(segment.tag, element) for element in segment.elements],
@@ -185,7 +208,9 @@ class EdifactNormalizer(Normalizer, register=True):
         interchange = source.interchange
         group, message = canonical_message(source)
         namespace = f"EDIFACT-{message.message_type}"
-        message_type, segment_types = _message_type(message, namespace=namespace)
+        message_type, segment_types = message_record_types(
+            message.message_type, message.segments, namespace=namespace
+        )
         siblings = group.messages if group is not None else interchange.messages
         delimiters = interchange.delimiters
 
@@ -198,6 +223,9 @@ class EdifactNormalizer(Normalizer, register=True):
             types=[message_type, *segment_types],
             raw={"edifact": source.raw} if include_raw else None,
             extras={
+                # FMT-6.5: the dialect profile (EANCOM, ODETTE/VDA or plain UN/EDIFACT) and the
+                # evidence it was recognised on — lifted into the revision's provenance.
+                PROFILE_EXTRAS_KEY: edifact_profile(source).extras(),
                 "edifact_message_type": message.message_type,
                 "edifact_directory": message.directory,
                 "edifact_envelope": {
@@ -226,7 +254,7 @@ class EdifactNormalizer(Normalizer, register=True):
                         "message_type": item.message_type,
                         "reference": item.reference,
                         "directory": item.directory,
-                        "segments": [_segment_template(segment) for segment in item.segments],
+                        "segments": [segment_template(segment) for segment in item.segments],
                     }
                     for item in siblings
                 ],

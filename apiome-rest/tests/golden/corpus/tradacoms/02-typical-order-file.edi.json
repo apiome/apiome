@@ -1,0 +1,873 @@
+{
+  "adapter": "tradacoms",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "tradacoms",
+        "evidence": [
+          "An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "tradacoms",
+        "label": "TRADACOMS"
+      },
+      "tradacoms_file": {
+        "generation": "00002",
+        "header_message_type": "ORDHDR",
+        "transaction_code": "0430",
+        "transaction_name": "ORDERS",
+        "version": "1"
+      },
+      "tradacoms_message_type": "ORDERS",
+      "tradacoms_messages": [
+        {
+          "file_header": true,
+          "message_type": "ORDHDR",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TYP01",
+                  "repetitions": [
+                    [
+                      "0430"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TYP02",
+                  "repetitions": [
+                    [
+                      "ORDERS"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TYP"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SDT01",
+                  "repetitions": [
+                    [
+                      "5012345678901",
+                      "EXAMPLE SUPPLIES"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SDT02",
+                  "repetitions": [
+                    [
+                      "SUP001"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CDT01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CDT02",
+                  "repetitions": [
+                    [
+                      "CUS001"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "FIL01",
+                  "repetitions": [
+                    [
+                      "00002"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "FIL02",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "FIL03",
+                  "repetitions": [
+                    [
+                      "260819"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "FIL"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "ORDERS",
+          "reference": "2",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CLO01",
+                  "repetitions": [
+                    [
+                      "5087654321098",
+                      "ACME RETAIL"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CLO02",
+                  "repetitions": [
+                    [
+                      "STORE-114"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "CLO03",
+                  "repetitions": [
+                    [
+                      "ACME RETAIL LEEDS"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CLO"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ORD01",
+                  "repetitions": [
+                    [
+                      "PO-0002"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ORD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ORD03",
+                  "repetitions": [
+                    [
+                      "260819"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ORD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DIN01",
+                  "repetitions": [
+                    [
+                      "260826"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DIN02",
+                  "repetitions": [
+                    [
+                      "0800",
+                      "1000"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5012345670001",
+                      "",
+                      "WIDGET-001"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "480",
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "86400"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "180.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5012345670002",
+                      "",
+                      "GADGET-007"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "120",
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "5040"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "42.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5012345670003",
+                      "",
+                      "BRACKET-020"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "2000",
+                      "EA"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "3000"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "1.50"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OTR01",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OTR"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "ORDTLR",
+          "reference": "3",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OFT01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OFT02",
+                  "repetitions": [
+                    [
+                      "94440"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OFT"
+            }
+          ],
+          "version": "9"
+        }
+      ],
+      "tradacoms_transmission": {
+        "application_reference": null,
+        "message_reference": "2",
+        "message_version": "9",
+        "recipient_code": "5087654321098",
+        "sender_code": "5012345678901",
+        "sender_reference": "00002",
+        "syntax_identifier": "ANAA",
+        "syntax_version": "1",
+        "transmission_count": 1
+      }
+    },
+    "format": "tradacoms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TRADACOMS ORDERS",
+      "namespace": "TRADACOMS-ORDERS"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TRADACOMS ORDERS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "5087654321098",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO01-1",
+            "name": "CLO01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACME RETAIL",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO01-2",
+            "name": "CLO01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "STORE-114",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO02",
+            "name": "CLO02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACME RETAIL LEEDS",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO03",
+            "name": "CLO03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260826",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN01",
+            "name": "DIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0800",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN02-1",
+            "name": "DIN02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1000",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN02-2",
+            "name": "DIN02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.OLD",
+            "name": "OLD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "TRADACOMS-ORDERS.OLD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PO-0002",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.ORD01",
+            "name": "ORD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260819",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.ORD03",
+            "name": "ORD03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "3",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.OTR01",
+            "name": "OTR01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-ORDERS.MessageORDERS",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageORDERS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-ORDERS.OLD.OLD01",
+            "name": "OLD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5012345670001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-ORDERS.OLD.OLD02-1",
+            "name": "OLD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-ORDERS.OLD.OLD02-3",
+            "name": "OLD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-ORDERS.OLD.OLD05-1",
+            "name": "OLD05-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-ORDERS.OLD.OLD05-2",
+            "name": "OLD05-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "86400",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-ORDERS.OLD.OLD06",
+            "name": "OLD06",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "180.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-ORDERS.OLD.OLD07",
+            "name": "OLD07",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-ORDERS.OLD",
+        "key_type": null,
+        "kind": "record",
+        "name": "OLD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "tradacoms/02-typical-order-file.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tradacoms"
+  },
+  "fingerprint": "sha256:05e1f94ec7aa4f903872466d451e651aab98f807bc36ad14048b793cb3cbc873",
+  "lint": {
+    "findings": 21,
+    "grade": "C",
+    "report_fingerprint": "a3c7336295efe2260b10e67039b4ba30eed26fe1c21ff8723c99a856bd5bf02a",
+    "score": 73,
+    "severity_counts": {
+      "error": 0,
+      "info": 19,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

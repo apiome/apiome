@@ -1,0 +1,23 @@
+---
+slug: edi-dialect-profiles
+title: TRADACOMS, EANCOM and ODETTE/VDA dialect profiles
+description: UK retail TRADACOMS joins the Catalog, and EDIFACT recognises EANCOM and ODETTE/VDA.
+authors: [apiome]
+---
+
+Apiome now reads [**TRADACOMS**](/bring-in/tradacoms-import) transmissions — the EDI standard UK
+retail runs on — and recognises **EANCOM** and **ODETTE/VDA** interchanges as
+[dialect profiles](/bring-in/edifact-import#dialect-profiles) of UN/EDIFACT.
+
+{/* truncate */}
+
+- **TRADACOMS as its own structure.** An `STX` … `END` transmission is read as transmission → file →
+  `MHD` … `MTR` message → segment, never as an EDIFACT interchange. The **Format details** tab shows
+  every transmission, file and message, with the `MTR` and `END` counts beside what was observed.
+- **The profile is recorded.** Every EDIFACT and TRADACOMS import records the profile it was read
+  with — and the evidence it was recognised on — in the import's provenance (`formatProfile`), the
+  canonical model and the analysis.
+- **Honest about boundaries.** The capability panel names each profile and where it stops: no
+  EANCOM, ODETTE/VDA or TRADACOMS implementation guide is consulted.
+- **Misroutes are named.** A TRADACOMS file sent to the EDIFACT importer, or an EDIFACT interchange
+  sent to the TRADACOMS one, is refused as `FORMAT_MISMATCH`.

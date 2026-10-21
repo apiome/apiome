@@ -1,0 +1,1365 @@
+{
+  "adapter": "tradacoms",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "tradacoms",
+        "evidence": [
+          "An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "tradacoms",
+        "label": "TRADACOMS"
+      },
+      "tradacoms_file": {
+        "generation": "00005",
+        "header_message_type": "ORDHDR",
+        "transaction_code": "0430",
+        "transaction_name": "ORDERS",
+        "version": "1"
+      },
+      "tradacoms_message_type": "ORDERS",
+      "tradacoms_messages": [
+        {
+          "file_header": true,
+          "message_type": "ORDHDR",
+          "reference": "1",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TYP01",
+                  "repetitions": [
+                    [
+                      "0430"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TYP02",
+                  "repetitions": [
+                    [
+                      "ORDERS"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TYP"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "SDT01",
+                  "repetitions": [
+                    [
+                      "5060012345678",
+                      "NORTHERN FOODS LTD"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "SDT02",
+                  "repetitions": [
+                    [
+                      "NF-SUP-0087"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "SDT03",
+                  "repetitions": [
+                    [
+                      "GB456789123"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "SDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CDT01",
+                  "repetitions": [
+                    [
+                      "5010987654321",
+                      "HIGH STREET GROCERS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CDT02",
+                  "repetitions": [
+                    [
+                      "HSG-BUY-0012"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "CDT03",
+                  "repetitions": [
+                    [
+                      "GB321987654"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "FIL01",
+                  "repetitions": [
+                    [
+                      "00005"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "FIL02",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "FIL03",
+                  "repetitions": [
+                    [
+                      "260822"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "FIL"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "ORDERS",
+          "reference": "2",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CLO01",
+                  "repetitions": [
+                    [
+                      "5010987654321",
+                      "HIGH STREET GROCERS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CLO02",
+                  "repetitions": [
+                    [
+                      "DEPOT-NORTH"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "CLO03",
+                  "repetitions": [
+                    [
+                      "HSG NORTHERN DEPOT, UNIT 4, LEEDS"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CLO"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ORD01",
+                  "repetitions": [
+                    [
+                      "HSG-2026-0088412"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ORD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ORD03",
+                  "repetitions": [
+                    [
+                      "260822"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ORD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DIN01",
+                  "repetitions": [
+                    [
+                      "260824"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DIN02",
+                  "repetitions": [
+                    [
+                      "0400",
+                      "0700"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340011",
+                      "",
+                      "CHILLED-MILK-2L"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "288",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "51840"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "180.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "SEMI SKIMMED MILK 2L"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340028",
+                      "",
+                      "BREAD-800G-WHITE"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "420",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "37800"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "90.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "WHITE SLICED BREAD 800G"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340035",
+                      "",
+                      "EGGS-FREE-RANGE-12"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "160",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "32000"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "200.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "FREE RANGE EGGS 12PK"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "4"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340042",
+                      "",
+                      "BUTTER-250G"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "96",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "24000"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "250.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "SALTED BUTTER 250G"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "5"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340059",
+                      "",
+                      "YOGHURT-4X125G"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "240",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "28800"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "120.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "NATURAL YOGHURT 4X125G"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OTR01",
+                  "repetitions": [
+                    [
+                      "5"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OTR"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "ORDERS",
+          "reference": "3",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CLO01",
+                  "repetitions": [
+                    [
+                      "5010987654321",
+                      "HIGH STREET GROCERS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CLO02",
+                  "repetitions": [
+                    [
+                      "DEPOT-SOUTH"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "CLO03",
+                  "repetitions": [
+                    [
+                      "HSG SOUTHERN DEPOT, UNIT 9, BRISTOL"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CLO"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ORD01",
+                  "repetitions": [
+                    [
+                      "HSG-2026-0088413"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ORD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ORD03",
+                  "repetitions": [
+                    [
+                      "260822"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ORD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DIN01",
+                  "repetitions": [
+                    [
+                      "260824"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "DIN02",
+                  "repetitions": [
+                    [
+                      "0500",
+                      "0800"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340011",
+                      "",
+                      "CHILLED-MILK-2L"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "192",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "34560"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "180.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "SEMI SKIMMED MILK 2L"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OLD01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OLD02",
+                  "repetitions": [
+                    [
+                      "5060012340028",
+                      "",
+                      "BREAD-800G-WHITE"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "OLD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "OLD04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "OLD05",
+                  "repetitions": [
+                    [
+                      "300",
+                      "CS"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "OLD06",
+                  "repetitions": [
+                    [
+                      "27000"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "OLD07",
+                  "repetitions": [
+                    [
+                      "90.00"
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "OLD08",
+                  "repetitions": [
+                    [
+                      "WHITE SLICED BREAD 800G"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OLD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OTR01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OTR"
+            }
+          ],
+          "version": "9"
+        },
+        {
+          "file_header": false,
+          "message_type": "ORDTLR",
+          "reference": "4",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "OFT01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "OFT02",
+                  "repetitions": [
+                    [
+                      "236000"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "OFT"
+            }
+          ],
+          "version": "9"
+        }
+      ],
+      "tradacoms_transmission": {
+        "application_reference": null,
+        "message_reference": "2",
+        "message_version": "9",
+        "recipient_code": "5010987654321",
+        "sender_code": "5060012345678",
+        "sender_reference": "00005",
+        "syntax_identifier": "ANAA",
+        "syntax_version": "1",
+        "transmission_count": 1
+      }
+    },
+    "format": "tradacoms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TRADACOMS ORDERS",
+      "namespace": "TRADACOMS-ORDERS"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TRADACOMS ORDERS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "5010987654321",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO01-1",
+            "name": "CLO01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "HIGH STREET GROCERS",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO01-2",
+            "name": "CLO01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DEPOT-NORTH",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO02",
+            "name": "CLO02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "HSG NORTHERN DEPOT, UNIT 4, LEEDS",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.CLO03",
+            "name": "CLO03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260824",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN01",
+            "name": "DIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0400",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN02-1",
+            "name": "DIN02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0700",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.DIN02-2",
+            "name": "DIN02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.OLD",
+            "name": "OLD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "TRADACOMS-ORDERS.OLD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "HSG-2026-0088412",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.ORD01",
+            "name": "ORD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "260822",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.ORD03",
+            "name": "ORD03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "TRADACOMS-ORDERS.MessageORDERS.OTR01",
+            "name": "OTR01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-ORDERS.MessageORDERS",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageORDERS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "TRADACOMS-ORDERS.OLD.OLD01",
+            "name": "OLD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5060012340011",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "TRADACOMS-ORDERS.OLD.OLD02-1",
+            "name": "OLD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CHILLED-MILK-2L",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "TRADACOMS-ORDERS.OLD.OLD02-3",
+            "name": "OLD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "288",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "TRADACOMS-ORDERS.OLD.OLD05-1",
+            "name": "OLD05-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CS",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "TRADACOMS-ORDERS.OLD.OLD05-2",
+            "name": "OLD05-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "51840",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "TRADACOMS-ORDERS.OLD.OLD06",
+            "name": "OLD06",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "180.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "TRADACOMS-ORDERS.OLD.OLD07",
+            "name": "OLD07",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SEMI SKIMMED MILK 2L",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "TRADACOMS-ORDERS.OLD.OLD08",
+            "name": "OLD08",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TRADACOMS-ORDERS.OLD",
+        "key_type": null,
+        "kind": "record",
+        "name": "OLD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "tradacoms/05-real-world-grocery-order-file.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tradacoms"
+  },
+  "fingerprint": "sha256:fd0372a887472de5476a5abc2bdff2b81fea073b637997d346783bf7f27be14e",
+  "lint": {
+    "findings": 22,
+    "grade": "C",
+    "report_fingerprint": "a9eb1b6da8b7c1d036759d8a2ece58635d81cbd852be751fd5491286e6a56ac5",
+    "score": 72,
+    "severity_counts": {
+      "error": 0,
+      "info": 20,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

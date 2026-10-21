@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 from . import edifact_normalizer  # noqa: F401 — self-registers the normalizer
 from .canonical_model import ApiParadigm, CanonicalApi
+from .edi_dialect_profiles import UN_EDIFACT, edifact_profile
 from .edifact_analysis import (
     EDIFACT_ANALYZER_KEY,
     EDIFACT_ANALYZER_VERSION,
@@ -39,6 +40,25 @@ from .payload_analysis import AnalyzerCapabilities, PayloadAnalysisDocument
 __all__ = ["EdifactImportSource"]
 
 
+def _profile_reason(text: str) -> str:
+    """Name the dialect profile an interchange is written in, for a detection reason.
+
+    Args:
+        text: Text :func:`~app.edifact_parser.is_edifact` claimed.
+
+    Returns:
+        ``" — EANCOM profile"`` (or ODETTE/VDA) when one applies, else ``""`` — including when the
+        text does not parse, which the parse phase reports properly.
+    """
+    try:
+        match = edifact_profile(parse_edifact(text))
+    except EdifactParseError:
+        return ""
+    if match.profile is UN_EDIFACT:
+        return ""
+    return f" — {match.profile.label} profile"
+
+
 class EdifactImportSource(ImportSource, register=True):
     """Adapter for UN/EDIFACT interchanges (``.edi`` / ``.edifact`` file / url / paste)."""
 
@@ -58,8 +78,10 @@ class EdifactImportSource(ImportSource, register=True):
         """Claim text that opens with an EDIFACT interchange header.
 
         The marker is positional (``UNB`` first, optionally after ``UNA``), so an X12 interchange
-        sharing the ``.edi`` extension is never claimed. An interchange header with no ``UNH`` is
-        still EDIFACT — claimed at lower confidence, so the parser can say what is wrong with it.
+        or a TRADACOMS transmission (``STX=``) sharing the ``.edi`` extension is never claimed. An
+        interchange header with no ``UNH`` is still EDIFACT — claimed at lower confidence, so the
+        parser can say what is wrong with it. The reason names the dialect profile (EANCOM,
+        ODETTE/VDA — FMT-6.5) when the interchange carries one's evidence.
 
         Args:
             payload: The candidate text and its file name.
@@ -74,7 +96,8 @@ class EdifactImportSource(ImportSource, register=True):
             return DetectionResult(
                 confidence=0.95,
                 format="edifact",
-                reason="`UNB` interchange header (optionally after `UNA`) with `UNH` messages",
+                reason="`UNB` interchange header (optionally after `UNA`) with `UNH` messages"
+                + _profile_reason(text),
             )
         return DetectionResult(
             confidence=0.7,

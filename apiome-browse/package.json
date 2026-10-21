@@ -1,6 +1,6 @@
 {
   "name": "apiome-browse",
-  "version": "0.39.12",
+  "version": "0.39.13",
   "private": true,
   "scripts": {
     "dev": "./scripts/run.sh dev",

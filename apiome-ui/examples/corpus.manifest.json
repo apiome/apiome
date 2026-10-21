@@ -549,7 +549,7 @@
       "marker": "`\"clientName\": \"Thunder Client\"` + `requests[]` or environment `data[]`"
     },
     "tradacoms": {
-      "label": "TRADACOMS (pending #5449)",
+      "label": "TRADACOMS",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`STX=` transmission header + `END=` trailer"
@@ -9038,13 +9038,15 @@
         "PIA",
         "IMD",
         "LOC",
-        "association-code"
+        "association-code",
+        "eancom-profile"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Reconstructed in-repo from the shape of an EANCOM ORDERS interchange; identifiers are synthetic and no upstream text was copied.",
-      "rung": "real-world"
+      "rung": "real-world",
+      "notes": "The EANCOM dialect sample (FMT-6.5): the EAN008 association code in UNH routes it to the EANCOM profile, recorded in provenance and the analysis."
     },
     {
       "path": "edifact/06-typical-odette-delfor.edi",
@@ -9060,13 +9062,14 @@
         "DELFOR",
         "SCC",
         "schedule-lines",
-        "UNOA"
+        "UNOA",
+        "odette-profile"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "notes": "The ODETTE/VDA dialect sample FMT-6.5 needs; detection must record the profile rather than treating it as plain EDIFACT.",
+      "notes": "The ODETTE/VDA dialect sample (FMT-6.5): an ODETTE organisation code on the interchange and a DELFOR from the ODETTE/VDA message set, so detection records the ODETTE/VDA profile rather than plain UN/EDIFACT.",
       "rung": "typical"
     },
     {
@@ -9281,6 +9284,28 @@
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "failure_class": "semantic",
       "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "edifact/negative/07-wrong-format-tradacoms.edi",
+      "format": "edifact",
+      "adapter_key": "edifact",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "edifact",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "tradacoms"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "A TRADACOMS STX transmission sent to the EDIFACT importer: the same segment syntax inside a different envelope \u2014 the misroute FMT-6.5 names, refused as FORMAT_MISMATCH rather than read as an interchange.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
     },
     {
       "path": "envoy-xds/01-minimal-route-config.yaml",
@@ -28107,7 +28132,7 @@
     {
       "path": "tradacoms/01-minimal-order-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28117,8 +28142,7 @@
         "ORDHDR",
         "ORDERS",
         "ORDTLR",
-        "STX-envelope",
-        "pending-adapter"
+        "STX-envelope"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28129,7 +28153,7 @@
     {
       "path": "tradacoms/02-typical-order-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28140,8 +28164,7 @@
         "OLD",
         "DIN",
         "delivery-window",
-        "trading-party-codes",
-        "pending-adapter"
+        "trading-party-codes"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28152,7 +28175,7 @@
     {
       "path": "tradacoms/03-typical-invoice-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28164,8 +28187,7 @@
         "VATTLR",
         "INVTLR",
         "vat-rate-lines",
-        "settlement-totals",
-        "pending-adapter"
+        "settlement-totals"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28176,7 +28198,7 @@
     {
       "path": "tradacoms/04-stress-multi-message-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28186,8 +28208,7 @@
         "multi-message",
         "uncoded-line",
         "stx-password",
-        "application-reference",
-        "pending-adapter"
+        "application-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28198,7 +28219,7 @@
     {
       "path": "tradacoms/05-real-world-grocery-order-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28209,8 +28230,7 @@
         "gtin",
         "case-quantities",
         "multi-depot",
-        "delivery-window",
-        "pending-adapter"
+        "delivery-window"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28221,7 +28241,7 @@
     {
       "path": "tradacoms/06-typical-delivery-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28231,8 +28251,7 @@
         "DELHDR",
         "DELIVR",
         "DELTLR",
-        "ordered-vs-delivered",
-        "pending-adapter"
+        "ordered-vs-delivered"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28243,7 +28262,7 @@
     {
       "path": "tradacoms/07-composition-nested-files.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28253,8 +28272,7 @@
         "multiple-files-one-transmission",
         "ORDERS",
         "DELIVR",
-        "nested-message-structure",
-        "pending-adapter"
+        "nested-message-structure"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28265,7 +28283,7 @@
     {
       "path": "tradacoms/08-transmission-set/ack-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28274,8 +28292,7 @@
       "features": [
         "ACKHDR",
         "ACKMNT",
-        "acknowledgment",
-        "pending-adapter"
+        "acknowledgment"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28288,7 +28305,7 @@
     {
       "path": "tradacoms/08-transmission-set/order-file.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28296,8 +28313,7 @@
       },
       "features": [
         "ORDERS",
-        "transmission",
-        "pending-adapter"
+        "transmission"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -28309,7 +28325,7 @@
     {
       "path": "tradacoms/negative/01-syntactic-missing-equals.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28318,8 +28334,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-equals",
-        "pending-adapter"
+        "missing-equals"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28331,7 +28346,7 @@
     {
       "path": "tradacoms/negative/02-semantic-no-end-segment.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28340,8 +28355,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-end-segment",
-        "pending-adapter"
+        "no-end-segment"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28353,7 +28367,7 @@
     {
       "path": "tradacoms/negative/03-truncated-mid-segment.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28362,8 +28376,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-segment",
-        "pending-adapter"
+        "mid-segment"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28375,7 +28388,7 @@
     {
       "path": "tradacoms/negative/04-wrong-format-edifact.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28384,8 +28397,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "edifact",
-        "pending-adapter"
+        "edifact"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28398,7 +28410,7 @@
     {
       "path": "tradacoms/negative/05-encoding-utf16.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28407,8 +28419,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28420,7 +28431,7 @@
     {
       "path": "tradacoms/negative/06-semantic-message-count-mismatch.edi",
       "format": "tradacoms",
-      "adapter_key": null,
+      "adapter_key": "tradacoms",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tradacoms",
@@ -28429,8 +28440,7 @@
       "features": [
         "negative",
         "semantic",
-        "sequence-mismatch",
-        "pending-adapter"
+        "sequence-mismatch"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

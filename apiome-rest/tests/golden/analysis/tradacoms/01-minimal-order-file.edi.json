@@ -1,0 +1,1360 @@
+{
+  "adapter": "tradacoms",
+  "corpus_path": "tradacoms/01-minimal-order-file.edi",
+  "document": {
+    "analyzer": {
+      "key": "tradacoms",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "tradacoms.byte_offsets",
+        "tradacoms.composite_elements",
+        "tradacoms.dialect_profile",
+        "tradacoms.element",
+        "tradacoms.empty_elements",
+        "tradacoms.file",
+        "tradacoms.message",
+        "tradacoms.message_control_totals",
+        "tradacoms.message_sequence",
+        "tradacoms.multiple_transmissions",
+        "tradacoms.release_character",
+        "tradacoms.segment",
+        "tradacoms.segment_ordinals",
+        "tradacoms.segment_repeat_counts",
+        "tradacoms.transmission_control_totals",
+        "tradacoms.transmission_envelope"
+      ],
+      "unsupported": [
+        "tradacoms.code_value_validation",
+        "tradacoms.message_specification_validation"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "component": 11,
+        "composite": 5,
+        "element": 16,
+        "file": 1,
+        "message": 3,
+        "segment": 10,
+        "transmission": 1
+      },
+      "maxDepth": 6,
+      "nodeCount": 47,
+      "truncated": false,
+      "warningCount": 2
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "tradacoms",
+    "sourceHash": "sha256:f5ca5bac1174423144e9c849e81d2a5f79174801e3061bd26871be551fccca52",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "componentSeparator": ":",
+          "controlCountConsistent": true,
+          "date": "260819",
+          "declaredMessageCount": 3,
+          "elementSeparator": "+",
+          "fileCount": 1,
+          "implementationGuideConsulted": false,
+          "messageCount": 3,
+          "profile": "tradacoms",
+          "profileLabel": "TRADACOMS",
+          "recipientCode": "5087654321098",
+          "releaseCharacter": "?",
+          "segmentTerminator": "'",
+          "senderCode": "5012345678901",
+          "senderReference": "00001",
+          "syntaxIdentifier": "ANAA",
+          "syntaxVersion": "1",
+          "tagSeparator": "=",
+          "time": "1030"
+        },
+        "children": [
+          {
+            "attributes": {
+              "fileGenerationNumber": "00001",
+              "fileVersionNumber": "1",
+              "hasHeaderMessage": true,
+              "headerMessageType": "ORDHDR",
+              "messageCount": 3,
+              "transactionCode": "0430",
+              "transactionName": "ORDERS"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 6,
+                  "envelopeSegmentCount": 6,
+                  "fileHeader": true,
+                  "inProfileMessageSet": true,
+                  "messageReference": "1",
+                  "messageType": "ORDHDR",
+                  "messageVersion": "9",
+                  "segmentCount": 4
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "TYP"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "TYP01"
+                        },
+                        "children": [],
+                        "id": "0.0.0.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]/TYP01"
+                        },
+                        "name": "TYP01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "0430",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "TYP02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.0.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]/TYP02"
+                        },
+                        "name": "TYP02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "ORDERS",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 16,
+                      "line": 3,
+                      "offset": 98,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[0]/TYP[0]"
+                    },
+                    "name": "TYP",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "SDT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "SDT01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "SDT01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.0.1.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01/SDT01-1"
+                            },
+                            "name": "SDT01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5012345678901",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "SDT01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.0.1.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01/SDT01-2"
+                            },
+                            "name": "SDT01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "SUPPLIER",
+                            "valueLength": 8,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.0.1.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]/SDT01"
+                        },
+                        "name": "SDT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.0.1",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 27,
+                      "line": 4,
+                      "offset": 115,
+                      "ordinal": 1,
+                      "path": "STX[0]/FILE[0]/MHD[0]/SDT[1]"
+                    },
+                    "name": "SDT",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "CDT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "CDT01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "CDT01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.0.2.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01/CDT01-1"
+                            },
+                            "name": "CDT01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5087654321098",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "CDT01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.0.2.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01/CDT01-2"
+                            },
+                            "name": "CDT01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "BUYER",
+                            "valueLength": 5,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.0.2.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]/CDT01"
+                        },
+                        "name": "CDT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.0.2",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 24,
+                      "line": 5,
+                      "offset": 143,
+                      "ordinal": 2,
+                      "path": "STX[0]/FILE[0]/MHD[0]/CDT[2]"
+                    },
+                    "name": "CDT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 3,
+                      "elementPositionCount": 3,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "FIL"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "FIL01"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL01"
+                        },
+                        "name": "FIL01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "00001",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "FIL02"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL02"
+                        },
+                        "name": "FIL02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "FIL03"
+                        },
+                        "children": [],
+                        "id": "0.0.0.3.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]/FIL03"
+                        },
+                        "name": "FIL03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.0.3",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 19,
+                      "line": 6,
+                      "offset": 168,
+                      "ordinal": 3,
+                      "path": "STX[0]/FILE[0]/MHD[0]/FIL[3]"
+                    },
+                    "name": "FIL",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.0",
+                "kind": "message",
+                "label": "Message ORDHDR (1)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 2,
+                  "offset": 82,
+                  "ordinal": 0,
+                  "path": "STX[0]/FILE[0]/MHD[0]"
+                },
+                "name": "ORDHDR",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 7,
+                  "envelopeSegmentCount": 7,
+                  "fileHeader": false,
+                  "inProfileMessageSet": true,
+                  "messageReference": "2",
+                  "messageType": "ORDERS",
+                  "messageVersion": "9",
+                  "segmentCount": 5
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "CLO"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "01",
+                          "reference": "CLO01"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "CLO01-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.0.0.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/CLO[0]/CLO01/CLO01-1"
+                            },
+                            "name": "CLO01-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5087654321098",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "CLO01-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.0.0.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/CLO[0]/CLO01/CLO01-2"
+                            },
+                            "name": "CLO01-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "BUYER",
+                            "valueLength": 5,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.0.0",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/CLO[0]/CLO01"
+                        },
+                        "name": "CLO01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.0.1.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 24,
+                      "line": 9,
+                      "offset": 211,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[1]/CLO[0]"
+                    },
+                    "name": "CLO",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 3,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "ORD"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "ORD01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.1.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/ORD[1]/ORD01"
+                        },
+                        "name": "ORD01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "PO-0001",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "ORD02"
+                        },
+                        "children": [],
+                        "id": "0.0.1.1.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/ORD[1]/ORD02"
+                        },
+                        "name": "ORD02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "ORD03"
+                        },
+                        "children": [],
+                        "id": "0.0.1.1.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/ORD[1]/ORD03"
+                        },
+                        "name": "ORD03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.1",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 20,
+                      "line": 10,
+                      "offset": 236,
+                      "ordinal": 1,
+                      "path": "STX[0]/FILE[0]/MHD[1]/ORD[1]"
+                    },
+                    "name": "ORD",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "DIN"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "DIN01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.2.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/DIN[2]/DIN01"
+                        },
+                        "name": "DIN01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260826",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.2",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 11,
+                      "line": 11,
+                      "offset": 257,
+                      "ordinal": 2,
+                      "path": "STX[0]/FILE[0]/MHD[1]/DIN[2]"
+                    },
+                    "name": "DIN",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 4,
+                      "elementPositionCount": 6,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "OLD"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "OLD01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD01"
+                        },
+                        "name": "OLD01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 3,
+                          "position": "02",
+                          "reference": "OLD02"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "OLD02-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD02/OLD02-1"
+                            },
+                            "name": "OLD02-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "5012345670001",
+                            "valueLength": 13,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "OLD02-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD02/OLD02-2"
+                            },
+                            "name": "OLD02-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "",
+                            "valueLength": 0,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "03",
+                              "reference": "OLD02-3"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.1.2",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 2,
+                              "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD02/OLD02-3"
+                            },
+                            "name": "OLD02-3",
+                            "ordinal": 2,
+                            "redacted": false,
+                            "value": "WIDGET-001",
+                            "valueLength": 10,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.3.1",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD02"
+                        },
+                        "name": "OLD02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "03",
+                          "reference": "OLD03"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD03"
+                        },
+                        "name": "OLD03",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "04",
+                          "reference": "OLD04"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.3",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD04"
+                        },
+                        "name": "OLD04",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "",
+                        "valueLength": 0,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "componentCount": 2,
+                          "position": "05",
+                          "reference": "OLD05"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "position": "01",
+                              "reference": "OLD05-1"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.4.0",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD05/OLD05-1"
+                            },
+                            "name": "OLD05-1",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "100",
+                            "valueLength": 3,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "position": "02",
+                              "reference": "OLD05-2"
+                            },
+                            "children": [],
+                            "id": "0.0.1.3.4.1",
+                            "kind": "component",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD05/OLD05-2"
+                            },
+                            "name": "OLD05-2",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "EA",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.0.1.3.4",
+                        "kind": "composite",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD05"
+                        },
+                        "name": "OLD05",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "position": "06",
+                          "reference": "OLD06"
+                        },
+                        "children": [],
+                        "id": "0.0.1.3.5",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]/OLD06"
+                        },
+                        "name": "OLD06",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "18500",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.3",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 47,
+                      "line": 12,
+                      "offset": 269,
+                      "ordinal": 3,
+                      "path": "STX[0]/FILE[0]/MHD[1]/OLD[3]"
+                    },
+                    "name": "OLD",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "elementCount": 1,
+                      "elementPositionCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "OTR"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "OTR01"
+                        },
+                        "children": [],
+                        "id": "0.0.1.4.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[1]/OTR[4]/OTR01"
+                        },
+                        "name": "OTR01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.1.4",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 6,
+                      "line": 13,
+                      "offset": 317,
+                      "ordinal": 4,
+                      "path": "STX[0]/FILE[0]/MHD[1]/OTR[4]"
+                    },
+                    "name": "OTR",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.1",
+                "kind": "message",
+                "label": "Message ORDERS (2)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 8,
+                  "offset": 195,
+                  "ordinal": 1,
+                  "path": "STX[0]/FILE[0]/MHD[1]"
+                },
+                "name": "ORDERS",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "controlCountConsistent": true,
+                  "declaredSegmentCount": 3,
+                  "envelopeSegmentCount": 3,
+                  "fileHeader": false,
+                  "inProfileMessageSet": true,
+                  "messageReference": "3",
+                  "messageType": "ORDTLR",
+                  "messageVersion": "9",
+                  "segmentCount": 1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "elementCount": 2,
+                      "elementPositionCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "segmentId": "OFT"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "position": "01",
+                          "reference": "OFT01"
+                        },
+                        "children": [],
+                        "id": "0.0.2.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "STX[0]/FILE[0]/MHD[2]/OFT[0]/OFT01"
+                        },
+                        "name": "OFT01",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "1",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "position": "02",
+                          "reference": "OFT02"
+                        },
+                        "children": [],
+                        "id": "0.0.2.0.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "STX[0]/FILE[0]/MHD[2]/OFT[0]/OFT02"
+                        },
+                        "name": "OFT02",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "18500",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.0.2.0",
+                    "kind": "segment",
+                    "label": null,
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 12,
+                      "line": 16,
+                      "offset": 347,
+                      "ordinal": 0,
+                      "path": "STX[0]/FILE[0]/MHD[2]/OFT[0]"
+                    },
+                    "name": "OFT",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.0.2",
+                "kind": "message",
+                "label": "Message ORDTLR (3)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 15,
+                  "line": 15,
+                  "offset": 331,
+                  "ordinal": 2,
+                  "path": "STX[0]/FILE[0]/MHD[2]"
+                },
+                "name": "ORDTLR",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "file",
+            "label": "File ORDHDR (00001)",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 15,
+              "line": 2,
+              "offset": 82,
+              "ordinal": 0,
+              "path": "STX[0]/FILE[0]"
+            },
+            "name": "ORDHDR",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "transmission",
+        "label": "Transmission 00001",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 81,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "STX[0]"
+        },
+        "name": "STX",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "tradacoms.canonical_projection_subset",
+        "location": null,
+        "message": "The canonical model is derived from message ORDERS (2) in file ORDHDR alone. This document carries 3 message(s) across 1 file(s); the remaining 2 are described here and nowhere else.",
+        "nodeId": null,
+        "severity": "info"
+      },
+      {
+        "code": "tradacoms.dialect_profile_applied",
+        "location": null,
+        "message": "Read with the TRADACOMS profile. An `STX=` transmission header opens the document; it is not an EDIFACT `UNB`. The TRADACOMS manual's message specifications are not consulted: which segments a message may carry, their order and their code values are recorded as written, not checked.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

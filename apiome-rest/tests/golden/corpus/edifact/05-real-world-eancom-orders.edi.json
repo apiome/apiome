@@ -849,7 +849,16 @@
             }
           ]
         }
-      ]
+      ],
+      "format_profile": {
+        "engine": "edifact",
+        "evidence": [
+          "Association assigned code EAN008 names an EANCOM subset version."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "eancom",
+        "label": "EANCOM"
+      }
     },
     "format": "edifact",
     "identity": {
@@ -1991,7 +2000,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:96152486ba0f864f65af1e32d8626ebaa4b6611f4dd671723901e8e346c55f50",
+  "fingerprint": "sha256:b1789b0a02b97586ded72fced382487981a0002fe82872ae8874a15e05369779",
   "lint": {
     "findings": 67,
     "grade": "F",

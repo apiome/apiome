@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1465 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1466 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -133,7 +133,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | --- | --- | --- | --- | --- |
 | `dicom/` | DICOM (pending #5451) | data_schema | `DICM` magic at offset 128, or 8-hex-digit keys with `vr`/`Value` (DICOM JSON) | 15 |
 | `edi-x12/` | EDI ASC X12 | message | `ISA`/`GS`/`ST` envelopes | 12 |
-| `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 16 |
+| `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 17 |
 | `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 11 |
 | `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 11 |
 | `fix-orchestra/` | FIX Orchestra (pending #5453) | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
@@ -146,7 +146,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | `ncpdp/` | NCPDP SCRIPT / Telecom (pending #5452) | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
 | `sepa/` | SEPA payment files (pending #5450) | message | `urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace | 14 |
 | `swift-mt/` | SWIFT MT | message | `{1:` basic header + `{4:` text block terminated by `-}` | 14 |
-| `tradacoms/` | TRADACOMS (pending #5449) | message | `STX=` transmission header + `END=` trailer | 15 |
+| `tradacoms/` | TRADACOMS | message | `STX=` transmission header + `END=` trailer | 15 |
 
 ### Agent / LLM tools
 
@@ -825,8 +825,8 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `02-typical-invoic-d96a.edi` | typical | `edifact` ≥ 0.9 | valid | `INVOIC`, `D96A`, `UNA`, `NAD`, `TAX`, `MOA`, `CUX` |
 | `03-typical-desadv-d01b.edi` | typical | `edifact` ≥ 0.9 | valid | `DESADV`, `D01B`, `PAC`, `MEA`, `GIN`, `TDT`, `CPS` |
 | `04-stress-multi-message-group.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `UNG`, `UNE`, `multi-message`, `comma-decimal`, `release-character`, `empty-elements` |
-| `05-real-world-eancom-orders.edi` | real-world | `edifact` ≥ 0.9 | valid | `EANCOM`, `ORDERS`, `GLN`, `PIA`, `IMD`, `LOC`, `association-code` |
-| `06-typical-odette-delfor.edi` ⚠ | typical | `edifact` ≥ 0.9 | valid | `ODETTE`, `DELFOR`, `SCC`, `schedule-lines`, `UNOA` |
+| `05-real-world-eancom-orders.edi` ⚠ | real-world | `edifact` ≥ 0.9 | valid | `EANCOM`, `ORDERS`, `GLN`, `PIA`, `IMD`, `LOC`, `association-code`, `eancom-profile` |
+| `06-typical-odette-delfor.edi` ⚠ | typical | `edifact` ≥ 0.9 | valid | `ODETTE`, `DELFOR`, `SCC`, `schedule-lines`, `UNOA`, `odette-profile` |
 | `07-stress-control-count-mismatch.edi` ⚠ | stress | `edifact` ≥ 0.9 | valid | `control-counts`, `declared-vs-observed`, `self-inconsistent` |
 | `08-composition-nested-segment-groups.edi` | composition | `edifact` ≥ 0.9 | valid | `nested-segment-groups`, `contact-group`, `allowance-charge`, `tax-group`, `INVOIC` |
 | `09-interchange-set/contrl.edi` ⚠ | multi-file (member) | `edifact` (no guarantee) | valid | `CONTRL`, `functional-acknowledgment`, `UCI`, `UCM` |
@@ -837,16 +837,21 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-x12.edi` ⚠ | — | `edifact` (no guarantee) | invalid | `negative`, `wrong-format`, `x12` |
 | `negative/05-encoding-utf16.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 | `negative/06-semantic-unh-without-unt.edi` | — | `edifact` (no guarantee) | invalid | `negative`, `semantic`, `unterminated-message` |
+| `negative/07-wrong-format-tradacoms.edi` ⚠ | — | `edifact` (no guarantee) | invalid | `negative`, `wrong-format`, `tradacoms` |
 
 > ⚠ **`04-stress-multi-message-group.edi`** — Two functional groups and three messages: the canonical model is derived from the first group's first message and the extras must be reported, exactly as the X12 analyzer does.
 
-> ⚠ **`06-typical-odette-delfor.edi`** — The ODETTE/VDA dialect sample FMT-6.5 needs; detection must record the profile rather than treating it as plain EDIFACT.
+> ⚠ **`05-real-world-eancom-orders.edi`** — The EANCOM dialect sample (FMT-6.5): the EAN008 association code in UNH routes it to the EANCOM profile, recorded in provenance and the analysis.
+
+> ⚠ **`06-typical-odette-delfor.edi`** — The ODETTE/VDA dialect sample (FMT-6.5): an ODETTE organisation code on the interchange and a DELFOR from the ODETTE/VDA message set, so detection records the ODETTE/VDA profile rather than plain UN/EDIFACT.
 
 > ⚠ **`07-stress-control-count-mismatch.edi`** — UNT declares 99 segments and UNZ declares 7 interchanges; both disagree with what is present. The acceptance criterion is that both numbers are shown, not that the interchange is rejected.
 
 > ⚠ **`09-interchange-set/contrl.edi`** — Fileset member: the CONTRL acknowledgment referring to the ORDERS interchange by its control reference.
 
 > ⚠ **`negative/04-wrong-format-x12.edi`** — An ISA/GS/ST interchange: the same file extension, the same industry, a different syntax — the misroute the EDIFACT sniffer must not make.
+
+> ⚠ **`negative/07-wrong-format-tradacoms.edi`** — A TRADACOMS STX transmission sent to the EDIFACT importer: the same segment syntax inside a different envelope — the misroute FMT-6.5 names, refused as FORMAT_MISMATCH rather than read as an interchange.
 
 ### `envoy-xds/` — Envoy xDS routes (pending #5458)
 
@@ -2313,25 +2318,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-semantic-orphan-container-id.json`** — Folders and requests reference container ids that no folder declares, so the hierarchy cannot be reconstructed.
 
-### `tradacoms/` — TRADACOMS (pending #5449)
+### `tradacoms/` — TRADACOMS
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-order-file.edi` | minimal | `tradacoms` ≥ 0.9 | valid | `ORDHDR`, `ORDERS`, `ORDTLR`, `STX-envelope`, `pending-adapter` |
-| `02-typical-order-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `OLD`, `DIN`, `delivery-window`, `trading-party-codes`, `pending-adapter` |
-| `03-typical-invoice-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `INVFIL`, `INVOIC`, `VATTLR`, `INVTLR`, `vat-rate-lines`, `settlement-totals`, `pending-adapter` |
-| `04-stress-multi-message-file.edi` | stress | `tradacoms` ≥ 0.9 | valid | `multi-message`, `uncoded-line`, `stx-password`, `application-reference`, `pending-adapter` |
-| `05-real-world-grocery-order-file.edi` | real-world | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `gtin`, `case-quantities`, `multi-depot`, `delivery-window`, `pending-adapter` |
-| `06-typical-delivery-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `DELHDR`, `DELIVR`, `DELTLR`, `ordered-vs-delivered`, `pending-adapter` |
-| `07-composition-nested-files.edi` | composition | `tradacoms` ≥ 0.9 | valid | `multiple-files-one-transmission`, `ORDERS`, `DELIVR`, `nested-message-structure`, `pending-adapter` |
-| `08-transmission-set/ack-file.edi` ⚠ | multi-file (member) | `tradacoms` (no guarantee) | valid | `ACKHDR`, `ACKMNT`, `acknowledgment`, `pending-adapter` |
-| `08-transmission-set/order-file.edi` | multi-file (root) | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `transmission`, `pending-adapter` |
-| `negative/01-syntactic-missing-equals.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `syntactic`, `missing-equals`, `pending-adapter` |
-| `negative/02-semantic-no-end-segment.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `semantic`, `no-end-segment`, `pending-adapter` |
-| `negative/03-truncated-mid-segment.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `truncated`, `mid-segment`, `pending-adapter` |
-| `negative/04-wrong-format-edifact.edi` ⚠ | — | `tradacoms` (no guarantee) | invalid | `negative`, `wrong-format`, `edifact`, `pending-adapter` |
-| `negative/05-encoding-utf16.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-message-count-mismatch.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `semantic`, `sequence-mismatch`, `pending-adapter` |
+| `01-minimal-order-file.edi` | minimal | `tradacoms` ≥ 0.9 | valid | `ORDHDR`, `ORDERS`, `ORDTLR`, `STX-envelope` |
+| `02-typical-order-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `OLD`, `DIN`, `delivery-window`, `trading-party-codes` |
+| `03-typical-invoice-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `INVFIL`, `INVOIC`, `VATTLR`, `INVTLR`, `vat-rate-lines`, `settlement-totals` |
+| `04-stress-multi-message-file.edi` | stress | `tradacoms` ≥ 0.9 | valid | `multi-message`, `uncoded-line`, `stx-password`, `application-reference` |
+| `05-real-world-grocery-order-file.edi` | real-world | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `gtin`, `case-quantities`, `multi-depot`, `delivery-window` |
+| `06-typical-delivery-file.edi` | typical | `tradacoms` ≥ 0.9 | valid | `DELHDR`, `DELIVR`, `DELTLR`, `ordered-vs-delivered` |
+| `07-composition-nested-files.edi` | composition | `tradacoms` ≥ 0.9 | valid | `multiple-files-one-transmission`, `ORDERS`, `DELIVR`, `nested-message-structure` |
+| `08-transmission-set/ack-file.edi` ⚠ | multi-file (member) | `tradacoms` (no guarantee) | valid | `ACKHDR`, `ACKMNT`, `acknowledgment` |
+| `08-transmission-set/order-file.edi` | multi-file (root) | `tradacoms` ≥ 0.9 | valid | `ORDERS`, `transmission` |
+| `negative/01-syntactic-missing-equals.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `syntactic`, `missing-equals` |
+| `negative/02-semantic-no-end-segment.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `semantic`, `no-end-segment` |
+| `negative/03-truncated-mid-segment.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `truncated`, `mid-segment` |
+| `negative/04-wrong-format-edifact.edi` ⚠ | — | `tradacoms` (no guarantee) | invalid | `negative`, `wrong-format`, `edifact` |
+| `negative/05-encoding-utf16.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-message-count-mismatch.edi` | — | `tradacoms` (no guarantee) | invalid | `negative`, `semantic`, `sequence-mismatch` |
 
 > ⚠ **`08-transmission-set/ack-file.edi`** — Fileset member: the acknowledgment transmission referring to the order file by its file generation number.
 
@@ -2715,7 +2720,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1465 | `Apache-2.0` |
+| `hand-authored` | 1466 | `Apache-2.0` |
 
 ## Trying an import
 

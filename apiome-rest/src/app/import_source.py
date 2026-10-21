@@ -1200,6 +1200,9 @@ def load_builtin_import_sources() -> None:
     # ``edifact_import_source`` (FMT-6.1) self-registers the ``edifact`` adapter — a UN/EDIFACT
     # interchange, X12's rest-of-world twin — and, via its own imports, the EDIFACT normalizer.
     from . import edifact_import_source as _edifact  # noqa: F401
+    # ``tradacoms_import_source`` (FMT-6.5) self-registers the ``tradacoms`` adapter — the UK retail
+    # dialect, read with the EDIFACT lexical layer inside its own STX/MHD/MTR/END envelope.
+    from . import tradacoms_import_source as _tradacoms  # noqa: F401
     # ``idoc_import_source`` (FMT-6.2) self-registers the ``idoc`` adapter — an SAP IDoc in its
     # flat (EDI_DC40/EDI_DD40) or XML form, with optional segment definitions — and its normalizer.
     from . import idoc_import_source as _idoc  # noqa: F401

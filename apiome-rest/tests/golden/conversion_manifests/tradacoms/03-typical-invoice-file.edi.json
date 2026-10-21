@@ -1,0 +1,1798 @@
+{
+  "adapter": "tradacoms",
+  "conversion_mode": "lossy",
+  "corpus_path": "tradacoms/03-typical-invoice-file.edi",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 2,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD01"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD01",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD02"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD02"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD02",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD02",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD02"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD03-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-1"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD03-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD03-1",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD03-3"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-3"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD03-3",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD03-3",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-3"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD06"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD06"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD06",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD06",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD06"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD07"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD07"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD07",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD07",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD07"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD08"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD08"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD08",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD08",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD08"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD.ILD09"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD09"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.ILD.ILD09",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD.ILD09",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD09"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-1"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-2"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.CLO02"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO02"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO02"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.ILD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/ILD"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.ILD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.ILD",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/ILD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.IRF01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF01"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.IRF02"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF02"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF02"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.IRF03"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF03"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF03"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.PYT01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/PYT01"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/PYT01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.STL01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL01"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.STL01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL01",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.STL02"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL02"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.STL02",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL02",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL02"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.STL03"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL03"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.STL03",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL03",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL03"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.STL04"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL04"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.STL04",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL04",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL04"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC.STL05"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL05"
+          }
+        ],
+        "id": "construct:field:TRADACOMS-INVOIC.MessageINVOIC.STL05",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL05",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL05"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.ILD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.ILD"
+          }
+        ],
+        "id": "construct:type:TRADACOMS-INVOIC.ILD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.ILD",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.ILD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "TRADACOMS-INVOIC.MessageINVOIC"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC"
+          }
+        ],
+        "id": "construct:type:TRADACOMS-INVOIC.MessageINVOIC",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:TRADACOMS-INVOIC.MessageINVOIC",
+        "status": "retained",
+        "target": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC"
+      },
+      {
+        "count": 1,
+        "detail": "the tradacoms analyzer does not model tradacoms.code_value_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:tradacoms.code_value_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:tradacoms.code_value_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the tradacoms analyzer does not model tradacoms.message_specification_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:tradacoms.message_specification_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:tradacoms.message_specification_validation",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "tradacoms.code_value_validation",
+        "id": "source:analysis:tradacoms.code_value_validation",
+        "kind": "source",
+        "label": "tradacoms.code_value_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "tradacoms.code_value_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tradacoms.message_specification_validation",
+        "id": "source:analysis:tradacoms.message_specification_validation",
+        "kind": "source",
+        "label": "tradacoms.message_specification_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "tradacoms.message_specification_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD",
+        "kind": "source",
+        "label": "ILD",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "ILD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD01",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD01",
+        "kind": "source",
+        "label": "ILD01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD02",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD02",
+        "kind": "source",
+        "label": "ILD02",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD02",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD03-1",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD03-1",
+        "kind": "source",
+        "label": "ILD03-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD03-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD03-3",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD03-3",
+        "kind": "source",
+        "label": "ILD03-3",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD03-3",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD06",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD06",
+        "kind": "source",
+        "label": "ILD06",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD06",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD07",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD07",
+        "kind": "source",
+        "label": "ILD07",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD07",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD08",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD08",
+        "kind": "source",
+        "label": "ILD08",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD08",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD09",
+        "id": "source:construct:TRADACOMS-INVOIC.ILD.ILD09",
+        "kind": "source",
+        "label": "ILD09",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD09",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC",
+        "kind": "source",
+        "label": "MessageINVOIC",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MessageINVOIC",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+        "kind": "source",
+        "label": "CLO01-1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CLO01-1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+        "kind": "source",
+        "label": "CLO01-2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CLO01-2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+        "kind": "source",
+        "label": "CLO02",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CLO02",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.ILD",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.ILD",
+        "kind": "source",
+        "label": "ILD",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ILD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+        "kind": "source",
+        "label": "IRF01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "IRF01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+        "kind": "source",
+        "label": "IRF02",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "IRF02",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+        "kind": "source",
+        "label": "IRF03",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "IRF03",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+        "kind": "source",
+        "label": "PYT01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PYT01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL01",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL01",
+        "kind": "source",
+        "label": "STL01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STL01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL02",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL02",
+        "kind": "source",
+        "label": "STL02",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STL02",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL03",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL03",
+        "kind": "source",
+        "label": "STL03",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STL03",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL04",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL04",
+        "kind": "source",
+        "label": "STL04",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STL04",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL05",
+        "id": "source:construct:TRADACOMS-INVOIC.MessageINVOIC.STL05",
+        "kind": "source",
+        "label": "STL05",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STL05",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD01",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD01",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD02",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD02",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD02",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD02",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD03-1",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-1",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD03-3",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-3",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-3",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD03-3",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD06",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD06",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD06",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD06",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD07",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD07",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD07",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD07",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD08",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD08",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD08",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD08",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.ILD.ILD09",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD09",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD09",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.ILD/properties/ILD09",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-1",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-1",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO01-2",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-2",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO01-2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.CLO02",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO02",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO02",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/CLO02",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.ILD",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/ILD",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/ILD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/ILD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF01",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF01",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF02",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF02",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF02",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF02",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.IRF03",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF03",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF03",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/IRF03",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.PYT01",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/PYT01",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/PYT01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/PYT01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL01",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL01",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL02",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL02",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL02",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL02",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL03",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL03",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL03",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL03",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL04",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL04",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL04",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL04",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "TRADACOMS-INVOIC.MessageINVOIC.STL05",
+        "id": "target:/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL05",
+        "kind": "target",
+        "label": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL05",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/TRADACOMS-INVOIC.MessageINVOIC/properties/STL05",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 2,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 2,
+      "checklist": 18,
+      "construct": 23,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "tradacoms",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 78,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "tradacoms.code_value_validation",
+          "tradacoms.message_specification_validation"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-tradacoms-03-typical-invoice-file-edi",
+      "source_format": "tradacoms",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 25,
+      "transformed": 0,
+      "unavailable": 2
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 43,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 43,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 68,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 2,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 2,
+      "checklist": 18,
+      "construct": 23,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "tradacoms",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 78,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "tradacoms.code_value_validation",
+          "tradacoms.message_specification_validation"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-tradacoms-03-typical-invoice-file-edi",
+      "source_format": "tradacoms",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 25,
+      "transformed": 0,
+      "unavailable": 2
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 43,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

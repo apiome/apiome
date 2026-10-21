@@ -1133,6 +1133,26 @@ def _persist_arazzo_workflows(
         )
 
 
+def format_profile_metadata(model: CanonicalApi) -> Optional[Dict[str, Any]]:
+    """Return the dialect profile a model was read with, for the revision's provenance (FMT-6.5).
+
+    An adapter whose format has dialects (EDIFACT's EANCOM and ODETTE/VDA, TRADACOMS) records the
+    one it applied under the canonical ``format_profile`` extras (:mod:`app.edi_dialect_profiles`);
+    the catalog Provenance tab reads it from ``format_metadata.formatProfile``.
+
+    Args:
+        model: The normalized model.
+
+    Returns:
+        A copy of the profile mapping, or ``None`` when the model records none (or a malformed one).
+    """
+    extras = model.extras if isinstance(model.extras, dict) else {}
+    profile = extras.get("format_profile")
+    if not isinstance(profile, dict) or not isinstance(profile.get("key"), str):
+        return None
+    return dict(profile)
+
+
 def persist_adapter_import(
     payload: Dict[str, Any],
     model: CanonicalApi,
@@ -1228,6 +1248,9 @@ def persist_adapter_import(
     }
     if fingerprint:
         format_metadata["fingerprint"] = fingerprint
+    profile = format_profile_metadata(model)
+    if profile is not None:
+        format_metadata["formatProfile"] = profile
     format_metadata.update(_source_content_for_persist(intake, scrub_resolution))
     if input_kind == "url" and source_label:
         format_metadata["sourceUri"] = source_label

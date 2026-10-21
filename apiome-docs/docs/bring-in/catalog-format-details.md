@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -170,6 +170,10 @@ the X12 inspector's contract:
   is never shown.
 - **Message facts**: message type (`ORDERS`), version and release (`D`, `96A`), controlling agency
   and association code (`EAN008`), recorded as the sender's claim.
+- **Dialect profile**: the interchange row's **profile** and **profileLabel** name the profile it was
+  read with — EANCOM, ODETTE/VDA or plain UN/EDIFACT ([how each is recognised](./edifact-import.md#dialect-profiles))
+  — beside **implementationGuideConsulted** `false`. Each message under a dialect shows
+  **inProfileMessageSet**, and the warning `edifact.dialect_profile_applied` states the evidence.
 - **Control counts**: what `UNT` (segments, `UNH` to `UNT` inclusive), `UNE` (messages) and `UNZ`
   (groups, or messages when there are none) *declared* sits beside what was *observed*, with
   **controlCountConsistent** saying whether they agree. The control reference each trailer repeats
@@ -192,6 +196,28 @@ the X12 inspector's contract:
   one.
 - **Segment groups** are shown as flat segments; a directory would be needed to nest them.
 - The **decimal mark** is recorded, and values are never re-read as numbers.
+
+## The TRADACOMS analysis
+
+For TRADACOMS sources ([how to import one](./tradacoms-import.md)) the tab renders **transmission →
+file → message → segment → element**, one root per transmission in the document, with composite
+components under their element. Segments and elements use the EDIFACT analysis's vocabulary and
+contract:
+
+- **The transmission row** shows the syntax (`ANAA`, `1`), **senderCode** and **recipientCode**,
+  date and time, **senderReference** and **applicationReference**, the service characters (with
+  **tagSeparator** `=`), and the dialect profile (**profile** `tradacoms`,
+  **implementationGuideConsulted** `false`). The `STX` recipient's reference is never shown.
+- **The file row** shows **headerMessageType** (`ORDHDR`), **transactionCode** and
+  **transactionName** (`0430`, `ORDERS`), and the `FIL` **fileGenerationNumber** and
+  **fileVersionNumber**.
+- **The message row** shows **messageReference**, **messageType**, **messageVersion**, whether it is
+  the file's header (**fileHeader**) and **inProfileMessageSet**.
+- **Control counts**: what `MTR` (segments, `MHD` to `MTR` inclusive) and `END` (messages)
+  *declared* sits beside what was *observed*, with **controlCountConsistent**; each disagreement is
+  a warning (`tradacoms.control_count_mismatch`).
+- **Conversion scope**: the canonical model is the first transmission's first detail message; a
+  document of several says so (warning `tradacoms.canonical_projection_subset`).
 
 ## The IDoc analysis
 
