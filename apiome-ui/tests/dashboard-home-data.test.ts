@@ -28,6 +28,7 @@ import {
   PROJECT_PIN_LIMIT,
   PULSE_WEEKS,
   RECENTLY_VIEWED_LIMIT,
+  TIME_SPENT_CANDIDATES,
 } from '@lib/db/dashboard-home-model';
 
 /** Every `connectionPool.query` call the module makes, in order. */
@@ -55,6 +56,7 @@ const SECTION = {
   continueProjects: 'WITH latest AS',
   recentlyViewed: 'FROM apiome.project_views pv',
   pinned: 'FROM apiome.project_pins pp',
+  timeSpent: 'FROM apiome.project_time pt',
   sunset: "v.metadata->>'sunsetAt'",
   lint: "quality_report->'severity_counts'",
   keys: 'FROM apiome.api_keys ak',
@@ -125,6 +127,7 @@ describe('getDashboardHomeForSession — who it reads for', () => {
       continueProjects: [],
       pinnedProjects: [],
       recentlyViewed: [],
+      timeSpent: { projects: [], total7: 0, total30: 0 },
       attention: [],
       pulse: [],
     });
@@ -420,6 +423,53 @@ describe('the pinned-projects section (#513)', () => {
   });
 });
 
+describe('the time-spent section (#544)', () => {
+  it('maps both windows and both totals, coercing the bigints pg returns as strings', async () => {
+    answer(SECTION.timeSpent, [
+      { project_id: 'p-1', project_name: 'Payments', seconds_7: '3600', seconds_30: '7200', total_7: '3600', total_30: '9000' },
+      { project_id: 'p-2', project_name: ' ', seconds_7: '0', seconds_30: '1800', total_7: '3600', total_30: '9000' },
+    ]);
+    const home = await getDashboardHomeForSession();
+    expect(home.timeSpent).toEqual({
+      projects: [
+        { projectId: 'p-1', projectName: 'Payments', seconds7: 3600, seconds30: 7200 },
+        { projectId: 'p-2', projectName: 'Untitled project', seconds7: 0, seconds30: 1800 },
+      ],
+      total7: 3600,
+      total30: 9000,
+    });
+  });
+
+  it("reads only the reader's own time in the current workspace, over 30 days, capped", async () => {
+    await getDashboardHomeForSession();
+    const entry = queries.find((candidate) => candidate.sql.includes(SECTION.timeSpent));
+
+    expect(entry?.params).toEqual(['user-1', 'tenant-1', TIME_SPENT_CANDIDATES]);
+    expect(entry?.sql).toContain('pt.user_id = $1');
+    expect(entry?.sql).toContain('pt.tenant_id = $2');
+    expect(entry?.sql).toContain('p.deleted_at IS NULL');
+    expect(entry?.sql).toContain("pt.day > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - 30");
+    expect(entry?.sql).toContain('OVER ()');
+  });
+
+  it('is empty with no time, with no workspace, and when the read fails', async () => {
+    let home = await getDashboardHomeForSession();
+    expect(home.timeSpent).toEqual({ projects: [], total7: 0, total30: 0 });
+
+    (getAuthSession as jest.Mock).mockResolvedValue({ user: { user_id: 'user-1' } });
+    queries.length = 0;
+    home = await getDashboardHomeForSession();
+    expect(queries.some((entry) => entry.sql.includes(SECTION.timeSpent))).toBe(false);
+
+    (getAuthSession as jest.Mock).mockResolvedValue(SESSION);
+    fail(SECTION.timeSpent);
+    answer(SECTION.continueProjects, [projectRow()]);
+    home = await getDashboardHomeForSession();
+    expect(home.timeSpent.projects).toEqual([]);
+    expect(home.continueProjects).toHaveLength(1);
+  });
+});
+
 describe('the needs-attention sections', () => {
   it('ranks the three sources together, most urgent first', async () => {
     answer(SECTION.sunset, [
@@ -572,6 +622,7 @@ describe('failing soft', () => {
       continueProjects: [],
       pinnedProjects: [],
       recentlyViewed: [],
+      timeSpent: { projects: [], total7: 0, total30: 0 },
       attention: [],
       pulse: [],
     });

@@ -33,6 +33,16 @@
       "fallback": "fixture:hive-a11y/home.html"
     },
     {
+      "id": "home-time-spent",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"home-time-spent\"]",
+      "data": "fixture:hive-a11y/home.html",
+      "scrollTo": "[data-testid=\"home-time-spent\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/home/TimeSpent.tsx"
+      ]
+    },
+    {
       "id": "import-wizard-source",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#imp-source-heading",

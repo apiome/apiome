@@ -145,6 +145,15 @@ const HOME: DashboardHome = {
       pinnedAt: new Date(Date.now() - 5 * 86_400_000).toISOString(),
     },
   ],
+  timeSpent: {
+    projects: [
+      { projectId: 'p-1', projectName: 'Payments API', seconds7: 2 * 3600 + 15 * 60, seconds30: 9 * 3600 },
+      { projectId: 'p-2', projectName: 'Orders Service', seconds7: 45 * 60, seconds30: 12 * 3600 },
+      { projectId: 'p-3', projectName: 'Inventory API', seconds7: 0, seconds30: 90 * 60 },
+    ],
+    total7: 3 * 3600,
+    total30: 22 * 3600 + 30 * 60,
+  },
   recentlyViewed: [
     {
       projectId: 'p-2',
@@ -202,6 +211,7 @@ const EMPTY_HOME: DashboardHome = {
   continueProjects: [],
   pinnedProjects: [],
   recentlyViewed: [],
+  timeSpent: { projects: [], total7: 0, total30: 0 },
   attention: [],
   pulse: [],
 };
@@ -451,8 +461,8 @@ describe('Home — what fills the half that used to be empty', () => {
   it('fills both columns of the body, so neither is blank', async () => {
     await renderLoaded();
     const aside = screen.getByRole('complementary', { name: /Workspace shortcuts and health/i });
-    // Quick actions, Needs attention and Publishing pulse.
-    expect(aside.querySelectorAll(':scope > *')).toHaveLength(3);
+    // Quick actions, Needs attention, Publishing pulse and Time spent (#544).
+    expect(aside.querySelectorAll(':scope > *')).toHaveLength(4);
     expect(aside.textContent?.trim()).not.toBe('');
   });
 });
@@ -460,6 +470,54 @@ describe('Home — what fills the half that used to be empty', () => {
 /* -------------------------------------------------------------------------
    3. Needs attention
    ------------------------------------------------------------------------- */
+
+describe('Home — Time spent (#544)', () => {
+  it('opens on the last 7 days: a bar per project with time, longest first, and the total in words', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Time spent' });
+    const rows = within(panel).getAllByRole('link');
+
+    expect(rows.map((row) => row.getAttribute('href'))).toEqual([
+      '/ade/dashboard/versions?projectId=p-1',
+      '/ade/dashboard/versions?projectId=p-2',
+    ]);
+    expect(within(rows[0]).getByText('Payments API')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('2h 15m')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('45m')).toBeInTheDocument();
+    expect(within(panel).getByText('3h 00m on projects in the last 7 days')).toBeInTheDocument();
+    expect(within(panel).getByRole('radio', { name: '7 days' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('switches to the last 30 days without a new request', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Time spent' });
+    const calls = mockGetDashboardHome.mock.calls.length;
+
+    fireEvent.click(within(panel).getByRole('radio', { name: '30 days' }));
+
+    const rows = within(panel).getAllByRole('link');
+    expect(rows.map((row) => within(row).getAllByText(/./)[0].textContent)).toEqual([
+      'Orders Service',
+      'Payments API',
+      'Inventory API',
+    ]);
+    expect(within(panel).getByText('22h 30m on projects in the last 30 days')).toBeInTheDocument();
+    expect(mockGetDashboardHome.mock.calls.length).toBe(calls);
+  });
+
+  it('sizes the busiest bar full and the rest against it', async () => {
+    await renderLoaded();
+    const bars = screen.getByRole('group', { name: 'Time spent' }).querySelectorAll('.home-time__bar');
+    expect((bars[0] as HTMLElement).style.width).toBe('100%');
+    expect((bars[1] as HTMLElement).style.width).toBe('33%');
+  });
+
+  it('says how time is counted when there is none', async () => {
+    await renderLoaded(EMPTY_HOME);
+    const panel = screen.getByRole('group', { name: 'Time spent' });
+    expect(within(panel).getByText('No time in the last 7 days')).toBeInTheDocument();
+  });
+});
 
 describe('Home — Pinned projects (#513)', () => {
   it('lists each pin, newest first, linking into its versions, with the count against the limit', async () => {
@@ -626,7 +684,7 @@ describe('Home — accessibility and resilience', () => {
   it('draws exactly one h1, and names every added region', async () => {
     await renderLoaded();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    for (const name of ['Pinned projects', 'Pick up where you left off', 'Recently viewed', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse']) {
+    for (const name of ['Pinned projects', 'Pick up where you left off', 'Recently viewed', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse', 'Time spent']) {
       expect(screen.getByText(name)).toBeInTheDocument();
     }
   });

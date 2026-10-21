@@ -36,6 +36,10 @@ import {
   type LintRow,
   type ReviewAttentionRow,
   type SunsetRow,
+  formatDuration,
+  timeSpentBars,
+  TIME_SPENT_LIMIT,
+  type TimeSpent,
 } from '@lib/db/dashboard-home-model';
 
 import {
@@ -697,11 +701,80 @@ describe('emptyDashboardHome', () => {
       continueProjects: [],
       pinnedProjects: [],
       recentlyViewed: [],
+      timeSpent: { projects: [], total7: 0, total30: 0 },
       attention: [],
       pulse: [],
     });
     expect(first.continueProjects).not.toBe(second.continueProjects);
     expect(first.recentlyViewed).not.toBe(second.recentlyViewed);
     expect(first.pinnedProjects).not.toBe(second.pinnedProjects);
+  });
+});
+
+describe('time spent (#544)', () => {
+  describe('formatDuration', () => {
+    it.each([
+      [0, '0m'],
+      [-5, '0m'],
+      [Number.NaN, '0m'],
+      [30, '<1m'],
+      [60, '1m'],
+      [45 * 60, '45m'],
+      [3600, '1h 00m'],
+      [2 * 3600 + 5 * 60 + 59, '2h 05m'],
+      [26 * 3600, '26h 00m'],
+    ])('reads %p seconds as %p', (seconds, expected) => {
+      expect(formatDuration(seconds)).toBe(expected);
+    });
+  });
+
+  describe('timeSpentBars', () => {
+    const TIME: TimeSpent = {
+      projects: [
+        { projectId: 'a', projectName: 'Alpha', seconds7: 600, seconds30: 9000 },
+        { projectId: 'b', projectName: 'Beta', seconds7: 3600, seconds30: 3600 },
+        { projectId: 'c', projectName: 'Gamma', seconds7: 0, seconds30: 1200 },
+        { projectId: 'd', projectName: 'Delta', seconds7: 10, seconds30: 10 },
+      ],
+      total7: 4210,
+      total30: 13810,
+    };
+
+    it('ranks each window by its own figure and sizes bars against the busiest', () => {
+      expect(timeSpentBars(TIME, 7).map((bar) => [bar.projectId, bar.seconds, bar.percent])).toEqual([
+        ['b', 3600, 100],
+        ['a', 600, 17],
+        ['d', 10, 2],
+      ]);
+      expect(timeSpentBars(TIME, 30).map((bar) => bar.projectId)).toEqual(['a', 'b', 'c', 'd']);
+    });
+
+    it('leaves out projects with no time in the window', () => {
+      expect(timeSpentBars(TIME, 7).some((bar) => bar.projectId === 'c')).toBe(false);
+    });
+
+    it('never draws a sliver thinner than 2 %', () => {
+      expect(Math.min(...timeSpentBars(TIME, 30).map((bar) => bar.percent))).toBe(2);
+    });
+
+    it('draws at most the limit, breaking ties by name', () => {
+      const many: TimeSpent = {
+        projects: ['F', 'E', 'D', 'C', 'B', 'A'].map((name) => ({
+          projectId: name,
+          projectName: name,
+          seconds7: 60,
+          seconds30: 60,
+        })),
+        total7: 360,
+        total30: 360,
+      };
+      const bars = timeSpentBars(many, 7);
+      expect(bars).toHaveLength(TIME_SPENT_LIMIT);
+      expect(bars.map((bar) => bar.projectName)).toEqual(['A', 'B', 'C', 'D', 'E']);
+    });
+
+    it('is empty with no time', () => {
+      expect(timeSpentBars({ projects: [], total7: 0, total30: 0 }, 30)).toEqual([]);
+    });
   });
 });

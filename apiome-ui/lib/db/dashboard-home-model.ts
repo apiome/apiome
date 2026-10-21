@@ -40,6 +40,18 @@ export const CONTINUE_PROJECT_LIMIT = 3;
  */
 export const PROJECT_PIN_LIMIT = 8;
 
+/** The two windows "Time spent" switches between (#544), in UTC days counting today. */
+export const TIME_SPENT_WINDOWS = [7, 30] as const;
+
+/** One of {@link TIME_SPENT_WINDOWS}. */
+export type TimeSpentWindow = (typeof TIME_SPENT_WINDOWS)[number];
+
+/** How many projects "Time spent" draws a bar for (#544); the rest are folded into the total. */
+export const TIME_SPENT_LIMIT = 5;
+
+/** How many projects the time query returns — enough to fill both windows' top five. */
+export const TIME_SPENT_CANDIDATES = 20;
+
 /** How many projects "Recently viewed" lists (#510). */
 export const RECENTLY_VIEWED_LIMIT = 5;
 
@@ -133,6 +145,78 @@ export interface PinnedProject {
  * - `error` — the write failed, or there is no signed-in reader.
  */
 export type PinProjectStatus = 'pinned' | 'already_pinned' | 'limit_reached' | 'not_found' | 'error';
+
+/** One project's share of the reader's active time (#544), in both windows at once. */
+export interface ProjectTime {
+  /** The project's record id, used as the React key and in the link. */
+  projectId: string;
+  /** The project's name, as the bar's label. */
+  projectName: string;
+  /** Active seconds in the last 7 UTC days, counting today. */
+  seconds7: number;
+  /** Active seconds in the last 30 UTC days, counting today. */
+  seconds30: number;
+}
+
+/** The reader's time on Home (#544): the top projects plus the totals across *all* projects. */
+export interface TimeSpent {
+  /** Up to {@link TIME_SPENT_CANDIDATES} projects, most time in 30 days first. */
+  projects: ProjectTime[];
+  /** Active seconds across every project in the last 7 days. */
+  total7: number;
+  /** Active seconds across every project in the last 30 days. */
+  total30: number;
+}
+
+/** One bar of the "Time spent" panel. */
+export interface TimeSpentBar {
+  projectId: string;
+  projectName: string;
+  /** Active seconds in the chosen window. */
+  seconds: number;
+  /** Bar length, 0–100, relative to the busiest project in the window. */
+  percent: number;
+}
+
+/**
+ * The bars for one window: the projects with time in it, most first, at most
+ * {@link TIME_SPENT_LIMIT}, each sized against the busiest one.
+ *
+ * @param timeSpent The loaded time.
+ * @param span 7 or 30 days.
+ * @returns The bars, empty when there is no time in the window.
+ */
+export function timeSpentBars(timeSpent: TimeSpent, span: TimeSpentWindow): TimeSpentBar[] {
+  const pick = (project: ProjectTime) => (span === 7 ? project.seconds7 : project.seconds30);
+  const ranked = timeSpent.projects
+    .filter((project) => pick(project) > 0)
+    .sort((a, b) => pick(b) - pick(a) || a.projectName.localeCompare(b.projectName))
+    .slice(0, TIME_SPENT_LIMIT);
+  const busiest = ranked.length > 0 ? pick(ranked[0]) : 0;
+  return ranked.map((project) => ({
+    projectId: project.projectId,
+    projectName: project.projectName,
+    seconds: pick(project),
+    percent: busiest > 0 ? Math.max(2, Math.round((pick(project) / busiest) * 100)) : 0,
+  }));
+}
+
+/**
+ * A duration as a reader says it: `"2h 05m"`, `"45m"`, or `"<1m"` for a sliver.
+ *
+ * @param seconds Active seconds (negative or non-finite reads as none).
+ * @returns The duration in hours and minutes.
+ */
+export function formatDuration(seconds: number): string {
+  const safe = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+  if (safe === 0) return '0m';
+  if (safe < 60) return '<1m';
+  const minutes = Math.floor(safe / 60);
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  return `${hours}h ${String(rest).padStart(2, '0')}m`;
+}
 
 /** Which of the four sources an attention row came from. */
 export type AttentionKind = 'sunset' | 'lint' | 'key' | 'review';
@@ -564,6 +648,8 @@ export interface DashboardHome {
   pinnedProjects: PinnedProject[];
   /** Up to {@link RECENTLY_VIEWED_LIMIT} projects in the current workspace, last opened first. */
   recentlyViewed: RecentlyViewedProject[];
+  /** The reader's own active time per project in the current workspace (#544). */
+  timeSpent: TimeSpent;
   /** Up to {@link ATTENTION_LIMIT} ranked rows. Empty means the panel is not drawn at all. */
   attention: AttentionItem[];
   /** Exactly {@link PULSE_WEEKS} buckets, oldest first. */
@@ -584,6 +670,7 @@ export function emptyDashboardHome(): DashboardHome {
     continueProjects: [],
     pinnedProjects: [],
     recentlyViewed: [],
+    timeSpent: { projects: [], total7: 0, total30: 0 },
     attention: [],
     pulse: [],
   };

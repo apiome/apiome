@@ -3361,6 +3361,32 @@ class PinnedProject(BaseModel):
     pinned_at: datetime = Field(..., serialization_alias="pinnedAt")
 
 
+class ProjectTimeSpent(BaseModel):
+    """One project's share of the caller's active time in the window (#544)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    seconds: int = Field(..., ge=0, description="Active seconds on this project in the window.")
+
+
+class ProjectTimeSpentResponse(BaseModel):
+    """Envelope for ``GET /v1/projects/{tenant_slug}/time-spent`` (#544)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    days: int = Field(..., ge=1, description="The window: today and the days before it, in UTC.")
+    total_seconds: int = Field(
+        0,
+        ge=0,
+        serialization_alias="totalSeconds",
+        description="The caller's active seconds across every project in the window.",
+    )
+    projects: List[ProjectTimeSpent] = Field(default_factory=list)
+
+
 class PinnedProjectsResponse(BaseModel):
     """Envelope for ``GET /v1/projects/{tenant_slug}/pinned`` (#513)."""
 

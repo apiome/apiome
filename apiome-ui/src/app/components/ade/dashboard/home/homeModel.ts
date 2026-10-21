@@ -627,4 +627,5 @@ export const PANEL = {
   quickActions: { title: 'Quick actions', icon: Zap },
   attention: { title: 'Needs attention', icon: BellRing },
   pulse: { title: 'Publishing pulse' },
+  timeSpent: { title: 'Time spent' },
 } as const;
