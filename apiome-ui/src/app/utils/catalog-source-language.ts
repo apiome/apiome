@@ -72,6 +72,7 @@ const FORMAT_LANGUAGE: Readonly<Record<string, string>> = {
   iso20022: 'xml',
   iso8583: 'plaintext',
   fix: 'plaintext',
+  'fix-orchestra': 'xml',
   zosconnect: 'json',
 };
 

@@ -1153,6 +1153,29 @@ def format_profile_metadata(model: CanonicalApi) -> Optional[Dict[str, Any]]:
     return dict(profile)
 
 
+def fix_msg_types_metadata(model: CanonicalApi) -> List[str]:
+    """Return the FIX message types (``MsgType``, tag 35) a model describes, for linking (FMT-6.9).
+
+    A FIX Orchestra repository records every message's ``msgType`` under ``extras.fix_msg_types``
+    (:mod:`app.fix_orchestra_normalizer`); a ``fix`` message item records its one ``fix_msg_type``
+    (:mod:`app.fix_normalizer`). Both are stored as ``format_metadata.fixMsgTypes`` so the
+    cross-format identity suggestions can link a specification to the messages that follow it
+    (:func:`app.api_identity_service.rank_identity_suggestions`).
+
+    Args:
+        model: The normalized model.
+
+    Returns:
+        The sorted, de-duplicated message types; empty for a model that records none.
+    """
+    if model.format not in ("fix", "fix-orchestra"):
+        return []
+    extras = model.extras if isinstance(model.extras, dict) else {}
+    declared = extras.get("fix_msg_types")
+    values = list(declared) if isinstance(declared, list) else [extras.get("fix_msg_type")]
+    return sorted({str(value) for value in values if isinstance(value, str) and value})
+
+
 def source_retention_withheld(model: CanonicalApi) -> Optional[str]:
     """Return why a model asks for its verbatim upload not to be stored, or ``None`` (FMT-6.7).
 
@@ -1275,6 +1298,9 @@ def persist_adapter_import(
     profile = format_profile_metadata(model)
     if profile is not None:
         format_metadata["formatProfile"] = profile
+    fix_msg_types = fix_msg_types_metadata(model)
+    if fix_msg_types:
+        format_metadata["fixMsgTypes"] = fix_msg_types
     format_metadata.update(_source_content_for_persist(intake, scrub_resolution))
     withheld = source_retention_withheld(model)
     if withheld is not None:

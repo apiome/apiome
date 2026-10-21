@@ -727,6 +727,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['e-prescribing', 'newrx', 'rxfill', 'pharmacy', 'claim', 'd.0', 'b1', 'pharmacy claims'],
   },
   {
+    id: 'fix-orchestra-import',
+    title: 'Import a FIX Orchestra repository',
+    summary: 'Catalog the declared FIX schema: messages, code sets, components, groups and presence rules.',
+    page: 'apiome-docs/docs/bring-in/fix-orchestra-import.md',
+    section: 'reference',
+    keywords: ['rules of engagement', 'msgtype', 'code set', 'presence', 'trading', 'fixr'],
+  },
+  {
     id: 'dicom-import',
     title: 'Import DICOM metadata',
     summary: 'Catalog SOP classes, attributes and Structured Report trees from Part 10 or DICOM JSON. Pixel data is never read.',

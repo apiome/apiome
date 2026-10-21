@@ -1,0 +1,503 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [],
+      "fix_datatypes": [],
+      "fix_field_count": 8,
+      "fix_flows": [],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleModular",
+      "fix_repository_version": "FIX.4.4_EP010"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleModular",
+      "namespace": "FIX.4.4_EP010"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleModular",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "Common",
+          "fix_id": "1003",
+          "fix_kind": "component"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "55"
+            },
+            "field_number": 55,
+            "key": "Instrument.Symbol",
+            "name": "Symbol",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Instrument",
+        "key_type": null,
+        "kind": "record",
+        "name": "Instrument",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_component_id": "1003",
+              "fix_presence": "required"
+            },
+            "field_number": null,
+            "key": "NewOrderSingle.Instrument",
+            "name": "Instrument",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Instrument",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "OrdTypeCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "40"
+            },
+            "field_number": 40,
+            "key": "NewOrderSingle.OrdType",
+            "name": "OrdType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrdTypeCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "38"
+            },
+            "field_number": 38,
+            "key": "NewOrderSingle.OrderQty",
+            "name": "OrderQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "conditional",
+                "fix_rules": [
+                  {
+                    "name": "RequiredForLimit",
+                    "presence": "required",
+                    "when": "OrdType == \"^Limit\""
+                  }
+                ]
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "conditional",
+              "fix_tag": "44"
+            },
+            "field_number": 44,
+            "key": "NewOrderSingle.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "SideCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "54"
+            },
+            "field_number": 54,
+            "key": "NewOrderSingle.Side",
+            "name": "Side",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SideCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "TimeInForceCodeSet",
+              "fix_presence": "optional",
+              "fix_tag": "59"
+            },
+            "field_number": 59,
+            "key": "NewOrderSingle.TimeInForce",
+            "name": "TimeInForce",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "TimeInForceCodeSet",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "UTCTimestamp",
+              "fix_presence": "required",
+              "fix_tag": "60"
+            },
+            "field_number": 60,
+            "key": "NewOrderSingle.TransactTime",
+            "name": "TransactTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40001"
+            },
+            "key": "OrdTypeCodeSet.Market",
+            "name": "Market",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40002"
+            },
+            "key": "OrdTypeCodeSet.Limit",
+            "name": "Limit",
+            "value": "2"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40003"
+            },
+            "key": "OrdTypeCodeSet.Stop",
+            "name": "Stop",
+            "value": "3"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40004"
+            },
+            "key": "OrdTypeCodeSet.StopLimit",
+            "name": "StopLimit",
+            "value": "4"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "40",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "OrdTypeCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrdTypeCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54001"
+            },
+            "key": "SideCodeSet.Buy",
+            "name": "Buy",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54002"
+            },
+            "key": "SideCodeSet.Sell",
+            "name": "Sell",
+            "value": "2"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54005"
+            },
+            "key": "SideCodeSet.SellShort",
+            "name": "SellShort",
+            "value": "5"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "54",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "SideCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SideCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "59000"
+            },
+            "key": "TimeInForceCodeSet.Day",
+            "name": "Day",
+            "value": "0"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "59001"
+            },
+            "key": "TimeInForceCodeSet.GoodTillCancel",
+            "name": "GoodTillCancel",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "59003"
+            },
+            "key": "TimeInForceCodeSet.ImmediateOrCancel",
+            "name": "ImmediateOrCancel",
+            "value": "3"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "59004"
+            },
+            "key": "TimeInForceCodeSet.FillOrKill",
+            "name": "FillOrKill",
+            "value": "4"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "59",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "TimeInForceCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "TimeInForceCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4_EP010"
+  },
+  "corpus_path": "fix-orchestra/07-modular-set/repository.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:bba7781bb96f9905f9f0be5a9b4baaec52f3869c795fb1065376ee68c87c02fd",
+  "lint": {
+    "findings": 15,
+    "grade": "C",
+    "report_fingerprint": "79afe31cc9207ef9b2f3a076c16b6f90b8026d3445a6ec33ef765efea71b9871",
+    "score": 70,
+    "severity_counts": {
+      "error": 0,
+      "info": 10,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,837 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [],
+      "fix_datatypes": [],
+      "fix_field_count": 11,
+      "fix_flows": [],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        },
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "dark"
+        },
+        {
+          "msgType": "8",
+          "name": "ExecutionReport",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "8",
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleRules",
+      "fix_repository_version": "FIX.4.4_EP003"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleRules",
+      "namespace": "FIX.4.4_EP003"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleRules",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "150000"
+            },
+            "key": "ExecTypeCodeSet.New",
+            "name": "New",
+            "value": "0"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "150F"
+            },
+            "key": "ExecTypeCodeSet.Trade",
+            "name": "Trade",
+            "value": "F"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "150004"
+            },
+            "key": "ExecTypeCodeSet.Canceled",
+            "name": "Canceled",
+            "value": "4"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "150008"
+            },
+            "key": "ExecTypeCodeSet.Rejected",
+            "name": "Rejected",
+            "value": "8"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "150",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "ExecTypeCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "ExecTypeCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "9",
+          "fix_kind": "message",
+          "fix_msg_name": "ExecutionReport",
+          "fix_msg_type": "8",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "ExecutionReport.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "ExecTypeCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "150"
+            },
+            "field_number": 150,
+            "key": "ExecutionReport.ExecType",
+            "name": "ExecType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ExecTypeCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "38"
+            },
+            "field_number": 38,
+            "key": "ExecutionReport.OrderQty",
+            "name": "OrderQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "optional",
+              "fix_tag": "44"
+            },
+            "field_number": 44,
+            "key": "ExecutionReport.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ExecutionReport",
+        "key_type": null,
+        "kind": "record",
+        "name": "ExecutionReport",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_responses": [
+            {
+              "messages": [
+                {
+                  "msgType": "8",
+                  "name": "ExecutionReport"
+                }
+              ],
+              "name": "accept"
+            }
+          ],
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "optional",
+              "fix_tag": "1"
+            },
+            "field_number": 1,
+            "key": "NewOrderSingle.Account",
+            "name": "Account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "ignored"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "MultipleCharValue",
+              "fix_presence": "ignored",
+              "fix_tag": "18"
+            },
+            "field_number": 18,
+            "key": "NewOrderSingle.ExecInst",
+            "name": "ExecInst",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "UTCTimestamp",
+              "fix_presence": "optional",
+              "fix_tag": "126"
+            },
+            "field_number": 126,
+            "key": "NewOrderSingle.ExpireTime",
+            "name": "ExpireTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "1"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "constant"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "char",
+              "fix_presence": "constant",
+              "fix_tag": "21"
+            },
+            "field_number": 21,
+            "key": "NewOrderSingle.HandlInst",
+            "name": "HandlInst",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "forbidden"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "forbidden",
+              "fix_tag": "110"
+            },
+            "field_number": 110,
+            "key": "NewOrderSingle.MinQty",
+            "name": "MinQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "OrdTypeCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "40"
+            },
+            "field_number": 40,
+            "key": "NewOrderSingle.OrdType",
+            "name": "OrdType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrdTypeCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_rules": [
+                  {
+                    "assign": "OrderQty > 0",
+                    "name": "PositiveQuantity"
+                  }
+                ]
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "38"
+            },
+            "field_number": 38,
+            "key": "NewOrderSingle.OrderQty",
+            "name": "OrderQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "conditional",
+                "fix_rules": [
+                  {
+                    "name": "RequiredForLimit",
+                    "presence": "required",
+                    "when": "OrdType in {\"^Limit\", \"^StopLimit\"}"
+                  }
+                ]
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "conditional",
+              "fix_tag": "44"
+            },
+            "field_number": 44,
+            "key": "NewOrderSingle.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "conditional",
+                "fix_rules": [
+                  {
+                    "name": "RequiredForStop",
+                    "presence": "required",
+                    "when": "OrdType in {\"^Stop\", \"^StopLimit\"}"
+                  }
+                ]
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "conditional",
+              "fix_tag": "99"
+            },
+            "field_number": 99,
+            "key": "NewOrderSingle.StopPx",
+            "name": "StopPx",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A second scenario of the same message: on the dark venue MinQty is required and Price is forbidden.",
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "dark"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle_dark.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "110"
+            },
+            "field_number": 110,
+            "key": "NewOrderSingle_dark.MinQty",
+            "name": "MinQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "1"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "constant"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "OrdTypeCodeSet",
+              "fix_presence": "constant",
+              "fix_tag": "40"
+            },
+            "field_number": 40,
+            "key": "NewOrderSingle_dark.OrdType",
+            "name": "OrdType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrdTypeCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "38"
+            },
+            "field_number": 38,
+            "key": "NewOrderSingle_dark.OrderQty",
+            "name": "OrderQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "fix_presence": "forbidden"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "forbidden",
+              "fix_tag": "44"
+            },
+            "field_number": 44,
+            "key": "NewOrderSingle_dark.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NewOrderSingle_dark",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle_dark",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40001"
+            },
+            "key": "OrdTypeCodeSet.Market",
+            "name": "Market",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40002"
+            },
+            "key": "OrdTypeCodeSet.Limit",
+            "name": "Limit",
+            "value": "2"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40003"
+            },
+            "key": "OrdTypeCodeSet.Stop",
+            "name": "Stop",
+            "value": "3"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40004"
+            },
+            "key": "OrdTypeCodeSet.StopLimit",
+            "name": "StopLimit",
+            "value": "4"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "40",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "OrdTypeCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrdTypeCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4_EP003"
+  },
+  "corpus_path": "fix-orchestra/04-stress-presence-and-rules.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:430264d9818acd0e182c86aca6c65049442774d6fbff216a7a43c31aae53b669",
+  "lint": {
+    "findings": 24,
+    "grade": "D",
+    "report_fingerprint": "52fdc3dae2689c6eb304ae70dd01513a1260eefa65221ca1106cb6c2d7b93989",
+    "score": 64,
+    "severity_counts": {
+      "error": 0,
+      "info": 20,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

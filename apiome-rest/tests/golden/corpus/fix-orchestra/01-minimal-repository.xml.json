@@ -1,0 +1,172 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [],
+      "fix_datatypes": [],
+      "fix_field_count": 2,
+      "fix_flows": [],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleMinimal",
+      "fix_repository_version": "FIX.4.4"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleMinimal",
+      "namespace": "FIX.4.4"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleMinimal",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "SideCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "54"
+            },
+            "field_number": 54,
+            "key": "NewOrderSingle.Side",
+            "name": "Side",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SideCodeSet",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54001"
+            },
+            "key": "SideCodeSet.Buy",
+            "name": "Buy",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54002"
+            },
+            "key": "SideCodeSet.Sell",
+            "name": "Sell",
+            "value": "2"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "54",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "SideCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SideCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4"
+  },
+  "corpus_path": "fix-orchestra/01-minimal-repository.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:65c7fd3c7e23316081941148c9fadfa3c88b6814b81a69df12e8ef91200750ba",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "7cf5000b0036e4c37f990f45309c43fb5f059de7ec7617bb456fab28e1526724",
+    "score": 89,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

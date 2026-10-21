@@ -99,6 +99,7 @@ def parse_xml(
     source_label: Optional[str] = None,
     max_bytes: int = DEFAULT_MAX_XML_BYTES,
     max_depth: int = DEFAULT_MAX_XML_DEPTH,
+    allow_xinclude: bool = False,
 ) -> ET.Element:
     """Parse XML text with DTD, entity, external-reference, size and depth guards.
 
@@ -107,6 +108,10 @@ def parse_xml(
         source_label: Optional label (filename) used to make errors specific.
         max_bytes: UTF-8 byte ceiling, checked before parsing.
         max_depth: Maximum element nesting depth, checked after parsing.
+        allow_xinclude: Leave ``xi:include`` elements in the returned tree instead of
+            rejecting them. They are never expanded here: a caller that opts in resolves
+            each directive itself, against the members of an uploaded fileset only
+            (FMT-6.9, :mod:`app.fix_orchestra_parser`), never the network or filesystem.
 
     Returns:
         The parsed root :class:`xml.etree.ElementTree.Element`.
@@ -161,7 +166,7 @@ def parse_xml(
             code="INPUT_DEPTH_LIMIT",
         )
 
-    directive = _find_xinclude(root)
+    directive = None if allow_xinclude else _find_xinclude(root)
     if directive is not None:
         raise SecureXmlError(
             f"XML document uses an XInclude directive{where} "

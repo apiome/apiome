@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1466 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1467 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -135,8 +135,8 @@ The corpus holds **1466 files** across **107 format directories**. Every file ha
 | `edi-x12/` | EDI ASC X12 | message | `ISA`/`GS`/`ST` envelopes | 12 |
 | `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 17 |
 | `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 11 |
-| `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 11 |
-| `fix-orchestra/` | FIX Orchestra (pending #5453) | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
+| `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 12 |
+| `fix-orchestra/` | FIX Orchestra | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
 | `hl7v3/` | HL7 v3 / CDA | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
 | `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
@@ -901,17 +901,18 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | --- | --- | --- | --- | --- |
 | `01-newordersingle.fix` | minimal | `fix` ≥ 0.95 | valid | `new-order-single` |
 | `02-executionreport.fix` | typical | `fix` ≥ 0.95 | valid | `execution-report` |
-| `02-orchestra.xml` ⚠ | composition | `fix` ≥ 0.9 | valid | `fixr-repository`, `code-sets`, `messages` |
+| `02-orchestra.xml` ⚠ | composition | `fix-orchestra` ≥ 0.9 | valid | `fixr-repository`, `code-sets`, `messages` |
 | `03-cancel-replace-flow.fix` | typical | `fix` ≥ 0.95 | valid | `order-cancel-replace`, `order-cancel-request`, `session-log` |
 | `04-repeating-groups-stress.fix` | stress | `fix` ≥ 0.95 | valid | `repeating-groups`, `party-ids`, `user-defined-tags`, `execution-report` |
 | `05-order-lifecycle-session.fix` | real-world | `fix` ≥ 0.95 | valid | `logon`, `heartbeat`, `order-lifecycle`, `execution-report`, `logout` |
+| `06-composition-allocation-instruction.fix` | composition | `fix` ≥ 0.95 | valid | `allocation-instruction`, `parties-component`, `nested-repeating-group`, `multiple-groups` |
 | `negative/01-syntactic-bare-token.fix` ⚠ | — | `fix` (no guarantee) | invalid | `negative`, `syntactic`, `bare-token` |
 | `negative/02-semantic-missing-msgtype.fix` | — | `fix` (no guarantee) | invalid | `negative`, `semantic`, `missing-msgtype` |
 | `negative/03-truncated-mid-tag.fix` ⚠ | — | `fix` (no guarantee) | invalid | `negative`, `truncated`, `mid-tag` |
 | `negative/04-wrong-format-hl7-ack.hl7` | — | `fix` (no guarantee) | invalid | `negative`, `wrong-format`, `hl7-ack` |
 | `negative/05-encoding-utf16-order.fix` ⚠ | — | `fix` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
 
-> ⚠ **`02-orchestra.xml`** — FIX Orchestra XML is not yet recognized — currently misdetected as protobuf (weak 0.70 grpc-adapter keyword match) and the fix adapter has no Orchestra parser; expected_detection records the intended contract.
+> ⚠ **`02-orchestra.xml`** — A FIX Orchestra repository kept beside the tag=value messages it specifies; it imports with the fix-orchestra adapter (FMT-6.9), and its NewOrderSingle (msgType D) is suggested as a link for fix/01-newordersingle.fix.
 
 > ⚠ **`negative/01-syntactic-bare-token.fix`** — The fix sniffer is_fix() raises FixParseError on the bare token instead of returning False; the pipeline grounds the failure to INPUT_MALFORMED, but a direct adapter.detect() probe raises FixParseError.
 
@@ -919,24 +920,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/05-encoding-utf16-order.fix`** — A direct adapter.detect() probe on the replacement-character text raises FixParseError (known is_fix sniffer bug); the pipeline classifies the file as INPUT_ENCODING_INVALID before that matters.
 
-### `fix-orchestra/` — FIX Orchestra (pending #5453)
+### `fix-orchestra/` — FIX Orchestra
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-repository.xml` | minimal | `fix-orchestra` ≥ 0.9 | valid | `codeSet`, `fields`, `message`, `structure`, `pending-adapter` |
-| `02-typical-order-repository.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `datatypes`, `codeSets`, `component`, `componentRef`, `documentation`, `metadata`, `pending-adapter` |
-| `03-composition-components-and-groups.xml` | composition | `fix-orchestra` ≥ 0.9 | valid | `group`, `nested-group`, `numInGroup`, `groupRef`, `componentRef`, `pending-adapter` |
-| `04-stress-presence-and-rules.xml` | stress | `fix-orchestra` ≥ 0.9 | valid | `presence-required`, `presence-optional`, `presence-conditional`, `presence-forbidden`, `presence-ignored`, `presence-constant`, `rule`, `when`, `scenario`, `responses`, `pending-adapter` |
-| `05-real-world-execution-flow.xml` | real-world | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow`, `responses`, `conditional-rules`, `execution-report`, `cancel-reject`, `pending-adapter` |
-| `06-typical-actors-and-state-machine.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow-reliability`, `states`, `transition`, `state-machine`, `pending-adapter` |
-| `07-modular-set/codesets.xml` ⚠ | multi-file (member) | `fix-orchestra` (no guarantee) | valid | `shared-code-sets`, `xinclude-target`, `pending-adapter` |
-| `07-modular-set/repository.xml` | multi-file (root) | `fix-orchestra` ≥ 0.9 | valid | `xinclude`, `modular-repository`, `conditional-rule`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-message.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-messages.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `semantic`, `no-messages`, `pending-adapter` |
-| `negative/03-truncated-mid-codeset.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-fix-tagvalue.fix` ⚠ | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `wrong-format`, `fix-tagvalue`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-field-ref.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-field`, `missing-component`, `pending-adapter` |
+| `01-minimal-repository.xml` | minimal | `fix-orchestra` ≥ 0.9 | valid | `codeSet`, `fields`, `message`, `structure` |
+| `02-typical-order-repository.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `datatypes`, `codeSets`, `component`, `componentRef`, `documentation`, `metadata` |
+| `03-composition-components-and-groups.xml` | composition | `fix-orchestra` ≥ 0.9 | valid | `group`, `nested-group`, `numInGroup`, `groupRef`, `componentRef` |
+| `04-stress-presence-and-rules.xml` | stress | `fix-orchestra` ≥ 0.9 | valid | `presence-required`, `presence-optional`, `presence-conditional`, `presence-forbidden`, `presence-ignored`, `presence-constant`, `rule`, `when`, `scenario`, `responses` |
+| `05-real-world-execution-flow.xml` | real-world | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow`, `responses`, `conditional-rules`, `execution-report`, `cancel-reject` |
+| `06-typical-actors-and-state-machine.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow-reliability`, `states`, `transition`, `state-machine` |
+| `07-modular-set/codesets.xml` ⚠ | multi-file (member) | `fix-orchestra` (no guarantee) | valid | `shared-code-sets`, `xinclude-target` |
+| `07-modular-set/repository.xml` | multi-file (root) | `fix-orchestra` ≥ 0.9 | valid | `xinclude`, `modular-repository`, `conditional-rule` |
+| `negative/01-syntactic-unclosed-message.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-messages.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `semantic`, `no-messages` |
+| `negative/03-truncated-mid-codeset.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-fix-tagvalue.fix` ⚠ | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `wrong-format`, `fix-tagvalue` |
+| `negative/05-encoding-utf16.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-field-ref.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-field`, `missing-component` |
 
 > ⚠ **`07-modular-set/codesets.xml`** — Fileset member: the shared code-set library; on its own it types nothing.
 
@@ -2723,7 +2724,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1466 | `Apache-2.0` |
+| `hand-authored` | 1467 | `Apache-2.0` |
 
 ## Trying an import
 

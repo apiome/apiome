@@ -1,0 +1,293 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [],
+      "fix_datatypes": [],
+      "fix_field_count": 6,
+      "fix_flows": [],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleOrchestra",
+      "fix_repository_version": "FIX.4.4"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleOrchestra",
+      "namespace": "FIX.4.4"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleOrchestra",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": null,
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "OrdTypeCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "40"
+            },
+            "field_number": 40,
+            "key": "NewOrderSingle.OrdType",
+            "name": "OrdType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrdTypeCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Qty",
+              "fix_presence": "required",
+              "fix_tag": "38"
+            },
+            "field_number": 38,
+            "key": "NewOrderSingle.OrderQty",
+            "name": "OrderQty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "Price",
+              "fix_presence": "optional",
+              "fix_tag": "44"
+            },
+            "field_number": 44,
+            "key": "NewOrderSingle.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "SideCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "54"
+            },
+            "field_number": 54,
+            "key": "NewOrderSingle.Side",
+            "name": "Side",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SideCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "55"
+            },
+            "field_number": 55,
+            "key": "NewOrderSingle.Symbol",
+            "name": "Symbol",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40001"
+            },
+            "key": "OrdTypeCodeSet.Market",
+            "name": "Market",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "40002"
+            },
+            "key": "OrdTypeCodeSet.Limit",
+            "name": "Limit",
+            "value": "2"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "40",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "OrdTypeCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrdTypeCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54001"
+            },
+            "key": "SideCodeSet.Buy",
+            "name": "Buy",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "54002"
+            },
+            "key": "SideCodeSet.Sell",
+            "name": "Sell",
+            "value": "2"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "54",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "SideCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SideCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4"
+  },
+  "corpus_path": "fix/02-orchestra.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:9f1c6d1fec37a6b96edb2fecf37fc81b111c24e95fe13521a081565398f9e528",
+  "lint": {
+    "findings": 10,
+    "grade": "B",
+    "report_fingerprint": "706c8e2b1ab140d54c69643bb9aa912bfdd49193710bf51664e0bb2901c82a10",
+    "score": 81,
+    "severity_counts": {
+      "error": 0,
+      "info": 7,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

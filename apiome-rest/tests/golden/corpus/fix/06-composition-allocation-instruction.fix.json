@@ -1,0 +1,919 @@
+{
+  "adapter": "fix",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_begin_string": "FIX.4.4",
+      "fix_delimiter": "|",
+      "fix_fields": [
+        {
+          "name": "BeginString",
+          "tag": "8",
+          "value": "FIX.4.4"
+        },
+        {
+          "name": "BodyLength",
+          "tag": "9",
+          "value": "356"
+        },
+        {
+          "name": "MsgType",
+          "tag": "35",
+          "value": "J"
+        },
+        {
+          "name": "MsgSeqNum",
+          "tag": "34",
+          "value": "412"
+        },
+        {
+          "name": "SenderCompID",
+          "tag": "49",
+          "value": "BUYSIDE"
+        },
+        {
+          "name": "TargetCompID",
+          "tag": "56",
+          "value": "SELLSIDE"
+        },
+        {
+          "name": "SendingTime",
+          "tag": "52",
+          "value": "20260118-16:30:00.000"
+        },
+        {
+          "name": "Tag70",
+          "tag": "70",
+          "value": "ALLOC-0007"
+        },
+        {
+          "name": "Tag71",
+          "tag": "71",
+          "value": "0"
+        },
+        {
+          "name": "Tag626",
+          "tag": "626",
+          "value": "1"
+        },
+        {
+          "name": "Tag857",
+          "tag": "857",
+          "value": "0"
+        },
+        {
+          "name": "Side",
+          "tag": "54",
+          "value": "1"
+        },
+        {
+          "name": "Symbol",
+          "tag": "55",
+          "value": "EXMPL"
+        },
+        {
+          "name": "Tag53",
+          "tag": "53",
+          "value": "1500"
+        },
+        {
+          "name": "AvgPx",
+          "tag": "6",
+          "value": "101.25"
+        },
+        {
+          "name": "Tag75",
+          "tag": "75",
+          "value": "20260118"
+        },
+        {
+          "name": "TransactTime",
+          "tag": "60",
+          "value": "20260118-16:30:00.000"
+        },
+        {
+          "name": "Tag73",
+          "tag": "73",
+          "value": "2"
+        },
+        {
+          "name": "ClOrdID",
+          "tag": "11",
+          "value": "ORDER-0200"
+        },
+        {
+          "name": "OrderID",
+          "tag": "37",
+          "value": "ORD-0200"
+        },
+        {
+          "name": "ClOrdID",
+          "tag": "11",
+          "value": "ORDER-0201"
+        },
+        {
+          "name": "OrderID",
+          "tag": "37",
+          "value": "ORD-0201"
+        },
+        {
+          "name": "Tag453",
+          "tag": "453",
+          "value": "1"
+        },
+        {
+          "name": "Tag448",
+          "tag": "448",
+          "value": "EXEC-FIRM-1"
+        },
+        {
+          "name": "Tag447",
+          "tag": "447",
+          "value": "D"
+        },
+        {
+          "name": "Tag452",
+          "tag": "452",
+          "value": "1"
+        },
+        {
+          "name": "Tag802",
+          "tag": "802",
+          "value": "1"
+        },
+        {
+          "name": "Tag523",
+          "tag": "523",
+          "value": "DESK-EQ"
+        },
+        {
+          "name": "Tag803",
+          "tag": "803",
+          "value": "10"
+        },
+        {
+          "name": "Tag78",
+          "tag": "78",
+          "value": "2"
+        },
+        {
+          "name": "Tag79",
+          "tag": "79",
+          "value": "ACCT-PENSION"
+        },
+        {
+          "name": "Tag80",
+          "tag": "80",
+          "value": "1000"
+        },
+        {
+          "name": "Tag79",
+          "tag": "79",
+          "value": "ACCT-HEDGE"
+        },
+        {
+          "name": "Tag80",
+          "tag": "80",
+          "value": "500"
+        },
+        {
+          "name": "CheckSum",
+          "tag": "10",
+          "value": "118"
+        }
+      ],
+      "fix_msg_type": "J",
+      "fix_msg_type_name": "MessageJ",
+      "fix_sender_comp_id": "BUYSIDE",
+      "fix_target_comp_id": "SELLSIDE"
+    },
+    "format": "fix",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "MessageJ (FIX.4.4)",
+      "namespace": "FIX.4.4"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "MessageJ (FIX.4.4)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "MessageJ",
+        "enum_values": [],
+        "extras": {
+          "fix_kind": "message",
+          "fix_msg_type": "J",
+          "fix_msg_type_name": "MessageJ"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "118",
+            "deprecated": false,
+            "description": "CheckSum",
+            "extras": {
+              "fix_name": "CheckSum",
+              "fix_tag": "10"
+            },
+            "field_number": 35,
+            "key": "FIX.4.4.MessageJ.Tag10",
+            "name": "Tag10",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ORDER-0200",
+            "deprecated": false,
+            "description": "ClOrdID",
+            "extras": {
+              "fix_name": "ClOrdID",
+              "fix_tag": "11"
+            },
+            "field_number": 19,
+            "key": "FIX.4.4.MessageJ.Tag11",
+            "name": "Tag11",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ORDER-0201",
+            "deprecated": false,
+            "description": "ClOrdID",
+            "extras": {
+              "fix_name": "ClOrdID",
+              "fix_tag": "11"
+            },
+            "field_number": 21,
+            "key": "FIX.4.4.MessageJ.Tag11",
+            "name": "Tag11",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "412",
+            "deprecated": false,
+            "description": "MsgSeqNum",
+            "extras": {
+              "fix_name": "MsgSeqNum",
+              "fix_tag": "34"
+            },
+            "field_number": 4,
+            "key": "FIX.4.4.MessageJ.Tag34",
+            "name": "Tag34",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "J",
+            "deprecated": false,
+            "description": "MsgType",
+            "extras": {
+              "fix_name": "MsgType",
+              "fix_tag": "35"
+            },
+            "field_number": 3,
+            "key": "FIX.4.4.MessageJ.Tag35",
+            "name": "Tag35",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ORD-0200",
+            "deprecated": false,
+            "description": "OrderID",
+            "extras": {
+              "fix_name": "OrderID",
+              "fix_tag": "37"
+            },
+            "field_number": 20,
+            "key": "FIX.4.4.MessageJ.Tag37",
+            "name": "Tag37",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ORD-0201",
+            "deprecated": false,
+            "description": "OrderID",
+            "extras": {
+              "fix_name": "OrderID",
+              "fix_tag": "37"
+            },
+            "field_number": 22,
+            "key": "FIX.4.4.MessageJ.Tag37",
+            "name": "Tag37",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "D",
+            "deprecated": false,
+            "description": "Tag447",
+            "extras": {
+              "fix_name": "Tag447",
+              "fix_tag": "447"
+            },
+            "field_number": 25,
+            "key": "FIX.4.4.MessageJ.Tag447",
+            "name": "Tag447",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EXEC-FIRM-1",
+            "deprecated": false,
+            "description": "Tag448",
+            "extras": {
+              "fix_name": "Tag448",
+              "fix_tag": "448"
+            },
+            "field_number": 24,
+            "key": "FIX.4.4.MessageJ.Tag448",
+            "name": "Tag448",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": "Tag452",
+            "extras": {
+              "fix_name": "Tag452",
+              "fix_tag": "452"
+            },
+            "field_number": 26,
+            "key": "FIX.4.4.MessageJ.Tag452",
+            "name": "Tag452",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": "Tag453",
+            "extras": {
+              "fix_name": "Tag453",
+              "fix_tag": "453"
+            },
+            "field_number": 23,
+            "key": "FIX.4.4.MessageJ.Tag453",
+            "name": "Tag453",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "BUYSIDE",
+            "deprecated": false,
+            "description": "SenderCompID",
+            "extras": {
+              "fix_name": "SenderCompID",
+              "fix_tag": "49"
+            },
+            "field_number": 5,
+            "key": "FIX.4.4.MessageJ.Tag49",
+            "name": "Tag49",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260118-16:30:00.000",
+            "deprecated": false,
+            "description": "SendingTime",
+            "extras": {
+              "fix_name": "SendingTime",
+              "fix_tag": "52"
+            },
+            "field_number": 7,
+            "key": "FIX.4.4.MessageJ.Tag52",
+            "name": "Tag52",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DESK-EQ",
+            "deprecated": false,
+            "description": "Tag523",
+            "extras": {
+              "fix_name": "Tag523",
+              "fix_tag": "523"
+            },
+            "field_number": 28,
+            "key": "FIX.4.4.MessageJ.Tag523",
+            "name": "Tag523",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1500",
+            "deprecated": false,
+            "description": "Tag53",
+            "extras": {
+              "fix_name": "Tag53",
+              "fix_tag": "53"
+            },
+            "field_number": 14,
+            "key": "FIX.4.4.MessageJ.Tag53",
+            "name": "Tag53",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": "Side",
+            "extras": {
+              "fix_name": "Side",
+              "fix_tag": "54"
+            },
+            "field_number": 12,
+            "key": "FIX.4.4.MessageJ.Tag54",
+            "name": "Tag54",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EXMPL",
+            "deprecated": false,
+            "description": "Symbol",
+            "extras": {
+              "fix_name": "Symbol",
+              "fix_tag": "55"
+            },
+            "field_number": 13,
+            "key": "FIX.4.4.MessageJ.Tag55",
+            "name": "Tag55",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SELLSIDE",
+            "deprecated": false,
+            "description": "TargetCompID",
+            "extras": {
+              "fix_name": "TargetCompID",
+              "fix_tag": "56"
+            },
+            "field_number": 6,
+            "key": "FIX.4.4.MessageJ.Tag56",
+            "name": "Tag56",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "101.25",
+            "deprecated": false,
+            "description": "AvgPx",
+            "extras": {
+              "fix_name": "AvgPx",
+              "fix_tag": "6"
+            },
+            "field_number": 15,
+            "key": "FIX.4.4.MessageJ.Tag6",
+            "name": "Tag6",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260118-16:30:00.000",
+            "deprecated": false,
+            "description": "TransactTime",
+            "extras": {
+              "fix_name": "TransactTime",
+              "fix_tag": "60"
+            },
+            "field_number": 17,
+            "key": "FIX.4.4.MessageJ.Tag60",
+            "name": "Tag60",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": "Tag626",
+            "extras": {
+              "fix_name": "Tag626",
+              "fix_tag": "626"
+            },
+            "field_number": 10,
+            "key": "FIX.4.4.MessageJ.Tag626",
+            "name": "Tag626",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ALLOC-0007",
+            "deprecated": false,
+            "description": "Tag70",
+            "extras": {
+              "fix_name": "Tag70",
+              "fix_tag": "70"
+            },
+            "field_number": 8,
+            "key": "FIX.4.4.MessageJ.Tag70",
+            "name": "Tag70",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0",
+            "deprecated": false,
+            "description": "Tag71",
+            "extras": {
+              "fix_name": "Tag71",
+              "fix_tag": "71"
+            },
+            "field_number": 9,
+            "key": "FIX.4.4.MessageJ.Tag71",
+            "name": "Tag71",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": "Tag73",
+            "extras": {
+              "fix_name": "Tag73",
+              "fix_tag": "73"
+            },
+            "field_number": 18,
+            "key": "FIX.4.4.MessageJ.Tag73",
+            "name": "Tag73",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260118",
+            "deprecated": false,
+            "description": "Tag75",
+            "extras": {
+              "fix_name": "Tag75",
+              "fix_tag": "75"
+            },
+            "field_number": 16,
+            "key": "FIX.4.4.MessageJ.Tag75",
+            "name": "Tag75",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": "Tag78",
+            "extras": {
+              "fix_name": "Tag78",
+              "fix_tag": "78"
+            },
+            "field_number": 30,
+            "key": "FIX.4.4.MessageJ.Tag78",
+            "name": "Tag78",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACCT-PENSION",
+            "deprecated": false,
+            "description": "Tag79",
+            "extras": {
+              "fix_name": "Tag79",
+              "fix_tag": "79"
+            },
+            "field_number": 31,
+            "key": "FIX.4.4.MessageJ.Tag79",
+            "name": "Tag79",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "ACCT-HEDGE",
+            "deprecated": false,
+            "description": "Tag79",
+            "extras": {
+              "fix_name": "Tag79",
+              "fix_tag": "79"
+            },
+            "field_number": 33,
+            "key": "FIX.4.4.MessageJ.Tag79",
+            "name": "Tag79",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "FIX.4.4",
+            "deprecated": false,
+            "description": "BeginString",
+            "extras": {
+              "fix_name": "BeginString",
+              "fix_tag": "8"
+            },
+            "field_number": 1,
+            "key": "FIX.4.4.MessageJ.Tag8",
+            "name": "Tag8",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1000",
+            "deprecated": false,
+            "description": "Tag80",
+            "extras": {
+              "fix_name": "Tag80",
+              "fix_tag": "80"
+            },
+            "field_number": 32,
+            "key": "FIX.4.4.MessageJ.Tag80",
+            "name": "Tag80",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "500",
+            "deprecated": false,
+            "description": "Tag80",
+            "extras": {
+              "fix_name": "Tag80",
+              "fix_tag": "80"
+            },
+            "field_number": 34,
+            "key": "FIX.4.4.MessageJ.Tag80",
+            "name": "Tag80",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": "Tag802",
+            "extras": {
+              "fix_name": "Tag802",
+              "fix_tag": "802"
+            },
+            "field_number": 27,
+            "key": "FIX.4.4.MessageJ.Tag802",
+            "name": "Tag802",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "10",
+            "deprecated": false,
+            "description": "Tag803",
+            "extras": {
+              "fix_name": "Tag803",
+              "fix_tag": "803"
+            },
+            "field_number": 29,
+            "key": "FIX.4.4.MessageJ.Tag803",
+            "name": "Tag803",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "0",
+            "deprecated": false,
+            "description": "Tag857",
+            "extras": {
+              "fix_name": "Tag857",
+              "fix_tag": "857"
+            },
+            "field_number": 11,
+            "key": "FIX.4.4.MessageJ.Tag857",
+            "name": "Tag857",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "356",
+            "deprecated": false,
+            "description": "BodyLength",
+            "extras": {
+              "fix_name": "BodyLength",
+              "fix_tag": "9"
+            },
+            "field_number": 2,
+            "key": "FIX.4.4.MessageJ.Tag9",
+            "name": "Tag9",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "FIX.4.4.MessageJ",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageJ",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "fix/06-composition-allocation-instruction.fix",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.98,
+    "format": "fix"
+  },
+  "fingerprint": "sha256:e40b19333739274fe68ae9ffaf9302c00945ab617f9bb3e5633dc6838735a5e9",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "4c036debd01db92b85b53fe3a5df4c70a8fe914d9b09542cf3777b7da4d4122c",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

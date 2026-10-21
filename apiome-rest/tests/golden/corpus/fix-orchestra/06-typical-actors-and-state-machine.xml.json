@@ -1,0 +1,323 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [
+        {
+          "fields": [
+            "ClOrdID"
+          ],
+          "name": "BuySide",
+          "state_machines": []
+        },
+        {
+          "fields": [],
+          "name": "SellSide",
+          "state_machines": []
+        },
+        {
+          "fields": [],
+          "name": "OrderBook",
+          "state_machines": [
+            {
+              "id": "39",
+              "name": "OrderState",
+              "states": [
+                {
+                  "name": "New",
+                  "transitions": [
+                    {
+                      "name": "PartialFill",
+                      "target": "PartiallyFilled",
+                      "when": "ExecType == \"^Trade\" and LeavesQty > 0"
+                    },
+                    {
+                      "name": "Fill",
+                      "target": "Filled",
+                      "when": "ExecType == \"^Trade\" and LeavesQty == 0"
+                    },
+                    {
+                      "name": "Cancel",
+                      "target": "Canceled"
+                    }
+                  ]
+                },
+                {
+                  "name": "PartiallyFilled",
+                  "transitions": [
+                    {
+                      "name": "Fill",
+                      "target": "Filled",
+                      "when": "LeavesQty == 0"
+                    },
+                    {
+                      "name": "Cancel",
+                      "target": "Canceled"
+                    }
+                  ]
+                },
+                {
+                  "name": "Filled",
+                  "transitions": []
+                },
+                {
+                  "name": "Canceled",
+                  "transitions": []
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "fix_datatypes": [],
+      "fix_field_count": 2,
+      "fix_flows": [
+        {
+          "destination": "SellSide",
+          "name": "OrderEntry",
+          "reliability": "idempotent",
+          "source": "BuySide"
+        },
+        {
+          "destination": "BuySide",
+          "name": "Executions",
+          "reliability": "recoverable",
+          "source": "SellSide"
+        }
+      ],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        },
+        {
+          "msgType": "8",
+          "name": "ExecutionReport",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "8",
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleWorkflow",
+      "fix_repository_version": "FIX.4.4_EP005"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleWorkflow",
+      "namespace": "FIX.4.4_EP005"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleWorkflow",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_flow": "Executions",
+          "fix_id": "9",
+          "fix_kind": "message",
+          "fix_msg_name": "ExecutionReport",
+          "fix_msg_type": "8",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "ExecutionReport.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "OrdStatusCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "39"
+            },
+            "field_number": 39,
+            "key": "ExecutionReport.OrdStatus",
+            "name": "OrdStatus",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrdStatusCodeSet",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ExecutionReport",
+        "key_type": null,
+        "kind": "record",
+        "name": "ExecutionReport",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_flow": "OrderEntry",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "39000"
+            },
+            "key": "OrdStatusCodeSet.New",
+            "name": "New",
+            "value": "0"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "39001"
+            },
+            "key": "OrdStatusCodeSet.PartiallyFilled",
+            "name": "PartiallyFilled",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "39002"
+            },
+            "key": "OrdStatusCodeSet.Filled",
+            "name": "Filled",
+            "value": "2"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "39004"
+            },
+            "key": "OrdStatusCodeSet.Canceled",
+            "name": "Canceled",
+            "value": "4"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "39",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "OrdStatusCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrdStatusCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4_EP005"
+  },
+  "corpus_path": "fix-orchestra/06-typical-actors-and-state-machine.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:2b7cc2750f05c7eb06e5f5dee79b2e837a04cc9f06a7fdedebf60640715369c1",
+  "lint": {
+    "findings": 7,
+    "grade": "B",
+    "report_fingerprint": "d0edcfeb958dd7262885e6ae365349fa39462e185ab0e09494bf4765bfd47095",
+    "score": 84,
+    "severity_counts": {
+      "error": 0,
+      "info": 4,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

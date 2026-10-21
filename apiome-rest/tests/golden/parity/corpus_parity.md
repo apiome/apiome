@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 66
+- **Formats gated:** 67
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -38,7 +38,8 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `edix12` | EDI X12 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `edix12` |
 | `fhir` | FHIR | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `fhir` |
-| `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 5 | `fix` |
+| `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 7 | `fix` |
+| `fix-orchestra` | FIX Orchestra | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 14 | — |
 | `flatbuffers` | FlatBuffers | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `flatbuffers` |
 | `gateway-api` | Gateway API HTTPRoute | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 6 | `gateway-api` |
 | `graphql` | GraphQL | graph | 18 | 5 | 0 | 0 | 23 | 6/6 | 14 | `graphql` |
@@ -112,6 +113,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `edix12` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `fhir` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `fix` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `fix-orchestra` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `flatbuffers` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `gateway-api` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `graphql` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -171,4 +173,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `consul`, `cue`, `dhall`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `consul`, `cue`, `dhall`, `envoy-xds`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
