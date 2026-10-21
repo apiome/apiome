@@ -9,3 +9,4 @@ apiome-ui/package-lock.json
 .env
 private-suite/
 apiome-web/
+api-db/
