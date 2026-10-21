@@ -5,6 +5,8 @@ Provides CRUD endpoints for managing projects.
 All endpoints are tenant-scoped and require authentication via JWT token or API key.
 """
 
+import uuid
+
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List, Dict, Any
 
@@ -16,7 +18,10 @@ from .models import (
     ProjectConversionHistoryResponse,
     ProjectSchema,
     ProjectCreateRequest,
-    ProjectUpdateRequest
+    ProjectUpdateRequest,
+    ProjectViewRecord,
+    RecentlyViewedProject,
+    RecentlyViewedProjectsResponse,
 )
 from .auth import validate_authentication, get_authenticated_user_id
 from .permissions import enforce_permission, Resource, Action
@@ -97,6 +102,136 @@ async def list_projects(
     )
 
     return [ProjectSchema(**p) for p in projects]
+
+
+# --- Recently viewed projects (#510) ----------------------------------------------------
+#
+# Per-user and per-tenant: the tenant comes from the token and the user from
+# ``get_authenticated_user_id``, so a caller only ever reads or writes their own history. The
+# two ``/recently-viewed`` routes are registered before ``/{tenant_slug}/{project_id}`` so the
+# final segment is not taken for a project id.
+
+RECENTLY_VIEWED_DEFAULT_LIMIT = 10
+RECENTLY_VIEWED_MAX_LIMIT = 50
+
+
+def _require_view_user_id(auth_data: Dict[str, Any]) -> str:
+    """Resolve the caller for the view history, or fail with 403.
+
+    Args:
+        auth_data: Authentication data from :func:`validate_authentication`.
+
+    Returns:
+        The caller's user id.
+
+    Raises:
+        HTTPException: 403 when the credentials cannot be attributed to a user.
+    """
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Recently viewed projects require an attributable user",
+        )
+    return user_id
+
+
+def _is_uuid(value: str) -> bool:
+    """Return whether ``value`` parses as a UUID (so the ``::uuid`` cast cannot fail)."""
+    try:
+        uuid.UUID(str(value))
+    except ValueError:
+        return False
+    return True
+
+
+@router.get("/{tenant_slug}/recently-viewed")
+async def list_recently_viewed_projects(
+    tenant_slug: str,
+    limit: int = Query(
+        RECENTLY_VIEWED_DEFAULT_LIMIT,
+        ge=1,
+        le=RECENTLY_VIEWED_MAX_LIMIT,
+        description="Maximum projects to return, most recently viewed first.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RecentlyViewedProjectsResponse:
+    """
+    List the projects the caller most recently opened in this tenant.
+
+    Deleted projects are left out. Each row carries when the caller first and last opened the
+    project and how many times.
+
+    Args:
+        tenant_slug: The tenant slug
+        limit: Maximum rows (1–50, default 10)
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The caller's recently viewed projects, newest first
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    rows = db.list_recently_viewed_projects(auth_data["tenant_id"], user_id, limit)
+    return RecentlyViewedProjectsResponse(
+        projects=[RecentlyViewedProject(**{**row, "id": str(row["id"])}) for row in rows]
+    )
+
+
+@router.delete("/{tenant_slug}/recently-viewed", status_code=204)
+async def clear_recently_viewed_projects(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> None:
+    """
+    Forget every project the caller has opened in this tenant.
+
+    Only the caller's own history is removed; other members' lists are untouched.
+
+    Args:
+        tenant_slug: The tenant slug
+        auth_data: Authentication data (injected by dependency)
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    db.clear_recently_viewed_projects(auth_data["tenant_id"], user_id)
+
+
+@router.post("/{tenant_slug}/{project_id}/views")
+async def record_project_view(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ProjectViewRecord:
+    """
+    Record that the caller opened a project.
+
+    Repeated calls update the same record: the last-viewed time moves forward and the view
+    count goes up by one.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The caller's view record for the project
+
+    Raises:
+        HTTPException: 404 when the project does not exist, is deleted, or is in another tenant.
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    row = (
+        db.record_project_view(auth_data["tenant_id"], user_id, project_id)
+        if _is_uuid(project_id)
+        else None
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    return ProjectViewRecord(**{**row, "project_id": str(row["project_id"])})
 
 
 @router.get("/{tenant_slug}/{project_id}")

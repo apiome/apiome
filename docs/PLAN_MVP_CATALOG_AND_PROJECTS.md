@@ -237,7 +237,7 @@ More import formats.
 
 Favourites, time tracking, heatmaps, archaeology.
 
-- [ ] [#510](https://github.com/apiome/apiome/issues/510) Recently viewed projects
+- [x] [#510](https://github.com/apiome/apiome/issues/510) Recently viewed projects
 - [ ] [#513](https://github.com/apiome/apiome/issues/513) Pin favorite projects to the dashboard
 - [ ] [#542](https://github.com/apiome/apiome/issues/542) Add favorite projects / quick access list
 - [ ] [#544](https://github.com/apiome/apiome/issues/544) Add time spent per project breakdown

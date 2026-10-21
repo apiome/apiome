@@ -7529,6 +7529,84 @@ class Database:
         results = self.execute_query(query, (slug, tenant_id))
         return results[0] if results else None
 
+    # --- Recently viewed projects (#510) --------------------------------------------------
+
+    def record_project_view(
+        self, tenant_id: str, user_id: str, project_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Record that a user opened a project, upserting its ``project_views`` row (#510).
+
+        The project must be live and belong to ``tenant_id``; the ``INSERT … SELECT`` matches no
+        row otherwise, so a project id leaked from another workspace can never be logged.
+
+        Args:
+            tenant_id: The caller's tenant (from the token, never the request).
+            user_id: The caller.
+            project_id: The project that was opened.
+
+        Returns:
+            The upserted row (``project_id``, ``first_viewed_at``, ``last_viewed_at``,
+            ``view_count``), or ``None`` when the project is missing, deleted or in another
+            tenant.
+        """
+        query = """
+            INSERT INTO apiome.project_views (user_id, project_id, tenant_id)
+            SELECT %s::uuid, p.id, p.tenant_id
+            FROM apiome.projects p
+            WHERE p.id = %s::uuid AND p.tenant_id = %s::uuid AND p.deleted_at IS NULL
+            ON CONFLICT (user_id, project_id) DO UPDATE
+            SET last_viewed_at = CURRENT_TIMESTAMP,
+                view_count = apiome.project_views.view_count + 1
+            RETURNING project_id, first_viewed_at, last_viewed_at, view_count
+        """
+        rows = self.execute_query(query, (user_id, project_id, tenant_id))
+        return dict(rows[0]) if rows else None
+
+    def list_recently_viewed_projects(
+        self, tenant_id: str, user_id: str, limit: int
+    ) -> List[Dict[str, Any]]:
+        """List the projects a user most recently opened in a tenant, newest first (#510).
+
+        Soft-deleted projects are skipped, so a project moved to the trash drops off the list
+        and comes back with its history if it is restored.
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            limit: Maximum rows to return (the route bounds it).
+
+        Returns:
+            Rows with the project's ``id``, ``name``, ``slug``, ``description`` and the view's
+            ``first_viewed_at``, ``last_viewed_at`` and ``view_count``.
+        """
+        query = """
+            SELECT p.id, p.name, p.slug, p.description,
+                   pv.first_viewed_at, pv.last_viewed_at, pv.view_count
+            FROM apiome.project_views pv
+            JOIN apiome.projects p ON p.id = pv.project_id
+            WHERE pv.tenant_id = %s::uuid AND pv.user_id = %s::uuid
+              AND p.tenant_id = pv.tenant_id AND p.deleted_at IS NULL
+            ORDER BY pv.last_viewed_at DESC, p.name ASC
+            LIMIT %s
+        """
+        return [dict(r) for r in self.execute_query(query, (tenant_id, user_id, limit))]
+
+    def clear_recently_viewed_projects(self, tenant_id: str, user_id: str) -> int:
+        """Forget every project view a user has in a tenant (#510).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+
+        Returns:
+            How many rows were removed.
+        """
+        query = """
+            DELETE FROM apiome.project_views
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid
+        """
+        return self._execute_write(query, (tenant_id, user_id))
+
     # --- Bulk-import reconciliation reads (BLK-1.2, #5524) -------------------------------
     #
     # What `app.bulk_import_reconciliation` needs to answer "does a project for this spec

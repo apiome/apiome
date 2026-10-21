@@ -243,6 +243,7 @@ import type { VersionLintReport } from '@/app/utils/version-lint-report';
 import type { VerificationPolicyDecision } from '../style-guides/verification-policy-api';
 import { useMockUsage } from '@/app/hooks/useMockUsage';
 import { useOpenReviews } from '@/app/hooks/useOpenReviews';
+import { useRecordProjectView } from '@/app/hooks/useRecordProjectView';
 import { lookupReview } from '@lib/review-status';
 import { scrollBehavior } from '@lib/motion';
 
@@ -646,6 +647,12 @@ const Versions = () => {
   const { seriesByVersion: mockUsageByVersion } = useMockUsage({
     enabled: Boolean(selectedProject?.slug),
     projectSlug: selectedProject?.slug ?? null,
+  });
+
+  // Log the project the reader opened for Home's "Recently viewed" panel (#510).
+  useRecordProjectView({
+    urlProjectId: searchParams.get('projectId'),
+    selectedProjectId: selectedProjectId || null,
   });
 
   // The selected project's open reviews (COL-2.4, #4520). One read feeds both the table's

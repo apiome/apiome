@@ -3297,6 +3297,37 @@ class ProjectUpdateRequest(BaseModel):
         from_attributes = True
 
 
+class ProjectViewRecord(BaseModel):
+    """One project the caller has opened, with when and how often (#510)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(..., serialization_alias="projectId")
+    first_viewed_at: datetime = Field(..., serialization_alias="firstViewedAt")
+    last_viewed_at: datetime = Field(..., serialization_alias="lastViewedAt")
+    view_count: int = Field(..., ge=1, serialization_alias="viewCount")
+
+
+class RecentlyViewedProject(BaseModel):
+    """A row of the caller's recently viewed projects, newest first (#510)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    description: Optional[str] = None
+    first_viewed_at: datetime = Field(..., serialization_alias="firstViewedAt")
+    last_viewed_at: datetime = Field(..., serialization_alias="lastViewedAt")
+    view_count: int = Field(..., ge=1, serialization_alias="viewCount")
+
+
+class RecentlyViewedProjectsResponse(BaseModel):
+    """Envelope for ``GET /v1/projects/{tenant_slug}/recently-viewed`` (#510)."""
+
+    projects: List[RecentlyViewedProject] = Field(default_factory=list)
+
+
 # ==================== Version Models ====================
 
 class VersionSchema(BaseModel):

@@ -26,6 +26,7 @@ import {
   FolderKanban,
   GitBranch,
   Globe,
+  History,
   KeyRound,
   Library,
   MessageSquareCheck,
@@ -483,6 +484,27 @@ export function revisionMetaLine(
   return [versionLabel ?? 'No versions yet', ...parts].join(' · ');
 }
 
+/**
+ * A "Recently viewed" row's quiet line (#510): the newest revision, then when the reader last
+ * opened the project and, once they have opened it more than once, how often.
+ *
+ * @param versionLabel The newest revision's semantic id, or `null` when the project has none.
+ * @param lastViewedAt When the reader last opened it, ISO.
+ * @param viewCount How many times they have opened it.
+ * @param now The instant to measure from. Defaults to the current time.
+ * @returns A `·`-separated line, e.g. `"v2.4.0 · Viewed 2 hours ago · 5 views"`.
+ */
+export function recentlyViewedLine(
+  versionLabel: string | null,
+  lastViewedAt: string,
+  viewCount: number,
+  now: Date = new Date(),
+): string {
+  const parts = [versionLabel ?? 'No versions yet', `Viewed ${formatTimeAgo(lastViewedAt, now)}`];
+  if (viewCount > 1) parts.push(`${viewCount} views`);
+  return parts.join(' · ');
+}
+
 /* -------------------------------------------------------------------------
    Publishing pulse
    ------------------------------------------------------------------------- */
@@ -586,6 +608,7 @@ export const PULSE_SPAN_LABEL = 'last 12 weeks';
 /** The heading and glyph of each added panel, in one place so the tests can name them. */
 export const PANEL = {
   continue: { title: 'Pick up where you left off' },
+  recentlyViewed: { title: 'Recently viewed', icon: History, subtitle: 'Projects you opened' },
   activity: { title: 'Recent activity', icon: Activity, subtitle: 'Your latest actions' },
   quickActions: { title: 'Quick actions', icon: Zap },
   attention: { title: 'Needs attention', icon: BellRing },

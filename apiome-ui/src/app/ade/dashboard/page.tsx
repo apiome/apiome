@@ -17,8 +17,8 @@
  *
  * The same widgets, plus the work. Reading down: a greeting header with the two actions a
  * reader most often wants, the first-run checklist as the page's one honey card, the six stats,
- * and then a two-column body whose *both* columns are full — "Pick up where you left off" and
- * Recent activity on the left, Quick actions / Needs attention / Publishing pulse on the right.
+ * and then a two-column body whose *both* columns are full — "Pick up where you left off",
+ * Recently viewed (#510) and Recent activity on the left, Quick actions / Needs attention / Publishing pulse on the right.
  *
  * Nothing here is a new data source. The stats and the activity list are the same two calls,
  * unchanged; everything added is assembled by `lib/db/dashboard-home.ts` out of columns other
@@ -53,6 +53,7 @@ import { NeedsAttention } from '@/app/components/ade/dashboard/home/NeedsAttenti
 import { PublishingPulse } from '@/app/components/ade/dashboard/home/PublishingPulse';
 import { QuickActions } from '@/app/components/ade/dashboard/home/QuickActions';
 import { RecentActivity } from '@/app/components/ade/dashboard/home/RecentActivity';
+import { RecentlyViewed } from '@/app/components/ade/dashboard/home/RecentlyViewed';
 import {
   ACTIVITY_LIMIT,
   EMPTY_STATS,
@@ -186,6 +187,7 @@ const Dashboard = () => {
         <div className="home-grid">
           <div className="home-grid__main">
             <ContinueWorking projects={home.continueProjects} loading={isLoading} />
+            <RecentlyViewed projects={home.recentlyViewed} loading={isLoading} />
             <RecentActivity activity={recentActivity} loading={isLoading} />
           </div>
 

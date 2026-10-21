@@ -122,6 +122,22 @@ const HOME: DashboardHome = {
       touchedKind: 'published',
     },
   ],
+  recentlyViewed: [
+    {
+      projectId: 'p-2',
+      projectName: 'Orders Service',
+      versionLabel: 'v1.9.2',
+      lastViewedAt: new Date(Date.now() - 20 * 60_000).toISOString(),
+      viewCount: 6,
+    },
+    {
+      projectId: 'p-3',
+      projectName: 'Inventory API',
+      versionLabel: null,
+      lastViewedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+      viewCount: 1,
+    },
+  ],
   attention: [
     {
       id: 'sunset:v-1',
@@ -161,6 +177,7 @@ const HOME: DashboardHome = {
 const EMPTY_HOME: DashboardHome = {
   workspaceName: 'Acme Corp',
   continueProjects: [],
+  recentlyViewed: [],
   attention: [],
   pulse: [],
 };
@@ -420,6 +437,44 @@ describe('Home — what fills the half that used to be empty', () => {
    3. Needs attention
    ------------------------------------------------------------------------- */
 
+describe('Home — Recently viewed (#510)', () => {
+  it('lists the projects the reader opened, last first, each linking into its versions', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Recently viewed' });
+    const rows = within(panel).getAllByRole('link');
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveAttribute('href', '/ade/dashboard/versions?projectId=p-2');
+    expect(within(rows[0]).getByText('Orders Service')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('v1.9.2 · Viewed 20 minutes ago · 6 views')).toBeInTheDocument();
+    expect(rows[1]).toHaveAttribute('href', '/ade/dashboard/versions?projectId=p-3');
+    expect(within(rows[1]).getByText('No versions yet · Viewed 2 days ago')).toBeInTheDocument();
+  });
+
+  it('carries the absolute instant as the relative time tooltip', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Recently viewed' });
+    const line = within(panel).getByText(/Viewed 20 minutes ago/);
+    expect(line).toHaveAttribute('title', HOME.recentlyViewed[0].lastViewedAt);
+  });
+
+  it('says how the list fills when nothing has been opened yet', async () => {
+    await renderLoaded(EMPTY_HOME);
+    const panel = screen.getByRole('group', { name: 'Recently viewed' });
+    expect(within(panel).getByText('Nothing viewed yet')).toBeInTheDocument();
+  });
+
+  it('draws skeleton rows rather than the empty state while loading', () => {
+    mockGetDashboardStats.mockReturnValue(never());
+    mockGetRecentActivity.mockReturnValue(never());
+    mockGetDashboardHome.mockReturnValue(never());
+    render(<Dashboard />);
+
+    expect(screen.getByText('Recently viewed')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing viewed yet')).not.toBeInTheDocument();
+  });
+});
+
 describe('Home — Needs attention', () => {
   it('lists each row, its consequence, and a link to a real route', async () => {
     await renderLoaded();
@@ -488,7 +543,7 @@ describe('Home — accessibility and resilience', () => {
   it('draws exactly one h1, and names every added region', async () => {
     await renderLoaded();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    for (const name of ['Pick up where you left off', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse']) {
+    for (const name of ['Pick up where you left off', 'Recently viewed', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse']) {
       expect(screen.getByText(name)).toBeInTheDocument();
     }
   });

@@ -28,7 +28,7 @@ in it, and counts its projects and published versions.
 
 Home is the Control Panel's first page: what is moving in your workspace, and what needs you.
 
-<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pick up where you left off, Quick actions and Needs attention" />
+<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pick up where you left off, Recently viewed, Quick actions and Needs attention" />
 
 From top to bottom:
 
@@ -38,18 +38,38 @@ From top to bottom:
    version**, **Publish it**, **View it in Browse** (with two Designer steps first when your plan
    includes the Designer). The button on the next step takes you there. Dismiss it with **×**.
 3. **Statistics** — tenants, projects, versions, published versions, classes and properties.
-4. **Pick up where you left off** — a card per recent project, with its latest version and quality
-   score. Click one to open its versions.
-5. **Recent activity** — your latest changes.
-6. **Quick actions** — **Import a spec**, **Browse the catalog**, **Create an API key** and **Invite
+4. **Pick up where you left off** — a card per project someone in your workspaces recently changed,
+   with its latest version and quality score. Click one to open its versions.
+5. **Recently viewed** — the projects *you* last opened in this workspace, most recent first, up to
+   five. Each row shows the latest version, when you last viewed it and, after the first visit, how
+   many times. Click one to open its versions. See [Recently viewed](#recently-viewed).
+6. **Recent activity** — your latest changes.
+7. **Quick actions** — **Import a spec**, **Browse the catalog**, **Create an API key** and **Invite
    a teammate**.
-7. **Needs attention** — blocking lint findings, expiring API keys, versions near their sunset and
+8. **Needs attention** — blocking lint findings, expiring API keys, versions near their sunset and
    reviews waiting on you. It is hidden when nothing needs you.
 
 The sidebar groups the rest of the Control Panel by job: **Build**, **Bring in**, **Ship**,
 **Govern**, and your workspace settings. **Primitives & types**, **MCP servers**, **Export studio**,
 **SDK settings**, **Style guides** and **Access audit** are marked as coming soon: they are not yet
 available and cannot be opened.
+
+## Recently viewed
+
+A project is added to **Recently viewed** when you open it: when you **click a project** on
+**Projects**, a card or row on Home, a catalog item's **“Open version history”**, or **pick it in the
+project selector** on **Versions**. Arriving on **Versions** without choosing a project — when it
+shows the first project for you — does not count.
+
+The list is yours alone: other members of the workspace never see what you opened. It follows you
+across browsers and devices, and lists only the workspace you are in. A project moved to the trash
+leaves the list, and comes back if it is restored.
+
+Scripts and integrations can read and clear the same history through the REST API:
+[`GET /v1/projects/{tenant_slug}/recently-viewed`](../reference/rest/projects.md#list-recently-viewed-projects-v1-projects-tenant-slug-recently-viewed-get)
+lists it, [`POST /v1/projects/{tenant_slug}/{project_id}/views`](../reference/rest/projects.md#record-project-view-v1-projects-tenant-slug-project-id-views-post)
+records a view, and [`DELETE /v1/projects/{tenant_slug}/recently-viewed`](../reference/rest/projects.md#clear-recently-viewed-projects-v1-projects-tenant-slug-recently-viewed-delete)
+clears it.
 
 ## Where next
 

@@ -1,0 +1,20 @@
+---
+slug: recently-viewed-projects
+title: Recently viewed projects on Home
+description: Home now lists the projects you last opened, on any device.
+authors: [apiome]
+---
+
+Home has a new **Recently viewed** panel: the projects *you* last opened in this workspace, most
+recent first. [How it fills](/getting-started/launcher-and-home#recently-viewed).
+
+{/* truncate */}
+
+- **Yours, everywhere.** The history is kept per person on the server, so it follows you across
+  browsers and devices, and no one else in the workspace sees it.
+- **One click back in.** Each row shows the project's latest version, when you last viewed it and
+  how often, and opens its versions.
+- **In the API too.** `GET /v1/projects/{tenant_slug}/recently-viewed` lists the history,
+  `POST /v1/projects/{tenant_slug}/{project_id}/views` records a view and
+  `DELETE /v1/projects/{tenant_slug}/recently-viewed` clears it — see the
+  [Projects reference](/reference/rest/projects).

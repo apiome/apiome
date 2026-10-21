@@ -1,6 +1,6 @@
 ---
 title: "Projects"
-description: "REST endpoints tagged projects: 12 operations."
+description: "REST endpoints tagged projects: 15 operations."
 sidebar_position: 61
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.278.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.279.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `projects` · 12 operations
+Tag: `projects` · 15 operations
 
 ## `GET /v1/projects/domains` {#list-project-domain-categories-global-v1-projects-domains-get}
 
@@ -163,6 +163,70 @@ Operation id: `list_project_domain_categories_for_tenant_v1_projects__tenant_slu
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list project domain categories for tenant. | `application/json` map of array of string |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/projects/{tenant_slug}/recently-viewed` {#list-recently-viewed-projects-v1-projects-tenant-slug-recently-viewed-get}
+
+**List Recently Viewed Projects**
+
+List the projects the caller most recently opened in this tenant.
+
+Deleted projects are left out. Each row carries when the caller first and last opened the
+project and how many times.
+
+Args:
+    tenant_slug: The tenant slug
+    limit: Maximum rows (1–50, default 10)
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The caller's recently viewed projects, newest first
+
+Operation id: `list_recently_viewed_projects_v1_projects__tenant_slug__recently_viewed_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Maximum projects to return, most recently viewed first. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list recently viewed projects. | `application/json` [`RecentlyViewedProjectsResponse`](#schema-recentlyviewedprojectsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/projects/{tenant_slug}/recently-viewed` {#clear-recently-viewed-projects-v1-projects-tenant-slug-recently-viewed-delete}
+
+**Clear Recently Viewed Projects**
+
+Forget every project the caller has opened in this tenant.
+
+Only the caller's own history is removed; other members' lists are untouched.
+
+Args:
+    tenant_slug: The tenant slug
+    auth_data: Authentication data (injected by dependency)
+
+Operation id: `clear_recently_viewed_projects_v1_projects__tenant_slug__recently_viewed_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for clear recently viewed projects. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/projects/{tenant_slug}/{project_id}` {#get-project-v1-projects-tenant-slug-project-id-get}
@@ -440,6 +504,44 @@ Operation id: `restore_project_v1_projects__tenant_slug___project_id__restore_po
 | 200 | Successful response for restore project. | `application/json` [`ProjectSchema`](#schema-projectschema) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/projects/{tenant_slug}/{project_id}/views` {#record-project-view-v1-projects-tenant-slug-project-id-views-post}
+
+**Record Project View**
+
+Record that the caller opened a project.
+
+Repeated calls update the same record: the last-viewed time moves forward and the view
+count goes up by one.
+
+Args:
+    tenant_slug: The tenant slug
+    project_id: The project ID
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The caller's view record for the project
+
+Raises:
+    HTTPException: 404 when the project does not exist, is deleted, or is in another tenant.
+
+Operation id: `record_project_view_v1_projects__tenant_slug___project_id__views_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record project view. | `application/json` [`ProjectViewRecord`](#schema-projectviewrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `ConversionEvidenceResponse` {#schema-conversionevidenceresponse}
@@ -532,3 +634,22 @@ Request model for updating a project.
 | `metadata` | object or null | no | Additional JSON metadata bag. |
 | `changeReportTemplateVersionId` | string or null | no | Change Report Template Version ID. |
 | `expectedUpdatedAt` | string (date-time) or null | no | Optimistic-concurrency precondition (CLI 3.4, #3205): the project's updated_at as the caller last read it. When set, the update applies only if the project is unchanged since; otherwise the request fails with 409 code 'update_conflict' and the project's current updated_at. |
+
+### `ProjectViewRecord` {#schema-projectviewrecord}
+
+One project the caller has opened, with when and how often (#510).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projectId` | string | yes | Project ID. |
+| `firstViewedAt` | string (date-time) | yes | First Viewed At. |
+| `lastViewedAt` | string (date-time) | yes | Last Viewed At. |
+| `viewCount` | integer | yes | Number of view. |
+
+### `RecentlyViewedProjectsResponse` {#schema-recentlyviewedprojectsresponse}
+
+Envelope for ``GET /v1/projects/{tenant_slug}/recently-viewed`` (#510).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projects` | array of `RecentlyViewedProject` | no | Projects. |
