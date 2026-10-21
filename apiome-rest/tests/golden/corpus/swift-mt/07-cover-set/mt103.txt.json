@@ -1,0 +1,780 @@
+{
+  "adapter": "swift-mt",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "swift_headers": {
+        "application": {
+          "messageType": "103",
+          "priority": "N",
+          "receiver": "EXAMPUS44XXXX"
+        },
+        "basic": {
+          "applicationId": "F",
+          "ltAddress": "EXAMPLNL2AXXXX",
+          "sequenceNumber": "000050",
+          "serviceId": "01",
+          "sessionNumber": "2381"
+        },
+        "trailer": {
+          "CHK": "AA11BB22CC33"
+        },
+        "user": {
+          "108": "PAY20260824A",
+          "121": "6b2c1a7e-0f4d-4a2b-9c31-000000000050"
+        }
+      },
+      "swift_message_type": "MT103",
+      "swift_mx_correspondence": {
+        "basis": "the SWIFT Standards MT and MX Equivalence Tables",
+        "disclaimer": "This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.",
+        "mt": "MT103",
+        "mx": "pacs.008",
+        "mxName": "FI To FI Customer Credit Transfer",
+        "verified": false
+      }
+    },
+    "format": "swift-mt",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "SWIFT MT103",
+      "namespace": "SWIFT-MT103"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "SWIFT MT103",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.CodeWord.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.CodeWord.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.CodeWord",
+        "key_type": null,
+        "kind": "record",
+        "name": "CodeWord",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 20: Transaction Reference Number",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field20.reference",
+            "name": "reference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field20",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field20",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 23, option B: Bank Operation Code",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field23B.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field23B",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field23B",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 32, option A: Value Date/Currency/Interbank Settled Amount",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT103.Field32A.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.Field32A.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field32A.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field32A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field32A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 33, option B: Currency/Instructed Amount",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.Field33B.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field33B.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field33B",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field33B",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 50, option K: Ordering Customer",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field50K.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.Field50K.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field50K",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field50K",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 52, option A: Ordering Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field52A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field52A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field52A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 56, option A: Intermediary Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field56A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field56A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field56A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 57, option A: Account With Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field57A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field57A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field57A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 59: Beneficiary Customer",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field59.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.Field59.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field59",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field59",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 70: Remittance Information",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field70.codeWords",
+            "name": "codeWords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT103.CodeWord",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field70",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field70",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 71, option A: Details of Charges",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.Field71A.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.Field71A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field71A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "SWIFT MT103 message",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT103.MT103.20",
+            "name": "20",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field20",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT103.MT103.23B",
+            "name": "23B",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field23B",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT103.MT103.32A",
+            "name": "32A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field32A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT103.MT103.33B",
+            "name": "33B",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field33B",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "SWIFT-MT103.MT103.50K",
+            "name": "50K",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field50K",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "SWIFT-MT103.MT103.52A",
+            "name": "52A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field52A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "SWIFT-MT103.MT103.56A",
+            "name": "56A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field56A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "SWIFT-MT103.MT103.57A",
+            "name": "57A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field57A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "SWIFT-MT103.MT103.59",
+            "name": "59",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field59",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "SWIFT-MT103.MT103.70",
+            "name": "70",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field70",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "SWIFT-MT103.MT103.71A",
+            "name": "71A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT103.Field71A",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT103.MT103",
+        "key_type": null,
+        "kind": "record",
+        "name": "MT103",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "swift-mt/07-cover-set/mt103.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 13
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "swift-mt"
+  },
+  "fingerprint": "sha256:9c35cbe79089ffae1a5b48e627ab1b043bb58556a78aee22798652d82e5d33dd",
+  "lint": {
+    "findings": 34,
+    "grade": "D",
+    "report_fingerprint": "be942bd5059a939fb66f226cad13d783c5c92aa62bb18ee69c9ed193e840f8e8",
+    "score": 63,
+    "severity_counts": {
+      "error": 0,
+      "info": 30,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

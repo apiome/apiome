@@ -138,6 +138,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   edix12: 'EDI X12',
   edifact: 'UN/EDIFACT',
   idoc: 'SAP IDoc',
+  'swift-mt': 'SWIFT MT',
   iso20022: 'ISO 20022',
   iso8583: 'ISO 8583',
   fix: 'FIX',

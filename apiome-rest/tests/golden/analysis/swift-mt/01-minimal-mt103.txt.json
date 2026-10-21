@@ -1,0 +1,632 @@
+{
+  "adapter": "swift-mt",
+  "corpus_path": "swift-mt/01-minimal-mt103.txt",
+  "document": {
+    "analyzer": {
+      "key": "swift-mt",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "swift.application_header",
+        "swift.basic_header",
+        "swift.byte_offsets",
+        "swift.code_words",
+        "swift.field_components",
+        "swift.fields",
+        "swift.multiple_messages",
+        "swift.mx_correspondence_notes",
+        "swift.option_letters",
+        "swift.sequences",
+        "swift.statement_lines",
+        "swift.text_block",
+        "swift.trailer",
+        "swift.user_header"
+      ],
+      "unsupported": [
+        "swift.bic_directory",
+        "swift.checksum_verification",
+        "swift.mx_translation",
+        "swift.network_validation",
+        "swift.other_message_types",
+        "swift.usage_rules"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "block": 3,
+        "component": 8,
+        "field": 6,
+        "line": 2,
+        "message": 1,
+        "sequence": 1
+      },
+      "maxDepth": 5,
+      "nodeCount": 21,
+      "truncated": false,
+      "warningCount": 1
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "swift-mt",
+    "sourceHash": "sha256:9dfe5d3f8de9e65e5f810c53e1f01f8aa99d454a1e2f81bb47e907134ca35b5b",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "direction": "input",
+          "fieldCount": 6,
+          "messageName": "MT103",
+          "messageType": "103",
+          "mxCorrespondence": {
+            "mx": "pacs.008",
+            "mxName": "FI To FI Customer Credit Transfer",
+            "verified": false
+          },
+          "sequenceCount": 1
+        },
+        "children": [
+          {
+            "attributes": {
+              "applicationId": "F",
+              "blockId": "1",
+              "ltAddress": "EXAMPLNL2AXXXX",
+              "sequenceNumber": "000000",
+              "serviceId": "01",
+              "sessionNumber": "0000"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "block",
+            "label": "{1:} Basic header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 31,
+              "line": 1,
+              "offset": 0,
+              "ordinal": 0,
+              "path": "MSG[0]/{1}"
+            },
+            "name": "1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "2",
+              "messageType": "103",
+              "priority": "N",
+              "receiver": "EXAMPGB2LXXXX"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "block",
+            "label": "{2:} Application header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 22,
+              "line": 1,
+              "offset": 31,
+              "ordinal": 1,
+              "path": "MSG[0]/{2}"
+            },
+            "name": "2",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "4"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "fieldCount": 6,
+                  "sequence": "A"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fieldName": "Transaction Reference Number",
+                      "format": "reference",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "20",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.0.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/20[0]/reference"
+                        },
+                        "name": "reference",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "REF20260819001",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.0",
+                    "kind": "field",
+                    "label": ":20: Transaction Reference Number",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 18,
+                      "line": 2,
+                      "offset": 57,
+                      "ordinal": 0,
+                      "path": "MSG[0]/{4}/A/20[0]"
+                    },
+                    "name": "20",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Bank Operation Code",
+                      "format": "code",
+                      "lineCount": 1,
+                      "option": "B",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "23",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.1.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/23B[1]/code"
+                        },
+                        "name": "code",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "CRED",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.1",
+                    "kind": "field",
+                    "label": ":23B: Bank Operation Code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 9,
+                      "line": 3,
+                      "offset": 76,
+                      "ordinal": 1,
+                      "path": "MSG[0]/{4}/A/23B[1]"
+                    },
+                    "name": "23B",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Value Date/Currency/Interbank Settled Amount",
+                      "format": "date_currency_amount",
+                      "lineCount": 1,
+                      "option": "A",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "32",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.2.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/32A[2]/date"
+                        },
+                        "name": "date",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.2.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/32A[2]/currency"
+                        },
+                        "name": "currency",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "EUR",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.2.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/32A[2]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "12500,00",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.2",
+                    "kind": "field",
+                    "label": ":32A: Value Date/Currency/Interbank Settled Amount",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 22,
+                      "line": 4,
+                      "offset": 86,
+                      "ordinal": 2,
+                      "path": "MSG[0]/{4}/A/32A[2]"
+                    },
+                    "name": "32A",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Ordering Customer",
+                      "format": "party_name_address",
+                      "lineCount": 2,
+                      "option": "K",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "50",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.3.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/50K[3]/account"
+                        },
+                        "name": "account",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "NL91ABNA0417164300",
+                        "valueLength": 18,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.3.1",
+                        "kind": "line",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/50K[3]/line[0]"
+                        },
+                        "name": "line 1",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "ACME RETAIL BV",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.3",
+                    "kind": "field",
+                    "label": ":50K: Ordering Customer",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 39,
+                      "line": 5,
+                      "offset": 109,
+                      "ordinal": 3,
+                      "path": "MSG[0]/{4}/A/50K[3]"
+                    },
+                    "name": "50K",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Beneficiary Customer",
+                      "format": "party_name_address",
+                      "lineCount": 2,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "59",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.4.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/59[4]/account"
+                        },
+                        "name": "account",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "GB29NWBK60161331926819",
+                        "valueLength": 22,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.4.1",
+                        "kind": "line",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/59[4]/line[0]"
+                        },
+                        "name": "line 1",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "NORTHERN SUPPLIES LTD",
+                        "valueLength": 21,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.4",
+                    "kind": "field",
+                    "label": ":59: Beneficiary Customer",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 49,
+                      "line": 7,
+                      "offset": 149,
+                      "ordinal": 4,
+                      "path": "MSG[0]/{4}/A/59[4]"
+                    },
+                    "name": "59",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Details of Charges",
+                      "format": "code",
+                      "lineCount": 1,
+                      "option": "A",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "71",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.2.0.5.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/71A[5]/code"
+                        },
+                        "name": "code",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "SHA",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.0.5",
+                    "kind": "field",
+                    "label": ":71A: Details of Charges",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 8,
+                      "line": 9,
+                      "offset": 199,
+                      "ordinal": 5,
+                      "path": "MSG[0]/{4}/A/71A[5]"
+                    },
+                    "name": "71A",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.2.0",
+                "kind": "sequence",
+                "label": "Sequence A",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "MSG[0]/{4}/A"
+                },
+                "name": "A",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "block",
+            "label": "{4:} Text",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": null,
+              "line": 1,
+              "offset": 53,
+              "ordinal": 2,
+              "path": "MSG[0]/{4}"
+            },
+            "name": "4",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "message",
+        "label": "MT103 (REF20260819001)",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": null,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "MSG[0]"
+        },
+        "name": "MT103",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "swift.mx_correspondence_note",
+        "location": null,
+        "message": "MT103 corresponds to ISO 20022 pacs.008 (FI To FI Customer Credit Transfer), as documented by the SWIFT Standards MT and MX Equivalence Tables. This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

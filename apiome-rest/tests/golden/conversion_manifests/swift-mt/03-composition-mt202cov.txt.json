@@ -1,0 +1,3542 @@
+{
+  "adapter": "swift-mt",
+  "conversion_mode": "lossy",
+  "corpus_path": "swift-mt/03-composition-mt202cov.txt",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 17,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.CodeWord.code"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/code"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.CodeWord.code",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.CodeWord.code",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.CodeWord/properties/code"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.CodeWord.text"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/text"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.CodeWord.text",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.CodeWord.text",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.CodeWord/properties/text"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field20.reference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field20/properties/reference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field20.reference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field20.reference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field20/properties/reference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field21.reference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field21/properties/reference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field21.reference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field21.reference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field21/properties/reference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field32A.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field32A/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field32A.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field32A.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field32A.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field32A/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field32A.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field32A.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field32A.date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field32A/properties/date"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field32A.date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field32A.date",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field33B.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field33B/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field33B.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field33B.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field33B/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field33B.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field33B/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field33B.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field33B.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field33B/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field50F.account"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field50F/properties/account"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field50F.account",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field50F.account",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field50F/properties/account"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field50F.numberedLines"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field50F/properties/numberedLines"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field50F.numberedLines",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field50F.numberedLines",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field50F/properties/numberedLines"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field52A.bic"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field52A/properties/bic"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field52A.bic",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field52A.bic",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field52A/properties/bic"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field53A.bic"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field53A/properties/bic"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field53A.bic",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field53A.bic",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field53A/properties/bic"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field56A.bic"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field56A/properties/bic"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field56A.bic",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field56A.bic",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field56A/properties/bic"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field57A.bic"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field57A/properties/bic"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field57A.bic",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field57A.bic",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field57A/properties/bic"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field58A.account"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field58A/properties/account"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field58A.account",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field58A.account",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field58A/properties/account"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field58A.bic"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field58A/properties/bic"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field58A.bic",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field58A.bic",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field58A/properties/bic"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field59F.account"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field59F/properties/account"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field59F.account",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field59F.account",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field59F/properties/account"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field59F.numberedLines"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field59F/properties/numberedLines"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field59F.numberedLines",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field59F.numberedLines",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field59F/properties/numberedLines"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field70.codeWords"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field70/properties/codeWords"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field70.codeWords",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field70.codeWords",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field70/properties/codeWords"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field72.codeWords"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field72/properties/codeWords"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.Field72.codeWords",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field72.codeWords",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field72/properties/codeWords"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.20"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/20"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.20",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.20",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/20"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.21"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/21"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.21",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.21",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/21"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.32A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/32A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.32A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.32A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/32A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.52A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/52A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.52A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.52A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/52A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.53A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/53A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.53A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.53A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/53A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.56A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/56A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.56A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.56A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/56A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.57A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/57A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.57A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.57A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/57A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.58A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/58A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.58A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.58A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/58A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.72"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/72"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.72",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.72",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/72"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV.SequenceB"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/SequenceB"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COV.SequenceB",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV.SequenceB",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/SequenceB"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.33B"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/33B"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.33B",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.33B",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/33B"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.50F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/50F"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.50F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.50F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/50F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.52A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/52A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.52A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.52A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/52A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.56A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/56A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.56A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.56A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/56A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.57A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/57A"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.57A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.57A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/57A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.59F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/59F"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.59F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.59F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/59F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB.70"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/70"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.MT202COVSequenceB.70",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.70",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/70"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.NumberedLine.number"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/number"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.NumberedLine.number",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.NumberedLine.number",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.NumberedLine/properties/number"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.NumberedLine.text"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/text"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT202COV.NumberedLine.text",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.NumberedLine.text",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.NumberedLine/properties/text"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.CodeWord"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.CodeWord"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.CodeWord",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.CodeWord",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.CodeWord"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field20"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field20"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field20",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field20",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field20"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field21"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field21"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field21",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field21",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field21"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field32A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field32A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field32A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field32A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field32A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field33B"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field33B"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field33B",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field33B",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field33B"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field50F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field50F"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field50F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field50F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field50F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field52A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field52A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field52A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field52A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field52A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field53A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field53A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field53A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field53A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field53A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field56A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field56A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field56A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field56A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field56A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field57A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field57A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field57A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field57A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field57A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field58A"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field58A"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field58A",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field58A",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field58A"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field59F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field59F"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field59F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field59F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field59F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field70"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field70"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field70",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field70",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field70"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.Field72"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.Field72"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.Field72",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.Field72",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.Field72"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COV"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COV"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.MT202COV",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COV",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COV"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.MT202COVSequenceB"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.MT202COVSequenceB",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.MT202COVSequenceB",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT202COV.NumberedLine"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT202COV.NumberedLine"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT202COV.NumberedLine",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT202COV.NumberedLine",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT202COV.NumberedLine"
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.bic_directory, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.bic_directory",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.bic_directory",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.checksum_verification, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.checksum_verification",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.checksum_verification",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.mx_translation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.mx_translation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.mx_translation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.network_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.network_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.network_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.other_message_types, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.other_message_types",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.other_message_types",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.usage_rules, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.usage_rules",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.usage_rules",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "swift.bic_directory",
+        "id": "source:analysis:swift.bic_directory",
+        "kind": "source",
+        "label": "swift.bic_directory",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.bic_directory",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.checksum_verification",
+        "id": "source:analysis:swift.checksum_verification",
+        "kind": "source",
+        "label": "swift.checksum_verification",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.checksum_verification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.mx_translation",
+        "id": "source:analysis:swift.mx_translation",
+        "kind": "source",
+        "label": "swift.mx_translation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.mx_translation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.network_validation",
+        "id": "source:analysis:swift.network_validation",
+        "kind": "source",
+        "label": "swift.network_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.network_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.other_message_types",
+        "id": "source:analysis:swift.other_message_types",
+        "kind": "source",
+        "label": "swift.other_message_types",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.other_message_types",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.usage_rules",
+        "id": "source:analysis:swift.usage_rules",
+        "kind": "source",
+        "label": "swift.usage_rules",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.usage_rules",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord",
+        "id": "source:construct:SWIFT-MT202COV.CodeWord",
+        "kind": "source",
+        "label": "CodeWord",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "CodeWord",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord.code",
+        "id": "source:construct:SWIFT-MT202COV.CodeWord.code",
+        "kind": "source",
+        "label": "code",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "code",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord.text",
+        "id": "source:construct:SWIFT-MT202COV.CodeWord.text",
+        "kind": "source",
+        "label": "text",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "text",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field20",
+        "id": "source:construct:SWIFT-MT202COV.Field20",
+        "kind": "source",
+        "label": "Field20",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field20",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field20.reference",
+        "id": "source:construct:SWIFT-MT202COV.Field20.reference",
+        "kind": "source",
+        "label": "reference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field21",
+        "id": "source:construct:SWIFT-MT202COV.Field21",
+        "kind": "source",
+        "label": "Field21",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field21",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field21.reference",
+        "id": "source:construct:SWIFT-MT202COV.Field21.reference",
+        "kind": "source",
+        "label": "reference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A",
+        "id": "source:construct:SWIFT-MT202COV.Field32A",
+        "kind": "source",
+        "label": "Field32A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field32A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.amount",
+        "id": "source:construct:SWIFT-MT202COV.Field32A.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.currency",
+        "id": "source:construct:SWIFT-MT202COV.Field32A.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.date",
+        "id": "source:construct:SWIFT-MT202COV.Field32A.date",
+        "kind": "source",
+        "label": "date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B",
+        "id": "source:construct:SWIFT-MT202COV.Field33B",
+        "kind": "source",
+        "label": "Field33B",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field33B",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B.amount",
+        "id": "source:construct:SWIFT-MT202COV.Field33B.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B.currency",
+        "id": "source:construct:SWIFT-MT202COV.Field33B.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F",
+        "id": "source:construct:SWIFT-MT202COV.Field50F",
+        "kind": "source",
+        "label": "Field50F",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field50F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F.account",
+        "id": "source:construct:SWIFT-MT202COV.Field50F.account",
+        "kind": "source",
+        "label": "account",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "account",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F.numberedLines",
+        "id": "source:construct:SWIFT-MT202COV.Field50F.numberedLines",
+        "kind": "source",
+        "label": "numberedLines",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "numberedLines",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field52A",
+        "id": "source:construct:SWIFT-MT202COV.Field52A",
+        "kind": "source",
+        "label": "Field52A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field52A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field52A.bic",
+        "id": "source:construct:SWIFT-MT202COV.Field52A.bic",
+        "kind": "source",
+        "label": "bic",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bic",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field53A",
+        "id": "source:construct:SWIFT-MT202COV.Field53A",
+        "kind": "source",
+        "label": "Field53A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field53A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field53A.bic",
+        "id": "source:construct:SWIFT-MT202COV.Field53A.bic",
+        "kind": "source",
+        "label": "bic",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bic",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field56A",
+        "id": "source:construct:SWIFT-MT202COV.Field56A",
+        "kind": "source",
+        "label": "Field56A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field56A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field56A.bic",
+        "id": "source:construct:SWIFT-MT202COV.Field56A.bic",
+        "kind": "source",
+        "label": "bic",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bic",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field57A",
+        "id": "source:construct:SWIFT-MT202COV.Field57A",
+        "kind": "source",
+        "label": "Field57A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field57A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field57A.bic",
+        "id": "source:construct:SWIFT-MT202COV.Field57A.bic",
+        "kind": "source",
+        "label": "bic",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bic",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A",
+        "id": "source:construct:SWIFT-MT202COV.Field58A",
+        "kind": "source",
+        "label": "Field58A",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field58A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A.account",
+        "id": "source:construct:SWIFT-MT202COV.Field58A.account",
+        "kind": "source",
+        "label": "account",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "account",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A.bic",
+        "id": "source:construct:SWIFT-MT202COV.Field58A.bic",
+        "kind": "source",
+        "label": "bic",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bic",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F",
+        "id": "source:construct:SWIFT-MT202COV.Field59F",
+        "kind": "source",
+        "label": "Field59F",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field59F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F.account",
+        "id": "source:construct:SWIFT-MT202COV.Field59F.account",
+        "kind": "source",
+        "label": "account",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "account",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F.numberedLines",
+        "id": "source:construct:SWIFT-MT202COV.Field59F.numberedLines",
+        "kind": "source",
+        "label": "numberedLines",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "numberedLines",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field70",
+        "id": "source:construct:SWIFT-MT202COV.Field70",
+        "kind": "source",
+        "label": "Field70",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field70",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field70.codeWords",
+        "id": "source:construct:SWIFT-MT202COV.Field70.codeWords",
+        "kind": "source",
+        "label": "codeWords",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "codeWords",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field72",
+        "id": "source:construct:SWIFT-MT202COV.Field72",
+        "kind": "source",
+        "label": "Field72",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field72",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field72.codeWords",
+        "id": "source:construct:SWIFT-MT202COV.Field72.codeWords",
+        "kind": "source",
+        "label": "codeWords",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "codeWords",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV",
+        "kind": "source",
+        "label": "MT202COV",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MT202COV",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.20",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.20",
+        "kind": "source",
+        "label": "20",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "20",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.21",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.21",
+        "kind": "source",
+        "label": "21",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "21",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.32A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.32A",
+        "kind": "source",
+        "label": "32A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "32A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.52A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.52A",
+        "kind": "source",
+        "label": "52A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "52A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.53A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.53A",
+        "kind": "source",
+        "label": "53A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "53A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.56A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.56A",
+        "kind": "source",
+        "label": "56A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "56A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.57A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.57A",
+        "kind": "source",
+        "label": "57A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "57A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.58A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.58A",
+        "kind": "source",
+        "label": "58A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "58A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.72",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.72",
+        "kind": "source",
+        "label": "72",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "72",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.SequenceB",
+        "id": "source:construct:SWIFT-MT202COV.MT202COV.SequenceB",
+        "kind": "source",
+        "label": "SequenceB",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SequenceB",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB",
+        "kind": "source",
+        "label": "MT202COVSequenceB",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MT202COVSequenceB",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.33B",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.33B",
+        "kind": "source",
+        "label": "33B",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "33B",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.50F",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.50F",
+        "kind": "source",
+        "label": "50F",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "50F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.52A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.52A",
+        "kind": "source",
+        "label": "52A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "52A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.56A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.56A",
+        "kind": "source",
+        "label": "56A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "56A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.57A",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.57A",
+        "kind": "source",
+        "label": "57A",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "57A",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.59F",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.59F",
+        "kind": "source",
+        "label": "59F",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "59F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.70",
+        "id": "source:construct:SWIFT-MT202COV.MT202COVSequenceB.70",
+        "kind": "source",
+        "label": "70",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "70",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine",
+        "id": "source:construct:SWIFT-MT202COV.NumberedLine",
+        "kind": "source",
+        "label": "NumberedLine",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "NumberedLine",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine.number",
+        "id": "source:construct:SWIFT-MT202COV.NumberedLine.number",
+        "kind": "source",
+        "label": "number",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "number",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine.text",
+        "id": "source:construct:SWIFT-MT202COV.NumberedLine.text",
+        "kind": "source",
+        "label": "text",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "text",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord",
+        "id": "target:/components/schemas/SWIFT-MT202COV.CodeWord",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.CodeWord",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.CodeWord",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord.code",
+        "id": "target:/components/schemas/SWIFT-MT202COV.CodeWord/properties/code",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/code",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/code",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.CodeWord.text",
+        "id": "target:/components/schemas/SWIFT-MT202COV.CodeWord/properties/text",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/text",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.CodeWord/properties/text",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field20",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field20",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field20",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field20",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field20.reference",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field20/properties/reference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field20/properties/reference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field20/properties/reference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field21",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field21",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field21",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field21",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field21.reference",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field21/properties/reference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field21/properties/reference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field21/properties/reference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field32A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field32A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field32A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.amount",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field32A/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field32A/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.currency",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field32A/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field32A/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field32A.date",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field32A/properties/date",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field32A/properties/date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field32A/properties/date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field33B",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field33B",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field33B",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B.amount",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field33B/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field33B/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field33B/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field33B.currency",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field33B/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field33B/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field33B/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field50F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field50F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field50F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F.account",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field50F/properties/account",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field50F/properties/account",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field50F/properties/account",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field50F.numberedLines",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field50F/properties/numberedLines",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field50F/properties/numberedLines",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field50F/properties/numberedLines",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field52A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field52A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field52A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field52A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field52A.bic",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field52A/properties/bic",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field52A/properties/bic",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field52A/properties/bic",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field53A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field53A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field53A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field53A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field53A.bic",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field53A/properties/bic",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field53A/properties/bic",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field53A/properties/bic",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field56A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field56A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field56A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field56A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field56A.bic",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field56A/properties/bic",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field56A/properties/bic",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field56A/properties/bic",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field57A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field57A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field57A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field57A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field57A.bic",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field57A/properties/bic",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field57A/properties/bic",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field57A/properties/bic",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field58A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field58A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field58A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A.account",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field58A/properties/account",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field58A/properties/account",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field58A/properties/account",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field58A.bic",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field58A/properties/bic",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field58A/properties/bic",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field58A/properties/bic",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field59F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field59F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field59F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F.account",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field59F/properties/account",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field59F/properties/account",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field59F/properties/account",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field59F.numberedLines",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field59F/properties/numberedLines",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field59F/properties/numberedLines",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field59F/properties/numberedLines",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field70",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field70",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field70",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field70",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field70.codeWords",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field70/properties/codeWords",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field70/properties/codeWords",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field70/properties/codeWords",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field72",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field72",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field72",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field72",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.Field72.codeWords",
+        "id": "target:/components/schemas/SWIFT-MT202COV.Field72/properties/codeWords",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.Field72/properties/codeWords",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.Field72/properties/codeWords",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.20",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/20",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/20",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/20",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.21",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/21",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/21",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/21",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.32A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/32A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/32A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/32A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.52A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/52A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/52A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/52A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.53A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/53A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/53A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/53A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.56A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/56A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/56A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/56A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.57A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/57A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/57A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/57A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.58A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/58A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/58A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/58A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.72",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/72",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/72",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/72",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COV.SequenceB",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COV/properties/SequenceB",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/SequenceB",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COV/properties/SequenceB",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.33B",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/33B",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/33B",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/33B",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.50F",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/50F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/50F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/50F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.52A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/52A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/52A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/52A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.56A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/56A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/56A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/56A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.57A",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/57A",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/57A",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/57A",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.59F",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/59F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/59F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/59F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.MT202COVSequenceB.70",
+        "id": "target:/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/70",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/70",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.MT202COVSequenceB/properties/70",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine",
+        "id": "target:/components/schemas/SWIFT-MT202COV.NumberedLine",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.NumberedLine",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.NumberedLine",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine.number",
+        "id": "target:/components/schemas/SWIFT-MT202COV.NumberedLine/properties/number",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/number",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/number",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT202COV.NumberedLine.text",
+        "id": "target:/components/schemas/SWIFT-MT202COV.NumberedLine/properties/text",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/text",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT202COV.NumberedLine/properties/text",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 57,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "swift-mt",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 50,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "swift.bic_directory",
+          "swift.checksum_verification",
+          "swift.mx_translation",
+          "swift.network_validation",
+          "swift.other_message_types",
+          "swift.usage_rules"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-swift-mt-03-composition-mt202cov-txt",
+      "source_format": "swift-mt",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 59,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 81,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 81,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 140,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 57,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "swift-mt",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 50,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "swift.bic_directory",
+          "swift.checksum_verification",
+          "swift.mx_translation",
+          "swift.network_validation",
+          "swift.other_message_types",
+          "swift.usage_rules"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-swift-mt-03-composition-mt202cov-txt",
+      "source_format": "swift-mt",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 59,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 81,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

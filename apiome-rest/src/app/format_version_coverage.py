@@ -551,6 +551,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="IDoc XML (EDI_DC40 control record)",
     ),
+    "swift-mt": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="SWIFT FIN MT103, MT202 / MT202 COV, MT940, MT942",
+                format_key="swift-mt",
+                support=VersionSupport.UNGATED,
+                note="An MT message names no standards release of its own (the yearly SR changes "
+                "usage rules, not the block grammar), so one grammar is read for every release. "
+                "Network-validated rules of any particular release are not evaluated.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "fhir": VersionCoverage(
         reads=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
         writes=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],

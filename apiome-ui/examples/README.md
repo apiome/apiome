@@ -145,7 +145,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | `nacha/` | NACHA ACH (pending #5450) | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
 | `ncpdp/` | NCPDP SCRIPT / Telecom (pending #5452) | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
 | `sepa/` | SEPA payment files (pending #5450) | message | `urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace | 14 |
-| `swift-mt/` | SWIFT MT (pending #5447) | message | `{1:` basic header + `{4:` text block terminated by `-}` | 14 |
+| `swift-mt/` | SWIFT MT | message | `{1:` basic header + `{4:` text block terminated by `-}` | 14 |
 | `tradacoms/` | TRADACOMS (pending #5449) | message | `STX=` transmission header + `END=` trailer | 15 |
 
 ### Agent / LLM tools
@@ -2241,24 +2241,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-unresolvable-declaration-ref.json`** — The FMT-3.6 acceptance case: a 1.2 listing whose declaration is missing from the fileset.
 
-### `swift-mt/` — SWIFT MT (pending #5447)
+### `swift-mt/` — SWIFT MT
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-mt103.txt` | minimal | `swift-mt` ≥ 0.9 | valid | `MT103`, `block-structure`, `tag-fields`, `pending-adapter` |
-| `02-typical-mt103.txt` | typical | `swift-mt` ≥ 0.9 | valid | `MT103`, `user-header`, `UETR`, `remittance-codes`, `sender-to-receiver`, `pending-adapter` |
-| `03-composition-mt202cov.txt` | composition | `swift-mt` ≥ 0.9 | valid | `MT202COV`, `two-sequences`, `option-letters`, `50F`, `59F`, `validation-flag`, `pending-adapter` |
-| `04-stress-mt940-statement.txt` | stress | `swift-mt` ≥ 0.9 | valid | `MT940`, `statement-lines`, `transaction-type-codes`, `reversal`, `supplementary-details`, `balances`, `pending-adapter` |
-| `05-real-world-mt103-charges-chain.txt` | real-world | `swift-mt` ≥ 0.9 | valid | `MT103`, `cross-currency`, `exchange-rate`, `correspondent-chain`, `charges`, `regulatory-reporting`, `pending-adapter` |
-| `06-typical-mt942-interim.txt` | typical | `swift-mt` ≥ 0.9 | valid | `MT942`, `floor-limit`, `summary-counts`, `statement-lines`, `pending-adapter` |
-| `07-cover-set/mt103.txt` | multi-file (root) | `swift-mt` ≥ 0.9 | valid | `MT103`, `customer-transfer`, `pending-adapter` |
-| `07-cover-set/mt202cov.txt` ⚠ | multi-file (member) | `swift-mt` (no guarantee) | valid | `MT202COV`, `cover-payment`, `field-21-reference`, `pending-adapter` |
-| `negative/01-syntactic-unterminated-block4.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `syntactic`, `unterminated-block`, `pending-adapter` |
-| `negative/02-semantic-no-transaction-reference.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `semantic`, `missing-field-20`, `pending-adapter` |
-| `negative/03-truncated-mid-field.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `truncated`, `mid-field`, `pending-adapter` |
-| `negative/04-wrong-format-iso20022.xml` ⚠ | — | `swift-mt` (no guarantee) | invalid | `negative`, `wrong-format`, `iso20022`, `pacs.008`, `pending-adapter` |
-| `negative/05-encoding-utf16.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-unknown-message-type.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `semantic`, `unsupported-mt-type`, `free-format`, `pending-adapter` |
+| `01-minimal-mt103.txt` | minimal | `swift-mt` ≥ 0.9 | valid | `MT103`, `block-structure`, `tag-fields` |
+| `02-typical-mt103.txt` | typical | `swift-mt` ≥ 0.9 | valid | `MT103`, `user-header`, `UETR`, `remittance-codes`, `sender-to-receiver` |
+| `03-composition-mt202cov.txt` | composition | `swift-mt` ≥ 0.9 | valid | `MT202COV`, `two-sequences`, `option-letters`, `50F`, `59F`, `validation-flag` |
+| `04-stress-mt940-statement.txt` | stress | `swift-mt` ≥ 0.9 | valid | `MT940`, `statement-lines`, `transaction-type-codes`, `reversal`, `supplementary-details`, `balances` |
+| `05-real-world-mt103-charges-chain.txt` ⚠ | real-world | `swift-mt` ≥ 0.9 | valid | `MT103`, `cross-currency`, `exchange-rate`, `correspondent-chain`, `charges`, `regulatory-reporting` |
+| `06-typical-mt942-interim.txt` | typical | `swift-mt` ≥ 0.9 | valid | `MT942`, `floor-limit`, `summary-counts`, `statement-lines` |
+| `07-cover-set/mt103.txt` | multi-file (root) | `swift-mt` ≥ 0.9 | valid | `MT103`, `customer-transfer` |
+| `07-cover-set/mt202cov.txt` ⚠ | multi-file (member) | `swift-mt` (no guarantee) | valid | `MT202COV`, `cover-payment`, `field-21-reference` |
+| `negative/01-syntactic-unterminated-block4.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `syntactic`, `unterminated-block` |
+| `negative/02-semantic-no-transaction-reference.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `semantic`, `missing-field-20` |
+| `negative/03-truncated-mid-field.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `truncated`, `mid-field` |
+| `negative/04-wrong-format-iso20022.xml` ⚠ | — | `swift-mt` (no guarantee) | invalid | `negative`, `wrong-format`, `iso20022`, `pacs.008` |
+| `negative/05-encoding-utf16.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-unknown-message-type.txt` | — | `swift-mt` (no guarantee) | invalid | `negative`, `semantic`, `unsupported-mt-type`, `free-format` |
+
+> ⚠ **`05-real-world-mt103-charges-chain.txt`** — Field 20 (PAY20260819CHRG01) is 17 characters, one over the documented 16x: the adapter keeps it as lines and flags it (swift.field_not_well_formed) rather than refusing the message.
 
 > ⚠ **`07-cover-set/mt202cov.txt`** — Fileset member: the cover payment. Field 21 carries the MT103's field 20, which is the only link between the two messages.
 

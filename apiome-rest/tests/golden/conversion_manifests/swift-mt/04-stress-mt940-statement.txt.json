@@ -1,0 +1,3590 @@
+{
+  "adapter": "swift-mt",
+  "conversion_mode": "lossy",
+  "corpus_path": "swift-mt/04-stress-mt940-statement.txt",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 13,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.CodeWord.code"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.CodeWord/properties/code"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.CodeWord.code",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.CodeWord.code",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.CodeWord/properties/code"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.CodeWord.text"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.CodeWord/properties/text"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.CodeWord.text",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.CodeWord.text",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.CodeWord/properties/text"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field20.reference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field20/properties/reference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field20.reference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field20.reference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field20/properties/reference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field21.reference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field21/properties/reference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field21.reference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field21.reference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field21/properties/reference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field25.account"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field25/properties/account"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field25.account",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field25.account",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field25/properties/account"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field28C.sequenceNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field28C/properties/sequenceNumber"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field28C.sequenceNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field28C.sequenceNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field28C/properties/sequenceNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field28C.statementNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field28C/properties/statementNumber"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field28C.statementNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field28C.statementNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field28C/properties/statementNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field60F.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field60F/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field60F.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field60F.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field60F/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field60F.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field60F/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field60F.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field60F.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field60F/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field60F.date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field60F/properties/date"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field60F.date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field60F.date",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field60F/properties/date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field60F.mark"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field60F/properties/mark"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field60F.mark",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field60F.mark",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field60F/properties/mark"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.bankReference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/bankReference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.bankReference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.bankReference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/bankReference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.codeWords"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/codeWords"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.codeWords",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.codeWords",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/codeWords"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.customerReference"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/customerReference"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.customerReference",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.customerReference",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/customerReference"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.entryDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/entryDate"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.entryDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.entryDate",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/entryDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.mark"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/mark"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.mark",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.mark",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/mark"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.transactionType"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/transactionType"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.transactionType",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.transactionType",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/transactionType"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61.valueDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61/properties/valueDate"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field61.valueDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61.valueDate",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61/properties/valueDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field62F.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field62F/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field62F.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field62F.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field62F/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field62F.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field62F/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field62F.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field62F.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field62F/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field62F.date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field62F/properties/date"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field62F.date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field62F.date",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field62F/properties/date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field62F.mark"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field62F/properties/mark"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field62F.mark",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field62F.mark",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field62F/properties/mark"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field64.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field64/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field64.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field64.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field64/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field64.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field64/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field64.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field64.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field64/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field64.date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field64/properties/date"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field64.date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field64.date",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field64/properties/date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field64.mark"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field64/properties/mark"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field64.mark",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field64.mark",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field64/properties/mark"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field65.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field65/properties/amount"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field65.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field65.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field65/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field65.currency"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field65/properties/currency"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field65.currency",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field65.currency",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field65/properties/currency"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field65.date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field65/properties/date"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field65.date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field65.date",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field65/properties/date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field65.mark"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field65/properties/mark"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field65.mark",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field65.mark",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field65/properties/mark"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field86.codeWords"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field86/properties/codeWords"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field86.codeWords",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field86.codeWords",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field86/properties/codeWords"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field86.lines"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field86/properties/lines"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.Field86.lines",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field86.lines",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field86/properties/lines"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.20"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/20"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.20",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.20",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/20"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.21"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/21"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.21",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.21",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/21"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.25"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/25"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.25",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.25",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/25"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.28C"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/28C"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.28C",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.28C",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/28C"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.60F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/60F"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.60F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.60F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/60F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.62F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/62F"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.62F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.62F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/62F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.64"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/64"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.64",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.64",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/64"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.65"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/65"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.65",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.65",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/65"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.86"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/86"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.86",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.86",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/86"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940.StatementLines"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940/properties/StatementLines"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.MT940.StatementLines",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940.StatementLines",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940/properties/StatementLines"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.StatementLine.61"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.StatementLine/properties/61"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.StatementLine.61",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.StatementLine.61",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.StatementLine/properties/61"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.StatementLine.86"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.StatementLine/properties/86"
+          }
+        ],
+        "id": "construct:field:SWIFT-MT940.StatementLine.86",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.StatementLine.86",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.StatementLine/properties/86"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.CodeWord"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.CodeWord"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.CodeWord",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.CodeWord",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.CodeWord"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field20"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field20"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field20",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field20",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field20"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field21"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field21"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field21",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field21",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field21"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field25"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field25"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field25",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field25",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field25"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field28C"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field28C"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field28C",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field28C",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field28C"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field60F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field60F"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field60F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field60F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field60F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field61"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field61"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field61",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field61",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field61"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field62F"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field62F"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field62F",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field62F",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field62F"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field64"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field64"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field64",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field64",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field64"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field65"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field65"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field65",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field65",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field65"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.Field86"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.Field86"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.Field86",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.Field86",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.Field86"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.MT940"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.MT940"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.MT940",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.MT940",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.MT940"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "SWIFT-MT940.StatementLine"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/SWIFT-MT940.StatementLine"
+          }
+        ],
+        "id": "construct:type:SWIFT-MT940.StatementLine",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:SWIFT-MT940.StatementLine",
+        "status": "retained",
+        "target": "target:/components/schemas/SWIFT-MT940.StatementLine"
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.bic_directory, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.bic_directory",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.bic_directory",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.checksum_verification, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.checksum_verification",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.checksum_verification",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.mx_translation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.mx_translation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.mx_translation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.network_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.network_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.network_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.other_message_types, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.other_message_types",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.other_message_types",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the swift-mt analyzer does not model swift.usage_rules, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:swift.usage_rules",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:swift.usage_rules",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "swift.bic_directory",
+        "id": "source:analysis:swift.bic_directory",
+        "kind": "source",
+        "label": "swift.bic_directory",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.bic_directory",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.checksum_verification",
+        "id": "source:analysis:swift.checksum_verification",
+        "kind": "source",
+        "label": "swift.checksum_verification",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.checksum_verification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.mx_translation",
+        "id": "source:analysis:swift.mx_translation",
+        "kind": "source",
+        "label": "swift.mx_translation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.mx_translation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.network_validation",
+        "id": "source:analysis:swift.network_validation",
+        "kind": "source",
+        "label": "swift.network_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.network_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.other_message_types",
+        "id": "source:analysis:swift.other_message_types",
+        "kind": "source",
+        "label": "swift.other_message_types",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.other_message_types",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "swift.usage_rules",
+        "id": "source:analysis:swift.usage_rules",
+        "kind": "source",
+        "label": "swift.usage_rules",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "swift.usage_rules",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord",
+        "id": "source:construct:SWIFT-MT940.CodeWord",
+        "kind": "source",
+        "label": "CodeWord",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "CodeWord",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord.code",
+        "id": "source:construct:SWIFT-MT940.CodeWord.code",
+        "kind": "source",
+        "label": "code",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "code",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord.text",
+        "id": "source:construct:SWIFT-MT940.CodeWord.text",
+        "kind": "source",
+        "label": "text",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "text",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field20",
+        "id": "source:construct:SWIFT-MT940.Field20",
+        "kind": "source",
+        "label": "Field20",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field20",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field20.reference",
+        "id": "source:construct:SWIFT-MT940.Field20.reference",
+        "kind": "source",
+        "label": "reference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field21",
+        "id": "source:construct:SWIFT-MT940.Field21",
+        "kind": "source",
+        "label": "Field21",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field21",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field21.reference",
+        "id": "source:construct:SWIFT-MT940.Field21.reference",
+        "kind": "source",
+        "label": "reference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field25",
+        "id": "source:construct:SWIFT-MT940.Field25",
+        "kind": "source",
+        "label": "Field25",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field25",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field25.account",
+        "id": "source:construct:SWIFT-MT940.Field25.account",
+        "kind": "source",
+        "label": "account",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "account",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C",
+        "id": "source:construct:SWIFT-MT940.Field28C",
+        "kind": "source",
+        "label": "Field28C",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field28C",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C.sequenceNumber",
+        "id": "source:construct:SWIFT-MT940.Field28C.sequenceNumber",
+        "kind": "source",
+        "label": "sequenceNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "sequenceNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C.statementNumber",
+        "id": "source:construct:SWIFT-MT940.Field28C.statementNumber",
+        "kind": "source",
+        "label": "statementNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "statementNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F",
+        "id": "source:construct:SWIFT-MT940.Field60F",
+        "kind": "source",
+        "label": "Field60F",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field60F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.amount",
+        "id": "source:construct:SWIFT-MT940.Field60F.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.currency",
+        "id": "source:construct:SWIFT-MT940.Field60F.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.date",
+        "id": "source:construct:SWIFT-MT940.Field60F.date",
+        "kind": "source",
+        "label": "date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.mark",
+        "id": "source:construct:SWIFT-MT940.Field60F.mark",
+        "kind": "source",
+        "label": "mark",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "mark",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61",
+        "id": "source:construct:SWIFT-MT940.Field61",
+        "kind": "source",
+        "label": "Field61",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field61",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.amount",
+        "id": "source:construct:SWIFT-MT940.Field61.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.bankReference",
+        "id": "source:construct:SWIFT-MT940.Field61.bankReference",
+        "kind": "source",
+        "label": "bankReference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "bankReference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.codeWords",
+        "id": "source:construct:SWIFT-MT940.Field61.codeWords",
+        "kind": "source",
+        "label": "codeWords",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "codeWords",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.customerReference",
+        "id": "source:construct:SWIFT-MT940.Field61.customerReference",
+        "kind": "source",
+        "label": "customerReference",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "customerReference",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.entryDate",
+        "id": "source:construct:SWIFT-MT940.Field61.entryDate",
+        "kind": "source",
+        "label": "entryDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.mark",
+        "id": "source:construct:SWIFT-MT940.Field61.mark",
+        "kind": "source",
+        "label": "mark",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "mark",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.transactionType",
+        "id": "source:construct:SWIFT-MT940.Field61.transactionType",
+        "kind": "source",
+        "label": "transactionType",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "transactionType",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.valueDate",
+        "id": "source:construct:SWIFT-MT940.Field61.valueDate",
+        "kind": "source",
+        "label": "valueDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "valueDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F",
+        "id": "source:construct:SWIFT-MT940.Field62F",
+        "kind": "source",
+        "label": "Field62F",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field62F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.amount",
+        "id": "source:construct:SWIFT-MT940.Field62F.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.currency",
+        "id": "source:construct:SWIFT-MT940.Field62F.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.date",
+        "id": "source:construct:SWIFT-MT940.Field62F.date",
+        "kind": "source",
+        "label": "date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.mark",
+        "id": "source:construct:SWIFT-MT940.Field62F.mark",
+        "kind": "source",
+        "label": "mark",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "mark",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64",
+        "id": "source:construct:SWIFT-MT940.Field64",
+        "kind": "source",
+        "label": "Field64",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field64",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.amount",
+        "id": "source:construct:SWIFT-MT940.Field64.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.currency",
+        "id": "source:construct:SWIFT-MT940.Field64.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.date",
+        "id": "source:construct:SWIFT-MT940.Field64.date",
+        "kind": "source",
+        "label": "date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.mark",
+        "id": "source:construct:SWIFT-MT940.Field64.mark",
+        "kind": "source",
+        "label": "mark",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "mark",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65",
+        "id": "source:construct:SWIFT-MT940.Field65",
+        "kind": "source",
+        "label": "Field65",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field65",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.amount",
+        "id": "source:construct:SWIFT-MT940.Field65.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.currency",
+        "id": "source:construct:SWIFT-MT940.Field65.currency",
+        "kind": "source",
+        "label": "currency",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "currency",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.date",
+        "id": "source:construct:SWIFT-MT940.Field65.date",
+        "kind": "source",
+        "label": "date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.mark",
+        "id": "source:construct:SWIFT-MT940.Field65.mark",
+        "kind": "source",
+        "label": "mark",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "mark",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86",
+        "id": "source:construct:SWIFT-MT940.Field86",
+        "kind": "source",
+        "label": "Field86",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Field86",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86.codeWords",
+        "id": "source:construct:SWIFT-MT940.Field86.codeWords",
+        "kind": "source",
+        "label": "codeWords",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "codeWords",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86.lines",
+        "id": "source:construct:SWIFT-MT940.Field86.lines",
+        "kind": "source",
+        "label": "lines",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "lines",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940",
+        "id": "source:construct:SWIFT-MT940.MT940",
+        "kind": "source",
+        "label": "MT940",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MT940",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.20",
+        "id": "source:construct:SWIFT-MT940.MT940.20",
+        "kind": "source",
+        "label": "20",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "20",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.21",
+        "id": "source:construct:SWIFT-MT940.MT940.21",
+        "kind": "source",
+        "label": "21",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "21",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.25",
+        "id": "source:construct:SWIFT-MT940.MT940.25",
+        "kind": "source",
+        "label": "25",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "25",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.28C",
+        "id": "source:construct:SWIFT-MT940.MT940.28C",
+        "kind": "source",
+        "label": "28C",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "28C",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.60F",
+        "id": "source:construct:SWIFT-MT940.MT940.60F",
+        "kind": "source",
+        "label": "60F",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "60F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.62F",
+        "id": "source:construct:SWIFT-MT940.MT940.62F",
+        "kind": "source",
+        "label": "62F",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "62F",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.64",
+        "id": "source:construct:SWIFT-MT940.MT940.64",
+        "kind": "source",
+        "label": "64",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "64",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.65",
+        "id": "source:construct:SWIFT-MT940.MT940.65",
+        "kind": "source",
+        "label": "65",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "65",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.86",
+        "id": "source:construct:SWIFT-MT940.MT940.86",
+        "kind": "source",
+        "label": "86",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "86",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.StatementLines",
+        "id": "source:construct:SWIFT-MT940.MT940.StatementLines",
+        "kind": "source",
+        "label": "StatementLines",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "StatementLines",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine",
+        "id": "source:construct:SWIFT-MT940.StatementLine",
+        "kind": "source",
+        "label": "StatementLine",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "StatementLine",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine.61",
+        "id": "source:construct:SWIFT-MT940.StatementLine.61",
+        "kind": "source",
+        "label": "61",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "61",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine.86",
+        "id": "source:construct:SWIFT-MT940.StatementLine.86",
+        "kind": "source",
+        "label": "86",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "86",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord",
+        "id": "target:/components/schemas/SWIFT-MT940.CodeWord",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.CodeWord",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.CodeWord",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord.code",
+        "id": "target:/components/schemas/SWIFT-MT940.CodeWord/properties/code",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.CodeWord/properties/code",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.CodeWord/properties/code",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.CodeWord.text",
+        "id": "target:/components/schemas/SWIFT-MT940.CodeWord/properties/text",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.CodeWord/properties/text",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.CodeWord/properties/text",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field20",
+        "id": "target:/components/schemas/SWIFT-MT940.Field20",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field20",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field20",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field20.reference",
+        "id": "target:/components/schemas/SWIFT-MT940.Field20/properties/reference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field20/properties/reference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field20/properties/reference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field21",
+        "id": "target:/components/schemas/SWIFT-MT940.Field21",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field21",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field21",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field21.reference",
+        "id": "target:/components/schemas/SWIFT-MT940.Field21/properties/reference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field21/properties/reference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field21/properties/reference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field25",
+        "id": "target:/components/schemas/SWIFT-MT940.Field25",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field25",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field25",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field25.account",
+        "id": "target:/components/schemas/SWIFT-MT940.Field25/properties/account",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field25/properties/account",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field25/properties/account",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C",
+        "id": "target:/components/schemas/SWIFT-MT940.Field28C",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field28C",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field28C",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C.sequenceNumber",
+        "id": "target:/components/schemas/SWIFT-MT940.Field28C/properties/sequenceNumber",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field28C/properties/sequenceNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field28C/properties/sequenceNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field28C.statementNumber",
+        "id": "target:/components/schemas/SWIFT-MT940.Field28C/properties/statementNumber",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field28C/properties/statementNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field28C/properties/statementNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F",
+        "id": "target:/components/schemas/SWIFT-MT940.Field60F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field60F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field60F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.amount",
+        "id": "target:/components/schemas/SWIFT-MT940.Field60F/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field60F/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field60F/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.currency",
+        "id": "target:/components/schemas/SWIFT-MT940.Field60F/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field60F/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field60F/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.date",
+        "id": "target:/components/schemas/SWIFT-MT940.Field60F/properties/date",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field60F/properties/date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field60F/properties/date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field60F.mark",
+        "id": "target:/components/schemas/SWIFT-MT940.Field60F/properties/mark",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field60F/properties/mark",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field60F/properties/mark",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.amount",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.bankReference",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/bankReference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/bankReference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/bankReference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.codeWords",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/codeWords",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/codeWords",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/codeWords",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.customerReference",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/customerReference",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/customerReference",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/customerReference",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.entryDate",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/entryDate",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/entryDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/entryDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.mark",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/mark",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/mark",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/mark",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.transactionType",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/transactionType",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/transactionType",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/transactionType",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field61.valueDate",
+        "id": "target:/components/schemas/SWIFT-MT940.Field61/properties/valueDate",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field61/properties/valueDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field61/properties/valueDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F",
+        "id": "target:/components/schemas/SWIFT-MT940.Field62F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field62F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field62F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.amount",
+        "id": "target:/components/schemas/SWIFT-MT940.Field62F/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field62F/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field62F/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.currency",
+        "id": "target:/components/schemas/SWIFT-MT940.Field62F/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field62F/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field62F/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.date",
+        "id": "target:/components/schemas/SWIFT-MT940.Field62F/properties/date",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field62F/properties/date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field62F/properties/date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field62F.mark",
+        "id": "target:/components/schemas/SWIFT-MT940.Field62F/properties/mark",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field62F/properties/mark",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field62F/properties/mark",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64",
+        "id": "target:/components/schemas/SWIFT-MT940.Field64",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field64",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field64",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.amount",
+        "id": "target:/components/schemas/SWIFT-MT940.Field64/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field64/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field64/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.currency",
+        "id": "target:/components/schemas/SWIFT-MT940.Field64/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field64/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field64/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.date",
+        "id": "target:/components/schemas/SWIFT-MT940.Field64/properties/date",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field64/properties/date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field64/properties/date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field64.mark",
+        "id": "target:/components/schemas/SWIFT-MT940.Field64/properties/mark",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field64/properties/mark",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field64/properties/mark",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65",
+        "id": "target:/components/schemas/SWIFT-MT940.Field65",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field65",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field65",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.amount",
+        "id": "target:/components/schemas/SWIFT-MT940.Field65/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field65/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field65/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.currency",
+        "id": "target:/components/schemas/SWIFT-MT940.Field65/properties/currency",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field65/properties/currency",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field65/properties/currency",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.date",
+        "id": "target:/components/schemas/SWIFT-MT940.Field65/properties/date",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field65/properties/date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field65/properties/date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field65.mark",
+        "id": "target:/components/schemas/SWIFT-MT940.Field65/properties/mark",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field65/properties/mark",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field65/properties/mark",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86",
+        "id": "target:/components/schemas/SWIFT-MT940.Field86",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field86",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field86",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86.codeWords",
+        "id": "target:/components/schemas/SWIFT-MT940.Field86/properties/codeWords",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field86/properties/codeWords",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field86/properties/codeWords",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.Field86.lines",
+        "id": "target:/components/schemas/SWIFT-MT940.Field86/properties/lines",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.Field86/properties/lines",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.Field86/properties/lines",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.20",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/20",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/20",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/20",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.21",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/21",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/21",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/21",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.25",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/25",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/25",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/25",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.28C",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/28C",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/28C",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/28C",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.60F",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/60F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/60F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/60F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.62F",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/62F",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/62F",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/62F",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.64",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/64",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/64",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/64",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.65",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/65",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/65",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/65",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.86",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/86",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/86",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/86",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.MT940.StatementLines",
+        "id": "target:/components/schemas/SWIFT-MT940.MT940/properties/StatementLines",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.MT940/properties/StatementLines",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.MT940/properties/StatementLines",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine",
+        "id": "target:/components/schemas/SWIFT-MT940.StatementLine",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.StatementLine",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.StatementLine",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine.61",
+        "id": "target:/components/schemas/SWIFT-MT940.StatementLine/properties/61",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.StatementLine/properties/61",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.StatementLine/properties/61",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "SWIFT-MT940.StatementLine.86",
+        "id": "target:/components/schemas/SWIFT-MT940.StatementLine/properties/86",
+        "kind": "target",
+        "label": "/components/schemas/SWIFT-MT940.StatementLine/properties/86",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/SWIFT-MT940.StatementLine/properties/86",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 58,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "swift-mt",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 105,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "swift.bic_directory",
+          "swift.checksum_verification",
+          "swift.mx_translation",
+          "swift.network_validation",
+          "swift.other_message_types",
+          "swift.usage_rules"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-swift-mt-04-stress-mt940-statement-txt",
+      "source_format": "swift-mt",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 60,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 82,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 82,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 142,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 6,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 6,
+      "checklist": 18,
+      "construct": 58,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "swift-mt",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 105,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "swift.bic_directory",
+          "swift.checksum_verification",
+          "swift.mx_translation",
+          "swift.network_validation",
+          "swift.other_message_types",
+          "swift.usage_rules"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-swift-mt-04-stress-mt940-statement-txt",
+      "source_format": "swift-mt",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 60,
+      "transformed": 0,
+      "unavailable": 6
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 82,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

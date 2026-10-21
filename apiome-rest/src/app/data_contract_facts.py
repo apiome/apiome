@@ -111,6 +111,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "relaxng",
         "sample",
         "sql-ddl",
+        "swift-mt",
         "xsd",
     }
 )

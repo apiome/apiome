@@ -88,6 +88,7 @@ from .payload_analysis import (
     ValueVisibility,
 )
 from .payload_analyzer import GENERIC_ANALYZER_KEY
+from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     # Imported lazily at every call site: :mod:`app.import_source` imports the analysis
@@ -142,7 +143,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "16"
+REGISTRY_VERSION = "17"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1083,6 +1084,61 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "Nothing is checked against the basic type's structure (WE30) or the qualifier code "
             "lists: a well-formed IDoc is not claimed to be a valid one. Status records (EDI_DS40) "
             "and release 2.x record layouts are not read.",
+        ],
+    ),
+    # FMT-6.3 (#5447): SWIFT MT, seeded because the MX correspondence it records must be stated as a
+    # note — never as a conversion — wherever a reader meets it, and the capability panel is one.
+    "swift-mt": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "Message → block (basic, application and user headers, text, trailer) → sequence → "
+            "field → component, code word or numbered line. Each field keeps its tag and option "
+            "letter (``50K`` and ``50F`` are the same field in different options)."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "Every header block and every field carries the line, offset and length of the "
+                "text it was read from, beside its path (``MSG[0]/{4}/A/32A[3]``)."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Field components, code-word texts and lines are payment data — accounts, names, "
+                "amounts — so the stored record carries whatever the value-visibility policy "
+                "allows. Tags, option letters, code-word qualifiers and the header blocks are "
+                "structure and are always shown."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "swift.basic_header",
+                "swift.application_header",
+                "swift.user_header",
+                "swift.trailer",
+                "swift.byte_offsets",
+                "swift.multiple_messages",
+            ],
+            note=(
+                "The canonical model is the first message: one record type per message, and one "
+                "per field as written with its option (``Field50K``), so option letters survive as "
+                "different shapes; code words become qualifier/text records. Header blocks are "
+                "recorded beside the model as structure, and further messages in the file are in "
+                "the analysis only."
+            ),
+        ),
+        notes=[
+            "Where an MX counterpart is documented — MT103 → pacs.008, MT202 → pacs.009, MT202 COV → "
+            "pacs.009 (COV), MT940 → camt.053, MT942 → camt.052 — it is recorded as a note, never as "
+            "a conversion. " + MX_CORRESPONDENCE_DISCLAIMER,
+            "MT103, MT202 (including COV), MT940 and MT942 are read; other message types are "
+            "refused. Fields are read by a small stated field catalogue; content that does not "
+            "match its documented shape is kept as lines and flagged, never refused.",
+            "SWIFT network-validated rules and usage rules are not evaluated, BICs are not looked "
+            "up, and CHK/MAC trailers are recorded but not verified.",
         ],
     ),
     "relaxng": _Seed(

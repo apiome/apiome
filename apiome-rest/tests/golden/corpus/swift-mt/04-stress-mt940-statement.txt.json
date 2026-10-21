@@ -1,0 +1,1047 @@
+{
+  "adapter": "swift-mt",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "swift_headers": {
+        "application": {
+          "inputTime": "0930",
+          "messageType": "940",
+          "mirDate": "260819",
+          "mirLtAddress": "EXAMPLNL2AXXXX",
+          "mirSequence": "000044",
+          "mirSession": "2381",
+          "outputDate": "260819",
+          "outputTime": "0930",
+          "priority": "N"
+        },
+        "basic": {
+          "applicationId": "F",
+          "ltAddress": "EXAMPLNL2AXXXX",
+          "sequenceNumber": "000044",
+          "serviceId": "01",
+          "sessionNumber": "2381"
+        },
+        "trailer": {
+          "CHK": "AABBCCDDEEFF",
+          "TNG": ""
+        },
+        "user": {
+          "108": "STMT20260819"
+        }
+      },
+      "swift_message_type": "MT940",
+      "swift_mx_correspondence": {
+        "basis": "the SWIFT Standards MT and MX Equivalence Tables",
+        "disclaimer": "This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.",
+        "mt": "MT940",
+        "mx": "camt.053",
+        "mxName": "Bank To Customer Statement",
+        "verified": false
+      }
+    },
+    "format": "swift-mt",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "SWIFT MT940",
+      "namespace": "SWIFT-MT940"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "SWIFT MT940",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.CodeWord.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.CodeWord.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.CodeWord",
+        "key_type": null,
+        "kind": "record",
+        "name": "CodeWord",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 20: Transaction Reference Number",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field20.reference",
+            "name": "reference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field20",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field20",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 21: Related Reference",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field21.reference",
+            "name": "reference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field21",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field21",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 25: Account Identification",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field25.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field25",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field25",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 28, option C: Statement Number/Sequence Number",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field28C.sequenceNumber",
+            "name": "sequenceNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field28C.statementNumber",
+            "name": "statementNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field28C",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field28C",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 60, option F: Opening Balance (first)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.Field60F.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.Field60F.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field60F.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field60F.mark",
+            "name": "mark",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field60F",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field60F",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 61: Statement Line",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.Field61.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "SWIFT-MT940.Field61.bankReference",
+            "name": "bankReference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "SWIFT-MT940.Field61.codeWords",
+            "name": "codeWords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT940.CodeWord",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "SWIFT-MT940.Field61.customerReference",
+            "name": "customerReference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field61.entryDate",
+            "name": "entryDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.Field61.mark",
+            "name": "mark",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "SWIFT-MT940.Field61.transactionType",
+            "name": "transactionType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field61.valueDate",
+            "name": "valueDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field61",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field61",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 62, option F: Closing Balance (final)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.Field62F.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.Field62F.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field62F.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field62F.mark",
+            "name": "mark",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field62F",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field62F",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 64: Closing Available Balance",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.Field64.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.Field64.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field64.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field64.mark",
+            "name": "mark",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field64",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field64",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 65: Forward Available Balance",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.Field65.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.Field65.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field65.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field65.mark",
+            "name": "mark",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field65",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field65",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 86: Information to Account Owner",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.Field86.codeWords",
+            "name": "codeWords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT940.CodeWord",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.Field86.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.Field86",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field86",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "SWIFT MT940 message",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.MT940.20",
+            "name": "20",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field20",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.MT940.21",
+            "name": "21",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field21",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT940.MT940.25",
+            "name": "25",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field25",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT940.MT940.28C",
+            "name": "28C",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field28C",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "SWIFT-MT940.MT940.60F",
+            "name": "60F",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field60F",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "SWIFT-MT940.MT940.62F",
+            "name": "62F",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field62F",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "SWIFT-MT940.MT940.64",
+            "name": "64",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "SWIFT-MT940.MT940.65",
+            "name": "65",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field65",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "SWIFT-MT940.MT940.86",
+            "name": "86",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field86",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "SWIFT-MT940.MT940.StatementLines",
+            "name": "StatementLines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT940.StatementLine",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.MT940",
+        "key_type": null,
+        "kind": "record",
+        "name": "MT940",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A statement line (field 61) and the information to account owner (field 86) that follows it",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT940.StatementLine.61",
+            "name": "61",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field61",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT940.StatementLine.86",
+            "name": "86",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT940.Field86",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT940.StatementLine",
+        "key_type": null,
+        "kind": "record",
+        "name": "StatementLine",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "swift-mt/04-stress-mt940-statement.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 13
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "swift-mt"
+  },
+  "fingerprint": "sha256:05feebeb2aa094176ee73c47bef57ac279e97a37a315a829432fafe67497c1e1",
+  "lint": {
+    "findings": 55,
+    "grade": "F",
+    "report_fingerprint": "f9274537ed0b51dc5a64af84c3ab7ff00a8dbf19a034ad450f044002bccaf958",
+    "score": 55,
+    "severity_counts": {
+      "error": 0,
+      "info": 46,
+      "warning": 9
+    }
+  },
+  "snapshot_version": 1
+}

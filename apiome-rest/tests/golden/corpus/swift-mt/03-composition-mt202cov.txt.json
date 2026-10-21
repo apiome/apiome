@@ -1,0 +1,1029 @@
+{
+  "adapter": "swift-mt",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "swift_headers": {
+        "application": {
+          "messageType": "202",
+          "priority": "N",
+          "receiver": "EXAMPUS33XXXX"
+        },
+        "basic": {
+          "applicationId": "F",
+          "ltAddress": "EXAMPLNL2AXXXX",
+          "sequenceNumber": "000043",
+          "serviceId": "01",
+          "sessionNumber": "2381"
+        },
+        "trailer": {
+          "CHK": "1122334455CD"
+        },
+        "user": {
+          "119": "COV",
+          "121": "6b2c1a7e-0f4d-4a2b-9c31-000000000002"
+        }
+      },
+      "swift_message_type": "MT202COV",
+      "swift_mx_correspondence": {
+        "basis": "the SWIFT Standards MT and MX Equivalence Tables",
+        "disclaimer": "This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.",
+        "mt": "MT202COV",
+        "mx": "pacs.009 (COV)",
+        "mxName": "Financial Institution Credit Transfer, cover form",
+        "verified": false
+      }
+    },
+    "format": "swift-mt",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "SWIFT MT202COV",
+      "namespace": "SWIFT-MT202COV"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "SWIFT MT202COV",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.CodeWord.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.CodeWord.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.CodeWord",
+        "key_type": null,
+        "kind": "record",
+        "name": "CodeWord",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 20: Transaction Reference Number",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field20.reference",
+            "name": "reference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field20",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field20",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 21: Related Reference",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field21.reference",
+            "name": "reference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field21",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field21",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 32, option A: Value Date/Currency/Interbank Settled Amount",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT202COV.Field32A.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.Field32A.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field32A.date",
+            "name": "date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field32A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field32A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 33, option B: Currency/Instructed Amount",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.Field33B.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field33B.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field33B",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field33B",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 50, option F: Ordering Customer",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field50F.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.Field50F.numberedLines",
+            "name": "numberedLines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT202COV.NumberedLine",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field50F",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field50F",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 52, option A: Ordering Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field52A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field52A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field52A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 53, option A: Sender's Correspondent",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field53A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field53A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field53A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 56, option A: Intermediary Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field56A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field56A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field56A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 57, option A: Account With Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field57A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field57A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field57A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 58, option A: Beneficiary Institution",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field58A.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.Field58A.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field58A",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field58A",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 59, option F: Beneficiary Customer",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field59F.account",
+            "name": "account",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.Field59F.numberedLines",
+            "name": "numberedLines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT202COV.NumberedLine",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field59F",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field59F",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 70: Remittance Information",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field70.codeWords",
+            "name": "codeWords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT202COV.CodeWord",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field70",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field70",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Field 72: Sender to Receiver Information",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.Field72.codeWords",
+            "name": "codeWords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SWIFT-MT202COV.CodeWord",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.Field72",
+        "key_type": null,
+        "kind": "record",
+        "name": "Field72",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "SWIFT MT202COV message",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.MT202COV.20",
+            "name": "20",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field20",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.MT202COV.21",
+            "name": "21",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field21",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT202COV.MT202COV.32A",
+            "name": "32A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field32A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT202COV.MT202COV.52A",
+            "name": "52A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field52A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "SWIFT-MT202COV.MT202COV.53A",
+            "name": "53A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field53A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "SWIFT-MT202COV.MT202COV.56A",
+            "name": "56A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field56A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "SWIFT-MT202COV.MT202COV.57A",
+            "name": "57A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field57A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "SWIFT-MT202COV.MT202COV.58A",
+            "name": "58A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field58A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "SWIFT-MT202COV.MT202COV.72",
+            "name": "72",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field72",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "SWIFT-MT202COV.MT202COV.SequenceB",
+            "name": "SequenceB",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.MT202COVSequenceB",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.MT202COV",
+        "key_type": null,
+        "kind": "record",
+        "name": "MT202COV",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Sequence B — underlying customer credit transfer details",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.33B",
+            "name": "33B",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field33B",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.50F",
+            "name": "50F",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field50F",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.52A",
+            "name": "52A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field52A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.56A",
+            "name": "56A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field56A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.57A",
+            "name": "57A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field57A",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.59F",
+            "name": "59F",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field59F",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "SWIFT-MT202COV.MT202COVSequenceB.70",
+            "name": "70",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SWIFT-MT202COV.Field70",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.MT202COVSequenceB",
+        "key_type": null,
+        "kind": "record",
+        "name": "MT202COVSequenceB",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "SWIFT-MT202COV.NumberedLine.number",
+            "name": "number",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "SWIFT-MT202COV.NumberedLine.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SWIFT-MT202COV.NumberedLine",
+        "key_type": null,
+        "kind": "record",
+        "name": "NumberedLine",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "swift-mt/03-composition-mt202cov.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 17
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "swift-mt"
+  },
+  "fingerprint": "sha256:7641187683c9467ea81e90552cf8086597b136273ef312db4b9c30b67765de8b",
+  "lint": {
+    "findings": 47,
+    "grade": "F",
+    "report_fingerprint": "346a135885aec6c5257eff30ae787ac2c094aabc6e22053a27745c58f9485e15",
+    "score": 55,
+    "severity_counts": {
+      "error": 0,
+      "info": 41,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

@@ -703,6 +703,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['edi_dc40', 'orders05', 'invoic02', 'segment definition', 'we60', 'erp', 'b2b'],
   },
   {
+    id: 'swift-mt-import',
+    title: 'Import SWIFT MT messages',
+    summary: 'Catalog SWIFT MT103, MT202, MT940 and MT942 messages, with MX correspondence notes.',
+    page: 'apiome-docs/docs/bring-in/swift-mt-import.md',
+    section: 'reference',
+    keywords: ['mt103', 'mt202', 'mt940', 'mx', 'pacs.008', 'camt.053', 'cbpr+', 'payments'],
+  },
+  {
     id: 'agents-manifest-import',
     title: 'Import agentic-web site manifests',
     summary: "Catalog a site's agents.json, agent.json, agents.txt or llms.txt and its discovery seeds.",

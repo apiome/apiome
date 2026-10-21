@@ -3,7 +3,7 @@
 Fixtures for **FMT-6.3** ([#5447](https://github.com/apiome/apiome/issues/5447)). Apiome reads ISO
 20022 (MX) but not SWIFT MT, the legacy message set still in production through the CBPR+ coexistence
 period. Owning both sides makes Apiome the workbench for the MT→MX migration every correspondent bank
-is running. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+is running. Every entry is read by the `swift-mt` adapter (`apiome-rest/src/app/swift_mt_import_source.py`).
 
 **Detection marker.** A `{1:` basic header block followed by `{2:` and a `{4:` text block terminated
 by `-}`.

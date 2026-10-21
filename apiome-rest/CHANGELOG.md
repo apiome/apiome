@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.407.0] - 2026-10-20
+
+### Added
+- **SWIFT MT import with MT↔MX projection notes (#5447, FMT-6.3)**: the new **`swift-mt`** import source (formats
+  `swift-mt`, `swift`, `mt`; `.fin` / `.mt` / `.txt`; file / URL / paste / fileset) for MT103, MT202 (and COV),
+  MT940 and MT942:
+  - `app/swift_mt_parser.py` — blocks 1–5 (basic and application headers parsed leniently by position, user header
+    and trailer sub-blocks), `:nn[a]:` text-block fields with offsets and lines, several messages per file, MT202 COV
+    sequence B (a second `{4:}` block, or the first field 50 of one). Refusals carry intake codes: an unterminated
+    text block is `INPUT_TRUNCATED` when its last field is incomplete and `INPUT_MALFORMED` when only the `-}` is
+    missing; no field 20, no block 2 or an unsupported type is `INPUT_SEMANTIC_INVALID`.
+  - `app/swift_mt_fields.py` — a stated field catalogue: option-letter party shapes (A/B/C/D/F/K), amounts,
+    balances, statement lines with supplementary code words, narratives with `/CODE/` qualifiers. Content that does
+    not match is kept as lines and flagged, never refused. The MT → MX table (`pacs.008`, `pacs.009`, `pacs.009`
+    COV, `camt.053`, `camt.052`) and the disclaimer every note carries.
+  - `app/swift_mt_normalizer.py` — the message as the root record type and one record type per field *with its
+    option* (`Field50K` ≠ `Field50F`), `CodeWord` / `NumberedLine` records, `StatementLine` groups, a nested
+    sequence B; headers in `swift_headers` and the correspondence in `swift_mx_correspondence` (`verified: false`).
+  - `app/swift_mt_analysis.py` (`swift-mt@1.0.0`) — message → block → sequence → field → component / code word /
+    numbered line / line; tags, options and qualifiers as structure, values under the visibility policy; warnings
+    `swift.mx_correspondence_note`, `swift.field_not_well_formed`, `swift.field_not_in_catalogue`,
+    `swift.canonical_projection_subset`; a cover's `relatesToMessage`.
+  - Reviewed `swift-mt` capability entry (registry contract `17`), version coverage, corpus activation of the 14
+    `apiome-ui/examples/swift-mt/` fixtures, goldens and the round-trip matrix row (import-only, 45 xfails).
+
 ## [1.406.0] - 2026-10-20
 
 ### Added

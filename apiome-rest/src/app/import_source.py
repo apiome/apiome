@@ -1203,6 +1203,9 @@ def load_builtin_import_sources() -> None:
     # ``idoc_import_source`` (FMT-6.2) self-registers the ``idoc`` adapter — an SAP IDoc in its
     # flat (EDI_DC40/EDI_DD40) or XML form, with optional segment definitions — and its normalizer.
     from . import idoc_import_source as _idoc  # noqa: F401
+    # ``swift_mt_import_source`` (FMT-6.3) self-registers the ``swift-mt`` adapter — SWIFT MT103,
+    # MT202 (COV), MT940 and MT942 messages — and its normalizer.
+    from . import swift_mt_import_source as _swift_mt  # noqa: F401
     from . import oncrpc_import_source as _oncrpc  # noqa: F401
     from . import corbaidl_import_source as _corbaidl  # noqa: F401
     from . import odata_import_source as _odata  # noqa: F401
