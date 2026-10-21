@@ -50,6 +50,7 @@ import {
   type Version,
   type VersionRowMenuContext,
 } from '../src/app/components/ade/versions/versionsModel';
+import { versionCopySummary } from '../src/app/components/ade/versions/versionsModel';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures — the mockup's six revisions of Payments API
@@ -647,5 +648,21 @@ describe('versionRowQuickActions', () => {
 
   it('withholds Publish from a catalog item', () => {
     expect(versionRowQuickActions(HEAD_DRAFT, { ...CONTEXT, publishable: false }).map((a) => a.id)).toEqual(['edit']);
+  });
+});
+
+describe('versionCopySummary (#771)', () => {
+  it('names what was copied, singular and plural', () => {
+    expect(versionCopySummary(4, 2)).toBe('4 classes and 2 paths');
+    expect(versionCopySummary(1, 1)).toBe('1 class and 1 path');
+    expect(versionCopySummary(3, null)).toBe('3 classes');
+    expect(versionCopySummary(3, 0)).toBe('3 classes');
+    expect(versionCopySummary(0, 5)).toBe('5 paths');
+  });
+
+  it('is null when nothing was copied', () => {
+    expect(versionCopySummary(undefined, undefined)).toBeNull();
+    expect(versionCopySummary(0, 0)).toBeNull();
+    expect(versionCopySummary(null, null)).toBeNull();
   });
 });

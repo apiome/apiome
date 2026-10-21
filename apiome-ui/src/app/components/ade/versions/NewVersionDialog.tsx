@@ -15,6 +15,9 @@
  * With two or more named branches the copy-source select becomes *Base copy on branch tip*,
  * exactly as before; with fewer, the hint says so and carries the honey flag in a
  * non-production build, since that mode is `FEATURE_GITLIKE` data.
+ *
+ * Once a copy source is chosen, **Copy paths** (#771) decides whether the source's paths come
+ * along. Classes always do — paths reference them, so they are never optional.
  */
 
 import * as React from 'react';
@@ -22,6 +25,7 @@ import { GitFork, Info } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
+import { Checkbox } from '@/app/components/ui/Checkbox';
 import { Dialog, DialogContent, DialogFooter } from '@/app/components/ui/Dialog';
 import { FormField } from '@/app/components/ui/FormField';
 import { Input } from '@/app/components/ui/Input';
@@ -67,6 +71,9 @@ export interface NewVersionDialogProps {
   /** The revision to copy from, `''` for a blank version. */
   sourceVersionId: string;
   onSourceVersionIdChange: (next: string) => void;
+  /** Whether the copy also brings the source's paths (#771); only offered with a source. */
+  copyPaths: boolean;
+  onCopyPathsChange: (next: boolean) => void;
   autoGenerate: boolean;
   onAutoGenerateChange: (next: boolean) => void;
   bumpStrategy: BumpStrategy;
@@ -115,6 +122,8 @@ export default function NewVersionDialog({
   onCopySourceBranchKeyChange,
   sourceVersionId,
   onSourceVersionIdChange,
+  copyPaths,
+  onCopyPathsChange,
   autoGenerate,
   onAutoGenerateChange,
   bumpStrategy,
@@ -248,8 +257,25 @@ export default function NewVersionDialog({
             </div>
 
             {sourceVersionId ? (
+              <label className="ver-check ver-dialog__copy-paths" htmlFor="create-copy-paths">
+                <Checkbox
+                  id="create-copy-paths"
+                  checked={copyPaths}
+                  disabled={busy}
+                  onCheckedChange={(checked) => onCopyPathsChange(checked === true)}
+                  data-testid="new-version-copy-paths"
+                />
+                <span>Copy paths</span>
+              </label>
+            ) : null}
+
+            {sourceVersionId ? (
               <Alert variant="info" className="ver-dialog__note" icon={<Info aria-hidden />}>
-                Classes and properties will be copied from the selected revision.
+                <span data-testid="new-version-copy-note">
+                  {copyPaths
+                    ? 'Classes, properties and paths will be copied from the selected revision.'
+                    : 'Classes and properties will be copied from the selected revision. Paths will not be copied; classes are always copied because paths depend on them.'}
+                </span>
                 <p className="ver-dialog__subnote">
                   <span className="ver-dialog__subnote-title">Compatibility</span> — after you create a
                   new version, the service records a parent→head compatibility check in the workflow

@@ -218,6 +218,7 @@ const VERSION_PRELUDES = [
   '.ver-hint--row > svg',
   '.ver-hint__em',
   '.ver-dialog__note',
+  '.ver-dialog__copy-paths',
   '.ver-dialog__subnote',
   '.ver-dialog__subnote-title',
   '.ver-callout',

@@ -138,6 +138,7 @@ import {
   sortVersions,
   storedQualityBadge,
   unpublishVersionConfirm,
+  versionCopySummary,
   versionFacetCounts,
   versionsFootLabel,
   versionsHeadLine,
@@ -436,6 +437,8 @@ const Versions = () => {
   const [commitExternalRef, setCommitExternalRef] = useState('');
   const [enabled, setEnabled] = useState(true);
   const [sourceVersionId, setSourceVersionId] = useState<string>('');
+  // New version → Copy paths (#771): on by default; only sent with a copy source.
+  const [copyPaths, setCopyPaths] = useState(true);
   /** When multiple named branches exist, select by branch id before resolving tip (#505). */
   const [copySourceBranchKey, setCopySourceBranchKey] = useState<string>('blank');
   const [branchListLoading, setBranchListLoading] = useState(false);
@@ -1130,6 +1133,7 @@ const Versions = () => {
     setVersionId(''); setAutoGenerate(true); setBumpStrategy('minor');
     setNextAutoVersion(calculateNextVersion('minor')); setDescription('');
     setChangeLog(''); setCommitExternalRef(''); setEnabled(true); setSourceVersionId('');
+    setCopyPaths(true);
     setCopySourceBranchKey('blank');
     setErrorMessage(''); setBranchListError(null);
     void loadBranches();
@@ -1224,7 +1228,10 @@ const Versions = () => {
       if (commitExternalRefTrim) body.externalRef = commitExternalRefTrim;
       if (!autoGenerate) body.version_id = versionId.trim();
       if (autoGenerate) body.bump_strategy = bumpStrategy;
-      if (sourceVersionId?.trim()) body.source_version_id = sourceVersionId.trim();
+      if (sourceVersionId?.trim()) {
+        body.source_version_id = sourceVersionId.trim();
+        body.copyPaths = copyPaths;
+      }
 
       const res = await fetch('/api/versions', {
         method: 'POST',
@@ -1235,7 +1242,7 @@ const Versions = () => {
         success?: boolean;
         error?: string;
         code?: string;
-        version?: { copied_classes?: number; copy_warning?: string };
+        version?: { copied_classes?: number | null; copied_paths?: number | null; copy_warning?: string | null };
       };
       if (!res.ok || !json.success) {
         if (res.status === 409) {
@@ -1278,10 +1285,11 @@ const Versions = () => {
       await loadVersions();
       const v = json.version;
       const successNoun = 'Version created';
-      if (v && typeof v.copied_classes === 'number' && v.copied_classes > 0) {
-        toast.success(`${successNoun}. Copied ${v.copied_classes} class(es).`);
-      } else if (v?.copy_warning) {
+      const copiedSummary = v ? versionCopySummary(v.copied_classes, v.copied_paths) : null;
+      if (v?.copy_warning) {
         toast.warning(`${successNoun}, but: ${v.copy_warning}`);
+      } else if (copiedSummary) {
+        toast.success(`${successNoun}. Copied ${copiedSummary}.`);
       } else {
         toast.success(`${successNoun}.`);
       }
@@ -3980,6 +3988,8 @@ const Versions = () => {
         onCopySourceBranchKeyChange={handleCopySourceBranchKeyChange}
         sourceVersionId={sourceVersionId}
         onSourceVersionIdChange={setSourceVersionId}
+        copyPaths={copyPaths}
+        onCopyPathsChange={setCopyPaths}
         autoGenerate={autoGenerate}
         onAutoGenerateChange={handleAutoGenerateChange}
         bumpStrategy={bumpStrategy}

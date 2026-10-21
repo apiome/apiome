@@ -242,7 +242,7 @@ Favourites, time tracking, heatmaps, archaeology.
 - [x] [#542](https://github.com/apiome/apiome/issues/542) Add favorite projects / quick access list
 - [x] [#544](https://github.com/apiome/apiome/issues/544) Add time spent per project breakdown
 - [x] [#560](https://github.com/apiome/apiome/issues/560) Heatmap visualization in versions screen
-- [ ] [#771](https://github.com/apiome/apiome/issues/771) When copying versions, offer options to copy paths
+- [x] [#771](https://github.com/apiome/apiome/issues/771) When copying versions, offer options to copy paths
 - [ ] [#1023](https://github.com/apiome/apiome/issues/1023) Version Archaeology & Cross-Project Comparison
 - [ ] [#1048](https://github.com/apiome/apiome/issues/1048) Service Catalog & Internal Marketplace
 - [ ] [#2594](https://github.com/apiome/apiome/issues/2594) Project activity timeline correlated with schema revisions

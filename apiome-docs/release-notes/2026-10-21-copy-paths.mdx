@@ -1,0 +1,18 @@
+---
+slug: copy-paths-with-new-version
+title: Choose whether a new version copies paths
+description: New version can now copy a version's paths along with its classes.
+authors: [apiome]
+---
+
+When you copy from an existing version, **New version** now asks whether to **Copy paths** too.
+[How copying works](/build/version-dialogs#copy-paths).
+
+{/* truncate */}
+
+- **Paths come along by default.** Operations, parameters, request bodies, responses and each path's
+  Studio canvas are copied, pointing at the new version's classes.
+- **Or start from the schemas only.** Untick **Copy paths** to keep the classes and leave the paths
+  behind. Classes are always copied, because paths depend on them.
+- **In the API.** `POST /v1/versions/{tenant_slug}/{project_id}` takes `copyPaths` with
+  `source_version_id` — see the [Versions reference](/reference/rest/versions).

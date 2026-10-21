@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.418.0] - 2026-10-21
+
+### Added
+- **Copy paths with a new version (#771)**: `POST /v1/versions/{tenant_slug}/{project_id}` takes
+  `copyPaths` (also `copy_paths`, default `false`). With `source_version_id`, the source's paths are copied
+  alongside its classes: operations, their descriptions, parameters, request bodies and responses, the
+  path-level shared parameters / request bodies / responses and their links, and each path's Studio canvas.
+  Every class reference is re-pointed at the new version's class of the same name, and canvas ids are
+  rewritten to the copies. The copy runs in the push transaction, so a failure rolls back the whole push.
+  - `copyPaths` without `source_version_id` is a **422**.
+  - The created version reports `copied_paths` and `copied_operations` (with `copyPaths`), and the push
+    audit records `copiedPaths`.
+  - `VersionSchema` now also carries `copied_classes` and `copy_warning`, which the route set but the
+    response model dropped.
+  - OpenAPI version 1.282.0.
+
 ## [1.417.0] - 2026-10-21
 
 ### Added

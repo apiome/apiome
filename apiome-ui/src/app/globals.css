@@ -14255,6 +14255,11 @@ button.tfa-reset-notice__close > svg {
   margin-block-start: var(--space-3);
 }
 
+/* New version → Copy paths (#771): the same step down from the copy-source grid as the note. */
+.ver-dialog__copy-paths {
+  margin-block-start: var(--space-3);
+}
+
 .ver-dialog__subnote {
   margin-block-start: var(--space-1);
   font-size: var(--fs-xs);

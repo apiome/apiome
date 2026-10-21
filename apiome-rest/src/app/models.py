@@ -3582,6 +3582,22 @@ class VersionSchema(BaseModel):
     project_slug: Optional[str] = None
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
+    copied_classes: Optional[int] = Field(
+        default=None,
+        description="Create only: classes copied from source_version_id.",
+    )
+    copied_paths: Optional[int] = Field(
+        default=None,
+        description="Create only, with copyPaths: paths copied from source_version_id (#771).",
+    )
+    copied_operations: Optional[int] = Field(
+        default=None,
+        description="Create only, with copyPaths: operations copied with those paths (#771).",
+    )
+    copy_warning: Optional[str] = Field(
+        default=None,
+        description="Create only: why nothing was copied (e.g. the source version was not found).",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -3755,6 +3771,14 @@ class VersionCreateRequest(BaseModel):
         description="Named branch to advance; required when the project has multiple branches.",
     )
     source_version_id: Optional[str] = None  # Copy classes from this version
+    copy_paths: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("copyPaths", "copy_paths"),
+        description=(
+            "Also copy the source version's paths (operations, parameters, request bodies, "
+            "responses) — #771. Classes are always copied with source_version_id; requires it."
+        ),
+    )
     source_commit_sha: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("sourceCommitSha", "source_commit_sha"),
