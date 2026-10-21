@@ -1,6 +1,6 @@
 ---
 title: "Read a catalog item's format details"
-description: "What a catalog item records about its native format: X12, EDIFACT, copybooks, statuses."
+description: "What a catalog item records about its native format: EDI, IDoc, copybooks, statuses."
 sidebar_position: 4
 tags: [catalog, formats]
 ---
@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `idoc@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -192,6 +192,29 @@ the X12 inspector's contract:
   one.
 - **Segment groups** are shown as flat segments; a directory would be needed to nest them.
 - The **decimal mark** is recorded, and values are never re-read as numbers.
+
+## The IDoc analysis
+
+For SAP IDoc sources ([how to import one](./idoc-import.md)) the tab renders **IDoc → segment →
+field**, one root per IDoc in the file:
+
+- **The control record is structure.** Basic type, extension, message type, ports, partners,
+  direction (**Outbound**/**Inbound**), release, status and creation date and time sit on the IDoc
+  row, with every non-empty `EDI_DC40` field under **controlRecord**. None of it is a value, so no
+  value-visibility setting withholds what identifies the document.
+- **Segments nest by number.** Each segment shows its **segmentNumber**, its
+  **parentSegmentNumber** and the **depth** those numbers give. A flat record's declared `HLEVEL`
+  is shown as **declaredLevel** when it disagrees (warning `idoc.hierarchy_level_disagrees`).
+- **Fields are values** and follow the same five presence facts as EDI. In a flat IDoc each field
+  also shows its **offset** within `SDATA`, its **recordOffset** within the 1063-character record
+  and its **length**, cut from the segment definition supplied with the IDoc. A flat segment with
+  no definition has one field, `SDATA`, marked **opaque** (warning `idoc.sdata_without_definition`).
+- **What the byte counts assume** is stated on every flat record (warning
+  `idoc.layout_assumptions`), exactly as the copybook inspector states its own: one character per
+  byte, the release 4.0+ `EDI_DC40`/`EDI_DD40` layouts, trailing blanks as padding, short records
+  padded back with blanks. An XML IDoc has no byte layout and claims no offsets.
+- **Conversion scope**: the canonical model is the first IDoc's basic type; a file of several says
+  so (warning `idoc.canonical_projection_subset`).
 
 ## The COBOL copybook inspector
 

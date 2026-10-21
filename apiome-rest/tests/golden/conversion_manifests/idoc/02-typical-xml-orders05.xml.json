@@ -1,0 +1,2926 @@
+{
+  "adapter": "idoc",
+  "conversion_mode": "lossy",
+  "corpus_path": "idoc/02-typical-xml-orders05.xml",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 9,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01.BELNR"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/BELNR"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK01.BELNR",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01.BELNR",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/BELNR"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01.CURCY"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/CURCY"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK01.CURCY",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01.CURCY",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/CURCY"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01.GEWEI"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/GEWEI"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK01.GEWEI",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01.GEWEI",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/GEWEI"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01.NTGEW"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/NTGEW"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK01.NTGEW",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01.NTGEW",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/NTGEW"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01.WKURS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/WKURS"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK01.WKURS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01.WKURS",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/WKURS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK03.DATUM"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/DATUM"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK03.DATUM",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK03.DATUM",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK03/properties/DATUM"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK03.IDDAT"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/IDDAT"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK03.IDDAT",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK03.IDDAT",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK03/properties/IDDAT"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK14.ORGID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/ORGID"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK14.ORGID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK14.ORGID",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK14/properties/ORGID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK14.QUALF"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/QUALF"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDK14.QUALF",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK14.QUALF",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK14/properties/QUALF"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.LAND1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/LAND1"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.LAND1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.LAND1",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/LAND1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.NAME1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/NAME1"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.NAME1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.NAME1",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/NAME1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.ORT01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/ORT01"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.ORT01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.ORT01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/ORT01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.PARTN"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARTN"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.PARTN",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.PARTN",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARTN"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.PARVW"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARVW"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.PARVW",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.PARVW",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARVW"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.PSTLZ"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PSTLZ"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.PSTLZ",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.PSTLZ",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PSTLZ"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1.STRAS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/STRAS"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDKA1.STRAS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1.STRAS",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/STRAS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01.E1EDP19"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP19"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP01.E1EDP19",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01.E1EDP19",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP19"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01.E1EDP26"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP26"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP01.E1EDP26",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01.E1EDP26",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP26"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01.MENEE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENEE"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP01.MENEE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01.MENEE",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENEE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01.MENGE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENGE"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP01.MENGE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01.MENGE",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENGE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01.POSEX"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/POSEX"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP01.POSEX",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01.POSEX",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/POSEX"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP19.IDTNR"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/IDTNR"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP19.IDTNR",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP19.IDTNR",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/IDTNR"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP19.KTEXT"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/KTEXT"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP19.KTEXT",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP19.KTEXT",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/KTEXT"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP19.QUALF"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/QUALF"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP19.QUALF",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP19.QUALF",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/QUALF"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP26.BETRG"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/BETRG"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP26.BETRG",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP26.BETRG",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP26/properties/BETRG"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP26.QUALF"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/QUALF"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDP26.QUALF",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP26.QUALF",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP26/properties/QUALF"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDS01.SUMID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMID"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDS01.SUMID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDS01.SUMID",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDS01.SUMME"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMME"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.E1EDS01.SUMME",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDS01.SUMME",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMME"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDK01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK01"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDK01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDK03"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK03"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDK03",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK03",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK03"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDK14"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK14"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDK14",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK14",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK14"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDKA1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDKA1"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDKA1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDKA1",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDKA1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDP01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDP01"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDP01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDP01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDP01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05.E1EDS01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDS01"
+          }
+        ],
+        "id": "construct:field:IDOC-ORDERS05.ORDERS05.E1EDS01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDS01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDS01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK01"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDK01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK03"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK03"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDK03",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK03",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK03"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDK14"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDK14"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDK14",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDK14",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDK14"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDKA1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDKA1"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDKA1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDKA1",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP01"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDP01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP19"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP19"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDP19",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP19",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP19"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDP26"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDP26"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDP26",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDP26",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDP26"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.E1EDS01"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.E1EDS01"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.E1EDS01",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.E1EDS01",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.E1EDS01"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "IDOC-ORDERS05.ORDERS05"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/IDOC-ORDERS05.ORDERS05"
+          }
+        ],
+        "id": "construct:type:IDOC-ORDERS05.ORDERS05",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:IDOC-ORDERS05.ORDERS05",
+        "status": "retained",
+        "target": "target:/components/schemas/IDOC-ORDERS05.ORDERS05"
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.basic_type_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.basic_type_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.basic_type_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.byte_offsets, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.byte_offsets",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.byte_offsets",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.code_page_detection, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.code_page_detection",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.code_page_detection",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.field_offsets, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.field_offsets",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.field_offsets",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.qualifier_semantics, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.qualifier_semantics",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.qualifier_semantics",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.release_2x_records, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.release_2x_records",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.release_2x_records",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.standard_segment_layouts, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.standard_segment_layouts",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.standard_segment_layouts",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the idoc analyzer does not model idoc.status_records, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:idoc.status_records",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:idoc.status_records",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "idoc.basic_type_validation",
+        "id": "source:analysis:idoc.basic_type_validation",
+        "kind": "source",
+        "label": "idoc.basic_type_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.basic_type_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.byte_offsets",
+        "id": "source:analysis:idoc.byte_offsets",
+        "kind": "source",
+        "label": "idoc.byte_offsets",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.byte_offsets",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.code_page_detection",
+        "id": "source:analysis:idoc.code_page_detection",
+        "kind": "source",
+        "label": "idoc.code_page_detection",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.code_page_detection",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.field_offsets",
+        "id": "source:analysis:idoc.field_offsets",
+        "kind": "source",
+        "label": "idoc.field_offsets",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.field_offsets",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.qualifier_semantics",
+        "id": "source:analysis:idoc.qualifier_semantics",
+        "kind": "source",
+        "label": "idoc.qualifier_semantics",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.qualifier_semantics",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.release_2x_records",
+        "id": "source:analysis:idoc.release_2x_records",
+        "kind": "source",
+        "label": "idoc.release_2x_records",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.release_2x_records",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.standard_segment_layouts",
+        "id": "source:analysis:idoc.standard_segment_layouts",
+        "kind": "source",
+        "label": "idoc.standard_segment_layouts",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.standard_segment_layouts",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "idoc.status_records",
+        "id": "source:analysis:idoc.status_records",
+        "kind": "source",
+        "label": "idoc.status_records",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "idoc.status_records",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01",
+        "kind": "source",
+        "label": "E1EDK01",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDK01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.BELNR",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01.BELNR",
+        "kind": "source",
+        "label": "BELNR",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BELNR",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.CURCY",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01.CURCY",
+        "kind": "source",
+        "label": "CURCY",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CURCY",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.GEWEI",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01.GEWEI",
+        "kind": "source",
+        "label": "GEWEI",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "GEWEI",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.NTGEW",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01.NTGEW",
+        "kind": "source",
+        "label": "NTGEW",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NTGEW",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.WKURS",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK01.WKURS",
+        "kind": "source",
+        "label": "WKURS",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "WKURS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK03",
+        "kind": "source",
+        "label": "E1EDK03",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDK03",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03.DATUM",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK03.DATUM",
+        "kind": "source",
+        "label": "DATUM",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DATUM",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03.IDDAT",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK03.IDDAT",
+        "kind": "source",
+        "label": "IDDAT",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "IDDAT",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK14",
+        "kind": "source",
+        "label": "E1EDK14",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDK14",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14.ORGID",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK14.ORGID",
+        "kind": "source",
+        "label": "ORGID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ORGID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14.QUALF",
+        "id": "source:construct:IDOC-ORDERS05.E1EDK14.QUALF",
+        "kind": "source",
+        "label": "QUALF",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "QUALF",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1",
+        "kind": "source",
+        "label": "E1EDKA1",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDKA1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.LAND1",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.LAND1",
+        "kind": "source",
+        "label": "LAND1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LAND1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.NAME1",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.NAME1",
+        "kind": "source",
+        "label": "NAME1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NAME1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.ORT01",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.ORT01",
+        "kind": "source",
+        "label": "ORT01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ORT01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PARTN",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.PARTN",
+        "kind": "source",
+        "label": "PARTN",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PARTN",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PARVW",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.PARVW",
+        "kind": "source",
+        "label": "PARVW",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PARVW",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PSTLZ",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.PSTLZ",
+        "kind": "source",
+        "label": "PSTLZ",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PSTLZ",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.STRAS",
+        "id": "source:construct:IDOC-ORDERS05.E1EDKA1.STRAS",
+        "kind": "source",
+        "label": "STRAS",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "STRAS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01",
+        "kind": "source",
+        "label": "E1EDP01",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDP01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.E1EDP19",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01.E1EDP19",
+        "kind": "source",
+        "label": "E1EDP19",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDP19",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.E1EDP26",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01.E1EDP26",
+        "kind": "source",
+        "label": "E1EDP26",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDP26",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.MENEE",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01.MENEE",
+        "kind": "source",
+        "label": "MENEE",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MENEE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.MENGE",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01.MENGE",
+        "kind": "source",
+        "label": "MENGE",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MENGE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.POSEX",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP01.POSEX",
+        "kind": "source",
+        "label": "POSEX",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "POSEX",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP19",
+        "kind": "source",
+        "label": "E1EDP19",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDP19",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.IDTNR",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP19.IDTNR",
+        "kind": "source",
+        "label": "IDTNR",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "IDTNR",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.KTEXT",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP19.KTEXT",
+        "kind": "source",
+        "label": "KTEXT",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "KTEXT",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.QUALF",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP19.QUALF",
+        "kind": "source",
+        "label": "QUALF",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "QUALF",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP26",
+        "kind": "source",
+        "label": "E1EDP26",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDP26",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26.BETRG",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP26.BETRG",
+        "kind": "source",
+        "label": "BETRG",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BETRG",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26.QUALF",
+        "id": "source:construct:IDOC-ORDERS05.E1EDP26.QUALF",
+        "kind": "source",
+        "label": "QUALF",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "QUALF",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01",
+        "id": "source:construct:IDOC-ORDERS05.E1EDS01",
+        "kind": "source",
+        "label": "E1EDS01",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "E1EDS01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01.SUMID",
+        "id": "source:construct:IDOC-ORDERS05.E1EDS01.SUMID",
+        "kind": "source",
+        "label": "SUMID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SUMID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01.SUMME",
+        "id": "source:construct:IDOC-ORDERS05.E1EDS01.SUMME",
+        "kind": "source",
+        "label": "SUMME",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SUMME",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05",
+        "kind": "source",
+        "label": "ORDERS05",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "ORDERS05",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK01",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK01",
+        "kind": "source",
+        "label": "E1EDK01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDK01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK03",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK03",
+        "kind": "source",
+        "label": "E1EDK03",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDK03",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK14",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDK14",
+        "kind": "source",
+        "label": "E1EDK14",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDK14",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDKA1",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDKA1",
+        "kind": "source",
+        "label": "E1EDKA1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDKA1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDP01",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDP01",
+        "kind": "source",
+        "label": "E1EDP01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDP01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDS01",
+        "id": "source:construct:IDOC-ORDERS05.ORDERS05.E1EDS01",
+        "kind": "source",
+        "label": "E1EDS01",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1EDS01",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.BELNR",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/BELNR",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/BELNR",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/BELNR",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.CURCY",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/CURCY",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/CURCY",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/CURCY",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.GEWEI",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/GEWEI",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/GEWEI",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/GEWEI",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.NTGEW",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/NTGEW",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/NTGEW",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/NTGEW",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK01.WKURS",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK01/properties/WKURS",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/WKURS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK01/properties/WKURS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK03",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK03",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK03",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03.DATUM",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK03/properties/DATUM",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/DATUM",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/DATUM",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK03.IDDAT",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK03/properties/IDDAT",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/IDDAT",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK03/properties/IDDAT",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK14",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK14",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK14",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14.ORGID",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK14/properties/ORGID",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/ORGID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/ORGID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDK14.QUALF",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDK14/properties/QUALF",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/QUALF",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDK14/properties/QUALF",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.LAND1",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/LAND1",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/LAND1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/LAND1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.NAME1",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/NAME1",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/NAME1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/NAME1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.ORT01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/ORT01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/ORT01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/ORT01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PARTN",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARTN",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARTN",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARTN",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PARVW",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARVW",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARVW",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PARVW",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.PSTLZ",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PSTLZ",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PSTLZ",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/PSTLZ",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDKA1.STRAS",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/STRAS",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/STRAS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDKA1/properties/STRAS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.E1EDP19",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP19",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP19",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP19",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.E1EDP26",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP26",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP26",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/E1EDP26",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.MENEE",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENEE",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENEE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENEE",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.MENGE",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENGE",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENGE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/MENGE",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP01.POSEX",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP01/properties/POSEX",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/POSEX",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP01/properties/POSEX",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP19",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP19",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP19",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.IDTNR",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/IDTNR",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/IDTNR",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/IDTNR",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.KTEXT",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/KTEXT",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/KTEXT",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/KTEXT",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP19.QUALF",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP19/properties/QUALF",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/QUALF",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP19/properties/QUALF",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP26",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP26",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP26",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26.BETRG",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP26/properties/BETRG",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/BETRG",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/BETRG",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDP26.QUALF",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDP26/properties/QUALF",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/QUALF",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDP26/properties/QUALF",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDS01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDS01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDS01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01.SUMID",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMID",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.E1EDS01.SUMME",
+        "id": "target:/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMME",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMME",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.E1EDS01/properties/SUMME",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK03",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK03",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK03",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK03",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDK14",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK14",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK14",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDK14",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDKA1",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDKA1",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDKA1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDKA1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDP01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDP01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDP01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDP01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "IDOC-ORDERS05.ORDERS05.E1EDS01",
+        "id": "target:/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDS01",
+        "kind": "target",
+        "label": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDS01",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/IDOC-ORDERS05.ORDERS05/properties/E1EDS01",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 8,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 8,
+      "checklist": 18,
+      "construct": 43,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "idoc",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 57,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "idoc.basic_type_validation",
+          "idoc.byte_offsets",
+          "idoc.code_page_detection",
+          "idoc.field_offsets",
+          "idoc.qualifier_semantics",
+          "idoc.release_2x_records",
+          "idoc.standard_segment_layouts",
+          "idoc.status_records"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-idoc-02-typical-xml-orders05-xml",
+      "source_format": "idoc",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 45,
+      "transformed": 0,
+      "unavailable": 8
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 69,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 69,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 114,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 8,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 8,
+      "checklist": 18,
+      "construct": 43,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "idoc",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 57,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "idoc.basic_type_validation",
+          "idoc.byte_offsets",
+          "idoc.code_page_detection",
+          "idoc.field_offsets",
+          "idoc.qualifier_semantics",
+          "idoc.release_2x_records",
+          "idoc.standard_segment_layouts",
+          "idoc.status_records"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-idoc-02-typical-xml-orders05-xml",
+      "source_format": "idoc",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 45,
+      "transformed": 0,
+      "unavailable": 8
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 69,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

@@ -1,0 +1,763 @@
+{
+  "adapter": "idoc",
+  "corpus_path": "idoc/07-with-definition-set/custmas01.txt",
+  "document": {
+    "analyzer": {
+      "key": "idoc",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "idoc.byte_offsets",
+        "idoc.control_record",
+        "idoc.field_offsets",
+        "idoc.fields",
+        "idoc.flat_form",
+        "idoc.multiple_idocs",
+        "idoc.segment_definitions",
+        "idoc.segment_hierarchy",
+        "idoc.segment_numbers",
+        "idoc.xml_form"
+      ],
+      "unsupported": [
+        "idoc.basic_type_validation",
+        "idoc.code_page_detection",
+        "idoc.qualifier_semantics",
+        "idoc.release_2x_records",
+        "idoc.standard_segment_layouts",
+        "idoc.status_records"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 17,
+        "idoc": 1,
+        "segment": 4
+      },
+      "maxDepth": 4,
+      "nodeCount": 22,
+      "truncated": false,
+      "warningCount": 1
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "idoc",
+    "sourceHash": "sha256:d2d89d61c22e81a7905c3e5d4cacc78123a0e2082479f04c2d60919f63f157dc",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "basicType": "ZCUSTMAS01",
+          "controlRecord": {
+            "CREDAT": "20260819",
+            "CRETIM": "121500",
+            "DIRECT": "1",
+            "DOCNUM": "0000000000900001",
+            "DOCREL": "740",
+            "IDOCTYP": "ZCUSTMAS01",
+            "MANDT": "100",
+            "MESTYP": "ZCUSTMAS",
+            "RCVPOR": "MDMHUB",
+            "RCVPRN": "MDMCLNT001",
+            "RCVPRT": "LS",
+            "SNDPOR": "SAPPRD",
+            "SNDPRN": "PRDCLNT100",
+            "SNDPRT": "LS",
+            "STATUS": "53",
+            "TABNAM": "EDI_DC40"
+          },
+          "controlRecordLength": 524,
+          "createdDate": "20260819",
+          "createdTime": "121500",
+          "direction": "1",
+          "directionLabel": "Outbound",
+          "documentNumber": "0000000000900001",
+          "form": "flat",
+          "messageType": "ZCUSTMAS",
+          "receiverPartner": "MDMCLNT001",
+          "receiverPartnerType": "LS",
+          "receiverPort": "MDMHUB",
+          "release": "740",
+          "segmentCount": 4,
+          "senderPartner": "PRDCLNT100",
+          "senderPartnerType": "LS",
+          "senderPort": "SAPPRD",
+          "status": "53"
+        },
+        "children": [
+          {
+            "attributes": {
+              "childSegmentCount": 3,
+              "declaredLevel": 1,
+              "definitionApplied": true,
+              "depth": 1,
+              "fieldCount": 4,
+              "parentSegmentNumber": 0,
+              "repeatCount": 1,
+              "repeatIndex": 0,
+              "segmentName": "Z1CUSTHDR",
+              "segmentNumber": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "dataType": "CHAR",
+                  "description": "Customer number",
+                  "length": 10,
+                  "offset": 0,
+                  "position": 1,
+                  "recordOffset": 63
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/KUNNR"
+                },
+                "name": "KUNNR",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "0000012345",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "dataType": "CHAR",
+                  "description": "Name",
+                  "length": 40,
+                  "offset": 10,
+                  "position": 2,
+                  "recordOffset": 73
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/NAME1"
+                },
+                "name": "NAME1",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "ACME RETAIL BV",
+                "valueLength": 14,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "dataType": "CHAR",
+                  "description": "Country key",
+                  "length": 3,
+                  "offset": 50,
+                  "position": 3,
+                  "recordOffset": 113
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/LAND1"
+                },
+                "name": "LAND1",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "NL",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "dataType": "CUKY",
+                  "description": "Currency",
+                  "length": 5,
+                  "offset": 53,
+                  "position": 4,
+                  "recordOffset": 116
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/WAERS"
+                },
+                "name": "WAERS",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "declaredLevel": 2,
+                  "definitionApplied": true,
+                  "depth": 2,
+                  "fieldCount": 5,
+                  "parentSegmentNumber": 1,
+                  "repeatCount": 2,
+                  "repeatIndex": 0,
+                  "segmentName": "Z1CUSTADR",
+                  "segmentNumber": 2
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Address kind",
+                      "length": 6,
+                      "offset": 0,
+                      "position": 1,
+                      "recordOffset": 63
+                    },
+                    "children": [],
+                    "id": "0.0.4.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]/ADRKIND"
+                    },
+                    "name": "ADRKIND",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "BILL",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Street",
+                      "length": 60,
+                      "offset": 6,
+                      "position": 2,
+                      "recordOffset": 69
+                    },
+                    "children": [],
+                    "id": "0.0.4.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]/STRAS"
+                    },
+                    "name": "STRAS",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "Coolsingel 40",
+                    "valueLength": 13,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "City",
+                      "length": 40,
+                      "offset": 66,
+                      "position": 3,
+                      "recordOffset": 129
+                    },
+                    "children": [],
+                    "id": "0.0.4.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]/ORT01"
+                    },
+                    "name": "ORT01",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "Rotterdam",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Postal code",
+                      "length": 10,
+                      "offset": 106,
+                      "position": 4,
+                      "recordOffset": 169
+                    },
+                    "children": [],
+                    "id": "0.0.4.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 3,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]/PSTLZ"
+                    },
+                    "name": "PSTLZ",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "3011 AD",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Country key",
+                      "length": 3,
+                      "offset": 116,
+                      "position": 5,
+                      "recordOffset": 179
+                    },
+                    "children": [],
+                    "id": "0.0.4.4",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 4,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]/LAND1"
+                    },
+                    "name": "LAND1",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "NL",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.0.4",
+                "kind": "segment",
+                "label": "Z1CUSTADR (1 of 2)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 1063,
+                  "line": 3,
+                  "offset": 1589,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[4]"
+                },
+                "name": "Z1CUSTADR",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "declaredLevel": 2,
+                  "definitionApplied": true,
+                  "depth": 2,
+                  "fieldCount": 5,
+                  "parentSegmentNumber": 1,
+                  "repeatCount": 2,
+                  "repeatIndex": 1,
+                  "segmentName": "Z1CUSTADR",
+                  "segmentNumber": 3
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Address kind",
+                      "length": 6,
+                      "offset": 0,
+                      "position": 1,
+                      "recordOffset": 63
+                    },
+                    "children": [],
+                    "id": "0.0.5.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]/ADRKIND"
+                    },
+                    "name": "ADRKIND",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "SHIP",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Street",
+                      "length": 60,
+                      "offset": 6,
+                      "position": 2,
+                      "recordOffset": 69
+                    },
+                    "children": [],
+                    "id": "0.0.5.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]/STRAS"
+                    },
+                    "name": "STRAS",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "Havenweg 12",
+                    "valueLength": 11,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "City",
+                      "length": 40,
+                      "offset": 66,
+                      "position": 3,
+                      "recordOffset": 129
+                    },
+                    "children": [],
+                    "id": "0.0.5.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]/ORT01"
+                    },
+                    "name": "ORT01",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "Rotterdam",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Postal code",
+                      "length": 10,
+                      "offset": 106,
+                      "position": 4,
+                      "recordOffset": 169
+                    },
+                    "children": [],
+                    "id": "0.0.5.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 3,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]/PSTLZ"
+                    },
+                    "name": "PSTLZ",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "3011 XX",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "Country key",
+                      "length": 3,
+                      "offset": 116,
+                      "position": 5,
+                      "recordOffset": 179
+                    },
+                    "children": [],
+                    "id": "0.0.5.4",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 4,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]/LAND1"
+                    },
+                    "name": "LAND1",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "NL",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.0.5",
+                "kind": "segment",
+                "label": "Z1CUSTADR (2 of 2)",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 1063,
+                  "line": 4,
+                  "offset": 2653,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTADR[5]"
+                },
+                "name": "Z1CUSTADR",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "declaredLevel": 2,
+                  "definitionApplied": true,
+                  "depth": 2,
+                  "fieldCount": 3,
+                  "parentSegmentNumber": 1,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentName": "Z1CUSTBNK",
+                  "segmentNumber": 4
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "IBAN",
+                      "length": 34,
+                      "offset": 0,
+                      "position": 1,
+                      "recordOffset": 63
+                    },
+                    "children": [],
+                    "id": "0.0.6.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTBNK[6]/IBAN"
+                    },
+                    "name": "IBAN",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "NL91ABNA0417164300",
+                    "valueLength": 18,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CHAR",
+                      "description": "SWIFT/BIC",
+                      "length": 11,
+                      "offset": 34,
+                      "position": 2,
+                      "recordOffset": 97
+                    },
+                    "children": [],
+                    "id": "0.0.6.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTBNK[6]/SWIFT"
+                    },
+                    "name": "SWIFT",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "ABNANL2A",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "CUKY",
+                      "description": "Account currency",
+                      "length": 5,
+                      "offset": 45,
+                      "position": 3,
+                      "recordOffset": 108
+                    },
+                    "children": [],
+                    "id": "0.0.6.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTBNK[6]/WAERS"
+                    },
+                    "name": "WAERS",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "EUR",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.0.6",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 1063,
+                  "line": 5,
+                  "offset": 3717,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/Z1CUSTHDR[0]/Z1CUSTBNK[6]"
+                },
+                "name": "Z1CUSTBNK",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "segment",
+            "label": null,
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 1063,
+              "line": 2,
+              "offset": 525,
+              "ordinal": 0,
+              "path": "IDOC[0]/Z1CUSTHDR[0]"
+            },
+            "name": "Z1CUSTHDR",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "idoc",
+        "label": "IDoc 0000000000900001 (ZCUSTMAS01)",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 524,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "IDOC[0]"
+        },
+        "name": "ZCUSTMAS01",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "idoc.layout_assumptions",
+        "location": null,
+        "message": "Record and field offsets are computed under assumptions this file does not state: One character per byte position — a single-byte code page. A multi-byte character in a value shifts every offset after it. The control record is the 524-character EDI_DC40 layout and each data record the 1063-character EDI_DD40 layout (a 63-character header and 1000 characters of SDATA) of SAP release 4.0 and later; the release 2.x EDI_DC/EDI_DD layouts are not read. Trailing blanks are padding and are removed from values; leading blanks are kept. A data record shorter than its layout lost trailing blanks only, so its SDATA is padded back with blanks — a record truncated in the middle of a value cannot be told apart. Segment-definition offsets are 0-based within SDATA, as the definition file states them.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

@@ -1510,6 +1510,56 @@
       "waivers": {}
     },
     {
+      "format_key": "idoc",
+      "label": "SAP IDoc",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "idoc"
+      ],
+      "corpus_directories": [
+        "idoc"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "idoc"
+      ],
+      "emit_key": "idoc",
+      "roundtrip_row": true,
+      "roundtrip_cells": [
+        {
+          "source_format": "idoc",
+          "emit_key": "idoc",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "iso20022",
       "label": "ISO 20022",
       "paradigm": "data_schema",
@@ -2962,7 +3012,6 @@
     "haproxy",
     "hl7v3",
     "hoppscotch",
-    "idoc",
     "ims",
     "istio",
     "jsonld",

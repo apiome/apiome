@@ -36,6 +36,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Kafka Connect schema import and export
     - dbt model and semantic-manifest import
     - SQL DDL import
+    - SAP IDoc import and export: flat-file (EDI_DC40) and XML IDocs, segment definitions for flat fields, the hierarchy from segment numbers, IDoc XML export
     - UN/EDIFACT import (ORDERS, INVOIC, DESADV …): `UNA` delimiters honoured, the whole interchange on the Format details tab, declared versus observed control counts
   - Linting rule pack updates for scoring new import types
     - Data contracts are now scored on their own terms: ownership, service levels, freshness,

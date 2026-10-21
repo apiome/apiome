@@ -62,6 +62,7 @@ const FORMAT_LANGUAGE: Readonly<Record<string, string>> = {
   hl7v2: 'plaintext',
   edix12: 'plaintext',
   edifact: 'plaintext',
+  idoc: 'plaintext',
   iso20022: 'xml',
   iso8583: 'plaintext',
   fix: 'plaintext',

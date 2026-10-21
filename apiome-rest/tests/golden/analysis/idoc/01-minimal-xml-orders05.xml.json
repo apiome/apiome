@@ -1,0 +1,201 @@
+{
+  "adapter": "idoc",
+  "corpus_path": "idoc/01-minimal-xml-orders05.xml",
+  "document": {
+    "analyzer": {
+      "key": "idoc",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "idoc.control_record",
+        "idoc.fields",
+        "idoc.flat_form",
+        "idoc.multiple_idocs",
+        "idoc.segment_definitions",
+        "idoc.segment_hierarchy",
+        "idoc.segment_numbers",
+        "idoc.xml_form"
+      ],
+      "unsupported": [
+        "idoc.basic_type_validation",
+        "idoc.byte_offsets",
+        "idoc.code_page_detection",
+        "idoc.field_offsets",
+        "idoc.qualifier_semantics",
+        "idoc.release_2x_records",
+        "idoc.standard_segment_layouts",
+        "idoc.status_records"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 2,
+        "idoc": 1,
+        "segment": 1
+      },
+      "maxDepth": 3,
+      "nodeCount": 4,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "idoc",
+    "sourceHash": "sha256:0c34cfa4f2a07cff2a1324f37364ab38dad94a23992387f182f77bb3678f9bfc",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "basicType": "ORDERS05",
+          "controlRecord": {
+            "CREDAT": "20260819",
+            "CRETIM": "100000",
+            "DIRECT": "1",
+            "DOCNUM": "0000000000123400",
+            "IDOCTYP": "ORDERS05",
+            "MANDT": "100",
+            "MESTYP": "ORDERS",
+            "RCVPOR": "A000000012",
+            "RCVPRN": "0000012345",
+            "RCVPRT": "LI",
+            "SNDPOR": "SAPPRD",
+            "SNDPRN": "PRDCLNT100",
+            "SNDPRT": "LS",
+            "TABNAM": "EDI_DC40"
+          },
+          "createdDate": "20260819",
+          "createdTime": "100000",
+          "direction": "1",
+          "directionLabel": "Outbound",
+          "documentNumber": "0000000000123400",
+          "form": "xml",
+          "messageType": "ORDERS",
+          "receiverPartner": "0000012345",
+          "receiverPartnerType": "LI",
+          "receiverPort": "A000000012",
+          "segmentCount": 1,
+          "senderPartner": "PRDCLNT100",
+          "senderPartnerType": "LS",
+          "senderPort": "SAPPRD"
+        },
+        "children": [
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 2,
+              "parentSegmentNumber": 0,
+              "repeatCount": 1,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK01",
+              "segmentNumber": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK01[0]/CURCY"
+                },
+                "name": "CURCY",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK01[0]/BELNR"
+                },
+                "name": "BELNR",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "4500098200",
+                "valueLength": 10,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.0",
+            "kind": "segment",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "IDOC[0]/E1EDK01[0]"
+            },
+            "name": "E1EDK01",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "idoc",
+        "label": "IDoc 0000000000123400 (ORDERS05)",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "IDOC[0]"
+        },
+        "name": "ORDERS05",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

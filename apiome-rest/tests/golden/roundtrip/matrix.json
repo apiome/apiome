@@ -813,6 +813,22 @@
     {
       "corpus_path": "a2a/02-typical-travel-concierge.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "a2a",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "a2a/02-typical-travel-concierge.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -2833,6 +2849,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "acp",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "acp/02-typical-research-agent.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "acp",
       "status": "xfail",
       "unexplained": []
@@ -4955,6 +4987,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "agents-manifest",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "agents-manifest",
       "status": "xfail",
       "unexplained": []
@@ -7343,6 +7391,22 @@
     {
       "corpus_path": "api-blueprint/01-simple-api.apib",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 9,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "api-blueprint",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "api-blueprint/01-simple-api.apib",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 3,
@@ -9650,6 +9714,22 @@
     {
       "corpus_path": "apigee/02-typical-proxy-bundle.zip",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -11511,6 +11591,22 @@
     {
       "corpus_path": "arazzo-1.1/02-typical-checkout-flow.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "arazzo",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "arazzo-1.1/02-typical-checkout-flow.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -13269,6 +13365,22 @@
     {
       "corpus_path": "arrow/02-typical-orders-schema.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 8,
+      "loss_drop": 7,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "arrow",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "arrow/02-typical-orders-schema.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 8,
@@ -14986,6 +15098,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "asn1",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "asn1/01-person.asn1",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 12,
+      "loss_drop": 13,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "asn1",
       "status": "xfail",
       "unexplained": []
@@ -16924,6 +17052,22 @@
     {
       "corpus_path": "asyncapi/01-user-events-2.6.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "asyncapi",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "asyncapi/01-user-events-2.6.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -18242,6 +18386,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "avro",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "avro/01-user-record.avsc",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 6,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "avro",
       "status": "xfail",
       "unexplained": []
@@ -20291,6 +20451,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "avro-idl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "avro-idl/02-typical-orders-protocol.avdl",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 10,
+      "loss_drop": 14,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "avro-idl",
       "status": "xfail",
       "unexplained": []
@@ -23421,6 +23597,22 @@
     {
       "corpus_path": "aws-apigateway/02-typical-rest-api-export.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 1,
+      "loss_drop": 4,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "aws-apigateway",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "aws-apigateway/02-typical-rest-api-export.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 1,
@@ -25856,6 +26048,22 @@
     {
       "corpus_path": "azure-apim/02-typical-arm-api.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "azure-apim",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "azure-apim/02-typical-arm-api.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -27921,6 +28129,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "capnproto",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "capnproto/01-address-book.capnp",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 13,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "capnproto",
       "status": "xfail",
       "unexplained": []
@@ -30823,6 +31047,22 @@
     {
       "corpus_path": "cddl/02-typical-order.cddl",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 18,
+      "loss_drop": 19,
+      "loss_ok": 6,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "cddl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cddl/02-typical-order.cddl",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 18,
@@ -33008,6 +33248,22 @@
     {
       "corpus_path": "cloudevents/01-order-created.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 2,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "cloudevents",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cloudevents/01-order-created.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 6,
@@ -34241,6 +34497,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "cobolcopybook",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cobol-copybook/01-customer-record.cpy",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 7,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "cobolcopybook",
       "status": "xfail",
       "unexplained": []
@@ -36412,6 +36684,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "connectrpc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "connectrpc/02-tasks-service.proto",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 19,
+      "loss_ok": 7,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "connectrpc",
       "status": "xfail",
       "unexplained": []
@@ -40472,6 +40760,22 @@
     {
       "corpus_path": "corba-idl/01-bank.idl",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 10,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "corbaidl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "corba-idl/01-bank.idl",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 6,
@@ -43363,6 +43667,22 @@
     {
       "corpus_path": "dbt/02-typical-schema.yml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "dbt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dbt/02-typical-schema.yml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 6,
@@ -45560,6 +45880,22 @@
           "key": "PostCheckoutRequest"
         }
       ]
+    },
+    {
+      "corpus_path": "discovery/01-bookstore-api.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 1,
+      "loss_drop": 5,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "discovery",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "discovery/01-bookstore-api.json",
@@ -48679,6 +49015,22 @@
     {
       "corpus_path": "dtd/02-typical-catalogue.dtd",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 15,
+      "loss_drop": 15,
+      "loss_ok": 6,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "dtd",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dtd/02-typical-catalogue.dtd",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 15,
@@ -51750,6 +52102,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "edifact",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "edifact/02-typical-invoic-d96a.edi",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 49,
+      "loss_drop": 49,
+      "loss_ok": 10,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "edifact",
       "status": "xfail",
       "unexplained": []
@@ -54880,6 +55248,22 @@
     {
       "corpus_path": "edi-x12/01-850-purchase-order.edi",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 23,
+      "loss_drop": 23,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "edix12",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "edi-x12/01-850-purchase-order.edi",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 23,
@@ -56605,6 +56989,22 @@
           "key": "PostPatientRequest"
         }
       ]
+    },
+    {
+      "corpus_path": "fhir/01-patient.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 9,
+      "loss_drop": 12,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "fhir",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "fhir/01-patient.json",
@@ -58671,6 +59071,22 @@
     {
       "corpus_path": "fix/02-executionreport.fix",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 21,
+      "loss_drop": 21,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "fix",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "fix/02-executionreport.fix",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 21,
@@ -60159,6 +60575,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "flatbuffers",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "flatbuffers/01-monster.fbs",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 12,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "flatbuffers",
       "status": "xfail",
       "unexplained": []
@@ -62125,6 +62557,22 @@
     {
       "corpus_path": "gateway-api/02-typical-hostnames-methods.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "gateway-api",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "gateway-api/02-typical-hostnames-methods.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -63994,6 +64442,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "graphql",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "graphql/02-scalar-types.graphql",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 10,
+      "loss_drop": 2,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "graphql",
       "status": "xfail",
       "unexplained": []
@@ -66541,6 +67005,22 @@
     {
       "corpus_path": "hl7v2/01-adt-a01.hl7",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 49,
+      "loss_drop": 49,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "hl7v2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hl7v2/01-adt-a01.hl7",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 49,
@@ -68200,6 +68680,22 @@
     {
       "corpus_path": "http-file/02-typical-vars-auth.http",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 2,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "http-file",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "http-file/02-typical-vars-auth.http",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 2,
@@ -69324,6 +69820,3822 @@
       "overclaims": [],
       "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
       "source_format": "http-file",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 20,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'IDoc ORDERS05', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "IDoc ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 5: '>!<CURCY UTF8String OPTIONAL,': Expected '}'. (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 5: '>!<CURCY UTF8String OPTIONAL,': Expected '}'.)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 26,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 26,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 13,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added channel 'com.example.idoc.orders05', added operation '65e5c52c-e2c3-4e48-8597-090475292b03', changed root '', added service 'com.example.idoc.orders05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "channel",
+          "key": "com.example.idoc.orders05"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "65e5c52c-e2c3-4e48-8597-090475292b03"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "com.example.idoc.orders05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 34,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:4:13:unexpected `-` after `package` declaration\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:4:13:unexpected `-` in file scope\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:4:14:missing message field tag in declaration\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:4:14:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:4:14:unexpected message field at file scope\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:35:3:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:35:8:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:35:26:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:35:26:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:36:3:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:36:8:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:36:26:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:36:26:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:60:3:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:60:8:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:60:26:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:60:26:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:61:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:61:17:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:61:35:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:61:35:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:62:3:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:62:8:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:62:26:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:62:26:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:63:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:63:17:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:63:35:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:63:35:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:64:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:64:17:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:64:35:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:64:35:unexpected identifier after definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:65:3:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:65:8:unexpected `-` in definition\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:65:26:missing name in message field\n/tmp/apiome-proto-0gz5jjyz/IDOC_ORDERS05.proto:65:26:unexpected identifier after definition)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a CORBA IDL definition (observed: Re-import failed: Content does not appear to be a CORBA IDL definition)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 15,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /E1EDK01', added operation 'GET /E1EDK01/{id}', added operation 'POST /E1EDK01', changed root '', added service 'E1EDK01.E1EDK01', added type 'E1EDK01.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /E1EDK01/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /E1EDK01"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "E1EDK01.E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 9,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with... (observed: Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing).)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 12,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Query._', changed root '', added service 'Query'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 18,
+      "loss_drop": 34,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 8,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": null,
+      "source_format": "idoc",
+      "status": "pass",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 20,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'IDoc ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDoc ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 20,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'IDoc ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDoc ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 12,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'e1edk01s.idoc-orders05', added type 'idoc-orders05/v1.E1EDK01'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "e1edk01s.idoc-orders05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05/v1.E1EDK01"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 9,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to decla... (observed: Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none).)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 13,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 10,
+      "loss_drop": 34,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 10,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'idoc->llm-tools.ORDERS05', added service 'idoc->llm-tools', added type 'ORDERS05Params')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "idoc->llm-tools.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "idoc->llm-tools"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05Params"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'IDOC-ORDERS05.E1EDK01', changed type 'IDOC-ORDERS05.E1EDK03', changed type 'IDOC-ORDERS05.E1EDK14', changed type 'IDOC-ORDERS05.E1EDKA1', changed type 'IDOC-ORDERS05.E1EDP01', changed type 'IDOC-ORDERS05.E1EDP19', changed type 'IDOC-ORDERS05.E1EDP26', changed type 'IDOC-ORDERS05.E1EDS01', changed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 7,
+      "matched_count": 10,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'ORDERS05', added type 'ORDERS05.E1EDK01', added type 'ORDERS05.E1EDK03.items', added type 'ORDERS05.E1EDK14', added type 'ORDERS05.E1EDKA1.items', added type 'ORDERS05.E1EDP01.items', added type 'ORDERS05.E1EDP01.items.E1EDP19', added type 'ORDERS05.E1EDP01.items.E1EDP26', added type 'ORDERS05.E1EDS01'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDK03.items"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDKA1.items"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDP01.items"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDP01.items.E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDP01.items.E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05.E1EDS01"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (idoc->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (idoc->oncrpc))",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 34,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 20,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'IDoc ORDERS05', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "IDoc ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Postman requests found in collection (idoc->postman) (observed: Re-import failed: No Postman requests found in collection (idoc->postman))",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 34,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:3:13:unexpected `-` after `package` declaration\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:3:13:unexpected `-` in file scope\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:3:14:missing message field tag in declaration\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:3:14:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:3:14:unexpected message field at file scope\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:34:3:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:34:8:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:34:26:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:34:26:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:35:3:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:35:8:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:35:26:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:35:26:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:59:3:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:59:8:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:59:26:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:59:26:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:60:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:60:17:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:60:35:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:60:35:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:61:3:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:61:8:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:61:26:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:61:26:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:62:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:62:17:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:62:35:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:62:35:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:63:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:63:17:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:63:35:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:63:35:unexpected identifier after definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:64:3:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:64:8:unexpected `-` in definition\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:64:26:missing name in message field\n/tmp/apiome-proto-tcavhgz_/IDOC_ORDERS05.proto:64:26:unexpected identifier after definition)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 20,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'IDoc ORDERS05', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "IDoc ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'IDOC.E1EDK01', added type 'IDOC.E1EDK03', added type 'IDOC.E1EDK14', added type 'IDOC.E1EDKA1', added type 'IDOC.E1EDP01', added type 'IDOC.E1EDP19', added type 'IDOC.E1EDP26', added type 'IDOC.E1EDS01', added type 'IDOC.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDS01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'IDOC.E1EDK01', added type 'IDOC.E1EDK03', added type 'IDOC.E1EDK14', added type 'IDOC.E1EDKA1', added type 'IDOC.E1EDP01', added type 'IDOC.E1EDP19', added type 'IDOC.E1EDP26', added type 'IDOC.E1EDS01', added type 'IDOC.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.E1EDS01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 19,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 0,
+      "loss_drop": 34,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 9,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'idoc-orders05:i-doc-orders05.types.e1-edk01', added type 'idoc-orders05:i-doc-orders05.types.e1-edk03', added type 'idoc-orders05:i-doc-orders05.types.e1-edk14', added type 'idoc-orders05:i-doc-orders05.types.e1-edka1', added type 'idoc-orders05:i-doc-orders05.types.e1-edp01', added type 'idoc-orders05:i-doc-orders05.types.e1-edp19', added type 'idoc-orders05:i-doc-orders05.types.e1-edp26', added type 'idoc-orders05:i-doc-orders05.types.e1-eds01', added type 'idoc-orders05:i-doc-orders05.types.orders05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edk01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edk03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edk14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edka1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edp01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edp19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-edp26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.e1-eds01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "idoc-orders05:i-doc-orders05.types.orders05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'IDOC-ORDERS05.E1EDK01', changed type 'IDOC-ORDERS05.E1EDK03', changed type 'IDOC-ORDERS05.E1EDK14', changed type 'IDOC-ORDERS05.E1EDKA1', changed type 'IDOC-ORDERS05.E1EDP19', changed type 'IDOC-ORDERS05.E1EDP26', changed type 'IDOC-ORDERS05.E1EDS01'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 10,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "IDOC-ORDERS05.E1EDK01",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK03",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDK14",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDKA1",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP01",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP19",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDP26",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.E1EDS01",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "IDOC-ORDERS05.ORDERS05",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'IDOC-ORDERS05.E1EDK01', changed type 'IDOC-ORDERS05.E1EDK03', changed type 'IDOC-ORDERS05.E1EDK14', changed type 'IDOC-ORDERS05.E1EDKA1', changed type 'IDOC-ORDERS05.E1EDP01', changed type 'IDOC-ORDERS05.E1EDP19', changed type 'IDOC-ORDERS05.E1EDP26', changed type 'IDOC-ORDERS05.E1EDS01', changed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "source_format": "idoc",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK03"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDK14"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP19"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDP26"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.E1EDS01"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "IDOC-ORDERS05.ORDERS05"
+        }
+      ]
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "idoc",
       "status": "xfail",
       "unexplained": []
     },
@@ -71732,6 +76044,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "iso20022",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "iso20022/01-pain.001-credit-transfer.xml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 36,
+      "loss_drop": 36,
+      "loss_ok": 18,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "iso20022",
       "status": "xfail",
       "unexplained": []
@@ -77284,6 +81612,22 @@
     {
       "corpus_path": "iso8583/01-authorization-0100.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 22,
+      "loss_drop": 22,
+      "loss_ok": 12,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "iso8583",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "iso8583/01-authorization-0100.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 22,
@@ -80596,6 +84940,22 @@
     {
       "corpus_path": "json-schema/02-product-types.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "json-schema",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "json-schema/02-product-types.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 3,
@@ -81934,6 +86294,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "jtd",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "jtd/01-user.jtd.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "jtd",
       "status": "xfail",
       "unexplained": []
@@ -83626,6 +88002,22 @@
     {
       "corpus_path": "k8s-crd/02-typical-cronwidget.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "k8s-crd",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "k8s-crd/02-typical-cronwidget.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -85064,6 +89456,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "kafka-connect",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "kafka-connect/02-typical-order-schema.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 8,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "kafka-connect",
       "status": "xfail",
       "unexplained": []
@@ -86670,6 +91078,22 @@
           "key": "users-service"
         }
       ]
+    },
+    {
+      "corpus_path": "kong/02-typical-single-service-auth.yaml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "kong",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "kong/02-typical-single-service-auth.yaml",
@@ -88647,6 +93071,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "llm-tools",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "llm-tools/02-typical-anthropic.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 5,
+      "loss_drop": 2,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "llm-tools",
       "status": "xfail",
       "unexplained": []
@@ -91311,6 +95751,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "mcp",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "mcp/02-typical-tickets-server.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 12,
+      "loss_drop": 6,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": []
@@ -94947,6 +99403,22 @@
     {
       "corpus_path": "odata/02-orders.edmx",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 1,
+      "loss_drop": 8,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "odata",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "odata/02-orders.edmx",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 1,
@@ -98267,6 +102739,22 @@
     {
       "corpus_path": "odata-v2/02-typical-v2-orders.xml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 4,
+      "loss_drop": 21,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "odata-v2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "odata-v2/02-typical-v2-orders.xml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 4,
@@ -101539,6 +106027,22 @@
     {
       "corpus_path": "odcs/02-typical-orders-contract.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "odcs",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "odcs/02-typical-orders-contract.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 6,
@@ -103178,6 +107682,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "oncrpc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "onc-rpc/01-key-value-store.x",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 8,
+      "loss_drop": 8,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": []
@@ -105571,6 +110091,22 @@
     {
       "corpus_path": "openapi/07-nullable-types.yaml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 6,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "openapi",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "openapi/07-nullable-types.yaml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 6,
@@ -107091,6 +111627,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "openrpc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "openrpc/01-wallet-api.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 2,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "openrpc",
       "status": "xfail",
       "unexplained": []
@@ -109198,6 +113750,22 @@
           "key": "Task"
         }
       ]
+    },
+    {
+      "corpus_path": "postman/01-tasks-collection.postman_collection.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 3,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "postman",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "postman/01-tasks-collection.postman_collection.json",
@@ -111353,6 +115921,22 @@
           "key": "PostOrderRequest"
         }
       ]
+    },
+    {
+      "corpus_path": "postman-v2/02-typical-crud-collection.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "postman-v2",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "postman-v2/02-typical-crud-collection.json",
@@ -114215,6 +118799,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "protobuf",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "protobuf/02-grpc-service.proto",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 18,
+      "loss_ok": 7,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "protobuf",
       "status": "xfail",
       "unexplained": []
@@ -118030,6 +122630,22 @@
     {
       "corpus_path": "protobuf-editions/02-typical-orders-edition-2023.proto",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 12,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "protobuf-editions",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "protobuf-editions/02-typical-orders-edition-2023.proto",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 2,
@@ -121027,6 +125643,22 @@
     {
       "corpus_path": "raml/01-simple-api.raml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 11,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "raml",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "raml/01-simple-api.raml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 7,
@@ -123160,6 +127792,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "relaxng",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "relaxng/02-typical-catalogue.rng",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 8,
+      "loss_drop": 10,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": []
@@ -125433,6 +130081,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "smithy",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "smithy/01-weather-service.smithy",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 5,
+      "loss_drop": 2,
+      "loss_ok": 6,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "smithy",
       "status": "xfail",
       "unexplained": []
@@ -128795,6 +133459,22 @@
     {
       "corpus_path": "sql-ddl/02-typical-postgres.sql",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 22,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "sql-ddl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "sql-ddl/02-typical-postgres.sql",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 22,
@@ -132141,6 +136821,22 @@
           "key": "User"
         }
       ]
+    },
+    {
+      "corpus_path": "swagger/01-swagger-2-petstore.yaml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 28,
+      "loss_drop": 6,
+      "loss_ok": 8,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "swagger",
+      "status": "xfail",
+      "unexplained": []
     },
     {
       "corpus_path": "swagger/01-swagger-2-petstore.yaml",
@@ -136224,6 +140920,22 @@
     {
       "corpus_path": "swagger-1.2/02-typical-orders-declaration.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 14,
+      "loss_drop": 4,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "swagger-1.2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swagger-1.2/02-typical-orders-declaration.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 14,
@@ -139310,6 +144022,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "thrift",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "thrift/01-user-service.thrift",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 12,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "thrift",
       "status": "xfail",
       "unexplained": []
@@ -142466,6 +147194,22 @@
     {
       "corpus_path": "typespec/01-pets-api.tsp",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "typespec",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "typespec/01-pets-api.tsp",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -145051,6 +149795,22 @@
     {
       "corpus_path": "wadl/01-bookstore.wadl",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 7,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "wadl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wadl/01-bookstore.wadl",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -147175,6 +151935,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "wit",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wit/02-typical-calculator.wit",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 3,
+      "loss_drop": 3,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "wit",
       "status": "xfail",
       "unexplained": []
@@ -150538,6 +155314,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "wsdl",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wsdl/02-order-service.wsdl",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 21,
+      "loss_ok": 9,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "wsdl",
       "status": "xfail",
       "unexplained": []
@@ -155085,6 +159877,22 @@
     {
       "corpus_path": "wsdl2/02-typical-orders.wsdl",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 18,
+      "loss_ok": 7,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "wsdl2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wsdl2/02-typical-orders.wsdl",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -158443,6 +163251,22 @@
     {
       "corpus_path": "xml-rpc/01-method-call.xml",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 3,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "xmlrpc",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "xml-rpc/01-method-call.xml",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 2,
@@ -160062,6 +164886,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "xregistry",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "xregistry/02-typical-order-events.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 7,
+      "loss_drop": 4,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "xregistry",
       "status": "xfail",
       "unexplained": []
@@ -161895,6 +166735,22 @@
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "xsd",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "xsd/01-purchase-order.xsd",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 15,
+      "loss_drop": 14,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
       "source_format": "xsd",
       "status": "xfail",
       "unexplained": []
@@ -164168,6 +169024,22 @@
     {
       "corpus_path": "zos-connect/01-api-requester.json",
       "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "zosconnect",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "zos-connect/01-api-requester.json",
+      "diff_count": 0,
       "emit_format": "iso20022",
       "emit_key": "iso20022",
       "loss_approx": 0,
@@ -165992,6 +170864,7 @@
     "graphql",
     "hl7v2",
     "http-file",
+    "idoc",
     "iso20022",
     "iso8583",
     "json-schema",
@@ -166051,6 +170924,7 @@
     "graphql",
     "hl7v2",
     "http-file",
+    "idoc",
     "iso20022",
     "iso8583",
     "json-schema",

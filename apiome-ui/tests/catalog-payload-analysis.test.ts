@@ -87,6 +87,7 @@ describe('status and vocabulary presentation', () => {
     expect(analysisKindLabel('condition')).toBe('Condition');
     expect(analysisKindLabel('opaque')).toBe('Opaque');
     expect(analysisKindLabel('message')).toBe('Message');
+    expect(analysisKindLabel('idoc')).toBe('IDoc');
     expect(analysisKindLabel('edifact_interchange')).toBe('edifact_interchange');
   });
 

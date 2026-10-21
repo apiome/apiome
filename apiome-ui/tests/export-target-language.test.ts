@@ -26,6 +26,7 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('asn1')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('asn')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('edix12')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('idoc')).toBe('xml');
     expect(monacoLanguageForExportTarget('oncrpc')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('corbaidl')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('odata')).toBe('xml');
@@ -112,6 +113,7 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('asn1')).toBe('.asn1');
     expect(fileExtensionForExportTarget('asn')).toBe('.asn1');
     expect(fileExtensionForExportTarget('edix12')).toBe('.edi');
+    expect(fileExtensionForExportTarget('idoc')).toBe('.xml');
     expect(fileExtensionForExportTarget('oncrpc')).toBe('.x');
     expect(fileExtensionForExportTarget('corbaidl')).toBe('.idl');
     expect(fileExtensionForExportTarget('odata')).toBe('.edmx');

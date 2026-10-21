@@ -695,6 +695,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['una', 'unb', 'orders', 'invoic', 'desadv', 'eancom', 'iso 9735', 'b2b'],
   },
   {
+    id: 'idoc-import',
+    title: 'Import and export SAP IDocs',
+    summary: 'Catalog SAP IDocs from flat files or XML, and export IDoc XML.',
+    page: 'apiome-docs/docs/bring-in/idoc-import.md',
+    section: 'reference',
+    keywords: ['edi_dc40', 'orders05', 'invoic02', 'segment definition', 'we60', 'erp', 'b2b'],
+  },
+  {
     id: 'agents-manifest-import',
     title: 'Import agentic-web site manifests',
     summary: "Catalog a site's agents.json, agent.json, agents.txt or llms.txt and its discovery seeds.",

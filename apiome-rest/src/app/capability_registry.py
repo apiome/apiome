@@ -496,6 +496,7 @@ _DOCUMENTATION_SEED: Dict[str, _DocSeed] = {
 _DOCUMENTATION_UNAVAILABLE_NOTE: Dict[str, str] = {
     "edix12": "The ASC X12 EDI standard is published to members; no public authoritative link.",
     "iso8583": "ISO 8583 is a paywalled ISO standard; no public authoritative link.",
+    "idoc": "SAP IDoc documentation is versioned per SAP release on SAP Help, which is not on the authoritative-host allowlist.",
     "hl7v2": "The HL7 v2.x messaging standard is distributed to members; no public authoritative link.",
     "cobolcopybook": "COBOL copybook layout has no single authoritative public specification page.",
     "xmlrpc": "The XML-RPC specification is published only over http; no authoritative https link.",

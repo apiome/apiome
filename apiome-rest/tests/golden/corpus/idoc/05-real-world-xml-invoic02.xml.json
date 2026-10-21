@@ -1,0 +1,1604 @@
+{
+  "adapter": "idoc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "idoc_basic_type": "INVOIC02",
+      "idoc_control": {
+        "CREDAT": "20260820",
+        "CRETIM": "091500",
+        "DIRECT": "1",
+        "DOCNUM": "0000000000987654",
+        "DOCREL": "740",
+        "IDOCTYP": "INVOIC02",
+        "MANDT": "100",
+        "MESTYP": "INVOIC",
+        "OUTMOD": "2",
+        "RCVPFC": "AG",
+        "RCVPOR": "A000000034",
+        "RCVPRN": "0000012345",
+        "RCVPRT": "KU",
+        "REFMES": "0090001234",
+        "SNDPFC": "LF",
+        "SNDPOR": "SAPPRD",
+        "SNDPRN": "PRDCLNT100",
+        "SNDPRT": "LS",
+        "STATUS": "03",
+        "STD": "E",
+        "STDMES": "INVOIC",
+        "STDVRS": "D96A",
+        "TABNAM": "EDI_DC40"
+      },
+      "idoc_definition": null,
+      "idoc_message_type": "INVOIC",
+      "idoc_segments": [
+        {
+          "children": [],
+          "fields": [
+            [
+              "CURCY",
+              "EUR"
+            ],
+            [
+              "HWAER",
+              "EUR"
+            ],
+            [
+              "WKURS",
+              "1.00000"
+            ],
+            [
+              "ZTERM",
+              "NT30"
+            ],
+            [
+              "BELNR",
+              "0090001234"
+            ],
+            [
+              "BSART",
+              "INVO"
+            ],
+            [
+              "RECIPNT_NO",
+              "0000012345"
+            ]
+          ],
+          "name": "E1EDK01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "PARVW",
+              "RS"
+            ],
+            [
+              "PARTN",
+              "0000000001"
+            ],
+            [
+              "NAME1",
+              "Example Supplies BV"
+            ],
+            [
+              "STRAS",
+              "Keizersgracht 1"
+            ],
+            [
+              "ORT01",
+              "Amsterdam"
+            ],
+            [
+              "PSTLZ",
+              "1015 CJ"
+            ],
+            [
+              "LAND1",
+              "NL"
+            ],
+            [
+              "STCEG",
+              "NL123456789B01"
+            ]
+          ],
+          "name": "E1EDKA1"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "PARVW",
+              "RE"
+            ],
+            [
+              "PARTN",
+              "0000012345"
+            ],
+            [
+              "NAME1",
+              "Acme Retail BV"
+            ],
+            [
+              "STRAS",
+              "Coolsingel 40"
+            ],
+            [
+              "ORT01",
+              "Rotterdam"
+            ],
+            [
+              "PSTLZ",
+              "3011 AD"
+            ],
+            [
+              "LAND1",
+              "NL"
+            ],
+            [
+              "STCEG",
+              "NL987654321B01"
+            ]
+          ],
+          "name": "E1EDKA1"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "QUALF",
+              "009"
+            ],
+            [
+              "BELNR",
+              "0090001234"
+            ],
+            [
+              "DATUM",
+              "20260820"
+            ]
+          ],
+          "name": "E1EDK02"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "QUALF",
+              "001"
+            ],
+            [
+              "BELNR",
+              "4500098231"
+            ],
+            [
+              "DATUM",
+              "20260819"
+            ]
+          ],
+          "name": "E1EDK02"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "IDDAT",
+              "024"
+            ],
+            [
+              "DATUM",
+              "20260820"
+            ]
+          ],
+          "name": "E1EDK03"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "IDDAT",
+              "012"
+            ],
+            [
+              "DATUM",
+              "20260819"
+            ]
+          ],
+          "name": "E1EDK03"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "QUALF",
+              "001"
+            ],
+            [
+              "LKOND",
+              "EXW"
+            ],
+            [
+              "LKTEXT",
+              "Ex works Amsterdam"
+            ]
+          ],
+          "name": "E1EDK17"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "QUALF",
+              "001"
+            ],
+            [
+              "TAGE",
+              "30"
+            ],
+            [
+              "ZTERM_TXT",
+              "Payable within 30 days net"
+            ]
+          ],
+          "name": "E1EDK18"
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "fields": [
+                [
+                  "QUALF",
+                  "001"
+                ],
+                [
+                  "IDTNR",
+                  "WIDGET-001"
+                ],
+                [
+                  "KTEXT",
+                  "Stainless widget 40mm"
+                ]
+              ],
+              "name": "E1EDP19"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "QUALF",
+                  "002"
+                ],
+                [
+                  "IDTNR",
+                  "8712345001234"
+                ]
+              ],
+              "name": "E1EDP19"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "MWSKZ",
+                  "V1"
+                ],
+                [
+                  "MSATZ",
+                  "21.000"
+                ],
+                [
+                  "MWSBT",
+                  "18144.00"
+                ]
+              ],
+              "name": "E1EDP04"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "QUALF",
+                  "003"
+                ],
+                [
+                  "BETRG",
+                  "86400.00"
+                ]
+              ],
+              "name": "E1EDP26"
+            }
+          ],
+          "fields": [
+            [
+              "POSEX",
+              "000010"
+            ],
+            [
+              "MENGE",
+              "480"
+            ],
+            [
+              "MENEE",
+              "PCE"
+            ],
+            [
+              "VPREI",
+              "180.00"
+            ],
+            [
+              "PEINH",
+              "1"
+            ],
+            [
+              "NETWR",
+              "86400.00"
+            ]
+          ],
+          "name": "E1EDP01"
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "fields": [
+                [
+                  "QUALF",
+                  "001"
+                ],
+                [
+                  "IDTNR",
+                  "GADGET-007"
+                ],
+                [
+                  "KTEXT",
+                  "Gadget boxed"
+                ]
+              ],
+              "name": "E1EDP19"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "MWSKZ",
+                  "V1"
+                ],
+                [
+                  "MSATZ",
+                  "21.000"
+                ],
+                [
+                  "MWSBT",
+                  "1058.40"
+                ]
+              ],
+              "name": "E1EDP04"
+            }
+          ],
+          "fields": [
+            [
+              "POSEX",
+              "000020"
+            ],
+            [
+              "MENGE",
+              "120"
+            ],
+            [
+              "MENEE",
+              "PCE"
+            ],
+            [
+              "VPREI",
+              "42.00"
+            ],
+            [
+              "PEINH",
+              "1"
+            ],
+            [
+              "NETWR",
+              "5040.00"
+            ]
+          ],
+          "name": "E1EDP01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SUMID",
+              "001"
+            ],
+            [
+              "SUMME",
+              "110642.40"
+            ],
+            [
+              "SUNIT",
+              "EUR"
+            ]
+          ],
+          "name": "E1EDS01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SUMID",
+              "011"
+            ],
+            [
+              "SUMME",
+              "91440.00"
+            ],
+            [
+              "SUNIT",
+              "EUR"
+            ]
+          ],
+          "name": "E1EDS01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SUMID",
+              "005"
+            ],
+            [
+              "SUMME",
+              "19202.40"
+            ],
+            [
+              "SUNIT",
+              "EUR"
+            ]
+          ],
+          "name": "E1EDS01"
+        }
+      ]
+    },
+    "format": "idoc",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "IDoc INVOIC02",
+      "namespace": "IDOC-INVOIC02"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "IDoc INVOIC02",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-INVOIC02.E1EDK01.BELNR",
+            "name": "BELNR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-INVOIC02.E1EDK01.BSART",
+            "name": "BSART",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDK01.CURCY",
+            "name": "CURCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDK01.HWAER",
+            "name": "HWAER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "IDOC-INVOIC02.E1EDK01.RECIPNT_NO",
+            "name": "RECIPNT_NO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDK01.WKURS",
+            "name": "WKURS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-INVOIC02.E1EDK01.ZTERM",
+            "name": "ZTERM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDK01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDK02.BELNR",
+            "name": "BELNR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDK02.DATUM",
+            "name": "DATUM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDK02.QUALF",
+            "name": "QUALF",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDK02",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK02",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDK03.DATUM",
+            "name": "DATUM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDK03.IDDAT",
+            "name": "IDDAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDK03",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK03",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDK17.LKOND",
+            "name": "LKOND",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDK17.LKTEXT",
+            "name": "LKTEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDK17.QUALF",
+            "name": "QUALF",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDK17",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK17",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDK18.QUALF",
+            "name": "QUALF",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDK18.TAGE",
+            "name": "TAGE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDK18.ZTERM_TXT",
+            "name": "ZTERM_TXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDK18",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK18",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "IDOC-INVOIC02.E1EDKA1.LAND1",
+            "name": "LAND1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDKA1.NAME1",
+            "name": "NAME1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-INVOIC02.E1EDKA1.ORT01",
+            "name": "ORT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDKA1.PARTN",
+            "name": "PARTN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDKA1.PARVW",
+            "name": "PARVW",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-INVOIC02.E1EDKA1.PSTLZ",
+            "name": "PSTLZ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "IDOC-INVOIC02.E1EDKA1.STCEG",
+            "name": "STCEG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-INVOIC02.E1EDKA1.STRAS",
+            "name": "STRAS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDKA1",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDKA1",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "IDOC-INVOIC02.E1EDP01.E1EDP04",
+            "name": "E1EDP04",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-INVOIC02.E1EDP04",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "IDOC-INVOIC02.E1EDP01.E1EDP19",
+            "name": "E1EDP19",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDP19",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "IDOC-INVOIC02.E1EDP01.E1EDP26",
+            "name": "E1EDP26",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-INVOIC02.E1EDP26",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDP01.MENEE",
+            "name": "MENEE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDP01.MENGE",
+            "name": "MENGE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-INVOIC02.E1EDP01.NETWR",
+            "name": "NETWR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-INVOIC02.E1EDP01.PEINH",
+            "name": "PEINH",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDP01.POSEX",
+            "name": "POSEX",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-INVOIC02.E1EDP01.VPREI",
+            "name": "VPREI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDP01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDP04.MSATZ",
+            "name": "MSATZ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDP04.MWSBT",
+            "name": "MWSBT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDP04.MWSKZ",
+            "name": "MWSKZ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDP04",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP04",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDP19.IDTNR",
+            "name": "IDTNR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDP19.KTEXT",
+            "name": "KTEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDP19.QUALF",
+            "name": "QUALF",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDP19",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP19",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDP26.BETRG",
+            "name": "BETRG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDP26.QUALF",
+            "name": "QUALF",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDP26",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP26",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.E1EDS01.SUMID",
+            "name": "SUMID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.E1EDS01.SUMME",
+            "name": "SUMME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.E1EDS01.SUNIT",
+            "name": "SUNIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.E1EDS01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDS01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IDoc basic type INVOIC02 (message type INVOIC)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDK01",
+            "name": "E1EDK01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-INVOIC02.E1EDK01",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDK02",
+            "name": "E1EDK02",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDK02",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDK03",
+            "name": "E1EDK03",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDK03",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDK17",
+            "name": "E1EDK17",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-INVOIC02.E1EDK17",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDK18",
+            "name": "E1EDK18",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-INVOIC02.E1EDK18",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDKA1",
+            "name": "E1EDKA1",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDKA1",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDP01",
+            "name": "E1EDP01",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDP01",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "IDOC-INVOIC02.INVOIC02.E1EDS01",
+            "name": "E1EDS01",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-INVOIC02.E1EDS01",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IDOC-INVOIC02.INVOIC02",
+        "key_type": null,
+        "kind": "record",
+        "name": "INVOIC02",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "idoc/05-real-world-xml-invoic02.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 12
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "idoc"
+  },
+  "fingerprint": "sha256:50e21a34561216d4de5fff7f0159f15986607222894232c997c531aaf7c64f65",
+  "lint": {
+    "findings": 66,
+    "grade": "F",
+    "report_fingerprint": "20cae579811635ecf484ea6f1e9932c9db1d64b50132aeed985742ead553d929",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 55,
+      "warning": 11
+    }
+  },
+  "snapshot_version": 1
+}

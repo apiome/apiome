@@ -1,0 +1,22 @@
+---
+slug: idoc-import-export
+title: Import and export SAP IDocs
+description: Flat-file and XML IDocs join the Catalog, and IDoc XML joins the export targets.
+authors: [apiome]
+---
+
+Apiome now reads [**SAP IDocs**](/bring-in/idoc-import) — `ORDERS05`, `INVOIC02` and custom basic
+types — in both transport forms, and exports IDoc XML.
+
+{/* truncate */}
+
+- **Flat file or XML, one schema.** An `EDI_DC40` flat file and an IDoc XML document carrying the same
+  IDoc import to the same canonical model when they are read with the same segment definitions.
+- **The hierarchy from the numbers.** Segments nest by their parent segment numbers (`PSGNUM`), never
+  by record order.
+- **Segment definitions.** Drop a WE60 segment-definition export beside a flat IDoc and its `SDATA` is
+  cut into named fields. The **Format details** tab shows each field's offset and length, and the
+  assumptions those byte counts rest on.
+- **The control record is structure.** Basic type, message type and partners are always shown,
+  never withheld as payload.
+- **IDoc XML export.** An imported IDoc exports back as IDoc XML.

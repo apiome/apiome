@@ -139,7 +139,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | `fix-orchestra/` | FIX Orchestra (pending #5453) | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
 | `hl7v3/` | HL7 v3 / CDA (pending #5448) | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
-| `idoc/` | SAP IDoc (pending #5446) | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
+| `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
 | `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 12 |
 | `iso8583/` | ISO 8583 | message | `mti` + numbered `dataElements` | 11 |
 | `nacha/` | NACHA ACH (pending #5450) | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
@@ -1138,26 +1138,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`08-emitted-jetbrains-collection.http`** — The same API as 07 in the other dialect: the request name is the `###` separator itself and comments use `//`.
 
-### `idoc/` — SAP IDoc (pending #5446)
+### `idoc/` — SAP IDoc
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-xml-orders05.xml` | minimal | `idoc` ≥ 0.9 | valid | `xml-form`, `control-record`, `ORDERS05`, `pending-adapter` |
-| `02-typical-xml-orders05.xml` | typical | `idoc` ≥ 0.9 | valid | `xml-form`, `ORDERS05`, `partners`, `items`, `summary`, `pending-adapter` |
-| `03-composition-xml-nested-segments.xml` | composition | `idoc` ≥ 0.9 | valid | `xml-form`, `nested-segments`, `extension-type`, `repeated-qualifiers`, `text-segments`, `pending-adapter` |
-| `04-stress-flat-multi-idoc.txt` | stress | `idoc` ≥ 0.9 | valid | `flat-form`, `multi-idoc`, `PSGNUM`, `HLEVEL`, `test-flag`, `edi-standard-fields`, `empty-fields`, `pending-adapter` |
-| `05-real-world-xml-invoic02.xml` | real-world | `idoc` ≥ 0.9 | valid | `xml-form`, `INVOIC02`, `vat-per-line`, `payment-terms`, `incoterms`, `summary-rows`, `pending-adapter` |
-| `06-typical-flat-orders05.txt` ⚠ | typical | `idoc` ≥ 0.9 | valid | `flat-form`, `ORDERS05`, `fixed-width`, `same-document-as-02`, `pending-adapter` |
-| `07-with-definition-set/custmas01.txt` | multi-file (root) | `idoc` ≥ 0.9 | valid | `multi-file`, `flat-form`, `custom-basic-type`, `segment-definition`, `pending-adapter` |
-| `07-with-definition-set/segments.xml` ⚠ | multi-file (member) | `idoc` (no guarantee) | valid | `multi-file`, `segment-definition`, `field-offsets`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-segment.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-missing-control-record.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `semantic`, `no-control-record`, `pending-adapter` |
-| `negative/03-truncated-mid-segment.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `truncated`, `mid-element`, `pending-adapter` |
-| `negative/04-wrong-format-edifact.edi` | — | `idoc` (no guarantee) | invalid | `negative`, `wrong-format`, `edifact`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-short-control-record.txt` ⚠ | — | `idoc` (no guarantee) | invalid | `negative`, `semantic`, `malformed-control-record`, `short-record`, `pending-adapter` |
+| `01-minimal-xml-orders05.xml` | minimal | `idoc` ≥ 0.9 | valid | `xml-form`, `control-record`, `ORDERS05` |
+| `02-typical-xml-orders05.xml` | typical | `idoc` ≥ 0.9 | valid | `xml-form`, `ORDERS05`, `partners`, `items`, `summary` |
+| `03-composition-xml-nested-segments.xml` | composition | `idoc` ≥ 0.9 | valid | `xml-form`, `nested-segments`, `extension-type`, `repeated-qualifiers`, `text-segments` |
+| `04-stress-flat-multi-idoc.txt` | stress | `idoc` ≥ 0.9 | valid | `flat-form`, `multi-idoc`, `PSGNUM`, `HLEVEL`, `test-flag`, `edi-standard-fields`, `empty-fields` |
+| `05-real-world-xml-invoic02.xml` | real-world | `idoc` ≥ 0.9 | valid | `xml-form`, `INVOIC02`, `vat-per-line`, `payment-terms`, `incoterms`, `summary-rows` |
+| `06-typical-flat-orders05.txt` ⚠ | typical | `idoc` ≥ 0.9 | valid | `flat-form`, `ORDERS05`, `fixed-width`, `same-document-as-02` |
+| `07-with-definition-set/custmas01.txt` | multi-file (root) | `idoc` ≥ 0.9 | valid | `multi-file`, `flat-form`, `custom-basic-type`, `segment-definition` |
+| `07-with-definition-set/segments.xml` ⚠ | multi-file (member) | `idoc` (no guarantee) | valid | `multi-file`, `segment-definition`, `field-offsets` |
+| `negative/01-syntactic-unclosed-segment.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-missing-control-record.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `semantic`, `no-control-record` |
+| `negative/03-truncated-mid-segment.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `truncated`, `mid-element` |
+| `negative/04-wrong-format-edifact.edi` | — | `idoc` (no guarantee) | invalid | `negative`, `wrong-format`, `edifact` |
+| `negative/05-encoding-utf16.xml` | — | `idoc` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-short-control-record.txt` ⚠ | — | `idoc` (no guarantee) | invalid | `negative`, `semantic`, `malformed-control-record`, `short-record` |
 
-> ⚠ **`06-typical-flat-orders05.txt`** — Byte-exact flat twin of 02-typical-xml-orders05.xml: both forms must produce the same canonical model.
+> ⚠ **`06-typical-flat-orders05.txt`** — Flat twin of 02-typical-xml-orders05.xml: the same control record and the same segment hierarchy, rebuilt from SEGNUM/PSGNUM. With no segment definition beside it each segment's SDATA is one opaque value, so the field lists differ; 07 is the flat set with its definition.
 
 > ⚠ **`07-with-definition-set/segments.xml`** — Fileset member: the WE60-style segment definition that supplies the SDATA field offsets; without it the flat record's payload is opaque.
 

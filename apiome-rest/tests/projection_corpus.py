@@ -142,6 +142,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "gateway-api": GENERIC,
     "hl7v2": GENERIC,
     "http-file": GENERIC,
+    "idoc": GENERIC,
     "iso20022": GENERIC,
     "iso8583": GENERIC,
     "json-schema": GENERIC,

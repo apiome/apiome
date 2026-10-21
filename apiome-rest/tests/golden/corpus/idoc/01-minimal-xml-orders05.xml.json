@@ -1,0 +1,167 @@
+{
+  "adapter": "idoc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "idoc_basic_type": "ORDERS05",
+      "idoc_control": {
+        "CREDAT": "20260819",
+        "CRETIM": "100000",
+        "DIRECT": "1",
+        "DOCNUM": "0000000000123400",
+        "IDOCTYP": "ORDERS05",
+        "MANDT": "100",
+        "MESTYP": "ORDERS",
+        "RCVPOR": "A000000012",
+        "RCVPRN": "0000012345",
+        "RCVPRT": "LI",
+        "SNDPOR": "SAPPRD",
+        "SNDPRN": "PRDCLNT100",
+        "SNDPRT": "LS",
+        "TABNAM": "EDI_DC40"
+      },
+      "idoc_definition": null,
+      "idoc_message_type": "ORDERS",
+      "idoc_segments": [
+        {
+          "children": [],
+          "fields": [
+            [
+              "CURCY",
+              "EUR"
+            ],
+            [
+              "BELNR",
+              "4500098200"
+            ]
+          ],
+          "name": "E1EDK01"
+        }
+      ]
+    },
+    "format": "idoc",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "IDoc ORDERS05",
+      "namespace": "IDOC-ORDERS05"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "IDoc ORDERS05",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ORDERS05.E1EDK01.BELNR",
+            "name": "BELNR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDK01.CURCY",
+            "name": "CURCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDK01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IDoc basic type ORDERS05 (message type ORDERS)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDK01",
+            "name": "E1EDK01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDK01",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.ORDERS05",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERS05",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "idoc/01-minimal-xml-orders05.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "idoc"
+  },
+  "fingerprint": "sha256:b10a705c25e196c39a6040f591efb553ac0d32de51522e26a6391c8d9e6e45e6",
+  "lint": {
+    "findings": 5,
+    "grade": "A",
+    "report_fingerprint": "61ed85c78cb0910c423a66e384727454b0ceacfd984ecf323d35037c97cfcad3",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 4,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}
