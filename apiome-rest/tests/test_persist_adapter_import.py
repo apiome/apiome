@@ -181,6 +181,22 @@ def test_persists_a_non_publishable_catalog_item_with_raw_source(monkeypatch) ->
     assert call["format_metadata"]["inputKind"] == "file"
 
 
+def test_withholds_the_verbatim_source_when_the_model_asks(monkeypatch) -> None:
+    """FMT-6.7: a DICOM upload is patient (and pixel) data, so its source is not stored."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    model = _model().model_copy(
+        update={"format": "dicom", "extras": {"source_retention": {"verbatim": False, "reason": "dicom-test"}}}
+    )
+    persist_adapter_import(_payload(), model, _text_intake('{"00100010": {"vr": "PN"}}'), _catalog_routing())
+
+    metadata = fake.source_format_call["format_metadata"]
+    assert metadata["sourceContent"] is None
+    assert metadata["sourceWithheld"] == "dicom-test"
+    assert "sourceEncoding" not in metadata
+    assert metadata["sourceLabel"] == "orders.proto"
+
+
 def test_records_the_routing_reason_and_fingerprint_for_provenance(monkeypatch) -> None:
     """MFI-25.8: the Provenance tab reads why it was routed and the revision fingerprint."""
     fake = _FakeDb()

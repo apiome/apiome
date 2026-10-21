@@ -345,6 +345,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', dataType: 'records', origin: 'mainframe', importable: true, aliases: ['copybook', 'cobol', 'cobol-copybook'], description: 'COBOL copybook record layout.' },
 
   // ---- Healthcare ----
+  { id: 'dicom', label: 'DICOM', icon: HeartPulse, tone: 'red', dataType: 'schema', origin: 'healthcare', importable: true, aliases: ['dcm', 'dicom-json'], description: 'DICOM Part 10 files and DICOM JSON metadata — SOP classes, attributes by tag and VR, sequences and Structured Report content trees. Pixel data is never read.' },
   { id: 'fhir', label: 'FHIR', icon: HeartPulse, tone: 'red', dataType: 'schema', origin: 'healthcare', importable: true, aliases: ['fhirr4', 'structuredefinition'], description: 'HL7 FHIR healthcare resource definition.' },
   { id: 'hl7v2', label: 'HL7 v2', icon: HeartPulse, tone: 'pink', dataType: 'messages', origin: 'healthcare', importable: true, aliases: ['hl7', 'hl7v2x'], description: 'HL7 v2.x healthcare messaging.' },
   { id: 'hl7v3', label: 'HL7 v3 / CDA', icon: HeartPulse, tone: 'pink', dataType: 'messages', origin: 'healthcare', importable: true, aliases: ['cda', 'c-cda'], description: 'HL7 v3 Clinical Document Architecture (CDA R2) documents — CCD, discharge summary and other C-CDA types, template ids kept as asserted claims.' },

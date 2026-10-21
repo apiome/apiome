@@ -5,6 +5,51 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.411.0] - 2026-10-20
+
+### Added
+- **DICOM SOP class and Structured Report import (#5451, FMT-6.7)**: the imaging half of healthcare, metadata
+  layer only.
+  - The new **`dicom`** import source (formats `dicom` / `dcm` / `dicom-json`; `.dcm` / `.dicom` / `.dic` / `.json`;
+    file / URL / paste / fileset). `app/dicom_part10.py` reads a Part 10 file through the binary intake SPI — the
+    preamble and `DICM` magic, the file meta group, then the dataset in implicit or explicit VR little endian,
+    explicit VR big endian, deflated explicit VR little endian or any encapsulated transfer syntax; defined- and
+    undefined-length sequences and items, and undefined-length `UN` read as an implicit-VR sequence.
+    `app/dicom_json.py` reads the DICOM JSON model (PS3.18 Annex F), one dataset or an array; an archive of DICOM
+    JSON documents is read root first (`app/dicom_parser.py`).
+  - **Pixel data is never read, stored or analysed.** Pixel Data, Float / Double Float Pixel Data and Overlay Data
+    values are stepped over by their declared length (or their fragment item headers) without being sliced or
+    decoded, and recorded as a skip — tag, VR, length, fragments — on the model (`dicom_pixel_data`), as a
+    `pixel-data` analysis node (`read: false`) and as an info warning (`dicom.pixel_data_not_read`). A DICOM JSON
+    `BulkDataURI` is not followed and an `InlineBinary` is not decoded. The analysis `sourceHash` is taken over the
+    file with every pixel-data value excised.
+  - `app/dicom_normalizer.py` models one record type per SOP class (or per query level for a query result), one
+    field per attribute keyed by its tag and typed by its VR (aliases over string / integer / number with the VR's
+    maximum length; `PN` a record of its component groups), lists where the VM allows several values, one nested
+    record type per sequence tag folded across items, and a `FileMetaInformation` type. A Structured Report's
+    content tree is recorded as a hierarchy in `dicom_sr_content_trees` (value type, relationship type, concept
+    name — never a content value). No attribute value enters the model; fields mark PS3.15 Annex E and private
+    attributes `dicom_patient_identifying`.
+  - `app/dicom_analysis.py` (analyzer `dicom@1.0.0`) describes every element with its tag, VR, VM and byte offset;
+    values follow the value-visibility policy, so the default stores none.
+  - `app/dicom_dictionary.py` uses `pydicom` (new dependency, `>=3.0.0`) for the PS3.6 data dictionary and UID
+    registry only.
+  - Refusals: a file that stops inside an element `INPUT_TRUNCATED`; an unknown VR, a value overrunning its item or
+    a broken DICOM JSON attribute `INPUT_MALFORMED`; no `DICM` magic, no Transfer Syntax UID, or a dataset with no
+    SOP Class UID that is not a query result `INPUT_SEMANTIC_INVALID`; JSON with no DICOM attribute
+    `FORMAT_MISMATCH`; nesting, inflation and element-count bounds `INPUT_DEPTH_LIMIT` / `INPUT_EXPANSION_LIMIT` /
+    `INPUT_TOO_LARGE`; JSON syntax and encoding faults are left code-less.
+  - Capability registry `dicom` seed (registry version `21`) stating the pixel-data boundary and value policy, and
+    version coverage for `dicom`; the `dicom/` corpus is activated with canonical and analysis goldens and a matrix
+    row.
+
+### Changed
+- **A normalizer can ask for the verbatim upload not to be stored.** Canonical extras
+  `source_retention: {"verbatim": false, "reason": ...}` make the import persist `format_metadata.sourceContent` as
+  `null` with `sourceWithheld: <reason>` (`import_source_pipeline.source_retention_withheld`). DICOM uses it
+  (`dicom-patient-and-pixel-data`). Converting a catalog item whose source was withheld now explains why there is
+  nothing to convert instead of asking for a re-import.
+
 ## [1.410.0] - 2026-10-20
 
 ### Added

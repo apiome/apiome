@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -286,6 +286,34 @@ it was cut from.
 - **Other warnings**: `nacha.addenda_indicator_mismatch` (an entry's indicator disagrees with the
   addenda after it), `nacha.addenda_layout_not_modelled` (an addenda type other than 05, 98 or 99,
   kept whole) and `nacha.iat_layout_not_modelled` (an IAT batch, read with the domestic layouts).
+
+## The DICOM analysis
+
+For DICOM files ([how to import one](./dicom-import.md)) the tab renders one **dataset** row per
+instance or query result, with the Part 10 **file meta information** first, then every
+**attribute** in source order. A **sequence** row holds its **item** rows, and in a Structured
+Report the `ContentSequence` items are **content item** rows. A Part 10 element carries its byte
+offset and length; a DICOM JSON attribute carries its JSON pointer.
+
+- **The dataset row** shows **typeName**, **sopClassUid** and **sopClassName**, **modality**,
+  **form** (`part10` or `json`), the **transferSyntaxUid** and **transferSyntaxName**, and
+  **pixelDataPresent** beside **pixelDataRead** `false`.
+- **The attribute row** shows **tag**, **keyword**, **vr**, **vm**, **valueCount** and
+  **valueForm** (`inline`, `binary`, `bulk-data-uri`, `inline-binary` or `empty`).
+  **patientIdentifying** marks the attributes DICOM's de-identification profile (PS3.15 Annex E)
+  lists, and every private one. The value itself follows the value-visibility policy: at the
+  default you see whether it was present and how long it was, never what it said.
+- **The content item row** shows the item's **valueType** (`CONTAINER`, `TEXT`, `CODE`, `NUM`…),
+  **relationshipType** and its concept name (**conceptCode**, **conceptScheme**,
+  **conceptMeaning**). The item's value, such as the finding text, is not an attribute.
+- **The pixel data row** (**Pixel data (not read)**) shows the **tag**, **vr** and
+  **declaredLength**, or **encapsulatedFragments** for a compressed image, with **read** and
+  **stored** `false`. It carries no value. The record's `sourceHash` is taken over the file with
+  every pixel-data value cut out, so even the hash never digests image content.
+- **Warnings**: `dicom.pixel_data_not_read` (one per pixel-data element),
+  `dicom.private_attributes_not_modelled`, `dicom.media_storage_sop_class_mismatch` (the file meta
+  group and the dataset name different SOP classes) and `dicom.fileset_member_skipped`. All are
+  informational, so the record stays **available**.
 
 ## The COBOL copybook inspector
 

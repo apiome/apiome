@@ -36,6 +36,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Kafka Connect schema import and export
     - dbt model and semantic-manifest import
     - SQL DDL import
+    - DICOM import (Part 10 files and DICOM JSON metadata): SOP classes, attributes keyed by tag with their VR, nested sequences and Structured Report content trees; pixel data is never read, stored or analysed, and no patient value is kept at the default value-visibility policy
     - NACHA ACH import (PPD, CCD, WEB, TEL batches with addenda): batches and entries as native structure, batch and file control totals shown as declared versus observed; SEPA pain.001, pain.008 and pacs.008 files routed to the ISO 20022 importer with the message id and SEPA profile recorded
     - TRADACOMS import (order, invoice, delivery and acknowledgment files) and EDI dialect profiles: EANCOM and ODETTE/VDA interchanges recognised on the EDIFACT importer, the applied profile shown in provenance and the capability panel
     - HL7 v3 / CDA import (CCD, discharge summary, other C-CDA documents): header and section hierarchy, RIM data types as canonical types, template ids recorded as asserted claims marked not validated

@@ -131,7 +131,7 @@ The corpus holds **1466 files** across **107 format directories**. Every file ha
 
 | Directory | Format | Paradigm | Marker / shape | Files |
 | --- | --- | --- | --- | --- |
-| `dicom/` | DICOM (pending #5451) | data_schema | `DICM` magic at offset 128, or 8-hex-digit keys with `vr`/`Value` (DICOM JSON) | 15 |
+| `dicom/` | DICOM | data_schema | `DICM` magic at offset 128, or 8-hex-digit keys with `vr`/`Value` (DICOM JSON) | 15 |
 | `edi-x12/` | EDI ASC X12 | message | `ISA`/`GS`/`ST` envelopes | 12 |
 | `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 17 |
 | `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 11 |
@@ -728,25 +728,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`04-stress-type-system.dhall`** — Type-level functions and the hash-pinned import are the declared limits; the sandbox must also refuse remote imports outright.
 
-### `dicom/` — DICOM (pending #5451)
+### `dicom/` — DICOM
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-json.json` | minimal | `dicom` ≥ 0.9 | valid | `dicom-json`, `sop-class`, `patient-module`, `pending-adapter` |
-| `02-typical-ct-instance-json.json` | typical | `dicom` ≥ 0.9 | valid | `dicom-json`, `ct`, `image-plane`, `image-pixel-descriptors`, `rescale`, `pending-adapter` |
-| `03-composition-structured-report-json.json` | composition | `dicom` ≥ 0.9 | valid | `structured-report`, `ContentSequence`, `nested-sequences`, `coded-concepts`, `measured-value`, `pending-adapter` |
-| `04-stress-part10-sequences-and-pixeldata.dcm` ⚠ | stress | `dicom` ≥ 0.9 | valid | `part10`, `binary-intake`, `explicit-vr`, `nested-sequences`, `private-block`, `pixel-data-skipped`, `multi-valued`, `pending-adapter` |
-| `05-real-world-mr-series-json.json` | real-world | `dicom` ≥ 0.9 | valid | `dicom-json`, `mr`, `acquisition-parameters`, `frame-of-reference`, `referenced-pps`, `pending-adapter` |
-| `06-typical-part10-minimal.dcm` | typical | `dicom` ≥ 0.9 | valid | `part10`, `binary-intake`, `file-meta-group`, `explicit-vr`, `pending-adapter` |
-| `07-study-set/series-1-instance.json` ⚠ | multi-file (member) | `dicom` (no guarantee) | valid | `instance`, `series-1`, `pending-adapter` |
-| `07-study-set/series-2-instance.json` ⚠ | multi-file (member) | `dicom` (no guarantee) | valid | `instance`, `series-2`, `image-plane`, `pending-adapter` |
-| `07-study-set/study-index.json` | multi-file (root) | `dicom` ≥ 0.9 | valid | `study-level-query`, `series-counts`, `dicomweb-url`, `pending-adapter` |
-| `negative/01-syntactic-broken-json.json` | — | `dicom` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma`, `pending-adapter` |
-| `negative/02-semantic-no-sop-class.json` | — | `dicom` (no guarantee) | invalid | `negative`, `semantic`, `missing-sop-class`, `pending-adapter` |
-| `negative/03-truncated-mid-element.dcm` | — | `dicom` (no guarantee) | invalid | `negative`, `truncated`, `part10`, `mid-element`, `pending-adapter` |
-| `negative/04-wrong-format-fhir-imagingstudy.json` | — | `dicom` (no guarantee) | invalid | `negative`, `wrong-format`, `fhir`, `ImagingStudy`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `dicom` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-missing-dicm-preamble.dcm` ⚠ | — | `dicom` (no guarantee) | invalid | `negative`, `semantic`, `missing-magic`, `pending-adapter` |
+| `01-minimal-json.json` | minimal | `dicom` ≥ 0.9 | valid | `dicom-json`, `sop-class`, `patient-module` |
+| `02-typical-ct-instance-json.json` | typical | `dicom` ≥ 0.9 | valid | `dicom-json`, `ct`, `image-plane`, `image-pixel-descriptors`, `rescale` |
+| `03-composition-structured-report-json.json` | composition | `dicom` ≥ 0.9 | valid | `structured-report`, `ContentSequence`, `nested-sequences`, `coded-concepts`, `measured-value` |
+| `04-stress-part10-sequences-and-pixeldata.dcm` ⚠ | stress | `dicom` ≥ 0.9 | valid | `part10`, `binary-intake`, `explicit-vr`, `nested-sequences`, `private-block`, `pixel-data-skipped`, `multi-valued` |
+| `05-real-world-mr-series-json.json` | real-world | `dicom` ≥ 0.9 | valid | `dicom-json`, `mr`, `acquisition-parameters`, `frame-of-reference`, `referenced-pps` |
+| `06-typical-part10-minimal.dcm` | typical | `dicom` ≥ 0.9 | valid | `part10`, `binary-intake`, `file-meta-group`, `explicit-vr` |
+| `07-study-set/series-1-instance.json` ⚠ | multi-file (member) | `dicom` (no guarantee) | valid | `instance`, `series-1` |
+| `07-study-set/series-2-instance.json` ⚠ | multi-file (member) | `dicom` (no guarantee) | valid | `instance`, `series-2`, `image-plane` |
+| `07-study-set/study-index.json` | multi-file (root) | `dicom` ≥ 0.9 | valid | `study-level-query`, `series-counts`, `dicomweb-url` |
+| `negative/01-syntactic-broken-json.json` | — | `dicom` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma` |
+| `negative/02-semantic-no-sop-class.json` | — | `dicom` (no guarantee) | invalid | `negative`, `semantic`, `missing-sop-class` |
+| `negative/03-truncated-mid-element.dcm` | — | `dicom` (no guarantee) | invalid | `negative`, `truncated`, `part10`, `mid-element` |
+| `negative/04-wrong-format-fhir-imagingstudy.json` | — | `dicom` (no guarantee) | invalid | `negative`, `wrong-format`, `fhir`, `ImagingStudy` |
+| `negative/05-encoding-utf16.json` | — | `dicom` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-missing-dicm-preamble.dcm` ⚠ | — | `dicom` (no guarantee) | invalid | `negative`, `semantic`, `missing-magic` |
 
 > ⚠ **`04-stress-part10-sequences-and-pixeldata.dcm`** — Contains a (7FE0,0010) PixelData element of eight zero bytes so the skip can be asserted; the private (0009,10xx) block with VR UN is a declared parsing limit.
 

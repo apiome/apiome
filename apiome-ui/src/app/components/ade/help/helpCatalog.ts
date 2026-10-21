@@ -719,6 +719,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['stx', 'ordhdr', 'invfil', 'uk retail', 'eancom', 'odette', 'edi'],
   },
   {
+    id: 'dicom-import',
+    title: 'Import DICOM metadata',
+    summary: 'Catalog SOP classes, attributes and Structured Report trees from Part 10 or DICOM JSON. Pixel data is never read.',
+    page: 'apiome-docs/docs/bring-in/dicom-import.md',
+    section: 'reference',
+    keywords: ['dcm', 'part 10', 'sop class', 'structured report', 'value representation', 'pixel data', 'dicomweb', 'imaging'],
+  },
+  {
     id: 'nacha-sepa-import',
     title: 'Import NACHA ACH and SEPA payment files',
     summary: 'Catalog ACH batches with declared versus observed control totals, and route SEPA files to ISO 20022.',

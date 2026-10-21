@@ -1,0 +1,314 @@
+{
+  "adapter": "dicom",
+  "corpus_path": "dicom/01-minimal-json.json",
+  "document": {
+    "analyzer": {
+      "key": "dicom",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "dicom.attributes",
+        "dicom.byte_offsets",
+        "dicom.deflated_dataset",
+        "dicom.encapsulated_transfer_syntaxes",
+        "dicom.explicit_vr_big_endian",
+        "dicom.explicit_vr_little_endian",
+        "dicom.implicit_vr_little_endian",
+        "dicom.json_model",
+        "dicom.part10_file_meta",
+        "dicom.private_attribute_structure",
+        "dicom.query_results",
+        "dicom.sequences",
+        "dicom.structured_report_content_tree",
+        "dicom.undefined_length_sequences",
+        "dicom.unknown_vr_sequences",
+        "dicom.value_multiplicity",
+        "dicom.value_representations"
+      ],
+      "unsupported": [
+        "dicom.iod_module_validation",
+        "dicom.iso2022_character_sets",
+        "dicom.overlay_data",
+        "dicom.part10_in_archives",
+        "dicom.pixel_data",
+        "dicom.private_attribute_meaning",
+        "dicom.sr_template_validation"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "attribute": 7,
+        "dataset": 1
+      },
+      "maxDepth": 2,
+      "nodeCount": 8,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "dicom",
+    "sourceHash": "sha256:434cdaaa8443680bcfcdc98f5530103555d7f7f3a4fea7f41219a0c4f7758c88",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "attributeCount": 7,
+          "form": "json",
+          "modality": "CT",
+          "pixelDataPresent": false,
+          "pixelDataRead": false,
+          "sopClassName": "CT Image Storage",
+          "sopClassUid": "1.2.840.10008.5.1.4.1.1.2",
+          "structuredReport": false,
+          "typeName": "CTImageStorage"
+        },
+        "children": [
+          {
+            "attributes": {
+              "keyword": "SOPClassUID",
+              "tag": "(0008,0016)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "attribute",
+            "label": "SOP Class UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "/00080016"
+            },
+            "name": "SOPClassUID",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "1.2.840.10008.5.1.4.1.1.2",
+            "valueLength": 25,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SOPInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0008,0018)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "attribute",
+            "label": "SOP Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "/00080018"
+            },
+            "name": "SOPInstanceUID",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.3.20260819100000.1",
+            "valueLength": 40,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Modality",
+              "tag": "(0008,0060)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "attribute",
+            "label": "Modality",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "/00080060"
+            },
+            "name": "Modality",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "CT",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientName",
+              "patientIdentifying": true,
+              "tag": "(0010,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "PN"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "attribute",
+            "label": "Patient's Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "/00100010"
+            },
+            "name": "PatientName",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "SAMPLE^ALEX",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientID",
+              "patientIdentifying": true,
+              "tag": "(0010,0020)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "attribute",
+            "label": "Patient ID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "/00100020"
+            },
+            "name": "PatientID",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "PAT-0001",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000D)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "attribute",
+            "label": "Study Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "/0020000D"
+            },
+            "name": "StudyInstanceUID",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.1.20260819100000",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000E)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "attribute",
+            "label": "Series Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 6,
+              "path": "/0020000E"
+            },
+            "name": "SeriesInstanceUID",
+            "ordinal": 6,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.2.20260819100000",
+            "valueLength": 38,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "dataset",
+        "label": "CT Image Storage",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "/"
+        },
+        "name": "CTImageStorage",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

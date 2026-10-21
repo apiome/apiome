@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 64
+- **Formats gated:** 65
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -32,6 +32,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `connectrpc` | Connect RPC | rpc | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `connectrpc` |
 | `corbaidl` | CORBA IDL | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `corbaidl` |
 | `dbt` | dbt Project | data_schema | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
+| `dicom` | DICOM | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `discovery` | Google API Discovery | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `dtd` | DTD | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
@@ -103,6 +104,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `connectrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `corbaidl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dbt` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `dicom` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `discovery` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dtd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `edifact` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -167,4 +169,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `consul`, `cue`, `dhall`, `dicom`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `consul`, `cue`, `dhall`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`

@@ -279,6 +279,13 @@ const KIND_LABEL: Record<string, string> = {
   batch: 'Batch',
   entry: 'Entry',
   addenda: 'Addenda',
+  // DICOM (dicom_analysis.py) — `sequence` shares the SWIFT MT label above
+  dataset: 'Dataset',
+  'file-meta': 'File meta information',
+  attribute: 'Attribute',
+  item: 'Item',
+  'content-item': 'Content item',
+  'pixel-data': 'Pixel data (not read)',
   // COBOL copybook (cobolcopybook_analysis.py)
   record: 'Record',
   group: 'Group',

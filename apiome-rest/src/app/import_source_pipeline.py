@@ -1153,6 +1153,30 @@ def format_profile_metadata(model: CanonicalApi) -> Optional[Dict[str, Any]]:
     return dict(profile)
 
 
+def source_retention_withheld(model: CanonicalApi) -> Optional[str]:
+    """Return why a model asks for its verbatim upload not to be stored, or ``None`` (FMT-6.7).
+
+    The import stores the original upload on the revision so the convert flow can re-parse it
+    (MFI-23.9). A format whose uploads are themselves sensitive payload — a DICOM file is patient
+    data and, in Part 10 form, pixel data — says so under the canonical ``source_retention`` extras
+    (``{"verbatim": false, "reason": ...}``), and the persisted ``sourceContent`` is then withheld,
+    the way an archive carrying secrets is (``sourceWithheld``). The extras are written by the
+    format's normalizer, never copied from the document.
+
+    Args:
+        model: The normalized model.
+
+    Returns:
+        The withholding reason, or ``None`` when the upload may be stored as usual.
+    """
+    extras = model.extras if isinstance(model.extras, dict) else {}
+    retention = extras.get("source_retention")
+    if not isinstance(retention, dict) or retention.get("verbatim") is not False:
+        return None
+    reason = retention.get("reason")
+    return reason if isinstance(reason, str) and reason else "format-policy"
+
+
 def persist_adapter_import(
     payload: Dict[str, Any],
     model: CanonicalApi,
@@ -1252,6 +1276,11 @@ def persist_adapter_import(
     if profile is not None:
         format_metadata["formatProfile"] = profile
     format_metadata.update(_source_content_for_persist(intake, scrub_resolution))
+    withheld = source_retention_withheld(model)
+    if withheld is not None:
+        format_metadata.pop("sourceEncoding", None)
+        format_metadata["sourceContent"] = None
+        format_metadata["sourceWithheld"] = withheld
     if input_kind == "url" and source_label:
         format_metadata["sourceUri"] = source_label
     # MFI-29.3: a git-sourced fileset arrives as the same packed archive an upload

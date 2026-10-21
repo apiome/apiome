@@ -122,6 +122,19 @@ def _captured_fileset(item: Dict[str, Any], raw: str) -> Optional[IntakeFileset]
     return IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
 
 
+def _source_withheld(item: Dict[str, Any]) -> Optional[str]:
+    """Why the import withheld the item's verbatim source (``format_metadata.sourceWithheld``), if it did.
+
+    An archive carrying secrets, or a format whose uploads are sensitive payload (DICOM, FMT-6.7),
+    is imported without its source; conversion then has nothing to re-parse, and says why.
+    """
+    metadata = item.get("format_metadata")
+    if not isinstance(metadata, dict):
+        return None
+    reason = metadata.get("sourceWithheld")
+    return reason if isinstance(reason, str) and reason else None
+
+
 def build_conversion_source(
     item: Dict[str, Any],
     *,
@@ -155,6 +168,13 @@ def build_conversion_source(
             resolvable adapter (HTTP 400), or its source cannot be parsed/normalized (HTTP 422).
     """
     payload = resolve_source_payload(item)
+    withheld = _source_withheld(item)
+    if withheld is not None and (payload is None or payload.get("mode") != "content"):
+        raise ConversionError(
+            f"This catalog item's source was deliberately not stored ({withheld}), so there is no "
+            "source material to convert.",
+            status_code=422,
+        )
     if payload is None or payload.get("mode") != "content":
         raise ConversionError(
             "This catalog item has no captured source material to convert; re-import it with its "

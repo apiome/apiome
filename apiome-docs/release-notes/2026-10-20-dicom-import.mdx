@@ -1,0 +1,20 @@
+---
+slug: dicom-import
+title: DICOM metadata import
+description: DICOM SOP classes and Structured Report trees join the Catalog — never pixel data.
+authors: [apiome]
+---
+
+Apiome now reads [**DICOM**](/bring-in/dicom-import) — Part 10 files and DICOM JSON metadata —
+beside the FHIR and HL7 formats it already imports.
+
+{/* truncate */}
+
+- **DICOM's information model as a schema.** Each SOP class becomes a record type, each attribute a
+  field keyed by its tag and typed by its value representation, and each sequence a nested type.
+- **Structured Reports keep their shape.** A report's content tree is recorded as a hierarchy of
+  value types, relationships and concept names.
+- **Pixel data is never read.** Image content is skipped by length, never stored and never
+  analysed, and every skip is stated on the model and on the **Format details** tab.
+- **Patient data stays out.** No attribute value enters the schema, the default value-visibility
+  policy keeps none in the analysis, and the uploaded file is not kept.

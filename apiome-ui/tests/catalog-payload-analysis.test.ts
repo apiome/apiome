@@ -90,6 +90,8 @@ describe('status and vocabulary presentation', () => {
     expect(analysisKindLabel('idoc')).toBe('IDoc');
     expect(analysisKindLabel('code_word')).toBe('Code word');
     expect(analysisKindLabel('addenda')).toBe('Addenda');
+    expect(analysisKindLabel('pixel-data')).toBe('Pixel data (not read)');
+    expect(analysisKindLabel('content-item')).toBe('Content item');
     expect(analysisKindLabel('transmission')).toBe('Transmission');
     expect(analysisKindLabel('edifact_interchange')).toBe('edifact_interchange');
   });
