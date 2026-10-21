@@ -8,7 +8,7 @@ whole document, one golden per corpus fixture, the same way ``corpus_snapshot`` 
 model and ``projection_corpus`` pins the export manifest.
 
 Selection is by corpus tag, never by path (the corpus rule since IXH-1.1): every valid ``edix12``,
-``edifact`` and ``cobolcopybook`` entry — the format-native extractors — plus the
+``edifact``, ``idoc`` and ``cobolcopybook`` entry — the format-native extractors — plus the
 ``minimal``/``typical`` valid ``json-schema`` and ``graphql`` entries as generic-extractor controls.
 
 Goldens store the document under the **default** value-visibility policy (``structural``), value
@@ -34,8 +34,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from corpus_adapter_support import adapter_for, missing_tools
-from corpus_loader import CorpusEntry, Rung, ValidityClass, load_corpus
+from corpus_adapter_support import adapter_for, missing_tools, parse_native
+from corpus_loader import CorpusEntry, FilesetRole, Rung, ValidityClass, load_corpus
 
 from app.import_source import ImportSource
 from app.payload_analysis import PayloadAnalysisDocument
@@ -55,7 +55,7 @@ ANALYSIS_SNAPSHOT_VERSION = 1
 VOLATILE = "[volatile]"
 
 #: Formats with a native analyzer — every valid entry of these is snapshotted.
-NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "cobolcopybook")
+NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "idoc", "cobolcopybook")
 
 #: Generic-extractor control formats, limited to the low rungs: the controls exist to prove the
 #: generic path stays stable, not to re-pin every fixture the canonical goldens already cover.
@@ -81,7 +81,13 @@ def analysis_entries() -> List[CorpusEntry]:
             selected.extend(
                 load_corpus(format=fmt, validity_class=ValidityClass.VALID, rung=rung)
             )
-    return [entry for entry in selected if not missing_tools(entry.adapter_key)]
+    # Fileset members are read as part of their set's root, exactly as the canonical suite reads
+    # them (``corpus_adapter_support.valid_entries``): an IDoc segment definition is not an IDoc.
+    return [
+        entry
+        for entry in selected
+        if not missing_tools(entry.adapter_key) and entry.fileset_role is not FilesetRole.MEMBER
+    ]
 
 
 def build_analysis_document(
@@ -89,7 +95,7 @@ def build_analysis_document(
 ) -> PayloadAnalysisDocument:
     """Parse one corpus entry and analyze it exactly as an import does.
 
-    The path is the import pipeline's: the adapter parses its own text, then
+    The path is the import pipeline's: the adapter parses the entry (a fileset root with its set), then
     :func:`app.payload_analyzer.analyze_import` runs the adapter's analyzer over the fresh AST.
     A raising analyzer therefore lands here as a declared ``failed`` document, never an exception —
     if a golden ever records ``failed``, that is a real regression made visible, not a test bug.
@@ -103,7 +109,7 @@ def build_analysis_document(
     """
     source = adapter or adapter_for(entry)
     text = entry.read_text()
-    native_ast = source.parse(text, source_label=entry.path)
+    native_ast = parse_native(source, entry)
     return analyze_import(source, native_ast, source=text)
 
 

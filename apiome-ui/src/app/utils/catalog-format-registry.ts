@@ -350,6 +350,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
 
   // ---- Finance / B2B ----
   { id: 'edix12', label: 'EDI X12', icon: FileText, tone: 'orange', dataType: 'messages', origin: 'b2b', importable: true, aliases: ['x12', 'edi'], description: 'ANSI X12 EDI transaction sets.' },
+  { id: 'idoc', label: 'SAP IDoc', icon: FileText, tone: 'orange', dataType: 'messages', origin: 'b2b', importable: true, aliases: ['sap-idoc'], description: 'SAP IDocs — flat EDI_DC40/EDI_DD40 files or IDoc XML, with optional segment definitions.' },
   { id: 'edifact', label: 'UN/EDIFACT', icon: FileText, tone: 'orange', dataType: 'messages', origin: 'b2b', importable: true, aliases: ['un-edifact'], description: 'UN/EDIFACT (ISO 9735) interchanges — X12’s rest-of-world twin.' },
   { id: 'iso20022', label: 'ISO 20022', icon: Landmark, tone: 'amber', dataType: 'messages', origin: 'finance', importable: true, description: 'ISO 20022 financial messaging schema.' },
   { id: 'iso8583', label: 'ISO 8583', icon: CreditCard, tone: 'orange', dataType: 'messages', origin: 'finance', importable: true, description: 'ISO 8583 card transaction messaging.' },

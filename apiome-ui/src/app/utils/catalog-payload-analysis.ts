@@ -264,6 +264,8 @@ const KIND_LABEL: Record<string, string> = {
   composite: 'Composite',
   component: 'Component',
   repetition: 'Repetition',
+  // SAP IDoc (idoc_analysis.py) — `segment` and `field` share the labels above and below
+  idoc: 'IDoc',
   // COBOL copybook (cobolcopybook_analysis.py)
   record: 'Record',
   group: 'Group',

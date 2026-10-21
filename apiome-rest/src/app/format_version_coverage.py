@@ -528,6 +528,29 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "idoc": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="IDoc record types EDI_DC40 / EDI_DD40 (SAP release 4.0+), flat and XML",
+                format_key="idoc",
+                support=VersionSupport.UNGATED,
+                note="The release an IDoc names (DOCREL, e.g. 740) is recorded, not branched on: "
+                "the 4.0+ control and data record layouts are read for every release, and the "
+                "release 2.x EDI_DC/EDI_DD layouts are not read. The basic type (ORDERS05, "
+                "INVOIC02) is the IDoc's own schema, not a format version.",
+            )
+        ],
+        writes=[
+            FormatVersion(
+                version="IDoc XML (EDI_DC40 control record)",
+                format_key="idoc",
+                support=VersionSupport.UNGATED,
+                note="The written document carries the control record the model records, release "
+                "included; the emitter targets no release of its own and writes the XML form only.",
+            )
+        ],
+        default_write="IDoc XML (EDI_DC40 control record)",
+    ),
     "fhir": VersionCoverage(
         reads=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
         writes=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],

@@ -3,7 +3,7 @@
 Fixtures for **FMT-6.2** ([#5446](https://github.com/apiome/apiome/issues/5446)). IDoc is how SAP
 systems exchange business documents, and every SAP integration vendor lists it first. Structurally it
 is a control record plus hierarchical data segments with fixed-width fields — very close to the COBOL
-copybook and X12 work already shipped. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+copybook and X12 work already shipped. Every entry is read by the `idoc` adapter (`apiome-rest/src/app/idoc_import_source.py`).
 
 **Two forms, one canonical model.** Both must import to the same thing:
 
@@ -24,7 +24,7 @@ XML form nests the same relationships. A reader that assumes a flat list is wron
 | `03-composition-xml-nested-segments.xml` | composition | Three-level nesting (`E1EDK01` → `E1EDKA1` → `E1EDKA3`, `E1EDKT1` → `E1EDKT2`), an extension type (`CIMTYP`), repeated qualifier segments. |
 | `04-stress-flat-multi-idoc.txt` | stress | **Two IDocs in one flat file**, deep `PSGNUM`/`HLEVEL` hierarchy, a test flag, EDI standard fields (`STD`/`STDVRS`), an item with quantity zero and an empty material number. |
 | `05-real-world-xml-invoic02.xml` | real-world | INVOIC02 as an SAP estate emits it: VAT per line, payment terms, incoterms, three `E1EDS01` summary rows. |
-| `06-typical-flat-orders05.txt` | typical | The flat twin of `02` — same document, byte-exact record layout. |
+| `06-typical-flat-orders05.txt` | typical | The flat twin of `02` — same control record and segment hierarchy, byte-exact record layout. Without a segment definition its SDATA is opaque. |
 | `07-with-definition-set/` | multi-file | A custom `ZCUSTMAS01` flat IDoc plus the **segment definition** file that says where its `SDATA` fields start and end. |
 | `negative/` | — | Unclosed segment, an IDoc with no `EDI_DC40`, truncation, an EDIFACT interchange, UTF-16, and a control record that is too short to cut. |
 

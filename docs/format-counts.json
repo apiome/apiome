@@ -1,15 +1,15 @@
 {
   "version": "1",
-  "capability_registry_version": "15",
-  "total": 59,
-  "importable": 59,
-  "exportable": 44,
-  "round_trip": 44,
+  "capability_registry_version": "16",
+  "total": 60,
+  "importable": 60,
+  "exportable": 45,
+  "round_trip": 45,
   "import_only": 15,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 58,
+  "catalog": 59,
   "toolchain_gated": 3,
   "paradigms": [
     {
@@ -43,9 +43,9 @@
     {
       "id": "data_schema",
       "label": "Data schema",
-      "total": 22,
-      "importable": 22,
-      "exportable": 16
+      "total": 23,
+      "importable": 23,
+      "exportable": 17
     },
     {
       "id": "agent",

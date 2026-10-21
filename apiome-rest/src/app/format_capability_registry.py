@@ -142,7 +142,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "15"
+REGISTRY_VERSION = "16"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1023,6 +1023,66 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "One batch interchange is read per document. Interactive EDIFACT (UIB/UIH), packages "
             "(UNO/UNP) and files carrying several interchanges are refused rather than read in "
             "part.",
+        ],
+    ),
+    # FMT-6.2 (#5446): SAP IDoc, seeded because the two transport forms differ in what they can
+    # say — the flat form has byte offsets and needs a segment definition for its fields, the XML
+    # form names its fields and has no byte layout — and a reader must be told which applies.
+    "idoc": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "IDoc → segment → field, with segments nested by their parent segment numbers "
+            "(PSGNUM) rather than by record order. Each IDoc in a file is its own root."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "A flat IDoc's control record and every data record carry their line, offset and "
+                "length, and each field cut from SDATA its offset within SDATA and within the "
+                "record. An XML IDoc has no byte layout, so its records locate by path "
+                "(``IDOC[0]/E1EDP01[6]/E1EDP19[0]``) and declare byte offsets unsupported."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Segment field values are observed payload, so the stored record carries whatever "
+                "the value-visibility policy allows. The control record — basic type, extension, "
+                "message type, partners, ports, direction, dates — is structure, recorded in the "
+                "IDoc node's attributes and never withheld."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "idoc.byte_offsets",
+                "idoc.field_offsets",
+                "idoc.multiple_idocs",
+                "idoc.segment_numbers",
+            ],
+            note=(
+                "The canonical model is the first IDoc's basic type: one record type per segment "
+                "type, nested as the segment numbers nest them, with list cardinality where any "
+                "parent carries more than one occurrence or the definition allows it. Segment "
+                "numbers, byte offsets and further IDocs in the file are in the analysis only. A "
+                "flat file and an XML document produce the same model when both are read with "
+                "the same segment definitions."
+            ),
+        ),
+        notes=[
+            "A flat segment's 1000-character SDATA has no field boundaries of its own. With a "
+            "segment definition (a WE60 export) supplied beside the IDoc it is cut at the declared "
+            "offsets; without one it is recorded as a single opaque SDATA value. Standard SAP "
+            "segment layouts are not bundled.",
+            "Field offsets and lengths are computed under stated assumptions — one character per "
+            "byte, the release 4.0+ EDI_DC40/EDI_DD40 layouts, trailing blanks as padding — and "
+            "every flat record says so.",
+            "A declared HLEVEL that disagrees with the depth the parent segment numbers give is "
+            "recorded beside it; the hierarchy follows the numbers.",
+            "Nothing is checked against the basic type's structure (WE30) or the qualifier code "
+            "lists: a well-formed IDoc is not claimed to be a valid one. Status records (EDI_DS40) "
+            "and release 2.x record layouts are not read.",
         ],
     ),
     "relaxng": _Seed(

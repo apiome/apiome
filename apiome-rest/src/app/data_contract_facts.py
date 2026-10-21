@@ -98,6 +98,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "dtd",
         "edifact",
         "edix12",
+        "idoc",
         "fix",
         "flatbuffers",
         "hl7v2",

@@ -1,0 +1,751 @@
+{
+  "adapter": "idoc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "idoc_basic_type": "ORDERS05",
+      "idoc_control": {
+        "CREDAT": "20260819",
+        "CRETIM": "103000",
+        "DIRECT": "1",
+        "DOCNUM": "0000000000123456",
+        "DOCREL": "740",
+        "IDOCTYP": "ORDERS05",
+        "MANDT": "100",
+        "MESTYP": "ORDERS",
+        "OUTMOD": "2",
+        "RCVPOR": "A000000012",
+        "RCVPRN": "0000012345",
+        "RCVPRT": "LI",
+        "REFMES": "4500098231",
+        "SNDPOR": "SAPPRD",
+        "SNDPRN": "PRDCLNT100",
+        "SNDPRT": "LS",
+        "STATUS": "30",
+        "TABNAM": "EDI_DC40"
+      },
+      "idoc_definition": null,
+      "idoc_message_type": "ORDERS",
+      "idoc_segments": [
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "   EUR  1.00000        4500098231"
+            ]
+          ],
+          "name": "E1EDK01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "0061000"
+            ]
+          ],
+          "name": "E1EDK14"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "00220260819"
+            ]
+          ],
+          "name": "E1EDK03"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "00220260826"
+            ]
+          ],
+          "name": "E1EDK03"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "AG 0000012345                 ACME RETAIL BV"
+            ]
+          ],
+          "name": "E1EDKA1"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "WE 0000012399                 ACME RETAIL WAREHOUSE 1"
+            ]
+          ],
+          "name": "E1EDKA1"
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "fields": [
+                [
+                  "SDATA",
+                  "001WIDGET-001                         Stainless widget 40mm"
+                ]
+              ],
+              "name": "E1EDP19"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "SDATA",
+                  "00386400.00"
+                ]
+              ],
+              "name": "E1EDP26"
+            }
+          ],
+          "fields": [
+            [
+              "SDATA",
+              "000010      480            PCE"
+            ]
+          ],
+          "name": "E1EDP01"
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "fields": [
+                [
+                  "SDATA",
+                  "001GADGET-007                         Gadget boxed"
+                ]
+              ],
+              "name": "E1EDP19"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "SDATA",
+                  "0035040.00"
+                ]
+              ],
+              "name": "E1EDP26"
+            }
+          ],
+          "fields": [
+            [
+              "SDATA",
+              "000020      120            PCE"
+            ]
+          ],
+          "name": "E1EDP01"
+        },
+        {
+          "children": [],
+          "fields": [
+            [
+              "SDATA",
+              "0022"
+            ]
+          ],
+          "name": "E1EDS01"
+        }
+      ]
+    },
+    "format": "idoc",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "IDoc ORDERS05",
+      "namespace": "IDOC-ORDERS05"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "IDoc ORDERS05",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDK01.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDK01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDK03.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDK03",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK03",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDK14.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDK14",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDK14",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDKA1.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDKA1",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDKA1",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ORDERS05.E1EDP01.E1EDP19",
+            "name": "E1EDP19",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDP19",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-ORDERS05.E1EDP01.E1EDP26",
+            "name": "E1EDP26",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDP26",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDP01.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDP01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDP19.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDP19",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP19",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDP26.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDP26",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDP26",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1000,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.E1EDS01.SDATA",
+            "name": "SDATA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.E1EDS01",
+        "key_type": null,
+        "kind": "record",
+        "name": "E1EDS01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IDoc basic type ORDERS05 (message type ORDERS)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDK01",
+            "name": "E1EDK01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDK01",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDK03",
+            "name": "E1EDK03",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-ORDERS05.E1EDK03",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDK14",
+            "name": "E1EDK14",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDK14",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDKA1",
+            "name": "E1EDKA1",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-ORDERS05.E1EDKA1",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDP01",
+            "name": "E1EDP01",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-ORDERS05.E1EDP01",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-ORDERS05.ORDERS05.E1EDS01",
+            "name": "E1EDS01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ORDERS05.E1EDS01",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IDOC-ORDERS05.ORDERS05",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERS05",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "idoc/06-typical-flat-orders05.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 9
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "idoc"
+  },
+  "fingerprint": "sha256:a747322648e2d1ef286de8a2cd8353d3d8f3665816f6fe766ae875596d0f28e2",
+  "lint": {
+    "findings": 25,
+    "grade": "D",
+    "report_fingerprint": "64ef1f86b2dc3c12c72c9fa65bd425cf319fbe7c863973618ca289cee1715aa8",
+    "score": 63,
+    "severity_counts": {
+      "error": 0,
+      "info": 17,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

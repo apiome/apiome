@@ -5,6 +5,38 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.406.0] - 2026-10-20
+
+### Added
+- **SAP IDoc import and emit (#5446, FMT-6.2)**: the new **`idoc`** import source (formats `idoc`, `sap-idoc`;
+  `.idoc` / `.txt` / `.xml`; file / URL / paste / fileset) and **`idoc`** emitter:
+  - `app/idoc_parser.py` — both transport forms into one AST: the flat file (the 524-character `EDI_DC40` control
+    record cut at its 36 field offsets, then 1063-character `EDI_DD40` data records) and IDoc XML (`<IDOC>` →
+    `<EDI_DC40>` + segments, through `secure_xml`). The hierarchy is rebuilt from `SEGNUM`/`PSGNUM` (document order
+    in XML), with `HLEVEL` kept as a claim. WE60-style `<IDocSegments>` definitions cut flat `SDATA` into fields;
+    without one, `SDATA` stays opaque. Refusals carry intake codes (`INPUT_TRUNCATED`, `INPUT_MALFORMED`,
+    `INPUT_SEMANTIC_INVALID` — a short control record among them); encoding faults are left to the pipeline.
+    `IDOC_LAYOUT_ASSUMPTIONS` states what every flat offset assumes, mirroring the copybook layout contract.
+  - `app/idoc_normalizer.py` — the first IDoc's basic type as the root record type, one record type per segment
+    type nested by segment number, lists where a parent carries more than one or the definition allows it,
+    descriptions and lengths from the definition. Flat and XML forms read with the same definitions produce the
+    same model. Values are never defaults; `idoc_control` (non-empty control fields, layout order) and
+    `idoc_segments` (the emitter's template) are extras.
+  - `app/idoc_analysis.py` (`idoc@1.0.0`) — IDoc → segment → field, the control record as attributes (never a
+    value), flat field offsets / record offsets / lengths, and warnings `idoc.layout_assumptions`,
+    `idoc.sdata_without_definition`, `idoc.hierarchy_level_disagrees`, `idoc.definition_mismatch`,
+    `idoc.canonical_projection_subset`.
+  - `app/idoc_emitter.py` — IDoc XML from the canonical model: the type tree for structure, the imported template
+    for values, empty skeletons (recorded as inferred losses) for segment types without one. XML IDocs round-trip
+    exactly (`idoc -> idoc` passes in the matrix). Export validation re-reads the output with the parser.
+  - Reviewed `idoc` capability entry (registry contract `16`), version coverage, corpus activation of the 14
+    `apiome-ui/examples/idoc/` fixtures (fixture `06` rebuilt as the true flat twin of `02`), goldens, and the
+    round-trip matrix row and column (110 xfails).
+
+### Changed
+- The payload-analysis golden suite reads fileset roots through `parse_fileset` and skips fileset members, as the
+  canonical suite does; the EDIFACT `09-interchange-set/contrl.edi` member golden is removed.
+
 ## [1.405.0] - 2026-10-20
 
 ### Added

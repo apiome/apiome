@@ -1,0 +1,2601 @@
+{
+  "adapter": "idoc",
+  "corpus_path": "idoc/05-real-world-xml-invoic02.xml",
+  "document": {
+    "analyzer": {
+      "key": "idoc",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "idoc.control_record",
+        "idoc.fields",
+        "idoc.flat_form",
+        "idoc.multiple_idocs",
+        "idoc.segment_definitions",
+        "idoc.segment_hierarchy",
+        "idoc.segment_numbers",
+        "idoc.xml_form"
+      ],
+      "unsupported": [
+        "idoc.basic_type_validation",
+        "idoc.byte_offsets",
+        "idoc.code_page_detection",
+        "idoc.field_offsets",
+        "idoc.qualifier_semantics",
+        "idoc.release_2x_records",
+        "idoc.standard_segment_layouts",
+        "idoc.status_records"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 76,
+        "idoc": 1,
+        "segment": 20
+      },
+      "maxDepth": 4,
+      "nodeCount": 97,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "idoc",
+    "sourceHash": "sha256:cb64369373bad647d69bafe2f0043d86f344a02027d43778d44b18294f3117a4",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "basicType": "INVOIC02",
+          "controlRecord": {
+            "CREDAT": "20260820",
+            "CRETIM": "091500",
+            "DIRECT": "1",
+            "DOCNUM": "0000000000987654",
+            "DOCREL": "740",
+            "IDOCTYP": "INVOIC02",
+            "MANDT": "100",
+            "MESTYP": "INVOIC",
+            "OUTMOD": "2",
+            "RCVPFC": "AG",
+            "RCVPOR": "A000000034",
+            "RCVPRN": "0000012345",
+            "RCVPRT": "KU",
+            "REFMES": "0090001234",
+            "SNDPFC": "LF",
+            "SNDPOR": "SAPPRD",
+            "SNDPRN": "PRDCLNT100",
+            "SNDPRT": "LS",
+            "STATUS": "03",
+            "STD": "E",
+            "STDMES": "INVOIC",
+            "STDVRS": "D96A",
+            "TABNAM": "EDI_DC40"
+          },
+          "createdDate": "20260820",
+          "createdTime": "091500",
+          "direction": "1",
+          "directionLabel": "Outbound",
+          "documentNumber": "0000000000987654",
+          "ediStandard": "E",
+          "ediStandardMessage": "INVOIC",
+          "ediStandardVersion": "D96A",
+          "form": "xml",
+          "messageType": "INVOIC",
+          "receiverPartner": "0000012345",
+          "receiverPartnerFunction": "AG",
+          "receiverPartnerType": "KU",
+          "receiverPort": "A000000034",
+          "release": "740",
+          "segmentCount": 20,
+          "senderPartner": "PRDCLNT100",
+          "senderPartnerFunction": "LF",
+          "senderPartnerType": "LS",
+          "senderPort": "SAPPRD",
+          "status": "03"
+        },
+        "children": [
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 7,
+              "parentSegmentNumber": 0,
+              "repeatCount": 1,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK01",
+              "segmentNumber": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK01[0]/CURCY"
+                },
+                "name": "CURCY",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK01[0]/HWAER"
+                },
+                "name": "HWAER",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDK01[0]/WKURS"
+                },
+                "name": "WKURS",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "1.00000",
+                "valueLength": 7,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 4
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/E1EDK01[0]/ZTERM"
+                },
+                "name": "ZTERM",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "NT30",
+                "valueLength": 4,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 5
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/E1EDK01[0]/BELNR"
+                },
+                "name": "BELNR",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "0090001234",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 6
+                },
+                "children": [],
+                "id": "0.0.5",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/E1EDK01[0]/BSART"
+                },
+                "name": "BSART",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "INVO",
+                "valueLength": 4,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 7
+                },
+                "children": [],
+                "id": "0.0.6",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/E1EDK01[0]/RECIPNT_NO"
+                },
+                "name": "RECIPNT_NO",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "0000012345",
+                "valueLength": 10,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.0",
+            "kind": "segment",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "IDOC[0]/E1EDK01[0]"
+            },
+            "name": "E1EDK01",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 8,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 0,
+              "segmentName": "E1EDKA1",
+              "segmentNumber": 2
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.1.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDKA1[1]/PARVW"
+                },
+                "name": "PARVW",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "RS",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.1.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDKA1[1]/PARTN"
+                },
+                "name": "PARTN",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "0000000001",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.1.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDKA1[1]/NAME1"
+                },
+                "name": "NAME1",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "Example Supplies BV",
+                "valueLength": 19,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 4
+                },
+                "children": [],
+                "id": "0.1.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/E1EDKA1[1]/STRAS"
+                },
+                "name": "STRAS",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "Keizersgracht 1",
+                "valueLength": 15,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 5
+                },
+                "children": [],
+                "id": "0.1.4",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/E1EDKA1[1]/ORT01"
+                },
+                "name": "ORT01",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "Amsterdam",
+                "valueLength": 9,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 6
+                },
+                "children": [],
+                "id": "0.1.5",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/E1EDKA1[1]/PSTLZ"
+                },
+                "name": "PSTLZ",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "1015 CJ",
+                "valueLength": 7,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 7
+                },
+                "children": [],
+                "id": "0.1.6",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/E1EDKA1[1]/LAND1"
+                },
+                "name": "LAND1",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "NL",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 8
+                },
+                "children": [],
+                "id": "0.1.7",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 7,
+                  "path": "IDOC[0]/E1EDKA1[1]/STCEG"
+                },
+                "name": "STCEG",
+                "ordinal": 7,
+                "redacted": false,
+                "value": "NL123456789B01",
+                "valueLength": 14,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.1",
+            "kind": "segment",
+            "label": "E1EDKA1 (1 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "IDOC[0]/E1EDKA1[1]"
+            },
+            "name": "E1EDKA1",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 8,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 1,
+              "segmentName": "E1EDKA1",
+              "segmentNumber": 3
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDKA1[2]/PARVW"
+                },
+                "name": "PARVW",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "RE",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDKA1[2]/PARTN"
+                },
+                "name": "PARTN",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "0000012345",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDKA1[2]/NAME1"
+                },
+                "name": "NAME1",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "Acme Retail BV",
+                "valueLength": 14,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 4
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/E1EDKA1[2]/STRAS"
+                },
+                "name": "STRAS",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "Coolsingel 40",
+                "valueLength": 13,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 5
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/E1EDKA1[2]/ORT01"
+                },
+                "name": "ORT01",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "Rotterdam",
+                "valueLength": 9,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 6
+                },
+                "children": [],
+                "id": "0.2.5",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/E1EDKA1[2]/PSTLZ"
+                },
+                "name": "PSTLZ",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "3011 AD",
+                "valueLength": 7,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 7
+                },
+                "children": [],
+                "id": "0.2.6",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/E1EDKA1[2]/LAND1"
+                },
+                "name": "LAND1",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "NL",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 8
+                },
+                "children": [],
+                "id": "0.2.7",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 7,
+                  "path": "IDOC[0]/E1EDKA1[2]/STCEG"
+                },
+                "name": "STCEG",
+                "ordinal": 7,
+                "redacted": false,
+                "value": "NL987654321B01",
+                "valueLength": 14,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.2",
+            "kind": "segment",
+            "label": "E1EDKA1 (2 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "IDOC[0]/E1EDKA1[2]"
+            },
+            "name": "E1EDKA1",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK02",
+              "segmentNumber": 4
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.3.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK02[3]/QUALF"
+                },
+                "name": "QUALF",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "009",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.3.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK02[3]/BELNR"
+                },
+                "name": "BELNR",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "0090001234",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.3.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDK02[3]/DATUM"
+                },
+                "name": "DATUM",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "20260820",
+                "valueLength": 8,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.3",
+            "kind": "segment",
+            "label": "E1EDK02 (1 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "IDOC[0]/E1EDK02[3]"
+            },
+            "name": "E1EDK02",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 1,
+              "segmentName": "E1EDK02",
+              "segmentNumber": 5
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.4.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK02[4]/QUALF"
+                },
+                "name": "QUALF",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "001",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.4.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK02[4]/BELNR"
+                },
+                "name": "BELNR",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "4500098231",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.4.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDK02[4]/DATUM"
+                },
+                "name": "DATUM",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "20260819",
+                "valueLength": 8,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.4",
+            "kind": "segment",
+            "label": "E1EDK02 (2 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "IDOC[0]/E1EDK02[4]"
+            },
+            "name": "E1EDK02",
+            "ordinal": 4,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 2,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK03",
+              "segmentNumber": 6
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.5.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK03[5]/IDDAT"
+                },
+                "name": "IDDAT",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "024",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.5.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK03[5]/DATUM"
+                },
+                "name": "DATUM",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "20260820",
+                "valueLength": 8,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.5",
+            "kind": "segment",
+            "label": "E1EDK03 (1 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "IDOC[0]/E1EDK03[5]"
+            },
+            "name": "E1EDK03",
+            "ordinal": 5,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 2,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 1,
+              "segmentName": "E1EDK03",
+              "segmentNumber": 7
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.6.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK03[6]/IDDAT"
+                },
+                "name": "IDDAT",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "012",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.6.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK03[6]/DATUM"
+                },
+                "name": "DATUM",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "20260819",
+                "valueLength": 8,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.6",
+            "kind": "segment",
+            "label": "E1EDK03 (2 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 6,
+              "path": "IDOC[0]/E1EDK03[6]"
+            },
+            "name": "E1EDK03",
+            "ordinal": 6,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 1,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK17",
+              "segmentNumber": 8
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.7.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK17[7]/QUALF"
+                },
+                "name": "QUALF",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "001",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.7.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK17[7]/LKOND"
+                },
+                "name": "LKOND",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "EXW",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.7.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDK17[7]/LKTEXT"
+                },
+                "name": "LKTEXT",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "Ex works Amsterdam",
+                "valueLength": 18,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.7",
+            "kind": "segment",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 7,
+              "path": "IDOC[0]/E1EDK17[7]"
+            },
+            "name": "E1EDK17",
+            "ordinal": 7,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 1,
+              "repeatIndex": 0,
+              "segmentName": "E1EDK18",
+              "segmentNumber": 9
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.8.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDK18[8]/QUALF"
+                },
+                "name": "QUALF",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "001",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.8.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDK18[8]/TAGE"
+                },
+                "name": "TAGE",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "30",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.8.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDK18[8]/ZTERM_TXT"
+                },
+                "name": "ZTERM_TXT",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "Payable within 30 days net",
+                "valueLength": 26,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.8",
+            "kind": "segment",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 8,
+              "path": "IDOC[0]/E1EDK18[8]"
+            },
+            "name": "E1EDK18",
+            "ordinal": 8,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 4,
+              "depth": 1,
+              "fieldCount": 6,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 0,
+              "segmentName": "E1EDP01",
+              "segmentNumber": 10
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.9.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDP01[9]/POSEX"
+                },
+                "name": "POSEX",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "000010",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.9.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDP01[9]/MENGE"
+                },
+                "name": "MENGE",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "480",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.9.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDP01[9]/MENEE"
+                },
+                "name": "MENEE",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "PCE",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 4
+                },
+                "children": [],
+                "id": "0.9.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/E1EDP01[9]/VPREI"
+                },
+                "name": "VPREI",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "180.00",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 5
+                },
+                "children": [],
+                "id": "0.9.4",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/E1EDP01[9]/PEINH"
+                },
+                "name": "PEINH",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "1",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 6
+                },
+                "children": [],
+                "id": "0.9.5",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/E1EDP01[9]/NETWR"
+                },
+                "name": "NETWR",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "86400.00",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 3,
+                  "parentSegmentNumber": 10,
+                  "repeatCount": 2,
+                  "repeatIndex": 0,
+                  "segmentName": "E1EDP19",
+                  "segmentNumber": 11
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.9.6.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP19[6]/QUALF"
+                    },
+                    "name": "QUALF",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "001",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.9.6.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP19[6]/IDTNR"
+                    },
+                    "name": "IDTNR",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "WIDGET-001",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 3
+                    },
+                    "children": [],
+                    "id": "0.9.6.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP19[6]/KTEXT"
+                    },
+                    "name": "KTEXT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "Stainless widget 40mm",
+                    "valueLength": 21,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.9.6",
+                "kind": "segment",
+                "label": "E1EDP19 (1 of 2)",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/E1EDP01[9]/E1EDP19[6]"
+                },
+                "name": "E1EDP19",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 2,
+                  "parentSegmentNumber": 10,
+                  "repeatCount": 2,
+                  "repeatIndex": 1,
+                  "segmentName": "E1EDP19",
+                  "segmentNumber": 12
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.9.7.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP19[7]/QUALF"
+                    },
+                    "name": "QUALF",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "002",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.9.7.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP19[7]/IDTNR"
+                    },
+                    "name": "IDTNR",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "8712345001234",
+                    "valueLength": 13,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.9.7",
+                "kind": "segment",
+                "label": "E1EDP19 (2 of 2)",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 7,
+                  "path": "IDOC[0]/E1EDP01[9]/E1EDP19[7]"
+                },
+                "name": "E1EDP19",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 3,
+                  "parentSegmentNumber": 10,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentName": "E1EDP04",
+                  "segmentNumber": 13
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.9.8.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP04[8]/MWSKZ"
+                    },
+                    "name": "MWSKZ",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "V1",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.9.8.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP04[8]/MSATZ"
+                    },
+                    "name": "MSATZ",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "21.000",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 3
+                    },
+                    "children": [],
+                    "id": "0.9.8.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP04[8]/MWSBT"
+                    },
+                    "name": "MWSBT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "18144.00",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.9.8",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 8,
+                  "path": "IDOC[0]/E1EDP01[9]/E1EDP04[8]"
+                },
+                "name": "E1EDP04",
+                "ordinal": 8,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 2,
+                  "parentSegmentNumber": 10,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentName": "E1EDP26",
+                  "segmentNumber": 14
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.9.9.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP26[9]/QUALF"
+                    },
+                    "name": "QUALF",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "003",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.9.9.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[9]/E1EDP26[9]/BETRG"
+                    },
+                    "name": "BETRG",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "86400.00",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.9.9",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 9,
+                  "path": "IDOC[0]/E1EDP01[9]/E1EDP26[9]"
+                },
+                "name": "E1EDP26",
+                "ordinal": 9,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.9",
+            "kind": "segment",
+            "label": "E1EDP01 (1 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 9,
+              "path": "IDOC[0]/E1EDP01[9]"
+            },
+            "name": "E1EDP01",
+            "ordinal": 9,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 2,
+              "depth": 1,
+              "fieldCount": 6,
+              "parentSegmentNumber": 0,
+              "repeatCount": 2,
+              "repeatIndex": 1,
+              "segmentName": "E1EDP01",
+              "segmentNumber": 15
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.10.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDP01[10]/POSEX"
+                },
+                "name": "POSEX",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "000020",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.10.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDP01[10]/MENGE"
+                },
+                "name": "MENGE",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "120",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.10.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDP01[10]/MENEE"
+                },
+                "name": "MENEE",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "PCE",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 4
+                },
+                "children": [],
+                "id": "0.10.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "IDOC[0]/E1EDP01[10]/VPREI"
+                },
+                "name": "VPREI",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "42.00",
+                "valueLength": 5,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 5
+                },
+                "children": [],
+                "id": "0.10.4",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "IDOC[0]/E1EDP01[10]/PEINH"
+                },
+                "name": "PEINH",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "1",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 6
+                },
+                "children": [],
+                "id": "0.10.5",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "IDOC[0]/E1EDP01[10]/NETWR"
+                },
+                "name": "NETWR",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "5040.00",
+                "valueLength": 7,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 3,
+                  "parentSegmentNumber": 15,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentName": "E1EDP19",
+                  "segmentNumber": 16
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.10.6.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP19[6]/QUALF"
+                    },
+                    "name": "QUALF",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "001",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.10.6.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP19[6]/IDTNR"
+                    },
+                    "name": "IDTNR",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "GADGET-007",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 3
+                    },
+                    "children": [],
+                    "id": "0.10.6.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP19[6]/KTEXT"
+                    },
+                    "name": "KTEXT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "Gadget boxed",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.10.6",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 6,
+                  "path": "IDOC[0]/E1EDP01[10]/E1EDP19[6]"
+                },
+                "name": "E1EDP19",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childSegmentCount": 0,
+                  "depth": 2,
+                  "fieldCount": 3,
+                  "parentSegmentNumber": 15,
+                  "repeatCount": 1,
+                  "repeatIndex": 0,
+                  "segmentName": "E1EDP04",
+                  "segmentNumber": 17
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "position": 1
+                    },
+                    "children": [],
+                    "id": "0.10.7.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP04[7]/MWSKZ"
+                    },
+                    "name": "MWSKZ",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "V1",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 2
+                    },
+                    "children": [],
+                    "id": "0.10.7.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP04[7]/MSATZ"
+                    },
+                    "name": "MSATZ",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "21.000",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "position": 3
+                    },
+                    "children": [],
+                    "id": "0.10.7.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "IDOC[0]/E1EDP01[10]/E1EDP04[7]/MWSBT"
+                    },
+                    "name": "MWSBT",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "1058.40",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.10.7",
+                "kind": "segment",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 7,
+                  "path": "IDOC[0]/E1EDP01[10]/E1EDP04[7]"
+                },
+                "name": "E1EDP04",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.10",
+            "kind": "segment",
+            "label": "E1EDP01 (2 of 2)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 10,
+              "path": "IDOC[0]/E1EDP01[10]"
+            },
+            "name": "E1EDP01",
+            "ordinal": 10,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 3,
+              "repeatIndex": 0,
+              "segmentName": "E1EDS01",
+              "segmentNumber": 18
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.11.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDS01[11]/SUMID"
+                },
+                "name": "SUMID",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "001",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.11.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDS01[11]/SUMME"
+                },
+                "name": "SUMME",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "110642.40",
+                "valueLength": 9,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.11.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDS01[11]/SUNIT"
+                },
+                "name": "SUNIT",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.11",
+            "kind": "segment",
+            "label": "E1EDS01 (1 of 3)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 11,
+              "path": "IDOC[0]/E1EDS01[11]"
+            },
+            "name": "E1EDS01",
+            "ordinal": 11,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 3,
+              "repeatIndex": 1,
+              "segmentName": "E1EDS01",
+              "segmentNumber": 19
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.12.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDS01[12]/SUMID"
+                },
+                "name": "SUMID",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "011",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.12.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDS01[12]/SUMME"
+                },
+                "name": "SUMME",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "91440.00",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.12.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDS01[12]/SUNIT"
+                },
+                "name": "SUNIT",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.12",
+            "kind": "segment",
+            "label": "E1EDS01 (2 of 3)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 12,
+              "path": "IDOC[0]/E1EDS01[12]"
+            },
+            "name": "E1EDS01",
+            "ordinal": 12,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childSegmentCount": 0,
+              "depth": 1,
+              "fieldCount": 3,
+              "parentSegmentNumber": 0,
+              "repeatCount": 3,
+              "repeatIndex": 2,
+              "segmentName": "E1EDS01",
+              "segmentNumber": 20
+            },
+            "children": [
+              {
+                "attributes": {
+                  "position": 1
+                },
+                "children": [],
+                "id": "0.13.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "IDOC[0]/E1EDS01[13]/SUMID"
+                },
+                "name": "SUMID",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "005",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 2
+                },
+                "children": [],
+                "id": "0.13.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "IDOC[0]/E1EDS01[13]/SUMME"
+                },
+                "name": "SUMME",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "19202.40",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "position": 3
+                },
+                "children": [],
+                "id": "0.13.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "IDOC[0]/E1EDS01[13]/SUNIT"
+                },
+                "name": "SUNIT",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "EUR",
+                "valueLength": 3,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.13",
+            "kind": "segment",
+            "label": "E1EDS01 (3 of 3)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 13,
+              "path": "IDOC[0]/E1EDS01[13]"
+            },
+            "name": "E1EDS01",
+            "ordinal": 13,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "idoc",
+        "label": "IDoc 0000000000987654 (INVOIC02)",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "IDOC[0]"
+        },
+        "name": "INVOIC02",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

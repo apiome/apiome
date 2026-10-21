@@ -255,7 +255,7 @@
       "marker": "HTTP request line / `###` separators / `curl` / `.http` `.rest`"
     },
     "idoc": {
-      "label": "SAP IDoc (pending #5446)",
+      "label": "SAP IDoc",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML)"
@@ -12976,7 +12976,7 @@
     {
       "path": "idoc/01-minimal-xml-orders05.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -12985,8 +12985,7 @@
       "features": [
         "xml-form",
         "control-record",
-        "ORDERS05",
-        "pending-adapter"
+        "ORDERS05"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12997,7 +12996,7 @@
     {
       "path": "idoc/02-typical-xml-orders05.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13008,8 +13007,7 @@
         "ORDERS05",
         "partners",
         "items",
-        "summary",
-        "pending-adapter"
+        "summary"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13020,7 +13018,7 @@
     {
       "path": "idoc/03-composition-xml-nested-segments.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13031,8 +13029,7 @@
         "nested-segments",
         "extension-type",
         "repeated-qualifiers",
-        "text-segments",
-        "pending-adapter"
+        "text-segments"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13043,7 +13040,7 @@
     {
       "path": "idoc/04-stress-flat-multi-idoc.txt",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13056,8 +13053,7 @@
         "HLEVEL",
         "test-flag",
         "edi-standard-fields",
-        "empty-fields",
-        "pending-adapter"
+        "empty-fields"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13068,7 +13064,7 @@
     {
       "path": "idoc/05-real-world-xml-invoic02.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13080,8 +13076,7 @@
         "vat-per-line",
         "payment-terms",
         "incoterms",
-        "summary-rows",
-        "pending-adapter"
+        "summary-rows"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13092,7 +13087,7 @@
     {
       "path": "idoc/06-typical-flat-orders05.txt",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13102,20 +13097,19 @@
         "flat-form",
         "ORDERS05",
         "fixed-width",
-        "same-document-as-02",
-        "pending-adapter"
+        "same-document-as-02"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "notes": "Byte-exact flat twin of 02-typical-xml-orders05.xml: both forms must produce the same canonical model.",
+      "notes": "Flat twin of 02-typical-xml-orders05.xml: the same control record and the same segment hierarchy, rebuilt from SEGNUM/PSGNUM. With no segment definition beside it each segment's SDATA is one opaque value, so the field lists differ; 07 is the flat set with its definition.",
       "rung": "typical"
     },
     {
       "path": "idoc/07-with-definition-set/custmas01.txt",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13125,8 +13119,7 @@
         "multi-file",
         "flat-form",
         "custom-basic-type",
-        "segment-definition",
-        "pending-adapter"
+        "segment-definition"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13138,7 +13131,7 @@
     {
       "path": "idoc/07-with-definition-set/segments.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "idoc",
@@ -13147,8 +13140,7 @@
       "features": [
         "multi-file",
         "segment-definition",
-        "field-offsets",
-        "pending-adapter"
+        "field-offsets"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -13161,7 +13153,7 @@
     {
       "path": "idoc/negative/01-syntactic-unclosed-segment.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13170,8 +13162,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13183,7 +13174,7 @@
     {
       "path": "idoc/negative/02-semantic-missing-control-record.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13192,8 +13183,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-control-record",
-        "pending-adapter"
+        "no-control-record"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13205,7 +13195,7 @@
     {
       "path": "idoc/negative/03-truncated-mid-segment.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13214,8 +13204,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-element",
-        "pending-adapter"
+        "mid-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13227,7 +13216,7 @@
     {
       "path": "idoc/negative/04-wrong-format-edifact.edi",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13236,8 +13225,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "edifact",
-        "pending-adapter"
+        "edifact"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13249,7 +13237,7 @@
     {
       "path": "idoc/negative/05-encoding-utf16.xml",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13258,8 +13246,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13271,7 +13258,7 @@
     {
       "path": "idoc/negative/06-semantic-short-control-record.txt",
       "format": "idoc",
-      "adapter_key": null,
+      "adapter_key": "idoc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "idoc",
@@ -13281,8 +13268,7 @@
         "negative",
         "semantic",
         "malformed-control-record",
-        "short-record",
-        "pending-adapter"
+        "short-record"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

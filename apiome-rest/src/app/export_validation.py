@@ -494,6 +494,21 @@ async def _validate_asn1(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_idoc(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate emitted IDoc XML by reading it back with the IDoc parser."""
+    from .idoc_emitter import validate_idoc_xml
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_idoc_xml(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 async def _validate_edix12(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -826,6 +841,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "proto3": _validate_proto,
     "asn1": _validate_asn1,
     "edix12": _validate_edix12,
+    "idoc": _validate_idoc,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,
     "odata": _validate_odata,

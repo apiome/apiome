@@ -1,0 +1,667 @@
+{
+  "adapter": "idoc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "idoc_basic_type": "ZCUSTMAS01",
+      "idoc_control": {
+        "CREDAT": "20260819",
+        "CRETIM": "121500",
+        "DIRECT": "1",
+        "DOCNUM": "0000000000900001",
+        "DOCREL": "740",
+        "IDOCTYP": "ZCUSTMAS01",
+        "MANDT": "100",
+        "MESTYP": "ZCUSTMAS",
+        "RCVPOR": "MDMHUB",
+        "RCVPRN": "MDMCLNT001",
+        "RCVPRT": "LS",
+        "SNDPOR": "SAPPRD",
+        "SNDPRN": "PRDCLNT100",
+        "SNDPRT": "LS",
+        "STATUS": "53",
+        "TABNAM": "EDI_DC40"
+      },
+      "idoc_definition": {
+        "basic_type": "ZCUSTMAS01",
+        "release": "740"
+      },
+      "idoc_message_type": "ZCUSTMAS",
+      "idoc_segments": [
+        {
+          "children": [
+            {
+              "children": [],
+              "fields": [
+                [
+                  "ADRKIND",
+                  "BILL"
+                ],
+                [
+                  "STRAS",
+                  "Coolsingel 40"
+                ],
+                [
+                  "ORT01",
+                  "Rotterdam"
+                ],
+                [
+                  "PSTLZ",
+                  "3011 AD"
+                ],
+                [
+                  "LAND1",
+                  "NL"
+                ]
+              ],
+              "name": "Z1CUSTADR"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "ADRKIND",
+                  "SHIP"
+                ],
+                [
+                  "STRAS",
+                  "Havenweg 12"
+                ],
+                [
+                  "ORT01",
+                  "Rotterdam"
+                ],
+                [
+                  "PSTLZ",
+                  "3011 XX"
+                ],
+                [
+                  "LAND1",
+                  "NL"
+                ]
+              ],
+              "name": "Z1CUSTADR"
+            },
+            {
+              "children": [],
+              "fields": [
+                [
+                  "IBAN",
+                  "NL91ABNA0417164300"
+                ],
+                [
+                  "SWIFT",
+                  "ABNANL2A"
+                ],
+                [
+                  "WAERS",
+                  "EUR"
+                ]
+              ],
+              "name": "Z1CUSTBNK"
+            }
+          ],
+          "fields": [
+            [
+              "KUNNR",
+              "0000012345"
+            ],
+            [
+              "NAME1",
+              "ACME RETAIL BV"
+            ],
+            [
+              "LAND1",
+              "NL"
+            ],
+            [
+              "WAERS",
+              "EUR"
+            ]
+          ],
+          "name": "Z1CUSTHDR"
+        }
+      ]
+    },
+    "format": "idoc",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "IDoc ZCUSTMAS01",
+      "namespace": "IDOC-ZCUSTMAS01"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "IDoc ZCUSTMAS01",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Customer address",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Address kind",
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTADR.ADRKIND",
+            "name": "ADRKIND",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Country key",
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTADR.LAND1",
+            "name": "LAND1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "City",
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTADR.ORT01",
+            "name": "ORT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Postal code",
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTADR.PSTLZ",
+            "name": "PSTLZ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Street",
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTADR.STRAS",
+            "name": "STRAS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ZCUSTMAS01.Z1CUSTADR",
+        "key_type": null,
+        "kind": "record",
+        "name": "Z1CUSTADR",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Bank details",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 34,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "IBAN",
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTBNK.IBAN",
+            "name": "IBAN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 11,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "SWIFT/BIC",
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTBNK.SWIFT",
+            "name": "SWIFT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 5,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Account currency",
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTBNK.WAERS",
+            "name": "WAERS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "IDOC-ZCUSTMAS01.Z1CUSTBNK",
+        "key_type": null,
+        "kind": "record",
+        "name": "Z1CUSTBNK",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Customer header",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Customer number",
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.KUNNR",
+            "name": "KUNNR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Country key",
+            "extras": {},
+            "field_number": 3,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.LAND1",
+            "name": "LAND1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Name",
+            "extras": {},
+            "field_number": 2,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.NAME1",
+            "name": "NAME1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 5,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Currency",
+            "extras": {},
+            "field_number": 4,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.WAERS",
+            "name": "WAERS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Customer address",
+            "extras": {},
+            "field_number": 5,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.Z1CUSTADR",
+            "name": "Z1CUSTADR",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-ZCUSTMAS01.Z1CUSTADR",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Bank details",
+            "extras": {},
+            "field_number": 6,
+            "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR.Z1CUSTBNK",
+            "name": "Z1CUSTBNK",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "IDOC-ZCUSTMAS01.Z1CUSTBNK",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IDOC-ZCUSTMAS01.Z1CUSTHDR",
+        "key_type": null,
+        "kind": "record",
+        "name": "Z1CUSTHDR",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IDoc basic type ZCUSTMAS01 (message type ZCUSTMAS)",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Customer header",
+            "extras": {},
+            "field_number": 1,
+            "key": "IDOC-ZCUSTMAS01.ZCUSTMAS01.Z1CUSTHDR",
+            "name": "Z1CUSTHDR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "IDOC-ZCUSTMAS01.Z1CUSTHDR",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IDOC-ZCUSTMAS01.ZCUSTMAS01",
+        "key_type": null,
+        "kind": "record",
+        "name": "ZCUSTMAS01",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "idoc/07-with-definition-set/custmas01.txt",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "idoc"
+  },
+  "fingerprint": "sha256:df7c0e0ece0cf70489ee75997d579368ff6b46ca937ee53765afd9c45f8b2dea",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "d04b82d2ea4bd5f4d151ee400c4ba6ff44e4bb9be299c076ef454910925423ee",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
