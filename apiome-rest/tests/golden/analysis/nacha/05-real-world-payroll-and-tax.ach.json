@@ -1,0 +1,5152 @@
+{
+  "adapter": "nacha",
+  "corpus_path": "nacha/05-real-world-payroll-and-tax.ach",
+  "document": {
+    "analyzer": {
+      "key": "nacha",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "nacha.addenda_05",
+        "nacha.addenda_98",
+        "nacha.addenda_99",
+        "nacha.batch",
+        "nacha.batch_control_totals",
+        "nacha.block_count",
+        "nacha.byte_offsets",
+        "nacha.entry_detail",
+        "nacha.entry_hash",
+        "nacha.file_control_totals",
+        "nacha.file_header",
+        "nacha.fixed_width_fields",
+        "nacha.routing_check_digit",
+        "nacha.transaction_direction"
+      ],
+      "unsupported": [
+        "nacha.iat_layouts",
+        "nacha.operating_rules_validation",
+        "nacha.return_reason_semantics"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "addenda": 1,
+        "batch": 2,
+        "entry": 9,
+        "field": 173,
+        "file": 1,
+        "record": 6
+      },
+      "maxDepth": 5,
+      "nodeCount": 192,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "nacha",
+    "sourceHash": "sha256:81beba4d249b1897f52fc95058fb088de1bba661db23f3e164bffddea8910f64",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "batchCount": 2,
+          "blockingFactor": "10",
+          "controlTotalsConsistent": true,
+          "declaredBatchCount": 2,
+          "declaredBlockCount": 2,
+          "declaredEntryAddendaCount": 10,
+          "declaredEntryHash": 57980361,
+          "declaredTotalCreditEntryDollarAmount": 2589739,
+          "declaredTotalDebitEntryDollarAmount": 1058992,
+          "fileCreationDate": "260819",
+          "fileCreationTime": "0600",
+          "fileIdModifier": "A",
+          "formatCode": "1",
+          "observedBatchCount": 2,
+          "observedBlockCount": 2,
+          "observedEntryAddendaCount": 10,
+          "observedEntryHash": 57980361,
+          "observedTotalCreditEntryDollarAmount": 2589739,
+          "observedTotalDebitEntryDollarAmount": 1058992,
+          "operatingRulesConsulted": false,
+          "paddingRecords": 4,
+          "recordCount": 20,
+          "recordSize": "094"
+        },
+        "children": [
+          {
+            "attributes": {
+              "recordTypeCode": "1"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "end": 1,
+                  "fieldKind": "numeric",
+                  "start": 1
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "field",
+                "label": "Record type code",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 1,
+                  "line": 1,
+                  "offset": 0,
+                  "ordinal": 0,
+                  "path": "FILE/fileHeader/recordTypeCode"
+                },
+                "name": "recordTypeCode",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "1",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 3,
+                  "fieldKind": "numeric",
+                  "start": 2
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "field",
+                "label": "Priority code",
+                "location": {
+                  "column": 2,
+                  "file": null,
+                  "length": 2,
+                  "line": 1,
+                  "offset": 1,
+                  "ordinal": 1,
+                  "path": "FILE/fileHeader/priorityCode"
+                },
+                "name": "priorityCode",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "01",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 13,
+                  "fieldKind": "alphanumeric",
+                  "start": 4
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "field",
+                "label": "Immediate destination",
+                "location": {
+                  "column": 4,
+                  "file": null,
+                  "length": 10,
+                  "line": 1,
+                  "offset": 3,
+                  "ordinal": 2,
+                  "path": "FILE/fileHeader/immediateDestination"
+                },
+                "name": "immediateDestination",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "091000019",
+                "valueLength": 9,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 23,
+                  "fieldKind": "alphanumeric",
+                  "start": 14
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "field",
+                "label": "Immediate origin",
+                "location": {
+                  "column": 14,
+                  "file": null,
+                  "length": 10,
+                  "line": 1,
+                  "offset": 13,
+                  "ordinal": 3,
+                  "path": "FILE/fileHeader/immediateOrigin"
+                },
+                "name": "immediateOrigin",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "1234567890",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 29,
+                  "fieldKind": "numeric",
+                  "start": 24
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "field",
+                "label": "File creation date",
+                "location": {
+                  "column": 24,
+                  "file": null,
+                  "length": 6,
+                  "line": 1,
+                  "offset": 23,
+                  "ordinal": 4,
+                  "path": "FILE/fileHeader/fileCreationDate"
+                },
+                "name": "fileCreationDate",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "260819",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 33,
+                  "fieldKind": "numeric",
+                  "start": 30
+                },
+                "children": [],
+                "id": "0.0.5",
+                "kind": "field",
+                "label": "File creation time",
+                "location": {
+                  "column": 30,
+                  "file": null,
+                  "length": 4,
+                  "line": 1,
+                  "offset": 29,
+                  "ordinal": 5,
+                  "path": "FILE/fileHeader/fileCreationTime"
+                },
+                "name": "fileCreationTime",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "0600",
+                "valueLength": 4,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 34,
+                  "fieldKind": "alphanumeric",
+                  "start": 34
+                },
+                "children": [],
+                "id": "0.0.6",
+                "kind": "field",
+                "label": "File ID modifier",
+                "location": {
+                  "column": 34,
+                  "file": null,
+                  "length": 1,
+                  "line": 1,
+                  "offset": 33,
+                  "ordinal": 6,
+                  "path": "FILE/fileHeader/fileIdModifier"
+                },
+                "name": "fileIdModifier",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "A",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 37,
+                  "fieldKind": "numeric",
+                  "start": 35
+                },
+                "children": [],
+                "id": "0.0.7",
+                "kind": "field",
+                "label": "Record size",
+                "location": {
+                  "column": 35,
+                  "file": null,
+                  "length": 3,
+                  "line": 1,
+                  "offset": 34,
+                  "ordinal": 7,
+                  "path": "FILE/fileHeader/recordSize"
+                },
+                "name": "recordSize",
+                "ordinal": 7,
+                "redacted": false,
+                "value": "094",
+                "valueLength": 3,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 39,
+                  "fieldKind": "numeric",
+                  "start": 38
+                },
+                "children": [],
+                "id": "0.0.8",
+                "kind": "field",
+                "label": "Blocking factor",
+                "location": {
+                  "column": 38,
+                  "file": null,
+                  "length": 2,
+                  "line": 1,
+                  "offset": 37,
+                  "ordinal": 8,
+                  "path": "FILE/fileHeader/blockingFactor"
+                },
+                "name": "blockingFactor",
+                "ordinal": 8,
+                "redacted": false,
+                "value": "10",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 40,
+                  "fieldKind": "numeric",
+                  "start": 40
+                },
+                "children": [],
+                "id": "0.0.9",
+                "kind": "field",
+                "label": "Format code",
+                "location": {
+                  "column": 40,
+                  "file": null,
+                  "length": 1,
+                  "line": 1,
+                  "offset": 39,
+                  "ordinal": 9,
+                  "path": "FILE/fileHeader/formatCode"
+                },
+                "name": "formatCode",
+                "ordinal": 9,
+                "redacted": false,
+                "value": "1",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 63,
+                  "fieldKind": "alphanumeric",
+                  "start": 41
+                },
+                "children": [],
+                "id": "0.0.10",
+                "kind": "field",
+                "label": "Immediate destination name",
+                "location": {
+                  "column": 41,
+                  "file": null,
+                  "length": 23,
+                  "line": 1,
+                  "offset": 40,
+                  "ordinal": 10,
+                  "path": "FILE/fileHeader/immediateDestinationName"
+                },
+                "name": "immediateDestinationName",
+                "ordinal": 10,
+                "redacted": false,
+                "value": "EXAMPLE BANK NA",
+                "valueLength": 15,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 86,
+                  "fieldKind": "alphanumeric",
+                  "start": 64
+                },
+                "children": [],
+                "id": "0.0.11",
+                "kind": "field",
+                "label": "Immediate origin name",
+                "location": {
+                  "column": 64,
+                  "file": null,
+                  "length": 23,
+                  "line": 1,
+                  "offset": 63,
+                  "ordinal": 11,
+                  "path": "FILE/fileHeader/immediateOriginName"
+                },
+                "name": "immediateOriginName",
+                "ordinal": 11,
+                "redacted": false,
+                "value": "EXAMPLE MANUFACTURING",
+                "valueLength": 21,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 94,
+                  "fieldKind": "alphanumeric",
+                  "start": 87
+                },
+                "children": [],
+                "id": "0.0.12",
+                "kind": "field",
+                "label": "Reference code",
+                "location": {
+                  "column": 87,
+                  "file": null,
+                  "length": 8,
+                  "line": 1,
+                  "offset": 86,
+                  "ordinal": 12,
+                  "path": "FILE/fileHeader/referenceCode"
+                },
+                "name": "referenceCode",
+                "ordinal": 12,
+                "redacted": false,
+                "value": "",
+                "valueLength": 0,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.0",
+            "kind": "record",
+            "label": "File header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 94,
+              "line": 1,
+              "offset": 0,
+              "ordinal": 0,
+              "path": "FILE/fileHeader"
+            },
+            "name": "fileHeader",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "addendaCount": 0,
+              "batchNumber": "0000001",
+              "companyEntryDescription": "PAYROLL",
+              "controlTotalsConsistent": true,
+              "declaredEntryAddendaCount": 8,
+              "declaredEntryHash": 48880360,
+              "declaredTotalCreditEntryDollarAmount": 2589739,
+              "declaredTotalDebitEntryDollarAmount": 0,
+              "effectiveEntryDate": "260821",
+              "entryCount": 8,
+              "observedEntryAddendaCount": 8,
+              "observedEntryHash": 48880360,
+              "observedTotalCreditEntryDollarAmount": 2589739,
+              "observedTotalDebitEntryDollarAmount": 0,
+              "originatorStatusCode": "1",
+              "serviceClassCode": "220",
+              "standardEntryClassCode": "PPD"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "recordTypeCode": "5"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.0.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 2,
+                      "offset": 95,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/batchHeader/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "5",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 4,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.0.1",
+                    "kind": "field",
+                    "label": "Service class code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 3,
+                      "line": 2,
+                      "offset": 96,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/batchHeader/serviceClassCode"
+                    },
+                    "name": "serviceClassCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "220",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 20,
+                      "fieldKind": "alphanumeric",
+                      "start": 5
+                    },
+                    "children": [],
+                    "id": "0.1.0.2",
+                    "kind": "field",
+                    "label": "Company name",
+                    "location": {
+                      "column": 5,
+                      "file": null,
+                      "length": 16,
+                      "line": 2,
+                      "offset": 99,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/batchHeader/companyName"
+                    },
+                    "name": "companyName",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "EXAMPLE MFG",
+                    "valueLength": 11,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 40,
+                      "fieldKind": "alphanumeric",
+                      "start": 21
+                    },
+                    "children": [],
+                    "id": "0.1.0.3",
+                    "kind": "field",
+                    "label": "Company discretionary data",
+                    "location": {
+                      "column": 21,
+                      "file": null,
+                      "length": 20,
+                      "line": 2,
+                      "offset": 115,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/batchHeader/companyDiscretionaryData"
+                    },
+                    "name": "companyDiscretionaryData",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "PAYROLL 08/2026",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 50,
+                      "fieldKind": "alphanumeric",
+                      "start": 41
+                    },
+                    "children": [],
+                    "id": "0.1.0.4",
+                    "kind": "field",
+                    "label": "Company identification",
+                    "location": {
+                      "column": 41,
+                      "file": null,
+                      "length": 10,
+                      "line": 2,
+                      "offset": 135,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/batchHeader/companyIdentification"
+                    },
+                    "name": "companyIdentification",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "1234567890",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 53,
+                      "fieldKind": "alphanumeric",
+                      "start": 51
+                    },
+                    "children": [],
+                    "id": "0.1.0.5",
+                    "kind": "field",
+                    "label": "Standard entry class code",
+                    "location": {
+                      "column": 51,
+                      "file": null,
+                      "length": 3,
+                      "line": 2,
+                      "offset": 145,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/batchHeader/standardEntryClassCode"
+                    },
+                    "name": "standardEntryClassCode",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "PPD",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 63,
+                      "fieldKind": "alphanumeric",
+                      "start": 54
+                    },
+                    "children": [],
+                    "id": "0.1.0.6",
+                    "kind": "field",
+                    "label": "Company entry description",
+                    "location": {
+                      "column": 54,
+                      "file": null,
+                      "length": 10,
+                      "line": 2,
+                      "offset": 148,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/batchHeader/companyEntryDescription"
+                    },
+                    "name": "companyEntryDescription",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "PAYROLL",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 69,
+                      "fieldKind": "alphanumeric",
+                      "start": 64
+                    },
+                    "children": [],
+                    "id": "0.1.0.7",
+                    "kind": "field",
+                    "label": "Company descriptive date",
+                    "location": {
+                      "column": 64,
+                      "file": null,
+                      "length": 6,
+                      "line": 2,
+                      "offset": 158,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/batchHeader/companyDescriptiveDate"
+                    },
+                    "name": "companyDescriptiveDate",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "260819",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 75,
+                      "fieldKind": "numeric",
+                      "start": 70
+                    },
+                    "children": [],
+                    "id": "0.1.0.8",
+                    "kind": "field",
+                    "label": "Effective entry date",
+                    "location": {
+                      "column": 70,
+                      "file": null,
+                      "length": 6,
+                      "line": 2,
+                      "offset": 164,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/batchHeader/effectiveEntryDate"
+                    },
+                    "name": "effectiveEntryDate",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "260821",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 76
+                    },
+                    "children": [],
+                    "id": "0.1.0.9",
+                    "kind": "field",
+                    "label": "Settlement date",
+                    "location": {
+                      "column": 76,
+                      "file": null,
+                      "length": 3,
+                      "line": 2,
+                      "offset": 170,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/batchHeader/settlementDate"
+                    },
+                    "name": "settlementDate",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "alphanumeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.0.10",
+                    "kind": "field",
+                    "label": "Originator status code",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 2,
+                      "offset": 173,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/batchHeader/originatorStatusCode"
+                    },
+                    "name": "originatorStatusCode",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 87,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.0.11",
+                    "kind": "field",
+                    "label": "Originating DFI identification",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 8,
+                      "line": 2,
+                      "offset": 174,
+                      "ordinal": 11,
+                      "path": "FILE/5[1]/batchHeader/originatingDfiIdentification"
+                    },
+                    "name": "originatingDfiIdentification",
+                    "ordinal": 11,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 88
+                    },
+                    "children": [],
+                    "id": "0.1.0.12",
+                    "kind": "field",
+                    "label": "Batch number",
+                    "location": {
+                      "column": 88,
+                      "file": null,
+                      "length": 7,
+                      "line": 2,
+                      "offset": 182,
+                      "ordinal": 12,
+                      "path": "FILE/5[1]/batchHeader/batchNumber"
+                    },
+                    "name": "batchNumber",
+                    "ordinal": 12,
+                    "redacted": false,
+                    "value": "0000001",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.0",
+                "kind": "record",
+                "label": "Batch header",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 2,
+                  "offset": 95,
+                  "ordinal": 0,
+                  "path": "FILE/5[1]/batchHeader"
+                },
+                "name": "batchHeader",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000001",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.1.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 3,
+                      "offset": 190,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[1]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.1.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 3,
+                      "offset": 191,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[1]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.1.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 3,
+                      "offset": 193,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[1]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.1.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 3,
+                      "offset": 201,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[1]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "9",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.1.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 3,
+                      "offset": 202,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[1]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "100200300",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.1.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 3,
+                      "offset": 219,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[1]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000312455",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.1.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 3,
+                      "offset": 229,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[1]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1001",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.1.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 3,
+                      "offset": 244,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[1]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE ALEX R",
+                    "valueLength": 13,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.1.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 3,
+                      "offset": 266,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[1]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.1.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 3,
+                      "offset": 268,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[1]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.1.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 3,
+                      "offset": 269,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[1]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000001",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.1",
+                "kind": "entry",
+                "label": "Entry 091000010000001",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 3,
+                  "offset": 190,
+                  "ordinal": 1,
+                  "path": "FILE/5[1]/6[1]"
+                },
+                "name": "entry22",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000002",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.2.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 4,
+                      "offset": 285,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[2]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.2.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 4,
+                      "offset": 286,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[2]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.2.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 4,
+                      "offset": 288,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[2]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.2.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 4,
+                      "offset": 296,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[2]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "9",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.2.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 4,
+                      "offset": 297,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[2]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "100200301",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.2.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 4,
+                      "offset": 314,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[2]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000289012",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.2.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 4,
+                      "offset": 324,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[2]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1002",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.2.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 4,
+                      "offset": 339,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[2]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE JORDAN T",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.2.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 4,
+                      "offset": 361,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[2]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.2.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 4,
+                      "offset": 363,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[2]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.2.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 4,
+                      "offset": 364,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[2]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000002",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.2",
+                "kind": "entry",
+                "label": "Entry 091000010000002",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 4,
+                  "offset": 285,
+                  "ordinal": 2,
+                  "path": "FILE/5[1]/6[2]"
+                },
+                "name": "entry22",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000003",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.3.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 5,
+                      "offset": 380,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[3]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.3.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 5,
+                      "offset": 381,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[3]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.3.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 5,
+                      "offset": 383,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[3]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "02100002",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.3.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 5,
+                      "offset": 391,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[3]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.3.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 5,
+                      "offset": 392,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[3]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "200300400",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.3.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 5,
+                      "offset": 409,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[3]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000415900",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.3.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 5,
+                      "offset": 419,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[3]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1003",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.3.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 5,
+                      "offset": 434,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[3]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE CHRIS M",
+                    "valueLength": 14,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.3.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 5,
+                      "offset": 456,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[3]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.3.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 5,
+                      "offset": 458,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[3]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.3.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 5,
+                      "offset": 459,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[3]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000003",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.3",
+                "kind": "entry",
+                "label": "Entry 091000010000003",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 5,
+                  "offset": 380,
+                  "ordinal": 3,
+                  "path": "FILE/5[1]/6[3]"
+                },
+                "name": "entry22",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000004",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.4.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 6,
+                      "offset": 475,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[4]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.4.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 6,
+                      "offset": 476,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[4]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.4.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 6,
+                      "offset": 478,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[4]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "02100002",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.4.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 6,
+                      "offset": 486,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[4]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.4.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 6,
+                      "offset": 487,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[4]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "200300401",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.4.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 6,
+                      "offset": 504,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[4]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000198744",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.4.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 6,
+                      "offset": 514,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[4]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1004",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.4.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 6,
+                      "offset": 529,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[4]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE PAT L",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.4.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 6,
+                      "offset": 551,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[4]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.4.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 6,
+                      "offset": 553,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[4]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.4.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 6,
+                      "offset": 554,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[4]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000004",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.4",
+                "kind": "entry",
+                "label": "Entry 091000010000004",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 6,
+                  "offset": 475,
+                  "ordinal": 4,
+                  "path": "FILE/5[1]/6[4]"
+                },
+                "name": "entry22",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000005",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.5.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 7,
+                      "offset": 570,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[5]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.5.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 7,
+                      "offset": 571,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[5]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.5.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 7,
+                      "offset": 573,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[5]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "12100024",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.5.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 7,
+                      "offset": 581,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[5]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "8",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.5.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 7,
+                      "offset": 582,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[5]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "300400500",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.5.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 7,
+                      "offset": 599,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[5]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000502300",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.5.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 7,
+                      "offset": 609,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[5]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1005",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.5.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 7,
+                      "offset": 624,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[5]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE SAM K",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.5.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 7,
+                      "offset": 646,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[5]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.5.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 7,
+                      "offset": 648,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[5]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.5.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 7,
+                      "offset": 649,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[5]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000005",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.5",
+                "kind": "entry",
+                "label": "Entry 091000010000005",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 7,
+                  "offset": 570,
+                  "ordinal": 5,
+                  "path": "FILE/5[1]/6[5]"
+                },
+                "name": "entry22",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000006",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.6.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 8,
+                      "offset": 665,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[6]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.6.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 8,
+                      "offset": 666,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[6]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.6.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 8,
+                      "offset": 668,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[6]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "12100024",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.6.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 8,
+                      "offset": 676,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[6]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "8",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.6.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 8,
+                      "offset": 677,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[6]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "300400501",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.6.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 8,
+                      "offset": 694,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[6]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000271188",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.6.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 8,
+                      "offset": 704,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[6]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1006",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.6.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 8,
+                      "offset": 719,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[6]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE CASEY B",
+                    "valueLength": 14,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.6.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 8,
+                      "offset": 741,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[6]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.6.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 8,
+                      "offset": 743,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[6]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.6.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 8,
+                      "offset": 744,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[6]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000006",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.6",
+                "kind": "entry",
+                "label": "Entry 091000010000006",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 8,
+                  "offset": 665,
+                  "ordinal": 6,
+                  "path": "FILE/5[1]/6[6]"
+                },
+                "name": "entry22",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000007",
+                  "transactionCode": "32"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.7.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 9,
+                      "offset": 760,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[7]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.7.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 9,
+                      "offset": 761,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[7]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "32",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.7.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 9,
+                      "offset": 763,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[7]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "01140153",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.7.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 9,
+                      "offset": 771,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[7]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "3",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.7.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 9,
+                      "offset": 772,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[7]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "400500600",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.7.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 9,
+                      "offset": 789,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[7]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000356090",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.7.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 9,
+                      "offset": 799,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[7]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1007",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.7.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 9,
+                      "offset": 814,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[7]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE ROBIN D",
+                    "valueLength": 14,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.7.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 9,
+                      "offset": 836,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[7]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.7.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 9,
+                      "offset": 838,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[7]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.7.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 9,
+                      "offset": 839,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[7]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000007",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.7",
+                "kind": "entry",
+                "label": "Entry 091000010000007",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 9,
+                  "offset": 760,
+                  "ordinal": 7,
+                  "path": "FILE/5[1]/6[7]"
+                },
+                "name": "entry32",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 0,
+                  "addendaRecordIndicator": "0",
+                  "checkDigitValid": true,
+                  "direction": "credit",
+                  "prenote": false,
+                  "traceNumber": "091000010000008",
+                  "transactionCode": "22"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.8.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 10,
+                      "offset": 855,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/6[8]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.8.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 10,
+                      "offset": 856,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/6[8]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "22",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.1.8.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 10,
+                      "offset": 858,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/6[8]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "01140153",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.1.8.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 10,
+                      "offset": 866,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/6[8]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "3",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.1.8.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 10,
+                      "offset": 867,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/6[8]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "400500601",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.1.8.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 10,
+                      "offset": 884,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/6[8]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0000244050",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.1.8.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 10,
+                      "offset": 894,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/6[8]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "EMP1008",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.8.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 10,
+                      "offset": 909,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/6[8]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "SAMPLE ASH V",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.1.8.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 10,
+                      "offset": 931,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/6[8]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.1.8.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 10,
+                      "offset": 933,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/6[8]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.8.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 10,
+                      "offset": 934,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/6[8]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000008",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.8",
+                "kind": "entry",
+                "label": "Entry 091000010000008",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 10,
+                  "offset": 855,
+                  "ordinal": 8,
+                  "path": "FILE/5[1]/6[8]"
+                },
+                "name": "entry22",
+                "ordinal": 8,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "recordTypeCode": "8"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.1.9.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 11,
+                      "offset": 950,
+                      "ordinal": 0,
+                      "path": "FILE/5[1]/batchControl/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "8",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 4,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.1.9.1",
+                    "kind": "field",
+                    "label": "Service class code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 3,
+                      "line": 11,
+                      "offset": 951,
+                      "ordinal": 1,
+                      "path": "FILE/5[1]/batchControl/serviceClassCode"
+                    },
+                    "name": "serviceClassCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "220",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 10,
+                      "fieldKind": "numeric",
+                      "start": 5
+                    },
+                    "children": [],
+                    "id": "0.1.9.2",
+                    "kind": "field",
+                    "label": "Entry/addenda count",
+                    "location": {
+                      "column": 5,
+                      "file": null,
+                      "length": 6,
+                      "line": 11,
+                      "offset": 954,
+                      "ordinal": 2,
+                      "path": "FILE/5[1]/batchControl/entryAddendaCount"
+                    },
+                    "name": "entryAddendaCount",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "000008",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 20,
+                      "fieldKind": "numeric",
+                      "start": 11
+                    },
+                    "children": [],
+                    "id": "0.1.9.3",
+                    "kind": "field",
+                    "label": "Entry hash",
+                    "location": {
+                      "column": 11,
+                      "file": null,
+                      "length": 10,
+                      "line": 11,
+                      "offset": 960,
+                      "ordinal": 3,
+                      "path": "FILE/5[1]/batchControl/entryHash"
+                    },
+                    "name": "entryHash",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "0048880360",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 32,
+                      "fieldKind": "amount",
+                      "start": 21
+                    },
+                    "children": [],
+                    "id": "0.1.9.4",
+                    "kind": "field",
+                    "label": "Total debit entry dollar amount",
+                    "location": {
+                      "column": 21,
+                      "file": null,
+                      "length": 12,
+                      "line": 11,
+                      "offset": 970,
+                      "ordinal": 4,
+                      "path": "FILE/5[1]/batchControl/totalDebitEntryDollarAmount"
+                    },
+                    "name": "totalDebitEntryDollarAmount",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "000000000000",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 44,
+                      "fieldKind": "amount",
+                      "start": 33
+                    },
+                    "children": [],
+                    "id": "0.1.9.5",
+                    "kind": "field",
+                    "label": "Total credit entry dollar amount",
+                    "location": {
+                      "column": 33,
+                      "file": null,
+                      "length": 12,
+                      "line": 11,
+                      "offset": 982,
+                      "ordinal": 5,
+                      "path": "FILE/5[1]/batchControl/totalCreditEntryDollarAmount"
+                    },
+                    "name": "totalCreditEntryDollarAmount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "000002589739",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 45
+                    },
+                    "children": [],
+                    "id": "0.1.9.6",
+                    "kind": "field",
+                    "label": "Company identification",
+                    "location": {
+                      "column": 45,
+                      "file": null,
+                      "length": 10,
+                      "line": 11,
+                      "offset": 994,
+                      "ordinal": 6,
+                      "path": "FILE/5[1]/batchControl/companyIdentification"
+                    },
+                    "name": "companyIdentification",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "1234567890",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 73,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.1.9.7",
+                    "kind": "field",
+                    "label": "Message authentication code",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 19,
+                      "line": 11,
+                      "offset": 1004,
+                      "ordinal": 7,
+                      "path": "FILE/5[1]/batchControl/messageAuthenticationCode"
+                    },
+                    "name": "messageAuthenticationCode",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "alphanumeric",
+                      "start": 74
+                    },
+                    "children": [],
+                    "id": "0.1.9.8",
+                    "kind": "field",
+                    "label": "Reserved",
+                    "location": {
+                      "column": 74,
+                      "file": null,
+                      "length": 6,
+                      "line": 11,
+                      "offset": 1023,
+                      "ordinal": 8,
+                      "path": "FILE/5[1]/batchControl/reserved"
+                    },
+                    "name": "reserved",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 87,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.1.9.9",
+                    "kind": "field",
+                    "label": "Originating DFI identification",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 8,
+                      "line": 11,
+                      "offset": 1029,
+                      "ordinal": 9,
+                      "path": "FILE/5[1]/batchControl/originatingDfiIdentification"
+                    },
+                    "name": "originatingDfiIdentification",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 88
+                    },
+                    "children": [],
+                    "id": "0.1.9.10",
+                    "kind": "field",
+                    "label": "Batch number",
+                    "location": {
+                      "column": 88,
+                      "file": null,
+                      "length": 7,
+                      "line": 11,
+                      "offset": 1037,
+                      "ordinal": 10,
+                      "path": "FILE/5[1]/batchControl/batchNumber"
+                    },
+                    "name": "batchNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "0000001",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.1.9",
+                "kind": "record",
+                "label": "Batch control",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 11,
+                  "offset": 950,
+                  "ordinal": 9,
+                  "path": "FILE/5[1]/batchControl"
+                },
+                "name": "batchControl",
+                "ordinal": 9,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "batch",
+            "label": "Batch 0000001 (PPD)",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 94,
+              "line": 2,
+              "offset": 95,
+              "ordinal": 1,
+              "path": "FILE/5[1]"
+            },
+            "name": "PPD",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "addendaCount": 1,
+              "batchNumber": "0000002",
+              "companyEntryDescription": "TAX PMT",
+              "controlTotalsConsistent": true,
+              "declaredEntryAddendaCount": 2,
+              "declaredEntryHash": 9100001,
+              "declaredTotalCreditEntryDollarAmount": 0,
+              "declaredTotalDebitEntryDollarAmount": 1058992,
+              "effectiveEntryDate": "260821",
+              "entryCount": 1,
+              "observedEntryAddendaCount": 2,
+              "observedEntryHash": 9100001,
+              "observedTotalCreditEntryDollarAmount": 0,
+              "observedTotalDebitEntryDollarAmount": 1058992,
+              "originatorStatusCode": "1",
+              "serviceClassCode": "225",
+              "standardEntryClassCode": "CCD"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "recordTypeCode": "5"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.2.0.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 12,
+                      "offset": 1045,
+                      "ordinal": 0,
+                      "path": "FILE/5[2]/batchHeader/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "5",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 4,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.2.0.1",
+                    "kind": "field",
+                    "label": "Service class code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 3,
+                      "line": 12,
+                      "offset": 1046,
+                      "ordinal": 1,
+                      "path": "FILE/5[2]/batchHeader/serviceClassCode"
+                    },
+                    "name": "serviceClassCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "225",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 20,
+                      "fieldKind": "alphanumeric",
+                      "start": 5
+                    },
+                    "children": [],
+                    "id": "0.2.0.2",
+                    "kind": "field",
+                    "label": "Company name",
+                    "location": {
+                      "column": 5,
+                      "file": null,
+                      "length": 16,
+                      "line": 12,
+                      "offset": 1049,
+                      "ordinal": 2,
+                      "path": "FILE/5[2]/batchHeader/companyName"
+                    },
+                    "name": "companyName",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "EXAMPLE MFG",
+                    "valueLength": 11,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 40,
+                      "fieldKind": "alphanumeric",
+                      "start": 21
+                    },
+                    "children": [],
+                    "id": "0.2.0.3",
+                    "kind": "field",
+                    "label": "Company discretionary data",
+                    "location": {
+                      "column": 21,
+                      "file": null,
+                      "length": 20,
+                      "line": 12,
+                      "offset": 1065,
+                      "ordinal": 3,
+                      "path": "FILE/5[2]/batchHeader/companyDiscretionaryData"
+                    },
+                    "name": "companyDiscretionaryData",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "TAX REMITTANCE",
+                    "valueLength": 14,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 50,
+                      "fieldKind": "alphanumeric",
+                      "start": 41
+                    },
+                    "children": [],
+                    "id": "0.2.0.4",
+                    "kind": "field",
+                    "label": "Company identification",
+                    "location": {
+                      "column": 41,
+                      "file": null,
+                      "length": 10,
+                      "line": 12,
+                      "offset": 1085,
+                      "ordinal": 4,
+                      "path": "FILE/5[2]/batchHeader/companyIdentification"
+                    },
+                    "name": "companyIdentification",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "1234567890",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 53,
+                      "fieldKind": "alphanumeric",
+                      "start": 51
+                    },
+                    "children": [],
+                    "id": "0.2.0.5",
+                    "kind": "field",
+                    "label": "Standard entry class code",
+                    "location": {
+                      "column": 51,
+                      "file": null,
+                      "length": 3,
+                      "line": 12,
+                      "offset": 1095,
+                      "ordinal": 5,
+                      "path": "FILE/5[2]/batchHeader/standardEntryClassCode"
+                    },
+                    "name": "standardEntryClassCode",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "CCD",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 63,
+                      "fieldKind": "alphanumeric",
+                      "start": 54
+                    },
+                    "children": [],
+                    "id": "0.2.0.6",
+                    "kind": "field",
+                    "label": "Company entry description",
+                    "location": {
+                      "column": 54,
+                      "file": null,
+                      "length": 10,
+                      "line": 12,
+                      "offset": 1098,
+                      "ordinal": 6,
+                      "path": "FILE/5[2]/batchHeader/companyEntryDescription"
+                    },
+                    "name": "companyEntryDescription",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "TAX PMT",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 69,
+                      "fieldKind": "alphanumeric",
+                      "start": 64
+                    },
+                    "children": [],
+                    "id": "0.2.0.7",
+                    "kind": "field",
+                    "label": "Company descriptive date",
+                    "location": {
+                      "column": 64,
+                      "file": null,
+                      "length": 6,
+                      "line": 12,
+                      "offset": 1108,
+                      "ordinal": 7,
+                      "path": "FILE/5[2]/batchHeader/companyDescriptiveDate"
+                    },
+                    "name": "companyDescriptiveDate",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "260819",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 75,
+                      "fieldKind": "numeric",
+                      "start": 70
+                    },
+                    "children": [],
+                    "id": "0.2.0.8",
+                    "kind": "field",
+                    "label": "Effective entry date",
+                    "location": {
+                      "column": 70,
+                      "file": null,
+                      "length": 6,
+                      "line": 12,
+                      "offset": 1114,
+                      "ordinal": 8,
+                      "path": "FILE/5[2]/batchHeader/effectiveEntryDate"
+                    },
+                    "name": "effectiveEntryDate",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "260821",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 76
+                    },
+                    "children": [],
+                    "id": "0.2.0.9",
+                    "kind": "field",
+                    "label": "Settlement date",
+                    "location": {
+                      "column": 76,
+                      "file": null,
+                      "length": 3,
+                      "line": 12,
+                      "offset": 1120,
+                      "ordinal": 9,
+                      "path": "FILE/5[2]/batchHeader/settlementDate"
+                    },
+                    "name": "settlementDate",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "alphanumeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.2.0.10",
+                    "kind": "field",
+                    "label": "Originator status code",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 12,
+                      "offset": 1123,
+                      "ordinal": 10,
+                      "path": "FILE/5[2]/batchHeader/originatorStatusCode"
+                    },
+                    "name": "originatorStatusCode",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 87,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.2.0.11",
+                    "kind": "field",
+                    "label": "Originating DFI identification",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 8,
+                      "line": 12,
+                      "offset": 1124,
+                      "ordinal": 11,
+                      "path": "FILE/5[2]/batchHeader/originatingDfiIdentification"
+                    },
+                    "name": "originatingDfiIdentification",
+                    "ordinal": 11,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 88
+                    },
+                    "children": [],
+                    "id": "0.2.0.12",
+                    "kind": "field",
+                    "label": "Batch number",
+                    "location": {
+                      "column": 88,
+                      "file": null,
+                      "length": 7,
+                      "line": 12,
+                      "offset": 1132,
+                      "ordinal": 12,
+                      "path": "FILE/5[2]/batchHeader/batchNumber"
+                    },
+                    "name": "batchNumber",
+                    "ordinal": 12,
+                    "redacted": false,
+                    "value": "0000002",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.2.0",
+                "kind": "record",
+                "label": "Batch header",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 12,
+                  "offset": 1045,
+                  "ordinal": 0,
+                  "path": "FILE/5[2]/batchHeader"
+                },
+                "name": "batchHeader",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "addendaCount": 1,
+                  "addendaRecordIndicator": "1",
+                  "checkDigitValid": true,
+                  "direction": "debit",
+                  "prenote": false,
+                  "traceNumber": "091000010000009",
+                  "transactionCode": "27"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.2.1.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 13,
+                      "offset": 1140,
+                      "ordinal": 0,
+                      "path": "FILE/5[2]/6[1]/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "6",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 3,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.2.1.1",
+                    "kind": "field",
+                    "label": "Transaction code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 2,
+                      "line": 13,
+                      "offset": 1141,
+                      "ordinal": 1,
+                      "path": "FILE/5[2]/6[1]/transactionCode"
+                    },
+                    "name": "transactionCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "27",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 11,
+                      "fieldKind": "numeric",
+                      "start": 4
+                    },
+                    "children": [],
+                    "id": "0.2.1.2",
+                    "kind": "field",
+                    "label": "Receiving DFI identification",
+                    "location": {
+                      "column": 4,
+                      "file": null,
+                      "length": 8,
+                      "line": 13,
+                      "offset": 1143,
+                      "ordinal": 2,
+                      "path": "FILE/5[2]/6[1]/receivingDfiIdentification"
+                    },
+                    "name": "receivingDfiIdentification",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 12,
+                      "fieldKind": "numeric",
+                      "start": 12
+                    },
+                    "children": [],
+                    "id": "0.2.1.3",
+                    "kind": "field",
+                    "label": "Check digit",
+                    "location": {
+                      "column": 12,
+                      "file": null,
+                      "length": 1,
+                      "line": 13,
+                      "offset": 1151,
+                      "ordinal": 3,
+                      "path": "FILE/5[2]/6[1]/checkDigit"
+                    },
+                    "name": "checkDigit",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "9",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 29,
+                      "fieldKind": "alphanumeric",
+                      "start": 13
+                    },
+                    "children": [],
+                    "id": "0.2.1.4",
+                    "kind": "field",
+                    "label": "DFI account number",
+                    "location": {
+                      "column": 13,
+                      "file": null,
+                      "length": 17,
+                      "line": 13,
+                      "offset": 1152,
+                      "ordinal": 4,
+                      "path": "FILE/5[2]/6[1]/dfiAccountNumber"
+                    },
+                    "name": "dfiAccountNumber",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "999888777",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 39,
+                      "fieldKind": "amount",
+                      "start": 30
+                    },
+                    "children": [],
+                    "id": "0.2.1.5",
+                    "kind": "field",
+                    "label": "Amount",
+                    "location": {
+                      "column": 30,
+                      "file": null,
+                      "length": 10,
+                      "line": 13,
+                      "offset": 1169,
+                      "ordinal": 5,
+                      "path": "FILE/5[2]/6[1]/amount"
+                    },
+                    "name": "amount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "0001058992",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 40
+                    },
+                    "children": [],
+                    "id": "0.2.1.6",
+                    "kind": "field",
+                    "label": "Individual identification number",
+                    "location": {
+                      "column": 40,
+                      "file": null,
+                      "length": 15,
+                      "line": 13,
+                      "offset": 1179,
+                      "ordinal": 6,
+                      "path": "FILE/5[2]/6[1]/individualIdentificationNumber"
+                    },
+                    "name": "individualIdentificationNumber",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "TAXAUTH",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 76,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.2.1.7",
+                    "kind": "field",
+                    "label": "Individual name",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 22,
+                      "line": 13,
+                      "offset": 1194,
+                      "ordinal": 7,
+                      "path": "FILE/5[2]/6[1]/individualName"
+                    },
+                    "name": "individualName",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "STATE TAX AUTHORITY",
+                    "valueLength": 19,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 78,
+                      "fieldKind": "alphanumeric",
+                      "start": 77
+                    },
+                    "children": [],
+                    "id": "0.2.1.8",
+                    "kind": "field",
+                    "label": "Discretionary data",
+                    "location": {
+                      "column": 77,
+                      "file": null,
+                      "length": 2,
+                      "line": 13,
+                      "offset": 1216,
+                      "ordinal": 8,
+                      "path": "FILE/5[2]/6[1]/discretionaryData"
+                    },
+                    "name": "discretionaryData",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "numeric",
+                      "start": 79
+                    },
+                    "children": [],
+                    "id": "0.2.1.9",
+                    "kind": "field",
+                    "label": "Addenda record indicator",
+                    "location": {
+                      "column": 79,
+                      "file": null,
+                      "length": 1,
+                      "line": 13,
+                      "offset": 1218,
+                      "ordinal": 9,
+                      "path": "FILE/5[2]/6[1]/addendaRecordIndicator"
+                    },
+                    "name": "addendaRecordIndicator",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.2.1.10",
+                    "kind": "field",
+                    "label": "Trace number",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 15,
+                      "line": 13,
+                      "offset": 1219,
+                      "ordinal": 10,
+                      "path": "FILE/5[2]/6[1]/traceNumber"
+                    },
+                    "name": "traceNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "091000010000009",
+                    "valueLength": 15,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "addendaTypeCode": "05",
+                      "layoutModelled": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "end": 1,
+                          "fieldKind": "numeric",
+                          "start": 1
+                        },
+                        "children": [],
+                        "id": "0.2.1.11.0",
+                        "kind": "field",
+                        "label": "Record type code",
+                        "location": {
+                          "column": 1,
+                          "file": null,
+                          "length": 1,
+                          "line": 14,
+                          "offset": 1235,
+                          "ordinal": 0,
+                          "path": "FILE/5[2]/6[1]/7[0]/recordTypeCode"
+                        },
+                        "name": "recordTypeCode",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "7",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "end": 3,
+                          "fieldKind": "numeric",
+                          "start": 2
+                        },
+                        "children": [],
+                        "id": "0.2.1.11.1",
+                        "kind": "field",
+                        "label": "Addenda type code",
+                        "location": {
+                          "column": 2,
+                          "file": null,
+                          "length": 2,
+                          "line": 14,
+                          "offset": 1236,
+                          "ordinal": 1,
+                          "path": "FILE/5[2]/6[1]/7[0]/addendaTypeCode"
+                        },
+                        "name": "addendaTypeCode",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "05",
+                        "valueLength": 2,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "end": 83,
+                          "fieldKind": "alphanumeric",
+                          "start": 4
+                        },
+                        "children": [],
+                        "id": "0.2.1.11.2",
+                        "kind": "field",
+                        "label": "Payment-related information",
+                        "location": {
+                          "column": 4,
+                          "file": null,
+                          "length": 80,
+                          "line": 14,
+                          "offset": 1238,
+                          "ordinal": 2,
+                          "path": "FILE/5[2]/6[1]/7[0]/paymentRelatedInformation"
+                        },
+                        "name": "paymentRelatedInformation",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "TXP*1234567890*94105*260819*T*1058992\\",
+                        "valueLength": 38,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "end": 87,
+                          "fieldKind": "numeric",
+                          "start": 84
+                        },
+                        "children": [],
+                        "id": "0.2.1.11.3",
+                        "kind": "field",
+                        "label": "Addenda sequence number",
+                        "location": {
+                          "column": 84,
+                          "file": null,
+                          "length": 4,
+                          "line": 14,
+                          "offset": 1318,
+                          "ordinal": 3,
+                          "path": "FILE/5[2]/6[1]/7[0]/addendaSequenceNumber"
+                        },
+                        "name": "addendaSequenceNumber",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "0001",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "end": 94,
+                          "fieldKind": "numeric",
+                          "start": 88
+                        },
+                        "children": [],
+                        "id": "0.2.1.11.4",
+                        "kind": "field",
+                        "label": "Entry detail sequence number",
+                        "location": {
+                          "column": 88,
+                          "file": null,
+                          "length": 7,
+                          "line": 14,
+                          "offset": 1322,
+                          "ordinal": 4,
+                          "path": "FILE/5[2]/6[1]/7[0]/entryDetailSequenceNumber"
+                        },
+                        "name": "entryDetailSequenceNumber",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "0000009",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.2.1.11",
+                    "kind": "addenda",
+                    "label": "Addenda 05",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 94,
+                      "line": 14,
+                      "offset": 1235,
+                      "ordinal": 0,
+                      "path": "FILE/5[2]/6[1]/7[0]"
+                    },
+                    "name": "addenda05",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.2.1",
+                "kind": "entry",
+                "label": "Entry 091000010000009",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 13,
+                  "offset": 1140,
+                  "ordinal": 1,
+                  "path": "FILE/5[2]/6[1]"
+                },
+                "name": "entry27",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "recordTypeCode": "8"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "end": 1,
+                      "fieldKind": "numeric",
+                      "start": 1
+                    },
+                    "children": [],
+                    "id": "0.2.2.0",
+                    "kind": "field",
+                    "label": "Record type code",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 1,
+                      "line": 15,
+                      "offset": 1330,
+                      "ordinal": 0,
+                      "path": "FILE/5[2]/batchControl/recordTypeCode"
+                    },
+                    "name": "recordTypeCode",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "8",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 4,
+                      "fieldKind": "numeric",
+                      "start": 2
+                    },
+                    "children": [],
+                    "id": "0.2.2.1",
+                    "kind": "field",
+                    "label": "Service class code",
+                    "location": {
+                      "column": 2,
+                      "file": null,
+                      "length": 3,
+                      "line": 15,
+                      "offset": 1331,
+                      "ordinal": 1,
+                      "path": "FILE/5[2]/batchControl/serviceClassCode"
+                    },
+                    "name": "serviceClassCode",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "225",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 10,
+                      "fieldKind": "numeric",
+                      "start": 5
+                    },
+                    "children": [],
+                    "id": "0.2.2.2",
+                    "kind": "field",
+                    "label": "Entry/addenda count",
+                    "location": {
+                      "column": 5,
+                      "file": null,
+                      "length": 6,
+                      "line": 15,
+                      "offset": 1334,
+                      "ordinal": 2,
+                      "path": "FILE/5[2]/batchControl/entryAddendaCount"
+                    },
+                    "name": "entryAddendaCount",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "000002",
+                    "valueLength": 6,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 20,
+                      "fieldKind": "numeric",
+                      "start": 11
+                    },
+                    "children": [],
+                    "id": "0.2.2.3",
+                    "kind": "field",
+                    "label": "Entry hash",
+                    "location": {
+                      "column": 11,
+                      "file": null,
+                      "length": 10,
+                      "line": 15,
+                      "offset": 1340,
+                      "ordinal": 3,
+                      "path": "FILE/5[2]/batchControl/entryHash"
+                    },
+                    "name": "entryHash",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "0009100001",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 32,
+                      "fieldKind": "amount",
+                      "start": 21
+                    },
+                    "children": [],
+                    "id": "0.2.2.4",
+                    "kind": "field",
+                    "label": "Total debit entry dollar amount",
+                    "location": {
+                      "column": 21,
+                      "file": null,
+                      "length": 12,
+                      "line": 15,
+                      "offset": 1350,
+                      "ordinal": 4,
+                      "path": "FILE/5[2]/batchControl/totalDebitEntryDollarAmount"
+                    },
+                    "name": "totalDebitEntryDollarAmount",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "000001058992",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 44,
+                      "fieldKind": "amount",
+                      "start": 33
+                    },
+                    "children": [],
+                    "id": "0.2.2.5",
+                    "kind": "field",
+                    "label": "Total credit entry dollar amount",
+                    "location": {
+                      "column": 33,
+                      "file": null,
+                      "length": 12,
+                      "line": 15,
+                      "offset": 1362,
+                      "ordinal": 5,
+                      "path": "FILE/5[2]/batchControl/totalCreditEntryDollarAmount"
+                    },
+                    "name": "totalCreditEntryDollarAmount",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "000000000000",
+                    "valueLength": 12,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 54,
+                      "fieldKind": "alphanumeric",
+                      "start": 45
+                    },
+                    "children": [],
+                    "id": "0.2.2.6",
+                    "kind": "field",
+                    "label": "Company identification",
+                    "location": {
+                      "column": 45,
+                      "file": null,
+                      "length": 10,
+                      "line": 15,
+                      "offset": 1374,
+                      "ordinal": 6,
+                      "path": "FILE/5[2]/batchControl/companyIdentification"
+                    },
+                    "name": "companyIdentification",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "1234567890",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 73,
+                      "fieldKind": "alphanumeric",
+                      "start": 55
+                    },
+                    "children": [],
+                    "id": "0.2.2.7",
+                    "kind": "field",
+                    "label": "Message authentication code",
+                    "location": {
+                      "column": 55,
+                      "file": null,
+                      "length": 19,
+                      "line": 15,
+                      "offset": 1384,
+                      "ordinal": 7,
+                      "path": "FILE/5[2]/batchControl/messageAuthenticationCode"
+                    },
+                    "name": "messageAuthenticationCode",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 79,
+                      "fieldKind": "alphanumeric",
+                      "start": 74
+                    },
+                    "children": [],
+                    "id": "0.2.2.8",
+                    "kind": "field",
+                    "label": "Reserved",
+                    "location": {
+                      "column": 74,
+                      "file": null,
+                      "length": 6,
+                      "line": 15,
+                      "offset": 1403,
+                      "ordinal": 8,
+                      "path": "FILE/5[2]/batchControl/reserved"
+                    },
+                    "name": "reserved",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "",
+                    "valueLength": 0,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 87,
+                      "fieldKind": "numeric",
+                      "start": 80
+                    },
+                    "children": [],
+                    "id": "0.2.2.9",
+                    "kind": "field",
+                    "label": "Originating DFI identification",
+                    "location": {
+                      "column": 80,
+                      "file": null,
+                      "length": 8,
+                      "line": 15,
+                      "offset": 1409,
+                      "ordinal": 9,
+                      "path": "FILE/5[2]/batchControl/originatingDfiIdentification"
+                    },
+                    "name": "originatingDfiIdentification",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "09100001",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "end": 94,
+                      "fieldKind": "numeric",
+                      "start": 88
+                    },
+                    "children": [],
+                    "id": "0.2.2.10",
+                    "kind": "field",
+                    "label": "Batch number",
+                    "location": {
+                      "column": 88,
+                      "file": null,
+                      "length": 7,
+                      "line": 15,
+                      "offset": 1417,
+                      "ordinal": 10,
+                      "path": "FILE/5[2]/batchControl/batchNumber"
+                    },
+                    "name": "batchNumber",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "0000002",
+                    "valueLength": 7,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.2.2",
+                "kind": "record",
+                "label": "Batch control",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 94,
+                  "line": 15,
+                  "offset": 1330,
+                  "ordinal": 2,
+                  "path": "FILE/5[2]/batchControl"
+                },
+                "name": "batchControl",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "batch",
+            "label": "Batch 0000002 (CCD)",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 94,
+              "line": 12,
+              "offset": 1045,
+              "ordinal": 2,
+              "path": "FILE/5[2]"
+            },
+            "name": "CCD",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "recordTypeCode": "9"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "end": 1,
+                  "fieldKind": "numeric",
+                  "start": 1
+                },
+                "children": [],
+                "id": "0.3.0",
+                "kind": "field",
+                "label": "Record type code",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 1,
+                  "line": 16,
+                  "offset": 1425,
+                  "ordinal": 0,
+                  "path": "FILE/fileControl/recordTypeCode"
+                },
+                "name": "recordTypeCode",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "9",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 7,
+                  "fieldKind": "numeric",
+                  "start": 2
+                },
+                "children": [],
+                "id": "0.3.1",
+                "kind": "field",
+                "label": "Batch count",
+                "location": {
+                  "column": 2,
+                  "file": null,
+                  "length": 6,
+                  "line": 16,
+                  "offset": 1426,
+                  "ordinal": 1,
+                  "path": "FILE/fileControl/batchCount"
+                },
+                "name": "batchCount",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "000002",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 13,
+                  "fieldKind": "numeric",
+                  "start": 8
+                },
+                "children": [],
+                "id": "0.3.2",
+                "kind": "field",
+                "label": "Block count",
+                "location": {
+                  "column": 8,
+                  "file": null,
+                  "length": 6,
+                  "line": 16,
+                  "offset": 1432,
+                  "ordinal": 2,
+                  "path": "FILE/fileControl/blockCount"
+                },
+                "name": "blockCount",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "000002",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 21,
+                  "fieldKind": "numeric",
+                  "start": 14
+                },
+                "children": [],
+                "id": "0.3.3",
+                "kind": "field",
+                "label": "Entry/addenda count",
+                "location": {
+                  "column": 14,
+                  "file": null,
+                  "length": 8,
+                  "line": 16,
+                  "offset": 1438,
+                  "ordinal": 3,
+                  "path": "FILE/fileControl/entryAddendaCount"
+                },
+                "name": "entryAddendaCount",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "00000010",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 31,
+                  "fieldKind": "numeric",
+                  "start": 22
+                },
+                "children": [],
+                "id": "0.3.4",
+                "kind": "field",
+                "label": "Entry hash",
+                "location": {
+                  "column": 22,
+                  "file": null,
+                  "length": 10,
+                  "line": 16,
+                  "offset": 1446,
+                  "ordinal": 4,
+                  "path": "FILE/fileControl/entryHash"
+                },
+                "name": "entryHash",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "0057980361",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 43,
+                  "fieldKind": "amount",
+                  "start": 32
+                },
+                "children": [],
+                "id": "0.3.5",
+                "kind": "field",
+                "label": "Total debit entry dollar amount",
+                "location": {
+                  "column": 32,
+                  "file": null,
+                  "length": 12,
+                  "line": 16,
+                  "offset": 1456,
+                  "ordinal": 5,
+                  "path": "FILE/fileControl/totalDebitEntryDollarAmount"
+                },
+                "name": "totalDebitEntryDollarAmount",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "000001058992",
+                "valueLength": 12,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 55,
+                  "fieldKind": "amount",
+                  "start": 44
+                },
+                "children": [],
+                "id": "0.3.6",
+                "kind": "field",
+                "label": "Total credit entry dollar amount",
+                "location": {
+                  "column": 44,
+                  "file": null,
+                  "length": 12,
+                  "line": 16,
+                  "offset": 1468,
+                  "ordinal": 6,
+                  "path": "FILE/fileControl/totalCreditEntryDollarAmount"
+                },
+                "name": "totalCreditEntryDollarAmount",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "000002589739",
+                "valueLength": 12,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 94,
+                  "fieldKind": "alphanumeric",
+                  "start": 56
+                },
+                "children": [],
+                "id": "0.3.7",
+                "kind": "field",
+                "label": "Reserved",
+                "location": {
+                  "column": 56,
+                  "file": null,
+                  "length": 39,
+                  "line": 16,
+                  "offset": 1480,
+                  "ordinal": 7,
+                  "path": "FILE/fileControl/reserved"
+                },
+                "name": "reserved",
+                "ordinal": 7,
+                "redacted": false,
+                "value": "",
+                "valueLength": 0,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.3",
+            "kind": "record",
+            "label": "File control",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 94,
+              "line": 16,
+              "offset": 1425,
+              "ordinal": 3,
+              "path": "FILE/fileControl"
+            },
+            "name": "fileControl",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "file",
+        "label": "ACH file",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 94,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "FILE"
+        },
+        "name": "ACH",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

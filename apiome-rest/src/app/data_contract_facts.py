@@ -109,6 +109,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "jtd",
         "k8s-crd",
         "kafka-connect",
+        "nacha",
         "relaxng",
         "sample",
         "sql-ddl",

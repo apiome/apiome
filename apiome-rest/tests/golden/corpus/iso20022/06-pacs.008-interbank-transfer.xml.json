@@ -4,6 +4,18 @@
     "channels": [],
     "description": null,
     "extras": {
+      "format_profile": {
+        "engine": "iso20022",
+        "evidence": [
+          "The `<Document>` namespace names message definition pacs.008.001.08 (FI-to-FI customer credit transfer), which carries the SEPA Credit Transfer (SCT), interbank scheme."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "sepa",
+        "label": "SEPA",
+        "message_family": "pacs.008",
+        "message_id": "pacs.008.001.08",
+        "scheme": "SEPA Credit Transfer (SCT), interbank"
+      },
       "iso20022_business_element": "FIToFICstmrCdtTrf",
       "iso20022_message_id": "pacs.008.001.08",
       "iso20022_namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
@@ -1376,7 +1388,7 @@
     "confidence": 0.98,
     "format": "iso20022"
   },
-  "fingerprint": "sha256:bf431547a948df536e9a4cac2c34e8492a1d9ee771512cec5cb91e67a0e67a29",
+  "fingerprint": "sha256:00230dbf36d7e17a81a02b42ce44685b06dcb89f2eecfd42ecfa77ee0f519529",
   "lint": {
     "findings": 57,
     "grade": "F",

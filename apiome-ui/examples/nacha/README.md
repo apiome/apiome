@@ -3,8 +3,8 @@
 Fixtures for the ACH half of **FMT-6.6** ([#5450](https://github.com/apiome/apiome/issues/5450)). An
 ACH file is fixed-width: **every record is exactly 94 characters**, and the file is blocked at ten
 records with `9`-filler. The SEPA half of the same ticket lives in `sepa/`, because it routes to the
-shipped ISO 20022 adapter rather than to a new parser. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+shipped ISO 20022 adapter rather than to a new parser. Entries run through the `nacha` adapter
+(`apiome-rest/src/app/nacha_import_source.py`).
 
 **Detection marker.** A first line of exactly 94 characters beginning `1` with `094` at columns 34-36
 and `10` (blocking factor) at 37-38, followed by `5`/`6`/`8`/`9` record types.

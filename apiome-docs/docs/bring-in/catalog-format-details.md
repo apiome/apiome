@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -262,6 +262,30 @@ For SWIFT MT sources ([how to import one](./swift-mt-import.md)) the tab renders
 - **Warnings**: `swift.mx_correspondence_note` states the correspondence and its disclaimer —
   it is a note, not a conversion; `swift.field_not_well_formed` and
   `swift.field_not_in_catalogue` name fields kept as lines.
+
+## The NACHA ACH analysis
+
+For NACHA ACH files ([how to import one](./nacha-sepa-import.md)) the tab renders **file → batch →
+entry → addenda**, with the file header and file control, and each batch's header and control, as
+**record** rows beside them. Every record and every field carries the exact line, offset and length
+it was cut from.
+
+- **The file row** shows the creation date and time, **fileIdModifier**, **recordSize** (`094`),
+  **blockingFactor** (`10`), **batchCount**, **recordCount** and **paddingRecords**, and
+  **operatingRulesConsulted** `false`.
+- **The batch row** shows **batchNumber**, **serviceClassCode**, **standardEntryClassCode** (`PPD`,
+  `CCD`, `WEB`…), **companyEntryDescription**, **effectiveEntryDate**, **entryCount** and
+  **addendaCount**.
+- **The entry row** shows **transactionCode**, **direction** (`credit` or `debit`), **prenote**,
+  **addendaRecordIndicator**, **addendaCount**, **traceNumber** and **checkDigitValid** (the routing
+  number's check digit, recomputed). Its fields — account number, amount, name — are values.
+- **Control totals**: every total the batch control and file control declare sits as
+  **declared…** beside **observed…** — entry/addenda count, entry hash, total debit, total credit,
+  and for the file batch count and block count — with **controlTotalsConsistent**. Each
+  disagreement is a warning (`nacha.control_total_mismatch`); the file still imports.
+- **Other warnings**: `nacha.addenda_indicator_mismatch` (an entry's indicator disagrees with the
+  addenda after it), `nacha.addenda_layout_not_modelled` (an addenda type other than 05, 98 or 99,
+  kept whole) and `nacha.iat_layout_not_modelled` (an IAT batch, read with the domestic layouts).
 
 ## The COBOL copybook inspector
 

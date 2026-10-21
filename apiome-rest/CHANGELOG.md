@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.410.0] - 2026-10-20
+
+### Added
+- **NACHA ACH and SEPA payment-file import (#5450, FMT-6.6)**: the US and EU payment-batch formats.
+  - The new **`nacha`** import source (formats `nacha` / `ach`; `.ach` / `.nacha` / `.txt`; file / URL / paste /
+    fileset). `app/nacha_records.py` holds the record-type-driven field maps (file header `1`, batch header `5`,
+    entry detail `6`, addenda `7` types 05 / 98 / 99 with a whole-content fallback, batch control `8`, file control
+    `9`), positions as the Operating Rules print them. `app/nacha_parser.py` reads one 94-character record per line
+    (or an unbroken line cut into records) into file → batch → entry → addenda. Refusals: no ACH file header
+    `FORMAT_MISMATCH`, a record that is not 94 characters or has an unknown type `INPUT_MALFORMED` (a short last
+    record before the file control, or EOF inside a batch / before the file control, `INPUT_TRUNCATED`), a batch
+    with no entries, an orphan addenda, records out of order or content after the file control
+    `INPUT_SEMANTIC_INVALID`; encoding faults are left code-less.
+  - Declared versus observed control totals (`app/nacha_controls.py`), following the X12 control-total contract:
+    entry/addenda count, entry hash (sum of receiving DFI routing prefixes, rightmost ten digits), total debit and
+    total credit for every batch control, plus batch count and block count for the file control. A disagreement is
+    recorded and warned (`nacha.control_total_mismatch`, info), never rejected.
+  - `app/nacha_normalizer.py` models batches and entries as native structure — `AchFile` → `Batch` →
+    `EntryDetail`, one record type per layout and per addenda type present, field positions in extras — with no
+    payload value; extras `nacha_file`, `nacha_sec_codes`, `nacha_batches`, `nacha_control_totals`.
+    `app/nacha_analysis.py` (analyzer `nacha@1.0.0`) describes every record and field with byte positions, entry
+    direction / prenote / check-digit validity, and the declared / observed totals on batch and file nodes.
+  - **SEPA routes to the ISO 20022 adapter** (`app/iso20022_sepa.py`): `pain.001` / `pain.008` / `pacs.008` are
+    recognised from the `<Document>` namespace as the `sepa` profile, recorded under canonical extras
+    `format_profile` (lifted to `format_metadata.formatProfile`) with the message id, and named in the detection
+    reason. A payment block with no transaction is `INPUT_SEMANTIC_INVALID`; a message-definition version above the
+    recognised ceiling (pain.001 ≤ .12, pain.008 ≤ .11, pacs.008 ≤ .13) is `FORMAT_VERSION_UNSUPPORTED`.
+  - Capability registry `nacha` seed (registry version `20`) and version coverage for `nacha` and the SEPA families;
+    the `nacha/` corpus is activated and the `sepa/` corpus re-pointed at `iso20022`, with canonical, analysis and
+    conversion goldens and matrix rows.
+
+### Changed
+- The ISO 20022 parser reports XML that stops partway through a tag or value as `INPUT_TRUNCATED` (it was
+  code-less, classified `INPUT_MALFORMED`); `Iso20022ParseError` gained a `code`. A document that ends on a complete
+  tag and only lacks its closing elements stays `INPUT_MALFORMED`.
+
 ## [1.409.0] - 2026-10-20
 
 ### Added

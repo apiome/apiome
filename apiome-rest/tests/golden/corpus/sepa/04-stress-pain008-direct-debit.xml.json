@@ -1,0 +1,3057 @@
+{
+  "adapter": "iso20022",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "iso20022",
+        "evidence": [
+          "The `<Document>` namespace names message definition pain.008.001.08 (Customer direct debit initiation), which carries the SEPA Direct Debit (SDD Core / B2B) scheme."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "sepa",
+        "label": "SEPA",
+        "message_family": "pain.008",
+        "message_id": "pain.008.001.08",
+        "scheme": "SEPA Direct Debit (SDD Core / B2B)"
+      },
+      "iso20022_business_element": "CstmrDrctDbtInitn",
+      "iso20022_message_id": "pain.008.001.08",
+      "iso20022_namespace": "urn:iso:std:iso:20022:tech:xsd:pain.008.001.08",
+      "iso20022_tree": {
+        "attributes": [],
+        "children": [
+          {
+            "attributes": [],
+            "children": [
+              {
+                "attributes": [],
+                "children": [
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "MsgId",
+                    "text": "DD-20260819-0001"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "CreDtTm",
+                    "text": "2026-08-19T09:00:00"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "NbOfTxs",
+                    "text": "4"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "CtrlSum",
+                    "text": "487.45"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "Nm",
+                        "text": "Example Utilities NV"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "Id",
+                                    "text": "NL98ZZZ123456780000"
+                                  }
+                                ],
+                                "tag": "Othr",
+                                "text": null
+                              }
+                            ],
+                            "tag": "OrgId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "Id",
+                        "text": null
+                      }
+                    ],
+                    "tag": "InitgPty",
+                    "text": null
+                  }
+                ],
+                "tag": "GrpHdr",
+                "text": null
+              },
+              {
+                "attributes": [],
+                "children": [
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "PmtInfId",
+                    "text": "DD-FRST-2026-08"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "PmtMtd",
+                    "text": "DD"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "BtchBookg",
+                    "text": "false"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "NbOfTxs",
+                    "text": "2"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "CtrlSum",
+                    "text": "235.20"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Cd",
+                            "text": "SEPA"
+                          }
+                        ],
+                        "tag": "SvcLvl",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Cd",
+                            "text": "CORE"
+                          }
+                        ],
+                        "tag": "LclInstrm",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "SeqTp",
+                        "text": "FRST"
+                      }
+                    ],
+                    "tag": "PmtTpInf",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "ReqdColltnDt",
+                    "text": "2026-08-26"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "Nm",
+                        "text": "Example Utilities NV"
+                      }
+                    ],
+                    "tag": "Cdtr",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "IBAN",
+                            "text": "NL91ABNA0417164300"
+                          }
+                        ],
+                        "tag": "Id",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrAcct",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "BICFI",
+                            "text": "ABNANL2A"
+                          }
+                        ],
+                        "tag": "FinInstnId",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrAgt",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "ChrgBr",
+                    "text": "SLEV"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "Id",
+                                    "text": "NL98ZZZ123456780000"
+                                  },
+                                  {
+                                    "attributes": [],
+                                    "children": [
+                                      {
+                                        "attributes": [],
+                                        "children": [],
+                                        "tag": "Prtry",
+                                        "text": "SEPA"
+                                      }
+                                    ],
+                                    "tag": "SchmeNm",
+                                    "text": null
+                                  }
+                                ],
+                                "tag": "Othr",
+                                "text": null
+                              }
+                            ],
+                            "tag": "PrvtId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "Id",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrSchmeId",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "EndToEndId",
+                            "text": "DD-0001"
+                          }
+                        ],
+                        "tag": "PmtId",
+                        "text": null
+                      },
+                      {
+                        "attributes": [
+                          [
+                            "Ccy",
+                            "EUR"
+                          ]
+                        ],
+                        "children": [],
+                        "tag": "InstdAmt",
+                        "text": "120.45"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "MndtId",
+                                "text": "MND-0000114"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "DtOfSgntr",
+                                "text": "2026-07-01"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "AmdmntInd",
+                                "text": "false"
+                              }
+                            ],
+                            "tag": "MndtRltdInf",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DrctDbtTx",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "BICFI",
+                                "text": "INGBNL2A"
+                              }
+                            ],
+                            "tag": "FinInstnId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAgt",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Nm",
+                            "text": "Sample Pat"
+                          }
+                        ],
+                        "tag": "Dbtr",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "IBAN",
+                                "text": "NL69INGB0123456789"
+                              }
+                            ],
+                            "tag": "Id",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAcct",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Ustrd",
+                            "text": "Electricity August 2026"
+                          }
+                        ],
+                        "tag": "RmtInf",
+                        "text": null
+                      }
+                    ],
+                    "tag": "DrctDbtTxInf",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "EndToEndId",
+                            "text": "DD-0002"
+                          }
+                        ],
+                        "tag": "PmtId",
+                        "text": null
+                      },
+                      {
+                        "attributes": [
+                          [
+                            "Ccy",
+                            "EUR"
+                          ]
+                        ],
+                        "children": [],
+                        "tag": "InstdAmt",
+                        "text": "114.75"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "MndtId",
+                                "text": "MND-0000115"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "DtOfSgntr",
+                                "text": "2026-07-02"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "AmdmntInd",
+                                "text": "true"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "OrgnlMndtId",
+                                    "text": "MND-0000099"
+                                  },
+                                  {
+                                    "attributes": [],
+                                    "children": [
+                                      {
+                                        "attributes": [],
+                                        "children": [
+                                          {
+                                            "attributes": [],
+                                            "children": [],
+                                            "tag": "IBAN",
+                                            "text": "NL69INGB0999999999"
+                                          }
+                                        ],
+                                        "tag": "Id",
+                                        "text": null
+                                      }
+                                    ],
+                                    "tag": "OrgnlDbtrAcct",
+                                    "text": null
+                                  }
+                                ],
+                                "tag": "AmdmntInfDtls",
+                                "text": null
+                              }
+                            ],
+                            "tag": "MndtRltdInf",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DrctDbtTx",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "BICFI",
+                                "text": "INGBNL2A"
+                              }
+                            ],
+                            "tag": "FinInstnId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAgt",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Nm",
+                            "text": "Sample Sam"
+                          }
+                        ],
+                        "tag": "Dbtr",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "IBAN",
+                                "text": "NL69INGB0123456790"
+                              }
+                            ],
+                            "tag": "Id",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAcct",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Ustrd",
+                            "text": "Electricity August 2026"
+                          }
+                        ],
+                        "tag": "RmtInf",
+                        "text": null
+                      }
+                    ],
+                    "tag": "DrctDbtTxInf",
+                    "text": null
+                  }
+                ],
+                "tag": "PmtInf",
+                "text": null
+              },
+              {
+                "attributes": [],
+                "children": [
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "PmtInfId",
+                    "text": "DD-RCUR-2026-08"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "PmtMtd",
+                    "text": "DD"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "NbOfTxs",
+                    "text": "2"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "CtrlSum",
+                    "text": "252.25"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Cd",
+                            "text": "SEPA"
+                          }
+                        ],
+                        "tag": "SvcLvl",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Cd",
+                            "text": "B2B"
+                          }
+                        ],
+                        "tag": "LclInstrm",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "SeqTp",
+                        "text": "RCUR"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Cd",
+                            "text": "SUPP"
+                          }
+                        ],
+                        "tag": "CtgyPurp",
+                        "text": null
+                      }
+                    ],
+                    "tag": "PmtTpInf",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "ReqdColltnDt",
+                    "text": "2026-08-26"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "Nm",
+                        "text": "Example Utilities NV"
+                      }
+                    ],
+                    "tag": "Cdtr",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "IBAN",
+                            "text": "NL91ABNA0417164300"
+                          }
+                        ],
+                        "tag": "Id",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrAcct",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "BICFI",
+                            "text": "ABNANL2A"
+                          }
+                        ],
+                        "tag": "FinInstnId",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrAgt",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [],
+                    "tag": "ChrgBr",
+                    "text": "SLEV"
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "Id",
+                                    "text": "NL98ZZZ123456780000"
+                                  },
+                                  {
+                                    "attributes": [],
+                                    "children": [
+                                      {
+                                        "attributes": [],
+                                        "children": [],
+                                        "tag": "Prtry",
+                                        "text": "SEPA"
+                                      }
+                                    ],
+                                    "tag": "SchmeNm",
+                                    "text": null
+                                  }
+                                ],
+                                "tag": "Othr",
+                                "text": null
+                              }
+                            ],
+                            "tag": "PrvtId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "Id",
+                        "text": null
+                      }
+                    ],
+                    "tag": "CdtrSchmeId",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "InstrId",
+                            "text": "I-0003"
+                          },
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "EndToEndId",
+                            "text": "DD-0003"
+                          }
+                        ],
+                        "tag": "PmtId",
+                        "text": null
+                      },
+                      {
+                        "attributes": [
+                          [
+                            "Ccy",
+                            "EUR"
+                          ]
+                        ],
+                        "children": [],
+                        "tag": "InstdAmt",
+                        "text": "190.00"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [],
+                        "tag": "ChrgBr",
+                        "text": "SLEV"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "MndtId",
+                                "text": "MND-B2B-0007"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "DtOfSgntr",
+                                "text": "2025-01-15"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "AmdmntInd",
+                                "text": "false"
+                              }
+                            ],
+                            "tag": "MndtRltdInf",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DrctDbtTx",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "BICFI",
+                                "text": "RABONL2U"
+                              }
+                            ],
+                            "tag": "FinInstnId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAgt",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Nm",
+                            "text": "Acme Retail BV"
+                          },
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "TwnNm",
+                                "text": "Rotterdam"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "Ctry",
+                                "text": "NL"
+                              }
+                            ],
+                            "tag": "PstlAdr",
+                            "text": null
+                          }
+                        ],
+                        "tag": "Dbtr",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "IBAN",
+                                "text": "NL44RABO0123456789"
+                              }
+                            ],
+                            "tag": "Id",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAcct",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [
+                                      {
+                                        "attributes": [],
+                                        "children": [
+                                          {
+                                            "attributes": [],
+                                            "children": [],
+                                            "tag": "Cd",
+                                            "text": "CINV"
+                                          }
+                                        ],
+                                        "tag": "CdOrPrtry",
+                                        "text": null
+                                      }
+                                    ],
+                                    "tag": "Tp",
+                                    "text": null
+                                  },
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "Nb",
+                                    "text": "INV-2026-4411"
+                                  }
+                                ],
+                                "tag": "RfrdDocInf",
+                                "text": null
+                              }
+                            ],
+                            "tag": "Strd",
+                            "text": null
+                          }
+                        ],
+                        "tag": "RmtInf",
+                        "text": null
+                      }
+                    ],
+                    "tag": "DrctDbtTxInf",
+                    "text": null
+                  },
+                  {
+                    "attributes": [],
+                    "children": [
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "EndToEndId",
+                            "text": "DD-0004"
+                          }
+                        ],
+                        "tag": "PmtId",
+                        "text": null
+                      },
+                      {
+                        "attributes": [
+                          [
+                            "Ccy",
+                            "EUR"
+                          ]
+                        ],
+                        "children": [],
+                        "tag": "InstdAmt",
+                        "text": "62.25"
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "MndtId",
+                                "text": "MND-B2B-0008"
+                              },
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "DtOfSgntr",
+                                "text": "2025-03-02"
+                              }
+                            ],
+                            "tag": "MndtRltdInf",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DrctDbtTx",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [
+                                  {
+                                    "attributes": [],
+                                    "children": [],
+                                    "tag": "Id",
+                                    "text": "NOTPROVIDED"
+                                  }
+                                ],
+                                "tag": "Othr",
+                                "text": null
+                              }
+                            ],
+                            "tag": "FinInstnId",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAgt",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Nm",
+                            "text": "Small Trader VOF"
+                          }
+                        ],
+                        "tag": "Dbtr",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [
+                              {
+                                "attributes": [],
+                                "children": [],
+                                "tag": "IBAN",
+                                "text": "NL18RABO0123459876"
+                              }
+                            ],
+                            "tag": "Id",
+                            "text": null
+                          }
+                        ],
+                        "tag": "DbtrAcct",
+                        "text": null
+                      },
+                      {
+                        "attributes": [],
+                        "children": [
+                          {
+                            "attributes": [],
+                            "children": [],
+                            "tag": "Ustrd",
+                            "text": "Monthly service fee"
+                          }
+                        ],
+                        "tag": "RmtInf",
+                        "text": null
+                      }
+                    ],
+                    "tag": "DrctDbtTxInf",
+                    "text": null
+                  }
+                ],
+                "tag": "PmtInf",
+                "text": null
+              }
+            ],
+            "tag": "CstmrDrctDbtInitn",
+            "text": null
+          }
+        ],
+        "tag": "Document",
+        "text": null
+      }
+    },
+    "format": "iso20022",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CstmrDrctDbtInitn (pain.008.001.08)",
+      "namespace": "pain.008.001.08"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CstmrDrctDbtInitn (pain.008.001.08)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.AmdmntInfDtls.OrgnlDbtrAcct",
+            "name": "OrgnlDbtrAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.OrgnlDbtrAcct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "MND-0000099",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.AmdmntInfDtls.OrgnlMndtId",
+            "name": "OrgnlMndtId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.AmdmntInfDtls",
+        "key_type": null,
+        "kind": "record",
+        "name": "AmdmntInfDtls",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "CINV",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CdOrPrtry.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CdOrPrtry",
+        "key_type": null,
+        "kind": "record",
+        "name": "CdOrPrtry",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "Example Utilities NV",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Cdtr.Nm",
+            "name": "Nm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Cdtr",
+        "key_type": null,
+        "kind": "record",
+        "name": "Cdtr",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CdtrAcct.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Id",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CdtrAcct",
+        "key_type": null,
+        "kind": "record",
+        "name": "CdtrAcct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CdtrAgt.FinInstnId",
+            "name": "FinInstnId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.FinInstnId",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CdtrAgt",
+        "key_type": null,
+        "kind": "record",
+        "name": "CdtrAgt",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CdtrSchmeId.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Id",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CdtrSchmeId",
+        "key_type": null,
+        "kind": "record",
+        "name": "CdtrSchmeId",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CstmrDrctDbtInitn.GrpHdr",
+            "name": "GrpHdr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.GrpHdr",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.CstmrDrctDbtInitn.PmtInf",
+            "name": "PmtInf",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pain.008.001.08.PmtInf",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.CstmrDrctDbtInitn.PmtInf",
+            "name": "PmtInf",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pain.008.001.08.PmtInf",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CstmrDrctDbtInitn",
+        "key_type": null,
+        "kind": "record",
+        "name": "CstmrDrctDbtInitn",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SUPP",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.CtgyPurp.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.CtgyPurp",
+        "key_type": null,
+        "kind": "record",
+        "name": "CtgyPurp",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "Sample Pat",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Dbtr.Nm",
+            "name": "Nm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Dbtr",
+        "key_type": null,
+        "kind": "record",
+        "name": "Dbtr",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.DbtrAcct.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Id",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.DbtrAcct",
+        "key_type": null,
+        "kind": "record",
+        "name": "DbtrAcct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.DbtrAgt.FinInstnId",
+            "name": "FinInstnId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.FinInstnId",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.DbtrAgt",
+        "key_type": null,
+        "kind": "record",
+        "name": "DbtrAgt",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Document.CstmrDrctDbtInitn",
+            "name": "CstmrDrctDbtInitn",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.CstmrDrctDbtInitn",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Document",
+        "key_type": null,
+        "kind": "record",
+        "name": "Document",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.DrctDbtTx.MndtRltdInf",
+            "name": "MndtRltdInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.MndtRltdInf",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.DrctDbtTx",
+        "key_type": null,
+        "kind": "record",
+        "name": "DrctDbtTx",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 5,
+            "key": "pain.008.001.08.DrctDbtTxInf.Dbtr",
+            "name": "Dbtr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Dbtr",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 6,
+            "key": "pain.008.001.08.DrctDbtTxInf.DbtrAcct",
+            "name": "DbtrAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.DbtrAcct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 4,
+            "key": "pain.008.001.08.DrctDbtTxInf.DbtrAgt",
+            "name": "DbtrAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.DbtrAgt",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.DrctDbtTxInf.DrctDbtTx",
+            "name": "DrctDbtTx",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.DrctDbtTx",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "120.45",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [
+                [
+                  "Ccy",
+                  "EUR"
+                ]
+              ],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.DrctDbtTxInf.InstdAmt",
+            "name": "InstdAmt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.DrctDbtTxInf.PmtId",
+            "name": "PmtId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.PmtId",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 7,
+            "key": "pain.008.001.08.DrctDbtTxInf.RmtInf",
+            "name": "RmtInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.RmtInf",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.DrctDbtTxInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "DrctDbtTxInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "ABNANL2A",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.FinInstnId.BICFI",
+            "name": "BICFI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.FinInstnId",
+        "key_type": null,
+        "kind": "record",
+        "name": "FinInstnId",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "2026-08-19T09:00:00",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.GrpHdr.CreDtTm",
+            "name": "CreDtTm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "487.45",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 4,
+            "key": "pain.008.001.08.GrpHdr.CtrlSum",
+            "name": "CtrlSum",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 5,
+            "key": "pain.008.001.08.GrpHdr.InitgPty",
+            "name": "InitgPty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.InitgPty",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DD-20260819-0001",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.GrpHdr.MsgId",
+            "name": "MsgId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "4",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.GrpHdr.NbOfTxs",
+            "name": "NbOfTxs",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.GrpHdr",
+        "key_type": null,
+        "kind": "record",
+        "name": "GrpHdr",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Id.OrgId",
+            "name": "OrgId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.OrgId",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Id",
+        "key_type": null,
+        "kind": "record",
+        "name": "Id",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.InitgPty.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Id",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Example Utilities NV",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.InitgPty.Nm",
+            "name": "Nm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.InitgPty",
+        "key_type": null,
+        "kind": "record",
+        "name": "InitgPty",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "CORE",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.LclInstrm.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.LclInstrm",
+        "key_type": null,
+        "kind": "record",
+        "name": "LclInstrm",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "false",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.MndtRltdInf.AmdmntInd",
+            "name": "AmdmntInd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2026-07-01",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.MndtRltdInf.DtOfSgntr",
+            "name": "DtOfSgntr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "MND-0000114",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.MndtRltdInf.MndtId",
+            "name": "MndtId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.MndtRltdInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "MndtRltdInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.OrgId.Othr",
+            "name": "Othr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Othr",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.OrgId",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrgId",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.OrgnlDbtrAcct.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Id",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.OrgnlDbtrAcct",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrgnlDbtrAcct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "NL98ZZZ123456780000",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Othr.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Othr",
+        "key_type": null,
+        "kind": "record",
+        "name": "Othr",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "DD-0001",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.PmtId.EndToEndId",
+            "name": "EndToEndId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.PmtId",
+        "key_type": null,
+        "kind": "record",
+        "name": "PmtId",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "false",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.PmtInf.BtchBookg",
+            "name": "BtchBookg",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 8,
+            "key": "pain.008.001.08.PmtInf.Cdtr",
+            "name": "Cdtr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Cdtr",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 9,
+            "key": "pain.008.001.08.PmtInf.CdtrAcct",
+            "name": "CdtrAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.CdtrAcct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 10,
+            "key": "pain.008.001.08.PmtInf.CdtrAgt",
+            "name": "CdtrAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.CdtrAgt",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 12,
+            "key": "pain.008.001.08.PmtInf.CdtrSchmeId",
+            "name": "CdtrSchmeId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.CdtrSchmeId",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SLEV",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 11,
+            "key": "pain.008.001.08.PmtInf.ChrgBr",
+            "name": "ChrgBr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "235.20",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 5,
+            "key": "pain.008.001.08.PmtInf.CtrlSum",
+            "name": "CtrlSum",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 13,
+            "key": "pain.008.001.08.PmtInf.DrctDbtTxInf",
+            "name": "DrctDbtTxInf",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pain.008.001.08.DrctDbtTxInf",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 14,
+            "key": "pain.008.001.08.PmtInf.DrctDbtTxInf",
+            "name": "DrctDbtTxInf",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pain.008.001.08.DrctDbtTxInf",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 4,
+            "key": "pain.008.001.08.PmtInf.NbOfTxs",
+            "name": "NbOfTxs",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DD-FRST-2026-08",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.PmtInf.PmtInfId",
+            "name": "PmtInfId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DD",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.PmtInf.PmtMtd",
+            "name": "PmtMtd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 6,
+            "key": "pain.008.001.08.PmtInf.PmtTpInf",
+            "name": "PmtTpInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.PmtTpInf",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2026-08-26",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 7,
+            "key": "pain.008.001.08.PmtInf.ReqdColltnDt",
+            "name": "ReqdColltnDt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.PmtInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "PmtInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.PmtTpInf.LclInstrm",
+            "name": "LclInstrm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.LclInstrm",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "FRST",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 3,
+            "key": "pain.008.001.08.PmtTpInf.SeqTp",
+            "name": "SeqTp",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.PmtTpInf.SvcLvl",
+            "name": "SvcLvl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.SvcLvl",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.PmtTpInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "PmtTpInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.PrvtId.Othr",
+            "name": "Othr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Othr",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.PrvtId",
+        "key_type": null,
+        "kind": "record",
+        "name": "PrvtId",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "NL",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.PstlAdr.Ctry",
+            "name": "Ctry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Rotterdam",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.PstlAdr.TwnNm",
+            "name": "TwnNm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.PstlAdr",
+        "key_type": null,
+        "kind": "record",
+        "name": "PstlAdr",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "INV-2026-4411",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 2,
+            "key": "pain.008.001.08.RfrdDocInf.Nb",
+            "name": "Nb",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.RfrdDocInf.Tp",
+            "name": "Tp",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.Tp",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.RfrdDocInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "RfrdDocInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "Electricity August 2026",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.RmtInf.Ustrd",
+            "name": "Ustrd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.RmtInf",
+        "key_type": null,
+        "kind": "record",
+        "name": "RmtInf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SEPA",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.SchmeNm.Prtry",
+            "name": "Prtry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.SchmeNm",
+        "key_type": null,
+        "kind": "record",
+        "name": "SchmeNm",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Strd.RfrdDocInf",
+            "name": "RfrdDocInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.RfrdDocInf",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Strd",
+        "key_type": null,
+        "kind": "record",
+        "name": "Strd",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SEPA",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_attributes": [],
+              "iso20022_kind": "leaf"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.SvcLvl.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.SvcLvl",
+        "key_type": null,
+        "kind": "record",
+        "name": "SvcLvl",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "iso20022_kind": "complex"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "iso20022_kind": "element"
+            },
+            "field_number": 1,
+            "key": "pain.008.001.08.Tp.CdOrPrtry",
+            "name": "CdOrPrtry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pain.008.001.08.CdOrPrtry",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pain.008.001.08.Tp",
+        "key_type": null,
+        "kind": "record",
+        "name": "Tp",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "sepa/04-stress-pain008-direct-debit.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 34
+  },
+  "detection": {
+    "confidence": 0.98,
+    "format": "iso20022"
+  },
+  "fingerprint": "sha256:b7255be7d8dd170e5a96a807a7f5b6feecaad849a3e5eee74f6d5dd7ceb901ad",
+  "lint": {
+    "findings": 102,
+    "grade": "F",
+    "report_fingerprint": "2c629f657b63eaa318b503632ef21721b09a039a69359a33e938e9b74886fb08",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 68,
+      "warning": 34
+    }
+  },
+  "snapshot_version": 1
+}

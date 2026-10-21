@@ -719,6 +719,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['stx', 'ordhdr', 'invfil', 'uk retail', 'eancom', 'odette', 'edi'],
   },
   {
+    id: 'nacha-sepa-import',
+    title: 'Import NACHA ACH and SEPA payment files',
+    summary: 'Catalog ACH batches with declared versus observed control totals, and route SEPA files to ISO 20022.',
+    page: 'apiome-docs/docs/bring-in/nacha-sepa-import.md',
+    section: 'reference',
+    keywords: ['ppd', 'ccd', 'pain.001', 'pain.008', 'pacs.008', 'entry hash', 'iso 20022', 'fixed-width'],
+  },
+  {
     id: 'hl7v3-cda-import',
     title: 'Import HL7 v3 / CDA documents',
     summary: 'Catalog CCDs, discharge summaries and other C-CDA clinical documents.',

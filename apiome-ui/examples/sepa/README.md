@@ -5,9 +5,13 @@ SEPA rides ISO 20022, which Apiome **already reads**, so the ticket's scope here
 routing*: a `pain.001` / `pain.008` / `pacs.008` document must route to the `iso20022` adapter with
 its **message identifier recorded**, rather than to a new parser.
 
-These entries therefore carry `adapter_key: null` today — they are the evidence the routing rule needs,
-not a claim that a separate SEPA adapter should exist. When FMT-6.6 lands, the expected move is to
-re-point them at `iso20022` (or fold the directory into `iso20022/`) rather than to register `sepa`.
+Since FMT-6.6 these entries carry `adapter_key: iso20022`: the directory stays separate as a SEPA
+*profile* of ISO 20022 (as `protobuf-editions/` is to `grpc`), not as a separate adapter. A
+`pain.001` / `pain.008` / `pacs.008` document is recorded with the SEPA `format_profile` and its
+message id (`apiome-rest/src/app/iso20022_sepa.py`); `camt.053` and `pain.002` import as plain ISO
+20022. The negatives exercise the two structural rules the profile applies — a payment block with no
+transactions, and a message-definition version above the recognised ceiling — plus the parser's
+truncation rule.
 
 **Detection marker.** `<Document xmlns="urn:iso:std:iso:20022:tech:xsd:<msgid>">`, where `<msgid>` is
 the identifier that must be recorded: `pain.001.001.09`, `pain.008.001.08`, `pacs.008.001.08`,

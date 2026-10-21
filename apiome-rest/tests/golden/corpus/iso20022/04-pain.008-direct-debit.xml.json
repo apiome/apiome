@@ -4,6 +4,18 @@
     "channels": [],
     "description": null,
     "extras": {
+      "format_profile": {
+        "engine": "iso20022",
+        "evidence": [
+          "The `<Document>` namespace names message definition pain.008.001.08 (Customer direct debit initiation), which carries the SEPA Direct Debit (SDD Core / B2B) scheme."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "sepa",
+        "label": "SEPA",
+        "message_family": "pain.008",
+        "message_id": "pain.008.001.08",
+        "scheme": "SEPA Direct Debit (SDD Core / B2B)"
+      },
       "iso20022_business_element": "CstmrDrctDbtInitn",
       "iso20022_message_id": "pain.008.001.08",
       "iso20022_namespace": "urn:iso:std:iso:20022:tech:xsd:pain.008.001.08",
@@ -2063,7 +2075,7 @@
     "confidence": 0.98,
     "format": "iso20022"
   },
-  "fingerprint": "sha256:80c00386ba598b79894fffa8cbcb55a2b12c72885bc8d1ff4bddbedc735e37b1",
+  "fingerprint": "sha256:5a65ec155f895fd5783cd6e337cb9353e5ce872c227c2770a30b46f060865975",
   "lint": {
     "findings": 75,
     "grade": "F",
