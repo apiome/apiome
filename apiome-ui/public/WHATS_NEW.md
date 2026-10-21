@@ -99,6 +99,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Versions: a **Federation** switch on the **Sources** tab chooses whether repository imports merge into one API or replace it, and **Merge history** (also a repository's **Sync history** on its **Imports** tab) lists every merge, conflict and replacement — open a conflict to compare both files' definitions line by line
   - Versions: the compatibility, what’s-new and deprecation banners are now one **Status** row of chips — click a chip to open its detail and actions — so the version list starts higher on the page
   - Home: a **Time spent** panel shows your own active time per project over the last 7 or 30 days — counted while a project is open on Versions and you are using the page, and visible only to you
+  - Versions: **Heatmap** in a version's **Actions** menu shows its classes as tiles colored by complexity, recent change, how many classes reference them, or documentation completeness
   - Favorite projects: your pinned projects are listed in a **Favorite projects** card on Profile and lead the command palette (⌘K) under **Favorites**
   - Home: pin up to 8 projects with **Pin to Home** in a project's **⋯** menu on Projects; they stay at the top of Home under **Pinned projects**, where each row can be unpinned
   - Home: a new **Recently viewed** panel lists the projects you last opened in this workspace, with the latest version, when you viewed it and how often — kept per person, so it follows you across devices

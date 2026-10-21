@@ -16483,6 +16483,107 @@ button.tfa-reset-notice__close > svg {
   min-block-size: 15rem;
 }
 
+/* ---- The class heatmap dialog (#560) ------------------------------------- */
+/* One tile per class; `data-heat` 0–4 picks its warmth. The ramp is mixed from
+   the warn and danger tokens into the surface, capped so `--fg` text keeps its
+   contrast in both themes. Level 0 is the inset well, i.e. "nothing here". */
+.vdlg-heatmap {
+  gap: var(--space-3);
+}
+
+.vdlg-heatmap__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.vdlg-heatmap__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-heatmap__ramp {
+  display: inline-flex;
+  gap: calc(var(--space-1) / 2);
+}
+
+.vdlg-heatmap__swatch {
+  inline-size: 1rem;
+  block-size: 0.75rem;
+  border-radius: var(--r-sm);
+}
+
+.vdlg-heatmap__frame {
+  max-block-size: min(55vh, 30rem);
+  min-block-size: 12rem;
+  overflow: auto;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.vdlg-heatmap__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  list-style: none;
+}
+
+.vdlg-heatmap__tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg);
+}
+
+.vdlg-heatmap__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.vdlg-heatmap__value {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.vdlg-heatmap__tile[data-heat='0'],
+.vdlg-heatmap__swatch[data-heat='0'] {
+  background: var(--bg-inset);
+}
+
+.vdlg-heatmap__tile[data-heat='1'],
+.vdlg-heatmap__swatch[data-heat='1'] {
+  background: color-mix(in srgb, var(--warn) 14%, var(--bg-surface));
+}
+
+.vdlg-heatmap__tile[data-heat='2'],
+.vdlg-heatmap__swatch[data-heat='2'] {
+  background: color-mix(in srgb, var(--warn) 30%, var(--bg-surface));
+}
+
+.vdlg-heatmap__tile[data-heat='3'],
+.vdlg-heatmap__swatch[data-heat='3'] {
+  background: color-mix(in srgb, var(--danger) 26%, var(--bg-surface));
+}
+
+.vdlg-heatmap__tile[data-heat='4'],
+.vdlg-heatmap__swatch[data-heat='4'] {
+  background: color-mix(in srgb, var(--danger) 40%, var(--bg-surface));
+}
+
 /* ---- 4 · The canvas compare tab ----------------------------------------- */
 .vdlg-canvas {
   display: flex;

@@ -980,6 +980,7 @@ export function gitlikeAffordance(
 export type VersionRowMenuAction =
   | 'view'
   | 'export'
+  | 'heatmap'
   | 'compareWithCurrent'
   | 'relationshipGraph'
   | 'branchFrom'
@@ -1082,6 +1083,13 @@ export function versionRowMenuItems(
     gitlike: false,
     disabled: false,
     title: 'Convert this version to another API format (fidelity shown per target)',
+  });
+  items.push({
+    id: 'heatmap',
+    label: 'Heatmap',
+    gitlike: false,
+    disabled: false,
+    title: 'Classes colored by complexity, recent change, references or documentation',
   });
 
   const isHead = headRevisionId !== null && version.id === headRevisionId;

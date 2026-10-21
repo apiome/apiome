@@ -168,6 +168,7 @@ import {
   buildOpenApiSpecJsonForVersion,
   getClassesForVersion,
   getPropertiesForClass,
+  getPropertiesForClassesBatch,
   getTenantsAdministratedByUser
 } from '../../../../../lib/db/helper';
 import { coerceProjectMetadataRecord } from '@lib/project-metadata';
@@ -196,6 +197,8 @@ import { generateMigrationGuideMarkdownFromSummary } from '../../../../../lib/mi
 import { downloadMigrationGuidePdf } from '../../../utils/export-migration-guide-pdf';
 import { sanitizeFilenameSegment } from '../../../utils/filename-utils';
 import RelationshipGraphDialog from './RelationshipGraphDialog';
+import ClassHeatmapDialog from './ClassHeatmapDialog';
+import type { HeatmapClass } from '@/app/utils/class-heatmap';
 import VersionHistoryGraphPanel from './VersionHistoryGraphPanel';
 import ProjectConversionPanel from './ProjectConversionPanel';
 import ImportDialog from '../../../components/ade/dashboard/ImportDialog';
@@ -495,6 +498,11 @@ const Versions = () => {
   const [relationshipGraphVersion, setRelationshipGraphVersion] = useState<Version | null>(null);
   const [relationshipGraphClasses, setRelationshipGraphClasses] = useState<Array<{ id: string; name: string; properties?: Array<{ id: string; name: string; data: unknown }> }> | null>(null);
   const [isLoadingRelationshipGraph, setIsLoadingRelationshipGraph] = useState(false);
+  // Class heatmap (#560) — not git-like, so it is never flag-gated.
+  const [showHeatmapDialog, setShowHeatmapDialog] = useState(false);
+  const [heatmapVersion, setHeatmapVersion] = useState<Version | null>(null);
+  const [heatmapClasses, setHeatmapClasses] = useState<HeatmapClass[] | null>(null);
+  const [isLoadingHeatmap, setIsLoadingHeatmap] = useState(false);
 
   const [hasClassSchemaMap, setHasClassSchemaMap] = useState<Record<string, boolean>>({});
   const [freezingSchemaVersionId, setFreezingSchemaVersionId] = useState<string | null>(null);
@@ -1807,6 +1815,28 @@ const Versions = () => {
     }
   };
 
+  /**
+   * Open the class heatmap (#560) for a revision: its classes, then every class's properties
+   * in one batch query. A failed load shows the dialog's empty state rather than an error.
+   */
+  const handleShowHeatmap = async (version: Version) => {
+    setHeatmapVersion(version);
+    setShowHeatmapDialog(true);
+    setIsLoadingHeatmap(true);
+    setHeatmapClasses(null);
+    try {
+      const classesData = JSON.parse(await getClassesForVersion(version.id)) as HeatmapClass[];
+      const byClass = JSON.parse(
+        await getPropertiesForClassesBatch(classesData.map((cls) => cls.id))
+      ) as Record<string, HeatmapClass['properties']>;
+      setHeatmapClasses(classesData.map((cls) => ({ ...cls, properties: byClass[cls.id] ?? [] })));
+    } catch {
+      setHeatmapClasses([]);
+    } finally {
+      setIsLoadingHeatmap(false);
+    }
+  };
+
   const loadVersionSpec = async (versionId: string): Promise<string> => {
     const version = versions.find(v => v.id === versionId);
     if (!version) throw new Error('Version not found');
@@ -2460,6 +2490,7 @@ const Versions = () => {
       // global nav item — a tenant may have hundreds of projects/versions.
       case 'export': setExportVersion(version); break;
       case 'relationshipGraph': await handleShowRelationshipGraph(version); break;
+      case 'heatmap': await handleShowHeatmap(version); break;
       case 'edit':
         if (!isPublished) handleEditClick(version);
         else if (effectiveIsAdmin) handleEditClick(version);
@@ -5516,6 +5547,16 @@ const Versions = () => {
         projectName={projects.find(p => p.id === relationshipGraphVersion?.project_id)?.name ?? ''}
         classesWithProperties={relationshipGraphClasses}
         isLoading={isLoadingRelationshipGraph}
+      />
+
+      {/* Class heatmap (#560). */}
+      <ClassHeatmapDialog
+        open={showHeatmapDialog}
+        onOpenChange={setShowHeatmapDialog}
+        version={heatmapVersion}
+        projectName={projects.find(p => p.id === heatmapVersion?.project_id)?.name ?? ''}
+        classes={heatmapClasses}
+        isLoading={isLoadingHeatmap}
       />
     </Page>
   );
