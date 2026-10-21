@@ -88,6 +88,11 @@ Do all of it in the pull request that releases the feature. `<id>` is its rail i
    `workspace/tenants.mdx`, `workspace/help.mdx`, and the 2026-10-07 release-notes posts for Build,
    Bring in, Ship and Govern. `git log -p --follow` on any of them shows what changed;
    `grep -rn "not yet available" apiome-docs/docs` finds the placeholders.
+   For `primitives` and `mcp`, also point the legacy-docs area rules back at the restored page:
+   the `PRIMITIVE|…` and `MCP` entries of `AREA_PAGES` in `scripts/legacy_docs_inventory.py` (now
+   `build/edit-classes-and-properties` and `getting-started/connect-an-mcp-host`), and the matching
+   links in `docs/archive/INVENTORY.md`; `python3 -m unittest scripts/tests/test_loose_docs.py`
+   fails if a rule names a page that is not on the site.
 7. **Recapture its screenshots** — the route is gated, so re-open it for the run:
    `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES=<id> yarn docs:screenshots -- --id <screenshot-id>` (or
    without the variable once step 5 is in the build), and update any copy that changed meanwhile.

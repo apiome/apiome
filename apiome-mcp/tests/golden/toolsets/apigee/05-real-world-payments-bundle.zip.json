@@ -1,0 +1,55 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Read an authorization",
+      "inputSchema": {
+        "properties": {
+          "segment1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment1"
+        ],
+        "type": "object"
+      },
+      "name": "GetAuthorization",
+      "operation": "GET /v3/payments/authorizations/{segment1}"
+    },
+    {
+      "description": "Authorize a payment",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Authorize",
+      "operation": "POST /v3/payments/authorizations"
+    },
+    {
+      "description": "Capture an authorization",
+      "inputSchema": {
+        "properties": {
+          "segment1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment1"
+        ],
+        "type": "object"
+      },
+      "name": "Capture",
+      "operation": "POST /v3/payments/authorizations/{segment1}/captures"
+    },
+    {
+      "description": "Network webhook receiver",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Webhooks",
+      "operation": "POST /v3/payments/webhooks"
+    }
+  ]
+}

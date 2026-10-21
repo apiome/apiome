@@ -1,0 +1,85 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "empty",
+      "operation": "a2a.(empty)"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "well-known_agent-card_json",
+      "operation": "a2a./.well-known/agent-card.json"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "not_a_url",
+      "operation": "a2a.not a url"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "http_legacy_edge_example_mcp",
+      "operation": "mcp.http://legacy.edge.example/mcp"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_edge_example_mcp",
+      "operation": "mcp.https://edge.example/mcp"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_edge_example_mcp_2",
+      "operation": "mcp.https://edge.example/mcp~2"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ftp_edge_example_skills_SKILL_md",
+      "operation": "skills.ftp://edge.example/skills/SKILL.md"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_edge_example_ucp_profile_json",
+      "operation": "ucp.https://edge.example/ucp/profile.json"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_edge_example_tools",
+      "operation": "webmcp.https://edge.example/tools"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_edge_example_x_weather",
+      "operation": "x-weather.https://edge.example/x/weather"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Book a flight and hotel package",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "book_trip",
+      "operation": "a2a.book_trip"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_travel_contoso_example_a2a",
+      "operation": "a2a.https://travel.contoso.example/a2a"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_agents_contoso_example_acp",
+      "operation": "acp.https://agents.contoso.example/acp"
+    },
+    {
+      "description": "Cancel a booked trip",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cancel_trip",
+      "operation": "actions.cancel_trip"
+    },
+    {
+      "description": "Search flights between two airports",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "search_flights",
+      "operation": "actions.search_flights"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_travel_contoso_example_mcp",
+      "operation": "mcp.https://travel.contoso.example/mcp"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Any number of path segments (Apigee `**`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "Admin",
+      "operation": "ANY /v1/store/admin/{path}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Any number of path segments (Apigee `**`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "Catalogue",
+      "operation": "GET /v1/store/products/{path}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Search",
+      "operation": "GET /v1/store/search"
+    }
+  ]
+}

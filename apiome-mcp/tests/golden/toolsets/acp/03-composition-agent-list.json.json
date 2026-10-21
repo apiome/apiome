@@ -1,0 +1,50 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Chooses an approver and opens an approval task.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Route_for_approval",
+      "operation": "approval-router.Route for approval"
+    },
+    {
+      "description": "Converts an amount from one ISO 4217 currency to another.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Convert",
+      "operation": "currency-converter.Convert"
+    },
+    {
+      "description": "Returns the reference rate for a currency pair on a date.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Rate_lookup",
+      "operation": "currency-converter.Rate lookup"
+    },
+    {
+      "description": "Reads supplier, dates, totals and tax from an invoice.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Extract_fields",
+      "operation": "invoice-extractor.Extract fields"
+    },
+    {
+      "description": "Returns each line item with quantity, unit price and amount.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Extract_line_items",
+      "operation": "invoice-extractor.Extract line items"
+    }
+  ]
+}

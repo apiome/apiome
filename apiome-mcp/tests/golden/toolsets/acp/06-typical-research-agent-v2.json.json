@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Extracts the text of uploaded PDF files as extra sources.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Read_PDFs",
+      "operation": "research-assistant.Read PDFs"
+    },
+    {
+      "description": "Condenses the chosen sources into a short answer in the asker's language.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Summarize",
+      "operation": "research-assistant.Summarize"
+    },
+    {
+      "description": "Searches the public web and ranks sources by relevance.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Web_search",
+      "operation": "research-assistant.Web search"
+    }
+  ]
+}

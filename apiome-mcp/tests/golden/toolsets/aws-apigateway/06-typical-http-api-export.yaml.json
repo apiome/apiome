@@ -1,0 +1,44 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_default",
+      "operation": "ANY /$default"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "subscriptionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subscriptionId"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_subscriptions_subscriptionId",
+      "operation": "DELETE /subscriptions/{subscriptionId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_subscriptions",
+      "operation": "GET /subscriptions"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_subscriptions",
+      "operation": "POST /subscriptions"
+    }
+  ]
+}

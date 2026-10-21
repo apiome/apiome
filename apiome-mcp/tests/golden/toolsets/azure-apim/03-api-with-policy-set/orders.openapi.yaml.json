@@ -1,0 +1,86 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List orders\n\nReturns HTTP 200 application/json (array of Order): Matching orders",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list-orders",
+      "operation": "GET /orders",
+      "output": {
+        "description": "Matching orders",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "orderId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get order\n\nReturns HTTP 200 with no body: One order",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "get-order",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "description": "One order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create an order\n\nReturns HTTP 201 with no body: Created",
+      "inputSchema": {
+        "properties": {
+          "lines": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "create-order",
+      "operation": "POST /orders",
+      "output": {
+        "description": "Created",
+        "status": "201"
+      }
+    }
+  ]
+}

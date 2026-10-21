@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns the incoming message text unchanged.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Echo",
+      "operation": "Echo Agent.echo"
+    }
+  ]
+}

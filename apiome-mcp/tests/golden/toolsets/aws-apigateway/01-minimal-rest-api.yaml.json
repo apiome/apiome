@@ -1,0 +1,18 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 with no body: 200 response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_ping",
+      "operation": "GET /ping",
+      "output": {
+        "description": "200 response",
+        "status": "200"
+      }
+    }
+  ]
+}

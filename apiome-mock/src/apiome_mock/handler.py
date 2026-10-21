@@ -779,6 +779,7 @@ async def _serve_matched_request(
     # the scenario does not override fall through to the default flow below.
     # Without a header the version's stored active scenario applies (#5531, MSC-2.1).
     scenario_name = parse_mock_scenario_name(request)
+    scenario_source: str | None
     if scenario_name is not None:
         scenario = compiled.scenarios.get(scenario_name)
         if scenario is None:

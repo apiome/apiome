@@ -1,0 +1,31 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Anything",
+      "operation": "Bad Name_With Spaces.Anything"
+    },
+    {
+      "description": "Same capability declared twice.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Anything_2",
+      "operation": "Bad Name_With Spaces.Anything~2"
+    },
+    {
+      "description": "Écrit un résumé en français.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "R_sum",
+      "operation": "résumé-writer.Résumé"
+    }
+  ]
+}

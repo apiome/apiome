@@ -1,0 +1,48 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List orders\n\nReturns HTTP 200 application/json: Matching orders",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list-orders",
+      "operation": "GET /orders",
+      "output": {
+        "description": "Matching orders",
+        "mediaType": "application/json",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get order\n\nReturns HTTP 200 with no body: One order",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "description": "Order identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "get-order",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "description": "One order",
+        "status": "200"
+      }
+    }
+  ]
+}
