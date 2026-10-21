@@ -1,0 +1,39 @@
+# Context rules for `docker build -f apiome-browse/Dockerfile .` (BuildKit reads this file in place of
+# the root .dockerignore). Send only apiome-browse and the shared Try-It modules it re-exports.
+**
+!apiome-browse/**
+!apiome-ui/lib/tryit/**
+
+# Dependencies and build output
+apiome-browse/node_modules
+apiome-browse/.next
+apiome-browse/out
+apiome-browse/dist
+apiome-browse/build
+apiome-browse/coverage
+apiome-browse/.nyc_output
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Environment files (.env.production is kept on purpose: the build reads it)
+apiome-browse/.env
+apiome-browse/.env.local
+apiome-browse/.env.development.local
+apiome-browse/.env.test.local
+apiome-browse/.env.production.local
+
+# Editor, OS and Docker files
+**/.vscode
+**/.idea
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+apiome-browse/Dockerfile
+apiome-browse/Dockerfile.dockerignore
+apiome-browse/.dockerignore
+apiome-browse/docker-compose.yml
+apiome-browse/*.sh
+apiome-browse/**/*.md

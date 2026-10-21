@@ -350,7 +350,7 @@ describe('header hygiene', () => {
 describe('executeRelay', () => {
   it('relays an allowed request and returns the envelope with timing and size', async () => {
     let time = 1000;
-    const httpRequest = vi.fn(async () => {
+    const httpRequest = vi.fn<RelayHttpRequest>(async () => {
       time += 120;
       return httpResponse();
     });
@@ -625,7 +625,7 @@ describe('executeRelay', () => {
   });
 
   it('exempts the operator-configured mock origin from the IP guard', async () => {
-    const httpRequest = vi.fn(async () => httpResponse({ body: bodyStream(['mocked']) }));
+    const httpRequest = vi.fn<RelayHttpRequest>(async () => httpResponse({ body: bodyStream(['mocked']) }));
     const resolve = vi.fn(async () => ['127.0.0.1']);
     const policy: RelayPolicy = { mockOrigin: 'http://localhost:8775', specOrigins: [] };
     const outcome = await executeRelay(

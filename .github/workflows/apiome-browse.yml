@@ -5,6 +5,8 @@ on:
     branches: [ main ]
     paths:
       - 'apiome-browse/**'
+      # The image bundles the shared Try-It modules apiome-browse/lib/tryit re-exports.
+      - 'apiome-ui/lib/tryit/**'
   workflow_dispatch:
 
 env:
@@ -42,7 +44,10 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./apiome-browse
+          # Repository root, so the shared apiome-ui/lib/tryit modules are in the context;
+          # apiome-browse/Dockerfile.dockerignore keeps it to the two directories the build needs.
+          context: .
+          file: ./apiome-browse/Dockerfile
           push: false
           load: true
           platforms: linux/amd64
