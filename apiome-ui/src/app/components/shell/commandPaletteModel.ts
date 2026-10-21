@@ -6,6 +6,8 @@ import {
 import { openPreferences } from '@/app/components/ade/preferences/preferencesDrawerBus';
 import { OPEN_ACTIONS, openActionHref } from './openActions';
 import type { CommandPaletteRecent } from './commandPaletteRecents';
+import { projectVersionsHref } from '@/app/components/ade/projects/projectsModel';
+import type { PinnedProject } from '@lib/db/dashboard-home-model';
 
 /**
  * What the command palette can offer, as data (HIVE-3.6, #5292; `DESIGN.md` §5.4).
@@ -15,10 +17,11 @@ import type { CommandPaletteRecent } from './commandPaletteRecents';
  * questions — which destination is gated and why, what `>` means, what "Recent" contains —
  * are answerable without a DOM, so they are tested without one.
  *
- * ### The three groups
+ * ### The four groups
  *
  * | Group | Source | Gated by |
  * | --- | --- | --- |
+ * | **Favorites** | the reader's pinned projects (#513, #542), this workspace | nothing — the read is scoped |
  * | **Jump to** | the HIVE-3.2 nav model, already resolved for the session | the model |
  * | **Actions** | {@link PALETTE_ACTIONS}, declared here | `requiresTenant` |
  * | **Recent** | `commandPaletteRecents.ts`, per workspace | nothing — it is history |
@@ -30,7 +33,7 @@ import type { CommandPaletteRecent } from './commandPaletteRecents';
  */
 
 /** Which group a command belongs to. */
-export type PaletteCommandGroupId = 'jump' | 'action' | 'recent';
+export type PaletteCommandGroupId = 'favorite' | 'jump' | 'action' | 'recent';
 
 /** A single row of the palette. */
 export interface PaletteCommand {
@@ -68,6 +71,7 @@ export interface PaletteCommandGroup {
 
 /** Headings, in the order `DESIGN.md` §5.4 lists the groups. */
 export const PALETTE_GROUP_HEADINGS: Readonly<Record<PaletteCommandGroupId, string>> = {
+  favorite: 'Favorites',
   jump: 'Jump to',
   action: 'Actions',
   recent: 'Recent',
@@ -279,12 +283,39 @@ export function buildRecentCommands(
   }));
 }
 
+/**
+ * **Favorites** — the reader's pinned projects (#542), each opening its versions.
+ *
+ * Never gated: the read behind it is already scoped to the reader's own pins in a workspace
+ * they belong to.
+ *
+ * @param favorites Pins from `listPinnedProjectsForSession()`, newest first.
+ * @returns Favorite commands, in the order they were given.
+ */
+export function buildFavoriteCommands(favorites: readonly PinnedProject[]): PaletteCommand[] {
+  return favorites.map<PaletteCommand>((favorite) => {
+    const meta = favorite.versionLabel ? `Favorite · ${favorite.versionLabel}` : 'Favorite';
+    return {
+      id: `favorite-${favorite.projectId}`,
+      group: 'favorite',
+      label: favorite.projectName,
+      meta,
+      icon: 'folder-kanban',
+      href: projectVersionsHref({ id: favorite.projectId }),
+      disabled: false,
+      keywords: keywordsFor(favorite.projectName, meta),
+    };
+  });
+}
+
 /** What {@link buildCommandGroups} needs to describe the palette for this session. */
 export interface CommandGroupsOptions {
   /** Nav groups from `getPlatformNavGroups()`, gating already resolved. */
   navGroups: readonly ResolvedPlatformNavGroup[];
   /** This workspace's recent destinations, newest first. */
   recents?: readonly CommandPaletteRecent[];
+  /** The reader's favorite (pinned) projects in this workspace, newest first (#542). */
+  favorites?: readonly PinnedProject[];
   /** `current_tenant_id` from the session, if any. */
   currentTenantId?: string | null;
   /** True when only the Actions group should be offered — the reader typed `>`. */
@@ -294,7 +325,10 @@ export interface CommandGroupsOptions {
 /**
  * The palette's whole contents for one session.
  *
- * Recent comes first when there is one: the most likely reason to open a palette is to go
+ * Favorites lead when there are any (#542): they are the projects the reader said they want
+ * one step away, and the palette is that step from every page.
+ *
+ * Recent comes next when there is one: the most likely reason to open a palette is to go
  * back to what you were just doing, and the mockup's own ordering (Jump to · Actions ·
  * Recent) describes a *first* visit, when there is no history to put above them.
  *
@@ -307,6 +341,7 @@ export interface CommandGroupsOptions {
 export function buildCommandGroups({
   navGroups,
   recents = [],
+  favorites = [],
   currentTenantId,
   commandsOnly = false,
 }: CommandGroupsOptions): PaletteCommandGroup[] {
@@ -320,11 +355,19 @@ export function buildCommandGroups({
   // commands, so they are not narrowed — they are gone.
   if (commandsOnly) return [actions].filter((group) => group.commands.length > 0);
 
+  // A favorite already listed above is not repeated under Recent.
+  const favoriteHrefs = new Set(buildFavoriteCommands(favorites).map((command) => command.href));
+
   const groups: PaletteCommandGroup[] = [
+    {
+      id: 'favorite',
+      heading: PALETTE_GROUP_HEADINGS.favorite,
+      commands: buildFavoriteCommands(favorites),
+    },
     {
       id: 'recent',
       heading: PALETTE_GROUP_HEADINGS.recent,
-      commands: buildRecentCommands(recents),
+      commands: buildRecentCommands(recents).filter((command) => !favoriteHrefs.has(command.href)),
     },
     {
       id: 'jump',

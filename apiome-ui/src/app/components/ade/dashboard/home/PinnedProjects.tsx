@@ -40,6 +40,13 @@ export interface PinnedProjectsProps {
   onUnpin: (project: PinnedProject) => void;
   /** Ids of projects whose unpin is in flight; their buttons go inert. */
   unpinning?: ReadonlySet<string>;
+  /**
+   * The panel's heading and quiet note. Defaults to Home's "Pinned projects"; the Profile page
+   * draws the same list as "Favorite projects" (#542).
+   */
+  heading?: { title: string; subtitle: string };
+  /** `data-testid` for the card. */
+  testId?: string;
 }
 
 /**
@@ -50,16 +57,24 @@ export interface PinnedProjectsProps {
  * @param props See {@link PinnedProjectsProps}.
  * @returns The card, with rows, skeleton rows, or the empty state.
  */
-export function PinnedProjects({ projects, loading, onUnpin, unpinning }: PinnedProjectsProps) {
+export function PinnedProjects({
+  projects,
+  loading,
+  onUnpin,
+  unpinning,
+  heading = PANEL.pinned,
+  testId,
+}: PinnedProjectsProps) {
   const Icon = PANEL.pinned.icon;
+  const titleId = React.useId();
 
   return (
-    <Card className="home-panel" role="group" aria-labelledby="home-pinned-title">
+    <Card className="home-panel" role="group" aria-labelledby={titleId} data-testid={testId}>
       <CardHeader className="home-panel__header">
         <span className="home-panel__title">
           <Icon aria-hidden />
-          <h2 id="home-pinned-title">{PANEL.pinned.title}</h2>
-          <span className="home-panel__note">{PANEL.pinned.subtitle}</span>
+          <h2 id={titleId}>{heading.title}</h2>
+          <span className="home-panel__note">{heading.subtitle}</span>
         </span>
       </CardHeader>
 

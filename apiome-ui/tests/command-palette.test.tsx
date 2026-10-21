@@ -33,6 +33,12 @@ jest.mock('@/app/components/ade/preferences/preferencesDrawerBus', () => ({
   closePreferences: jest.fn(),
 }));
 
+/** Favorites (#542): the reader's pinned projects, read each time the palette opens. */
+const mockListPinned = jest.fn<Promise<unknown[]>, []>(() => Promise.resolve([]));
+jest.mock('@lib/db/project-pins', () => ({
+  listPinnedProjectsForSession: () => mockListPinned(),
+}));
+
 import CommandPaletteHost from '../src/app/components/shell/CommandPaletteHost';
 import {
   isCommandPaletteMounted,
@@ -84,6 +90,8 @@ beforeEach(() => {
   mockPush.mockReset();
   mockOpenPreferences.mockReset();
   mockOpenPreferences.mockReturnValue(true);
+  mockListPinned.mockReset();
+  mockListPinned.mockResolvedValue([]);
   window.localStorage.clear();
 });
 
@@ -233,6 +241,64 @@ describe('what it offers', () => {
     const dialog = await openWithChord(user);
 
     expect(within(dialog).queryByText('Someone else’s API')).not.toBeInTheDocument();
+  });
+});
+
+describe('Favorites (#542)', () => {
+  const FAVORITE = {
+    projectId: 'p-1',
+    projectName: 'Payments API',
+    versionLabel: 'v2.4.0',
+    pinnedAt: '2026-10-21T10:00:00.000Z',
+  };
+
+  it('reads nothing until the palette opens, then lists favorites first', async () => {
+    mockListPinned.mockResolvedValue([FAVORITE]);
+    const user = userEvent.setup();
+    renderHost();
+    expect(mockListPinned).not.toHaveBeenCalled();
+
+    const dialog = await openWithChord(user);
+    const favorites = await within(dialog).findByTestId('palette-group-favorite');
+    expect(within(favorites).getByText('Payments API')).toBeInTheDocument();
+    expect(within(favorites).getByText('Favorite · v2.4.0')).toBeInTheDocument();
+    expect(
+      favorites.compareDocumentPosition(within(dialog).getByTestId('palette-group-jump'))
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('opens a favorite on its versions, without adding it to Recent', async () => {
+    mockListPinned.mockResolvedValue([FAVORITE]);
+    const user = userEvent.setup();
+    renderHost();
+    const dialog = await openWithChord(user);
+    await within(dialog).findByTestId('palette-group-favorite');
+
+    await user.keyboard('payments');
+    await user.keyboard('{Enter}');
+
+    expect(mockPush).toHaveBeenCalledWith('/ade/dashboard/versions?projectId=p-1');
+    expect(window.localStorage.getItem(PALETTE_RECENTS_STORAGE_KEY)).toBeNull();
+  });
+
+  it('offers no Favorites group without a workspace, and reads nothing', async () => {
+    mockListPinned.mockResolvedValue([FAVORITE]);
+    const user = userEvent.setup();
+    renderHost({ tenant: false });
+    const dialog = await openWithChord(user);
+
+    expect(within(dialog).queryByTestId('palette-group-favorite')).not.toBeInTheDocument();
+    expect(mockListPinned).not.toHaveBeenCalled();
+  });
+
+  it('leaves the group out when the read fails', async () => {
+    mockListPinned.mockRejectedValue(new Error('down'));
+    const user = userEvent.setup();
+    renderHost();
+    const dialog = await openWithChord(user);
+
+    await waitFor(() => expect(mockListPinned).toHaveBeenCalled());
+    expect(within(dialog).queryByTestId('palette-group-favorite')).not.toBeInTheDocument();
   });
 });
 

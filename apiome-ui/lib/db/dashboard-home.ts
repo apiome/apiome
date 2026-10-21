@@ -51,11 +51,11 @@ import type { Pool } from 'pg';
 const connectionPool = require('./db') as Pool;
 
 import { getAuthSession } from '../auth/server-session';
+import { queryPinnedProjects } from './pinned-projects-query';
 import {
   ATTENTION_LIMIT,
   CONTINUE_PROJECT_LIMIT,
   KEY_EXPIRY_ATTENTION_DAYS,
-  PROJECT_PIN_LIMIT,
   PULSE_WINDOW_DAYS,
   RECENTLY_VIEWED_LIMIT,
   bucketPublishesByWeek,
@@ -262,50 +262,15 @@ async function loadContinueProjects(userId: string, limit: number): Promise<Cont
  * The projects the reader pinned in the current workspace (#513), newest pin first.
  *
  * Scoped and re-checked exactly like {@link loadRecentlyViewed}: the session's workspace, joined
- * against `tenant_users`, trashed projects left out.
+ * against `tenant_users`, trashed projects left out. The statement is shared with the Profile
+ * card and the command palette (`./pinned-projects-query.ts`, #542).
  *
  * @param userId The reader, from the session.
  * @param tenantId The session's current workspace id.
- * @returns One {@link PinnedProject} per pin, at most {@link PROJECT_PIN_LIMIT}.
+ * @returns One {@link PinnedProject} per pin, at most `PROJECT_PIN_LIMIT`.
  */
 async function loadPinnedProjects(userId: string, tenantId: string): Promise<PinnedProject[]> {
-  const result = await connectionPool.query(
-    `SELECT
-       p.id AS project_id,
-       p.name AS project_name,
-       pp.pinned_at,
-       lv.version_id
-     FROM apiome.project_pins pp
-     JOIN apiome.projects p ON p.id = pp.project_id
-     LEFT JOIN LATERAL (
-       SELECT v.version_id
-       FROM apiome.versions v
-       WHERE v.project_id = p.id AND v.deleted_at IS NULL
-       ORDER BY v.created_at DESC, v.id DESC
-       LIMIT 1
-     ) lv ON true
-     WHERE pp.user_id = $1
-       AND pp.tenant_id = $2
-       AND pp.tenant_id IN ${MEMBER_TENANTS}
-       AND p.tenant_id = pp.tenant_id
-       AND p.deleted_at IS NULL
-     ORDER BY pp.pinned_at DESC, p.name ASC
-     LIMIT $3`,
-    [userId, tenantId, PROJECT_PIN_LIMIT],
-  );
-
-  return result.rows.flatMap((row) => {
-    const pinnedAt = asInstant(row.pinned_at);
-    if (!pinnedAt) return [];
-    return [
-      {
-        projectId: String(row.project_id),
-        projectName: asText(row.project_name) ?? 'Untitled project',
-        versionLabel: asText(row.version_id),
-        pinnedAt,
-      } satisfies PinnedProject,
-    ];
-  });
+  return queryPinnedProjects((sql, params) => connectionPool.query(sql, params), userId, tenantId);
 }
 
 /**

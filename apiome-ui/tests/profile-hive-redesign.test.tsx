@@ -69,6 +69,17 @@ jest.mock('@lib/db/helper', () => ({
     mockUpdateUserPassword(userId, current, next),
 }));
 
+/** Favorite projects (#542) — the reader's pins, read and unpinned through these actions. */
+const mockListPinned = jest.fn<Promise<PinnedProject[]>, []>();
+const mockUnpin = jest.fn<Promise<boolean>, [string]>();
+jest.mock('@lib/db/project-pins', () => ({
+  listPinnedProjectsForSession: () => mockListPinned(),
+  unpinProjectForSession: (projectId: string) => mockUnpin(projectId),
+}));
+
+const mockToast = { success: jest.fn(), error: jest.fn() };
+jest.mock('@/app/components/ui/toast', () => ({ toast: mockToast }));
+
 const mockMembershipContext = jest.fn();
 jest.mock('@lib/auth/tenant-membership-context', () => ({
   loadTenantMembershipContext: () => mockMembershipContext(),
@@ -116,6 +127,7 @@ jest.mock('react-qr-code', () => ({
 
 import Profile from '@/app/ade/dashboard/profile/page';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import type { PinnedProject } from '@lib/db/dashboard-home-model';
 
 /** The session user every test starts from. */
 const USER = {
@@ -147,6 +159,22 @@ const MEMBERSHIPS = {
   adminTenantIds: ['ten_4a1b9f'],
   createTenant: null,
 };
+
+/** Two favorites, newest pin first. */
+const FAVORITES: PinnedProject[] = [
+  {
+    projectId: 'prj_payments',
+    projectName: 'Payments API',
+    versionLabel: 'v2.4.0',
+    pinnedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+  },
+  {
+    projectId: 'prj_orders',
+    projectName: 'Orders Service',
+    versionLabel: null,
+    pinnedAt: new Date(Date.now() - 6 * 86_400_000).toISOString(),
+  },
+];
 
 /** The clipboard the copy buttons write to. */
 const writeText = jest.fn(async () => {});
@@ -183,6 +211,8 @@ beforeEach(() => {
   mockMembershipContext.mockResolvedValue(MEMBERSHIPS);
   mockUpdateUserName.mockResolvedValue(JSON.stringify({ success: true }));
   mockUpdateUserPassword.mockResolvedValue(JSON.stringify({ success: true }));
+  mockListPinned.mockResolvedValue(FAVORITES);
+  mockUnpin.mockResolvedValue(true);
 });
 
 /**
@@ -217,7 +247,7 @@ describe('the page frame', () => {
     await renderProfile();
 
     expect(
-      screen.getByText('Your identity, password, two-factor and sign-in methods.')
+      screen.getByText('Your identity, favorite projects, password, two-factor and sign-in methods.')
     ).toBeInTheDocument();
     const crumbs = within(screen.getByTestId('page-breadcrumb'));
     expect(crumbs.getByText('Acme Corp')).toBeInTheDocument();
@@ -882,6 +912,67 @@ describe('accessibility', () => {
  * The documentation site's Profile & security page (`apiome-docs/screens.json`, DOCS-1.9) is
  * captured from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/profile-hive-redesign.test.tsx -t "docs fixtures"`.
  */
+describe('the Favorite projects card (#542)', () => {
+  /** The card, once its read has landed. */
+  async function favoritesCard() {
+    await renderProfile();
+    const card = screen.getByTestId('profile-favorites');
+    await within(card).findByText('Payments API');
+    return card;
+  }
+
+  it('lists the reader favorites — their pins — each opening its versions', async () => {
+    const card = await favoritesCard();
+    expect(within(card).getByRole('heading', { name: 'Favorite projects' })).toBeInTheDocument();
+    expect(within(card).getByText('Pinned to Home and listed in ⌘K')).toBeInTheDocument();
+
+    const links = within(card).getAllByRole('link');
+    expect(links[0]).toHaveAttribute('href', '/ade/dashboard/versions?projectId=prj_payments');
+    expect(within(links[0]).getByText('v2.4.0 · Pinned 2 days ago')).toBeInTheDocument();
+    expect(within(links[1]).getByText('No versions yet · Pinned 6 days ago')).toBeInTheDocument();
+    expect(within(card).getByText('2 of 8 pinned')).toBeInTheDocument();
+  });
+
+  it('unpins at once, and confirms', async () => {
+    const card = await favoritesCard();
+    fireEvent.click(within(card).getByRole('button', { name: 'Unpin Payments API' }));
+
+    expect(within(card).queryByText('Payments API')).not.toBeInTheDocument();
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalledWith('Unpinned "Payments API".'));
+    expect(mockUnpin).toHaveBeenCalledWith('prj_payments');
+  });
+
+  it('puts the favorite back when the unpin fails', async () => {
+    mockUnpin.mockResolvedValue(false);
+    const card = await favoritesCard();
+    fireEvent.click(within(card).getByRole('button', { name: 'Unpin Payments API' }));
+
+    await waitFor(() =>
+      expect(mockToast.error).toHaveBeenCalledWith('Could not unpin "Payments API". Try again.')
+    );
+    expect(within(card).getByText('Payments API')).toBeInTheDocument();
+  });
+
+  it('teaches where favorites come from when there are none', async () => {
+    mockListPinned.mockResolvedValue([]);
+    await renderProfile();
+    const card = screen.getByTestId('profile-favorites');
+    expect(await within(card).findByText('No pinned projects')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: /Go to Projects/ })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects'
+    );
+  });
+
+  it('reads nothing, and shows the empty state, without a workspace', async () => {
+    sessionState.current = { user: { ...USER, current_tenant_id: undefined }, expires: EXPIRES };
+    render(<Profile />);
+    const card = await screen.findByTestId('profile-favorites');
+    expect(within(card).getByText('No pinned projects')).toBeInTheDocument();
+    expect(mockListPinned).not.toHaveBeenCalled();
+  });
+});
+
 describe('the docs fixtures', () => {
   /** `TwoFactorSettings`' status reads, mocked at the top of the file. */
   const twoFactorActions = jest.requireMock('@lib/auth/two-factor-profile-actions') as Record<
@@ -927,6 +1018,7 @@ describe('the docs fixtures', () => {
     await waitFor(() =>
       expect(screen.getByTestId('two-factor-trusted-status')).toHaveTextContent('This browser is trusted')
     );
+    await within(screen.getByTestId('profile-favorites')).findByText('Payments API');
     expect(screen.getByTestId('two-factor-backup-remaining')).toHaveTextContent('8 remaining');
     writeA11yFixture('profile', liveMarkup(page()));
     writeA11yFixture('profile-security', liveMarkup(screen.getByTestId('profile-security')));

@@ -70,8 +70,7 @@ import {
   type PinnedProject,
 } from '@lib/db/dashboard-home-model';
 import { getDashboardHomeForSession } from '@lib/db/dashboard-home';
-import { unpinProjectForSession } from '@lib/db/project-pins';
-import { toast } from '@/app/components/ui/toast';
+import { useUnpinProject } from '@/app/hooks/useUnpinProject';
 import { getDashboardStats, getRecentActivity } from '@lib/db/helper';
 
 /** The projects list, which owns both of the header's action dialogs. */
@@ -119,7 +118,6 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivityRow[]>([]);
   const [home, setHome] = useState<DashboardHome>(() => emptyDashboardHome());
   const [isLoading, setIsLoading] = useState(true);
-  const [unpinning, setUnpinning] = useState<ReadonlySet<string>>(() => new Set());
 
   const user = session?.user as { user_id?: string; current_tenant_id?: string } | undefined;
   const userId = user?.user_id;
@@ -155,33 +153,12 @@ const Dashboard = () => {
     loadDashboardData();
   }, [userId]);
 
-  /**
-   * Unpin from the Pinned projects panel (#513).
-   *
-   * Optimistic: the row goes at once, and comes back in its old place with an error toast if
-   * the write fails — a panel that waited on the round trip would feel broken on a slow link.
-   */
-  const handleUnpin = useCallback(async (project: PinnedProject) => {
-    const before = home.pinnedProjects;
-    setUnpinning((current) => new Set(current).add(project.projectId));
-    setHome((current) => ({
-      ...current,
-      pinnedProjects: current.pinnedProjects.filter((pin) => pin.projectId !== project.projectId),
-    }));
-
-    const ok = await unpinProjectForSession(project.projectId).catch(() => false);
-    if (ok) {
-      toast.success(`Unpinned "${project.projectName}".`);
-    } else {
-      setHome((current) => ({ ...current, pinnedProjects: before }));
-      toast.error(`Could not unpin "${project.projectName}". Try again.`);
-    }
-    setUnpinning((current) => {
-      const next = new Set(current);
-      next.delete(project.projectId);
-      return next;
-    });
-  }, [home.pinnedProjects]);
+  // Unpin from the Pinned projects panel (#513): optimistic, restored on failure.
+  const setPinned = useCallback(
+    (pinnedProjects: PinnedProject[]) => setHome((current) => ({ ...current, pinnedProjects })),
+    [],
+  );
+  const { unpinning, unpin } = useUnpinProject(home.pinnedProjects, setPinned);
 
   return (
     <Page>
@@ -226,7 +203,7 @@ const Dashboard = () => {
             <PinnedProjects
               projects={home.pinnedProjects}
               loading={isLoading}
-              onUnpin={(project) => void handleUnpin(project)}
+              onUnpin={(project) => void unpin(project)}
               unpinning={unpinning}
             />
             <ContinueWorking projects={home.continueProjects} loading={isLoading} />

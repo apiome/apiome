@@ -83,7 +83,7 @@ const PROFILE_MARKUP = `
               <ol class="flex flex-wrap items-center gap-1.5"><li>Acme Corp</li><li>Account</li><li>Profile</li></ol>
             </nav>
             <h1 class="page-header__title"><span class="min-w-0 break-words">Profile</span></h1>
-            <p class="page-header__desc">Your identity, password, two-factor and sign-in methods.</p>
+            <p class="page-header__desc">Your identity, favorite projects, password, two-factor and sign-in methods.</p>
           </div>
         </div>
         <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 pt-0.5">

@@ -128,8 +128,8 @@ export function isProjectOpenable(project: Project): boolean {
   return !project.deleted_at;
 }
 
-/** Where a project's versions live. */
-export function projectVersionsHref(project: Project): string {
+/** Where a project's versions live. Only the id is read, so a pin or a row will do. */
+export function projectVersionsHref(project: Pick<Project, 'id'>): string {
   return `/ade/dashboard/versions?projectId=${encodeURIComponent(project.id)}`;
 }
 
