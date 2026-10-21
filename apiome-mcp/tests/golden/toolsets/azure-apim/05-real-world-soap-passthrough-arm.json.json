@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "GetInvoice\n\nSOAP action http://example.com/billing/GetInvoice\n\nReturns HTTP 200 text/xml.",
+      "inputSchema": {
+        "properties": {
+          "SOAPAction": {
+            "default": "\"http://example.com/billing/GetInvoice\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "SOAPAction"
+        ],
+        "type": "object"
+      },
+      "name": "GetInvoice",
+      "operation": "POST /?soapAction=http://example.com/billing/GetInvoice",
+      "output": {
+        "mediaType": "text/xml",
+        "status": "200"
+      }
+    },
+    {
+      "description": "ListInvoices\n\nSOAP action http://example.com/billing/ListInvoices\n\nReturns HTTP 200 text/xml.",
+      "inputSchema": {
+        "properties": {
+          "SOAPAction": {
+            "default": "\"http://example.com/billing/ListInvoices\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "SOAPAction"
+        ],
+        "type": "object"
+      },
+      "name": "ListInvoices",
+      "operation": "POST /?soapAction=http://example.com/billing/ListInvoices",
+      "output": {
+        "mediaType": "text/xml",
+        "status": "200"
+      }
+    }
+  ]
+}

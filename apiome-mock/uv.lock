@@ -55,7 +55,7 @@ wheels = [
 
 [[package]]
 name = "apiome-mcp"
-version = "0.10.4"
+version = "0.10.5"
 source = { editable = "../apiome-mcp" }
 dependencies = [
     { name = "apiome-rest" },
@@ -97,7 +97,7 @@ dev = [
 
 [[package]]
 name = "apiome-mock"
-version = "0.16.3"
+version = "0.16.4"
 source = { editable = "." }
 dependencies = [
     { name = "apiome-mcp" },

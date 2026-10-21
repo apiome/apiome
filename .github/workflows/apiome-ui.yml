@@ -155,7 +155,11 @@ jobs:
         run: |
           cd apiome-ui
           # yarn test:import --ci
-          yarn test:coverage --ci
+          # The self-hosted nodes run more than one runner, and Jest's default (one worker per core,
+          # each a jsdom + coverage process) lets two jobs on a node starve each other: tests time
+          # out at random and the OOM killer takes workers. Half the cores per job, and recycling a
+          # worker once it holds 2 GB after a test file, keeps a node within its CPU and memory.
+          yarn test:coverage --ci --maxWorkers=50% --workerIdleMemoryLimit=2GB
         env:
           # POSTGRES_* come from job-level env; POSTGRES_PORT is exported by the
           # "Start PostgreSQL" step.

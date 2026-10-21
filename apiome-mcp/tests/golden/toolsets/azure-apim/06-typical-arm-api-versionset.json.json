@@ -1,0 +1,40 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List products\n\nReturns HTTP 200 with no body.",
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list-products",
+      "operation": "GET /products",
+      "output": {
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get product\n\nReturns HTTP 200 with no body.",
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "get-product",
+      "operation": "GET /products/{sku}",
+      "output": {
+        "status": "200"
+      }
+    }
+  ]
+}

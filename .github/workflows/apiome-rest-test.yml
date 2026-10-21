@@ -122,6 +122,12 @@ jobs:
       - name: Install the required AsyncAPI toolchain
         run: ./scripts/install_dev_toolchain.sh asyncapi-parser
 
+      # buf is optional at runtime, but the production image bundles it, and the generated
+      # supported-formats page describes that image: without buf the gRPC and Connect-RPC rows
+      # render as "Needs toolchain" and the page check below fails.
+      - name: Install buf (bundled in the production image)
+        run: ./scripts/install_dev_toolchain.sh buf
+
       # Loud, named gate: prove the required toolchain is actually usable before spending the
       # suite on it. A failure here says "the parser did not install", not "1,000 asyncapi
       # tests skipped".

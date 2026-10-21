@@ -1,0 +1,28 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ListShipments",
+      "operation": "GET /v2/shipments/shipments"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "segment1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment1"
+        ],
+        "type": "object"
+      },
+      "name": "GetShipment",
+      "operation": "GET /v2/shipments/shipments/{segment1}"
+    }
+  ]
+}

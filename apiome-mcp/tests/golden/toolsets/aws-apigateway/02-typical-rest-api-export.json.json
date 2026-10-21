@@ -1,0 +1,106 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (OrderList): 200 response",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_orders",
+      "operation": "GET /orders",
+      "output": {
+        "description": "200 response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "OrderList",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: 200 response",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_orders_orderId",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "description": "200 response",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: 200 response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "OPTIONS_orders",
+      "operation": "OPTIONS /orders",
+      "output": {
+        "description": "200 response",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 with no body: 201 response",
+      "inputSchema": {
+        "properties": {
+          "lines": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "POST_orders",
+      "operation": "POST /orders",
+      "output": {
+        "description": "201 response",
+        "status": "201"
+      }
+    }
+  ]
+}

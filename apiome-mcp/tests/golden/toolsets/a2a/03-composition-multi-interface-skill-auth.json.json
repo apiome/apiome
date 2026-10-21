@@ -1,0 +1,23 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Reports the current and available balance of one of the customer's accounts.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Account_balance",
+      "operation": "Ledger Assistant.account-balance"
+    },
+    {
+      "description": "Moves money between two accounts the customer owns. Requires step-up authentication.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Transfer_funds",
+      "operation": "Ledger Assistant.transfer-funds"
+    }
+  ]
+}

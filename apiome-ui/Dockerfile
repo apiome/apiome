@@ -2,7 +2,7 @@
 # Supports: linux/amd64, linux/arm64
 
 # Stage 1: Dependencies
-FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
+FROM --platform=$BUILDPLATFORM node:24-alpine AS deps
 WORKDIR /app
 
 # Install dependencies for native modules (bcrypt, pg)
@@ -17,7 +17,7 @@ RUN npm install
 
 
 # Stage 2: Builder
-FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -33,7 +33,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Stage 3: Runner (Production)
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 # Set to production environment

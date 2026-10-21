@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Callout",
+      "operation": "ANY /v3/lab/enriched"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Any number of path segments (Apigee `**`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "Transcode",
+      "operation": "POST /v3/lab/legacy/{path}"
+    }
+  ]
+}

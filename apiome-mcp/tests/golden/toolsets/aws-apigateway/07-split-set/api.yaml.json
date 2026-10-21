@@ -1,0 +1,202 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (ShipmentPage): 200 response",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_shipments",
+      "operation": "GET /shipments",
+      "output": {
+        "description": "200 response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "carrier": {
+                    "type": "string"
+                  },
+                  "parcels": {
+                    "items": {
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "price": {
+                    "properties": {
+                      "currency": {
+                        "maxLength": 3,
+                        "minLength": 3,
+                        "type": "string"
+                      },
+                      "value": {
+                        "minimum": 0.0,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "currency",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  "shipmentId": {
+                    "pattern": "^SHP-[0-9]{6}$",
+                    "type": "string"
+                  },
+                  "shippedAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "carrier",
+                  "parcels",
+                  "shipmentId"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "ShipmentPage",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Shipment): 200 response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_shipments_shipmentId",
+      "operation": "GET /shipments/{shipmentId}",
+      "output": {
+        "description": "200 response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "carrier": {
+              "type": "string"
+            },
+            "parcels": {
+              "items": {
+                "properties": {
+                  "fragile": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "parcelId": {
+                    "type": "string"
+                  },
+                  "weightKg": {
+                    "exclusiveMinimum": 0.0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "parcelId"
+                ],
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "price": {
+              "properties": {
+                "currency": {
+                  "maxLength": 3,
+                  "minLength": 3,
+                  "type": "string"
+                },
+                "value": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "value"
+              ],
+              "type": "object"
+            },
+            "shipmentId": {
+              "pattern": "^SHP-[0-9]{6}$",
+              "type": "string"
+            },
+            "shippedAt": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "carrier",
+            "parcels",
+            "shipmentId"
+          ],
+          "type": "object"
+        },
+        "shape": "Shipment",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 with no body: 201 response",
+      "inputSchema": {
+        "properties": {
+          "carrier": {
+            "type": "string"
+          },
+          "parcels": {
+            "items": {
+              "properties": {
+                "fragile": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "parcelId": {
+                  "type": "string"
+                },
+                "weightKg": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "parcelId"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "carrier",
+          "parcels"
+        ],
+        "type": "object"
+      },
+      "name": "POST_shipments",
+      "operation": "POST /shipments",
+      "output": {
+        "description": "201 response",
+        "status": "201"
+      }
+    }
+  ]
+}
