@@ -1276,7 +1276,7 @@
       "emit_key": null,
       "roundtrip_row": true,
       "roundtrip_cells": [],
-      "capability_provenance": "derived",
+      "capability_provenance": "reviewed",
       "requirements": {
         "valid-examples": "satisfied",
         "negative-examples": "satisfied",
