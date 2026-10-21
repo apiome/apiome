@@ -6,7 +6,8 @@
  * Pins live in `apiome.project_pins` — the rows Home's **Pinned projects** panel reads
  * (`./dashboard-home.ts`) and `GET /v1/projects/{tenant}/pinned` serves. Each member may pin up
  * to {@link PROJECT_PIN_LIMIT} projects per workspace; the Projects list's ⋯ menu and Home's
- * panel are the two places that call these actions.
+ * panel call these actions, and the pins double as the reader's **favorites** (#542) on the
+ * Profile page and in the command palette.
  *
  * ## Misuse safeguards
  *
@@ -28,7 +29,12 @@ const connectionPool = require('./db') as Pool;
 
 import { getAuthSession } from '../auth/server-session';
 import { isUuid } from '../comment-discussion';
-import { PROJECT_PIN_LIMIT, type PinProjectStatus } from './dashboard-home-model';
+import {
+  PROJECT_PIN_LIMIT,
+  type PinnedProject,
+  type PinProjectStatus,
+} from './dashboard-home-model';
+import { queryPinnedProjects } from './pinned-projects-query';
 
 /** The session's reader and current workspace, or `null` when signed out. */
 async function sessionReader(): Promise<{ userId: string; tenantId: string | null } | null> {
@@ -36,6 +42,31 @@ async function sessionReader(): Promise<{ userId: string; tenantId: string | nul
   const user = session?.user as { user_id?: string; current_tenant_id?: string } | undefined;
   if (!user?.user_id) return null;
   return { userId: user.user_id, tenantId: user.current_tenant_id ?? null };
+}
+
+/**
+ * The projects the reader pinned in the current workspace — their favorites (#542).
+ *
+ * The Profile page's **Favorite projects** card and the command palette's **Favorites** group
+ * read this; Home reads the same statement through `./dashboard-home.ts`.
+ *
+ * @returns Pins, newest first; empty when signed out, with no current workspace, or when the
+ *   read fails.
+ */
+export async function listPinnedProjectsForSession(): Promise<PinnedProject[]> {
+  const reader = await sessionReader();
+  if (!reader?.tenantId) return [];
+
+  try {
+    return await queryPinnedProjects(
+      (sql, params) => connectionPool.query(sql, params),
+      reader.userId,
+      reader.tenantId,
+    );
+  } catch (error) {
+    console.error('[project-pins] listing pins failed', error);
+    return [];
+  }
 }
 
 /**
@@ -47,26 +78,8 @@ async function sessionReader(): Promise<{ userId: string; tenantId: string | nul
  *   when the read fails.
  */
 export async function listPinnedProjectIdsForSession(): Promise<string[]> {
-  const reader = await sessionReader();
-  if (!reader?.tenantId) return [];
-
-  try {
-    const result = await connectionPool.query(
-      `SELECT pp.project_id
-       FROM apiome.project_pins pp
-       JOIN apiome.projects p ON p.id = pp.project_id
-       WHERE pp.user_id = $1::uuid
-         AND pp.tenant_id = $2::uuid
-         AND p.deleted_at IS NULL
-       ORDER BY pp.pinned_at DESC
-       LIMIT $3`,
-      [reader.userId, reader.tenantId, PROJECT_PIN_LIMIT],
-    );
-    return result.rows.map((row) => String(row.project_id));
-  } catch (error) {
-    console.error('[project-pins] listing pins failed', error);
-    return [];
-  }
+  const pins = await listPinnedProjectsForSession();
+  return pins.map((pin) => pin.projectId);
 }
 
 /**

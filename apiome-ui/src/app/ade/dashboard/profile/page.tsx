@@ -79,6 +79,7 @@ import {
   type SignInMethodRow,
 } from '@/app/components/ade/account';
 import { TwoFactorSettings } from './TwoFactorSettings';
+import { FavoriteProjectsCard } from '@/app/components/ade/account/FavoriteProjectsCard';
 
 /** The `/ade/dashboard` home, which the breadcrumb's first step returns to. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -287,7 +288,7 @@ const Profile = () => {
           { label: 'Profile' },
         ]}
         title="Profile"
-        description="Your identity, password, two-factor and sign-in methods."
+        description="Your identity, favorite projects, password, two-factor and sign-in methods."
         actions={
           <Button
             variant="outline"
@@ -339,6 +340,9 @@ const Profile = () => {
               lastLoginAt={lastLoginAt}
               onEditName={() => setShowEditDialog(true)}
             />
+
+            {/* Favorites are the reader's pinned projects (#542, #513). */}
+            <FavoriteProjectsCard tenantId={tenantId} />
 
             <SecurityCard
               twoFactor={<TwoFactorSettings />}

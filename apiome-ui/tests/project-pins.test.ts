@@ -48,7 +48,13 @@ const client = {
 const poolQueries: { sql: string; params: unknown[] }[] = [];
 const mockPoolQuery = jest.fn(async (sql: string, params: unknown[]) => {
   poolQueries.push({ sql, params });
-  return { rows: [{ project_id: 'p-1' }, { project_id: 'p-2' }], rowCount: 1 };
+  return {
+    rows: [
+      { project_id: 'p-1', project_name: 'Orders', pinned_at: new Date('2026-10-21T10:00:00Z'), version_id: 'v1.0.0' },
+      { project_id: 'p-2', project_name: 'Billing', pinned_at: '2026-10-20T10:00:00Z', version_id: null },
+    ],
+    rowCount: 1,
+  };
 });
 const mockConnect = jest.fn(async () => client);
 
@@ -59,6 +65,7 @@ jest.mock('../lib/db/db', () => ({
 
 import {
   listPinnedProjectIdsForSession,
+  listPinnedProjectsForSession,
   pinProjectForSession,
   unpinProjectForSession,
 } from '../lib/db/project-pins';
@@ -175,6 +182,22 @@ describe('unpinProjectForSession', () => {
   it('reports a failed write as false', async () => {
     mockPoolQuery.mockRejectedValueOnce(new Error('down'));
     await expect(unpinProjectForSession(PROJECT_ID)).resolves.toBe(false);
+  });
+});
+
+describe('listPinnedProjectsForSession (#542)', () => {
+  it('maps the shared statement rows to favorites', async () => {
+    await expect(listPinnedProjectsForSession()).resolves.toEqual([
+      { projectId: 'p-1', projectName: 'Orders', versionLabel: 'v1.0.0', pinnedAt: '2026-10-21T10:00:00.000Z' },
+      { projectId: 'p-2', projectName: 'Billing', versionLabel: null, pinnedAt: '2026-10-20T10:00:00.000Z' },
+    ]);
+    expect(poolQueries[0].sql).toContain('FROM apiome.tenant_users WHERE user_id = $1');
+  });
+
+  it('is empty when signed out, without touching the database', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue(null);
+    await expect(listPinnedProjectsForSession()).resolves.toEqual([]);
+    expect(poolQueries).toHaveLength(0);
   });
 });
 

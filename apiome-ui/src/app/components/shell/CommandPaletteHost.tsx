@@ -20,6 +20,8 @@ import {
   type PaletteCommand,
 } from './commandPaletteModel';
 import { useCommandPaletteRecents } from './commandPaletteRecents';
+import { listPinnedProjectsForSession } from '@lib/db/project-pins';
+import type { PinnedProject } from '@lib/db/dashboard-home-model';
 
 /**
  * Mounts the command palette and answers requests to open it (HIVE-3.6, #5292).
@@ -100,6 +102,23 @@ export default function CommandPaletteHost({
 
   const { recents, record } = useCommandPaletteRecents(currentTenantId);
 
+  // Favorites (#542): the reader's pinned projects, re-read each time the palette opens so a pin
+  // made on another page (or another device) is there without a reload. Nothing is read while
+  // the palette is closed, and a failed read just leaves the group out.
+  const [favorites, setFavorites] = React.useState<readonly PinnedProject[]>([]);
+  React.useEffect(() => {
+    if (!open || !currentTenantId) return;
+    let cancelled = false;
+    void listPinnedProjectsForSession()
+      .catch(() => [] as PinnedProject[])
+      .then((pins) => {
+        if (!cancelled) setFavorites(pins);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, currentTenantId]);
+
   const derivedGroups = React.useMemo(
     () => groups ?? getPlatformNavGroups({ currentTenantId }),
     [groups, currentTenantId]
@@ -111,10 +130,11 @@ export default function CommandPaletteHost({
       buildCommandGroups({
         navGroups: derivedGroups,
         recents,
+        favorites: currentTenantId ? favorites : [],
         currentTenantId,
         commandsOnly,
       }),
-    [derivedGroups, recents, currentTenantId, commandsOnly]
+    [derivedGroups, recents, favorites, currentTenantId, commandsOnly]
   );
 
   /**
@@ -163,7 +183,8 @@ export default function CommandPaletteHost({
       setOpen(false);
 
       if (command.href) {
-        if (command.group !== 'action') {
+        // Actions are verbs, not places; favorites are already one step away.
+        if (command.group !== 'action' && command.group !== 'favorite') {
           record({
             id: command.id.replace(/^recent-/, ''),
             label: command.label,

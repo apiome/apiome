@@ -18,6 +18,7 @@ import {
   PALETTE_GROUP_HEADINGS,
   buildActionCommands,
   buildCommandGroups,
+  buildFavoriteCommands,
   buildJumpCommands,
   buildRecentCommands,
   parseCommandQuery,
@@ -36,6 +37,7 @@ import {
 import { isFeatureReleased } from '../lib/feature-release';
 import { PLATFORM_NAV_ICONS } from '../lib/platform-nav-icons';
 import type { CommandPaletteRecent } from '../src/app/components/shell/commandPaletteRecents';
+import type { PinnedProject } from '../lib/db/dashboard-home-model';
 
 /** A session with a workspace. */
 const TENANT = 't-1';
@@ -235,6 +237,66 @@ describe('the groups, assembled', () => {
     }).flatMap((group) => group.commands.map((command) => command.id));
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('Favorites — the reader\u2019s pinned projects (#542)', () => {
+  const FAVORITES: PinnedProject[] = [
+    { projectId: 'p-1', projectName: 'Payments API', versionLabel: 'v2.4.0', pinnedAt: '2026-10-21T10:00:00.000Z' },
+    { projectId: 'p 2', projectName: 'Orders Service', versionLabel: null, pinnedAt: '2026-10-20T10:00:00.000Z' },
+  ];
+
+  it('opens each favorite on its versions, with a quiet "Favorite" meta line', () => {
+    const commands = buildFavoriteCommands(FAVORITES);
+    expect(commands.map((command) => [command.label, command.meta, command.href])).toEqual([
+      ['Payments API', 'Favorite · v2.4.0', '/ade/dashboard/versions?projectId=p-1'],
+      ['Orders Service', 'Favorite', '/ade/dashboard/versions?projectId=p%202'],
+    ]);
+    expect(commands.every((command) => command.group === 'favorite' && !command.disabled)).toBe(true);
+    expect(commands[0].keywords).toEqual(expect.arrayContaining(['Payments API']));
+  });
+
+  it('draws with an icon the rail knows', () => {
+    for (const command of buildFavoriteCommands(FAVORITES)) {
+      expect(PLATFORM_NAV_ICONS[command.icon]).toBeDefined();
+    }
+  });
+
+  it('leads the palette, headed "Favorites"', () => {
+    const groups = buildCommandGroups({
+      navGroups: getPlatformNavGroups({ currentTenantId: TENANT }),
+      recents: RECENTS,
+      favorites: FAVORITES,
+      currentTenantId: TENANT,
+    });
+    expect(groups[0].id).toBe('favorite');
+    expect(groups[0].heading).toBe(PALETTE_GROUP_HEADINGS.favorite);
+    expect(PALETTE_GROUP_HEADINGS.favorite).toBe('Favorites');
+  });
+
+  it('does not repeat a favorite under Recent', () => {
+    const groups = buildCommandGroups({
+      navGroups: getPlatformNavGroups({ currentTenantId: TENANT }),
+      recents: [
+        { id: 'fav', label: 'Payments API', href: '/ade/dashboard/versions?projectId=p-1', at: 3 },
+        ...RECENTS,
+      ],
+      favorites: FAVORITES,
+      currentTenantId: TENANT,
+    });
+    const recent = groups.find((group) => group.id === 'recent');
+    expect(recent?.commands.map((command) => command.label)).toEqual(['Payments API', 'Orders Service']);
+    expect(recent?.commands.some((command) => command.href === '/ade/dashboard/versions?projectId=p-1')).toBe(false);
+  });
+
+  it('is left out when there are none, and in commands-only mode', () => {
+    const navGroups = getPlatformNavGroups({ currentTenantId: TENANT });
+    expect(buildCommandGroups({ navGroups, currentTenantId: TENANT }).some((g) => g.id === 'favorite')).toBe(false);
+    expect(
+      buildCommandGroups({ navGroups, favorites: FAVORITES, currentTenantId: TENANT, commandsOnly: true }).map(
+        (group) => group.id
+      )
+    ).toEqual(['action']);
   });
 });
 
