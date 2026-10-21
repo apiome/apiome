@@ -348,6 +348,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'dicom', label: 'DICOM', icon: HeartPulse, tone: 'red', dataType: 'schema', origin: 'healthcare', importable: true, aliases: ['dcm', 'dicom-json'], description: 'DICOM Part 10 files and DICOM JSON metadata — SOP classes, attributes by tag and VR, sequences and Structured Report content trees. Pixel data is never read.' },
   { id: 'fhir', label: 'FHIR', icon: HeartPulse, tone: 'red', dataType: 'schema', origin: 'healthcare', importable: true, aliases: ['fhirr4', 'structuredefinition'], description: 'HL7 FHIR healthcare resource definition.' },
   { id: 'hl7v2', label: 'HL7 v2', icon: HeartPulse, tone: 'pink', dataType: 'messages', origin: 'healthcare', importable: true, aliases: ['hl7', 'hl7v2x'], description: 'HL7 v2.x healthcare messaging.' },
+  { id: 'ncpdp', label: 'NCPDP SCRIPT / Telecom', icon: HeartPulse, tone: 'pink', dataType: 'messages', origin: 'healthcare', importable: true, aliases: ['ncpdp-script', 'ncpdp-telecom'], description: 'NCPDP SCRIPT e-prescribing messages (NewRx, RxFill, RxChangeRequest …) and Telecommunication D.0 pharmacy claims, with each transaction type recorded.' },
   { id: 'hl7v3', label: 'HL7 v3 / CDA', icon: HeartPulse, tone: 'pink', dataType: 'messages', origin: 'healthcare', importable: true, aliases: ['cda', 'c-cda'], description: 'HL7 v3 Clinical Document Architecture (CDA R2) documents — CCD, discharge summary and other C-CDA types, template ids kept as asserted claims.' },
 
   // ---- Finance / B2B ----

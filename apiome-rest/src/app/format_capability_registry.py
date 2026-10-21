@@ -92,6 +92,7 @@ from .payload_analyzer import GENERIC_ANALYZER_KEY
 from .hl7v3_datatypes import TEMPLATE_CLAIM_STATEMENT
 from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
 from .nacha_analysis import NACHA_OPERATING_RULES_STATEMENT
+from .ncpdp_analysis import NCPDP_IMPLEMENTATION_GUIDE_STATEMENT
 from .dicom_dictionary import PIXEL_DATA_BOUNDARY_STATEMENT
 from .dicom_normalizer import DICOM_VALUE_STATEMENT
 from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
@@ -149,7 +150,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "21"
+REGISTRY_VERSION = "22"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1163,6 +1164,64 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "file stops inside it); a batch with no entries and an addenda record with no entry "
             "before it are refused as semantically invalid. SEPA payment files are ISO 20022 XML "
             "and route to the ISO 20022 adapter, never here.",
+        ],
+    ),
+    # FMT-6.8 (#5452): NCPDP SCRIPT and Telecom, seeded because the panel must name the supported
+    # versions of both sub-formats and say that no NCPDP implementation guide was consulted.
+    "ncpdp": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "SCRIPT: message (its transaction type — NewRx, RxFill, RxChangeRequest … — detected "
+            "per message) → element → leaf element or attribute. Telecom D.0: transmission → the "
+            "fixed transaction header and the patient (`AM01`) and insurance (`AM04`) segments → "
+            "transaction → segment (`AM07` claim, `AM11` pricing …) → field (two-character id)."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.PATH_ONLY,
+            note=(
+                "A SCRIPT node locates by its element path (``Message/Body/NewRx/Patient``) only — "
+                "the XML reader keeps no positions. A Telecom header field, segment and transaction "
+                "additionally carries the exact offset and length it was cut from, beside its path "
+                "(``TRANSMISSION/transaction[1]/AM07[0]``); a segment field locates by path."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Element, attribute and field values are patient and prescription data — names, "
+                "dates of birth, identifiers, drug codes, quantities, amounts — so the stored record "
+                "carries whatever the value-visibility policy allows; the default keeps presence and "
+                "length only. Transaction types, segment and field ids, the version and the "
+                "transaction counts are structure and are always shown."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "ncpdp.telecom_byte_offsets",
+                "ncpdp.script_relates_to",
+            ],
+            note=(
+                "SCRIPT: one record type per element name, inferred across every message read "
+                "(attributes and repeats included). Telecom: the transmission → transaction → "
+                "segment structure, one record per segment id with a field per field id observed, "
+                "and the header as a positional record. Payload values never enter the model. Each "
+                "message's or transmission's transaction type, the version claimed and the declared "
+                "versus observed transaction count are recorded beside the model."
+            ),
+        ),
+        notes=[
+            NCPDP_IMPLEMENTATION_GUIDE_STATEMENT,
+            "Versions read: SCRIPT messages of any version — 10.x `version`/`release` or the "
+            "2017071-and-later `TransactionVersion` is recorded per message, not branched on; "
+            "Telecommunication D.0 request transmissions, whose header version (`D0`) is checked — "
+            "any other version is refused. Telecom response transmissions are not read.",
+            "Field ids are labelled with their data element where a short table knows them "
+            "(`302-C2 Cardholder ID`); the D.0 data dictionary and payer sheets are not consulted, "
+            "so a field's presence is recorded, never its requiredness. The header's transaction "
+            "count is compared with the transactions observed for B1/B2/B3 and a disagreement is "
+            "stated as a warning: read, not rejected.",
         ],
     ),
     # FMT-6.5 (#5449): TRADACOMS, the UK retail dialect — EDIFACT-style segments read with the

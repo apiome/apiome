@@ -558,6 +558,29 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "ncpdp": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="NCPDP SCRIPT (10.x version/release, 2017071 and later TransactionVersion)",
+                format_key="ncpdp",
+                support=VersionSupport.UNGATED,
+                note="The version a SCRIPT message claims (`version`/`release` on 10.x, "
+                "`TransactionVersion` from 2017071) is recorded per message, not branched on: one "
+                "element grammar is read for every version, and no SCRIPT implementation guide or "
+                "schema is applied.",
+            ),
+            FormatVersion(
+                version="NCPDP Telecommunication D.0 (request transmissions)",
+                format_key="ncpdp",
+                support=VersionSupport.FULL,
+                note="The transaction header's version/release (`102-A2`) is checked: `D0` is read "
+                "and any other version is refused. Request transmissions only — response "
+                "transmissions and the D.0 data dictionary's field-level rules are not read.",
+            ),
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "tradacoms": VersionCoverage(
         reads=[
             FormatVersion(

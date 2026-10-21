@@ -143,7 +143,7 @@ The corpus holds **1466 files** across **107 format directories**. Every file ha
 | `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 12 |
 | `iso8583/` | ISO 8583 | message | `mti` + numbered `dataElements` | 11 |
 | `nacha/` | NACHA ACH | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
-| `ncpdp/` | NCPDP SCRIPT / Telecom (pending #5452) | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
+| `ncpdp/` | NCPDP SCRIPT / Telecom | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
 | `sepa/` | SEPA payment files (ISO 20022) | message | `urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace | 14 |
 | `swift-mt/` | SWIFT MT | message | `{1:` basic header + `{4:` text block terminated by `-}` | 14 |
 | `tradacoms/` | TRADACOMS | message | `STX=` transmission header + `END=` trailer | 15 |
@@ -1530,24 +1530,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`03-view-set/CUSTINQ.nsp`** — Fileset member: the program's VIEW over the DDM, carrying occurrence bounds the DDM itself does not state.
 
-### `ncpdp/` — NCPDP SCRIPT / Telecom (pending #5452)
+### `ncpdp/` — NCPDP SCRIPT / Telecom
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-newrx.xml` | minimal | `ncpdp` ≥ 0.85 | valid | `script`, `NewRx`, `participants`, `pending-adapter` |
-| `02-typical-newrx.xml` | typical | `ncpdp` ≥ 0.85 | valid | `script`, `NewRx`, `coded-drug`, `diagnosis`, `sig`, `sender-software`, `pending-adapter` |
-| `03-composition-rxchangerequest.xml` | composition | `ncpdp` ≥ 0.85 | valid | `script`, `RxChangeRequest`, `prescribed-and-requested`, `prior-authorization`, `benefits-coordination`, `pending-adapter` |
-| `04-stress-multiple-transactions.xml` | stress | `ncpdp` ≥ 0.85 | valid | `script`, `RxFill`, `RxRenewalRequest`, `CancelRx`, `Status`, `Error`, `multi-transaction`, `pending-adapter` |
-| `05-real-world-telecom-b1-claim.dat` | real-world | `ncpdp` ≥ 0.85 | valid | `telecom`, `D0`, `B1`, `insurance-segment`, `claim-segment`, `pricing-segment`, `control-characters`, `pending-adapter` |
-| `06-typical-telecom-b2-reversal.dat` | typical | `ncpdp` ≥ 0.85 | valid | `telecom`, `D0`, `B2`, `reversal`, `control-characters`, `pending-adapter` |
-| `07-transaction-set/newrx.xml` | multi-file (root) | `ncpdp` ≥ 0.85 | valid | `NewRx`, `script`, `pending-adapter` |
-| `07-transaction-set/status.xml` ⚠ | multi-file (member) | `ncpdp` (no guarantee) | valid | `Status`, `RelatesToMessageID`, `script`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-body.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-empty-body.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `semantic`, `no-transaction`, `pending-adapter` |
-| `negative/03-truncated-mid-medication.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `truncated`, `mid-element`, `pending-adapter` |
-| `negative/04-wrong-format-hl7v2.hl7` ⚠ | — | `ncpdp` (no guarantee) | invalid | `negative`, `wrong-format`, `hl7v2`, `RDE`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-unknown-telecom-version.dat` | — | `ncpdp` (no guarantee) | invalid | `negative`, `semantic`, `unknown-version`, `telecom`, `pending-adapter` |
+| `01-minimal-newrx.xml` | minimal | `ncpdp` ≥ 0.85 | valid | `script`, `NewRx`, `participants` |
+| `02-typical-newrx.xml` | typical | `ncpdp` ≥ 0.85 | valid | `script`, `NewRx`, `coded-drug`, `diagnosis`, `sig`, `sender-software` |
+| `03-composition-rxchangerequest.xml` | composition | `ncpdp` ≥ 0.85 | valid | `script`, `RxChangeRequest`, `prescribed-and-requested`, `prior-authorization`, `benefits-coordination` |
+| `04-stress-multiple-transactions.xml` | stress | `ncpdp` ≥ 0.85 | valid | `script`, `RxFill`, `RxRenewalRequest`, `CancelRx`, `Status`, `Error`, `multi-transaction` |
+| `05-real-world-telecom-b1-claim.dat` ⚠ | real-world | `ncpdp` ≥ 0.85 | valid | `telecom`, `D0`, `B1`, `insurance-segment`, `claim-segment`, `pricing-segment`, `control-characters` |
+| `06-typical-telecom-b2-reversal.dat` | typical | `ncpdp` ≥ 0.85 | valid | `telecom`, `D0`, `B2`, `reversal`, `control-characters` |
+| `07-transaction-set/newrx.xml` | multi-file (root) | `ncpdp` ≥ 0.85 | valid | `NewRx`, `script` |
+| `07-transaction-set/status.xml` ⚠ | multi-file (member) | `ncpdp` (no guarantee) | valid | `Status`, `RelatesToMessageID`, `script` |
+| `negative/01-syntactic-unclosed-body.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-empty-body.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `semantic`, `no-transaction` |
+| `negative/03-truncated-mid-medication.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `truncated`, `mid-element` |
+| `negative/04-wrong-format-hl7v2.hl7` ⚠ | — | `ncpdp` (no guarantee) | invalid | `negative`, `wrong-format`, `hl7v2`, `RDE` |
+| `negative/05-encoding-utf16.xml` | — | `ncpdp` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-unknown-telecom-version.dat` | — | `ncpdp` (no guarantee) | invalid | `negative`, `semantic`, `unknown-version`, `telecom` |
+
+> ⚠ **`05-real-world-telecom-b1-claim.dat`** — Since FMT-6.8 the transaction header is followed directly by its first segment; an earlier draft carried a stray field between them, which D.0 does not allow.
 
 > ⚠ **`07-transaction-set/status.xml`** — Fileset member: the pharmacy's response, tied to the NewRx by RelatesToMessageID.
 

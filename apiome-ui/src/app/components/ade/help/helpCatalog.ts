@@ -719,6 +719,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['stx', 'ordhdr', 'invfil', 'uk retail', 'eancom', 'odette', 'edi'],
   },
   {
+    id: 'ncpdp-import',
+    title: 'Import NCPDP SCRIPT and Telecom messages',
+    summary: 'Catalog e-prescriptions (NewRx, RxFill, RxChangeRequest) and D.0 pharmacy claims with each transaction type recorded.',
+    page: 'apiome-docs/docs/bring-in/ncpdp-import.md',
+    section: 'reference',
+    keywords: ['e-prescribing', 'newrx', 'rxfill', 'pharmacy', 'claim', 'd.0', 'b1', 'pharmacy claims'],
+  },
+  {
     id: 'dicom-import',
     title: 'Import DICOM metadata',
     summary: 'Catalog SOP classes, attributes and Structured Report trees from Part 10 or DICOM JSON. Pixel data is never read.',

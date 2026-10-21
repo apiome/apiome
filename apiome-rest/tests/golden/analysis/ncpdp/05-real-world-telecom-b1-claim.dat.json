@@ -1,0 +1,1211 @@
+{
+  "adapter": "ncpdp",
+  "corpus_path": "ncpdp/05-real-world-telecom-b1-claim.dat",
+  "document": {
+    "analyzer": {
+      "key": "ncpdp",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "ncpdp.script_attributes",
+        "ncpdp.script_elements",
+        "ncpdp.script_message",
+        "ncpdp.script_relates_to",
+        "ncpdp.script_transaction_type",
+        "ncpdp.telecom_byte_offsets",
+        "ncpdp.telecom_fields",
+        "ncpdp.telecom_header",
+        "ncpdp.telecom_segments",
+        "ncpdp.telecom_transaction_code",
+        "ncpdp.telecom_transaction_count"
+      ],
+      "unsupported": [
+        "ncpdp.implementation_guide_validation",
+        "ncpdp.script_source_positions",
+        "ncpdp.telecom_data_dictionary",
+        "ncpdp.telecom_response_transmissions"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 38,
+        "header": 1,
+        "segment": 5,
+        "transaction": 1,
+        "transmission": 1
+      },
+      "maxDepth": 4,
+      "nodeCount": 46,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "ncpdp",
+    "sourceHash": "sha256:5410ac81927a40321ac3281f9ed64303db6c7084e53c5a5a06f6e48201a7c77e",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "declaredTransactionCount": 1,
+          "implementationGuideConsulted": false,
+          "observedTransactionCount": 1,
+          "segmentCount": 5,
+          "transactionCode": "B1",
+          "transactionCountConsistent": true,
+          "transactionName": "Billing",
+          "version": "D0"
+        },
+        "children": [
+          {
+            "attributes": {
+              "length": 56
+            },
+            "children": [
+              {
+                "attributes": {
+                  "end": 6,
+                  "start": 1
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "field",
+                "label": "101-A1 BIN Number",
+                "location": {
+                  "column": 1,
+                  "file": null,
+                  "length": 6,
+                  "line": 1,
+                  "offset": 0,
+                  "ordinal": 0,
+                  "path": "TRANSMISSION/header/binNumber"
+                },
+                "name": "binNumber",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "610011",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 8,
+                  "start": 7
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "field",
+                "label": "102-A2 Version/Release Number",
+                "location": {
+                  "column": 7,
+                  "file": null,
+                  "length": 2,
+                  "line": 1,
+                  "offset": 6,
+                  "ordinal": 1,
+                  "path": "TRANSMISSION/header/versionReleaseNumber"
+                },
+                "name": "versionReleaseNumber",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "D0",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 10,
+                  "start": 9
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "field",
+                "label": "103-A3 Transaction Code",
+                "location": {
+                  "column": 9,
+                  "file": null,
+                  "length": 2,
+                  "line": 1,
+                  "offset": 8,
+                  "ordinal": 2,
+                  "path": "TRANSMISSION/header/transactionCode"
+                },
+                "name": "transactionCode",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "B1",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 20,
+                  "start": 11
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "field",
+                "label": "104-A4 Processor Control Number",
+                "location": {
+                  "column": 11,
+                  "file": null,
+                  "length": 10,
+                  "line": 1,
+                  "offset": 10,
+                  "ordinal": 3,
+                  "path": "TRANSMISSION/header/processorControlNumber"
+                },
+                "name": "processorControlNumber",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "PCN0000001",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 21,
+                  "start": 21
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "field",
+                "label": "109-A9 Transaction Count",
+                "location": {
+                  "column": 21,
+                  "file": null,
+                  "length": 1,
+                  "line": 1,
+                  "offset": 20,
+                  "ordinal": 4,
+                  "path": "TRANSMISSION/header/transactionCount"
+                },
+                "name": "transactionCount",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "1",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 23,
+                  "start": 22
+                },
+                "children": [],
+                "id": "0.0.5",
+                "kind": "field",
+                "label": "202-B2 Service Provider ID Qualifier",
+                "location": {
+                  "column": 22,
+                  "file": null,
+                  "length": 2,
+                  "line": 1,
+                  "offset": 21,
+                  "ordinal": 5,
+                  "path": "TRANSMISSION/header/serviceProviderIdQualifier"
+                },
+                "name": "serviceProviderIdQualifier",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "01",
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 38,
+                  "start": 24
+                },
+                "children": [],
+                "id": "0.0.6",
+                "kind": "field",
+                "label": "201-B1 Service Provider ID",
+                "location": {
+                  "column": 24,
+                  "file": null,
+                  "length": 15,
+                  "line": 1,
+                  "offset": 23,
+                  "ordinal": 6,
+                  "path": "TRANSMISSION/header/serviceProviderId"
+                },
+                "name": "serviceProviderId",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "1234567890",
+                "valueLength": 10,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 46,
+                  "start": 39
+                },
+                "children": [],
+                "id": "0.0.7",
+                "kind": "field",
+                "label": "401-D1 Date of Service",
+                "location": {
+                  "column": 39,
+                  "file": null,
+                  "length": 8,
+                  "line": 1,
+                  "offset": 38,
+                  "ordinal": 7,
+                  "path": "TRANSMISSION/header/dateOfService"
+                },
+                "name": "dateOfService",
+                "ordinal": 7,
+                "redacted": false,
+                "value": "20260819",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "end": 56,
+                  "start": 47
+                },
+                "children": [],
+                "id": "0.0.8",
+                "kind": "field",
+                "label": "110-AK Software Vendor/Certification ID",
+                "location": {
+                  "column": 47,
+                  "file": null,
+                  "length": 10,
+                  "line": 1,
+                  "offset": 46,
+                  "ordinal": 8,
+                  "path": "TRANSMISSION/header/softwareVendorCertificationId"
+                },
+                "name": "softwareVendorCertificationId",
+                "ordinal": 8,
+                "redacted": false,
+                "value": "EXAMPLESW1",
+                "valueLength": 10,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.0",
+            "kind": "header",
+            "label": "Transaction header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 56,
+              "line": 1,
+              "offset": 0,
+              "ordinal": 0,
+              "path": "TRANSMISSION/header"
+            },
+            "name": "header",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "fieldCount": 5,
+              "named": true,
+              "segmentId": "AM04",
+              "separator": "GS"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "fieldId": "C2"
+                },
+                "children": [],
+                "id": "0.1.0",
+                "kind": "field",
+                "label": "302-C2 Cardholder ID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "TRANSMISSION/AM04[1]/C2"
+                },
+                "name": "C2",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "MEM-000112233",
+                "valueLength": 13,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "CC"
+                },
+                "children": [],
+                "id": "0.1.1",
+                "kind": "field",
+                "label": "312-CC Cardholder First Name",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "TRANSMISSION/AM04[1]/CC"
+                },
+                "name": "CC",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "JORDAN",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "CD"
+                },
+                "children": [],
+                "id": "0.1.2",
+                "kind": "field",
+                "label": "313-CD Cardholder Last Name",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "TRANSMISSION/AM04[1]/CD"
+                },
+                "name": "CD",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "SAMPLE",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "C1"
+                },
+                "children": [],
+                "id": "0.1.3",
+                "kind": "field",
+                "label": "301-C1 Group ID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "TRANSMISSION/AM04[1]/C1"
+                },
+                "name": "C1",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "GRP-4711",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "FO"
+                },
+                "children": [],
+                "id": "0.1.4",
+                "kind": "field",
+                "label": "524-FO Plan ID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "TRANSMISSION/AM04[1]/FO"
+                },
+                "name": "FO",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "EXPAY01",
+                "valueLength": 7,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.1",
+            "kind": "segment",
+            "label": "Insurance",
+            "location": {
+              "column": 57,
+              "file": null,
+              "length": 60,
+              "line": 1,
+              "offset": 56,
+              "ordinal": 1,
+              "path": "TRANSMISSION/AM04[1]"
+            },
+            "name": "AM04",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "fieldCount": 5,
+              "named": true,
+              "segmentId": "AM01",
+              "separator": "GS"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "fieldId": "C4"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "field",
+                "label": "304-C4 Date of Birth",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "TRANSMISSION/AM01[2]/C4"
+                },
+                "name": "C4",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "19850214",
+                "valueLength": 8,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "C5"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "field",
+                "label": "305-C5 Patient Gender Code",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "TRANSMISSION/AM01[2]/C5"
+                },
+                "name": "C5",
+                "ordinal": 1,
+                "redacted": false,
+                "value": "2",
+                "valueLength": 1,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "CA"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "field",
+                "label": "310-CA Patient First Name",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "TRANSMISSION/AM01[2]/CA"
+                },
+                "name": "CA",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "JORDAN",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "CB"
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "field",
+                "label": "311-CB Patient Last Name",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "TRANSMISSION/AM01[2]/CB"
+                },
+                "name": "CB",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "SAMPLE",
+                "valueLength": 6,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "fieldId": "CP"
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "field",
+                "label": "325-CP Patient ZIP/Postal Zone",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "TRANSMISSION/AM01[2]/CP"
+                },
+                "name": "CP",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "0",
+                "valueLength": 1,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.2",
+            "kind": "segment",
+            "label": "Patient",
+            "location": {
+              "column": 117,
+              "file": null,
+              "length": 42,
+              "line": 1,
+              "offset": 116,
+              "ordinal": 2,
+              "path": "TRANSMISSION/AM01[2]"
+            },
+            "name": "AM01",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "segmentCount": 3,
+              "transactionCode": "B1"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "fieldCount": 11,
+                  "named": true,
+                  "segmentId": "AM07",
+                  "separator": "GS"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fieldId": "EM"
+                    },
+                    "children": [],
+                    "id": "0.3.0.0",
+                    "kind": "field",
+                    "label": "455-EM Prescription/Service Reference Number Qualifier",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/EM"
+                    },
+                    "name": "EM",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "1",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D2"
+                    },
+                    "children": [],
+                    "id": "0.3.0.1",
+                    "kind": "field",
+                    "label": "402-D2 Prescription/Service Reference Number",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D2"
+                    },
+                    "name": "D2",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "4471",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "E1"
+                    },
+                    "children": [],
+                    "id": "0.3.0.2",
+                    "kind": "field",
+                    "label": "436-E1 Product/Service ID Qualifier",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/E1"
+                    },
+                    "name": "E1",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "03",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D7"
+                    },
+                    "children": [],
+                    "id": "0.3.0.3",
+                    "kind": "field",
+                    "label": "407-D7 Product/Service ID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 3,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D7"
+                    },
+                    "name": "D7",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "00093310501",
+                    "valueLength": 11,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "E7"
+                    },
+                    "children": [],
+                    "id": "0.3.0.4",
+                    "kind": "field",
+                    "label": "442-E7 Quantity Dispensed",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 4,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/E7"
+                    },
+                    "name": "E7",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "21000",
+                    "valueLength": 5,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D3"
+                    },
+                    "children": [],
+                    "id": "0.3.0.5",
+                    "kind": "field",
+                    "label": "403-D3 Fill Number",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 5,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D3"
+                    },
+                    "name": "D3",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": "00",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D5"
+                    },
+                    "children": [],
+                    "id": "0.3.0.6",
+                    "kind": "field",
+                    "label": "405-D5 Days Supply",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 6,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D5"
+                    },
+                    "name": "D5",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": "7",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D6"
+                    },
+                    "children": [],
+                    "id": "0.3.0.7",
+                    "kind": "field",
+                    "label": "406-D6 Compound Code",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 7,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D6"
+                    },
+                    "name": "D6",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "D8"
+                    },
+                    "children": [],
+                    "id": "0.3.0.8",
+                    "kind": "field",
+                    "label": "408-D8 Dispense As Written/Product Selection Code",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 8,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/D8"
+                    },
+                    "name": "D8",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": "0",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DE"
+                    },
+                    "children": [],
+                    "id": "0.3.0.9",
+                    "kind": "field",
+                    "label": "414-DE Date Prescription Written",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 9,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/DE"
+                    },
+                    "name": "DE",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": "20260819",
+                    "valueLength": 8,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DF"
+                    },
+                    "children": [],
+                    "id": "0.3.0.10",
+                    "kind": "field",
+                    "label": "415-DF Number of Refills Authorized",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 10,
+                      "path": "TRANSMISSION/transaction[1]/AM07[0]/DF"
+                    },
+                    "name": "DF",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": "00",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "segment",
+                "label": "Claim",
+                "location": {
+                  "column": 159,
+                  "file": null,
+                  "length": 76,
+                  "line": 1,
+                  "offset": 158,
+                  "ordinal": 0,
+                  "path": "TRANSMISSION/transaction[1]/AM07[0]"
+                },
+                "name": "AM07",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "fieldCount": 5,
+                  "named": true,
+                  "segmentId": "AM11",
+                  "separator": "GS"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fieldId": "D9"
+                    },
+                    "children": [],
+                    "id": "0.3.1.0",
+                    "kind": "field",
+                    "label": "409-D9 Ingredient Cost Submitted",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "TRANSMISSION/transaction[1]/AM11[1]/D9"
+                    },
+                    "name": "D9",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "1245",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DC"
+                    },
+                    "children": [],
+                    "id": "0.3.1.1",
+                    "kind": "field",
+                    "label": "412-DC Dispensing Fee Submitted",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "TRANSMISSION/transaction[1]/AM11[1]/DC"
+                    },
+                    "name": "DC",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "250",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DQ"
+                    },
+                    "children": [],
+                    "id": "0.3.1.2",
+                    "kind": "field",
+                    "label": "426-DQ Usual and Customary Charge",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "TRANSMISSION/transaction[1]/AM11[1]/DQ"
+                    },
+                    "name": "DQ",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "1495",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DU"
+                    },
+                    "children": [],
+                    "id": "0.3.1.3",
+                    "kind": "field",
+                    "label": "430-DU Gross Amount Due",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 3,
+                      "path": "TRANSMISSION/transaction[1]/AM11[1]/DU"
+                    },
+                    "name": "DU",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": "1495",
+                    "valueLength": 4,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DN"
+                    },
+                    "children": [],
+                    "id": "0.3.1.4",
+                    "kind": "field",
+                    "label": "423-DN Basis of Cost Determination",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 4,
+                      "path": "TRANSMISSION/transaction[1]/AM11[1]/DN"
+                    },
+                    "name": "DN",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": "01",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.3.1",
+                "kind": "segment",
+                "label": "Pricing",
+                "location": {
+                  "column": 235,
+                  "file": null,
+                  "length": 37,
+                  "line": 1,
+                  "offset": 234,
+                  "ordinal": 1,
+                  "path": "TRANSMISSION/transaction[1]/AM11[1]"
+                },
+                "name": "AM11",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "fieldCount": 3,
+                  "named": true,
+                  "segmentId": "AM03",
+                  "separator": "GS"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fieldId": "EZ"
+                    },
+                    "children": [],
+                    "id": "0.3.2.0",
+                    "kind": "field",
+                    "label": "466-EZ Prescriber ID Qualifier",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "TRANSMISSION/transaction[1]/AM03[2]/EZ"
+                    },
+                    "name": "EZ",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "01",
+                    "valueLength": 2,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DB"
+                    },
+                    "children": [],
+                    "id": "0.3.2.1",
+                    "kind": "field",
+                    "label": "411-DB Prescriber ID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "TRANSMISSION/transaction[1]/AM03[2]/DB"
+                    },
+                    "name": "DB",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "1234567893",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "fieldId": "DR"
+                    },
+                    "children": [],
+                    "id": "0.3.2.2",
+                    "kind": "field",
+                    "label": "427-DR Prescriber Last Name",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "TRANSMISSION/transaction[1]/AM03[2]/DR"
+                    },
+                    "name": "DR",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": "CLINICIAN",
+                    "valueLength": 9,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.3.2",
+                "kind": "segment",
+                "label": "Prescriber",
+                "location": {
+                  "column": 272,
+                  "file": null,
+                  "length": 35,
+                  "line": 1,
+                  "offset": 271,
+                  "ordinal": 2,
+                  "path": "TRANSMISSION/transaction[1]/AM03[2]"
+                },
+                "name": "AM03",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "transaction",
+            "label": "Transaction 1",
+            "location": {
+              "column": 159,
+              "file": null,
+              "length": 76,
+              "line": 1,
+              "offset": 158,
+              "ordinal": 1,
+              "path": "TRANSMISSION/transaction[1]"
+            },
+            "name": "B1",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "transmission",
+        "label": "Telecom D.0 B1 (Billing)",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": 306,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "TRANSMISSION"
+        },
+        "name": "B1",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

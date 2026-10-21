@@ -1215,6 +1215,9 @@ def load_builtin_import_sources() -> None:
     # ``dicom_import_source`` (FMT-6.7) self-registers the ``dicom`` adapter — DICOM Part 10 files
     # and the DICOM JSON model, metadata layer only (pixel data is never read) — and its normalizer.
     from . import dicom_import_source as _dicom  # noqa: F401
+    # ``ncpdp_import_source`` (FMT-6.8) self-registers the ``ncpdp`` adapter — NCPDP SCRIPT
+    # e-prescribing XML and Telecommunication D.0 pharmacy claims — and its normalizer.
+    from . import ncpdp_import_source as _ncpdp  # noqa: F401
     # ``hl7v3_import_source`` (FMT-6.4) self-registers the ``hl7v3`` adapter — HL7 v3 / CDA
     # documents (CCD, discharge summary …), optionally inside a transmission wrapper — and its normalizer.
     from . import hl7v3_import_source as _hl7v3  # noqa: F401

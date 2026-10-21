@@ -1,0 +1,4590 @@
+{
+  "adapter": "ncpdp",
+  "conversion_mode": "lossy",
+  "corpus_path": "ncpdp/03-composition-rxchangerequest.xml",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 22,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.BenefitsCoordination.CardholderID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/CardholderID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.BenefitsCoordination.CardholderID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.CardholderID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/CardholderID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.BenefitsCoordination.GroupID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/GroupID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.BenefitsCoordination.GroupID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.GroupID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/GroupID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerIdentification"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.BenefitsCoordination.PayerName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerName"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.BenefitsCoordination.PayerName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.PayerName",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Body.RxChangeRequest"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Body/properties/RxChangeRequest"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Body.RxChangeRequest",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Body.RxChangeRequest",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Body/properties/RxChangeRequest"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.DateOfBirth.Date"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.DateOfBirth/properties/Date"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.DateOfBirth.Date",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.DateOfBirth.Date",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.DateOfBirth/properties/Date"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.DrugCoded.ProductCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCode"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.DrugCoded.ProductCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.DrugCoded.ProductCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCodeQualifier"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCodeQualifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.From.Qualifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.From/properties/Qualifier"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.From.Qualifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.From.Qualifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.From/properties/Qualifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.From.value"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.From/properties/value"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.From.value",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.From.value",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.From/properties/value"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.From"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/From"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.From",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.From",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/From"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.MessageID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/MessageID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.MessageID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.MessageID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/MessageID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.PrescriberOrderNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/PrescriberOrderNumber"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/PrescriberOrderNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.RelatesToMessageID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/RelatesToMessageID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.RelatesToMessageID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.RelatesToMessageID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/RelatesToMessageID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.SentTime"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/SentTime"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.SentTime",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.SentTime",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/SentTime"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header.To"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header/properties/To"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Header.To",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header.To",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/To"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.HumanPatient.DateOfBirth"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/DateOfBirth"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/DateOfBirth"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.HumanPatient.Gender"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Gender"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.HumanPatient.Gender",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.HumanPatient.Gender",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Gender"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.HumanPatient.Name"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Name"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.HumanPatient.Name",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.HumanPatient.Name",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Name"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Identification.NCPDPID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NCPDPID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Identification.NCPDPID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Identification.NCPDPID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Identification/properties/NCPDPID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Identification.NPI"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NPI"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Identification.NPI",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Identification.NPI",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Identification/properties/NPI"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationPrescribed.DaysSupply"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DaysSupply"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DaysSupply"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationPrescribed.DrugCoded"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugCoded"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugCoded"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationPrescribed.DrugDescription"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugDescription"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugDescription"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationPrescribed.Quantity"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/Quantity"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/Quantity"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.DaysSupply"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DaysSupply"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.DaysSupply",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.DaysSupply",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DaysSupply"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.DrugCoded"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugCoded"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.DrugCoded",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.DrugCoded",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugCoded"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.DrugDescription"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugDescription"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.DrugDescription",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.DrugDescription",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugDescription"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.PriorAuthorization"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/PriorAuthorization"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.PriorAuthorization",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.PriorAuthorization",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/PriorAuthorization"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.Quantity"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Quantity"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.Quantity",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.Quantity",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Quantity"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested.Sig"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Sig"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.MedicationRequested.Sig",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested.Sig",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Sig"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Message.Body"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Message/properties/Body"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Message.Body",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Message.Body",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/Body"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Message.Header"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Message/properties/Header"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Message.Header",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Message.Header",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/Header"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Message.release"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Message/properties/release"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Message.release",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Message.release",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/release"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Message.version"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Message/properties/version"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Message.version",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Message.version",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/version"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Name.FirstName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Name/properties/FirstName"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Name.FirstName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Name.FirstName",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Name/properties/FirstName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Name.LastName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Name/properties/LastName"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Name.LastName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Name.LastName",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Name/properties/LastName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.NonVeterinarian.Identification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Identification"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.NonVeterinarian.Identification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.NonVeterinarian.Identification",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Identification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.NonVeterinarian.Name"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Name"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.NonVeterinarian.Name",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.NonVeterinarian.Name",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Name"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Patient.HumanPatient"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Patient/properties/HumanPatient"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Patient.HumanPatient",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Patient.HumanPatient",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Patient/properties/HumanPatient"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.PayerIdentification.PayerID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.PayerIdentification/properties/PayerID"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.PayerIdentification.PayerID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.PayerIdentification.PayerID",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.PayerIdentification/properties/PayerID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Pharmacy.BusinessName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/BusinessName"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Pharmacy.BusinessName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Pharmacy.BusinessName",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/BusinessName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Pharmacy.Identification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/Identification"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Pharmacy.Identification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Pharmacy.Identification",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/Identification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Prescriber.NonVeterinarian"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Prescriber/properties/NonVeterinarian"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Prescriber/properties/NonVeterinarian"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationNumber"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationStatus"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationStatus"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Quantity.CodeListQualifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/CodeListQualifier"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Quantity.CodeListQualifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Quantity.CodeListQualifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Quantity/properties/CodeListQualifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Quantity.Value"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/Value"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Quantity.Value",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Quantity.Value",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Quantity/properties/Value"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/BenefitsCoordination"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/BenefitsCoordination"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationPrescribed"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationPrescribed"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.MedicationRequested"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationRequested"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.MedicationRequested",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MedicationRequested",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationRequested"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MessageRequestCode"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MessageRequestCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.Patient"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Patient"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.Patient",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Patient",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Patient"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.Pharmacy"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Pharmacy"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.Pharmacy",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Pharmacy",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Pharmacy"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest.Prescriber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Prescriber"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.RxChangeRequest.Prescriber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Prescriber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Prescriber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Sig.SigText"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Sig/properties/SigText"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.Sig.SigText",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Sig.SigText",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Sig/properties/SigText"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.To.Qualifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.To/properties/Qualifier"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.To.Qualifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.To.Qualifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.To/properties/Qualifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.To.value"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.To/properties/value"
+          }
+        ],
+        "id": "construct:field:NCPDP-SCRIPT.To.value",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.To.value",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.To/properties/value"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.BenefitsCoordination"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.BenefitsCoordination",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.BenefitsCoordination",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Body"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Body"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Body",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Body",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Body"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.DateOfBirth"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.DateOfBirth"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.DateOfBirth",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.DateOfBirth",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.DateOfBirth"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.DrugCoded"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.DrugCoded"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.DrugCoded",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.DrugCoded",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.From"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.From"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.From",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.From",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.From"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Header"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Header"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Header",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Header",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Header"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.HumanPatient"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.HumanPatient"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.HumanPatient",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.HumanPatient",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Identification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Identification"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Identification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Identification",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Identification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationPrescribed"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.MedicationPrescribed",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationPrescribed",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.MedicationRequested"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.MedicationRequested"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.MedicationRequested",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.MedicationRequested",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Message"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Message"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Message",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Message",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Message"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Name"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Name"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Name",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Name",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Name"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.NonVeterinarian"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.NonVeterinarian",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.NonVeterinarian",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Patient"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Patient"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Patient",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Patient",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Patient"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.PayerIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.PayerIdentification"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.PayerIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.PayerIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.PayerIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Pharmacy"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Pharmacy"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Pharmacy",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Pharmacy",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Prescriber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Prescriber"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Prescriber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Prescriber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Prescriber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.PriorAuthorization"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.PriorAuthorization",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.PriorAuthorization",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Quantity"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Quantity"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Quantity",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Quantity",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Quantity"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.RxChangeRequest"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.RxChangeRequest",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.RxChangeRequest",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.Sig"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.Sig"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.Sig",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.Sig",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.Sig"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-SCRIPT.To"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-SCRIPT.To"
+          }
+        ],
+        "id": "construct:type:NCPDP-SCRIPT.To",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-SCRIPT.To",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-SCRIPT.To"
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.implementation_guide_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.implementation_guide_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.implementation_guide_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.script_source_positions, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.script_source_positions",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.script_source_positions",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.telecom_data_dictionary, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.telecom_data_dictionary",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.telecom_data_dictionary",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.telecom_response_transmissions, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.telecom_response_transmissions",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.telecom_response_transmissions",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "ncpdp.implementation_guide_validation",
+        "id": "source:analysis:ncpdp.implementation_guide_validation",
+        "kind": "source",
+        "label": "ncpdp.implementation_guide_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.implementation_guide_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.script_source_positions",
+        "id": "source:analysis:ncpdp.script_source_positions",
+        "kind": "source",
+        "label": "ncpdp.script_source_positions",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.script_source_positions",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.telecom_data_dictionary",
+        "id": "source:analysis:ncpdp.telecom_data_dictionary",
+        "kind": "source",
+        "label": "ncpdp.telecom_data_dictionary",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.telecom_data_dictionary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.telecom_response_transmissions",
+        "id": "source:analysis:ncpdp.telecom_response_transmissions",
+        "kind": "source",
+        "label": "ncpdp.telecom_response_transmissions",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.telecom_response_transmissions",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination",
+        "id": "source:construct:NCPDP-SCRIPT.BenefitsCoordination",
+        "kind": "source",
+        "label": "BenefitsCoordination",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "BenefitsCoordination",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.CardholderID",
+        "id": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.CardholderID",
+        "kind": "source",
+        "label": "CardholderID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CardholderID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.GroupID",
+        "id": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.GroupID",
+        "kind": "source",
+        "label": "GroupID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "GroupID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification",
+        "id": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification",
+        "kind": "source",
+        "label": "PayerIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PayerIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.PayerName",
+        "id": "source:construct:NCPDP-SCRIPT.BenefitsCoordination.PayerName",
+        "kind": "source",
+        "label": "PayerName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PayerName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Body",
+        "id": "source:construct:NCPDP-SCRIPT.Body",
+        "kind": "source",
+        "label": "Body",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Body.RxChangeRequest",
+        "id": "source:construct:NCPDP-SCRIPT.Body.RxChangeRequest",
+        "kind": "source",
+        "label": "RxChangeRequest",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "RxChangeRequest",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DateOfBirth",
+        "id": "source:construct:NCPDP-SCRIPT.DateOfBirth",
+        "kind": "source",
+        "label": "DateOfBirth",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "DateOfBirth",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DateOfBirth.Date",
+        "id": "source:construct:NCPDP-SCRIPT.DateOfBirth.Date",
+        "kind": "source",
+        "label": "Date",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Date",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded",
+        "id": "source:construct:NCPDP-SCRIPT.DrugCoded",
+        "kind": "source",
+        "label": "DrugCoded",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "DrugCoded",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded.ProductCode",
+        "id": "source:construct:NCPDP-SCRIPT.DrugCoded.ProductCode",
+        "kind": "source",
+        "label": "ProductCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ProductCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+        "id": "source:construct:NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+        "kind": "source",
+        "label": "ProductCodeQualifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "ProductCodeQualifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From",
+        "id": "source:construct:NCPDP-SCRIPT.From",
+        "kind": "source",
+        "label": "From",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "From",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From.Qualifier",
+        "id": "source:construct:NCPDP-SCRIPT.From.Qualifier",
+        "kind": "source",
+        "label": "Qualifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Qualifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From.value",
+        "id": "source:construct:NCPDP-SCRIPT.From.value",
+        "kind": "source",
+        "label": "value",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "value",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header",
+        "id": "source:construct:NCPDP-SCRIPT.Header",
+        "kind": "source",
+        "label": "Header",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Header",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.From",
+        "id": "source:construct:NCPDP-SCRIPT.Header.From",
+        "kind": "source",
+        "label": "From",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "From",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.MessageID",
+        "id": "source:construct:NCPDP-SCRIPT.Header.MessageID",
+        "kind": "source",
+        "label": "MessageID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MessageID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+        "id": "source:construct:NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+        "kind": "source",
+        "label": "PrescriberOrderNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PrescriberOrderNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.RelatesToMessageID",
+        "id": "source:construct:NCPDP-SCRIPT.Header.RelatesToMessageID",
+        "kind": "source",
+        "label": "RelatesToMessageID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "RelatesToMessageID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.SentTime",
+        "id": "source:construct:NCPDP-SCRIPT.Header.SentTime",
+        "kind": "source",
+        "label": "SentTime",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SentTime",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.To",
+        "id": "source:construct:NCPDP-SCRIPT.Header.To",
+        "kind": "source",
+        "label": "To",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "To",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient",
+        "id": "source:construct:NCPDP-SCRIPT.HumanPatient",
+        "kind": "source",
+        "label": "HumanPatient",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "HumanPatient",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+        "id": "source:construct:NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+        "kind": "source",
+        "label": "DateOfBirth",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DateOfBirth",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.Gender",
+        "id": "source:construct:NCPDP-SCRIPT.HumanPatient.Gender",
+        "kind": "source",
+        "label": "Gender",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Gender",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.Name",
+        "id": "source:construct:NCPDP-SCRIPT.HumanPatient.Name",
+        "kind": "source",
+        "label": "Name",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Name",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification",
+        "id": "source:construct:NCPDP-SCRIPT.Identification",
+        "kind": "source",
+        "label": "Identification",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Identification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification.NCPDPID",
+        "id": "source:construct:NCPDP-SCRIPT.Identification.NCPDPID",
+        "kind": "source",
+        "label": "NCPDPID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NCPDPID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification.NPI",
+        "id": "source:construct:NCPDP-SCRIPT.Identification.NPI",
+        "kind": "source",
+        "label": "NPI",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NPI",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationPrescribed",
+        "kind": "source",
+        "label": "MedicationPrescribed",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MedicationPrescribed",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+        "kind": "source",
+        "label": "DaysSupply",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DaysSupply",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+        "kind": "source",
+        "label": "DrugCoded",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DrugCoded",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+        "kind": "source",
+        "label": "DrugDescription",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DrugDescription",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+        "kind": "source",
+        "label": "Quantity",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Quantity",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested",
+        "kind": "source",
+        "label": "MedicationRequested",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "MedicationRequested",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DaysSupply",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.DaysSupply",
+        "kind": "source",
+        "label": "DaysSupply",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DaysSupply",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DrugCoded",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.DrugCoded",
+        "kind": "source",
+        "label": "DrugCoded",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DrugCoded",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DrugDescription",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.DrugDescription",
+        "kind": "source",
+        "label": "DrugDescription",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DrugDescription",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.PriorAuthorization",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.PriorAuthorization",
+        "kind": "source",
+        "label": "PriorAuthorization",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PriorAuthorization",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.Quantity",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.Quantity",
+        "kind": "source",
+        "label": "Quantity",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Quantity",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.Sig",
+        "id": "source:construct:NCPDP-SCRIPT.MedicationRequested.Sig",
+        "kind": "source",
+        "label": "Sig",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Sig",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message",
+        "id": "source:construct:NCPDP-SCRIPT.Message",
+        "kind": "source",
+        "label": "Message",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Message",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.Body",
+        "id": "source:construct:NCPDP-SCRIPT.Message.Body",
+        "kind": "source",
+        "label": "Body",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.Header",
+        "id": "source:construct:NCPDP-SCRIPT.Message.Header",
+        "kind": "source",
+        "label": "Header",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Header",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.release",
+        "id": "source:construct:NCPDP-SCRIPT.Message.release",
+        "kind": "source",
+        "label": "release",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "release",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.version",
+        "id": "source:construct:NCPDP-SCRIPT.Message.version",
+        "kind": "source",
+        "label": "version",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name",
+        "id": "source:construct:NCPDP-SCRIPT.Name",
+        "kind": "source",
+        "label": "Name",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Name",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name.FirstName",
+        "id": "source:construct:NCPDP-SCRIPT.Name.FirstName",
+        "kind": "source",
+        "label": "FirstName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "FirstName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name.LastName",
+        "id": "source:construct:NCPDP-SCRIPT.Name.LastName",
+        "kind": "source",
+        "label": "LastName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LastName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian",
+        "id": "source:construct:NCPDP-SCRIPT.NonVeterinarian",
+        "kind": "source",
+        "label": "NonVeterinarian",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "NonVeterinarian",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian.Identification",
+        "id": "source:construct:NCPDP-SCRIPT.NonVeterinarian.Identification",
+        "kind": "source",
+        "label": "Identification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Identification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian.Name",
+        "id": "source:construct:NCPDP-SCRIPT.NonVeterinarian.Name",
+        "kind": "source",
+        "label": "Name",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Name",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Patient",
+        "id": "source:construct:NCPDP-SCRIPT.Patient",
+        "kind": "source",
+        "label": "Patient",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Patient",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Patient.HumanPatient",
+        "id": "source:construct:NCPDP-SCRIPT.Patient.HumanPatient",
+        "kind": "source",
+        "label": "HumanPatient",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "HumanPatient",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PayerIdentification",
+        "id": "source:construct:NCPDP-SCRIPT.PayerIdentification",
+        "kind": "source",
+        "label": "PayerIdentification",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PayerIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PayerIdentification.PayerID",
+        "id": "source:construct:NCPDP-SCRIPT.PayerIdentification.PayerID",
+        "kind": "source",
+        "label": "PayerID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PayerID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy",
+        "id": "source:construct:NCPDP-SCRIPT.Pharmacy",
+        "kind": "source",
+        "label": "Pharmacy",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Pharmacy",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy.BusinessName",
+        "id": "source:construct:NCPDP-SCRIPT.Pharmacy.BusinessName",
+        "kind": "source",
+        "label": "BusinessName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BusinessName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy.Identification",
+        "id": "source:construct:NCPDP-SCRIPT.Pharmacy.Identification",
+        "kind": "source",
+        "label": "Identification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Identification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Prescriber",
+        "id": "source:construct:NCPDP-SCRIPT.Prescriber",
+        "kind": "source",
+        "label": "Prescriber",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Prescriber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+        "id": "source:construct:NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+        "kind": "source",
+        "label": "NonVeterinarian",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "NonVeterinarian",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization",
+        "id": "source:construct:NCPDP-SCRIPT.PriorAuthorization",
+        "kind": "source",
+        "label": "PriorAuthorization",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PriorAuthorization",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber",
+        "id": "source:construct:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber",
+        "kind": "source",
+        "label": "PriorAuthorizationNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PriorAuthorizationNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus",
+        "id": "source:construct:NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus",
+        "kind": "source",
+        "label": "PriorAuthorizationStatus",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "PriorAuthorizationStatus",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity",
+        "id": "source:construct:NCPDP-SCRIPT.Quantity",
+        "kind": "source",
+        "label": "Quantity",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Quantity",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity.CodeListQualifier",
+        "id": "source:construct:NCPDP-SCRIPT.Quantity.CodeListQualifier",
+        "kind": "source",
+        "label": "CodeListQualifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CodeListQualifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity.Value",
+        "id": "source:construct:NCPDP-SCRIPT.Quantity.Value",
+        "kind": "source",
+        "label": "Value",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Value",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest",
+        "kind": "source",
+        "label": "RxChangeRequest",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "RxChangeRequest",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination",
+        "kind": "source",
+        "label": "BenefitsCoordination",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BenefitsCoordination",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed",
+        "kind": "source",
+        "label": "MedicationPrescribed",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MedicationPrescribed",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MedicationRequested",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MedicationRequested",
+        "kind": "source",
+        "label": "MedicationRequested",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MedicationRequested",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode",
+        "kind": "source",
+        "label": "MessageRequestCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "MessageRequestCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Patient",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Patient",
+        "kind": "source",
+        "label": "Patient",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Patient",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Pharmacy",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Pharmacy",
+        "kind": "source",
+        "label": "Pharmacy",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Pharmacy",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Prescriber",
+        "id": "source:construct:NCPDP-SCRIPT.RxChangeRequest.Prescriber",
+        "kind": "source",
+        "label": "Prescriber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Prescriber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Sig",
+        "id": "source:construct:NCPDP-SCRIPT.Sig",
+        "kind": "source",
+        "label": "Sig",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Sig",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Sig.SigText",
+        "id": "source:construct:NCPDP-SCRIPT.Sig.SigText",
+        "kind": "source",
+        "label": "SigText",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SigText",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To",
+        "id": "source:construct:NCPDP-SCRIPT.To",
+        "kind": "source",
+        "label": "To",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "To",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To.Qualifier",
+        "id": "source:construct:NCPDP-SCRIPT.To.Qualifier",
+        "kind": "source",
+        "label": "Qualifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "Qualifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To.value",
+        "id": "source:construct:NCPDP-SCRIPT.To.value",
+        "kind": "source",
+        "label": "value",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "value",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.CardholderID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/CardholderID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/CardholderID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/CardholderID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.GroupID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/GroupID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/GroupID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/GroupID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.PayerIdentification",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.BenefitsCoordination.PayerName",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerName",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.BenefitsCoordination/properties/PayerName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Body",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Body",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Body",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Body",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Body.RxChangeRequest",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Body/properties/RxChangeRequest",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Body/properties/RxChangeRequest",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Body/properties/RxChangeRequest",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DateOfBirth",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.DateOfBirth",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.DateOfBirth",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.DateOfBirth",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DateOfBirth.Date",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.DateOfBirth/properties/Date",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.DateOfBirth/properties/Date",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.DateOfBirth/properties/Date",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.DrugCoded",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.DrugCoded",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded.ProductCode",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCode",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCodeQualifier",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCodeQualifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.DrugCoded/properties/ProductCodeQualifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.From",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.From",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.From",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From.Qualifier",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.From/properties/Qualifier",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.From/properties/Qualifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.From/properties/Qualifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.From.value",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.From/properties/value",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.From/properties/value",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.From/properties/value",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.From",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/From",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/From",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/From",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.MessageID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/MessageID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/MessageID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/MessageID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/PrescriberOrderNumber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/PrescriberOrderNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/PrescriberOrderNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.RelatesToMessageID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/RelatesToMessageID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/RelatesToMessageID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/RelatesToMessageID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.SentTime",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/SentTime",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/SentTime",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/SentTime",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Header.To",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Header/properties/To",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Header/properties/To",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Header/properties/To",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.HumanPatient",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.HumanPatient",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/DateOfBirth",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/DateOfBirth",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/DateOfBirth",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.Gender",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Gender",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Gender",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Gender",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.HumanPatient.Name",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Name",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Name",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.HumanPatient/properties/Name",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Identification",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Identification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Identification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification.NCPDPID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Identification/properties/NCPDPID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NCPDPID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NCPDPID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Identification.NPI",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Identification/properties/NPI",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NPI",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Identification/properties/NPI",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DaysSupply",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DaysSupply",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DaysSupply",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugCoded",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugCoded",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugCoded",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugDescription",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugDescription",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/DrugDescription",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/Quantity",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/Quantity",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationPrescribed/properties/Quantity",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DaysSupply",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DaysSupply",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DaysSupply",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DaysSupply",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DrugCoded",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugCoded",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugCoded",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugCoded",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.DrugDescription",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugDescription",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugDescription",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/DrugDescription",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.PriorAuthorization",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/PriorAuthorization",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/PriorAuthorization",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/PriorAuthorization",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.Quantity",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Quantity",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Quantity",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Quantity",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.MedicationRequested.Sig",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Sig",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Sig",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.MedicationRequested/properties/Sig",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Message",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Message",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Message",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.Body",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/Body",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Message/properties/Body",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Message/properties/Body",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.Header",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/Header",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Message/properties/Header",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Message/properties/Header",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.release",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/release",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Message/properties/release",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Message/properties/release",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Message.version",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Message/properties/version",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Message/properties/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Message/properties/version",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Name",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Name",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Name",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name.FirstName",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Name/properties/FirstName",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Name/properties/FirstName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Name/properties/FirstName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Name.LastName",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Name/properties/LastName",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Name/properties/LastName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Name/properties/LastName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian.Identification",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Identification",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Identification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Identification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.NonVeterinarian.Name",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Name",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Name",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.NonVeterinarian/properties/Name",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Patient",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Patient",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Patient",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Patient",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Patient.HumanPatient",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Patient/properties/HumanPatient",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Patient/properties/HumanPatient",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Patient/properties/HumanPatient",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PayerIdentification",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.PayerIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.PayerIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.PayerIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PayerIdentification.PayerID",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.PayerIdentification/properties/PayerID",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.PayerIdentification/properties/PayerID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.PayerIdentification/properties/PayerID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Pharmacy",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Pharmacy",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy.BusinessName",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/BusinessName",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/BusinessName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/BusinessName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Pharmacy.Identification",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/Identification",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/Identification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Pharmacy/properties/Identification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Prescriber",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Prescriber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Prescriber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Prescriber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Prescriber/properties/NonVeterinarian",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Prescriber/properties/NonVeterinarian",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Prescriber/properties/NonVeterinarian",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationNumber",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationNumber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.PriorAuthorization.PriorAuthorizationStatus",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationStatus",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationStatus",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.PriorAuthorization/properties/PriorAuthorizationStatus",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Quantity",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Quantity",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Quantity",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity.CodeListQualifier",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Quantity/properties/CodeListQualifier",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/CodeListQualifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/CodeListQualifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Quantity.Value",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Quantity/properties/Value",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/Value",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Quantity/properties/Value",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.BenefitsCoordination",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/BenefitsCoordination",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/BenefitsCoordination",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/BenefitsCoordination",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MedicationPrescribed",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationPrescribed",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationPrescribed",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationPrescribed",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MedicationRequested",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationRequested",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationRequested",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MedicationRequested",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.MessageRequestCode",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MessageRequestCode",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MessageRequestCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/MessageRequestCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Patient",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Patient",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Patient",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Patient",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Pharmacy",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Pharmacy",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Pharmacy",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Pharmacy",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.RxChangeRequest.Prescriber",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Prescriber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Prescriber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.RxChangeRequest/properties/Prescriber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Sig",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Sig",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Sig",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Sig",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.Sig.SigText",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.Sig/properties/SigText",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.Sig/properties/SigText",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.Sig/properties/SigText",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.To",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.To",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.To",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To.Qualifier",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.To/properties/Qualifier",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.To/properties/Qualifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.To/properties/Qualifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-SCRIPT.To.value",
+        "id": "target:/components/schemas/NCPDP-SCRIPT.To/properties/value",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-SCRIPT.To/properties/value",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-SCRIPT.To/properties/value",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 4,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 4,
+      "checklist": 18,
+      "construct": 80,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "ncpdp",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 63,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "ncpdp.implementation_guide_validation",
+          "ncpdp.script_source_positions",
+          "ncpdp.telecom_data_dictionary",
+          "ncpdp.telecom_response_transmissions"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-ncpdp-03-composition-rxchangerequest-xml",
+      "source_format": "ncpdp",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 82,
+      "transformed": 0,
+      "unavailable": 4
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 102,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 102,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 184,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 4,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 4,
+      "checklist": 18,
+      "construct": 80,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "ncpdp",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 63,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "ncpdp.implementation_guide_validation",
+          "ncpdp.script_source_positions",
+          "ncpdp.telecom_data_dictionary",
+          "ncpdp.telecom_response_transmissions"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-ncpdp-03-composition-rxchangerequest-xml",
+      "source_format": "ncpdp",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 82,
+      "transformed": 0,
+      "unavailable": 4
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 102,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `ncpdp@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -314,6 +314,31 @@ offset and length; a DICOM JSON attribute carries its JSON pointer.
   `dicom.private_attributes_not_modelled`, `dicom.media_storage_sop_class_mismatch` (the file meta
   group and the dataset name different SOP classes) and `dicom.fileset_member_skipped`. All are
   informational, so the record stays **available**.
+
+## The NCPDP analysis
+
+For NCPDP documents ([how to import one](./ncpdp-import.md)) the tab renders what the file is:
+
+- **SCRIPT** — one **message** row per `Message`, then its **element** rows in document order, with
+  each attribute (`Qualifier`, `version`) as an **attribute** row. The message row shows
+  **transactionType** (`NewRx`, `RxFill`, `RxChangeRequest`…), **recognized**, **messageId**,
+  **relatesToMessageId** and **relatesToResolved** (whether the message it answers is in the same
+  upload), **version** and **implementationGuideConsulted** `false`. Rows locate by element path
+  only.
+- **Telecommunication D.0** — one **transmission** row with the **header** (its nine positional
+  fields), the patient and insurance **segment** rows, then one **transaction** row per transaction
+  holding its segments (`AM07` claim, `AM11` pricing…), each with its **field** rows. The
+  transmission row shows **version** (`D0`), **transactionCode** and **transactionName**,
+  **declaredTransactionCount** beside **observedTransactionCount**, **transactionCountConsistent**
+  and **implementationGuideConsulted** `false`. Header fields, segments and transactions carry the
+  exact offset and length they were cut from.
+
+Element, attribute and field values — names, dates of birth, drug codes, amounts — follow the
+value-visibility policy: at the default you see whether a value was present and how long it was.
+Warnings: `ncpdp.transaction_count_mismatch` (a B1/B2/B3 header's transaction count disagrees with
+the transactions observed), `ncpdp.transaction_not_recognized` (a SCRIPT `Body` carrying an
+element outside the recognised transactions) and `ncpdp.segment_not_named` (a segment id outside
+`AM01`–`AM16`). All are informational, so the record stays **available**.
 
 ## The COBOL copybook inspector
 

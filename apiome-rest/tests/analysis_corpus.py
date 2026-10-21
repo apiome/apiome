@@ -8,7 +8,7 @@ whole document, one golden per corpus fixture, the same way ``corpus_snapshot`` 
 model and ``projection_corpus`` pins the export manifest.
 
 Selection is by corpus tag, never by path (the corpus rule since IXH-1.1): every valid ``edix12``,
-``edifact``, ``tradacoms``, ``idoc``, ``swift-mt``, ``nacha``, ``dicom`` and ``cobolcopybook`` entry — the
+``edifact``, ``tradacoms``, ``idoc``, ``swift-mt``, ``nacha``, ``dicom``, ``ncpdp`` and ``cobolcopybook`` entry — the
 format-native extractors — plus the ``minimal``/``typical`` valid ``json-schema`` and ``graphql``
 entries as generic-extractor controls.
 
@@ -64,6 +64,7 @@ NATIVE_ANALYSIS_FORMATS = (
     "swift-mt",
     "nacha",
     "dicom",
+    "ncpdp",
     "cobolcopybook",
 )
 

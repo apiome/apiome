@@ -77,6 +77,7 @@ describe('catalog-format-registry — formats', () => {
     expect(resolveCatalogFormat('hl7v2')?.label).toBe('HL7 v2');
     expect(resolveCatalogFormat('cda')?.id).toBe('hl7v3');
     expect(resolveCatalogFormat('dcm')?.id).toBe('dicom');
+    expect(resolveCatalogFormat('ncpdp-telecom')?.id).toBe('ncpdp');
     expect(resolveCatalogFormat('edi-x12')?.id).toBe('edix12');
     expect(resolveCatalogFormat('iso20022')?.label).toBe('ISO 20022');
     expect(resolveCatalogFormat('iso8583')?.label).toBe('ISO 8583');
@@ -157,7 +158,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect'].sort(),
+      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect'].sort(),
     );
   });
 
