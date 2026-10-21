@@ -28,9 +28,7 @@ import type { Pool } from 'pg';
 const connectionPool = require('./db') as Pool;
 
 import { getAuthSession } from '../auth/server-session';
-
-/** A canonical UUID, any version. */
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from '../comment-discussion';
 
 /**
  * Record one open of a project by the signed-in reader.
@@ -40,7 +38,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  *   UUID, the project is not one the reader can reach, or the write failed.
  */
 export async function recordProjectViewForSession(projectId: string): Promise<boolean> {
-  if (typeof projectId !== 'string' || !UUID_PATTERN.test(projectId)) return false;
+  if (!isUuid(projectId)) return false;
 
   const session = await getAuthSession().catch(() => null);
   const userId = (session?.user as { user_id?: string } | undefined)?.user_id;

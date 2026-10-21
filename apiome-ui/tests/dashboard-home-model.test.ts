@@ -695,11 +695,13 @@ describe('emptyDashboardHome', () => {
     expect(first).toEqual({
       workspaceName: null,
       continueProjects: [],
+      pinnedProjects: [],
       recentlyViewed: [],
       attention: [],
       pulse: [],
     });
     expect(first.continueProjects).not.toBe(second.continueProjects);
     expect(first.recentlyViewed).not.toBe(second.recentlyViewed);
+    expect(first.pinnedProjects).not.toBe(second.pinnedProjects);
   });
 });

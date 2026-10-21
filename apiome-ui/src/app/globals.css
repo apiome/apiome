@@ -5351,6 +5351,33 @@ button.tfa-reset-notice__close > svg {
   color: var(--home-tone-fg);
 }
 
+/* ---- A pinned project (#513) ----------------------------------------------
+   The row is a link *and* an unpin button, side by side rather than nested (a
+   button inside an anchor is `nested-interactive`). So the hairline moves up to
+   the list item, which spans both, and the link inside it drops its own. */
+.home-pin {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-inline-end: var(--card-pad);
+}
+
+.home-rows > .home-pin:not(:first-child) {
+  border-block-start: 1px solid var(--border);
+}
+
+.home-rows > .home-pin:not(:first-child) > .home-row {
+  border-block-start: none;
+}
+
+.home-pin > .home-row {
+  flex: 1 1 auto;
+}
+
+.home-pin__unpin {
+  flex: none;
+}
+
 /* ---- The leading tile ---------------------------------------------------
    The activity row's hexagon, tinted by its kind. 45 % is the glyph proportion
    `.launch-tile` uses, so a tile reads the same on Home and on the launcher. */

@@ -1,6 +1,6 @@
 ---
 title: "Projects"
-description: "REST endpoints tagged projects: 15 operations."
+description: "REST endpoints tagged projects: 18 operations."
 sidebar_position: 61
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.279.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.280.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `projects` · 15 operations
+Tag: `projects` · 18 operations
 
 ## `GET /v1/projects/domains` {#list-project-domain-categories-global-v1-projects-domains-get}
 
@@ -163,6 +163,38 @@ Operation id: `list_project_domain_categories_for_tenant_v1_projects__tenant_slu
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list project domain categories for tenant. | `application/json` map of array of string |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/projects/{tenant_slug}/pinned` {#list-pinned-projects-v1-projects-tenant-slug-pinned-get}
+
+**List Pinned Projects**
+
+List the projects the caller pinned in this tenant, newest pin first.
+
+Deleted projects are left out. At most ``pinLimit`` (8) projects can be pinned.
+
+Args:
+    tenant_slug: The tenant slug
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The caller's pinned projects and the pin limit
+
+Operation id: `list_pinned_projects_v1_projects__tenant_slug__pinned_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list pinned projects. | `application/json` [`PinnedProjectsResponse`](#schema-pinnedprojectsresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/projects/{tenant_slug}/recently-viewed` {#list-recently-viewed-projects-v1-projects-tenant-slug-recently-viewed-get}
@@ -480,6 +512,75 @@ Operation id: `get_project_deletion_impact_v1_projects__tenant_slug___project_id
 | 200 | Successful response for get project deletion impact. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `PUT /v1/projects/{tenant_slug}/{project_id}/pin` {#pin-project-v1-projects-tenant-slug-project-id-pin-put}
+
+**Pin Project**
+
+Pin a project to the caller's Home.
+
+Idempotent: pinning a project that is already pinned returns its existing pin.
+
+Args:
+    tenant_slug: The tenant slug
+    project_id: The project ID
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The caller's pin, with how many projects they have pinned and the limit
+
+Raises:
+    HTTPException: 404 when the project does not exist, is deleted, or is in another tenant;
+        409 ``pin_limit_reached`` when the caller already has 8 pinned projects.
+
+Operation id: `pin_project_v1_projects__tenant_slug___project_id__pin_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for pin project. | `application/json` [`ProjectPinRecord`](#schema-projectpinrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/projects/{tenant_slug}/{project_id}/pin` {#unpin-project-v1-projects-tenant-slug-project-id-pin-delete}
+
+**Unpin Project**
+
+Unpin a project from the caller's Home.
+
+Idempotent: unpinning a project that is not pinned also returns 204.
+
+Args:
+    tenant_slug: The tenant slug
+    project_id: The project ID
+    auth_data: Authentication data (injected by dependency)
+
+Operation id: `unpin_project_v1_projects__tenant_slug___project_id__pin_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for unpin project. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/projects/{tenant_slug}/{project_id}/restore` {#restore-project-v1-projects-tenant-slug-project-id-restore-post}
 
 **Restore Project**
@@ -572,6 +673,15 @@ Validation error response emitted when request data fails schema checks.
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
 
+### `PinnedProjectsResponse` {#schema-pinnedprojectsresponse}
+
+Envelope for ``GET /v1/projects/{tenant_slug}/pinned`` (#513).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projects` | array of `PinnedProject` | no | Projects. |
+| `pinLimit` | integer | yes | Pin Limit. |
+
 ### `ProjectConversionHistoryResponse` {#schema-projectconversionhistoryresponse}
 
 ``GET /v1/projects/{tenant_slug}/{project_id}/conversions`` — the conversions that produced a
@@ -592,6 +702,17 @@ Request model for creating a project.
 | `description` | string or null | no | Free-text description. |
 | `slug` | string | yes | URL-safe identifier. |
 | `metadata` | object or null | no | Additional JSON metadata bag. |
+
+### `ProjectPinRecord` {#schema-projectpinrecord}
+
+The caller's pin on one project (#513).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projectId` | string | yes | Project ID. |
+| `pinnedAt` | string (date-time) | yes | Pinned At. |
+| `pinnedCount` | integer | yes | How many projects the caller has pinned in this tenant, including this one. |
+| `pinLimit` | integer | yes | The most projects one member may pin in a tenant. |
 
 ### `ProjectSchema` {#schema-projectschema}
 

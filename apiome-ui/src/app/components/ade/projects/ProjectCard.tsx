@@ -31,7 +31,7 @@ import { OwnerCell } from '@/app/components/ade/owners';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
-import { Ellipsis, Pencil, Plus, Trash2, Undo2, Users } from 'lucide-react';
+import { Ellipsis, Pencil, Pin, PinOff, Plus, Trash2, Undo2, Users } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Avatar } from '@/app/components/ui/Avatar';
@@ -87,6 +87,10 @@ export interface ProjectCardProps {
   busy?: boolean;
   /** The project's owner changed in place (a suggestion confirmed on the card, CDG-2.4). */
   onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
+  /** Whether the reader pinned this project to Home (#513). Words the ⋯ menu's pin item. */
+  pinned?: boolean;
+  /** Pin or unpin it (#513). The ⋯ menu offers the item only when this is given. */
+  onTogglePin?: (project: Project) => void;
 }
 
 /**
@@ -106,6 +110,8 @@ export default function ProjectCard({
   onPermanentDelete,
   busy = false,
   onOwnerChange,
+  pinned = false,
+  onTogglePin,
 }: ProjectCardProps) {
   const lifecycle = projectLifecycle(project);
   const isDeleted = lifecycle === 'deleted';
@@ -271,6 +277,7 @@ export default function ProjectCard({
                   <Pencil aria-hidden />
                   Edit project
                 </DropdownMenu.Item>
+                {onTogglePin ? <PinMenuItem project={project} pinned={pinned} onTogglePin={onTogglePin} /> : null}
                 <DropdownMenu.Separator className="tnt-menu__sep" />
                 <DropdownMenu.Item
                   className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
@@ -285,6 +292,35 @@ export default function ProjectCard({
         </div>
       )}
     </article>
+  );
+}
+
+/** Props for {@link PinMenuItem}. */
+export interface PinMenuItemProps {
+  /** The project the menu belongs to. */
+  project: Project;
+  /** Whether it is pinned now. */
+  pinned: boolean;
+  /** Pin or unpin it. */
+  onTogglePin: (project: Project) => void;
+}
+
+/**
+ * The ⋯ menu's "Pin to Home" / "Unpin from Home" item (#513), shared by the card and the table.
+ *
+ * @param props See {@link PinMenuItemProps}.
+ * @returns One menu item.
+ */
+export function PinMenuItem({ project, pinned, onTogglePin }: PinMenuItemProps) {
+  return (
+    <DropdownMenu.Item
+      className={MENU_ITEM_CLASS}
+      onSelect={() => onTogglePin(project)}
+      data-testid={`project-pin-${project.id}`}
+    >
+      {pinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}
+      {pinned ? 'Unpin from Home' : 'Pin to Home'}
+    </DropdownMenu.Item>
   );
 }
 

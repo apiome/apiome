@@ -39,6 +39,25 @@ jest.mock('@lib/auth/session-client', () => ({
   AuthSessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+/** Pinning to Home from the ⋯ menus (#513). */
+const mockListPins = jest.fn<Promise<string[]>, []>(() => Promise.resolve([]));
+const mockPin = jest.fn<Promise<string>, [string]>(() => Promise.resolve('pinned'));
+const mockUnpin = jest.fn<Promise<boolean>, [string]>(() => Promise.resolve(true));
+jest.mock('@lib/db/project-pins', () => ({
+  listPinnedProjectIdsForSession: () => mockListPins(),
+  pinProjectForSession: (projectId: string) => mockPin(projectId),
+  unpinProjectForSession: (projectId: string) => mockUnpin(projectId),
+}));
+
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
+jest.mock('@/app/components/ui/toast', () => ({
+  toast: {
+    success: (message: string) => mockToastSuccess(message),
+    error: (message: string) => mockToastError(message),
+  },
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
   useSearchParams: () => new URLSearchParams(),
@@ -414,6 +433,64 @@ describe('the table', () => {
     await user.click(screen.getByTestId('projects-view-table'));
     const table = await screen.findByTestId('projects-table');
     expect(within(table).getByTestId('projects-table-empty')).toHaveTextContent('Empty project');
+  });
+});
+
+describe('pinning to Home (#513)', () => {
+  beforeEach(() => {
+    mockListPins.mockImplementation(() => Promise.resolve([]));
+    mockPin.mockImplementation(() => Promise.resolve('pinned'));
+    mockUnpin.mockImplementation(() => Promise.resolve(true));
+  });
+
+  it('offers "Pin to Home" on a card, pins it, and then offers "Unpin from Home"', async () => {
+    const { user } = await renderProjects();
+    openMenu(screen.getByTestId(`project-card-menu-${PAYMENTS.id}`));
+    await user.click(await screen.findByText('Pin to Home'));
+
+    await waitFor(() => expect(mockPin).toHaveBeenCalledWith(PAYMENTS.id));
+    expect(mockToastSuccess).toHaveBeenCalledWith('Pinned "Payments API" to Home.');
+
+    openMenu(screen.getByTestId(`project-card-menu-${PAYMENTS.id}`));
+    expect(await screen.findByText('Unpin from Home')).toBeInTheDocument();
+  });
+
+  it('words the menu from the pins already held, and unpins', async () => {
+    mockListPins.mockImplementation(() => Promise.resolve([PAYMENTS.id]));
+    const { user } = await renderProjects();
+    await waitFor(() => expect(mockListPins).toHaveBeenCalled());
+
+    openMenu(screen.getByTestId(`project-card-menu-${PAYMENTS.id}`));
+    await user.click(await screen.findByText('Unpin from Home'));
+
+    await waitFor(() => expect(mockUnpin).toHaveBeenCalledWith(PAYMENTS.id));
+    expect(mockToastSuccess).toHaveBeenCalledWith('Unpinned "Payments API".');
+    expect(mockPin).not.toHaveBeenCalled();
+  });
+
+  it('says how to make room when the limit is reached, and leaves the item unpinned', async () => {
+    mockPin.mockImplementation(() => Promise.resolve('limit_reached'));
+    const { user } = await renderProjects();
+    openMenu(screen.getByTestId(`project-card-menu-${PAYMENTS.id}`));
+    await user.click(await screen.findByText('Pin to Home'));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith(
+        'You can pin up to 8 projects. Unpin one on Home first.'
+      )
+    );
+    openMenu(screen.getByTestId(`project-card-menu-${PAYMENTS.id}`));
+    expect(await screen.findByText('Pin to Home')).toBeInTheDocument();
+  });
+
+  it('offers the same item in the table row menu', async () => {
+    const { user } = await renderProjects();
+    await user.click(screen.getByTestId('projects-view-table'));
+    await screen.findByTestId('projects-table');
+
+    openMenu(screen.getByTestId(`projects-menu-${PAYMENTS.id}`));
+    await user.click(await screen.findByText('Pin to Home'));
+    await waitFor(() => expect(mockPin).toHaveBeenCalledWith(PAYMENTS.id));
   });
 });
 

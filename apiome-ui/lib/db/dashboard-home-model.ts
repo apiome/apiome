@@ -34,6 +34,12 @@ export const PULSE_WINDOW_DAYS = PULSE_WEEKS * 7;
 /** How many projects "Pick up where you left off" shows. Three, as the mockup's grid does. */
 export const CONTINUE_PROJECT_LIMIT = 3;
 
+/**
+ * The most projects one member may pin in a workspace (#513). Home shows all of them, and
+ * `PROJECT_PIN_LIMIT` in apiome-rest's `projects_routes.py` holds the same number.
+ */
+export const PROJECT_PIN_LIMIT = 8;
+
 /** How many projects "Recently viewed" lists (#510). */
 export const RECENTLY_VIEWED_LIMIT = 5;
 
@@ -105,6 +111,28 @@ export interface RecentlyViewedProject {
   /** How many times the reader has opened it (at least 1). */
   viewCount: number;
 }
+
+/** One project the reader pinned to Home (#513), from `apiome.project_pins`. */
+export interface PinnedProject {
+  /** The project's record id, used as the React key, in the link and to unpin. */
+  projectId: string;
+  /** The project's name, as the row's title. */
+  projectName: string;
+  /** The newest revision's semantic id (`"v2.4.0"`), or `null` for a project with none yet. */
+  versionLabel: string | null;
+  /** ISO instant the reader pinned it. */
+  pinnedAt: string;
+}
+
+/**
+ * What pinning a project came to (#513).
+ *
+ * - `pinned` — a new pin; `already_pinned` — it was pinned before, nothing changed.
+ * - `limit_reached` — the reader already has {@link PROJECT_PIN_LIMIT} pins; nothing was written.
+ * - `not_found` — the project is unknown, deleted, or in a workspace the reader is not in.
+ * - `error` — the write failed, or there is no signed-in reader.
+ */
+export type PinProjectStatus = 'pinned' | 'already_pinned' | 'limit_reached' | 'not_found' | 'error';
 
 /** Which of the four sources an attention row came from. */
 export type AttentionKind = 'sunset' | 'lint' | 'key' | 'review';
@@ -532,6 +560,8 @@ export interface DashboardHome {
   workspaceName: string | null;
   /** Up to {@link CONTINUE_PROJECT_LIMIT} projects, most recently touched first. */
   continueProjects: ContinueProject[];
+  /** Up to {@link PROJECT_PIN_LIMIT} projects pinned in the current workspace, newest pin first. */
+  pinnedProjects: PinnedProject[];
   /** Up to {@link RECENTLY_VIEWED_LIMIT} projects in the current workspace, last opened first. */
   recentlyViewed: RecentlyViewedProject[];
   /** Up to {@link ATTENTION_LIMIT} ranked rows. Empty means the panel is not drawn at all. */
@@ -552,6 +582,7 @@ export function emptyDashboardHome(): DashboardHome {
   return {
     workspaceName: null,
     continueProjects: [],
+    pinnedProjects: [],
     recentlyViewed: [],
     attention: [],
     pulse: [],

@@ -23,7 +23,12 @@
  */
 
 import { getAuthSession } from './__mocks__/server-session';
-import { ATTENTION_HREF, PULSE_WEEKS, RECENTLY_VIEWED_LIMIT } from '@lib/db/dashboard-home-model';
+import {
+  ATTENTION_HREF,
+  PROJECT_PIN_LIMIT,
+  PULSE_WEEKS,
+  RECENTLY_VIEWED_LIMIT,
+} from '@lib/db/dashboard-home-model';
 
 /** Every `connectionPool.query` call the module makes, in order. */
 const queries: { sql: string; params: unknown[] }[] = [];
@@ -49,6 +54,7 @@ const SECTION = {
   workspace: 'FROM apiome.tenants t',
   continueProjects: 'WITH latest AS',
   recentlyViewed: 'FROM apiome.project_views pv',
+  pinned: 'FROM apiome.project_pins pp',
   sunset: "v.metadata->>'sunsetAt'",
   lint: "quality_report->'severity_counts'",
   keys: 'FROM apiome.api_keys ak',
@@ -117,6 +123,7 @@ describe('getDashboardHomeForSession — who it reads for', () => {
     expect(home).toEqual({
       workspaceName: null,
       continueProjects: [],
+      pinnedProjects: [],
       recentlyViewed: [],
       attention: [],
       pulse: [],
@@ -351,6 +358,68 @@ describe('the recently-viewed section (#510)', () => {
   });
 });
 
+describe('the pinned-projects section (#513)', () => {
+  /** One row of the pinned query, as `pg` hands it back. */
+  function pinRow(overrides: Record<string, unknown> = {}) {
+    return {
+      project_id: 'p-9',
+      project_name: 'Billing API',
+      pinned_at: new Date('2026-10-20T09:00:00.000Z'),
+      version_id: 'v3.0.0',
+      ...overrides,
+    };
+  }
+
+  it('maps a row and serialises the instant', async () => {
+    answer(SECTION.pinned, [pinRow()]);
+    const home = await getDashboardHomeForSession();
+    expect(home.pinnedProjects).toEqual([
+      {
+        projectId: 'p-9',
+        projectName: 'Billing API',
+        versionLabel: 'v3.0.0',
+        pinnedAt: '2026-10-20T09:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('keeps a project with no revisions, names an untitled one, drops a row with no instant', async () => {
+    answer(SECTION.pinned, [
+      pinRow({ version_id: null, project_name: '' }),
+      pinRow({ project_id: 'p-10', pinned_at: null }),
+    ]);
+    const home = await getDashboardHomeForSession();
+    expect(home.pinnedProjects).toHaveLength(1);
+    expect(home.pinnedProjects[0]).toMatchObject({ versionLabel: null, projectName: 'Untitled project' });
+  });
+
+  it("reads only the reader's own pins in the current workspace, capped at the pin limit", async () => {
+    await getDashboardHomeForSession();
+    const entry = queries.find((candidate) => candidate.sql.includes(SECTION.pinned));
+
+    expect(entry?.params).toEqual(['user-1', 'tenant-1', PROJECT_PIN_LIMIT]);
+    expect(entry?.sql).toContain('pp.user_id = $1');
+    expect(entry?.sql).toContain('pp.tenant_id = $2');
+    expect(entry?.sql).toContain('p.deleted_at IS NULL');
+    expect(entry?.sql).toContain('ORDER BY pp.pinned_at DESC');
+  });
+
+  it('skips the query when the session has no current workspace', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue({ user: { user_id: 'user-1' } });
+    const home = await getDashboardHomeForSession();
+    expect(queries.some((entry) => entry.sql.includes(SECTION.pinned))).toBe(false);
+    expect(home.pinnedProjects).toEqual([]);
+  });
+
+  it('fails soft: the other panels still load', async () => {
+    fail(SECTION.pinned);
+    answer(SECTION.continueProjects, [projectRow()]);
+    const home = await getDashboardHomeForSession();
+    expect(home.pinnedProjects).toEqual([]);
+    expect(home.continueProjects).toHaveLength(1);
+  });
+});
+
 describe('the needs-attention sections', () => {
   it('ranks the three sources together, most urgent first', async () => {
     answer(SECTION.sunset, [
@@ -501,6 +570,7 @@ describe('failing soft', () => {
     await expect(getDashboardHomeForSession()).resolves.toEqual({
       workspaceName: null,
       continueProjects: [],
+      pinnedProjects: [],
       recentlyViewed: [],
       attention: [],
       pulse: [],

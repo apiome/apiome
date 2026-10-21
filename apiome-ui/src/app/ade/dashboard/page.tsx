@@ -17,8 +17,9 @@
  *
  * The same widgets, plus the work. Reading down: a greeting header with the two actions a
  * reader most often wants, the first-run checklist as the page's one honey card, the six stats,
- * and then a two-column body whose *both* columns are full — "Pick up where you left off",
- * Recently viewed (#510) and Recent activity on the left, Quick actions / Needs attention / Publishing pulse on the right.
+ * and then a two-column body whose *both* columns are full — Pinned projects (#513), "Pick up
+ * where you left off", Recently viewed (#510) and Recent activity on the left, Quick actions /
+ * Needs attention / Publishing pulse on the right.
  *
  * Nothing here is a new data source. The stats and the activity list are the same two calls,
  * unchanged; everything added is assembled by `lib/db/dashboard-home.ts` out of columns other
@@ -37,7 +38,7 @@
  * rather than popping in one at a time, which is what a page of skeletons is for.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Upload } from 'lucide-react';
 import { useAuthSession } from '@lib/auth/session-client';
@@ -50,6 +51,7 @@ import { FirstRunChecklist } from '@/app/components/ade/dashboard/FirstRunCheckl
 import { ContinueWorking } from '@/app/components/ade/dashboard/home/ContinueWorking';
 import { HomeStatStrip } from '@/app/components/ade/dashboard/home/HomeStatStrip';
 import { NeedsAttention } from '@/app/components/ade/dashboard/home/NeedsAttention';
+import { PinnedProjects } from '@/app/components/ade/dashboard/home/PinnedProjects';
 import { PublishingPulse } from '@/app/components/ade/dashboard/home/PublishingPulse';
 import { QuickActions } from '@/app/components/ade/dashboard/home/QuickActions';
 import { RecentActivity } from '@/app/components/ade/dashboard/home/RecentActivity';
@@ -62,8 +64,14 @@ import {
   type RecentActivityRow,
 } from '@/app/components/ade/dashboard/home/homeModel';
 import { firstNameOf, greetingFor } from '@/app/components/ade/launcher/launcherModel';
-import { emptyDashboardHome, type DashboardHome } from '@lib/db/dashboard-home-model';
+import {
+  emptyDashboardHome,
+  type DashboardHome,
+  type PinnedProject,
+} from '@lib/db/dashboard-home-model';
 import { getDashboardHomeForSession } from '@lib/db/dashboard-home';
+import { unpinProjectForSession } from '@lib/db/project-pins';
+import { toast } from '@/app/components/ui/toast';
 import { getDashboardStats, getRecentActivity } from '@lib/db/helper';
 
 /** The projects list, which owns both of the header's action dialogs. */
@@ -111,6 +119,7 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivityRow[]>([]);
   const [home, setHome] = useState<DashboardHome>(() => emptyDashboardHome());
   const [isLoading, setIsLoading] = useState(true);
+  const [unpinning, setUnpinning] = useState<ReadonlySet<string>>(() => new Set());
 
   const user = session?.user as { user_id?: string; current_tenant_id?: string } | undefined;
   const userId = user?.user_id;
@@ -145,6 +154,34 @@ const Dashboard = () => {
 
     loadDashboardData();
   }, [userId]);
+
+  /**
+   * Unpin from the Pinned projects panel (#513).
+   *
+   * Optimistic: the row goes at once, and comes back in its old place with an error toast if
+   * the write fails — a panel that waited on the round trip would feel broken on a slow link.
+   */
+  const handleUnpin = useCallback(async (project: PinnedProject) => {
+    const before = home.pinnedProjects;
+    setUnpinning((current) => new Set(current).add(project.projectId));
+    setHome((current) => ({
+      ...current,
+      pinnedProjects: current.pinnedProjects.filter((pin) => pin.projectId !== project.projectId),
+    }));
+
+    const ok = await unpinProjectForSession(project.projectId).catch(() => false);
+    if (ok) {
+      toast.success(`Unpinned "${project.projectName}".`);
+    } else {
+      setHome((current) => ({ ...current, pinnedProjects: before }));
+      toast.error(`Could not unpin "${project.projectName}". Try again.`);
+    }
+    setUnpinning((current) => {
+      const next = new Set(current);
+      next.delete(project.projectId);
+      return next;
+    });
+  }, [home.pinnedProjects]);
 
   return (
     <Page>
@@ -186,6 +223,12 @@ const Dashboard = () => {
 
         <div className="home-grid">
           <div className="home-grid__main">
+            <PinnedProjects
+              projects={home.pinnedProjects}
+              loading={isLoading}
+              onUnpin={(project) => void handleUnpin(project)}
+              unpinning={unpinning}
+            />
             <ContinueWorking projects={home.continueProjects} loading={isLoading} />
             <RecentlyViewed projects={home.recentlyViewed} loading={isLoading} />
             <RecentActivity activity={recentActivity} loading={isLoading} />

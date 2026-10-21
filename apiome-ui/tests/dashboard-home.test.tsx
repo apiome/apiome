@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
@@ -60,6 +60,15 @@ jest.mock('@lib/db/helper', () => ({
 jest.mock('@lib/db/dashboard-home', () => ({
   getDashboardHomeForSession: () => mockGetDashboardHome(),
 }));
+
+/** Unpinning from Home (#513). */
+const mockUnpin = jest.fn<Promise<boolean>, [string]>();
+jest.mock('@lib/db/project-pins', () => ({
+  unpinProjectForSession: (projectId: string) => mockUnpin(projectId),
+}));
+
+const mockToast = { success: jest.fn(), error: jest.fn() };
+jest.mock('@/app/components/ui/toast', () => ({ toast: mockToast }));
 
 // The Designer is not configured in the test environment, so the checklist shows its three core
 // steps — the pre-existing behaviour `FirstRunChecklist.test.tsx` covers in both configurations.
@@ -122,6 +131,20 @@ const HOME: DashboardHome = {
       touchedKind: 'published',
     },
   ],
+  pinnedProjects: [
+    {
+      projectId: 'p-1',
+      projectName: 'Payments API',
+      versionLabel: 'v2.4.0',
+      pinnedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+    },
+    {
+      projectId: 'p-4',
+      projectName: 'Shipping API',
+      versionLabel: null,
+      pinnedAt: new Date(Date.now() - 5 * 86_400_000).toISOString(),
+    },
+  ],
   recentlyViewed: [
     {
       projectId: 'p-2',
@@ -177,6 +200,7 @@ const HOME: DashboardHome = {
 const EMPTY_HOME: DashboardHome = {
   workspaceName: 'Acme Corp',
   continueProjects: [],
+  pinnedProjects: [],
   recentlyViewed: [],
   attention: [],
   pulse: [],
@@ -252,7 +276,7 @@ describe('Home — the widgets the redesign preserves', () => {
   it('draws all four activity kinds with their own tone', async () => {
     await renderLoaded();
     const tones = new Set(
-      Array.from(document.querySelectorAll('.home-row .home-tile')).map((tile) =>
+      Array.from(document.querySelectorAll('[data-activity] .home-tile')).map((tile) =>
         tile.getAttribute('data-tone'),
       ),
     );
@@ -437,6 +461,65 @@ describe('Home — what fills the half that used to be empty', () => {
    3. Needs attention
    ------------------------------------------------------------------------- */
 
+describe('Home — Pinned projects (#513)', () => {
+  it('lists each pin, newest first, linking into its versions, with the count against the limit', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Pinned projects' });
+    const links = within(panel).getAllByRole('link');
+
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute('href', '/ade/dashboard/versions?projectId=p-1');
+    expect(within(links[0]).getByText('Payments API')).toBeInTheDocument();
+    expect(within(links[0]).getByText('v2.4.0 · Pinned 3 days ago')).toBeInTheDocument();
+    expect(within(links[1]).getByText('No versions yet · Pinned 5 days ago')).toBeInTheDocument();
+    expect(within(panel).getByText('2 of 8 pinned')).toBeInTheDocument();
+  });
+
+  it('gives every row an unpin button beside the link, never inside it', async () => {
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Pinned projects' });
+    const unpin = within(panel).getByRole('button', { name: 'Unpin Payments API' });
+    expect(unpin.closest('a')).toBeNull();
+  });
+
+  it('removes the row at once and confirms when the unpin lands', async () => {
+    mockUnpin.mockResolvedValue(true);
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Pinned projects' });
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Unpin Payments API' }));
+
+    expect(within(panel).queryByText('Payments API')).not.toBeInTheDocument();
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalledWith('Unpinned "Payments API".'));
+    expect(mockUnpin).toHaveBeenCalledWith('p-1');
+    expect(within(panel).getByText('1 of 8 pinned')).toBeInTheDocument();
+  });
+
+  it('puts the row back and says so when the unpin fails', async () => {
+    mockUnpin.mockResolvedValue(false);
+    await renderLoaded();
+    const panel = screen.getByRole('group', { name: 'Pinned projects' });
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Unpin Payments API' }));
+
+    await waitFor(() =>
+      expect(mockToast.error).toHaveBeenCalledWith('Could not unpin "Payments API". Try again.'),
+    );
+    expect(within(panel).getByText('Payments API')).toBeInTheDocument();
+    expect(within(panel).getByText('2 of 8 pinned')).toBeInTheDocument();
+  });
+
+  it('teaches where pinning lives when nothing is pinned', async () => {
+    await renderLoaded(EMPTY_HOME);
+    const panel = screen.getByRole('group', { name: 'Pinned projects' });
+    expect(within(panel).getByText('No pinned projects')).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: /Go to Projects/ })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects',
+    );
+  });
+});
+
 describe('Home — Recently viewed (#510)', () => {
   it('lists the projects the reader opened, last first, each linking into its versions', async () => {
     await renderLoaded();
@@ -543,7 +626,7 @@ describe('Home — accessibility and resilience', () => {
   it('draws exactly one h1, and names every added region', async () => {
     await renderLoaded();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    for (const name of ['Pick up where you left off', 'Recently viewed', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse']) {
+    for (const name of ['Pinned projects', 'Pick up where you left off', 'Recently viewed', 'Recent activity', 'Quick actions', 'Needs attention', 'Publishing pulse']) {
       expect(screen.getByText(name)).toBeInTheDocument();
     }
   });

@@ -19,6 +19,9 @@ from .models import (
     ProjectSchema,
     ProjectCreateRequest,
     ProjectUpdateRequest,
+    PinnedProject,
+    PinnedProjectsResponse,
+    ProjectPinRecord,
     ProjectViewRecord,
     RecentlyViewedProject,
     RecentlyViewedProjectsResponse,
@@ -116,7 +119,7 @@ RECENTLY_VIEWED_MAX_LIMIT = 50
 
 
 def _require_view_user_id(auth_data: Dict[str, Any]) -> str:
-    """Resolve the caller for the view history, or fail with 403.
+    """Resolve the caller for their view history or pins (#510, #513), or fail with 403.
 
     Args:
         auth_data: Authentication data from :func:`validate_authentication`.
@@ -131,7 +134,7 @@ def _require_view_user_id(auth_data: Dict[str, Any]) -> str:
     if not user_id:
         raise HTTPException(
             status_code=403,
-            detail="Recently viewed projects require an attributable user",
+            detail="Recently viewed and pinned projects require an attributable user",
         )
     return user_id
 
@@ -232,6 +235,116 @@ async def record_project_view(
     if not row:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return ProjectViewRecord(**{**row, "project_id": str(row["project_id"])})
+
+
+# --- Pinned projects (#513) -------------------------------------------------------------
+#
+# Personal, like the view history above: tenant from the token, user from the credentials.
+# ``/pinned`` is registered before ``/{tenant_slug}/{project_id}`` for the same reason.
+
+PROJECT_PIN_LIMIT = 8
+
+
+@router.get("/{tenant_slug}/pinned")
+async def list_pinned_projects(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PinnedProjectsResponse:
+    """
+    List the projects the caller pinned in this tenant, newest pin first.
+
+    Deleted projects are left out. At most ``pinLimit`` (8) projects can be pinned.
+
+    Args:
+        tenant_slug: The tenant slug
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The caller's pinned projects and the pin limit
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    rows = db.list_pinned_projects(auth_data["tenant_id"], user_id, PROJECT_PIN_LIMIT)
+    return PinnedProjectsResponse(
+        projects=[PinnedProject(**{**row, "id": str(row["id"])}) for row in rows],
+        pin_limit=PROJECT_PIN_LIMIT,
+    )
+
+
+@router.put("/{tenant_slug}/{project_id}/pin")
+async def pin_project(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ProjectPinRecord:
+    """
+    Pin a project to the caller's Home.
+
+    Idempotent: pinning a project that is already pinned returns its existing pin.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The caller's pin, with how many projects they have pinned and the limit
+
+    Raises:
+        HTTPException: 404 when the project does not exist, is deleted, or is in another tenant;
+            409 ``pin_limit_reached`` when the caller already has 8 pinned projects.
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    if not _is_uuid(project_id):
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    result = db.pin_project(
+        auth_data["tenant_id"], user_id, project_id, limit=PROJECT_PIN_LIMIT
+    )
+    if result["status"] == "not_found":
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    if result["status"] == "limit_reached":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pin_limit_reached",
+                "message": f"You can pin up to {PROJECT_PIN_LIMIT} projects. Unpin one first.",
+                "limit": PROJECT_PIN_LIMIT,
+            },
+        )
+
+    pin = result["pin"]
+    return ProjectPinRecord(
+        project_id=str(pin["project_id"]),
+        pinned_at=pin["pinned_at"],
+        pinned_count=result["count"],
+        pin_limit=PROJECT_PIN_LIMIT,
+    )
+
+
+@router.delete("/{tenant_slug}/{project_id}/pin", status_code=204)
+async def unpin_project(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> None:
+    """
+    Unpin a project from the caller's Home.
+
+    Idempotent: unpinning a project that is not pinned also returns 204.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        auth_data: Authentication data (injected by dependency)
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    if _is_uuid(project_id):
+        db.unpin_project(auth_data["tenant_id"], user_id, project_id)
 
 
 @router.get("/{tenant_slug}/{project_id}")

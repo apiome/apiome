@@ -3328,6 +3328,48 @@ class RecentlyViewedProjectsResponse(BaseModel):
     projects: List[RecentlyViewedProject] = Field(default_factory=list)
 
 
+class ProjectPinRecord(BaseModel):
+    """The caller's pin on one project (#513)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(..., serialization_alias="projectId")
+    pinned_at: datetime = Field(..., serialization_alias="pinnedAt")
+    pinned_count: int = Field(
+        ...,
+        ge=0,
+        serialization_alias="pinnedCount",
+        description="How many projects the caller has pinned in this tenant, including this one.",
+    )
+    pin_limit: int = Field(
+        ...,
+        ge=1,
+        serialization_alias="pinLimit",
+        description="The most projects one member may pin in a tenant.",
+    )
+
+
+class PinnedProject(BaseModel):
+    """A row of the caller's pinned projects, newest pin first (#513)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    description: Optional[str] = None
+    pinned_at: datetime = Field(..., serialization_alias="pinnedAt")
+
+
+class PinnedProjectsResponse(BaseModel):
+    """Envelope for ``GET /v1/projects/{tenant_slug}/pinned`` (#513)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    projects: List[PinnedProject] = Field(default_factory=list)
+    pin_limit: int = Field(..., ge=1, serialization_alias="pinLimit")
+
+
 # ==================== Version Models ====================
 
 class VersionSchema(BaseModel):
