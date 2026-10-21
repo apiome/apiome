@@ -103,7 +103,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.406.0"
+version = "1.407.0"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "asn1tools" },

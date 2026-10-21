@@ -1,0 +1,21 @@
+---
+slug: swift-mt-import
+title: Import SWIFT MT messages
+description: MT103, MT202 (COV), MT940 and MT942 join the Catalog beside ISO 20022.
+authors: [apiome]
+---
+
+Apiome now reads [**SWIFT MT**](/bring-in/swift-mt-import) messages — the legacy half of the ISO 20022
+migration — beside the MX messages it already imports.
+
+{/* truncate */}
+
+- **Blocks and fields, natively.** Every header block, sequence and `:nn[a]:` field is on the
+  **Format details** tab, with exact source positions.
+- **Option letters and qualifiers are structure.** `50K` and `50F` stay different shapes; `/INV/`,
+  `/OCMT/` and the other code words keep their qualifier.
+- **Statements and covers.** MT940/942 statement lines are grouped with their `:86:`, and an MT202 COV
+  keeps its sequence B and links to the payment it covers.
+- **MT ↔ MX as a note.** Each message names its documented MX counterpart (MT103 → `pacs.008`,
+  MT940 → `camt.053` …) with a clear disclaimer: Apiome does not translate the message and does not
+  claim a translation would be valid.

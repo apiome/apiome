@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `idoc@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -215,6 +215,27 @@ field**, one root per IDoc in the file:
   padded back with blanks. An XML IDoc has no byte layout and claims no offsets.
 - **Conversion scope**: the canonical model is the first IDoc's basic type; a file of several says
   so (warning `idoc.canonical_projection_subset`).
+
+## The SWIFT MT analysis
+
+For SWIFT MT sources ([how to import one](./swift-mt-import.md)) the tab renders **message → block
+→ sequence → field → component**, one root per message in the file:
+
+- **The message row** shows the message type and name (`103`, `MT202COV`), the direction (input to
+  or output from SWIFT), the validation flag (`COV`, `STP`), and **mxCorrespondence** — the
+  documented ISO 20022 counterpart, always with **verified** `false`.
+- **Header blocks** `{1:}`, `{2:}`, `{3:}` and `{5:}` carry their parsed values as structure:
+  application and service ids, LT address, session and sequence numbers, receiver or MIR,
+  priority, the user header's MUR (**messageUserReference**) and UETR (**uetr**), trailer tags.
+- **Fields** carry their **tag**, **option** letter, **fieldName** and **format**, and whether the
+  content matched it (**wellFormed**). Their children are values: **components** (currency,
+  amount, BIC, mark…), **code words** with their **qualifier** as structure, **numbered lines**
+  with their **lineNumber**, and free **lines**.
+- **Statement lines**: in MT940/942 each `:61:` and the `:86:` after it share a
+  **statementLineIndex**.
+- **Warnings**: `swift.mx_correspondence_note` states the correspondence and its disclaimer —
+  it is a note, not a conversion; `swift.field_not_well_formed` and
+  `swift.field_not_in_catalogue` name fields kept as lines.
 
 ## The COBOL copybook inspector
 

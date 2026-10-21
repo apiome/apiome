@@ -1,0 +1,2666 @@
+{
+  "adapter": "swift-mt",
+  "corpus_path": "swift-mt/04-stress-mt940-statement.txt",
+  "document": {
+    "analyzer": {
+      "key": "swift-mt",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "swift.application_header",
+        "swift.basic_header",
+        "swift.byte_offsets",
+        "swift.code_words",
+        "swift.field_components",
+        "swift.fields",
+        "swift.multiple_messages",
+        "swift.mx_correspondence_notes",
+        "swift.option_letters",
+        "swift.sequences",
+        "swift.statement_lines",
+        "swift.text_block",
+        "swift.trailer",
+        "swift.user_header"
+      ],
+      "unsupported": [
+        "swift.bic_directory",
+        "swift.checksum_verification",
+        "swift.mx_translation",
+        "swift.network_validation",
+        "swift.other_message_types",
+        "swift.usage_rules"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "block": 5,
+        "code_word": 13,
+        "component": 63,
+        "field": 21,
+        "line": 1,
+        "message": 1,
+        "sequence": 1
+      },
+      "maxDepth": 5,
+      "nodeCount": 105,
+      "truncated": false,
+      "warningCount": 1
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "swift-mt",
+    "sourceHash": "sha256:11f32b6745fc780da862dc8be2ceb61a9241aab753ac270e7e633a7f2c54b899",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "direction": "output",
+          "fieldCount": 21,
+          "messageName": "MT940",
+          "messageType": "940",
+          "mxCorrespondence": {
+            "mx": "camt.053",
+            "mxName": "Bank To Customer Statement",
+            "verified": false
+          },
+          "sequenceCount": 1
+        },
+        "children": [
+          {
+            "attributes": {
+              "applicationId": "F",
+              "blockId": "1",
+              "ltAddress": "EXAMPLNL2AXXXX",
+              "sequenceNumber": "000044",
+              "serviceId": "01",
+              "sessionNumber": "2381"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "block",
+            "label": "{1:} Basic header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 31,
+              "line": 1,
+              "offset": 0,
+              "ordinal": 0,
+              "path": "MSG[0]/{1}"
+            },
+            "name": "1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "2",
+              "inputTime": "0930",
+              "messageType": "940",
+              "mirDate": "260819",
+              "mirLtAddress": "EXAMPLNL2AXXXX",
+              "mirSequence": "000044",
+              "mirSession": "2381",
+              "outputDate": "260819",
+              "outputTime": "0930",
+              "priority": "N"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "block",
+            "label": "{2:} Application header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 53,
+              "line": 1,
+              "offset": 31,
+              "ordinal": 1,
+              "path": "MSG[0]/{2}"
+            },
+            "name": "2",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "3",
+              "messageUserReference": "STMT20260819"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "block",
+            "label": "{3:} User header",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 22,
+              "line": 1,
+              "offset": 84,
+              "ordinal": 2,
+              "path": "MSG[0]/{3}"
+            },
+            "name": "3",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "4"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "fieldCount": 21,
+                  "sequence": "A"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fieldName": "Transaction Reference Number",
+                      "format": "reference",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "20",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.0.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/20[0]/reference"
+                        },
+                        "name": "reference",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "STMT20260819",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.0",
+                    "kind": "field",
+                    "label": ":20: Transaction Reference Number",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 16,
+                      "line": 2,
+                      "offset": 110,
+                      "ordinal": 0,
+                      "path": "MSG[0]/{4}/A/20[0]"
+                    },
+                    "name": "20",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Related Reference",
+                      "format": "reference",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "21",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.1.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/21[1]/reference"
+                        },
+                        "name": "reference",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "NONREF",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.1",
+                    "kind": "field",
+                    "label": ":21: Related Reference",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 10,
+                      "line": 3,
+                      "offset": 127,
+                      "ordinal": 1,
+                      "path": "MSG[0]/{4}/A/21[1]"
+                    },
+                    "name": "21",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Account Identification",
+                      "format": "account",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "25",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.2.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/25[2]/account"
+                        },
+                        "name": "account",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "NL91ABNA0417164300EUR",
+                        "valueLength": 21,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.2",
+                    "kind": "field",
+                    "label": ":25: Account Identification",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 25,
+                      "line": 4,
+                      "offset": 138,
+                      "ordinal": 2,
+                      "path": "MSG[0]/{4}/A/25[2]"
+                    },
+                    "name": "25",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Number/Sequence Number",
+                      "format": "statement_number",
+                      "lineCount": 1,
+                      "option": "C",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "28",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.3.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/28C[3]/statementNumber"
+                        },
+                        "name": "statementNumber",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "00161",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.3.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/28C[3]/sequenceNumber"
+                        },
+                        "name": "sequenceNumber",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "00001",
+                        "valueLength": 5,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.3",
+                    "kind": "field",
+                    "label": ":28C: Statement Number/Sequence Number",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 16,
+                      "line": 5,
+                      "offset": 164,
+                      "ordinal": 3,
+                      "path": "MSG[0]/{4}/A/28C[3]"
+                    },
+                    "name": "28C",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Opening Balance (first)",
+                      "format": "balance",
+                      "lineCount": 1,
+                      "option": "F",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "60",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.4.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/60F[4]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.4.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/60F[4]/date"
+                        },
+                        "name": "date",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "260818",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.4.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/60F[4]/currency"
+                        },
+                        "name": "currency",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "EUR",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.4.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/60F[4]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "1250000,00",
+                        "valueLength": 10,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.4",
+                    "kind": "field",
+                    "label": ":60F: Opening Balance (first)",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 25,
+                      "line": 6,
+                      "offset": 181,
+                      "ordinal": 4,
+                      "path": "MSG[0]/{4}/A/60F[4]"
+                    },
+                    "name": "60F",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 2,
+                      "repeatCount": 6,
+                      "repeatIndex": 0,
+                      "statementLineIndex": 0,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[5]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[5]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0819",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[5]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "D",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[5]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "12500,00",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[5]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NTRF",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[5]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "REF20260819001",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.5.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[5]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000001",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "OCMT"
+                        },
+                        "children": [],
+                        "id": "0.3.0.5.7",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 7,
+                          "path": "MSG[0]/{4}/A/61[5]/OCMT[0]"
+                        },
+                        "name": "/OCMT/",
+                        "ordinal": 7,
+                        "redacted": false,
+                        "value": "EUR12500,00",
+                        "valueLength": 11,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "CHGS"
+                        },
+                        "children": [],
+                        "id": "0.3.0.5.8",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 8,
+                          "path": "MSG[0]/{4}/A/61[5]/CHGS[1]"
+                        },
+                        "name": "/CHGS/",
+                        "ordinal": 8,
+                        "redacted": false,
+                        "value": "EUR7,50",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.5",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 87,
+                      "line": 7,
+                      "offset": 207,
+                      "ordinal": 5,
+                      "path": "MSG[0]/{4}/A/61[5]"
+                    },
+                    "name": "61",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 2,
+                      "repeatCount": 7,
+                      "repeatIndex": 0,
+                      "statementLineIndex": 0,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "ORDP"
+                        },
+                        "children": [],
+                        "id": "0.3.0.6.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[6]/ORDP[0]"
+                        },
+                        "name": "/ORDP/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "ACME RETAIL BV",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "REMI"
+                        },
+                        "children": [],
+                        "id": "0.3.0.6.1",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/86[6]/REMI[1]"
+                        },
+                        "name": "/REMI/",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "INV-10042 PO-0002",
+                        "valueLength": 17,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.6",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 48,
+                      "line": 9,
+                      "offset": 295,
+                      "ordinal": 6,
+                      "path": "MSG[0]/{4}/A/86[6]"
+                    },
+                    "name": "86",
+                    "ordinal": 6,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 1,
+                      "repeatCount": 6,
+                      "repeatIndex": 1,
+                      "statementLineIndex": 1,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[7]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[7]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0819",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[7]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[7]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "98750,00",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[7]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NMSC",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[7]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "COV20260819002",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.7.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[7]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000002",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.7",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 55,
+                      "line": 11,
+                      "offset": 344,
+                      "ordinal": 7,
+                      "path": "MSG[0]/{4}/A/61[7]"
+                    },
+                    "name": "61",
+                    "ordinal": 7,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 2,
+                      "repeatCount": 7,
+                      "repeatIndex": 1,
+                      "statementLineIndex": 1,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "ORDP"
+                        },
+                        "children": [],
+                        "id": "0.3.0.8.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[8]/ORDP[0]"
+                        },
+                        "name": "/ORDP/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "PACIFIC IMPORTS INC",
+                        "valueLength": 19,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "REMI"
+                        },
+                        "children": [],
+                        "id": "0.3.0.8.1",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/86[8]/REMI[1]"
+                        },
+                        "name": "/REMI/",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "INV-90211",
+                        "valueLength": 9,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.8",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 45,
+                      "line": 12,
+                      "offset": 400,
+                      "ordinal": 8,
+                      "path": "MSG[0]/{4}/A/86[8]"
+                    },
+                    "name": "86",
+                    "ordinal": 8,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 1,
+                      "repeatCount": 6,
+                      "repeatIndex": 2,
+                      "statementLineIndex": 2,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[9]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[9]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0819",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[9]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "D",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[9]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "7,50",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[9]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NCHG",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[9]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "CHARGES",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.9.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[9]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000003",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.9",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 44,
+                      "line": 14,
+                      "offset": 446,
+                      "ordinal": 9,
+                      "path": "MSG[0]/{4}/A/61[9]"
+                    },
+                    "name": "61",
+                    "ordinal": 9,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 1,
+                      "repeatCount": 7,
+                      "repeatIndex": 2,
+                      "statementLineIndex": 2,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "TEXT"
+                        },
+                        "children": [],
+                        "id": "0.3.0.10.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[10]/TEXT[0]"
+                        },
+                        "name": "/TEXT/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "TRANSFER CHARGES",
+                        "valueLength": 16,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.10",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 26,
+                      "line": 15,
+                      "offset": 491,
+                      "ordinal": 10,
+                      "path": "MSG[0]/{4}/A/86[10]"
+                    },
+                    "name": "86",
+                    "ordinal": 10,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 2,
+                      "repeatCount": 6,
+                      "repeatIndex": 3,
+                      "statementLineIndex": 3,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[11]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[11]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0819",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[11]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "D",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[11]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "250000,00",
+                        "valueLength": 9,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[11]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NDDT",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[11]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "SEPADD-2026-0819",
+                        "valueLength": 16,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.11.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[11]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000004",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "OCMT"
+                        },
+                        "children": [],
+                        "id": "0.3.0.11.7",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 7,
+                          "path": "MSG[0]/{4}/A/61[11]/OCMT[0]"
+                        },
+                        "name": "/OCMT/",
+                        "ordinal": 7,
+                        "redacted": false,
+                        "value": "EUR250000,00",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.11",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 78,
+                      "line": 16,
+                      "offset": 518,
+                      "ordinal": 11,
+                      "path": "MSG[0]/{4}/A/61[11]"
+                    },
+                    "name": "61",
+                    "ordinal": 11,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 3,
+                      "repeatCount": 7,
+                      "repeatIndex": 3,
+                      "statementLineIndex": 3,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "ORDP"
+                        },
+                        "children": [],
+                        "id": "0.3.0.12.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[12]/ORDP[0]"
+                        },
+                        "name": "/ORDP/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "UTILITY COMPANY NV",
+                        "valueLength": 18,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "MANDATE"
+                        },
+                        "children": [],
+                        "id": "0.3.0.12.1",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/86[12]/MANDATE[1]"
+                        },
+                        "name": "/MANDATE/",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "MND-0000114",
+                        "valueLength": 11,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "qualifier": "REMI"
+                        },
+                        "children": [],
+                        "id": "0.3.0.12.2",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/86[12]/REMI[2]"
+                        },
+                        "name": "/REMI/",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "ELECTRICITY AUGUST 2026",
+                        "valueLength": 23,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.12",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 79,
+                      "line": 18,
+                      "offset": 597,
+                      "ordinal": 12,
+                      "path": "MSG[0]/{4}/A/86[12]"
+                    },
+                    "name": "86",
+                    "ordinal": 12,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 1,
+                      "repeatCount": 6,
+                      "repeatIndex": 4,
+                      "statementLineIndex": 4,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[13]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[13]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0819",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[13]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[13]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "3200,25",
+                        "valueLength": 7,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[13]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NSTO",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[13]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "STANDING-ORDER",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.13.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[13]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000005",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.13",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 54,
+                      "line": 21,
+                      "offset": 677,
+                      "ordinal": 13,
+                      "path": "MSG[0]/{4}/A/61[13]"
+                    },
+                    "name": "61",
+                    "ordinal": 13,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 1,
+                      "repeatCount": 7,
+                      "repeatIndex": 4,
+                      "statementLineIndex": 4,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "REMI"
+                        },
+                        "children": [],
+                        "id": "0.3.0.14.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[14]/REMI[0]"
+                        },
+                        "name": "/REMI/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "RENT REBATE",
+                        "valueLength": 11,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.14",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 21,
+                      "line": 22,
+                      "offset": 732,
+                      "ordinal": 14,
+                      "path": "MSG[0]/{4}/A/86[14]"
+                    },
+                    "name": "86",
+                    "ordinal": 14,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Statement Line",
+                      "format": "statement_line",
+                      "lineCount": 1,
+                      "repeatCount": 6,
+                      "repeatIndex": 5,
+                      "statementLineIndex": 5,
+                      "tag": "61",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/61[15]/valueDate"
+                        },
+                        "name": "valueDate",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "260820",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/61[15]/entryDate"
+                        },
+                        "name": "entryDate",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "0820",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/61[15]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "RC",
+                        "valueLength": 2,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/61[15]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "12500,00",
+                        "valueLength": 8,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.4",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "MSG[0]/{4}/A/61[15]/transactionType"
+                        },
+                        "name": "transactionType",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "NRTI",
+                        "valueLength": 4,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.5",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "MSG[0]/{4}/A/61[15]/customerReference"
+                        },
+                        "name": "customerReference",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": "REF20260819001",
+                        "valueLength": 14,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.15.6",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "MSG[0]/{4}/A/61[15]/bankReference"
+                        },
+                        "name": "bankReference",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": "BK0000000006",
+                        "valueLength": 12,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.15",
+                    "kind": "field",
+                    "label": ":61: Statement Line",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 56,
+                      "line": 23,
+                      "offset": 754,
+                      "ordinal": 15,
+                      "path": "MSG[0]/{4}/A/61[15]"
+                    },
+                    "name": "61",
+                    "ordinal": 15,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 1,
+                      "repeatCount": 7,
+                      "repeatIndex": 5,
+                      "statementLineIndex": 5,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "qualifier": "TEXT"
+                        },
+                        "children": [],
+                        "id": "0.3.0.16.0",
+                        "kind": "code_word",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[16]/TEXT[0]"
+                        },
+                        "name": "/TEXT/",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "RETURN OF FUNDS - BENEFICIARY ACCOUNT CLOSED",
+                        "valueLength": 44,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.16",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 54,
+                      "line": 24,
+                      "offset": 811,
+                      "ordinal": 16,
+                      "path": "MSG[0]/{4}/A/86[16]"
+                    },
+                    "name": "86",
+                    "ordinal": 16,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Closing Balance (final)",
+                      "format": "balance",
+                      "lineCount": 1,
+                      "option": "F",
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "62",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.17.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/62F[17]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.17.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/62F[17]/date"
+                        },
+                        "name": "date",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.17.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/62F[17]/currency"
+                        },
+                        "name": "currency",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "EUR",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.17.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/62F[17]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "1101942,75",
+                        "valueLength": 10,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.17",
+                    "kind": "field",
+                    "label": ":62F: Closing Balance (final)",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 25,
+                      "line": 25,
+                      "offset": 866,
+                      "ordinal": 17,
+                      "path": "MSG[0]/{4}/A/62F[17]"
+                    },
+                    "name": "62F",
+                    "ordinal": 17,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Closing Available Balance",
+                      "format": "balance",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "64",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.18.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/64[18]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.18.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/64[18]/date"
+                        },
+                        "name": "date",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "260819",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.18.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/64[18]/currency"
+                        },
+                        "name": "currency",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "EUR",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.18.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/64[18]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "1101942,75",
+                        "valueLength": 10,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.18",
+                    "kind": "field",
+                    "label": ":64: Closing Available Balance",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 24,
+                      "line": 26,
+                      "offset": 892,
+                      "ordinal": 18,
+                      "path": "MSG[0]/{4}/A/64[18]"
+                    },
+                    "name": "64",
+                    "ordinal": 18,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Forward Available Balance",
+                      "format": "balance",
+                      "lineCount": 1,
+                      "repeatCount": 1,
+                      "repeatIndex": 0,
+                      "tag": "65",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.19.0",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/65[19]/mark"
+                        },
+                        "name": "mark",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "C",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.19.1",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "MSG[0]/{4}/A/65[19]/date"
+                        },
+                        "name": "date",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "260820",
+                        "valueLength": 6,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.19.2",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "MSG[0]/{4}/A/65[19]/currency"
+                        },
+                        "name": "currency",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": "EUR",
+                        "valueLength": 3,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.19.3",
+                        "kind": "component",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "MSG[0]/{4}/A/65[19]/amount"
+                        },
+                        "name": "amount",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "1098742,50",
+                        "valueLength": 10,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.19",
+                    "kind": "field",
+                    "label": ":65: Forward Available Balance",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 24,
+                      "line": 27,
+                      "offset": 917,
+                      "ordinal": 19,
+                      "path": "MSG[0]/{4}/A/65[19]"
+                    },
+                    "name": "65",
+                    "ordinal": 19,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "fieldName": "Information to Account Owner",
+                      "format": "narrative",
+                      "lineCount": 1,
+                      "repeatCount": 7,
+                      "repeatIndex": 6,
+                      "tag": "86",
+                      "wellFormed": true
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.20.0",
+                        "kind": "line",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "MSG[0]/{4}/A/86[20]/line[0]"
+                        },
+                        "name": "line 1",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "STATEMENT COVERS 19 AUGUST 2026, ALL TIMES CET",
+                        "valueLength": 46,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.20",
+                    "kind": "field",
+                    "label": ":86: Information to Account Owner",
+                    "location": {
+                      "column": 1,
+                      "file": null,
+                      "length": 50,
+                      "line": 28,
+                      "offset": 942,
+                      "ordinal": 20,
+                      "path": "MSG[0]/{4}/A/86[20]"
+                    },
+                    "name": "86",
+                    "ordinal": 20,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "sequence",
+                "label": "Sequence A",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "MSG[0]/{4}/A"
+                },
+                "name": "A",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "block",
+            "label": "{4:} Text",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": null,
+              "line": 1,
+              "offset": 106,
+              "ordinal": 3,
+              "path": "MSG[0]/{4}"
+            },
+            "name": "4",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "blockId": "5",
+              "tagCHK": "AABBCCDDEEFF",
+              "tagTNG": ""
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "block",
+            "label": "{5:} Trailer",
+            "location": {
+              "column": 1,
+              "file": null,
+              "length": 28,
+              "line": 29,
+              "offset": 995,
+              "ordinal": 4,
+              "path": "MSG[0]/{5}"
+            },
+            "name": "5",
+            "ordinal": 4,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "message",
+        "label": "MT940 (STMT20260819)",
+        "location": {
+          "column": 1,
+          "file": null,
+          "length": null,
+          "line": 1,
+          "offset": 0,
+          "ordinal": 0,
+          "path": "MSG[0]"
+        },
+        "name": "MT940",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "swift.mx_correspondence_note",
+        "location": null,
+        "message": "MT940 corresponds to ISO 20022 camt.053 (Bank To Customer Statement), as documented by the SWIFT Standards MT and MX Equivalence Tables. This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

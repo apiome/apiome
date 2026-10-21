@@ -59,12 +59,13 @@ VOLATILE = "[volatile]"
 PARITY_ENVELOPE_PATH = Path(__file__).resolve().parent / "fixtures" / "conversion_projection_parity.json"
 
 #: Formats whose entries attach their real payload analysis to the conversion.
-NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "idoc", "cobolcopybook")
+NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "idoc", "swift-mt", "cobolcopybook")
 
 # The representative selection: every distinct construct family the roadmap names, one fixture
 # each, selected by manifest tag (never path). X12: a plain envelope, the multi-group composition,
 # the HIPAA real-world shape, the composite-element fixture. EDIFACT: the default-delimiter envelope
 # and the multi-group, multi-message interchange. IDoc: the XML ORDERS05 and the flat multi-IDoc file.
+# SWIFT MT: the two-sequence MT202 COV and the MT940 statement.
 # Copybook: ODO, REDEFINES, the
 # binary/stress layout, the unmodelled clauses, the imperfect overlays. Controls: the minimal
 # JSON Schema and GraphQL fixtures, converting through the generic (no native analysis) path.
@@ -77,6 +78,8 @@ _SELECTORS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("edifact", ("multi-message",)),
     ("idoc", ("xml-form", "partners", "items")),
     ("idoc", ("multi-idoc",)),
+    ("swift-mt", ("MT202COV", "two-sequences")),
+    ("swift-mt", ("MT940", "statement-lines", "balances")),
     ("cobolcopybook", ("occurs",)),
     ("cobolcopybook", ("redefines", "level-88")),
     ("cobolcopybook", ("binary",)),
@@ -97,6 +100,8 @@ SOURCE_VALUE_PROBES: Dict[str, Tuple[str, ...]] = {
     "edifact/04-stress-multi-message-group.edi": ("PO-0002", "INV-10043"),
     "idoc/02-typical-xml-orders05.xml": ("WIDGET-001", "Acme Retail BV"),
     "idoc/04-stress-flat-multi-idoc.txt": ("WIDGET-001", "BRACKET-020"),
+    "swift-mt/03-composition-mt202cov.txt": ("PACIFIC IMPORTS INC", "INV-90211"),
+    "swift-mt/04-stress-mt940-statement.txt": ("ACME RETAIL BV", "ELECTRICITY AUGUST 2026"),
     "graphql/01-simple-user.graphql": ("type Query {",),
 }
 

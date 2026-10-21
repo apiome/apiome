@@ -142847,6 +142847,5702 @@
       "unexplained": []
     },
     {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'SWIFT MT103', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "SWIFT MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 71, column 5: '>!<20 Field20,': Expected '}'. (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 71, column 5: '>!<20 Field20,': Expected '}'.)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 19,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 19,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 19,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added channel 'com.example.swift.mt103', added operation '9774a2fa-9e36-4073-9613-cfa684055877', changed root '', added service 'com.example.swift.mt103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "channel",
+          "key": "com.example.swift.mt103"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "9774a2fa-9e36-4073-9613-cfa684055877"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "com.example.swift.mt103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:4:14:unexpected `-` after `package` declaration\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:4:14:unexpected `-` in file scope\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:4:15:missing message field tag in declaration\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:4:15:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:4:15:unexpected message field at file scope\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:71:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:71:18:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:71:34:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:71:34:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:81:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:81:18:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:81:34:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:81:34:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:86:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:86:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:86:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:86:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:87:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:87:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:87:24:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:87:24:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:88:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:88:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:88:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:88:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:89:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:89:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:89:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:89:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:90:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:90:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:90:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:90:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:91:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:91:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:91:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:91:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:92:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:92:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:92:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:92:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:93:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:93:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:93:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:93:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:94:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:94:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:94:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:94:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:95:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:95:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:95:24:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:95:24:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:96:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:96:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:96:24:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:96:24:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:97:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:97:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:97:25:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:97:25:unexpected identifier after definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:98:3:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:98:9:unexpected `-` in definition\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:98:24:missing name in message field\n/tmp/apiome-proto-kzo6zvob/SWIFT_MT103.proto:98:24:unexpected identifier after definition)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a CORBA IDL definition (observed: Re-import failed: Content does not appear to be a CORBA IDL definition)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 21,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /CodeWord', added operation 'GET /CodeWord/{id}', added operation 'POST /CodeWord', changed root '', added service 'CodeWord.CodeWord', added type 'CodeWord.CodeWord', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /CodeWord/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /CodeWord"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "CodeWord.CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 15,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with... (observed: Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing).)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 18,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Query._', changed root '', added service 'Query'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 33,
+      "loss_drop": 36,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 17,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', added type 'SWIFT MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', added type 'SWIFT MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 18,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'codewords.swift-mt103', added type 'swift-mt103/v1.CodeWord'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "codewords.swift-mt103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift-mt103/v1.CodeWord"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 15,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to decla... (observed: Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none).)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 19,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 16,
+      "loss_drop": 36,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 16,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'swift-mt->llm-tools.MT103', added service 'swift-mt->llm-tools', added type 'MT103Params')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "swift-mt->llm-tools.MT103"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "swift-mt->llm-tools"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103Params"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'SWIFT-MT103.CodeWord', changed type 'SWIFT-MT103.Field13C', changed type 'SWIFT-MT103.Field20', changed type 'SWIFT-MT103.Field23B', changed type 'SWIFT-MT103.Field32A', changed type 'SWIFT-MT103.Field33B', changed type 'SWIFT-MT103.Field50K', changed type 'SWIFT-MT103.Field52A', changed type 'SWIFT-MT103.Field53B', changed type 'SWIFT-MT103.Field57A', changed type 'SWIFT-MT103.Field59', changed type 'SWIFT-MT103.Field70', changed type 'SWIFT-MT103.Field71A', changed type 'SWIFT-MT103.Field72', changed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 7,
+      "matched_count": 16,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'MT103', added type 'MT103.13C', added type 'MT103.20', added type 'MT103.23B', added type 'MT103.32A', added type 'MT103.33B', added type 'MT103.50K', added type 'MT103.52A', added type 'MT103.53B', added type 'MT103.57A', added type 'MT103.59', added type 'MT103.70', added type 'MT103.70.codeWords.items', added type 'MT103.71A', added type 'MT103.72', added type 'MT103.72.codeWords.items'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.70.codeWords.items"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103.72.codeWords.items"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (swift-mt->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (swift-mt->oncrpc))",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'SWIFT MT103', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "SWIFT MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Postman requests found in collection (swift-mt->postman) (observed: Re-import failed: No Postman requests found in collection (swift-mt->postman))",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:3:14:unexpected `-` after `package` declaration\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:3:14:unexpected `-` in file scope\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:3:15:missing message field tag in declaration\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:3:15:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:3:15:unexpected message field at file scope\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:70:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:70:18:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:70:34:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:70:34:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:80:12:unexpected fully qualified name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:80:18:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:80:34:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:80:34:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:85:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:85:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:85:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:85:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:86:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:86:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:86:24:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:86:24:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:87:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:87:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:87:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:87:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:88:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:88:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:88:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:88:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:89:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:89:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:89:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:89:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:90:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:90:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:90:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:90:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:91:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:91:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:91:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:91:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:92:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:92:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:92:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:92:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:93:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:93:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:93:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:93:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:94:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:94:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:94:24:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:94:24:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:95:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:95:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:95:24:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:95:24:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:96:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:96:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:96:25:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:96:25:unexpected identifier after definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:97:3:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:97:9:unexpected `-` in definition\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:97:24:missing name in message field\n/tmp/apiome-proto-coa0_7ym/SWIFT_MT103.proto:97:24:unexpected identifier after definition)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 32,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'SWIFT MT103', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "SWIFT MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'SWIFT.CodeWord', added type 'SWIFT.Field13C', added type 'SWIFT.Field20', added type 'SWIFT.Field23B', added type 'SWIFT.Field32A', added type 'SWIFT.Field33B', added type 'SWIFT.Field50K', added type 'SWIFT.Field52A', added type 'SWIFT.Field53B', added type 'SWIFT.Field57A', added type 'SWIFT.Field59', added type 'SWIFT.Field70', added type 'SWIFT.Field71A', added type 'SWIFT.Field72', added type 'SWIFT.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "MT103"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103', added type 'SWIFT.CodeWord', added type 'SWIFT.Field13C', added type 'SWIFT.Field20', added type 'SWIFT.Field23B', added type 'SWIFT.Field32A', added type 'SWIFT.Field33B', added type 'SWIFT.Field50K', added type 'SWIFT.Field52A', added type 'SWIFT.Field53B', added type 'SWIFT.Field57A', added type 'SWIFT.Field59', added type 'SWIFT.Field70', added type 'SWIFT.Field71A', added type 'SWIFT.Field72', added type 'SWIFT.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 31,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 15,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'swift:mt103.types.code-word', added type 'swift:mt103.types.field13-c', added type 'swift:mt103.types.field20', added type 'swift:mt103.types.field23-b', added type 'swift:mt103.types.field32-a', added type 'swift:mt103.types.field33-b', added type 'swift:mt103.types.field50-k', added type 'swift:mt103.types.field52-a', added type 'swift:mt103.types.field53-b', added type 'swift:mt103.types.field57-a', added type 'swift:mt103.types.field59', added type 'swift:mt103.types.field70', added type 'swift:mt103.types.field71-a', added type 'swift:mt103.types.field72', added type 'swift:mt103.types.mt103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.code-word"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field13-c"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field23-b"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field32-a"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field33-b"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field50-k"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field52-a"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field53-b"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field57-a"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field71-a"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "swift:mt103.types.mt103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'SWIFT-MT103.CodeWord', changed type 'SWIFT-MT103.Field13C', changed type 'SWIFT-MT103.Field20', changed type 'SWIFT-MT103.Field23B', changed type 'SWIFT-MT103.Field32A', changed type 'SWIFT-MT103.Field33B', changed type 'SWIFT-MT103.Field52A', changed type 'SWIFT-MT103.Field53B', changed type 'SWIFT-MT103.Field57A', changed type 'SWIFT-MT103.Field71A'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 16,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "SWIFT-MT103.CodeWord",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field13C",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field20",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field23B",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field32A",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field33B",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field50K",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field52A",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field53B",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field57A",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field59",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field70",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field71A",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.Field72",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "SWIFT-MT103.MT103",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'SWIFT-MT103.CodeWord', changed type 'SWIFT-MT103.Field13C', changed type 'SWIFT-MT103.Field20', changed type 'SWIFT-MT103.Field23B', changed type 'SWIFT-MT103.Field32A', changed type 'SWIFT-MT103.Field33B', changed type 'SWIFT-MT103.Field50K', changed type 'SWIFT-MT103.Field52A', changed type 'SWIFT-MT103.Field53B', changed type 'SWIFT-MT103.Field57A', changed type 'SWIFT-MT103.Field59', changed type 'SWIFT-MT103.Field70', changed type 'SWIFT-MT103.Field71A', changed type 'SWIFT-MT103.Field72', changed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.CodeWord"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field13C"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field20"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field23B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field32A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field33B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field50K"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field52A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field53B"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field57A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field59"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field70"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field71A"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.Field72"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "SWIFT-MT103.MT103"
+        }
+      ]
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 15,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "swift-mt",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "thrift/01-user-service.thrift",
       "diff_count": 15,
       "emit_format": "apiblueprint",
@@ -170950,6 +176646,7 @@
     "sql-ddl",
     "swagger",
     "swagger-1.2",
+    "swift-mt",
     "thrift",
     "typespec",
     "wadl",

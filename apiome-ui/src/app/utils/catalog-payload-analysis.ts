@@ -266,6 +266,12 @@ const KIND_LABEL: Record<string, string> = {
   repetition: 'Repetition',
   // SAP IDoc (idoc_analysis.py) — `segment` and `field` share the labels above and below
   idoc: 'IDoc',
+  // SWIFT MT (swift_mt_analysis.py) — `message`, `field`, `component` and `segment` are shared
+  block: 'Block',
+  sequence: 'Sequence',
+  code_word: 'Code word',
+  numbered_line: 'Numbered line',
+  line: 'Line',
   // COBOL copybook (cobolcopybook_analysis.py)
   record: 'Record',
   group: 'Group',

@@ -531,7 +531,7 @@
       "marker": "`\"swaggerVersion\": \"1.2\"`"
     },
     "swift-mt": {
-      "label": "SWIFT MT (pending #5447)",
+      "label": "SWIFT MT",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`{1:` basic header + `{4:` text block terminated by `-}`"
@@ -27263,7 +27263,7 @@
     {
       "path": "swift-mt/01-minimal-mt103.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27272,8 +27272,7 @@
       "features": [
         "MT103",
         "block-structure",
-        "tag-fields",
-        "pending-adapter"
+        "tag-fields"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27284,7 +27283,7 @@
     {
       "path": "swift-mt/02-typical-mt103.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27295,8 +27294,7 @@
         "user-header",
         "UETR",
         "remittance-codes",
-        "sender-to-receiver",
-        "pending-adapter"
+        "sender-to-receiver"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27307,7 +27305,7 @@
     {
       "path": "swift-mt/03-composition-mt202cov.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27319,8 +27317,7 @@
         "option-letters",
         "50F",
         "59F",
-        "validation-flag",
-        "pending-adapter"
+        "validation-flag"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27331,7 +27328,7 @@
     {
       "path": "swift-mt/04-stress-mt940-statement.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27343,8 +27340,7 @@
         "transaction-type-codes",
         "reversal",
         "supplementary-details",
-        "balances",
-        "pending-adapter"
+        "balances"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27355,7 +27351,7 @@
     {
       "path": "swift-mt/05-real-world-mt103-charges-chain.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27367,19 +27363,19 @@
         "exchange-rate",
         "correspondent-chain",
         "charges",
-        "regulatory-reporting",
-        "pending-adapter"
+        "regulatory-reporting"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Reconstructed in-repo from the shape of a cross-currency correspondent payment; BICs and accounts are synthetic and no upstream text was copied.",
-      "rung": "real-world"
+      "rung": "real-world",
+      "notes": "Field 20 (PAY20260819CHRG01) is 17 characters, one over the documented 16x: the adapter keeps it as lines and flags it (swift.field_not_well_formed) rather than refusing the message."
     },
     {
       "path": "swift-mt/06-typical-mt942-interim.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27389,8 +27385,7 @@
         "MT942",
         "floor-limit",
         "summary-counts",
-        "statement-lines",
-        "pending-adapter"
+        "statement-lines"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27401,7 +27396,7 @@
     {
       "path": "swift-mt/07-cover-set/mt103.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27409,8 +27404,7 @@
       },
       "features": [
         "MT103",
-        "customer-transfer",
-        "pending-adapter"
+        "customer-transfer"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27422,7 +27416,7 @@
     {
       "path": "swift-mt/07-cover-set/mt202cov.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "valid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27431,8 +27425,7 @@
       "features": [
         "MT202COV",
         "cover-payment",
-        "field-21-reference",
-        "pending-adapter"
+        "field-21-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -27445,7 +27438,7 @@
     {
       "path": "swift-mt/negative/01-syntactic-unterminated-block4.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27454,8 +27447,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unterminated-block",
-        "pending-adapter"
+        "unterminated-block"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27467,7 +27459,7 @@
     {
       "path": "swift-mt/negative/02-semantic-no-transaction-reference.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27476,8 +27468,7 @@
       "features": [
         "negative",
         "semantic",
-        "missing-field-20",
-        "pending-adapter"
+        "missing-field-20"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27489,7 +27480,7 @@
     {
       "path": "swift-mt/negative/03-truncated-mid-field.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27498,8 +27489,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-field",
-        "pending-adapter"
+        "mid-field"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27511,7 +27501,7 @@
     {
       "path": "swift-mt/negative/04-wrong-format-iso20022.xml",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27521,8 +27511,7 @@
         "negative",
         "wrong-format",
         "iso20022",
-        "pacs.008",
-        "pending-adapter"
+        "pacs.008"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27535,7 +27524,7 @@
     {
       "path": "swift-mt/negative/05-encoding-utf16.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27544,8 +27533,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27557,7 +27545,7 @@
     {
       "path": "swift-mt/negative/06-semantic-unknown-message-type.txt",
       "format": "swift-mt",
-      "adapter_key": null,
+      "adapter_key": "swift-mt",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "swift-mt",
@@ -27567,8 +27555,7 @@
         "negative",
         "semantic",
         "unsupported-mt-type",
-        "free-format",
-        "pending-adapter"
+        "free-format"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
