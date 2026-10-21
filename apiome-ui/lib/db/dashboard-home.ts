@@ -12,6 +12,8 @@
  *   quality_score`, captured at import by V124 / MFI-4.2). Nothing is linted here: #5259 made
  *   the list stored-first precisely so that rendering a score costs no lint run, and Home is
  *   not the surface to reintroduce one.
+ * - **Recently viewed** (#510) — the reader's own history from `apiome.project_views`, which the
+ *   Versions page writes through `./project-views.ts` each time the reader opens a project.
  * - **Needs attention** — the sunset schedule (`versions.metadata.sunsetAt`, the same column
  *   the sunset timeline reads), blocking findings in the stored lint report, API keys near
  *   expiry, and the reviews the reader owes a decision on or has had changes requested on
@@ -52,6 +54,7 @@ import {
   CONTINUE_PROJECT_LIMIT,
   KEY_EXPIRY_ATTENTION_DAYS,
   PULSE_WINDOW_DAYS,
+  RECENTLY_VIEWED_LIMIT,
   bucketPublishesByWeek,
   emptyDashboardHome,
   keyAttention,
@@ -66,6 +69,7 @@ import {
   type KeyRow,
   type LintRow,
   type PulseWeek,
+  type RecentlyViewedProject,
   type ReviewAttentionRow,
   type SunsetRow,
 } from './dashboard-home-model';
@@ -247,6 +251,65 @@ async function loadContinueProjects(userId: string, limit: number): Promise<Cont
       touchedAt: (publishIsNewest ? publishedAt : editedAt) ?? new Date(0).toISOString(),
       touchedKind: publishIsNewest ? 'published' : 'edited',
     } satisfies ContinueProject;
+  });
+}
+
+/**
+ * The projects the reader most recently opened in the current workspace (#510).
+ *
+ * Scoped to the session's workspace — the same scope as `GET /v1/projects/{tenant}/recently-viewed`
+ * — and re-checked against `tenant_users`, so a stale `current_tenant_id` lists nothing rather
+ * than a workspace the reader has left. Trashed projects drop off; the newest revision's label is
+ * a bounded lateral read per row.
+ *
+ * @param userId The reader, from the session.
+ * @param tenantId The session's current workspace id.
+ * @param limit How many rows to fill.
+ * @returns One {@link RecentlyViewedProject} per project, last opened first.
+ */
+async function loadRecentlyViewed(
+  userId: string,
+  tenantId: string,
+  limit: number,
+): Promise<RecentlyViewedProject[]> {
+  const result = await connectionPool.query(
+    `SELECT
+       p.id AS project_id,
+       p.name AS project_name,
+       pv.last_viewed_at,
+       pv.view_count,
+       lv.version_id
+     FROM apiome.project_views pv
+     JOIN apiome.projects p ON p.id = pv.project_id
+     LEFT JOIN LATERAL (
+       SELECT v.version_id
+       FROM apiome.versions v
+       WHERE v.project_id = p.id AND v.deleted_at IS NULL
+       ORDER BY v.created_at DESC, v.id DESC
+       LIMIT 1
+     ) lv ON true
+     WHERE pv.user_id = $1
+       AND pv.tenant_id = $2
+       AND pv.tenant_id IN ${MEMBER_TENANTS}
+       AND p.tenant_id = pv.tenant_id
+       AND p.deleted_at IS NULL
+     ORDER BY pv.last_viewed_at DESC, p.name ASC
+     LIMIT $3`,
+    [userId, tenantId, limit],
+  );
+
+  return result.rows.flatMap((row) => {
+    const lastViewedAt = asInstant(row.last_viewed_at);
+    if (!lastViewedAt) return [];
+    return [
+      {
+        projectId: String(row.project_id),
+        projectName: asText(row.project_name) ?? 'Untitled project',
+        versionLabel: asText(row.version_id),
+        lastViewedAt,
+        viewCount: Math.max(1, asNumber(row.view_count, 1)),
+      } satisfies RecentlyViewedProject,
+    ];
   });
 }
 
@@ -536,8 +599,16 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
   if (!userId) return emptyDashboardHome();
   const tenantId = user?.current_tenant_id;
 
-  const [workspaceName, continueProjects, sunsetRows, lintRows, keyRows, reviewRows, pulse] =
-    await Promise.all([
+  const [
+    workspaceName,
+    continueProjects,
+    recentlyViewed,
+    sunsetRows,
+    lintRows,
+    keyRows,
+    reviewRows,
+    pulse,
+  ] = await Promise.all([
       tenantId
         ? section<string | null>('workspace name', () => loadWorkspaceName(userId, tenantId), null)
         : Promise.resolve(null),
@@ -546,6 +617,13 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
         () => loadContinueProjects(userId, CONTINUE_PROJECT_LIMIT),
         [],
       ),
+      tenantId
+        ? section<RecentlyViewedProject[]>(
+            'recently viewed',
+            () => loadRecentlyViewed(userId, tenantId, RECENTLY_VIEWED_LIMIT),
+            [],
+          )
+        : Promise.resolve([]),
       section<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
       section<LintRow[]>('lint gate', () => loadLintRows(userId), []),
       section<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
@@ -561,5 +639,5 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
     reviewAttention(reviewRows),
   ]);
 
-  return { workspaceName, continueProjects, attention, pulse };
+  return { workspaceName, continueProjects, recentlyViewed, attention, pulse };
 }

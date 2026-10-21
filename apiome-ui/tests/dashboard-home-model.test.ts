@@ -692,7 +692,14 @@ describe('emptyDashboardHome', () => {
   it('is empty, and a fresh object each call so one caller cannot mutate the next', () => {
     const first = emptyDashboardHome();
     const second = emptyDashboardHome();
-    expect(first).toEqual({ workspaceName: null, continueProjects: [], attention: [], pulse: [] });
+    expect(first).toEqual({
+      workspaceName: null,
+      continueProjects: [],
+      recentlyViewed: [],
+      attention: [],
+      pulse: [],
+    });
     expect(first.continueProjects).not.toBe(second.continueProjects);
+    expect(first.recentlyViewed).not.toBe(second.recentlyViewed);
   });
 });

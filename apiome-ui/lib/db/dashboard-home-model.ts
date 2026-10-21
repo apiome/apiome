@@ -34,6 +34,9 @@ export const PULSE_WINDOW_DAYS = PULSE_WEEKS * 7;
 /** How many projects "Pick up where you left off" shows. Three, as the mockup's grid does. */
 export const CONTINUE_PROJECT_LIMIT = 3;
 
+/** How many projects "Recently viewed" lists (#510). */
+export const RECENTLY_VIEWED_LIMIT = 5;
+
 /** How many rows "Needs attention" shows before it stops. */
 export const ATTENTION_LIMIT = 5;
 
@@ -82,6 +85,25 @@ export interface ContinueProject {
   touchedAt: string;
   /** Whether {@link touchedAt} was a publish or an ordinary edit. The card words each. */
   touchedKind: 'edited' | 'published';
+}
+
+/**
+ * One project the reader recently opened (#510), from `apiome.project_views`.
+ *
+ * Unlike {@link ContinueProject}, which ranks by what *anyone* last changed, this is the
+ * reader's own history: when they last opened the project and how often.
+ */
+export interface RecentlyViewedProject {
+  /** The project's record id, used as the React key and in the link. */
+  projectId: string;
+  /** The project's name, as the row's title. */
+  projectName: string;
+  /** The newest revision's semantic id (`"v2.4.0"`), or `null` for a project with none yet. */
+  versionLabel: string | null;
+  /** ISO instant the reader last opened the project. */
+  lastViewedAt: string;
+  /** How many times the reader has opened it (at least 1). */
+  viewCount: number;
 }
 
 /** Which of the four sources an attention row came from. */
@@ -510,6 +532,8 @@ export interface DashboardHome {
   workspaceName: string | null;
   /** Up to {@link CONTINUE_PROJECT_LIMIT} projects, most recently touched first. */
   continueProjects: ContinueProject[];
+  /** Up to {@link RECENTLY_VIEWED_LIMIT} projects in the current workspace, last opened first. */
+  recentlyViewed: RecentlyViewedProject[];
   /** Up to {@link ATTENTION_LIMIT} ranked rows. Empty means the panel is not drawn at all. */
   attention: AttentionItem[];
   /** Exactly {@link PULSE_WEEKS} buckets, oldest first. */
@@ -528,6 +552,7 @@ export function emptyDashboardHome(): DashboardHome {
   return {
     workspaceName: null,
     continueProjects: [],
+    recentlyViewed: [],
     attention: [],
     pulse: [],
   };

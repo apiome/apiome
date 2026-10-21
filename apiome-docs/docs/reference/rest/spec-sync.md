@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.278.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.279.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `spec-sync` · 4 operations
 
@@ -149,7 +149,7 @@ Request body for merge a bound draft against its repository ref.
 | 403 | Forbidden | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
 | 404 | Not Found | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
 | 409 | Conflict | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
-| 422 | Unprocessable Content | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
+| 422 | Unprocessable Entity | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
 | 502 | Bad Gateway | `application/json` [`SyncErrorDetail`](#schema-syncerrordetail) |
 
 ## Schemas used {#schemas-used}

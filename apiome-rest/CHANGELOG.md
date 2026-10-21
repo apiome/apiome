@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.415.0] - 2026-10-21
+
+### Added
+- **Recently viewed projects (#510)**: a per-user history of the projects each member opens, behind Home's
+  new **Recently viewed** panel.
+  - `POST /v1/projects/{tenant_slug}/{project_id}/views` records that the caller opened a project and returns
+    `ProjectViewRecord` (`projectId`, `firstViewedAt`, `lastViewedAt`, `viewCount`). Repeat calls update the
+    same record. 404 when the project is missing, deleted or in another tenant.
+  - `GET /v1/projects/{tenant_slug}/recently-viewed?limit=` lists the caller's history, newest first
+    (`RecentlyViewedProjectsResponse`; `limit` 1–50, default 10). Deleted projects are left out.
+  - `DELETE /v1/projects/{tenant_slug}/recently-viewed` forgets the caller's history in the tenant.
+  - All three need a user the credentials can be attributed to (403 otherwise); recording and listing need
+    `projects:view`.
+  - Migration `V308__project_views_510.sql`: `apiome.project_views`, one row per (user, project), cascading
+    with the user, project and tenant.
+  - OpenAPI version 1.279.0.
+
 ## [1.414.0] - 2026-10-21
 
 ### Added

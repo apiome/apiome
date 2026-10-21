@@ -23,7 +23,7 @@
  */
 
 import { getAuthSession } from './__mocks__/server-session';
-import { ATTENTION_HREF, PULSE_WEEKS } from '@lib/db/dashboard-home-model';
+import { ATTENTION_HREF, PULSE_WEEKS, RECENTLY_VIEWED_LIMIT } from '@lib/db/dashboard-home-model';
 
 /** Every `connectionPool.query` call the module makes, in order. */
 const queries: { sql: string; params: unknown[] }[] = [];
@@ -48,6 +48,7 @@ import { getDashboardHomeForSession } from '../lib/db/dashboard-home';
 const SECTION = {
   workspace: 'FROM apiome.tenants t',
   continueProjects: 'WITH latest AS',
+  recentlyViewed: 'FROM apiome.project_views pv',
   sunset: "v.metadata->>'sunsetAt'",
   lint: "quality_report->'severity_counts'",
   keys: 'FROM apiome.api_keys ak',
@@ -113,7 +114,13 @@ describe('getDashboardHomeForSession — who it reads for', () => {
     const home = await getDashboardHomeForSession();
 
     expect(queries).toHaveLength(0);
-    expect(home).toEqual({ workspaceName: null, continueProjects: [], attention: [], pulse: [] });
+    expect(home).toEqual({
+      workspaceName: null,
+      continueProjects: [],
+      recentlyViewed: [],
+      attention: [],
+      pulse: [],
+    });
   });
 
   it('touches no database when the session has no user id', async () => {
@@ -271,6 +278,79 @@ describe('the continue-projects section', () => {
    3. Needs attention
    ------------------------------------------------------------------------- */
 
+describe('the recently-viewed section (#510)', () => {
+  /** One row of the recently-viewed query, as `pg` hands it back. */
+  function viewRow(overrides: Record<string, unknown> = {}) {
+    return {
+      project_id: 'p-7',
+      project_name: 'Orders API',
+      last_viewed_at: new Date('2026-10-21T14:30:00.000Z'),
+      view_count: '4',
+      version_id: 'v1.2.0',
+      ...overrides,
+    };
+  }
+
+  it('maps a row, coercing the count and serialising the instant', async () => {
+    answer(SECTION.recentlyViewed, [viewRow()]);
+    const home = await getDashboardHomeForSession();
+
+    expect(home.recentlyViewed).toEqual([
+      {
+        projectId: 'p-7',
+        projectName: 'Orders API',
+        versionLabel: 'v1.2.0',
+        lastViewedAt: '2026-10-21T14:30:00.000Z',
+        viewCount: 4,
+      },
+    ]);
+  });
+
+  it('keeps a project with no revisions, and names an untitled one', async () => {
+    answer(SECTION.recentlyViewed, [viewRow({ version_id: null, project_name: ' ' })]);
+    const home = await getDashboardHomeForSession();
+    expect(home.recentlyViewed[0]).toMatchObject({
+      versionLabel: null,
+      projectName: 'Untitled project',
+    });
+  });
+
+  it('drops a row with no usable instant', async () => {
+    answer(SECTION.recentlyViewed, [viewRow({ last_viewed_at: null })]);
+    const home = await getDashboardHomeForSession();
+    expect(home.recentlyViewed).toEqual([]);
+  });
+
+  it("reads only the reader's own history in the current workspace, capped in SQL", async () => {
+    await getDashboardHomeForSession();
+    const entry = queries.find((candidate) => candidate.sql.includes(SECTION.recentlyViewed));
+
+    expect(entry?.params).toEqual(['user-1', 'tenant-1', RECENTLY_VIEWED_LIMIT]);
+    expect(entry?.sql).toContain('pv.user_id = $1');
+    expect(entry?.sql).toContain('pv.tenant_id = $2');
+    expect(entry?.sql).toContain('p.deleted_at IS NULL');
+    expect(entry?.sql).toContain('ORDER BY pv.last_viewed_at DESC');
+    expect(entry?.sql).toContain('LIMIT $3');
+  });
+
+  it('skips the query when the session has no current workspace', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue({ user: { user_id: 'user-1' } });
+    const home = await getDashboardHomeForSession();
+
+    expect(queries.some((entry) => entry.sql.includes(SECTION.recentlyViewed))).toBe(false);
+    expect(home.recentlyViewed).toEqual([]);
+  });
+
+  it('fails soft: the other panels still load', async () => {
+    fail(SECTION.recentlyViewed);
+    answer(SECTION.continueProjects, [projectRow()]);
+    const home = await getDashboardHomeForSession();
+
+    expect(home.recentlyViewed).toEqual([]);
+    expect(home.continueProjects).toHaveLength(1);
+  });
+});
+
 describe('the needs-attention sections', () => {
   it('ranks the three sources together, most urgent first', async () => {
     answer(SECTION.sunset, [
@@ -421,6 +501,7 @@ describe('failing soft', () => {
     await expect(getDashboardHomeForSession()).resolves.toEqual({
       workspaceName: null,
       continueProjects: [],
+      recentlyViewed: [],
       attention: [],
       pulse: [],
     });
