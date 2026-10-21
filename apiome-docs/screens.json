@@ -168,6 +168,16 @@
       "data": "fixture:hive-versions/edit.html"
     },
     {
+      "id": "version-heatmap-dialog",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/heatmap.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/versions/ClassHeatmapDialog.tsx",
+        "apiome-ui/src/app/utils/class-heatmap.ts"
+      ]
+    },
+    {
       "id": "version-sunset-dialog",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

@@ -519,6 +519,7 @@ describe('versionRowMenuItems', () => {
     expect(ids(HEAD_DRAFT)).toEqual([
       'view',
       'export',
+      'heatmap',
       'compareWithCurrent',
       'relationshipGraph',
       'branchFrom',
@@ -593,7 +594,7 @@ describe('versionRowMenuItems', () => {
 
   it('production + flag off: the git-like items — Delete included — are gone, as before', () => {
     const list = ids(HEAD_DRAFT, { gitlike: gitlikeAffordance(false, true) });
-    expect(list).toEqual(['view', 'export', 'scheduleSunset', 'edit', 'publish']);
+    expect(list).toEqual(['view', 'export', 'heatmap', 'scheduleSunset', 'edit', 'publish']);
   });
 
   it('non-production + flag off: the git-like items are listed, marked, inert, and say why', () => {

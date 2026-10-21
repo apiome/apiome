@@ -4,7 +4,7 @@
  * A revision row's overflow menu (HIVE-6.2, #5313).
  *
  * Authority: `docs/mockups/build/versions.html` §Row actions menu — *View spec · Export to
- * another format… · [gitlike] Compare with current · Relationship graph · Branch from here ·
+ * another format… · Heatmap (#560) · [gitlike] Compare with current · Relationship graph · Branch from here ·
  * Rollback… · Fork… · Tag · Schedule sunset (EOL)… · Edit · Publish/Unpublish · [gitlike]
  * Freeze schema · Lock/Unlock revision · Delete*, with the flag-gated items carrying a honey
  * `gitlike` flag rather than being hidden.
@@ -32,6 +32,7 @@ import {
   Ellipsis,
   Eye,
   FileOutput,
+  Flame,
   GitBranch,
   GitCompareArrows,
   GitFork,
@@ -63,6 +64,7 @@ import {
 const ACTION_ICON: Readonly<Record<VersionRowMenuAction, React.ComponentType<{ className?: string }>>> = {
   view: Eye,
   export: FileOutput,
+  heatmap: Flame,
   compareWithCurrent: GitCompareArrows,
   relationshipGraph: Network,
   branchFrom: GitBranch,

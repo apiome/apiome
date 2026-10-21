@@ -89,11 +89,15 @@ const mockBuildSpec = jest.fn(async () =>
   JSON.stringify({ openapi: '3.1.0', info: { title: 'Payments API', version: '2.3.1' }, paths: {} }, null, 2)
 );
 
+const mockGetClasses = jest.fn(async (): Promise<string> => '[]');
+const mockGetPropsBatch = jest.fn(async (): Promise<string> => '{}');
+
 jest.mock('@lib/db/helper', () => ({
   deleteVersion: (...args: unknown[]) => mockDeleteVersion(...(args as [])),
   buildOpenApiSpecJsonForVersion: (...args: unknown[]) => mockBuildSpec(...(args as [])),
-  getClassesForVersion: async () => '[]',
+  getClassesForVersion: (...args: unknown[]) => mockGetClasses(...(args as [])),
   getPropertiesForClass: async () => '[]',
+  getPropertiesForClassesBatch: (...args: unknown[]) => mockGetPropsBatch(...(args as [])),
   getTenantsAdministratedByUser: async () => '[]',
 }));
 
@@ -1000,6 +1004,7 @@ describe('the row menu', () => {
     expect(items).toEqual([
       'versions-row-action-view',
       'versions-row-action-export',
+      'versions-row-action-heatmap',
       'versions-row-action-compareWithCurrent',
       'versions-row-action-relationshipGraph',
       'versions-row-action-branchFrom',
@@ -1045,6 +1050,36 @@ describe('the row menu', () => {
     const menu = await openRowMenu(V231_ID);
     fireEvent.click(within(menu).getByTestId('versions-row-action-export'));
     await screen.findByTestId('export-dialog');
+  });
+
+  it('opens the class heatmap from the menu, loading the classes and their properties in one batch (#560)', async () => {
+    mockGetClasses.mockResolvedValueOnce(
+      JSON.stringify([
+        { id: 'c-order', name: 'Order', description: 'An order', updated_at: new Date().toISOString() },
+        { id: 'c-item', name: 'Item', description: null, updated_at: '2020-01-01T00:00:00Z' },
+      ])
+    );
+    mockGetPropsBatch.mockResolvedValueOnce(
+      JSON.stringify({
+        'c-order': [{ id: 'p1', name: 'items', description: 'Lines', data: { type: 'array', items: { $ref: '#/components/schemas/Item' } } }],
+      })
+    );
+    await renderVersions();
+    const menu = await openRowMenu(V231_ID);
+    fireEvent.click(within(menu).getByTestId('versions-row-action-heatmap'));
+    const grid = await screen.findByTestId('heatmap-grid');
+    expect(mockGetClasses).toHaveBeenCalledWith(V231_ID);
+    expect(mockGetPropsBatch).toHaveBeenCalledWith(['c-order', 'c-item']);
+    expect(screen.getByRole('heading', { name: 'Heatmap' })).toBeInTheDocument();
+    // Complexity first: Order (1 prop + depth 1 + 1 ref) leads Item (nothing).
+    const tiles = within(grid).getAllByRole('listitem');
+    expect(tiles.map((t) => t.getAttribute('data-testid'))).toEqual(['heatmap-tile-c-order', 'heatmap-tile-c-item']);
+    expect(tiles[0]).toHaveAttribute('data-heat', '4');
+    expect(tiles[1]).toHaveAttribute('data-heat', '0');
+    // References: Item is the one referenced.
+    fireEvent.click(screen.getByTestId('heatmap-metric-references'));
+    expect(screen.getByTestId('heatmap-tile-c-item')).toHaveAttribute('data-heat', '4');
+    expect(screen.getByTestId('heatmap-tile-c-item')).toHaveTextContent('1 ref');
   });
 
   it('confirms an unpublish with the version named, then POSTs the unpublish route', async () => {
@@ -1479,6 +1514,59 @@ describe('the browser fixtures', () => {
     const publishedMenu = await openRowMenu(V231_ID);
     fireEvent.click(within(publishedMenu).getByTestId('versions-row-action-scheduleSunset'));
     write('sunset', (await screen.findByTestId('sunset-schedule-dialog')).outerHTML);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('sunset-schedule-dialog')).not.toBeInTheDocument());
+
+    // The class heatmap (#560): a small payments schema, coloured by complexity.
+    const day = 86_400_000;
+    const ago = (n: number) => new Date(Date.now() - n * day).toISOString();
+    const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` });
+    mockGetClasses.mockResolvedValueOnce(
+      JSON.stringify([
+        { id: 'h-payment', name: 'Payment', description: 'A charge against a card', updated_at: ago(0) },
+        { id: 'h-refund', name: 'Refund', description: 'Money returned', updated_at: ago(4) },
+        { id: 'h-customer', name: 'Customer', description: 'Who pays', updated_at: ago(21) },
+        { id: 'h-card', name: 'Card', description: null, updated_at: ago(60) },
+        { id: 'h-address', name: 'Address', description: null, updated_at: ago(200) },
+        { id: 'h-payout', name: 'Payout', description: 'A transfer to the merchant', updated_at: ago(2) },
+        { id: 'h-currency', name: 'Currency', description: 'ISO 4217 code', updated_at: ago(400) },
+      ])
+    );
+    mockGetPropsBatch.mockResolvedValueOnce(
+      JSON.stringify({
+        'h-payment': [
+          { id: 'pa1', name: 'id', description: 'Identifier', data: { type: 'string' } },
+          { id: 'pa2', name: 'amount', description: 'Minor units', data: { type: 'integer' } },
+          { id: 'pa3', name: 'currency', description: null, data: ref('Currency') },
+          { id: 'pa4', name: 'customer', description: 'Payer', data: ref('Customer') },
+          { id: 'pa5', name: 'card', description: null, data: ref('Card') },
+          { id: 'pa6', name: 'metadata', description: null, data: { type: 'object' } },
+          { id: 'pa7', name: 'tag', description: null, data: { type: 'string' }, parent_id: 'pa6' },
+        ],
+        'h-refund': [
+          { id: 'rf1', name: 'payment', description: 'Refunded charge', data: ref('Payment') },
+          { id: 'rf2', name: 'amount', description: 'Minor units', data: { type: 'integer' } },
+          { id: 'rf3', name: 'currency', description: null, data: ref('Currency') },
+        ],
+        'h-customer': [
+          { id: 'cu1', name: 'name', description: 'Full name', data: { type: 'string' } },
+          { id: 'cu2', name: 'address', description: 'Billing', data: ref('Address') },
+        ],
+        'h-card': [
+          { id: 'ca1', name: 'last4', description: null, data: { type: 'string' } },
+          { id: 'ca2', name: 'billing', description: null, data: ref('Address') },
+        ],
+        'h-address': [{ id: 'ad1', name: 'line1', description: null, data: { type: 'string' } }],
+        'h-payout': [
+          { id: 'po1', name: 'amount', description: 'Minor units', data: { type: 'integer' } },
+          { id: 'po2', name: 'currency', description: 'Settlement', data: ref('Currency') },
+        ],
+      })
+    );
+    const heatmapMenu = await openRowMenu(V231_ID);
+    fireEvent.click(within(heatmapMenu).getByTestId('versions-row-action-heatmap'));
+    await screen.findByTestId('heatmap-grid');
+    write('heatmap', screen.getByTestId('class-heatmap-dialog').outerHTML);
   });
 });
 

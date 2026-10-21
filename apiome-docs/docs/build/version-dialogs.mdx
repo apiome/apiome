@@ -1,6 +1,6 @@
 ---
 title: Version dialogs
-description: Create, edit, publish, sunset, compare and export versions — every dialog explained.
+description: Create, edit, publish, sunset, compare, export and map versions — every dialog explained.
 sidebar_position: 1.3
 tags: [versions, dialogs]
 ---
@@ -86,6 +86,25 @@ fidelity check warns).
 
 **View spec** from the same menu shows the generated OpenAPI document as JSON or YAML, with
 **“Copy”** and **“Download”**.
+
+## Heatmap
+
+**Choose “Heatmap”** from a row's **Actions** menu to see every class in that version as a tile.
+The warmer the tile, the higher it scores on the metric picked in the switch at the top; tiles are
+ordered warmest first, and the legend says what cold and warm mean. Hover a tile for all four
+measurements at once.
+
+| Metric | What warms a class |
+| --- | --- |
+| **Complexity** (the default) | More properties, deeper nesting and more references to other classes. Scaled to the most complex class in the version |
+| **Recent change** | A newer last edit: today or yesterday is warmest, then this week, this month and the last 90 days; older is cold |
+| **References** | More other classes in the version point at it with `$ref`. Scaled to the most referenced class |
+| **Documentation** | A larger share of the class and its properties have a description; 100% is warmest, none is cold |
+
+Use it to find the classes worth reviewing first — complex ones nobody has documented, or the ones
+many others depend on. A version with no classes shows an empty state; add classes in the Studio.
+
+<Screenshot id="version-heatmap-dialog" alt="The Heatmap dialog: a payments schema's classes as tiles, colored by complexity, with the metric switch and legend" />
 
 ## Git-like features
 
