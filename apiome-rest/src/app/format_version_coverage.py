@@ -673,6 +673,22 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="tag=value message (any BeginString)",
     ),
+    "fix-orchestra": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="FIX Orchestra 1.0 repository",
+                format_key="fix-orchestra",
+                support=VersionSupport.FULL,
+                note="A `repository` in `http://fixprotocol.io/2020/orchestra/repository` (or the 2016 "
+                "FIX Repository draft namespace): datatypes, code sets, fields, components, groups, "
+                "messages and their scenarios, presence and rules, actors, flows and state machines. The "
+                "FIX version the repository describes (`FIX.4.4`, `FIX.Latest_EP…`) is recorded, not "
+                "branched on. `xi:include` resolves only inside an uploaded fileset.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "flatbuffers": VersionCoverage(
         reads=[
             FormatVersion(

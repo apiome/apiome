@@ -4,8 +4,8 @@ Fixtures for **FMT-6.9** ([#5453](https://github.com/apiome/apiome/issues/5453))
 adapter reads `tag=value` **messages** and *infers* a field schema from them; Orchestra is the
 machine-readable **specification** — an XML repository of message definitions, field types, code sets,
 components, groups, actors, flows and state machines. Reading it turns inference into fact, which in
-capital markets is the difference between a sample and a contract. Entries carry `adapter_key: null`
-and the `pending-adapter` tag.
+capital markets is the difference between a sample and a contract. Entries import with the
+`fix-orchestra` adapter.
 
 **Detection marker.** Root `repository` in `http://fixprotocol.io/2020/orchestra/repository`.
 
@@ -32,7 +32,7 @@ boolean:
 | `07-modular-set/` | multi-file | A repository that pulls its code sets in with XInclude from a shared library file. |
 | `negative/` | — | Unclosed message, a repository with no messages, truncation, a **`tag=value` FIX message log** (what the shipped `fix` adapter reads), UTF-16, and refs to a field and component that do not exist. |
 
-**Cross-links.** The Orchestra **emitter** is filed as **#4323**; coordinate the type model with it.
-An Orchestra-derived item should link to message-derived `fix` items where the message type matches —
-the shipped corpus's `fix/02-orchestra.xml` is the same family and is currently a recorded
-known-detection-bug fixture.
+**Cross-links.** The Orchestra **emitter** is filed as **#4323**; the round trip against it is
+asserted once it ships. An Orchestra-derived item records the `msgType` of every message, and the
+catalog suggests linking it to message-derived `fix` items of the same message type. The shipped
+corpus's `fix/02-orchestra.xml` is the same family and imports with this adapter too.

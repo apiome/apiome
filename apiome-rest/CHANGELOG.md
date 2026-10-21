@@ -5,6 +5,43 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.413.0] - 2026-10-21
+
+### Added
+- **FIX Orchestra import (#5453, FMT-6.9)**: the declared FIX schema, where the `fix` adapter infers one from
+  `tag=value` messages.
+  - The new **`fix-orchestra`** import source (formats `fix-orchestra` / `orchestra` / `fixr`; `.xml`; file / URL /
+    paste / fileset) claims a `repository` root in `http://fixprotocol.io/2020/orchestra/repository` (or the 2016
+    FIX Repository draft namespace). `app/fix_orchestra_parser.py` reads `datatypes`, `codeSets`, `fields`,
+    `components`, `groups` (with `numInGroup`), `messages` with their `structure`, scenarios and `responses`, and
+    `actors` / `flow` / `states` state machines. Entities are keyed by `(id, scenario)`; a ref falls back to the
+    `base` scenario.
+  - `app/fix_orchestra_normalizer.py`: each message (each scenario) is a record type with its `msgType`, flow and
+    responses in `extras`; code sets are enums; components are records; groups are records used as lists with
+    `minItems: 1`; a field's datatype resolves through declared `baseType` chains to a primitive (timestamps carry
+    `date-time` / `date` / `time`). `presence` maps to optionality and constraints — `required` and `constant`
+    non-nullable (`constant` pinned by `enum: [value]` and its default); `conditional`, `forbidden` and `ignored`
+    recorded as `constraints.extras.fix_presence`, with every `rule` (`when` / `assign`) in `fix_rules`. A
+    `forbidden` field is a declared constraint, never dropped. Actors, flows, state machines and datatypes are in
+    the model `extras`; Dublin Core metadata stays in `raw`, outside the fingerprint.
+  - **XInclude inside a fileset.** `app/secure_xml.parse_xml` gains `allow_xinclude` (default off, so every other
+    adapter still refuses the directive); the Orchestra parser resolves each `xi:include` only against the
+    uploaded fileset's members, refusing cycles and text includes. A single file that uses one is
+    `INPUT_REFERENCE_UNRESOLVED`.
+  - **Linking to `fix` items.** The import records `format_metadata.fixMsgTypes` for both `fix` and `fix-orchestra`
+    items (`app/import_source_pipeline.fix_msg_types_metadata`), and
+    `GET /v1/identity/{tenant_slug}/projects/{project_id}/suggestions` ranks a shared FIX message type
+    (reason `shared FIX message type(s) …`). Suggestions still never auto-link.
+  - Refusals: truncated XML `INPUT_TRUNCATED`; ill-formed XML `INPUT_MALFORMED`; no messages, a missing `id` /
+    `name`, a duplicate entity in one scenario, or an unknown `presence` `INPUT_SEMANTIC_INVALID`; a ref, a
+    `numInGroup` or an include that does not resolve `INPUT_REFERENCE_UNRESOLVED`; a non-Orchestra document
+    `FORMAT_MISMATCH`; encoding faults are left code-less.
+  - Version coverage for `fix-orchestra`; `fix-orchestra` is a schema-only format. The `fix-orchestra/` corpus is
+    activated with goldens and a matrix row (45 known-failing cells recorded); `fix/02-orchestra.xml` now imports
+    with this adapter (its known detection and import bugs are retired), and `fix/06-composition-allocation-instruction.fix`
+    gives the `fix` adapter its composition rung.
+  - The round trip against the Orchestra emitter (#4323) is asserted once that emitter ships.
+
 ## [1.412.0] - 2026-10-20
 
 ### Added

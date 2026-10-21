@@ -88,6 +88,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   'swift-mt': 'https://www.swift.com/standards',
   iso8583: 'https://www.iso.org/standard/31628.html',
   fix: 'https://www.fixtrading.org/standards/',
+  'fix-orchestra': 'https://www.fixtrading.org/standards/fix-orchestra/',
 
   // Mainframe
   zosconnect: 'https://www.ibm.com/docs/en/zos-connect/3.0.0?topic=apis-creating-api',

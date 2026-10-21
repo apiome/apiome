@@ -147,6 +147,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   iso20022: 'ISO 20022',
   iso8583: 'ISO 8583',
   fix: 'FIX',
+  'fix-orchestra': 'FIX Orchestra',
   'llm-tools': 'LLM Tools',
   mcp: 'MCP Server Manifest',
   a2a: 'A2A Agent Card',

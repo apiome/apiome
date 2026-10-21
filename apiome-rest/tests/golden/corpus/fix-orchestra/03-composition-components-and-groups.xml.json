@@ -1,0 +1,503 @@
+{
+  "adapter": "fix-orchestra",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fix_actors": [],
+      "fix_datatypes": [],
+      "fix_field_count": 9,
+      "fix_flows": [],
+      "fix_messages": [
+        {
+          "msgType": "D",
+          "name": "NewOrderSingle",
+          "scenario": "base"
+        }
+      ],
+      "fix_msg_types": [
+        "D"
+      ],
+      "fix_namespace": "http://fixprotocol.io/2020/orchestra/repository",
+      "fix_repository_name": "ExampleComposition",
+      "fix_repository_version": "FIX.4.4_EP002"
+    },
+    "format": "fix-orchestra",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ExampleComposition",
+      "namespace": "FIX.4.4_EP002"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ExampleComposition",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "Common",
+          "fix_id": "1003",
+          "fix_kind": "component"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "55"
+            },
+            "field_number": 55,
+            "key": "Instrument.Symbol",
+            "name": "Symbol",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Instrument",
+        "key_type": null,
+        "kind": "record",
+        "name": "Instrument",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "SingleGeneralOrderHandling",
+          "fix_id": "14",
+          "fix_kind": "message",
+          "fix_msg_name": "NewOrderSingle",
+          "fix_msg_type": "D",
+          "fix_scenario": "base"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "11"
+            },
+            "field_number": 11,
+            "key": "NewOrderSingle.ClOrdID",
+            "name": "ClOrdID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_component_id": "1003",
+              "fix_presence": "required"
+            },
+            "field_number": null,
+            "key": "NewOrderSingle.Instrument",
+            "name": "Instrument",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Instrument",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_group_id": "1012",
+              "fix_num_in_group": {
+                "name": "NoPartyIDs",
+                "tag": "453"
+              },
+              "fix_presence": "optional"
+            },
+            "field_number": null,
+            "key": "NewOrderSingle.PartiesGrp",
+            "name": "PartiesGrp",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "PartiesGrp",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NewOrderSingle",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewOrderSingle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "Common",
+          "fix_id": "1012",
+          "fix_kind": "group",
+          "fix_num_in_group": "453"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "448"
+            },
+            "field_number": 448,
+            "key": "PartiesGrp.PartyID",
+            "name": "PartyID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "PartyIDSourceCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "447"
+            },
+            "field_number": 447,
+            "key": "PartiesGrp.PartyIDSource",
+            "name": "PartyIDSource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "PartyIDSourceCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "PartyRoleCodeSet",
+              "fix_presence": "required",
+              "fix_tag": "452"
+            },
+            "field_number": 452,
+            "key": "PartiesGrp.PartyRole",
+            "name": "PartyRole",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "PartyRoleCodeSet",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_group_id": "2005",
+              "fix_num_in_group": {
+                "name": "NoPartySubIDs",
+                "tag": "802"
+              },
+              "fix_presence": "optional"
+            },
+            "field_number": null,
+            "key": "PartiesGrp.PartySubIDsGrp",
+            "name": "PartySubIDsGrp",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "PartySubIDsGrp",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PartiesGrp",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartiesGrp",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "447001"
+            },
+            "key": "PartyIDSourceCodeSet.BIC",
+            "name": "BIC",
+            "value": "B"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "447004"
+            },
+            "key": "PartyIDSourceCodeSet.Proprietary",
+            "name": "Proprietary",
+            "value": "D"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "447N"
+            },
+            "key": "PartyIDSourceCodeSet.LEI",
+            "name": "LEI",
+            "value": "N"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "char",
+          "fix_id": "447",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "PartyIDSourceCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "PartyIDSourceCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "452001"
+            },
+            "key": "PartyRoleCodeSet.ExecutingFirm",
+            "name": "ExecutingFirm",
+            "value": "1"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "452004"
+            },
+            "key": "PartyRoleCodeSet.ClearingFirm",
+            "name": "ClearingFirm",
+            "value": "4"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_code_id": "452003"
+            },
+            "key": "PartyRoleCodeSet.ClientID",
+            "name": "ClientID",
+            "value": "3"
+          }
+        ],
+        "extras": {
+          "fix_code_type": "int",
+          "fix_id": "452",
+          "fix_kind": "codeSet"
+        },
+        "fields": [],
+        "key": "PartyRoleCodeSet",
+        "key_type": null,
+        "kind": "enum",
+        "name": "PartyRoleCodeSet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fix_category": "Common",
+          "fix_id": "2005",
+          "fix_kind": "group",
+          "fix_num_in_group": "802"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "String",
+              "fix_presence": "required",
+              "fix_tag": "523"
+            },
+            "field_number": 523,
+            "key": "PartySubIDsGrp.PartySubID",
+            "name": "PartySubID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fix_datatype": "int",
+              "fix_presence": "optional",
+              "fix_tag": "803"
+            },
+            "field_number": 803,
+            "key": "PartySubIDsGrp.PartySubIDType",
+            "name": "PartySubIDType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PartySubIDsGrp",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartySubIDsGrp",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "FIX.4.4_EP002"
+  },
+  "corpus_path": "fix-orchestra/03-composition-components-and-groups.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "fix-orchestra"
+  },
+  "fingerprint": "sha256:e5959433bb147fd2fc2a3bcc9478c6dbb4926528a1f2470d53201ecf7364ab37",
+  "lint": {
+    "findings": 17,
+    "grade": "D",
+    "report_fingerprint": "d00ac0a6e582174fa79aaa4619cab63ced9ff9ffeafc2f0149600ae5bc8b3825",
+    "score": 69,
+    "severity_counts": {
+      "error": 0,
+      "info": 11,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

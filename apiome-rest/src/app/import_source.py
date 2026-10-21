@@ -1218,6 +1218,9 @@ def load_builtin_import_sources() -> None:
     # ``ncpdp_import_source`` (FMT-6.8) self-registers the ``ncpdp`` adapter — NCPDP SCRIPT
     # e-prescribing XML and Telecommunication D.0 pharmacy claims — and its normalizer.
     from . import ncpdp_import_source as _ncpdp  # noqa: F401
+    # ``fix_orchestra_import_source`` (FMT-6.9) self-registers the ``fix-orchestra`` adapter — FIX
+    # Orchestra repository XML, the declared schema the ``fix`` adapter infers — and its normalizer.
+    from . import fix_orchestra_import_source as _fix_orchestra  # noqa: F401
     # ``hl7v3_import_source`` (FMT-6.4) self-registers the ``hl7v3`` adapter — HL7 v3 / CDA
     # documents (CCD, discharge summary …), optionally inside a transmission wrapper — and its normalizer.
     from . import hl7v3_import_source as _hl7v3  # noqa: F401

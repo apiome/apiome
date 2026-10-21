@@ -1,0 +1,24 @@
+---
+slug: fix-orchestra-import
+title: FIX Orchestra import
+description: The declared FIX schema joins the Catalog, with presence rules kept as constraints.
+authors: [apiome]
+---
+
+Apiome now reads [**FIX Orchestra**](/bring-in/fix-orchestra-import) repositories — the
+machine-readable rules of engagement behind a FIX interface — beside the `tag=value` FIX messages
+it already imports. Where a message shows what was sent, the repository says what must be.
+
+{/* truncate */}
+
+- **The declared schema.** Messages become record types (one per scenario), code sets enums,
+  components records and repeating groups lists of records, nested as deep as the repository goes.
+- **Presence as a contract.** `required` and `optional` set the field's optionality; `conditional`
+  keeps its `when` rule; `constant` pins the value; `forbidden` and `ignored` are declared
+  constraints — a forbidden field is modelled, never dropped.
+- **Workflow recorded.** Actors, flows and state machines travel with the item, so a changed
+  workflow is a new version.
+- **Modular repositories.** A repository that pulls its code sets in with `xi:include` imports as
+  one archive; includes resolve only against the uploaded files.
+- **Linked to the messages.** An Orchestra item and a FIX message item of the same message type are
+  suggested for each other under **Related artifacts → Suggest links**.

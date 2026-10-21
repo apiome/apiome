@@ -33,6 +33,23 @@ def _shared_metadata_keys(
     return shared
 
 
+def _shared_fix_msg_types(
+    left: Optional[Dict[str, Any]], right: Optional[Dict[str, Any]]
+) -> List[str]:
+    """FIX message types (``format_metadata.fixMsgTypes``) both artifacts describe (FMT-6.9).
+
+    A FIX Orchestra repository and a ``fix`` message item record the ``MsgType`` values they
+    cover, so a specification is suggested for the messages that follow it, and the reverse.
+    """
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return []
+    left_types = left.get("fixMsgTypes")
+    right_types = right.get("fixMsgTypes")
+    if not isinstance(left_types, list) or not isinstance(right_types, list):
+        return []
+    return sorted({str(value) for value in left_types} & {str(value) for value in right_types})
+
+
 def build_related_artifact_refs(rows: List[Dict[str, Any]]) -> List[RelatedArtifactRef]:
     """Project DAO rows onto :class:`RelatedArtifactRef` models."""
     refs: List[RelatedArtifactRef] = []
@@ -94,6 +111,14 @@ def rank_identity_suggestions(
         if shared_keys:
             score += 20 * len(shared_keys)
             reasons.append(f"shared {', '.join(shared_keys)}")
+
+        shared_msg_types = _shared_fix_msg_types(
+            anchor_meta if isinstance(anchor_meta, dict) else None,
+            row.get("format_metadata") if isinstance(row.get("format_metadata"), dict) else None,
+        )
+        if shared_msg_types:
+            score += min(40, 20 * len(shared_msg_types))
+            reasons.append(f"shared FIX message type(s) {', '.join(shared_msg_types)}")
 
         overlap = anchor_ops.intersection(candidate_ops.get(pid, set()))
         if overlap:

@@ -57,10 +57,6 @@ __all__ = [
 #: Keep in sync with the entry's manifest ``notes``; strict xfail means a
 #: fixed adapter fails the suite until the entry is removed from this map.
 KNOWN_DETECTION_BUGS: Dict[str, str] = {
-    "fix/02-orchestra.xml": (
-        "FIX Orchestra XML is not yet recognized by the fix adapter "
-        "(no Orchestra parser); the manifest records the intended contract."
-    ),
     "cloudevents/03-order-lifecycle-batch.json": (
         "The cloudevents adapter's detect delegates to parse_document, which "
         "rejects top-level JSON arrays, so a spec-valid CloudEvents batch "
@@ -71,10 +67,6 @@ KNOWN_DETECTION_BUGS: Dict[str, str] = {
 #: Corpus entries whose import (parse/normalize/lint) crashes on a known
 #: adapter bug. Path -> reason. Same strict-xfail convention as above.
 KNOWN_IMPORT_BUGS: Dict[str, str] = {
-    "fix/02-orchestra.xml": (
-        "The fix adapter has no Orchestra parser; parse raises until the "
-        "detection-hardening epic adds one."
-    ),
     "asn1/07-scalar-alias-typedefs.asn1": (
         "asn1_normalizer builds Type(scalar=...) / Type(alias_of=...) for "
         "top-level scalar and SEQUENCE OF typedefs, but canonical Type has "

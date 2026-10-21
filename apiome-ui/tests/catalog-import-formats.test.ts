@@ -97,6 +97,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('cobol-copybook')?.sourceKind).toBe('cobolcopybook');
     expect(catalogAdapterForFormat('fix')?.sourceKind).toBe('fix');
     expect(catalogAdapterForFormat('fixprotocol')?.sourceKind).toBe('fix');
+    expect(catalogAdapterForFormat('fix-orchestra')?.sourceKind).toBe('fix-orchestra');
+    expect(catalogAdapterForFormat('orchestra')?.sourceKind).toBe('fix-orchestra');
     expect(catalogAdapterForFormat('zosconnect')?.sourceKind).toBe('zosconnect');
     expect(catalogAdapterForFormat('zos')?.sourceKind).toBe('zosconnect');
     expect(catalogAdapterForFormat('zos-connect')?.sourceKind).toBe('zosconnect');
@@ -122,7 +124,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -414,6 +416,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('cobol-copybook')).toBe('dataschema');
     expect(paradigmForFormat('fix')).toBe('dataschema');
     expect(paradigmForFormat('fixprotocol')).toBe('dataschema');
+    expect(paradigmForFormat('fix-orchestra')).toBe('dataschema');
     expect(paradigmForFormat('zosconnect')).toBe('rest');
     expect(paradigmForFormat('zos')).toBe('rest');
     expect(paradigmForFormat('zos-connect')).toBe('rest');

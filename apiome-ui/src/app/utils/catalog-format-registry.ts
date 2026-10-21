@@ -361,6 +361,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'nacha', label: 'NACHA ACH', icon: Landmark, tone: 'amber', dataType: 'messages', origin: 'finance', importable: true, aliases: ['ach'], description: 'NACHA ACH payment files — fixed-width batches and entries with declared versus observed control totals.' },
   { id: 'iso8583', label: 'ISO 8583', icon: CreditCard, tone: 'orange', dataType: 'messages', origin: 'finance', importable: true, description: 'ISO 8583 card transaction messaging.' },
   { id: 'fix', label: 'FIX', icon: TrendingUp, tone: 'emerald', dataType: 'messages', origin: 'finance', importable: true, aliases: ['fixprotocol'], description: 'FIX financial trading protocol.' },
+  { id: 'fix-orchestra', label: 'FIX Orchestra', icon: TrendingUp, tone: 'emerald', dataType: 'messages', origin: 'finance', importable: true, aliases: ['orchestra', 'fixr'], description: 'FIX Orchestra repository: the declared FIX schema — message definitions, code sets, components, groups and presence rules.' },
 
   // ---- Mainframe ----
   { id: 'zosconnect', label: 'z/OS Connect', icon: Server, tone: 'blue', dataType: 'rest', origin: 'mainframe', importable: true, aliases: ['zos', 'zos-connect'], description: 'z/OS Connect mainframe API.' },

@@ -101,6 +101,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "edix12",
         "idoc",
         "fix",
+        "fix-orchestra",
         "flatbuffers",
         "hl7v2",
         "hl7v3",

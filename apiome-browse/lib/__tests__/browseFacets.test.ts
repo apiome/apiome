@@ -77,6 +77,7 @@ describe('formatLabel', () => {
     expect(formatLabel('nacha')).toBe('NACHA ACH');
     expect(formatLabel('dicom')).toBe('DICOM');
     expect(formatLabel('ncpdp')).toBe('NCPDP SCRIPT / Telecom');
+    expect(formatLabel('fix-orchestra')).toBe('FIX Orchestra');
     expect(formatLabel('asn1')).toBe('ASN.1');
   });
 
