@@ -275,6 +275,10 @@ const KIND_LABEL: Record<string, string> = {
   code_word: 'Code word',
   numbered_line: 'Numbered line',
   line: 'Line',
+  // NACHA ACH (nacha_analysis.py) — `file`, `record` and `field` share the labels above and below
+  batch: 'Batch',
+  entry: 'Entry',
+  addenda: 'Addenda',
   // COBOL copybook (cobolcopybook_analysis.py)
   record: 'Record',
   group: 'Group',

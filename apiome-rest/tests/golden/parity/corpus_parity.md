@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 63
+- **Formats gated:** 64
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -46,7 +46,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `hl7v3` | HL7 v3 / CDA | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `http-file` | HTTP Request File | rest | 10 | 5 | 0 | 0 | 15 | 6/6 | 8 | `http-file` |
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
-| `iso20022` | ISO 20022 | data_schema | 6 | 5 | 1 | 0 | 12 | 5/6 (+1 waived) | 6 | `iso20022` |
+| `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
 | `json-schema` | JSON Schema | data_schema | 12 | 5 | 0 | 0 | 17 | 5/6 (+1 waived) | 12 | `json-schema` |
 | `jtd` | JSON Type Definition | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `jtd` |
@@ -55,6 +55,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `kong` | Kong Declarative Config | rest | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `kong` |
 | `llm-tools` | LLM Tools | agent | 8 | 5 | 0 | 0 | 13 | 5/6 (+1 waived) | 8 | `llm-tools` |
 | `mcp` | MCP Server Manifest | agent | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | — |
+| `nacha` | NACHA ACH | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `odata` | OData | rest | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `odata` |
 | `odcs` | ODCS Data Contract | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `odcs` |
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
@@ -125,6 +126,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `kong` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `llm-tools` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `mcp` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `nacha` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `odata` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `odcs` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `oncrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -165,4 +167,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `consul`, `cue`, `dhall`, `dicom`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `nacha`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `sepa`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `consul`, `cue`, `dhall`, `dicom`, `envoy-xds`, `fix-orchestra`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `ncpdp`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`

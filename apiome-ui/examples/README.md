@@ -142,9 +142,9 @@ The corpus holds **1466 files** across **107 format directories**. Every file ha
 | `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
 | `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 12 |
 | `iso8583/` | ISO 8583 | message | `mti` + numbered `dataElements` | 11 |
-| `nacha/` | NACHA ACH (pending #5450) | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
+| `nacha/` | NACHA ACH | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
 | `ncpdp/` | NCPDP SCRIPT / Telecom (pending #5452) | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
-| `sepa/` | SEPA payment files (pending #5450) | message | `urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace | 14 |
+| `sepa/` | SEPA payment files (ISO 20022) | message | `urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace | 14 |
 | `swift-mt/` | SWIFT MT | message | `{1:` basic header + `{4:` text block terminated by `-}` | 14 |
 | `tradacoms/` | TRADACOMS | message | `STX=` transmission header + `END=` trailer | 15 |
 
@@ -1204,11 +1204,13 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `adversarial/01-billion-laughs-pain001.xml` ⚠ | — | `iso20022` (no guarantee) | adversarial | `adversarial`, `billion-laughs`, `entity-expansion`, `pain.001` |
 | `negative/01-syntactic-unclosed-tag.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-tag` |
 | `negative/02-semantic-empty-document.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `semantic`, `empty-document` |
-| `negative/03-truncated-mid-tag.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `truncated`, `mid-tag` |
+| `negative/03-truncated-mid-tag.xml` ⚠ | — | `iso20022` (no guarantee) | invalid | `negative`, `truncated`, `mid-tag` |
 | `negative/04-wrong-format-xsd-schema.xsd` | — | `iso20022` (no guarantee) | invalid | `negative`, `wrong-format`, `xsd-schema` |
 | `negative/05-encoding-utf16-event.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
 
 > ⚠ **`adversarial/01-billion-laughs-pain001.xml`** — parse_iso20022 parses before its shape check (IXH-1.4) because is_iso20022 needs a successful secure parse; without that order the security code would be masked as a format mismatch.
+
+> ⚠ **`negative/03-truncated-mid-tag.xml`** — Since FMT-6.6 the ISO 20022 parser reports text that stops inside a tag or value as a truncation rather than a syntax fault.
 
 ### `iso8583/` — ISO 8583
 
@@ -1478,24 +1480,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/05-encoding-utf16.json`** — 01-minimal-echo-tool.json re-encoded as UTF-16 (BOM + NUL bytes).
 
-### `nacha/` — NACHA ACH (pending #5450)
+### `nacha/` — NACHA ACH
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-ppd-credit.ach` | minimal | `nacha` ≥ 0.9 | valid | `PPD`, `single-entry`, `fixed-width`, `block-padding`, `pending-adapter` |
-| `02-typical-ppd-batch.ach` | typical | `nacha` ≥ 0.9 | valid | `PPD`, `multiple-entries`, `transaction-codes`, `entry-hash`, `pending-adapter` |
-| `03-composition-ccd-with-addenda.ach` | composition | `nacha` ≥ 0.9 | valid | `CCD`, `addenda`, `RMR`, `addenda-indicator`, `pending-adapter` |
-| `04-stress-multi-batch-sec-codes.ach` | stress | `nacha` ≥ 0.9 | valid | `PPD`, `CCD`, `WEB`, `TEL`, `multi-batch`, `service-class`, `savings-transaction-codes`, `file-id-modifier`, `pending-adapter` |
-| `05-real-world-payroll-and-tax.ach` | real-world | `nacha` ≥ 0.9 | valid | `payroll`, `TXP`, `two-batches`, `credit-and-debit`, `pending-adapter` |
-| `06-stress-control-total-mismatch.ach` ⚠ | stress | `nacha` ≥ 0.9 | valid | `control-totals`, `declared-vs-observed`, `entry-hash-mismatch`, `pending-adapter` |
-| `07-return-set/forward-file.ach` | multi-file (root) | `nacha` ≥ 0.9 | valid | `PPD`, `forward-file`, `pending-adapter` |
-| `07-return-set/return-file.ach` ⚠ | multi-file (member) | `nacha` (no guarantee) | valid | `return-entry`, `R03`, `addenda-99`, `pending-adapter` |
-| `negative/01-syntactic-short-record.ach` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `syntactic`, `record-length`, `pending-adapter` |
-| `negative/02-semantic-batch-without-entries.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `semantic`, `empty-batch`, `pending-adapter` |
-| `negative/03-truncated-mid-entry.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `truncated`, `mid-record`, `pending-adapter` |
-| `negative/04-wrong-format-sepa-pain001.xml` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `wrong-format`, `sepa`, `pain.001`, `pending-adapter` |
-| `negative/05-encoding-utf16.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-orphan-addenda.ach` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `semantic`, `orphan-addenda`, `pending-adapter` |
+| `01-minimal-ppd-credit.ach` | minimal | `nacha` ≥ 0.9 | valid | `PPD`, `single-entry`, `fixed-width`, `block-padding` |
+| `02-typical-ppd-batch.ach` | typical | `nacha` ≥ 0.9 | valid | `PPD`, `multiple-entries`, `transaction-codes`, `entry-hash` |
+| `03-composition-ccd-with-addenda.ach` | composition | `nacha` ≥ 0.9 | valid | `CCD`, `addenda`, `RMR`, `addenda-indicator` |
+| `04-stress-multi-batch-sec-codes.ach` | stress | `nacha` ≥ 0.9 | valid | `PPD`, `CCD`, `WEB`, `TEL`, `multi-batch`, `service-class`, `savings-transaction-codes`, `file-id-modifier` |
+| `05-real-world-payroll-and-tax.ach` | real-world | `nacha` ≥ 0.9 | valid | `payroll`, `TXP`, `two-batches`, `credit-and-debit` |
+| `06-stress-control-total-mismatch.ach` ⚠ | stress | `nacha` ≥ 0.9 | valid | `control-totals`, `declared-vs-observed`, `entry-hash-mismatch` |
+| `07-return-set/forward-file.ach` | multi-file (root) | `nacha` ≥ 0.9 | valid | `PPD`, `forward-file` |
+| `07-return-set/return-file.ach` ⚠ | multi-file (member) | `nacha` (no guarantee) | valid | `return-entry`, `R03`, `addenda-99` |
+| `negative/01-syntactic-short-record.ach` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `syntactic`, `record-length` |
+| `negative/02-semantic-batch-without-entries.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `semantic`, `empty-batch` |
+| `negative/03-truncated-mid-entry.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `truncated`, `mid-record` |
+| `negative/04-wrong-format-sepa-pain001.xml` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `wrong-format`, `sepa`, `pain.001` |
+| `negative/05-encoding-utf16.ach` | — | `nacha` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-orphan-addenda.ach` ⚠ | — | `nacha` (no guarantee) | invalid | `negative`, `semantic`, `orphan-addenda` |
 
 > ⚠ **`06-stress-control-total-mismatch.ach`** — Batch and file control records declare five entries, a zero hash and a 999999 credit total; none of it matches the two entries present. The acceptance criterion is that both numbers are shown.
 
@@ -2065,24 +2067,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-xslt.xsl`** — Schematron is usually compiled to XSLT, so a stylesheet is the neighbour most likely to be mistaken for one.
 
-### `sepa/` — SEPA payment files (pending #5450)
+### `sepa/` — SEPA payment files (ISO 20022)
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-pain001.xml` | minimal | `iso20022` ≥ 0.9 | valid | `pain.001`, `single-transaction`, `iban`, `pending-adapter` |
-| `02-typical-pain001-batch.xml` | typical | `iso20022` ≥ 0.9 | valid | `pain.001`, `batch-booking`, `PmtTpInf`, `category-purpose`, `postal-address`, `pending-adapter` |
-| `03-composition-pain001-multi-pmtinf.xml` | composition | `iso20022` ≥ 0.9 | valid | `pain.001`, `multiple-PmtInf`, `structured-remittance`, `instant-payment`, `purpose-code`, `pending-adapter` |
-| `04-stress-pain008-direct-debit.xml` | stress | `iso20022` ≥ 0.9 | valid | `pain.008`, `CORE`, `B2B`, `FRST`, `RCUR`, `mandate`, `mandate-amendment`, `creditor-scheme-id`, `pending-adapter` |
-| `05-real-world-pacs008-interbank.xml` | real-world | `iso20022` ≥ 0.9 | valid | `pacs.008`, `clearing-system`, `UETR`, `intermediary-agent`, `regulatory-reporting`, `pending-adapter` |
-| `06-typical-camt053-statement.xml` | typical | `iso20022` ≥ 0.9 | valid | `camt.053`, `balances`, `bank-transaction-code`, `entry-details`, `pending-adapter` |
-| `07-status-set/pain001.xml` | multi-file (root) | `iso20022` ≥ 0.9 | valid | `pain.001`, `two-transactions`, `pending-adapter` |
-| `07-status-set/pain002.xml` ⚠ | multi-file (member) | `iso20022` (no guarantee) | valid | `pain.002`, `status-report`, `reject-reason`, `partial-acceptance`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-element.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-transactions.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `semantic`, `no-transactions`, `pending-adapter` |
-| `negative/03-truncated-mid-transaction.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `truncated`, `mid-amount`, `pending-adapter` |
-| `negative/04-wrong-format-nacha.ach` ⚠ | — | `iso20022` (no guarantee) | invalid | `negative`, `wrong-format`, `nacha`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-version-out-of-range-pain001-099.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `version-out-of-range`, `unpublished-message-version`, `pending-adapter` |
+| `01-minimal-pain001.xml` | minimal | `iso20022` ≥ 0.9 | valid | `pain.001`, `single-transaction`, `iban`, `sepa-profile` |
+| `02-typical-pain001-batch.xml` | typical | `iso20022` ≥ 0.9 | valid | `pain.001`, `batch-booking`, `PmtTpInf`, `category-purpose`, `postal-address`, `sepa-profile` |
+| `03-composition-pain001-multi-pmtinf.xml` | composition | `iso20022` ≥ 0.9 | valid | `pain.001`, `multiple-PmtInf`, `structured-remittance`, `instant-payment`, `purpose-code`, `sepa-profile` |
+| `04-stress-pain008-direct-debit.xml` | stress | `iso20022` ≥ 0.9 | valid | `pain.008`, `CORE`, `B2B`, `FRST`, `RCUR`, `mandate`, `mandate-amendment`, `creditor-scheme-id`, `sepa-profile` |
+| `05-real-world-pacs008-interbank.xml` | real-world | `iso20022` ≥ 0.9 | valid | `pacs.008`, `clearing-system`, `UETR`, `intermediary-agent`, `regulatory-reporting`, `sepa-profile` |
+| `06-typical-camt053-statement.xml` | typical | `iso20022` ≥ 0.9 | valid | `camt.053`, `balances`, `bank-transaction-code`, `entry-details` |
+| `07-status-set/pain001.xml` | multi-file (root) | `iso20022` ≥ 0.9 | valid | `pain.001`, `two-transactions`, `sepa-profile` |
+| `07-status-set/pain002.xml` ⚠ | multi-file (member) | `iso20022` (no guarantee) | valid | `pain.002`, `status-report`, `reject-reason`, `partial-acceptance` |
+| `negative/01-syntactic-unclosed-element.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-transactions.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `semantic`, `no-transactions` |
+| `negative/03-truncated-mid-transaction.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `truncated`, `mid-amount` |
+| `negative/04-wrong-format-nacha.ach` ⚠ | — | `iso20022` (no guarantee) | invalid | `negative`, `wrong-format`, `nacha` |
+| `negative/05-encoding-utf16.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-version-out-of-range-pain001-099.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `version-out-of-range`, `unpublished-message-version` |
 
 > ⚠ **`07-status-set/pain002.xml`** — Fileset member: the status report. It references the initiation by OrgnlMsgId and each transaction by OrgnlEndToEndId.
 
@@ -2695,7 +2697,6 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 | `flatbuffers` | multi-file | FlatBuffersImportSource.parse_fileset only parses the fileset root and never resolves included members, so a multi-file set demonstrates nothing beyond a single file. |
 | `hl7v2` | composition | HL7 v2 pipe-and-hat messages are self-contained segment streams with no reference, include, import, or inheritance mechanism, so the composition rung does not apply. |
 | `hl7v2` | multi-file | The hl7v2 adapter's parse_fileset only parses the root member and resolves nothing across members, so a genuine multi-file set does not apply. |
-| `iso20022` | multi-file | Iso20022ImportSource.parse_fileset only parses the fileset root and resolves no references across members, so a multi-file set demonstrates nothing beyond a single message. |
 | `iso8583` | composition | The ISO 8583 field-map grammar is a flat MTI plus numbered data elements with no reference, include, or reuse mechanism, so there is no composition to demonstrate. |
 | `iso8583` | multi-file | Iso8583ImportSource.parse_fileset only parses the fileset root and resolves no references across members, so a multi-file set demonstrates nothing beyond a single document. |
 | `json-schema` | multi-file | The json-schema adapter has no parse_fileset and does not resolve cross-file $ref targets, so schemas import as single self-contained documents. |

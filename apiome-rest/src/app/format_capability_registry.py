@@ -91,6 +91,7 @@ from .payload_analysis import (
 from .payload_analyzer import GENERIC_ANALYZER_KEY
 from .hl7v3_datatypes import TEMPLATE_CLAIM_STATEMENT
 from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
+from .nacha_analysis import NACHA_OPERATING_RULES_STATEMENT
 from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -146,7 +147,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "19"
+REGISTRY_VERSION = "20"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1036,6 +1037,61 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "its own adapter.",
             profile_statement(EANCOM),
             profile_statement(ODETTE),
+        ],
+    ),
+    # FMT-6.6 (#5450): NACHA ACH, seeded because its control totals must be stated as declared
+    # versus observed and its account numbers governed by value visibility wherever a reader meets
+    # them — and because the panel must say the Operating Rules were not consulted.
+    "nacha": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "File → batch (`5` header … `8` control) → entry detail (`6`) → addenda (`7`: 05 "
+            "payment-related, 98 notification of change, 99 return), with the file header (`1`) "
+            "and file control (`9`) as records beside the batches. Every record is cut into its "
+            "fixed-width fields by its record type code."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "Records are fixed-width (94 characters), so every record and every field carries "
+                "the exact line, offset and length it was cut from, beside its path "
+                "(``FILE/5[1]/6[2]/amount``)."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Field values are payment data — account numbers, names, amounts, identification "
+                "numbers — so the stored record carries whatever the value-visibility policy "
+                "allows; the default keeps presence and length only. Record types, transaction and "
+                "SEC codes, counts and the control totals are structure and are always shown."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "nacha.byte_offsets",
+                "nacha.routing_check_digit",
+                "nacha.transaction_direction",
+            ],
+            note=(
+                "The canonical model is the file's structure: AchFile → Batch → EntryDetail, one "
+                "record type per record layout (and per addenda type present) with each field's "
+                "positions recorded. Payload values never enter it. The file's SEC codes, batches "
+                "and every control total, declared versus observed, are recorded beside the model."
+            ),
+        ),
+        notes=[
+            NACHA_OPERATING_RULES_STATEMENT,
+            "Every total a batch control (`8`) or file control (`9`) record declares — entry and "
+            "addenda count, entry hash, total debit, total credit, batch count, block count — is "
+            "recomputed and recorded beside the declaration, and each disagreement is stated as a "
+            "warning: read, not rejected.",
+            "A record that is not 94 characters is refused as malformed (or as truncated when the "
+            "file stops inside it); a batch with no entries and an addenda record with no entry "
+            "before it are refused as semantically invalid. SEPA payment files are ISO 20022 XML "
+            "and route to the ISO 20022 adapter, never here.",
         ],
     ),
     # FMT-6.5 (#5449): TRADACOMS, the UK retail dialect — EDIFACT-style segments read with the

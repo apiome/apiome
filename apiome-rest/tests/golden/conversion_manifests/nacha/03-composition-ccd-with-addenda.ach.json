@@ -1,0 +1,4370 @@
+{
+  "adapter": "nacha",
+  "conversion_mode": "lossy",
+  "corpus_path": "nacha/03-composition-ccd-with-addenda.ach",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 8,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.AchFile.batches"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.AchFile/properties/batches"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.AchFile.batches",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.AchFile.batches",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.AchFile/properties/batches"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.AchFile.fileControl"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.AchFile/properties/fileControl"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.AchFile.fileControl",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.AchFile.fileControl",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.AchFile/properties/fileControl"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.AchFile.fileHeader"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.AchFile/properties/fileHeader"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.AchFile.fileHeader",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.AchFile.fileHeader",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.AchFile/properties/fileHeader"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05.addendaSequenceNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaSequenceNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Addenda05.addendaSequenceNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05.addendaSequenceNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05/properties/addendaSequenceNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05.addendaTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Addenda05.addendaTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05.addendaTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05/properties/addendaTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05.entryDetailSequenceNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05/properties/entryDetailSequenceNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Addenda05.entryDetailSequenceNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05.entryDetailSequenceNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05/properties/entryDetailSequenceNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05.paymentRelatedInformation"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05/properties/paymentRelatedInformation"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Addenda05.paymentRelatedInformation",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05.paymentRelatedInformation",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05/properties/paymentRelatedInformation"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Addenda05.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Batch.batchControl"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Batch/properties/batchControl"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Batch.batchControl",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Batch.batchControl",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Batch/properties/batchControl"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Batch.batchHeader"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Batch/properties/batchHeader"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Batch.batchHeader",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Batch.batchHeader",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Batch/properties/batchHeader"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Batch.entries"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Batch/properties/entries"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.Batch.entries",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Batch.entries",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Batch/properties/entries"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.batchNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/batchNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.batchNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.batchNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/batchNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.companyIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/companyIdentification"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.companyIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.companyIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/companyIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.entryAddendaCount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/entryAddendaCount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.entryAddendaCount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.entryAddendaCount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/entryAddendaCount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.entryHash"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/entryHash"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.entryHash",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.entryHash",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/entryHash"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.messageAuthenticationCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/messageAuthenticationCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.messageAuthenticationCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.messageAuthenticationCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/messageAuthenticationCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.originatingDfiIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/originatingDfiIdentification"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.originatingDfiIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.originatingDfiIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/originatingDfiIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.reserved"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/reserved"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.reserved",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.reserved",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/reserved"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.serviceClassCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/serviceClassCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.serviceClassCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.serviceClassCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/serviceClassCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.totalCreditEntryDollarAmount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/totalCreditEntryDollarAmount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/totalCreditEntryDollarAmount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl.totalDebitEntryDollarAmount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl/properties/totalDebitEntryDollarAmount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl/properties/totalDebitEntryDollarAmount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.batchNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/batchNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.batchNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.batchNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/batchNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.companyDescriptiveDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDescriptiveDate"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.companyDescriptiveDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.companyDescriptiveDate",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyDescriptiveDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.companyDiscretionaryData"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDiscretionaryData"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.companyDiscretionaryData",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.companyDiscretionaryData",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyDiscretionaryData"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.companyEntryDescription"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyEntryDescription"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.companyEntryDescription",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.companyEntryDescription",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyEntryDescription"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.companyIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyIdentification"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.companyIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.companyIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.companyName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyName"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.companyName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.companyName",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.effectiveEntryDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/effectiveEntryDate"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.effectiveEntryDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.effectiveEntryDate",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/effectiveEntryDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.originatingDfiIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatingDfiIdentification"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.originatingDfiIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.originatingDfiIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/originatingDfiIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.originatorStatusCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatorStatusCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.originatorStatusCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.originatorStatusCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/originatorStatusCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.serviceClassCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/serviceClassCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.serviceClassCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.serviceClassCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/serviceClassCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.settlementDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/settlementDate"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.settlementDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.settlementDate",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/settlementDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader.standardEntryClassCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader/properties/standardEntryClassCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.BatchHeader.standardEntryClassCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader.standardEntryClassCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/standardEntryClassCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.addenda05"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/addenda05"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.addenda05",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.addenda05",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/addenda05"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.addendaRecordIndicator"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/addendaRecordIndicator"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.addendaRecordIndicator",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.addendaRecordIndicator",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/addendaRecordIndicator"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.amount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/amount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.amount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.amount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/amount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.checkDigit"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/checkDigit"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.checkDigit",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.checkDigit",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/checkDigit"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.dfiAccountNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/dfiAccountNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.dfiAccountNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.dfiAccountNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/dfiAccountNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.discretionaryData"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/discretionaryData"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.discretionaryData",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.discretionaryData",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/discretionaryData"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.individualIdentificationNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualIdentificationNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.individualIdentificationNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.individualIdentificationNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/individualIdentificationNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.individualName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualName"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.individualName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.individualName",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/individualName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.receivingDfiIdentification"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/receivingDfiIdentification"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.receivingDfiIdentification",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.receivingDfiIdentification",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/receivingDfiIdentification"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.traceNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/traceNumber"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.traceNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.traceNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/traceNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail.transactionCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail/properties/transactionCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.EntryDetail.transactionCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail.transactionCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/transactionCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.batchCount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/batchCount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.batchCount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.batchCount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/batchCount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.blockCount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/blockCount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.blockCount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.blockCount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/blockCount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.entryAddendaCount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/entryAddendaCount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.entryAddendaCount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.entryAddendaCount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/entryAddendaCount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.entryHash"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/entryHash"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.entryHash",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.entryHash",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/entryHash"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.reserved"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/reserved"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.reserved",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.reserved",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/reserved"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.totalCreditEntryDollarAmount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/totalCreditEntryDollarAmount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/totalCreditEntryDollarAmount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl.totalDebitEntryDollarAmount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl/properties/totalDebitEntryDollarAmount"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl/properties/totalDebitEntryDollarAmount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.blockingFactor"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/blockingFactor"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.blockingFactor",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.blockingFactor",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/blockingFactor"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.fileCreationDate"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationDate"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.fileCreationDate",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.fileCreationDate",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationDate"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.fileCreationTime"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationTime"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.fileCreationTime",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.fileCreationTime",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationTime"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.fileIdModifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/fileIdModifier"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.fileIdModifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.fileIdModifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileIdModifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.formatCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/formatCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.formatCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.formatCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/formatCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.immediateDestination"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestination"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.immediateDestination",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.immediateDestination",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestination"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.immediateDestinationName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestinationName"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.immediateDestinationName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.immediateDestinationName",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestinationName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.immediateOrigin"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOrigin"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.immediateOrigin",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.immediateOrigin",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateOrigin"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.immediateOriginName"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOriginName"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.immediateOriginName",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.immediateOriginName",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateOriginName"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.priorityCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/priorityCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.priorityCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.priorityCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/priorityCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.recordSize"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/recordSize"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.recordSize",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.recordSize",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/recordSize"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.recordTypeCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/recordTypeCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.recordTypeCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.recordTypeCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/recordTypeCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader.referenceCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader/properties/referenceCode"
+          }
+        ],
+        "id": "construct:field:NACHA-ACH.FileHeader.referenceCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader.referenceCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader/properties/referenceCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.AchFile"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.AchFile"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.AchFile",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.AchFile",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.AchFile"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Addenda05"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Addenda05"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.Addenda05",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Addenda05",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Addenda05"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.Batch"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.Batch"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.Batch",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.Batch",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.Batch"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchControl"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchControl"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.BatchControl",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchControl",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchControl"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.BatchHeader"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.BatchHeader"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.BatchHeader",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.BatchHeader",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.BatchHeader"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.EntryDetail"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.EntryDetail"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.EntryDetail",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.EntryDetail",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.EntryDetail"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileControl"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileControl"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.FileControl",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileControl",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileControl"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NACHA-ACH.FileHeader"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NACHA-ACH.FileHeader"
+          }
+        ],
+        "id": "construct:type:NACHA-ACH.FileHeader",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NACHA-ACH.FileHeader",
+        "status": "retained",
+        "target": "target:/components/schemas/NACHA-ACH.FileHeader"
+      },
+      {
+        "count": 1,
+        "detail": "the nacha analyzer does not model nacha.iat_layouts, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:nacha.iat_layouts",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:nacha.iat_layouts",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the nacha analyzer does not model nacha.operating_rules_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:nacha.operating_rules_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:nacha.operating_rules_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the nacha analyzer does not model nacha.return_reason_semantics, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:nacha.return_reason_semantics",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:nacha.return_reason_semantics",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "nacha.iat_layouts",
+        "id": "source:analysis:nacha.iat_layouts",
+        "kind": "source",
+        "label": "nacha.iat_layouts",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "nacha.iat_layouts",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "nacha.operating_rules_validation",
+        "id": "source:analysis:nacha.operating_rules_validation",
+        "kind": "source",
+        "label": "nacha.operating_rules_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "nacha.operating_rules_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "nacha.return_reason_semantics",
+        "id": "source:analysis:nacha.return_reason_semantics",
+        "kind": "source",
+        "label": "nacha.return_reason_semantics",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "nacha.return_reason_semantics",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile",
+        "id": "source:construct:NACHA-ACH.AchFile",
+        "kind": "source",
+        "label": "AchFile",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "AchFile",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.batches",
+        "id": "source:construct:NACHA-ACH.AchFile.batches",
+        "kind": "source",
+        "label": "batches",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batches",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.fileControl",
+        "id": "source:construct:NACHA-ACH.AchFile.fileControl",
+        "kind": "source",
+        "label": "fileControl",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "fileControl",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.fileHeader",
+        "id": "source:construct:NACHA-ACH.AchFile.fileHeader",
+        "kind": "source",
+        "label": "fileHeader",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "fileHeader",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05",
+        "id": "source:construct:NACHA-ACH.Addenda05",
+        "kind": "source",
+        "label": "Addenda05",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Addenda05",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.addendaSequenceNumber",
+        "id": "source:construct:NACHA-ACH.Addenda05.addendaSequenceNumber",
+        "kind": "source",
+        "label": "addendaSequenceNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "addendaSequenceNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.addendaTypeCode",
+        "id": "source:construct:NACHA-ACH.Addenda05.addendaTypeCode",
+        "kind": "source",
+        "label": "addendaTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "addendaTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.entryDetailSequenceNumber",
+        "id": "source:construct:NACHA-ACH.Addenda05.entryDetailSequenceNumber",
+        "kind": "source",
+        "label": "entryDetailSequenceNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryDetailSequenceNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.paymentRelatedInformation",
+        "id": "source:construct:NACHA-ACH.Addenda05.paymentRelatedInformation",
+        "kind": "source",
+        "label": "paymentRelatedInformation",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "paymentRelatedInformation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.Addenda05.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch",
+        "id": "source:construct:NACHA-ACH.Batch",
+        "kind": "source",
+        "label": "Batch",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Batch",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.batchControl",
+        "id": "source:construct:NACHA-ACH.Batch.batchControl",
+        "kind": "source",
+        "label": "batchControl",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batchControl",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.batchHeader",
+        "id": "source:construct:NACHA-ACH.Batch.batchHeader",
+        "kind": "source",
+        "label": "batchHeader",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batchHeader",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.entries",
+        "id": "source:construct:NACHA-ACH.Batch.entries",
+        "kind": "source",
+        "label": "entries",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entries",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl",
+        "id": "source:construct:NACHA-ACH.BatchControl",
+        "kind": "source",
+        "label": "BatchControl",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "BatchControl",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.batchNumber",
+        "id": "source:construct:NACHA-ACH.BatchControl.batchNumber",
+        "kind": "source",
+        "label": "batchNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batchNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.companyIdentification",
+        "id": "source:construct:NACHA-ACH.BatchControl.companyIdentification",
+        "kind": "source",
+        "label": "companyIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.entryAddendaCount",
+        "id": "source:construct:NACHA-ACH.BatchControl.entryAddendaCount",
+        "kind": "source",
+        "label": "entryAddendaCount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryAddendaCount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.entryHash",
+        "id": "source:construct:NACHA-ACH.BatchControl.entryHash",
+        "kind": "source",
+        "label": "entryHash",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryHash",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.messageAuthenticationCode",
+        "id": "source:construct:NACHA-ACH.BatchControl.messageAuthenticationCode",
+        "kind": "source",
+        "label": "messageAuthenticationCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "messageAuthenticationCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.originatingDfiIdentification",
+        "id": "source:construct:NACHA-ACH.BatchControl.originatingDfiIdentification",
+        "kind": "source",
+        "label": "originatingDfiIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "originatingDfiIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.BatchControl.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.reserved",
+        "id": "source:construct:NACHA-ACH.BatchControl.reserved",
+        "kind": "source",
+        "label": "reserved",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reserved",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.serviceClassCode",
+        "id": "source:construct:NACHA-ACH.BatchControl.serviceClassCode",
+        "kind": "source",
+        "label": "serviceClassCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "serviceClassCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+        "id": "source:construct:NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+        "kind": "source",
+        "label": "totalCreditEntryDollarAmount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "totalCreditEntryDollarAmount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+        "id": "source:construct:NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+        "kind": "source",
+        "label": "totalDebitEntryDollarAmount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "totalDebitEntryDollarAmount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader",
+        "id": "source:construct:NACHA-ACH.BatchHeader",
+        "kind": "source",
+        "label": "BatchHeader",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "BatchHeader",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.batchNumber",
+        "id": "source:construct:NACHA-ACH.BatchHeader.batchNumber",
+        "kind": "source",
+        "label": "batchNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batchNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyDescriptiveDate",
+        "id": "source:construct:NACHA-ACH.BatchHeader.companyDescriptiveDate",
+        "kind": "source",
+        "label": "companyDescriptiveDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyDescriptiveDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyDiscretionaryData",
+        "id": "source:construct:NACHA-ACH.BatchHeader.companyDiscretionaryData",
+        "kind": "source",
+        "label": "companyDiscretionaryData",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyDiscretionaryData",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyEntryDescription",
+        "id": "source:construct:NACHA-ACH.BatchHeader.companyEntryDescription",
+        "kind": "source",
+        "label": "companyEntryDescription",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyEntryDescription",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyIdentification",
+        "id": "source:construct:NACHA-ACH.BatchHeader.companyIdentification",
+        "kind": "source",
+        "label": "companyIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyName",
+        "id": "source:construct:NACHA-ACH.BatchHeader.companyName",
+        "kind": "source",
+        "label": "companyName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "companyName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.effectiveEntryDate",
+        "id": "source:construct:NACHA-ACH.BatchHeader.effectiveEntryDate",
+        "kind": "source",
+        "label": "effectiveEntryDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "effectiveEntryDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.originatingDfiIdentification",
+        "id": "source:construct:NACHA-ACH.BatchHeader.originatingDfiIdentification",
+        "kind": "source",
+        "label": "originatingDfiIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "originatingDfiIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.originatorStatusCode",
+        "id": "source:construct:NACHA-ACH.BatchHeader.originatorStatusCode",
+        "kind": "source",
+        "label": "originatorStatusCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "originatorStatusCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.BatchHeader.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.serviceClassCode",
+        "id": "source:construct:NACHA-ACH.BatchHeader.serviceClassCode",
+        "kind": "source",
+        "label": "serviceClassCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "serviceClassCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.settlementDate",
+        "id": "source:construct:NACHA-ACH.BatchHeader.settlementDate",
+        "kind": "source",
+        "label": "settlementDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "settlementDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.standardEntryClassCode",
+        "id": "source:construct:NACHA-ACH.BatchHeader.standardEntryClassCode",
+        "kind": "source",
+        "label": "standardEntryClassCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "standardEntryClassCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail",
+        "id": "source:construct:NACHA-ACH.EntryDetail",
+        "kind": "source",
+        "label": "EntryDetail",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "EntryDetail",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.addenda05",
+        "id": "source:construct:NACHA-ACH.EntryDetail.addenda05",
+        "kind": "source",
+        "label": "addenda05",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "addenda05",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.addendaRecordIndicator",
+        "id": "source:construct:NACHA-ACH.EntryDetail.addendaRecordIndicator",
+        "kind": "source",
+        "label": "addendaRecordIndicator",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "addendaRecordIndicator",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.amount",
+        "id": "source:construct:NACHA-ACH.EntryDetail.amount",
+        "kind": "source",
+        "label": "amount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "amount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.checkDigit",
+        "id": "source:construct:NACHA-ACH.EntryDetail.checkDigit",
+        "kind": "source",
+        "label": "checkDigit",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "checkDigit",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.dfiAccountNumber",
+        "id": "source:construct:NACHA-ACH.EntryDetail.dfiAccountNumber",
+        "kind": "source",
+        "label": "dfiAccountNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "dfiAccountNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.discretionaryData",
+        "id": "source:construct:NACHA-ACH.EntryDetail.discretionaryData",
+        "kind": "source",
+        "label": "discretionaryData",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "discretionaryData",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.individualIdentificationNumber",
+        "id": "source:construct:NACHA-ACH.EntryDetail.individualIdentificationNumber",
+        "kind": "source",
+        "label": "individualIdentificationNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "individualIdentificationNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.individualName",
+        "id": "source:construct:NACHA-ACH.EntryDetail.individualName",
+        "kind": "source",
+        "label": "individualName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "individualName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.receivingDfiIdentification",
+        "id": "source:construct:NACHA-ACH.EntryDetail.receivingDfiIdentification",
+        "kind": "source",
+        "label": "receivingDfiIdentification",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "receivingDfiIdentification",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.EntryDetail.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.traceNumber",
+        "id": "source:construct:NACHA-ACH.EntryDetail.traceNumber",
+        "kind": "source",
+        "label": "traceNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "traceNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.transactionCode",
+        "id": "source:construct:NACHA-ACH.EntryDetail.transactionCode",
+        "kind": "source",
+        "label": "transactionCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "transactionCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl",
+        "id": "source:construct:NACHA-ACH.FileControl",
+        "kind": "source",
+        "label": "FileControl",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "FileControl",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.batchCount",
+        "id": "source:construct:NACHA-ACH.FileControl.batchCount",
+        "kind": "source",
+        "label": "batchCount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "batchCount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.blockCount",
+        "id": "source:construct:NACHA-ACH.FileControl.blockCount",
+        "kind": "source",
+        "label": "blockCount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "blockCount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.entryAddendaCount",
+        "id": "source:construct:NACHA-ACH.FileControl.entryAddendaCount",
+        "kind": "source",
+        "label": "entryAddendaCount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryAddendaCount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.entryHash",
+        "id": "source:construct:NACHA-ACH.FileControl.entryHash",
+        "kind": "source",
+        "label": "entryHash",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "entryHash",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.FileControl.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.reserved",
+        "id": "source:construct:NACHA-ACH.FileControl.reserved",
+        "kind": "source",
+        "label": "reserved",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "reserved",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+        "id": "source:construct:NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+        "kind": "source",
+        "label": "totalCreditEntryDollarAmount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "totalCreditEntryDollarAmount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+        "id": "source:construct:NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+        "kind": "source",
+        "label": "totalDebitEntryDollarAmount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "totalDebitEntryDollarAmount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader",
+        "id": "source:construct:NACHA-ACH.FileHeader",
+        "kind": "source",
+        "label": "FileHeader",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "FileHeader",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.blockingFactor",
+        "id": "source:construct:NACHA-ACH.FileHeader.blockingFactor",
+        "kind": "source",
+        "label": "blockingFactor",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "blockingFactor",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileCreationDate",
+        "id": "source:construct:NACHA-ACH.FileHeader.fileCreationDate",
+        "kind": "source",
+        "label": "fileCreationDate",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "fileCreationDate",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileCreationTime",
+        "id": "source:construct:NACHA-ACH.FileHeader.fileCreationTime",
+        "kind": "source",
+        "label": "fileCreationTime",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "fileCreationTime",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileIdModifier",
+        "id": "source:construct:NACHA-ACH.FileHeader.fileIdModifier",
+        "kind": "source",
+        "label": "fileIdModifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "fileIdModifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.formatCode",
+        "id": "source:construct:NACHA-ACH.FileHeader.formatCode",
+        "kind": "source",
+        "label": "formatCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "formatCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateDestination",
+        "id": "source:construct:NACHA-ACH.FileHeader.immediateDestination",
+        "kind": "source",
+        "label": "immediateDestination",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "immediateDestination",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateDestinationName",
+        "id": "source:construct:NACHA-ACH.FileHeader.immediateDestinationName",
+        "kind": "source",
+        "label": "immediateDestinationName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "immediateDestinationName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateOrigin",
+        "id": "source:construct:NACHA-ACH.FileHeader.immediateOrigin",
+        "kind": "source",
+        "label": "immediateOrigin",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "immediateOrigin",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateOriginName",
+        "id": "source:construct:NACHA-ACH.FileHeader.immediateOriginName",
+        "kind": "source",
+        "label": "immediateOriginName",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "immediateOriginName",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.priorityCode",
+        "id": "source:construct:NACHA-ACH.FileHeader.priorityCode",
+        "kind": "source",
+        "label": "priorityCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "priorityCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.recordSize",
+        "id": "source:construct:NACHA-ACH.FileHeader.recordSize",
+        "kind": "source",
+        "label": "recordSize",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordSize",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.recordTypeCode",
+        "id": "source:construct:NACHA-ACH.FileHeader.recordTypeCode",
+        "kind": "source",
+        "label": "recordTypeCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "recordTypeCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.referenceCode",
+        "id": "source:construct:NACHA-ACH.FileHeader.referenceCode",
+        "kind": "source",
+        "label": "referenceCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "referenceCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile",
+        "id": "target:/components/schemas/NACHA-ACH.AchFile",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.AchFile",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.AchFile",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.batches",
+        "id": "target:/components/schemas/NACHA-ACH.AchFile/properties/batches",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.AchFile/properties/batches",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.AchFile/properties/batches",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.fileControl",
+        "id": "target:/components/schemas/NACHA-ACH.AchFile/properties/fileControl",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.AchFile/properties/fileControl",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.AchFile/properties/fileControl",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.AchFile.fileHeader",
+        "id": "target:/components/schemas/NACHA-ACH.AchFile/properties/fileHeader",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.AchFile/properties/fileHeader",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.AchFile/properties/fileHeader",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.addendaSequenceNumber",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05/properties/addendaSequenceNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaSequenceNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaSequenceNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.addendaTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05/properties/addendaTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05/properties/addendaTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.entryDetailSequenceNumber",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05/properties/entryDetailSequenceNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05/properties/entryDetailSequenceNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05/properties/entryDetailSequenceNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.paymentRelatedInformation",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05/properties/paymentRelatedInformation",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05/properties/paymentRelatedInformation",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05/properties/paymentRelatedInformation",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Addenda05.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.Addenda05/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Addenda05/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Addenda05/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch",
+        "id": "target:/components/schemas/NACHA-ACH.Batch",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Batch",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Batch",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.batchControl",
+        "id": "target:/components/schemas/NACHA-ACH.Batch/properties/batchControl",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Batch/properties/batchControl",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Batch/properties/batchControl",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.batchHeader",
+        "id": "target:/components/schemas/NACHA-ACH.Batch/properties/batchHeader",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Batch/properties/batchHeader",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Batch/properties/batchHeader",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.Batch.entries",
+        "id": "target:/components/schemas/NACHA-ACH.Batch/properties/entries",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.Batch/properties/entries",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.Batch/properties/entries",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.batchNumber",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/batchNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/batchNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/batchNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.companyIdentification",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/companyIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/companyIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/companyIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.entryAddendaCount",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/entryAddendaCount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/entryAddendaCount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/entryAddendaCount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.entryHash",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/entryHash",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/entryHash",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/entryHash",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.messageAuthenticationCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/messageAuthenticationCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/messageAuthenticationCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/messageAuthenticationCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.originatingDfiIdentification",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/originatingDfiIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/originatingDfiIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/originatingDfiIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.reserved",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/reserved",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/reserved",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/reserved",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.serviceClassCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/serviceClassCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/serviceClassCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/serviceClassCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/totalCreditEntryDollarAmount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/totalCreditEntryDollarAmount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/totalCreditEntryDollarAmount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+        "id": "target:/components/schemas/NACHA-ACH.BatchControl/properties/totalDebitEntryDollarAmount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchControl/properties/totalDebitEntryDollarAmount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchControl/properties/totalDebitEntryDollarAmount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.batchNumber",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/batchNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/batchNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/batchNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyDescriptiveDate",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyDescriptiveDate",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDescriptiveDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDescriptiveDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyDiscretionaryData",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyDiscretionaryData",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDiscretionaryData",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyDiscretionaryData",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyEntryDescription",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyEntryDescription",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyEntryDescription",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyEntryDescription",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyIdentification",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.companyName",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/companyName",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/companyName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.effectiveEntryDate",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/effectiveEntryDate",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/effectiveEntryDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/effectiveEntryDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.originatingDfiIdentification",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/originatingDfiIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatingDfiIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatingDfiIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.originatorStatusCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/originatorStatusCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatorStatusCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/originatorStatusCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.serviceClassCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/serviceClassCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/serviceClassCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/serviceClassCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.settlementDate",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/settlementDate",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/settlementDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/settlementDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.BatchHeader.standardEntryClassCode",
+        "id": "target:/components/schemas/NACHA-ACH.BatchHeader/properties/standardEntryClassCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.BatchHeader/properties/standardEntryClassCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.BatchHeader/properties/standardEntryClassCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.addenda05",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/addenda05",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/addenda05",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/addenda05",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.addendaRecordIndicator",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/addendaRecordIndicator",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/addendaRecordIndicator",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/addendaRecordIndicator",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.amount",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/amount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/amount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/amount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.checkDigit",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/checkDigit",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/checkDigit",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/checkDigit",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.dfiAccountNumber",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/dfiAccountNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/dfiAccountNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/dfiAccountNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.discretionaryData",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/discretionaryData",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/discretionaryData",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/discretionaryData",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.individualIdentificationNumber",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/individualIdentificationNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualIdentificationNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualIdentificationNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.individualName",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/individualName",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/individualName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.receivingDfiIdentification",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/receivingDfiIdentification",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/receivingDfiIdentification",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/receivingDfiIdentification",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.traceNumber",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/traceNumber",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/traceNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/traceNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.EntryDetail.transactionCode",
+        "id": "target:/components/schemas/NACHA-ACH.EntryDetail/properties/transactionCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.EntryDetail/properties/transactionCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.EntryDetail/properties/transactionCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.batchCount",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/batchCount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/batchCount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/batchCount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.blockCount",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/blockCount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/blockCount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/blockCount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.entryAddendaCount",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/entryAddendaCount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/entryAddendaCount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/entryAddendaCount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.entryHash",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/entryHash",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/entryHash",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/entryHash",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.reserved",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/reserved",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/reserved",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/reserved",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/totalCreditEntryDollarAmount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/totalCreditEntryDollarAmount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/totalCreditEntryDollarAmount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+        "id": "target:/components/schemas/NACHA-ACH.FileControl/properties/totalDebitEntryDollarAmount",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileControl/properties/totalDebitEntryDollarAmount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileControl/properties/totalDebitEntryDollarAmount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.blockingFactor",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/blockingFactor",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/blockingFactor",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/blockingFactor",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileCreationDate",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationDate",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationDate",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationDate",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileCreationTime",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationTime",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationTime",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/fileCreationTime",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.fileIdModifier",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/fileIdModifier",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/fileIdModifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/fileIdModifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.formatCode",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/formatCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/formatCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/formatCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateDestination",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestination",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestination",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestination",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateDestinationName",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestinationName",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestinationName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateDestinationName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateOrigin",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateOrigin",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOrigin",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOrigin",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.immediateOriginName",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/immediateOriginName",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOriginName",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/immediateOriginName",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.priorityCode",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/priorityCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/priorityCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/priorityCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.recordSize",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/recordSize",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/recordSize",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/recordSize",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.recordTypeCode",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/recordTypeCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/recordTypeCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/recordTypeCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NACHA-ACH.FileHeader.referenceCode",
+        "id": "target:/components/schemas/NACHA-ACH.FileHeader/properties/referenceCode",
+        "kind": "target",
+        "label": "/components/schemas/NACHA-ACH.FileHeader/properties/referenceCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NACHA-ACH.FileHeader/properties/referenceCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 3,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 3,
+      "checklist": 18,
+      "construct": 76,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "nacha",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 87,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "nacha.iat_layouts",
+          "nacha.operating_rules_validation",
+          "nacha.return_reason_semantics"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-nacha-03-composition-ccd-with-addenda-ach",
+      "source_format": "nacha",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 78,
+      "transformed": 0,
+      "unavailable": 3
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 97,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 97,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 175,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 3,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 3,
+      "checklist": 18,
+      "construct": 76,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "nacha",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 87,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "nacha.iat_layouts",
+          "nacha.operating_rules_validation",
+          "nacha.return_reason_semantics"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-nacha-03-composition-ccd-with-addenda-ach",
+      "source_format": "nacha",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 78,
+      "transformed": 0,
+      "unavailable": 3
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 97,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

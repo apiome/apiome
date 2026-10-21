@@ -1,15 +1,15 @@
 {
   "version": "1",
-  "capability_registry_version": "19",
-  "total": 63,
-  "importable": 63,
+  "capability_registry_version": "20",
+  "total": 64,
+  "importable": 64,
   "exportable": 45,
   "round_trip": 45,
-  "import_only": 18,
+  "import_only": 19,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 62,
+  "catalog": 63,
   "toolchain_gated": 3,
   "paradigms": [
     {
@@ -43,8 +43,8 @@
     {
       "id": "data_schema",
       "label": "Data schema",
-      "total": 26,
-      "importable": 26,
+      "total": 27,
+      "importable": 27,
       "exportable": 17
     },
     {

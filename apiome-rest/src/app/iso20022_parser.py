@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
 
@@ -17,6 +17,7 @@ __all__ = [
     "Iso20022ParseError",
     "Iso20022Element",
     "Iso20022Document",
+    "declared_message_id",
     "is_iso20022",
     "parse_iso20022",
 ]
@@ -25,7 +26,20 @@ _ISO20022_NS_RE = re.compile(r"urn:iso:std:iso:20022:tech:xsd:([\w.]+)", re.IGNO
 
 
 class Iso20022ParseError(ValueError):
-    """Raised when ISO 20022 XML cannot be parsed."""
+    """Raised when ISO 20022 XML cannot be parsed.
+
+    Attributes:
+        code: The intake-taxonomy code when the fault has a precise one (``INPUT_TRUNCATED``, and
+            the SEPA rules' codes — FMT-6.6), else ``None`` and the pipeline classifies it.
+    """
+
+    def __init__(self, message: str, *, code: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+#: Expat messages that mean the text stopped before the document closed (FMT-6.6).
+_TRUNCATION_MARKERS = ("no element found", "unclosed token")
 
 
 @dataclass(frozen=True)
@@ -82,6 +96,22 @@ def is_iso20022(content: str) -> bool:
     return bool(namespace and _ISO20022_NS_RE.search(namespace))
 
 
+def declared_message_id(content: str) -> Optional[str]:
+    """Return the message-definition identifier the text's ISO 20022 namespace names, if any.
+
+    A cheap textual read for detection reasons (FMT-6.6); :func:`parse_iso20022` reads the
+    authoritative one from the parsed ``<Document>``.
+
+    Args:
+        content: Candidate text.
+
+    Returns:
+        ``pain.001.001.09``, or ``None`` when no ISO 20022 namespace appears.
+    """
+    match = _ISO20022_NS_RE.search(content or "")
+    return match.group(1) if match else None
+
+
 def _element_text(element: ET.Element) -> Optional[str]:
     if element.text and element.text.strip():
         return element.text.strip()
@@ -121,7 +151,15 @@ def parse_iso20022(content: str, *, source_label: Optional[str] = None) -> Iso20
         xml_root = parse_xml(content, source_label=source_label)
     except SecureXmlError as exc:
         if exc.code == "INPUT_MALFORMED":
-            raise Iso20022ParseError(f"Invalid XML: {exc}") from exc
+            # The text simply stopped — expat ran out of input *and* the last thing written is not
+            # a complete tag — so it is a truncation. A document that ends on a complete tag and
+            # only lacks its closing elements stays a syntax fault.
+            truncated = any(marker in str(exc) for marker in _TRUNCATION_MARKERS) and not (
+                content.rstrip().endswith(">")
+            )
+            raise Iso20022ParseError(
+                f"Invalid XML: {exc}", code="INPUT_TRUNCATED" if truncated else None
+            ) from exc
         raise
 
     if not is_iso20022(content):

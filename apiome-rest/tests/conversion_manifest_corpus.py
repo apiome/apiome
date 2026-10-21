@@ -59,14 +59,22 @@ VOLATILE = "[volatile]"
 PARITY_ENVELOPE_PATH = Path(__file__).resolve().parent / "fixtures" / "conversion_projection_parity.json"
 
 #: Formats whose entries attach their real payload analysis to the conversion.
-NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "tradacoms", "idoc", "swift-mt", "cobolcopybook")
+NATIVE_ANALYSIS_FORMATS = (
+    "edix12",
+    "edifact",
+    "tradacoms",
+    "idoc",
+    "swift-mt",
+    "nacha",
+    "cobolcopybook",
+)
 
 # The representative selection: every distinct construct family the roadmap names, one fixture
 # each, selected by manifest tag (never path). X12: a plain envelope, the multi-group composition,
 # the HIPAA real-world shape, the composite-element fixture. EDIFACT: the default-delimiter envelope
 # and the multi-group, multi-message interchange. IDoc: the XML ORDERS05 and the flat multi-IDoc file.
 # SWIFT MT: the two-sequence MT202 COV and the MT940 statement. TRADACOMS: the invoice file with
-# its VAT and invoice trailer messages.
+# its VAT and invoice trailer messages. NACHA: the CCD batch with addenda.
 # Copybook: ODO, REDEFINES, the
 # binary/stress layout, the unmodelled clauses, the imperfect overlays. Controls: the minimal
 # JSON Schema and GraphQL fixtures, converting through the generic (no native analysis) path.
@@ -82,6 +90,7 @@ _SELECTORS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("swift-mt", ("MT202COV", "two-sequences")),
     ("swift-mt", ("MT940", "statement-lines", "balances")),
     ("tradacoms", ("INVFIL", "INVOIC", "VATTLR")),
+    ("nacha", ("CCD", "addenda", "RMR")),
     ("cobolcopybook", ("occurs",)),
     ("cobolcopybook", ("redefines", "level-88")),
     ("cobolcopybook", ("binary",)),
@@ -105,6 +114,7 @@ SOURCE_VALUE_PROBES: Dict[str, Tuple[str, ...]] = {
     "swift-mt/03-composition-mt202cov.txt": ("PACIFIC IMPORTS INC", "INV-90211"),
     "swift-mt/04-stress-mt940-statement.txt": ("ACME RETAIL BV", "ELECTRICITY AUGUST 2026"),
     "tradacoms/03-typical-invoice-file.edi": ("INV-10042", "WIDGET-001"),
+    "nacha/03-composition-ccd-with-addenda.ach": ("EXAMPLE SUPPLIES BV", "500100200"),
     "graphql/01-simple-user.graphql": ("type Query {",),
 }
 

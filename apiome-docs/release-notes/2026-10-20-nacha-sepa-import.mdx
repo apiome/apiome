@@ -1,0 +1,23 @@
+---
+slug: nacha-sepa-import
+title: NACHA ACH and SEPA payment files
+description: ACH payment batches join the Catalog, and SEPA files route to ISO 20022.
+authors: [apiome]
+---
+
+Apiome now reads [**NACHA ACH**](/bring-in/nacha-sepa-import) payment files and recognises **SEPA**
+`pain.001`, `pain.008` and `pacs.008` files as a profile of ISO 20022.
+
+{/* truncate */}
+
+- **ACH batches as native structure.** A fixed-width ACH file imports as file → batch → entry →
+  addenda, each record cut into its fields by its record type code. The **Format details** tab shows
+  every record with its exact position.
+- **Declared versus observed.** Every total a batch control or file control declares — entry count,
+  entry hash, debit and credit totals, batch and block counts — is recomputed and shown beside the
+  declaration. A file that disagrees with itself is imported, and each disagreement is a warning.
+- **SEPA routes to ISO 20022.** A SEPA payment message goes to the ISO 20022 importer, which names
+  the message id in the detection reason and records the SEPA profile in the import's provenance.
+  A payment block with no transactions, or an unrecognised message version, is refused.
+- **Honest about boundaries.** Neither the NACHA Operating Rules nor the EPC rulebooks are consulted,
+  and payment values follow the value-visibility policy.

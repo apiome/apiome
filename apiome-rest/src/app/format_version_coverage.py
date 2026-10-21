@@ -529,6 +529,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "nacha": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="NACHA ACH record format (94-character records, record size 094)",
+                format_key="nacha",
+                support=VersionSupport.UNGATED,
+                note="An ACH file names no format version beyond its record size (`094`), blocking "
+                "factor (`10`) and format code (`1`); one domestic record layout is read for every "
+                "file. IAT layouts and the Operating Rules' yearly changes are not branched on.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "tradacoms": VersionCoverage(
         reads=[
             FormatVersion(
@@ -754,8 +768,16 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 support=VersionSupport.UNGATED,
                 note="The message-definition identifier the document declares (`pain.001.001.09`) "
                 "is recorded, but the reader does not branch on it and no message-definition "
-                "schema is applied.",
-            )
+                "schema is applied — except for the SEPA payment families in the next row.",
+            ),
+            FormatVersion(
+                version="SEPA pain.001 (to .001.12), pain.008 (to .001.11), pacs.008 (to .001.13)",
+                format_key="iso20022",
+                support=VersionSupport.FULL,
+                note="FMT-6.6: these families are recognised as the SEPA profile and gated on the "
+                "message-definition version; a version above the recognised ceiling "
+                "(`pain.001.001.99`) is refused as unsupported. The EPC rulebooks are not consulted.",
+            ),
         ],
         writes=[
             FormatVersion(

@@ -1,0 +1,1706 @@
+{
+  "adapter": "nacha",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "nacha_batches": [
+        {
+          "addendaCount": 0,
+          "batchNumber": "0000001",
+          "entryCount": 1,
+          "serviceClassCode": "200",
+          "standardEntryClassCode": "PPD"
+        }
+      ],
+      "nacha_control_totals": [
+        {
+          "consistent": true,
+          "declared": 1,
+          "field": "entryAddendaCount",
+          "observed": 1,
+          "record": "batchControl",
+          "scope": "batch 0000001"
+        },
+        {
+          "consistent": true,
+          "declared": 9100001,
+          "field": "entryHash",
+          "observed": 9100001,
+          "record": "batchControl",
+          "scope": "batch 0000001"
+        },
+        {
+          "consistent": true,
+          "declared": 0,
+          "field": "totalDebitEntryDollarAmount",
+          "observed": 0,
+          "record": "batchControl",
+          "scope": "batch 0000001"
+        },
+        {
+          "consistent": true,
+          "declared": 15000,
+          "field": "totalCreditEntryDollarAmount",
+          "observed": 15000,
+          "record": "batchControl",
+          "scope": "batch 0000001"
+        },
+        {
+          "consistent": true,
+          "declared": 1,
+          "field": "batchCount",
+          "observed": 1,
+          "record": "fileControl",
+          "scope": "the file"
+        },
+        {
+          "consistent": true,
+          "declared": 1,
+          "field": "blockCount",
+          "observed": 1,
+          "record": "fileControl",
+          "scope": "the file"
+        },
+        {
+          "consistent": true,
+          "declared": 1,
+          "field": "entryAddendaCount",
+          "observed": 1,
+          "record": "fileControl",
+          "scope": "the file"
+        },
+        {
+          "consistent": true,
+          "declared": 9100001,
+          "field": "entryHash",
+          "observed": 9100001,
+          "record": "fileControl",
+          "scope": "the file"
+        },
+        {
+          "consistent": true,
+          "declared": 0,
+          "field": "totalDebitEntryDollarAmount",
+          "observed": 0,
+          "record": "fileControl",
+          "scope": "the file"
+        },
+        {
+          "consistent": true,
+          "declared": 15000,
+          "field": "totalCreditEntryDollarAmount",
+          "observed": 15000,
+          "record": "fileControl",
+          "scope": "the file"
+        }
+      ],
+      "nacha_file": {
+        "addendaCount": 0,
+        "batchCount": 1,
+        "blockingFactor": "10",
+        "entryCount": 1,
+        "fileCreationDate": "260819",
+        "fileIdModifier": "A",
+        "paddingRecords": 5,
+        "recordSize": "094"
+      },
+      "nacha_sec_codes": [
+        "PPD"
+      ]
+    },
+    "format": "nacha",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "NACHA ACH file (PPD)",
+      "namespace": "NACHA-ACH"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "NACHA ACH file (PPD)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A NACHA ACH file",
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "structure"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batches in file order",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.AchFile.batches",
+            "name": "batches",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "NACHA-ACH.Batch",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File control record (9)",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.AchFile.fileControl",
+            "name": "fileControl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NACHA-ACH.FileControl",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File header record (1)",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.AchFile.fileHeader",
+            "name": "fileHeader",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NACHA-ACH.FileHeader",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.AchFile",
+        "key_type": null,
+        "kind": "record",
+        "name": "AchFile",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "One ACH batch",
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "structure"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batch control record (8)",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.Batch.batchControl",
+            "name": "batchControl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NACHA-ACH.BatchControl",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batch header record (5)",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.Batch.batchHeader",
+            "name": "batchHeader",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NACHA-ACH.BatchHeader",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Entry detail records (6)",
+            "extras": {
+              "nacha_kind": "structure"
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.Batch.entries",
+            "name": "entries",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "NACHA-ACH.EntryDetail",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.Batch",
+        "key_type": null,
+        "kind": "record",
+        "name": "Batch",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batch number",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 7,
+              "nacha_position": [
+                88,
+                94
+              ]
+            },
+            "field_number": 11,
+            "key": "NACHA-ACH.BatchControl.batchNumber",
+            "name": "batchNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company identification",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                45,
+                54
+              ]
+            },
+            "field_number": 7,
+            "key": "NACHA-ACH.BatchControl.companyIdentification",
+            "name": "companyIdentification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Entry/addenda count",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 6,
+              "nacha_position": [
+                5,
+                10
+              ]
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.BatchControl.entryAddendaCount",
+            "name": "entryAddendaCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Entry hash",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                11,
+                20
+              ]
+            },
+            "field_number": 4,
+            "key": "NACHA-ACH.BatchControl.entryHash",
+            "name": "entryHash",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Message authentication code",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 19,
+              "nacha_position": [
+                55,
+                73
+              ]
+            },
+            "field_number": 8,
+            "key": "NACHA-ACH.BatchControl.messageAuthenticationCode",
+            "name": "messageAuthenticationCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Originating DFI identification",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 8,
+              "nacha_position": [
+                80,
+                87
+              ]
+            },
+            "field_number": 10,
+            "key": "NACHA-ACH.BatchControl.originatingDfiIdentification",
+            "name": "originatingDfiIdentification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record type code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                1,
+                1
+              ]
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.BatchControl.recordTypeCode",
+            "name": "recordTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Reserved",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 6,
+              "nacha_position": [
+                74,
+                79
+              ]
+            },
+            "field_number": 9,
+            "key": "NACHA-ACH.BatchControl.reserved",
+            "name": "reserved",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Service class code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 3,
+              "nacha_position": [
+                2,
+                4
+              ]
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.BatchControl.serviceClassCode",
+            "name": "serviceClassCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Total credit entry dollar amount",
+            "extras": {
+              "nacha_field_kind": "amount",
+              "nacha_length": 12,
+              "nacha_note": "Cents",
+              "nacha_position": [
+                33,
+                44
+              ]
+            },
+            "field_number": 6,
+            "key": "NACHA-ACH.BatchControl.totalCreditEntryDollarAmount",
+            "name": "totalCreditEntryDollarAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Total debit entry dollar amount",
+            "extras": {
+              "nacha_field_kind": "amount",
+              "nacha_length": 12,
+              "nacha_note": "Cents",
+              "nacha_position": [
+                21,
+                32
+              ]
+            },
+            "field_number": 5,
+            "key": "NACHA-ACH.BatchControl.totalDebitEntryDollarAmount",
+            "name": "totalDebitEntryDollarAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.BatchControl",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchControl",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batch number",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 7,
+              "nacha_position": [
+                88,
+                94
+              ]
+            },
+            "field_number": 13,
+            "key": "NACHA-ACH.BatchHeader.batchNumber",
+            "name": "batchNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company descriptive date",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 6,
+              "nacha_position": [
+                64,
+                69
+              ]
+            },
+            "field_number": 8,
+            "key": "NACHA-ACH.BatchHeader.companyDescriptiveDate",
+            "name": "companyDescriptiveDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company discretionary data",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 20,
+              "nacha_position": [
+                21,
+                40
+              ]
+            },
+            "field_number": 4,
+            "key": "NACHA-ACH.BatchHeader.companyDiscretionaryData",
+            "name": "companyDiscretionaryData",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company entry description",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                54,
+                63
+              ]
+            },
+            "field_number": 7,
+            "key": "NACHA-ACH.BatchHeader.companyEntryDescription",
+            "name": "companyEntryDescription",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company identification",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                41,
+                50
+              ]
+            },
+            "field_number": 5,
+            "key": "NACHA-ACH.BatchHeader.companyIdentification",
+            "name": "companyIdentification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Company name",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 16,
+              "nacha_position": [
+                5,
+                20
+              ]
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.BatchHeader.companyName",
+            "name": "companyName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Effective entry date",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 6,
+              "nacha_note": "YYMMDD",
+              "nacha_position": [
+                70,
+                75
+              ]
+            },
+            "field_number": 9,
+            "key": "NACHA-ACH.BatchHeader.effectiveEntryDate",
+            "name": "effectiveEntryDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Originating DFI identification",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 8,
+              "nacha_position": [
+                80,
+                87
+              ]
+            },
+            "field_number": 12,
+            "key": "NACHA-ACH.BatchHeader.originatingDfiIdentification",
+            "name": "originatingDfiIdentification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Originator status code",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                79,
+                79
+              ]
+            },
+            "field_number": 11,
+            "key": "NACHA-ACH.BatchHeader.originatorStatusCode",
+            "name": "originatorStatusCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record type code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                1,
+                1
+              ]
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.BatchHeader.recordTypeCode",
+            "name": "recordTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Service class code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 3,
+              "nacha_note": "200 mixed, 220 credits, 225 debits",
+              "nacha_position": [
+                2,
+                4
+              ]
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.BatchHeader.serviceClassCode",
+            "name": "serviceClassCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Settlement date",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 3,
+              "nacha_note": "Julian day; inserted by the ACH operator",
+              "nacha_position": [
+                76,
+                78
+              ]
+            },
+            "field_number": 10,
+            "key": "NACHA-ACH.BatchHeader.settlementDate",
+            "name": "settlementDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Standard entry class code",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 3,
+              "nacha_position": [
+                51,
+                53
+              ]
+            },
+            "field_number": 6,
+            "key": "NACHA-ACH.BatchHeader.standardEntryClassCode",
+            "name": "standardEntryClassCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.BatchHeader",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchHeader",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Addenda record indicator",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                79,
+                79
+              ]
+            },
+            "field_number": 10,
+            "key": "NACHA-ACH.EntryDetail.addendaRecordIndicator",
+            "name": "addendaRecordIndicator",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Amount",
+            "extras": {
+              "nacha_field_kind": "amount",
+              "nacha_length": 10,
+              "nacha_note": "Cents, no decimal point",
+              "nacha_position": [
+                30,
+                39
+              ]
+            },
+            "field_number": 6,
+            "key": "NACHA-ACH.EntryDetail.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Check digit",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                12,
+                12
+              ]
+            },
+            "field_number": 4,
+            "key": "NACHA-ACH.EntryDetail.checkDigit",
+            "name": "checkDigit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "DFI account number",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 17,
+              "nacha_position": [
+                13,
+                29
+              ]
+            },
+            "field_number": 5,
+            "key": "NACHA-ACH.EntryDetail.dfiAccountNumber",
+            "name": "dfiAccountNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Discretionary data",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 2,
+              "nacha_position": [
+                77,
+                78
+              ]
+            },
+            "field_number": 9,
+            "key": "NACHA-ACH.EntryDetail.discretionaryData",
+            "name": "discretionaryData",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Individual identification number",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 15,
+              "nacha_note": "CCD: identification number",
+              "nacha_position": [
+                40,
+                54
+              ]
+            },
+            "field_number": 7,
+            "key": "NACHA-ACH.EntryDetail.individualIdentificationNumber",
+            "name": "individualIdentificationNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Individual name",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 22,
+              "nacha_note": "CCD: receiving company name",
+              "nacha_position": [
+                55,
+                76
+              ]
+            },
+            "field_number": 8,
+            "key": "NACHA-ACH.EntryDetail.individualName",
+            "name": "individualName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Receiving DFI identification",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 8,
+              "nacha_position": [
+                4,
+                11
+              ]
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.EntryDetail.receivingDfiIdentification",
+            "name": "receivingDfiIdentification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record type code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                1,
+                1
+              ]
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.EntryDetail.recordTypeCode",
+            "name": "recordTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Trace number",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 15,
+              "nacha_position": [
+                80,
+                94
+              ]
+            },
+            "field_number": 11,
+            "key": "NACHA-ACH.EntryDetail.traceNumber",
+            "name": "traceNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Transaction code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 2,
+              "nacha_position": [
+                2,
+                3
+              ]
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.EntryDetail.transactionCode",
+            "name": "transactionCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.EntryDetail",
+        "key_type": null,
+        "kind": "record",
+        "name": "EntryDetail",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Batch count",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 6,
+              "nacha_position": [
+                2,
+                7
+              ]
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.FileControl.batchCount",
+            "name": "batchCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Block count",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 6,
+              "nacha_position": [
+                8,
+                13
+              ]
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.FileControl.blockCount",
+            "name": "blockCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Entry/addenda count",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 8,
+              "nacha_position": [
+                14,
+                21
+              ]
+            },
+            "field_number": 4,
+            "key": "NACHA-ACH.FileControl.entryAddendaCount",
+            "name": "entryAddendaCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Entry hash",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                22,
+                31
+              ]
+            },
+            "field_number": 5,
+            "key": "NACHA-ACH.FileControl.entryHash",
+            "name": "entryHash",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record type code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                1,
+                1
+              ]
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.FileControl.recordTypeCode",
+            "name": "recordTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Reserved",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 39,
+              "nacha_position": [
+                56,
+                94
+              ]
+            },
+            "field_number": 8,
+            "key": "NACHA-ACH.FileControl.reserved",
+            "name": "reserved",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Total credit entry dollar amount",
+            "extras": {
+              "nacha_field_kind": "amount",
+              "nacha_length": 12,
+              "nacha_note": "Cents",
+              "nacha_position": [
+                44,
+                55
+              ]
+            },
+            "field_number": 7,
+            "key": "NACHA-ACH.FileControl.totalCreditEntryDollarAmount",
+            "name": "totalCreditEntryDollarAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Total debit entry dollar amount",
+            "extras": {
+              "nacha_field_kind": "amount",
+              "nacha_length": 12,
+              "nacha_note": "Cents",
+              "nacha_position": [
+                32,
+                43
+              ]
+            },
+            "field_number": 6,
+            "key": "NACHA-ACH.FileControl.totalDebitEntryDollarAmount",
+            "name": "totalDebitEntryDollarAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.FileControl",
+        "key_type": null,
+        "kind": "record",
+        "name": "FileControl",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "nacha_kind": "record"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Blocking factor",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 2,
+              "nacha_position": [
+                38,
+                39
+              ]
+            },
+            "field_number": 9,
+            "key": "NACHA-ACH.FileHeader.blockingFactor",
+            "name": "blockingFactor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File creation date",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 6,
+              "nacha_note": "YYMMDD",
+              "nacha_position": [
+                24,
+                29
+              ]
+            },
+            "field_number": 5,
+            "key": "NACHA-ACH.FileHeader.fileCreationDate",
+            "name": "fileCreationDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File creation time",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 4,
+              "nacha_note": "HHMM",
+              "nacha_position": [
+                30,
+                33
+              ]
+            },
+            "field_number": 6,
+            "key": "NACHA-ACH.FileHeader.fileCreationTime",
+            "name": "fileCreationTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File ID modifier",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                34,
+                34
+              ]
+            },
+            "field_number": 7,
+            "key": "NACHA-ACH.FileHeader.fileIdModifier",
+            "name": "fileIdModifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Format code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                40,
+                40
+              ]
+            },
+            "field_number": 10,
+            "key": "NACHA-ACH.FileHeader.formatCode",
+            "name": "formatCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Immediate destination",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 10,
+              "nacha_note": "Receiving point routing number",
+              "nacha_position": [
+                4,
+                13
+              ]
+            },
+            "field_number": 3,
+            "key": "NACHA-ACH.FileHeader.immediateDestination",
+            "name": "immediateDestination",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Immediate destination name",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 23,
+              "nacha_position": [
+                41,
+                63
+              ]
+            },
+            "field_number": 11,
+            "key": "NACHA-ACH.FileHeader.immediateDestinationName",
+            "name": "immediateDestinationName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Immediate origin",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 10,
+              "nacha_position": [
+                14,
+                23
+              ]
+            },
+            "field_number": 4,
+            "key": "NACHA-ACH.FileHeader.immediateOrigin",
+            "name": "immediateOrigin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Immediate origin name",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 23,
+              "nacha_position": [
+                64,
+                86
+              ]
+            },
+            "field_number": 12,
+            "key": "NACHA-ACH.FileHeader.immediateOriginName",
+            "name": "immediateOriginName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Priority code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 2,
+              "nacha_position": [
+                2,
+                3
+              ]
+            },
+            "field_number": 2,
+            "key": "NACHA-ACH.FileHeader.priorityCode",
+            "name": "priorityCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record size",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 3,
+              "nacha_position": [
+                35,
+                37
+              ]
+            },
+            "field_number": 8,
+            "key": "NACHA-ACH.FileHeader.recordSize",
+            "name": "recordSize",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Record type code",
+            "extras": {
+              "nacha_field_kind": "numeric",
+              "nacha_length": 1,
+              "nacha_position": [
+                1,
+                1
+              ]
+            },
+            "field_number": 1,
+            "key": "NACHA-ACH.FileHeader.recordTypeCode",
+            "name": "recordTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Reference code",
+            "extras": {
+              "nacha_field_kind": "alphanumeric",
+              "nacha_length": 8,
+              "nacha_position": [
+                87,
+                94
+              ]
+            },
+            "field_number": 13,
+            "key": "NACHA-ACH.FileHeader.referenceCode",
+            "name": "referenceCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NACHA-ACH.FileHeader",
+        "key_type": null,
+        "kind": "record",
+        "name": "FileHeader",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "nacha/01-minimal-ppd-credit.ach",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "nacha"
+  },
+  "fingerprint": "sha256:9d82121575c3c2ef0ad135fc8bccde3f8669d6401b12b47202e349235e47afc2",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "385baaf36f2f51b5a8f8592bb75f2c978e20e9e2048aab5accdf6fa6569f6605",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

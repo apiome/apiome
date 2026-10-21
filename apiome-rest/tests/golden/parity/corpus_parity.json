@@ -1607,37 +1607,45 @@
       "label": "ISO 20022",
       "paradigm": "data_schema",
       "corpus_formats": [
-        "iso20022"
+        "iso20022",
+        "sepa"
       ],
       "corpus_directories": [
-        "iso20022"
+        "iso20022",
+        "sepa"
       ],
       "fixtures": {
-        "valid": 6,
-        "negative": 5,
+        "valid": 14,
+        "negative": 11,
         "adversarial": 1,
         "scale": 0,
-        "total": 12
+        "total": 26
       },
       "rungs": [
         "composition",
         "minimal",
+        "multi-file",
         "real-world",
         "stress",
         "typical"
       ],
-      "rung_waivers": [
-        "multi-file"
-      ],
-      "goldens": 6,
+      "rung_waivers": [],
+      "goldens": 13,
       "golden_directories": [
-        "iso20022"
+        "iso20022",
+        "sepa"
       ],
       "emit_key": "iso20022",
       "roundtrip_row": true,
       "roundtrip_cells": [
         {
           "source_format": "iso20022",
+          "emit_key": "iso20022",
+          "status": "pass",
+          "has_reason": false
+        },
+        {
+          "source_format": "sepa",
           "emit_key": "iso20022",
           "status": "pass",
           "has_reason": false
@@ -2042,6 +2050,49 @@
       "roundtrip_row": true,
       "roundtrip_cells": [],
       "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "nacha",
+      "label": "NACHA ACH",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "nacha"
+      ],
+      "corpus_directories": [
+        "nacha"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "nacha"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
       "requirements": {
         "valid-examples": "satisfied",
         "negative-examples": "satisfied",
@@ -3145,7 +3196,6 @@
     "jsonld",
     "lwm2m",
     "matter",
-    "nacha",
     "natural-ddm",
     "ncpdp",
     "nginx",
@@ -3156,7 +3206,6 @@
     "pydantic",
     "ros2",
     "schematron",
-    "sepa",
     "shacl",
     "soapui",
     "sparkplug",

@@ -156,7 +156,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edifact', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect'].sort(),
+      ['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edifact', 'edix12', 'fix', 'flatbuffers', 'fhir', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'jsonschema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect'].sort(),
     );
   });
 

@@ -4,6 +4,18 @@
     "channels": [],
     "description": null,
     "extras": {
+      "format_profile": {
+        "engine": "iso20022",
+        "evidence": [
+          "The `<Document>` namespace names message definition pain.001.001.09 (Customer credit transfer initiation), which carries the SEPA Credit Transfer (SCT) scheme."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "sepa",
+        "label": "SEPA",
+        "message_family": "pain.001",
+        "message_id": "pain.001.001.09",
+        "scheme": "SEPA Credit Transfer (SCT)"
+      },
       "iso20022_business_element": "CstmrCdtTrfInitn",
       "iso20022_message_id": "pain.001.001.09",
       "iso20022_namespace": "urn:iso:std:iso:20022:tech:xsd:pain.001.001.09",
@@ -1308,7 +1320,7 @@
     "confidence": 0.98,
     "format": "iso20022"
   },
-  "fingerprint": "sha256:24bce16a71d4c73bfa92d1cc3480befd4a4c6c5105c01bf0f0b459ca08dff0f6",
+  "fingerprint": "sha256:10e1cb0e1925e1a16d28167f60ee7ff1a10d88ff81bb36d1368a0237be88d935",
   "lint": {
     "findings": 55,
     "grade": "F",

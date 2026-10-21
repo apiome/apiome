@@ -19,7 +19,9 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .edi_dialect_profiles import PROFILE_EXTRAS_KEY
 from .iso20022_parser import Iso20022Document, Iso20022Element, element_template
+from .iso20022_sepa import sepa_profile_extras
 from .normalizer import Keys, Normalizer, normalize_ordering
 
 __all__ = ["Iso20022Normalizer"]
@@ -138,6 +140,16 @@ class Iso20022Normalizer(Normalizer, register=True):
 
         business_child = source.root.children[0]
         title = f"{business_child.tag} ({source.message_id})"
+        extras: Dict[str, Any] = {
+            "iso20022_message_id": source.message_id,
+            "iso20022_namespace": source.namespace,
+            "iso20022_business_element": business_child.tag,
+            "iso20022_tree": element_template(source.root),
+        }
+        # FMT-6.6: a SEPA payment message records its profile (and message id) for provenance.
+        sepa = sepa_profile_extras(source.message_id)
+        if sepa is not None:
+            extras[PROFILE_EXTRAS_KEY] = sepa
         api = CanonicalApi(
             paradigm=self.paradigm,
             format=self.format,
@@ -145,11 +157,6 @@ class Iso20022Normalizer(Normalizer, register=True):
             title=title,
             types=types,
             raw={"iso20022": source.raw} if include_raw else None,
-            extras={
-                "iso20022_message_id": source.message_id,
-                "iso20022_namespace": source.namespace,
-                "iso20022_business_element": business_child.tag,
-                "iso20022_tree": element_template(source.root),
-            },
+            extras=extras,
         )
         return normalize_ordering(api)
