@@ -55,6 +55,7 @@ from .format_capability_registry import (
     CapabilityProvenance,
     ConversionSupport,
     FormatAvailability,
+    ImplementationGuideStatement,
     NativeHierarchy,
     ProjectionCoverage,
     capability_for,
@@ -353,6 +354,11 @@ class FormatCapabilitySummary(BaseModel):
         description="Construct keys the analyzer knowingly does not model, sorted — the format's "
         "unsupported grammar. Their absence from an analysis means nothing about the source.",
     )
+    implementation_guide: Optional[ImplementationGuideStatement] = Field(
+        default=None,
+        description="For an EDI or vertical-messaging format (FMT-6.10): the syntax read and the "
+        "implementation guides not consulted. Null for every other format.",
+    )
     notes: List[str] = Field(
         default_factory=list,
         description="Reviewed prose about this format's boundaries, in reading order. Empty on a "
@@ -551,6 +557,7 @@ def _capability_summary(format_key: str) -> FormatCapabilitySummary:
         conversion=capability.conversion.support,
         version_coverage=capability.version_coverage,
         unsupported_constructs=list(capability.unsupported_constructs),
+        implementation_guide=capability.implementation_guide,
         notes=list(capability.notes),
         registry_version=capability.registry_version,
         review_date=capability.review_date,

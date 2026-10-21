@@ -136,6 +136,8 @@ class FormatRow:
     provenance: CapabilityProvenance
     boundary_notes: Tuple[str, ...]
     version_coverage: VersionCoverage
+    #: FMT-6.10: the reviewed implementation-guide statement of an EDI-family format, else ``None``.
+    implementation_guide_statement: Optional[str] = None
 
     @property
     def direction(self) -> str:
@@ -189,6 +191,11 @@ def _row_from_matrix(entry: FormatMatrixRow) -> FormatRow:
         provenance=entry.capability.provenance,
         boundary_notes=tuple(entry.capability.notes),
         version_coverage=entry.capability.version_coverage,
+        implementation_guide_statement=(
+            entry.capability.implementation_guide.statement
+            if entry.capability.implementation_guide is not None
+            else None
+        ),
     )
 
 
@@ -485,6 +492,8 @@ def _boundaries_section(rows: Sequence[FormatRow]) -> List[str]:
     for row in reviewed:
         lines.append(f"### {row.label} {{#{row.anchor}}}")
         lines.append("")
+        if row.implementation_guide_statement:
+            lines.append(f"- **Implementation guides:** {row.implementation_guide_statement}")
         for note in row.boundary_notes:
             lines.append(f"- {' '.join(note.split())}")
         lines.append("")

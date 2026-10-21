@@ -106,7 +106,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | DTD | `dtd` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `dtd` | `.dtd`, `.ent`, `.mod`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-dtd) | Ready |
 | EDI X12 | `edix12` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `edix12`, `x12`, `edi` | `.edi`, `.x12`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Format-native (reviewed)](#format-edix12) | Ready |
 | FIX | `fix` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `fix`, `fixprotocol` | `.fix`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
-| FIX Orchestra | `fix-orchestra` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `fix-orchestra`, `orchestra`, `fixr` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| FIX Orchestra | `fix-orchestra` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `fix-orchestra`, `orchestra`, `fixr` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-fix-orchestra) | Ready |
 | FlatBuffers | `flatbuffers` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `flatbuffers`, `fbs` | `.fbs`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | HL7 v2 | `hl7v2` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `hl7v2`, `hl7`, `hl7v2x` | `.hl7`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | HL7 v3 / CDA | `hl7v3` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `hl7v3`, `cda`, `c-cda`, `hl7-cda` | `.xml`, `.cda`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-hl7v3) | Ready |
@@ -475,6 +475,7 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### DICOM {#format-dicom}
 
+- **Implementation guides:** Only the DICOM Part 10 and DICOM JSON attribute structure is read. No implementation guide is consulted — not IOD module requirements (PS3.3), SR templates (PS3.16) or the sending device's conformance statement — so a document that imports is structurally readable, not claimed to be conformant. The SOP Class UID is recorded as the sender's claim, not checked.
 - Pixel data is never read, never stored and never analysed. Apiome imports DICOM's metadata layer — the file meta information, the attribute structure and Structured Report content trees — and steps over every Pixel Data, Float Pixel Data, Double Float Pixel Data and Overlay Data value by its declared length without decoding it. Each one is recorded as present and skipped, with its VR and length, so its absence from the model is stated, not implied.
 - Attributes PS3.15 Annex E lists for de-identification, and every private attribute, are marked ``dicom_patient_identifying`` on their field; the mark describes the attribute, since no value is in the model at all.
 - Read: Part 10 files in implicit or explicit VR little endian, explicit VR big endian, deflated explicit VR little endian and every encapsulated transfer syntax (only its pixel data is compressed, and that is never read); the DICOM JSON model (PS3.18 Annex F), one dataset or an array; and archives of DICOM JSON documents. A Part 10 file inside an archive is skipped and stated, because archive members are read as text.
@@ -490,10 +491,18 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### EDI X12 {#format-edix12}
 
+- **Implementation guides:** Only the ASC X12 envelope and segment syntax (ISA/GS/ST) is read. No implementation guide is consulted — not the 4010 and 5010 implementation guides (TR3s) or trading-partner companion guides — so a document that imports is structurally readable, not claimed to be conformant. An ST03 implementation convention reference is recorded as the sender's claim, not checked.
 - An element position the source wrote and left empty is recorded as present with a zero length; a position the source never wrote is not recorded at all. The two are different facts about the payload and are never rendered as one.
 - HL loops are described as the segments they are, not as the hierarchy they encode. Where the interchange declares a repetition separator (ISA11 at 00501 and later, never at 00401) a repeated element carries its occurrences and states how many.
 - Control totals declared by the SE, GE and IEA trailers are recorded beside the counts actually observed, so an interchange that disagrees with itself can be seen to. The trailer segments themselves are not tree nodes, and TA1 acknowledgements are removed by the parser before the analysis runs.
 - No 4010/5010 implementation-guide conformance is evaluated — a structurally valid interchange is not claimed to be a conformant one, and an ST03 implementation convention reference is recorded as the sender's claim rather than as a checked fact.
+
+### FIX Orchestra {#format-fix-orchestra}
+
+- **Implementation guides:** Only the FIX Orchestra repository structure (datatypes, code sets, fields, components, groups, messages) is read. No implementation guide is consulted — not the FIX Latest base repository, the FIX session-layer specification or a counterparty's rules-of-engagement documents — so a document that imports is structurally readable, not claimed to be conformant. The FIX version the repository declares is recorded as the sender's claim, not checked.
+- The repository is read as declared: a message, field or code it defines is taken as given, and nothing is compared with the base FIX specification it extends or restricts.
+- Rule expressions (``when``, ``assign``) in the Orchestra Score DSL are recorded verbatim and never evaluated, so a conditional field's condition is stated, not applied.
+- An ``xi:include`` is resolved only against the other files of the same upload — never fetched from a URL or read from disk; a single uploaded file that uses one is refused.
 
 ### gRPC / Protobuf {#format-grpc}
 
@@ -504,6 +513,7 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### HL7 v3 / CDA {#format-hl7v3}
 
+- **Implementation guides:** Only the CDA R2 document structure (POCD_HD000040) is read. No implementation guide is consulted — not C-CDA R2.1, any other implementation guide's templates, the CDA R2 schema or terminology bindings — so a document that imports is structurally readable, not claimed to be conformant. Each templateId is recorded as the sender's claim, not checked.
 - Template ids are recorded as asserted conformance claims (``cda_template_claims``, each ``validated: false``). Asserted by the document, not validated: a templateId records which implementation-guide template the document claims to conform to. Apiome reads the claim; it does not check the document against the template's constraints, and a recognised template name is not a conformance verdict.
 - A template id the importer does not recognise imports like any other; a recognised one gains its C-CDA R2.1 name and nothing more.
 - CDA R2 documents are read (``typeId`` POCD_HD000040). The header must carry id, code, effectiveTime, recordTarget, author, custodian and a body component, and every narrative ``reference`` (``#anchor``) must resolve to an ``ID`` in the document; nothing else is checked against the CDA schema or any implementation guide, and codes are recorded as written, never looked up in a terminology.
@@ -519,12 +529,14 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### NACHA ACH {#format-nacha}
 
+- **Implementation guides:** Only the NACHA ACH record format (94-character records, types 1/5/6/7/8/9) is read. No implementation guide is consulted — not the NACHA Operating Rules' SEC-code requirements, IAT layouts or ODFI or bank file specifications — so a document that imports is structurally readable, not claimed to be conformant. A batch's Standard Entry Class code is recorded as the sender's claim, not checked.
 - Only the NACHA ACH record format (94-character records, types 1/5/6/7/8/9) is read. No implementation guide (the NACHA Operating Rules' SEC-code requirements, IAT layouts, ODFI or bank file specs…) is consulted, so a structurally valid interchange is not claimed to be a conformant one, and a message version or association code is recorded as the sender's claim rather than as a checked fact.
 - Every total a batch control (`8`) or file control (`9`) record declares — entry and addenda count, entry hash, total debit, total credit, batch count, block count — is recomputed and recorded beside the declaration, and each disagreement is stated as a warning: read, not rejected.
 - A record that is not 94 characters is refused as malformed (or as truncated when the file stops inside it); a batch with no entries and an addenda record with no entry before it are refused as semantically invalid. SEPA payment files are ISO 20022 XML and route to the ISO 20022 adapter, never here.
 
 ### NCPDP SCRIPT / Telecom {#format-ncpdp}
 
+- **Implementation guides:** Only the NCPDP SCRIPT element structure and Telecommunication D.0 segment/field syntax is read. No implementation guide is consulted — not the SCRIPT Implementation Guide, the Telecommunication D.0 Implementation Guide and data dictionary or payer sheets — so a document that imports is structurally readable, not claimed to be conformant. A SCRIPT message's version and release is recorded as the sender's claim, not checked.
 - Only the NCPDP SCRIPT element structure and Telecommunication D.0 segment/field syntax is read. No implementation guide (the SCRIPT Implementation Guide, the Telecommunication D.0 Implementation Guide and data dictionary, payer sheets…) is consulted, so a structurally valid interchange is not claimed to be a conformant one, and a message version or association code is recorded as the sender's claim rather than as a checked fact.
 - Versions read: SCRIPT messages of any version — 10.x `version`/`release` or the 2017071-and-later `TransactionVersion` is recorded per message, not branched on; Telecommunication D.0 request transmissions, whose header version (`D0`) is checked — any other version is refused. Telecom response transmissions are not read.
 - Field ids are labelled with their data element where a short table knows them (`302-C2 Cardholder ID`); the D.0 data dictionary and payer sheets are not consulted, so a field's presence is recorded, never its requiredness. The header's transaction count is compared with the transactions observed for B1/B2/B3 and a disagreement is stated as a warning: read, not rejected.
@@ -546,6 +558,7 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### SAP IDoc {#format-idoc}
 
+- **Implementation guides:** Only the SAP IDoc control and data record layout (EDI_DC40/EDI_DD40) and IDoc XML is read. No implementation guide is consulted — not the basic type's WE30 structure, standard SAP segment definitions (unless a WE60 export is supplied) or qualifier code lists — so a document that imports is structurally readable, not claimed to be conformant. The control record's IDoc type and message type is recorded as the sender's claim, not checked.
 - A flat segment's 1000-character SDATA has no field boundaries of its own. With a segment definition (a WE60 export) supplied beside the IDoc it is cut at the declared offsets; without one it is recorded as a single opaque SDATA value. Standard SAP segment layouts are not bundled.
 - Field offsets and lengths are computed under stated assumptions — one character per byte, the release 4.0+ EDI_DC40/EDI_DD40 layouts, trailing blanks as padding — and every flat record says so.
 - A declared HLEVEL that disagrees with the depth the parent segment numbers give is recorded beside it; the hierarchy follows the numbers.
@@ -562,12 +575,14 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### SWIFT MT {#format-swift-mt}
 
+- **Implementation guides:** Only the SWIFT FIN block structure and the stated MT103, MT202, MT940 and MT942 field catalogue is read. No implementation guide is consulted — not SWIFT network-validated rules, SWIFT usage rules, the MX usage guidelines or market practice guides — so a document that imports is structurally readable, not claimed to be conformant. A block 3 validation flag (field 119: STP, COV, REMIT) is recorded as the sender's claim, not checked.
 - Where an MX counterpart is documented — MT103 → pacs.008, MT202 → pacs.009, MT202 COV → pacs.009 (COV), MT940 → camt.053, MT942 → camt.052 — it is recorded as a note, never as a conversion. This is a documented correspondence, recorded as a note. Apiome has not translated this message, has not checked it against the MX usage guidelines, and does not claim that a translation would be valid: field mappings, truncation and character-set rules, and data requirements of the MX message are outside what was read.
 - MT103, MT202 (including COV), MT940 and MT942 are read; other message types are refused. Fields are read by a small stated field catalogue; content that does not match its documented shape is kept as lines and flagged, never refused.
 - SWIFT network-validated rules and usage rules are not evaluated, BICs are not looked up, and CHK/MAC trailers are recorded but not verified.
 
 ### TRADACOMS {#format-tradacoms}
 
+- **Implementation guides:** Only the TRADACOMS syntax (STX/MHD/MTR/END envelope over EDIFACT-style segments) is read. No implementation guide is consulted — not the TRADACOMS manual's message specifications or trading-partner guides — so a document that imports is structurally readable, not claimed to be conformant. An MHD message type and version is recorded as the sender's claim, not checked.
 - Only the TRADACOMS syntax (STX/MHD/MTR/END envelope over EDIFACT-style segments) is read. No implementation guide (the TRADACOMS manual's message specifications, trading-partner guides…) is consulted, so a structurally valid interchange is not claimed to be a conformant one, and a message version or association code is recorded as the sender's claim rather than as a checked fact.
 - TRADACOMS profile (GS1 UK (formerly ANA)). Recognised by an `STX=` transmission header — never `UNB` — and read as its own structure: transmission → file (header, detail and trailer messages) → `MHD` … `MTR` message. The TRADACOMS manual's message specifications are not consulted: which segments a message may carry, their order and their code values are recorded as written, not checked. Files are delimited by their header message (the one carrying `TYP`); the file's transaction code is recorded as the sender's claim.
 - The segment counts declared by each `MTR` and the message count declared by `END` are recorded beside what was observed, and every disagreement is stated as a warning — read, not rejected. `MHD` message references must count 1, 2, 3 … through a transmission; a document whose references skip is refused as semantically invalid.
@@ -575,6 +590,7 @@ What these formats knowingly do **not** model, from the source-format capability
 
 ### UN/EDIFACT {#format-edifact}
 
+- **Implementation guides:** Only the UN/EDIFACT syntax (ISO 9735) is read. No implementation guide is consulted — not the D.96A and D.01B message directories, EANCOM or ODETTE/VDA guides — so a document that imports is structurally readable, not claimed to be conformant. A UNH message version, release and association code is recorded as the sender's claim, not checked.
 - Only the UN/EDIFACT syntax (ISO 9735) is read. No implementation guide (D.96A, D.01B, EANCOM, ODETTE…) is consulted, so a structurally valid interchange is not claimed to be a conformant one, and a message version or association code is recorded as the sender's claim rather than as a checked fact.
 - Segment groups are described as the flat segments they are, not as the nesting a directory would give them, and code values (qualifiers, units, party roles) are recorded as written rather than looked up.
 - Control counts and control references declared by the UNT, UNE and UNZ trailers are recorded beside what was actually observed, and every disagreement is stated as a warning, so an interchange that disagrees with itself can be seen to — it is read, not rejected.

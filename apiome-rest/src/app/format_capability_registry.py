@@ -107,6 +107,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "FORMAT_KEY_PATTERN",
+    "IMPLEMENTATION_GUIDE_FAMILY",
     "REGISTRY_VERSION",
     "REVIEW_DATE",
     "AbsenceCategory",
@@ -122,6 +123,7 @@ __all__ = [
     "FormatCapability",
     "FormatCapabilitySnapshot",
     "FormatVersion",
+    "ImplementationGuideStatement",
     "NativeHierarchy",
     "ProjectionCoverage",
     "REASON_ABSENCE_CATEGORIES",
@@ -136,6 +138,7 @@ __all__ = [
     "explain_analysis_absence",
     "explain_construct",
     "format_capabilities",
+    "implementation_guide",
     "is_valid_format_key",
     "registry_snapshot",
     "render_absence",
@@ -150,11 +153,11 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "22"
+REGISTRY_VERSION = "23"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
-REVIEW_DATE = "2026-10-20"
+REVIEW_DATE = "2026-10-21"
 
 #: Accepted shape of a format key. The registry resolves an *arbitrary caller-supplied* string
 #: (a stored ``source_format`` whose adapter may have been retired), so the key is constrained
@@ -401,6 +404,82 @@ class CanonicalProjectionSupport(BaseModel):
     )
 
 
+class ImplementationGuideStatement(BaseModel):
+    """What a format's reader validates against, and the guides it does not consult (FMT-6.10).
+
+    Every EDI and vertical-messaging format reads a **syntax** — segments, records, elements — and
+    nothing above it: no implementation guide, operating rule, template or companion guide. A green
+    import therefore means *structurally readable*, never *conformant*, and this statement says so
+    in one vocabulary for the whole family (:data:`IMPLEMENTATION_GUIDE_FAMILY`). The Format
+    details tab renders :attr:`statement` as a banner on every record of these formats.
+
+    Attributes:
+        consulted: Always ``False``: apiome consults no implementation guide for any format.
+        standard_read: The syntax that *is* read and checked.
+        guides_not_consulted: The guides, rules and specifications that are not applied, by name.
+        claims_recorded: Conformance or version claims the document makes about itself, recorded
+            as the sender's claim and never checked.
+        statement: The reviewed sentence rendered to the reader.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    consulted: bool = Field(
+        default=False,
+        description="Whether any implementation guide is consulted. Always false.",
+    )
+    standard_read: str = Field(description="The syntax that is read and checked.")
+    guides_not_consulted: List[str] = Field(
+        description="The implementation guides, operating rules and specifications not applied."
+    )
+    claims_recorded: List[str] = Field(
+        default_factory=list,
+        description="Claims the document makes about itself, recorded as the sender's claim.",
+    )
+    statement: str = Field(description="The reviewed sentence the Format details tab renders.")
+
+
+def _join(items: List[str], conjunction: str = "and") -> str:
+    """``a``, ``a and b``, ``a, b and c`` (or ``or`` in place of ``and``)."""
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + f" {conjunction} " + items[-1]
+
+
+def implementation_guide(
+    standard: str, guides: List[str], claims: Optional[List[str]] = None
+) -> ImplementationGuideStatement:
+    """Build a format's implementation-guide statement in the family's shared vocabulary.
+
+    Args:
+        standard: The syntax that is read (``UN/EDIFACT syntax (ISO 9735)``).
+        guides: The guides not consulted, by name (at least one).
+        claims: Claims the document makes about itself that are recorded, not checked.
+
+    Returns:
+        The :class:`ImplementationGuideStatement`, its sentence rendered.
+
+    Raises:
+        ValueError: When no guide is named — a statement that names nothing says nothing.
+    """
+    if not guides:
+        raise ValueError("an implementation-guide statement must name the guides not consulted")
+    claims = list(claims or [])
+    statement = (
+        f"Only the {standard} is read. No implementation guide is consulted — not "
+        f"{_join(guides, 'or')} — so a document that imports is structurally readable, not claimed to "
+        "be conformant."
+    )
+    if claims:
+        verb = "is" if len(claims) == 1 else "are"
+        recorded = _join(claims)
+        statement += f" {recorded[0].upper()}{recorded[1:]} {verb} recorded as the sender's claim, not checked."
+    return ImplementationGuideStatement(
+        standard_read=standard,
+        guides_not_consulted=list(guides),
+        claims_recorded=claims,
+        statement=statement,
+    )
+
+
 class ConversionSupportEntry(BaseModel):
     """Whether this format participates in the conversion graph, and by which route.
 
@@ -501,6 +580,11 @@ class FormatCapability(BaseModel):
         "produces by default, and where a version is reached through a projection or a downgrade "
         "(FMT-3.8). A claim about *versions*: how completely the format's constructs are modelled "
         "is what ``unsupported_constructs`` and ``canonical_projection`` above answer.",
+    )
+    implementation_guide: Optional[ImplementationGuideStatement] = Field(
+        default=None,
+        description="For an EDI or vertical-messaging format (FMT-6.10): the syntax read and the "
+        "implementation guides not consulted. Null for every other format.",
     )
     notes: List[str] = Field(
         default_factory=list,
@@ -816,7 +900,26 @@ class _Seed(BaseModel):
     source_location: SourceLocationSupport
     value_visibility: ValueVisibilitySupport
     canonical_projection: CanonicalProjectionSupport
+    implementation_guide: Optional[ImplementationGuideStatement] = None
     notes: List[str] = Field(default_factory=list)
+
+
+#: The EDI and vertical-messaging formats (FMT-EPIC-6, plus EDI X12 before it) whose readers
+#: check a syntax and nothing above it. Each must ship a reviewed seed carrying an
+#: :class:`ImplementationGuideStatement` (FMT-6.10, #5454) — ``test_format_capability_registry``
+#: fails for a member without one — and the Format details tab renders that statement as a banner.
+IMPLEMENTATION_GUIDE_FAMILY: Tuple[str, ...] = (
+    "edix12",
+    "edifact",
+    "tradacoms",
+    "idoc",
+    "swift-mt",
+    "hl7v3",
+    "nacha",
+    "dicom",
+    "ncpdp",
+    "fix-orchestra",
+)
 
 
 # EDI X12 and COBOL copybook are seeded explicitly because they are the two formats whose
@@ -945,6 +1048,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "explicitly, naming the set the conversion was derived from."
             ),
         ),
+        implementation_guide=implementation_guide(
+            "ASC X12 envelope and segment syntax (ISA/GS/ST)",
+            ["the 4010 and 5010 implementation guides (TR3s)", "trading-partner companion guides"],
+            ["an ST03 implementation convention reference"],
+        ),
         notes=[
             "An element position the source wrote and left empty is recorded as present with a "
             "zero length; a position the source never wrote is not recorded at all. The two are "
@@ -1015,6 +1123,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "interchange carrying more than one says so explicitly, naming the message the "
                 "conversion was derived from."
             ),
+        ),
+        implementation_guide=implementation_guide(
+            "UN/EDIFACT syntax (ISO 9735)",
+            ["the D.96A and D.01B message directories", "EANCOM", "ODETTE/VDA guides"],
+            ["a UNH message version, release and association code"],
         ),
         notes=[
             EDIFACT_IMPLEMENTATION_GUIDE_STATEMENT,
@@ -1095,6 +1208,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 + DICOM_VALUE_STATEMENT
             ),
         ),
+        implementation_guide=implementation_guide(
+            "DICOM Part 10 and DICOM JSON attribute structure",
+            ["IOD module requirements (PS3.3)", "SR templates (PS3.16)", "the sending device's conformance statement"],
+            ["the SOP Class UID"],
+        ),
         notes=[
             PIXEL_DATA_BOUNDARY_STATEMENT,
             "Attributes PS3.15 Annex E lists for de-identification, and every private attribute, are "
@@ -1154,6 +1272,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "and every control total, declared versus observed, are recorded beside the model."
             ),
         ),
+        implementation_guide=implementation_guide(
+            "NACHA ACH record format (94-character records, types 1/5/6/7/8/9)",
+            ["the NACHA Operating Rules' SEC-code requirements", "IAT layouts", "ODFI or bank file specifications"],
+            ["a batch's Standard Entry Class code"],
+        ),
         notes=[
             NACHA_OPERATING_RULES_STATEMENT,
             "Every total a batch control (`8`) or file control (`9`) record declares — entry and "
@@ -1210,6 +1333,15 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "message's or transmission's transaction type, the version claimed and the declared "
                 "versus observed transaction count are recorded beside the model."
             ),
+        ),
+        implementation_guide=implementation_guide(
+            "NCPDP SCRIPT element structure and Telecommunication D.0 segment/field syntax",
+            [
+                "the SCRIPT Implementation Guide",
+                "the Telecommunication D.0 Implementation Guide and data dictionary",
+                "payer sheets",
+            ],
+            ["a SCRIPT message's version and release"],
         ),
         notes=[
             NCPDP_IMPLEMENTATION_GUIDE_STATEMENT,
@@ -1276,6 +1408,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "explicitly, naming the message the conversion was derived from."
             ),
         ),
+        implementation_guide=implementation_guide(
+            "TRADACOMS syntax (STX/MHD/MTR/END envelope over EDIFACT-style segments)",
+            ["the TRADACOMS manual's message specifications", "trading-partner guides"],
+            ["an MHD message type and version"],
+        ),
         notes=[
             TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT,
             profile_statement(TRADACOMS),
@@ -1332,6 +1469,15 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "flat file and an XML document produce the same model when both are read with "
                 "the same segment definitions."
             ),
+        ),
+        implementation_guide=implementation_guide(
+            "SAP IDoc control and data record layout (EDI_DC40/EDI_DD40) and IDoc XML",
+            [
+                "the basic type's WE30 structure",
+                "standard SAP segment definitions (unless a WE60 export is supplied)",
+                "qualifier code lists",
+            ],
+            ["the control record's IDoc type and message type"],
         ),
         notes=[
             "A flat segment's 1000-character SDATA has no field boundaries of its own. With a "
@@ -1391,6 +1537,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "recorded beside the model as structure, and further messages in the file are in "
                 "the analysis only."
             ),
+        ),
+        implementation_guide=implementation_guide(
+            "SWIFT FIN block structure and the stated MT103, MT202, MT940 and MT942 field catalogue",
+            ["SWIFT network-validated rules", "SWIFT usage rules", "the MX usage guidelines", "market practice guides"],
+            ["a block 3 validation flag (field 119: STP, COV, REMIT)"],
         ),
         notes=[
             "Where an MX counterpart is documented — MT103 → pacs.008, MT202 → pacs.009, MT202 COV → "
@@ -1454,6 +1605,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "holds) is recorded beside the model in ``cda_sections``."
             ),
         ),
+        implementation_guide=implementation_guide(
+            "CDA R2 document structure (POCD_HD000040)",
+            ["C-CDA R2.1", "any other implementation guide's templates", "the CDA R2 schema", "terminology bindings"],
+            ["each templateId"],
+        ),
         notes=[
             "Template ids are recorded as asserted conformance claims (``cda_template_claims``, "
             "each ``validated: false``). " + TEMPLATE_CLAIM_STATEMENT,
@@ -1467,6 +1623,72 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "An HL7 v3 transmission wrapper (for example ``MCCI_IN000002UV01``) is read as the root "
             "of an archive: its payload reference names the member holding the CDA document, and "
             "the wrapper is recorded in ``cda_transmission``. A wrapper uploaded alone is refused.",
+        ],
+    ),
+    # FMT-6.9 (#5453) / FMT-6.10 (#5454): FIX Orchestra, seeded so the panel says the repository is
+    # read as declared — the specification itself, never checked against a base repository or the
+    # rules of engagement it may restate — and what presence becomes on the canonical model.
+    "fix-orchestra": _Seed(
+        # The payload analysis is still the format-blind walk, so the first three fields restate
+        # what derivation produces. The reviewed judgements are the projection, the guide
+        # statement and the notes.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.PATH_ONLY,
+            note=(
+                "Elements locate by structural path and sibling ordinal only "
+                "(``repository/messages/message[2]/structure``). The hardened XML reader exposes "
+                "no positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "A repository is a specification, not trade data: its leaf values are names, tags, "
+                "code values and rule expressions. They are still governed by the value-visibility "
+                "policy — the default keeps only presence and length."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "fix-orchestra.annotations",
+                "fix-orchestra.unused_fields",
+            ],
+            note=(
+                "Each message (each scenario of it) is a record type with its msgType, flow and "
+                "responses; code sets are enums; components are records; groups are lists of "
+                "records with their numInGroup counter recorded. Presence maps to optionality, and "
+                "conditional, forbidden, ignored and constant refs carry a declared constraint — "
+                "no field is dropped for its presence. Actors, flows, state machines and declared "
+                "datatypes are recorded beside the model; a field no message, component or group "
+                "references is counted, not typed, and documentation beyond a field's own text is "
+                "not kept."
+            ),
+        ),
+        implementation_guide=implementation_guide(
+            "FIX Orchestra repository structure (datatypes, code sets, fields, components, groups, messages)",
+            [
+                "the FIX Latest base repository",
+                "the FIX session-layer specification",
+                "a counterparty's rules-of-engagement documents",
+            ],
+            ["the FIX version the repository declares"],
+        ),
+        notes=[
+            "The repository is read as declared: a message, field or code it defines is taken as "
+            "given, and nothing is compared with the base FIX specification it extends or restricts.",
+            "Rule expressions (``when``, ``assign``) in the Orchestra Score DSL are recorded "
+            "verbatim and never evaluated, so a conditional field's condition is stated, not "
+            "applied.",
+            "An ``xi:include`` is resolved only against the other files of the same upload — never "
+            "fetched from a URL or read from disk; a single uploaded file that uses one is refused.",
         ],
     ),
     "relaxng": _Seed(
@@ -2581,6 +2803,7 @@ def _derive_capability(source: "ImportSource") -> FormatCapability:
         source_location = seed.source_location
         value_visibility = seed.value_visibility
         canonical_projection = seed.canonical_projection
+        guide_statement = seed.implementation_guide
         notes = list(seed.notes)
     else:
         native = source.analyzer_key != GENERIC_ANALYZER_KEY
@@ -2611,6 +2834,7 @@ def _derive_capability(source: "ImportSource") -> FormatCapability:
                 "the registry makes no claim about what normalization keeps or drops."
             ),
         )
+        guide_statement = None
         notes = [
             "This entry is derived from the adapter's own declarations rather than reviewed, so "
             "it states only what the adapter states.",
@@ -2644,6 +2868,7 @@ def _derive_capability(source: "ImportSource") -> FormatCapability:
         # "which versions?" on its own. An adapter with no declaration resolves to the undeclared
         # coverage instead of an invented one.
         version_coverage=version_coverage_for(descriptor.key),
+        implementation_guide=guide_statement,
         notes=notes,
         registry_version=REGISTRY_VERSION,
         review_date=REVIEW_DATE,

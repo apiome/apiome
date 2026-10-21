@@ -1020,6 +1020,17 @@ export const REGISTRY_SNAPSHOT: FormatCapabilitySnapshot = {
         declared_formats: ['edi', 'x12'],
         note: 'Reaches the canonical model through edix12.',
       },
+      implementation_guide: {
+        consulted: false,
+        standard_read: 'ASC X12 envelope and segment syntax (ISA/GS/ST)',
+        guides_not_consulted: [
+          'the 4010 and 5010 implementation guides (TR3s)',
+          'trading-partner companion guides',
+        ],
+        claims_recorded: ['an ST03 implementation convention reference'],
+        statement:
+          'Only the ASC X12 envelope and segment syntax (ISA/GS/ST) is read. No implementation guide is consulted — not the 4010 and 5010 implementation guides (TR3s) or trading-partner companion guides — so a document that imports is structurally readable, not claimed to be conformant. An ST03 implementation convention reference is recorded as the sender’s claim, not checked.',
+      },
       notes: [],
       registry_version: '1',
       review_date: '2026-07-28',

@@ -165,6 +165,23 @@ export interface ConversionSupportEntry {
   note: string;
 }
 
+/**
+ * What an EDI or vertical-messaging format's reader checks, and the implementation guides it does
+ * not consult (mirrors Python `ImplementationGuideStatement`, FMT-6.10). `consulted` is always
+ * `false`: a green import of these formats means *structurally readable*, never *conformant*.
+ */
+export interface ImplementationGuideStatement {
+  consulted: boolean;
+  /** The syntax that is read and checked. */
+  standard_read: string;
+  /** The implementation guides, operating rules and specifications not applied. */
+  guides_not_consulted: string[];
+  /** Claims the document makes about itself, recorded as the sender's claim and never checked. */
+  claims_recorded: string[];
+  /** The reviewed sentence the Format details tab renders. */
+  statement: string;
+}
+
 /** The versioned capability entry for one source format (mirrors Python `FormatCapability`). */
 export interface FormatCapability {
   format: string;
@@ -186,6 +203,8 @@ export interface FormatCapability {
   limits: Record<string, number>;
   canonical_projection: CanonicalProjectionSupport;
   conversion: ConversionSupportEntry;
+  /** FMT-6.10: set for an EDI or vertical-messaging format, null (or absent) for every other. */
+  implementation_guide?: ImplementationGuideStatement | null;
   notes: string[];
   registry_version: string;
   review_date: string;
@@ -330,6 +349,27 @@ export function capabilityForFormat(
 }
 
 /** A single problem found while validating a {@link FormatCapabilitySnapshot}. */
+/**
+ * The implementation-guide statement to render for an entry, or `null` when there is none worth
+ * rendering (FMT-6.10).
+ *
+ * Only a *reviewed* entry's statement is rendered, and only one that says what it should: no guide
+ * was consulted and at least one is named. A statement claiming a guide *was* consulted is not a
+ * statement this registry makes, so it is refused rather than shown.
+ *
+ * @param capability - The resolved entry, or `null` when the registry has none.
+ * @returns The statement, or `null`.
+ */
+export function implementationGuideFor(
+  capability: FormatCapability | null | undefined,
+): ImplementationGuideStatement | null {
+  const guide = capability?.implementation_guide;
+  if (!capability || capability.provenance !== 'reviewed' || !guide) return null;
+  if (guide.consulted !== false || !guide.statement?.trim()) return null;
+  if (!Array.isArray(guide.guides_not_consulted) || guide.guides_not_consulted.length === 0) return null;
+  return guide;
+}
+
 export interface RegistryContractIssue {
   /** Where the issue was found (e.g. `"absences[3].category"`). */
   path: string;

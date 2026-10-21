@@ -97,6 +97,7 @@ import { metricNow, trackCatalogAnalysisMetric } from './catalogAnalysisMetrics'
 import { CatalogCopybookInspectorPanel } from './CatalogCopybookInspectorPanel';
 import { CatalogX12InspectorPanel } from './CatalogX12InspectorPanel';
 import { FormatCapabilityPanel } from './FormatCapabilityPanel';
+import { ImplementationGuideBanner } from './ImplementationGuideBanner';
 import { useFormatCapabilities } from './useFormatCapabilities';
 import {
   capabilityForFormat,
@@ -832,6 +833,11 @@ export function CatalogFormatDetailPanel({
       >
         {presentation.statement}
       </p>
+
+      {/* FMT-6.10: for an EDI or vertical-messaging format, say plainly that a readable document is not
+          a conformant one — the syntax read, the guides not consulted, the claims recorded. Renders
+          nothing for any other format, or while the registry has not loaded. */}
+      <ImplementationGuideBanner capability={capability} className="mt-3" />
 
       {/* Metrics — a text alternative to the tree: the shape of the structure without walking it. */}
       <dl

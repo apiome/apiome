@@ -119,6 +119,43 @@ record is stored `partial` / `bounds_exceeded` with an exact dropped-node count.
 says it plainly: the missing nodes are *absent from the record, not from your source*.
 A bounded record can never claim to be `available`.
 
+## Implementation guides: what is not checked
+
+For the EDI and vertical-messaging formats, an import that succeeds means the document was
+**structurally readable** — its envelope, segments, records or elements parsed. It does **not**
+mean the document conforms to an implementation guide. Apiome reads each format's syntax and
+nothing above it: no implementation guide, operating rule, template or trading-partner guide is
+consulted.
+
+So that a green import is never read as a compliance verdict, the **Format details** tab shows a
+**No implementation guide was consulted** banner under the status badges for every format in the
+family. It names:
+
+- **What is read** — the syntax Apiome actually checks.
+- **Not consulted** — the guides and rules that are not applied, by name.
+- **Recorded as the sender's claim** — what the document says about itself (an X12 `ST03`
+  reference, a CDA `templateId`, a NACHA SEC code…), kept as written and never checked.
+
+The [catalog item page](./catalog.mdx#an-items-page) shows the banner on an X12 item's **Format details**
+tab.
+
+The banner reads from each format's hand-reviewed entry in the capability registry
+(`implementation_guide` on `GET /v1/import/format-capabilities/{format_key}`), so the tab, the
+[supported formats](./supported-formats.md#format-boundaries) page and the API say the same thing.
+
+| Format | What is read | Not consulted | Recorded as the sender's claim |
+| --- | --- | --- | --- |
+| EDI X12 (`edix12`) | ASC X12 envelope and segment syntax (ISA/GS/ST) | the 4010 and 5010 implementation guides (TR3s); trading-partner companion guides | an ST03 implementation convention reference |
+| UN/EDIFACT (`edifact`) | UN/EDIFACT syntax (ISO 9735) | the D.96A and D.01B message directories; EANCOM; ODETTE/VDA guides | a UNH message version, release and association code |
+| TRADACOMS (`tradacoms`) | TRADACOMS syntax (STX/MHD/MTR/END envelope over EDIFACT-style segments) | the TRADACOMS manual's message specifications; trading-partner guides | an MHD message type and version |
+| SAP IDoc (`idoc`) | SAP IDoc control and data record layout (EDI_DC40/EDI_DD40) and IDoc XML | the basic type's WE30 structure; standard SAP segment definitions (unless a WE60 export is supplied); qualifier code lists | the control record's IDoc type and message type |
+| SWIFT MT (`swift-mt`) | SWIFT FIN block structure and the stated MT103, MT202, MT940 and MT942 field catalogue | SWIFT network-validated rules; SWIFT usage rules; the MX usage guidelines; market practice guides | a block 3 validation flag (field 119: STP, COV, REMIT) |
+| HL7 v3 / CDA (`hl7v3`) | CDA R2 document structure (POCD_HD000040) | C-CDA R2.1; any other implementation guide's templates; the CDA R2 schema; terminology bindings | each templateId |
+| NACHA ACH (`nacha`) | NACHA ACH record format (94-character records, types 1/5/6/7/8/9) | the NACHA Operating Rules' SEC-code requirements; IAT layouts; ODFI or bank file specifications | a batch's Standard Entry Class code |
+| DICOM (`dicom`) | DICOM Part 10 and DICOM JSON attribute structure | IOD module requirements (PS3.3); SR templates (PS3.16); the sending device's conformance statement | the SOP Class UID |
+| NCPDP SCRIPT / Telecom (`ncpdp`) | NCPDP SCRIPT element structure and Telecommunication D.0 segment/field syntax | the SCRIPT Implementation Guide; the Telecommunication D.0 Implementation Guide and data dictionary; payer sheets | a SCRIPT message's version and release |
+| FIX Orchestra (`fix-orchestra`) | FIX Orchestra repository structure (datatypes, code sets, fields, components, groups, messages) | the FIX Latest base repository; the FIX session-layer specification; a counterparty's rules-of-engagement documents | the FIX version the repository declares |
+
 ## The X12 inspector
 
 For EDI X12 sources the tab renders the native hierarchy — **interchange → functional
@@ -340,6 +377,31 @@ the transactions observed), `ncpdp.transaction_not_recognized` (a SCRIPT `Body` 
 element outside the recognised transactions) and `ncpdp.segment_not_named` (a segment id outside
 `AM01`–`AM16`). All are informational, so the record stays **available**.
 
+## The HL7 v3 / CDA analysis
+
+For CDA documents ([how to import one](./hl7v3-cda-import.md)) the tab renders the format-blind
+walk: one row per element and attribute, nested as the document nests them, located by element
+path (`ClinicalDocument/component/structuredBody/component[2]/section`). The analyzer stamp is
+`generic@1.0.0`, and the rows name containers and leaves rather than CDA's own vocabulary — the
+header → body → section → entry hierarchy is in the item's types instead.
+
+Each `templateId` is a conformance **claim** the document makes about itself. It is recorded as
+asserted (`validated: false`) and never checked against the template's constraints; the banner
+above says so. Leaf values — names, identifiers, observations — follow the value-visibility policy.
+
+## The FIX Orchestra analysis
+
+For FIX Orchestra repositories ([how to import one](./fix-orchestra-import.md)) the tab also
+renders the format-blind walk (`generic@1.0.0`): one row per element and attribute of the
+repository, located by element path (`repository/messages/message[2]/structure`). Messages, code
+sets, components, groups and their presence rules are read into the item's types, not into
+format-specific rows here.
+
+The repository is read **as declared**. Nothing is compared with the FIX Latest base repository it
+extends or restricts, and a rule's `when` or `assign` expression is recorded verbatim, never
+evaluated. Its leaf values are specification text — names, tags, code values — and still follow
+the value-visibility policy.
+
 ## The COBOL copybook inspector
 
 For copybook sources the tab renders the record layout — **record → group → field →
@@ -381,8 +443,9 @@ boundary statement for the item's format: its structure/source-location/value fa
 the constructs it **models** ("if one of these is absent from an analysis, the source
 did not contain it") versus **Not modelled (parsing limits)** ("their absence says
 nothing about the source, which may well contain them"), its numeric budgets, and its
-reviewed boundary notes. X12 and COBOL copybook entries are hand-reviewed; other
-formats derive their entry from their adapter.
+reviewed boundary notes. The entries for X12, EDIFACT, TRADACOMS, IDoc, SWIFT MT, HL7 v3,
+NACHA, DICOM, NCPDP, FIX Orchestra, COBOL copybook and a few schema formats are hand-reviewed and
+dated; other formats derive their entry from their adapter.
 
 When a detail is missing, the panel names one of eight causes rather than letting you
 guess:
@@ -426,7 +489,8 @@ one. `valueVisibility` can only narrow what the record stored.
 
 - **UI:** import the X12 or copybook sample from the import wizard, open the item,
   select **Format details**, and confirm the status badge, the analyzer stamp, and — for
-  X12 — the conformance note that no implementation guide was consulted.
+  X12 or any other format in the [implementation-guide family](#implementation-guides-what-is-not-checked)
+  — the **No implementation guide was consulted** banner.
 - **REST:** `GET …/analysis` and check `status`, `metrics.nodeCount`, and
   `redaction.valueVisibility` match what the tab shows.
 
