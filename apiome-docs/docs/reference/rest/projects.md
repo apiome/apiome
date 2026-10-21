@@ -1,6 +1,6 @@
 ---
 title: "Projects"
-description: "REST endpoints tagged projects: 18 operations."
+description: "REST endpoints tagged projects: 19 operations."
 sidebar_position: 61
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.280.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.281.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `projects` · 18 operations
+Tag: `projects` · 19 operations
 
 ## `GET /v1/projects/domains` {#list-project-domain-categories-global-v1-projects-domains-get}
 
@@ -259,6 +259,42 @@ Operation id: `clear_recently_viewed_projects_v1_projects__tenant_slug__recently
 | Status | Description | Body |
 | --- | --- | --- |
 | 204 | Successful response for clear recently viewed projects. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/projects/{tenant_slug}/time-spent` {#get-time-spent-v1-projects-tenant-slug-time-spent-get}
+
+**Get Time Spent**
+
+The caller's active time per project in this tenant over the last ``days`` days.
+
+Time is counted while a project's page is open, visible and in use in the app. Only the
+caller's own time is returned; projects are listed most time first (up to 50), deleted ones
+left out. ``totalSeconds`` covers every project in the window.
+
+Args:
+    tenant_slug: The tenant slug
+    days: The window in UTC days, counting today
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The window, the total and the per-project breakdown
+
+Operation id: `get_time_spent_v1_projects__tenant_slug__time_spent_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `days` | query | integer | no | The window in UTC days, counting today (1–90, default 7). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get time spent. | `application/json` [`ProjectTimeSpentResponse`](#schema-projecttimespentresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/projects/{tenant_slug}/{project_id}` {#get-project-v1-projects-tenant-slug-project-id-get}
@@ -741,6 +777,16 @@ ProjectSchema schema.
 | `creator_email` | string or null | no | Creator Email. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
+
+### `ProjectTimeSpentResponse` {#schema-projecttimespentresponse}
+
+Envelope for ``GET /v1/projects/{tenant_slug}/time-spent`` (#544).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `days` | integer | yes | The window: today and the days before it, in UTC. |
+| `totalSeconds` | integer | no | The caller's active seconds across every project in the window. |
+| `projects` | array of `ProjectTimeSpent` | no | Projects. |
 
 ### `ProjectUpdateRequest` {#schema-projectupdaterequest}
 

@@ -19,7 +19,7 @@
  * reader most often wants, the first-run checklist as the page's one honey card, the six stats,
  * and then a two-column body whose *both* columns are full — Pinned projects (#513), "Pick up
  * where you left off", Recently viewed (#510) and Recent activity on the left, Quick actions /
- * Needs attention / Publishing pulse on the right.
+ * Needs attention / Publishing pulse / Time spent (#544) on the right.
  *
  * Nothing here is a new data source. The stats and the activity list are the same two calls,
  * unchanged; everything added is assembled by `lib/db/dashboard-home.ts` out of columns other
@@ -56,6 +56,7 @@ import { PublishingPulse } from '@/app/components/ade/dashboard/home/PublishingP
 import { QuickActions } from '@/app/components/ade/dashboard/home/QuickActions';
 import { RecentActivity } from '@/app/components/ade/dashboard/home/RecentActivity';
 import { RecentlyViewed } from '@/app/components/ade/dashboard/home/RecentlyViewed';
+import { TimeSpent } from '@/app/components/ade/dashboard/home/TimeSpent';
 import {
   ACTIVITY_LIMIT,
   EMPTY_STATS,
@@ -215,6 +216,7 @@ const Dashboard = () => {
             <QuickActions hasTenant={hasTenant} />
             <NeedsAttention items={home.attention} loading={isLoading} />
             <PublishingPulse weeks={home.pulse} loading={isLoading} />
+            <TimeSpent timeSpent={home.timeSpent} loading={isLoading} />
           </aside>
         </div>
       </PageBody>

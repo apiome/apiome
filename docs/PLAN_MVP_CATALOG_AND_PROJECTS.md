@@ -240,7 +240,7 @@ Favourites, time tracking, heatmaps, archaeology.
 - [x] [#510](https://github.com/apiome/apiome/issues/510) Recently viewed projects
 - [x] [#513](https://github.com/apiome/apiome/issues/513) Pin favorite projects to the dashboard
 - [x] [#542](https://github.com/apiome/apiome/issues/542) Add favorite projects / quick access list
-- [ ] [#544](https://github.com/apiome/apiome/issues/544) Add time spent per project breakdown
+- [x] [#544](https://github.com/apiome/apiome/issues/544) Add time spent per project breakdown
 - [ ] [#560](https://github.com/apiome/apiome/issues/560) Heatmap visualization in versions screen
 - [ ] [#771](https://github.com/apiome/apiome/issues/771) When copying versions, offer options to copy paths
 - [ ] [#1023](https://github.com/apiome/apiome/issues/1023) Version Archaeology & Cross-Project Comparison

@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.417.0] - 2026-10-21
+
+### Added
+- **Time spent per project (#544)**: each member's active time on each project, behind Home's new **Time spent**
+  panel.
+  - `GET /v1/projects/{tenant_slug}/time-spent?days=` returns the caller's own active seconds per project over
+    the last `days` UTC days, counting today (1–90, default 7), most time first (up to 50 projects), with
+    `totalSeconds` across every project in the window (`ProjectTimeSpentResponse`). Deleted projects are left
+    out. Needs a user the credentials can be attributed to (403 otherwise) and `projects:view`.
+  - Time is recorded by the app, not this API: a project's page sends a heartbeat about once a minute while it
+    is visible and in use, and each accepted heartbeat credits 60 seconds.
+  - Migration `V310__project_time_544.sql`: `apiome.project_time`, one row per (user, project, UTC day) with
+    `active_seconds` (0–86400) and `last_beat_at`, which rate-limits crediting so parallel tabs cannot
+    double-count. Cascades with the user, project and tenant.
+  - OpenAPI version 1.281.0.
+
 ## [1.416.0] - 2026-10-21
 
 ### Added

@@ -22,6 +22,8 @@ from .models import (
     PinnedProject,
     PinnedProjectsResponse,
     ProjectPinRecord,
+    ProjectTimeSpent,
+    ProjectTimeSpentResponse,
     ProjectViewRecord,
     RecentlyViewedProject,
     RecentlyViewedProjectsResponse,
@@ -119,7 +121,7 @@ RECENTLY_VIEWED_MAX_LIMIT = 50
 
 
 def _require_view_user_id(auth_data: Dict[str, Any]) -> str:
-    """Resolve the caller for their view history or pins (#510, #513), or fail with 403.
+    """Resolve the caller for their views, pins or time (#510, #513, #544), or fail with 403.
 
     Args:
         auth_data: Authentication data from :func:`validate_authentication`.
@@ -134,7 +136,7 @@ def _require_view_user_id(auth_data: Dict[str, Any]) -> str:
     if not user_id:
         raise HTTPException(
             status_code=403,
-            detail="Recently viewed and pinned projects require an attributable user",
+            detail="Personal project history requires an attributable user",
         )
     return user_id
 
@@ -345,6 +347,59 @@ async def unpin_project(
     user_id = _require_view_user_id(auth_data)
     if _is_uuid(project_id):
         db.unpin_project(auth_data["tenant_id"], user_id, project_id)
+
+
+# --- Time spent per project (#544) ------------------------------------------------------
+#
+# Active time is recorded by the app's project pages (a heartbeat a minute while visible and in
+# use) into ``apiome.project_time``; this route only reads it, and only the caller's own.
+
+TIME_SPENT_MAX_DAYS = 90
+TIME_SPENT_MAX_PROJECTS = 50
+
+
+@router.get("/{tenant_slug}/time-spent")
+async def get_time_spent(
+    tenant_slug: str,
+    days: int = Query(
+        7,
+        ge=1,
+        le=TIME_SPENT_MAX_DAYS,
+        description="The window in UTC days, counting today (1–90, default 7).",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ProjectTimeSpentResponse:
+    """
+    The caller's active time per project in this tenant over the last ``days`` days.
+
+    Time is counted while a project's page is open, visible and in use in the app. Only the
+    caller's own time is returned; projects are listed most time first (up to 50), deleted ones
+    left out. ``totalSeconds`` covers every project in the window.
+
+    Args:
+        tenant_slug: The tenant slug
+        days: The window in UTC days, counting today
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The window, the total and the per-project breakdown
+    """
+    _ = tenant_slug
+    user_id = _require_view_user_id(auth_data)
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    rows = db.list_project_time(
+        auth_data["tenant_id"], user_id, days, TIME_SPENT_MAX_PROJECTS
+    )
+    return ProjectTimeSpentResponse(
+        days=days,
+        total_seconds=int(rows[0]["total_seconds"]) if rows else 0,
+        projects=[
+            ProjectTimeSpent(
+                id=str(row["id"]), name=row["name"], slug=row["slug"], seconds=int(row["seconds"])
+            )
+            for row in rows
+        ],
+    )
 
 
 @router.get("/{tenant_slug}/{project_id}")

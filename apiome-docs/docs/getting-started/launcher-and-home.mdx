@@ -28,7 +28,7 @@ in it, and counts its projects and published versions.
 
 Home is the Control Panel's first page: what is moving in your workspace, and what needs you.
 
-<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pinned projects, Pick up where you left off, Recently viewed, Quick actions and Needs attention" />
+<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pinned projects, Pick up where you left off, Quick actions and Needs attention" />
 
 From top to bottom:
 
@@ -50,6 +50,8 @@ From top to bottom:
    a teammate**.
 9. **Needs attention** — blocking lint findings, expiring API keys, versions near their sunset and
    reviews waiting on you. It is hidden when nothing needs you.
+10. **Time spent** — how long *you* spent on each project in the last 7 or 30 days. See
+    [Time spent](#time-spent).
 
 The sidebar groups the rest of the Control Panel by job: **Build**, **Bring in**, **Ship**,
 **Govern**, and your workspace settings. **Primitives & types**, **MCP servers**, **Export studio**,
@@ -82,6 +84,25 @@ lists them, [`PUT /v1/projects/{tenant_slug}/{project_id}/pin`](../reference/res
 pins a project (409 `pin_limit_reached` past eight) and
 [`DELETE /v1/projects/{tenant_slug}/{project_id}/pin`](../reference/rest/projects.md#unpin-project-v1-projects-tenant-slug-project-id-pin-delete)
 unpins it.
+
+## Time spent
+
+**Time spent** shows where your own time in this workspace went: a bar for each of your five busiest
+projects, longest first, with the hours and minutes beside it, and your total across every project
+underneath. **Click “7 days” or “30 days”** to switch the window; days are counted in UTC and
+include today. **Click a project** to open its versions.
+
+<Screenshot id="home-time-spent" alt="The Time spent panel on Home: 7 days selected, a bar each for Payments API and Orders Service, and 3h 00m in total" />
+
+Time is counted while a project is open on **Versions**, the browser tab is visible and you have
+used the page — clicked, typed, scrolled — in the last five minutes. A tab left open in the
+background, or a page you walked away from, stops counting until you come back. Two tabs on the
+same project count once. It is a measure of attention, not a timesheet.
+
+Your time is yours alone: nobody else in the workspace, including admins, can see it. Scripts can
+read the same figures with
+[`GET /v1/projects/{tenant_slug}/time-spent?days=7`](../reference/rest/projects.md#get-time-spent-v1-projects-tenant-slug-time-spent-get)
+(1–90 days).
 
 ## Recently viewed
 

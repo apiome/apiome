@@ -244,6 +244,7 @@ import type { VerificationPolicyDecision } from '../style-guides/verification-po
 import { useMockUsage } from '@/app/hooks/useMockUsage';
 import { useOpenReviews } from '@/app/hooks/useOpenReviews';
 import { useRecordProjectView } from '@/app/hooks/useRecordProjectView';
+import { useProjectTimeTracker } from '@/app/hooks/useProjectTimeTracker';
 import { lookupReview } from '@lib/review-status';
 import { scrollBehavior } from '@lib/motion';
 
@@ -654,6 +655,9 @@ const Versions = () => {
     urlProjectId: searchParams.get('projectId'),
     selectedProjectId: selectedProjectId || null,
   });
+
+  // Count active time on the open project for Home's "Time spent" panel (#544).
+  useProjectTimeTracker(selectedProjectId || null);
 
   // The selected project's open reviews (COL-2.4, #4520). One read feeds both the table's
   // Status column and the publish dialog's review panel, so a row and the dialog opened from

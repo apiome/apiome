@@ -7726,6 +7726,45 @@ class Database:
         """
         return [dict(r) for r in self.execute_query(query, (tenant_id, user_id, limit))]
 
+    # --- Time spent per project (#544) ------------------------------------------------------
+
+    def list_project_time(
+        self, tenant_id: str, user_id: str, days: int, limit: int
+    ) -> List[Dict[str, Any]]:
+        """A user's active time per project in a tenant over the last ``days`` UTC days (#544).
+
+        The window includes today, so ``days=7`` is today and the six days before it. Trashed
+        projects are left out. Each row also carries ``total_seconds``, the user's time across
+        *every* project in the window (not only the rows returned), via a window function.
+
+        Args:
+            tenant_id: The caller's tenant (from the token, never the request).
+            user_id: The caller.
+            days: How many UTC days, counting today.
+            limit: Maximum projects to return, most time first.
+
+        Returns:
+            Rows with the project's ``id``, ``name``, ``slug``, its ``seconds`` in the window and
+            ``total_seconds``; empty when the user has no time in the window.
+        """
+        query = """
+            SELECT p.id, p.name, p.slug,
+                   SUM(pt.active_seconds)::bigint AS seconds,
+                   SUM(SUM(pt.active_seconds)) OVER ()::bigint AS total_seconds
+            FROM apiome.project_time pt
+            JOIN apiome.projects p ON p.id = pt.project_id
+            WHERE pt.tenant_id = %s::uuid AND pt.user_id = %s::uuid
+              AND p.tenant_id = pt.tenant_id AND p.deleted_at IS NULL
+              AND pt.day > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - %s::int
+            GROUP BY p.id, p.name, p.slug
+            HAVING SUM(pt.active_seconds) > 0
+            ORDER BY seconds DESC, p.name ASC
+            LIMIT %s
+        """
+        return [
+            dict(r) for r in self.execute_query(query, (tenant_id, user_id, days, limit))
+        ]
+
     # --- Bulk-import reconciliation reads (BLK-1.2, #5524) -------------------------------
     #
     # What `app.bulk_import_reconciliation` needs to answer "does a project for this spec

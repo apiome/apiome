@@ -14,6 +14,8 @@
  *   not the surface to reintroduce one.
  * - **Pinned projects** (#513) — the projects the reader pinned in the current workspace, from
  *   `apiome.project_pins`, which `./project-pins.ts` writes.
+ * - **Time spent** (#544) — the reader's own active time per project over 7 and 30 days, from
+ *   `apiome.project_time`, which `./project-time.ts` credits from the Versions page's heartbeat.
  * - **Recently viewed** (#510) — the reader's own history from `apiome.project_views`, which the
  *   Versions page writes through `./project-views.ts` each time the reader opens a project.
  * - **Needs attention** — the sunset schedule (`versions.metadata.sunsetAt`, the same column
@@ -58,6 +60,7 @@ import {
   KEY_EXPIRY_ATTENTION_DAYS,
   PULSE_WINDOW_DAYS,
   RECENTLY_VIEWED_LIMIT,
+  TIME_SPENT_CANDIDATES,
   bucketPublishesByWeek,
   emptyDashboardHome,
   keyAttention,
@@ -74,6 +77,7 @@ import {
   type PinnedProject,
   type PulseWeek,
   type RecentlyViewedProject,
+  type TimeSpent,
   type ReviewAttentionRow,
   type SunsetRow,
 } from './dashboard-home-model';
@@ -271,6 +275,66 @@ async function loadContinueProjects(userId: string, limit: number): Promise<Cont
  */
 async function loadPinnedProjects(userId: string, tenantId: string): Promise<PinnedProject[]> {
   return queryPinnedProjects((sql, params) => connectionPool.query(sql, params), userId, tenantId);
+}
+
+/** What the time section draws when there is no time, or the read fails. */
+const NO_TIME: TimeSpent = { projects: [], total7: 0, total30: 0 };
+
+/**
+ * The reader's active time per project in the current workspace (#544), for both windows in one
+ * read.
+ *
+ * Thirty UTC days counting today are read once; `FILTER` splits out the last seven, and the
+ * window `SUM(...) OVER ()` totals carry the time on *every* project, not only the candidates the
+ * `LIMIT` keeps — so the panel's total is honest even when its bars show five projects of forty.
+ * Scoped and re-checked like the other sections: the session's workspace, joined against
+ * `tenant_users`, trashed projects left out.
+ *
+ * @param userId The reader, from the session.
+ * @param tenantId The session's current workspace id.
+ * @returns The candidates (most time in 30 days first) and both totals.
+ */
+async function loadTimeSpent(userId: string, tenantId: string): Promise<TimeSpent> {
+  const result = await connectionPool.query(
+    `SELECT
+       p.id AS project_id,
+       p.name AS project_name,
+       COALESCE(SUM(pt.active_seconds) FILTER (
+         WHERE pt.day > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - 7
+       ), 0) AS seconds_7,
+       SUM(pt.active_seconds) AS seconds_30,
+       SUM(COALESCE(SUM(pt.active_seconds) FILTER (
+         WHERE pt.day > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - 7
+       ), 0)) OVER () AS total_7,
+       SUM(SUM(pt.active_seconds)) OVER () AS total_30
+     FROM apiome.project_time pt
+     JOIN apiome.projects p ON p.id = pt.project_id
+     WHERE pt.user_id = $1
+       AND pt.tenant_id = $2
+       AND pt.tenant_id IN ${MEMBER_TENANTS}
+       AND p.tenant_id = pt.tenant_id
+       AND p.deleted_at IS NULL
+       AND pt.day > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - 30
+     GROUP BY p.id, p.name
+     HAVING SUM(pt.active_seconds) > 0
+     ORDER BY seconds_30 DESC, p.name ASC
+     LIMIT $3`,
+    [userId, tenantId, TIME_SPENT_CANDIDATES],
+  );
+
+  if (result.rows.length === 0) return NO_TIME;
+  // Each candidate row carries the 7-day figure the ranking for that window needs; a project
+  // busy this week but not in the 30-day top twenty is a case the cap accepts.
+  return {
+    projects: result.rows.map((row) => ({
+      projectId: String(row.project_id),
+      projectName: asText(row.project_name) ?? 'Untitled project',
+      seconds7: asNumber(row.seconds_7),
+      seconds30: asNumber(row.seconds_30),
+    })),
+    total7: asNumber(result.rows[0].total_7),
+    total30: asNumber(result.rows[0].total_30),
+  };
 }
 
 /**
@@ -623,6 +687,7 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
     continueProjects,
     pinnedProjects,
     recentlyViewed,
+    timeSpent,
     sunsetRows,
     lintRows,
     keyRows,
@@ -647,6 +712,9 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
             [],
           )
         : Promise.resolve([]),
+      tenantId
+        ? section<TimeSpent>('time spent', () => loadTimeSpent(userId, tenantId), NO_TIME)
+        : Promise.resolve(NO_TIME),
       section<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
       section<LintRow[]>('lint gate', () => loadLintRows(userId), []),
       section<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
@@ -662,5 +730,13 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
     reviewAttention(reviewRows),
   ]);
 
-  return { workspaceName, continueProjects, pinnedProjects, recentlyViewed, attention, pulse };
+  return {
+    workspaceName,
+    continueProjects,
+    pinnedProjects,
+    recentlyViewed,
+    timeSpent,
+    attention,
+    pulse,
+  };
 }

@@ -1,0 +1,21 @@
+---
+slug: time-spent-per-project
+title: See where your time goes, project by project
+description: Home's new Time spent panel shows your own active time per project.
+authors: [apiome]
+---
+
+Home has a new **Time spent** panel: how long *you* spent on each project over the last 7 or 30
+days. [How time is counted](/getting-started/launcher-and-home#time-spent).
+
+{/* truncate */}
+
+- **Your busiest projects at a glance.** A bar for each of your top five projects, longest first,
+  with hours and minutes, and your total across every project. Switch between **7 days** and
+  **30 days**.
+- **Active time only.** Time counts while a project is open on **Versions**, the tab is visible and
+  you have used the page in the last five minutes; a forgotten background tab counts nothing, and
+  two tabs on one project count once.
+- **Private.** Only you see your time — not teammates, not admins.
+- **In the API.** `GET /v1/projects/{tenant_slug}/time-spent?days=` returns the same figures — see
+  the [Projects reference](/reference/rest/projects).
