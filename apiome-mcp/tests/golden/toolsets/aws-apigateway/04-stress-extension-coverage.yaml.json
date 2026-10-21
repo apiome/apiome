@@ -1,0 +1,64 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 with no body: proxied",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_lambda-proxy",
+      "operation": "ANY /lambda-proxy",
+      "output": {
+        "description": "proxied",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: greedy proxy",
+      "inputSchema": {
+        "properties": {
+          "proxy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proxy"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_proxy",
+      "operation": "ANY /{proxy+}",
+      "output": {
+        "description": "greedy proxy",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: 200 response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_throttled",
+      "operation": "GET /throttled",
+      "output": {
+        "description": "200 response",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: 200 response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_aws-service",
+      "operation": "POST /aws-service",
+      "output": {
+        "description": "200 response",
+        "status": "200"
+      }
+    }
+  ]
+}

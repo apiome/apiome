@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Adds numbered citations linking each claim to its source.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Cite_sources",
+      "operation": "research-assistant.Cite sources"
+    },
+    {
+      "description": "Condenses the chosen sources into a short answer.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Summarize",
+      "operation": "research-assistant.Summarize"
+    },
+    {
+      "description": "Searches the public web and ranks sources by relevance.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Web_search",
+      "operation": "research-assistant.Web search"
+    }
+  ]
+}

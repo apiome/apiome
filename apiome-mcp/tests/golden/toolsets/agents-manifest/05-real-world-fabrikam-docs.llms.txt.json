@@ -1,0 +1,65 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "A2A agent for account questions",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Support_agent",
+      "operation": "a2a.https://support.fabrikam.example/.well-known/agent-card.json"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Changelog",
+      "operation": "docs.https://docs.fabrikam.example/changelog.md"
+    },
+    {
+      "description": "Create a key and make a first call",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Quickstart",
+      "operation": "docs.https://docs.fabrikam.example/quickstart.md"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Webhooks",
+      "operation": "docs.https://docs.fabrikam.example/webhooks.md"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Site_manifest",
+      "operation": "manifest.https://fabrikam.example/agents.json"
+    },
+    {
+      "description": "Tools for payments, refunds and payouts",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "MCP_server",
+      "operation": "mcp.https://mcp.fabrikam.example/mcp"
+    },
+    {
+      "description": "The OpenAPI 3.1 description",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "API_reference",
+      "operation": "openapi.https://api.fabrikam.example/openapi.json"
+    }
+  ]
+}

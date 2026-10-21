@@ -1,0 +1,141 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 with no body: Found",
+      "inputSchema": {
+        "properties": {
+          "authorizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorizationId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_authorizations_authorizationId",
+      "operation": "GET /authorizations/{authorizationId}",
+      "output": {
+        "description": "Found",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: OK",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_health",
+      "operation": "GET /health",
+      "output": {
+        "description": "OK",
+        "status": "200"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "OPTIONS_authorizations",
+      "operation": "OPTIONS /authorizations"
+    },
+    {
+      "description": "Authorize a payment\n\nReturns HTTP 201 application/json (AuthorizationResponse): Approved or declined",
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "captureMode": {
+            "enum": [
+              "AUTOMATIC",
+              "MANUAL"
+            ],
+            "type": "string"
+          },
+          "card": {},
+          "merchantId": {
+            "pattern": "^MER-[0-9]{6}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "card",
+          "merchantId"
+        ],
+        "type": "object"
+      },
+      "name": "POST_authorizations",
+      "operation": "POST /authorizations",
+      "output": {
+        "description": "Approved or declined",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "authorizationId": {
+              "type": "string"
+            },
+            "networkCode": {
+              "type": "string"
+            },
+            "result": {
+              "enum": [
+                "APPROVED",
+                "DECLINED",
+                "REFERRAL"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "AuthorizationResponse",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 with no body: Captured",
+      "inputSchema": {
+        "properties": {
+          "Idempotency-Key": {
+            "type": "string"
+          },
+          "amount": {},
+          "authorizationId": {
+            "type": "string"
+          },
+          "finalCapture": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authorizationId",
+          "Idempotency-Key",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "name": "POST_authorizations_authorizationId_captures",
+      "operation": "POST /authorizations/{authorizationId}/captures",
+      "output": {
+        "description": "Captured",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Receive a network webhook\n\nReturns HTTP 204 with no body: Accepted",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_webhooks",
+      "operation": "POST /webhooks",
+      "output": {
+        "description": "Accepted",
+        "status": "204"
+      }
+    }
+  ]
+}

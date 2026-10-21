@@ -1,0 +1,39 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List orders",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ListOrders",
+      "operation": "GET /v2/orders/orders"
+    },
+    {
+      "description": "Fetch one order",
+      "inputSchema": {
+        "properties": {
+          "segment1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment1"
+        ],
+        "type": "object"
+      },
+      "name": "GetOrder",
+      "operation": "GET /v2/orders/orders/{segment1}"
+    },
+    {
+      "description": "Create an order",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "CreateOrder",
+      "operation": "POST /v2/orders/orders"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns each message part unchanged.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Echo",
+      "operation": "echo.Echo"
+    }
+  ]
+}

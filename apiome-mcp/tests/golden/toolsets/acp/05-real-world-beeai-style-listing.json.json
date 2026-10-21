@@ -1,0 +1,41 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Holds a multi-turn conversation with memory of earlier turns.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Conversation",
+      "operation": "chat.Conversation"
+    },
+    {
+      "description": "Calls web search, Wikipedia and weather tools when a question needs them.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Tool_use",
+      "operation": "chat.Tool use"
+    },
+    {
+      "description": "Writes a long-form report with references.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Report_writing",
+      "operation": "gpt-researcher.Report writing"
+    },
+    {
+      "description": "Breaks a topic into research questions.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Research_planning",
+      "operation": "gpt-researcher.Research planning"
+    }
+  ]
+}

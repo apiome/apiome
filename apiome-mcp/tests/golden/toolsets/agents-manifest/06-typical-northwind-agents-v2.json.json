@@ -1,0 +1,41 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Order support agent",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_shop_northwind_example_well-known_agent-card_json",
+      "operation": "a2a.https://shop.northwind.example/.well-known/agent-card.json"
+    },
+    {
+      "description": "Warehouse stock levels",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_inventory_northwind_example_mcp",
+      "operation": "mcp.https://inventory.northwind.example/mcp"
+    },
+    {
+      "description": "Catalog search, cart and wishlist tools",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_shop_northwind_example_mcp",
+      "operation": "mcp.https://shop.northwind.example/mcp"
+    },
+    {
+      "description": "Walks an agent through checkout",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "northwind-checkout",
+      "operation": "skills.https://shop.northwind.example/skills/checkout/SKILL.md"
+    }
+  ]
+}

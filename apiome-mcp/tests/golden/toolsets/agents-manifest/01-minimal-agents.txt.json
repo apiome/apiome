@@ -1,0 +1,13 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "https_example_com_mcp",
+      "operation": "mcp.https://example.com/mcp"
+    }
+  ]
+}
