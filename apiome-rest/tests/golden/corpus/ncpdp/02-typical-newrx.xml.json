@@ -1,0 +1,2328 @@
+{
+  "adapter": "ncpdp",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "ncpdp",
+        "evidence": [
+          "`<Message>` root in the http://www.ncpdp.org/schema/SCRIPT namespace.",
+          "Version claimed: 10.6."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "ncpdp-script",
+        "label": "NCPDP SCRIPT"
+      },
+      "ncpdp_script": {
+        "members": [],
+        "messageCount": 1,
+        "root": "Message",
+        "versions": [
+          "10.6"
+        ]
+      },
+      "ncpdp_sub_format": "script",
+      "ncpdp_transaction_types": [
+        "NewRx"
+      ],
+      "ncpdp_transactions": [
+        {
+          "messageId": "MSG-20260819-0002",
+          "path": "Message",
+          "recognized": true,
+          "relatesToMessageId": "MSG-20260819-0000",
+          "relatesToResolved": false,
+          "transactionType": "NewRx",
+          "version": "10.6"
+        }
+      ]
+    },
+    "format": "ncpdp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "NCPDP SCRIPT NewRx",
+      "namespace": "NCPDP-SCRIPT"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "NCPDP SCRIPT NewRx",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Address.AddressLine1",
+            "name": "AddressLine1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Address.City",
+            "name": "City",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.Address.CountryCode",
+            "name": "CountryCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Address.PostalCode",
+            "name": "PostalCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Address.StateProvince",
+            "name": "StateProvince",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Address",
+        "key_type": null,
+        "kind": "record",
+        "name": "Address",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Body.NewRx",
+            "name": "NewRx",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.NewRx",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Body",
+        "key_type": null,
+        "kind": "record",
+        "name": "Body",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.CommunicationNumbers.PrimaryTelephone",
+            "name": "PrimaryTelephone",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.PrimaryTelephone",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.CommunicationNumbers",
+        "key_type": null,
+        "kind": "record",
+        "name": "CommunicationNumbers",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.DateOfBirth.Date",
+            "name": "Date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.DateOfBirth",
+        "key_type": null,
+        "kind": "record",
+        "name": "DateOfBirth",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Diagnosis.ClinicalInformationQualifier",
+            "name": "ClinicalInformationQualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Diagnosis.Primary",
+            "name": "Primary",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Primary",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Diagnosis",
+        "key_type": null,
+        "kind": "record",
+        "name": "Diagnosis",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.DrugCoded.DrugDBCode",
+            "name": "DrugDBCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.DrugDBCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.DrugCoded.ProductCode",
+            "name": "ProductCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.DrugCoded.ProductCodeQualifier",
+            "name": "ProductCodeQualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.DrugCoded.Strength",
+            "name": "Strength",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Strength",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.DrugCoded",
+        "key_type": null,
+        "kind": "record",
+        "name": "DrugCoded",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.DrugDBCode.Code",
+            "name": "Code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.DrugDBCode.Qualifier",
+            "name": "Qualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.DrugDBCode",
+        "key_type": null,
+        "kind": "record",
+        "name": "DrugDBCode",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.From.Qualifier",
+            "name": "Qualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "text"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.From.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.From",
+        "key_type": null,
+        "kind": "record",
+        "name": "From",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Header.From",
+            "name": "From",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.From",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Header.MessageID",
+            "name": "MessageID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 7,
+            "key": "NCPDP-SCRIPT.Header.PrescriberOrderNumber",
+            "name": "PrescriberOrderNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Header.RelatesToMessageID",
+            "name": "RelatesToMessageID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 6,
+            "key": "NCPDP-SCRIPT.Header.SenderSoftware",
+            "name": "SenderSoftware",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.SenderSoftware",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.Header.SentTime",
+            "name": "SentTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Header.To",
+            "name": "To",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.To",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Header",
+        "key_type": null,
+        "kind": "record",
+        "name": "Header",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.HumanPatient.Address",
+            "name": "Address",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Address",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 6,
+            "key": "NCPDP-SCRIPT.HumanPatient.CommunicationNumbers",
+            "name": "CommunicationNumbers",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.CommunicationNumbers",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.HumanPatient.DateOfBirth",
+            "name": "DateOfBirth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.DateOfBirth",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.HumanPatient.Gender",
+            "name": "Gender",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.HumanPatient.Identification",
+            "name": "Identification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Identification",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.HumanPatient.Name",
+            "name": "Name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Name",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.HumanPatient",
+        "key_type": null,
+        "kind": "record",
+        "name": "HumanPatient",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Identification.DEANumber",
+            "name": "DEANumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Identification.MedicalRecordIdentificationNumberEHR",
+            "name": "MedicalRecordIdentificationNumberEHR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Identification.NCPDPID",
+            "name": "NCPDPID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Identification.NPI",
+            "name": "NPI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.Identification.StateLicenseNumber",
+            "name": "StateLicenseNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Identification",
+        "key_type": null,
+        "kind": "record",
+        "name": "Identification",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.DaysSupply",
+            "name": "DaysSupply",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 8,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.Diagnosis",
+            "name": "Diagnosis",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Diagnosis",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.DrugCoded",
+            "name": "DrugCoded",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.DrugCoded",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.DrugDescription",
+            "name": "DrugDescription",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 10,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.Note",
+            "name": "Note",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 7,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.NumberOfRefills",
+            "name": "NumberOfRefills",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.Quantity",
+            "name": "Quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Quantity",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 9,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.Sig",
+            "name": "Sig",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Sig",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.Substitutions",
+            "name": "Substitutions",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 6,
+            "key": "NCPDP-SCRIPT.MedicationPrescribed.WrittenDate",
+            "name": "WrittenDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.WrittenDate",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.MedicationPrescribed",
+        "key_type": null,
+        "kind": "record",
+        "name": "MedicationPrescribed",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 7,
+            "key": "NCPDP-SCRIPT.Message.Body",
+            "name": "Body",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Body",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Message.DatatypesVersion",
+            "name": "DatatypesVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.Message.ECLVersion",
+            "name": "ECLVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 6,
+            "key": "NCPDP-SCRIPT.Message.Header",
+            "name": "Header",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Header",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Message.TransportVersion",
+            "name": "TransportVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Message.release",
+            "name": "release",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Message.version",
+            "name": "version",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Message",
+        "key_type": null,
+        "kind": "record",
+        "name": "Message",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Name.FirstName",
+            "name": "FirstName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Name.LastName",
+            "name": "LastName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Name.MiddleName",
+            "name": "MiddleName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Name.Suffix",
+            "name": "Suffix",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Name",
+        "key_type": null,
+        "kind": "record",
+        "name": "Name",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.NewRx.MedicationPrescribed",
+            "name": "MedicationPrescribed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.MedicationPrescribed",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.NewRx.Patient",
+            "name": "Patient",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Patient",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.NewRx.Pharmacy",
+            "name": "Pharmacy",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Pharmacy",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.NewRx.Prescriber",
+            "name": "Prescriber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Prescriber",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.NewRx",
+        "key_type": null,
+        "kind": "record",
+        "name": "NewRx",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.NonVeterinarian.Address",
+            "name": "Address",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Address",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.NonVeterinarian.CommunicationNumbers",
+            "name": "CommunicationNumbers",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.CommunicationNumbers",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.NonVeterinarian.Identification",
+            "name": "Identification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Identification",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.NonVeterinarian.Name",
+            "name": "Name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Name",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 5,
+            "key": "NCPDP-SCRIPT.NonVeterinarian.PracticeLocation",
+            "name": "PracticeLocation",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.PracticeLocation",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.NonVeterinarian",
+        "key_type": null,
+        "kind": "record",
+        "name": "NonVeterinarian",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Patient.HumanPatient",
+            "name": "HumanPatient",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.HumanPatient",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Patient",
+        "key_type": null,
+        "kind": "record",
+        "name": "Patient",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Pharmacy.Address",
+            "name": "Address",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Address",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Pharmacy.BusinessName",
+            "name": "BusinessName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 4,
+            "key": "NCPDP-SCRIPT.Pharmacy.CommunicationNumbers",
+            "name": "CommunicationNumbers",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.CommunicationNumbers",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Pharmacy.Identification",
+            "name": "Identification",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.Identification",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Pharmacy",
+        "key_type": null,
+        "kind": "record",
+        "name": "Pharmacy",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.PracticeLocation.BusinessName",
+            "name": "BusinessName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.PracticeLocation",
+        "key_type": null,
+        "kind": "record",
+        "name": "PracticeLocation",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Prescriber.NonVeterinarian",
+            "name": "NonVeterinarian",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.NonVeterinarian",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Prescriber",
+        "key_type": null,
+        "kind": "record",
+        "name": "Prescriber",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Primary.Code",
+            "name": "Code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Primary.Qualifier",
+            "name": "Qualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Primary",
+        "key_type": null,
+        "kind": "record",
+        "name": "Primary",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.PrimaryTelephone.Number",
+            "name": "Number",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.PrimaryTelephone",
+        "key_type": null,
+        "kind": "record",
+        "name": "PrimaryTelephone",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Quantity.CodeListQualifier",
+            "name": "CodeListQualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Quantity.QuantityUnitOfMeasure",
+            "name": "QuantityUnitOfMeasure",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.QuantityUnitOfMeasure",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Quantity.Value",
+            "name": "Value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Quantity",
+        "key_type": null,
+        "kind": "record",
+        "name": "Quantity",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.QuantityUnitOfMeasure.Code",
+            "name": "Code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.QuantityUnitOfMeasure",
+        "key_type": null,
+        "kind": "record",
+        "name": "QuantityUnitOfMeasure",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.SenderSoftware.SenderSoftwareDeveloper",
+            "name": "SenderSoftwareDeveloper",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.SenderSoftware.SenderSoftwareProduct",
+            "name": "SenderSoftwareProduct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.SenderSoftware.SenderSoftwareVersionRelease",
+            "name": "SenderSoftwareVersionRelease",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.SenderSoftware",
+        "key_type": null,
+        "kind": "record",
+        "name": "SenderSoftware",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Sig.SigText",
+            "name": "SigText",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Sig",
+        "key_type": null,
+        "kind": "record",
+        "name": "Sig",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.Strength.StrengthForm",
+            "name": "StrengthForm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.StrengthForm",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 3,
+            "key": "NCPDP-SCRIPT.Strength.StrengthUnitOfMeasure",
+            "name": "StrengthUnitOfMeasure",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-SCRIPT.StrengthUnitOfMeasure",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.Strength.StrengthValue",
+            "name": "StrengthValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.Strength",
+        "key_type": null,
+        "kind": "record",
+        "name": "Strength",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.StrengthForm.Code",
+            "name": "Code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.StrengthForm",
+        "key_type": null,
+        "kind": "record",
+        "name": "StrengthForm",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.StrengthUnitOfMeasure.Code",
+            "name": "Code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.StrengthUnitOfMeasure",
+        "key_type": null,
+        "kind": "record",
+        "name": "StrengthUnitOfMeasure",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.To.Qualifier",
+            "name": "Qualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "text"
+            },
+            "field_number": 2,
+            "key": "NCPDP-SCRIPT.To.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.To",
+        "key_type": null,
+        "kind": "record",
+        "name": "To",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "element"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ncpdp_xml": "element"
+            },
+            "field_number": 1,
+            "key": "NCPDP-SCRIPT.WrittenDate.Date",
+            "name": "Date",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-SCRIPT.WrittenDate",
+        "key_type": null,
+        "kind": "record",
+        "name": "WrittenDate",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ncpdp/02-typical-newrx.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 31
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "ncpdp"
+  },
+  "fingerprint": "sha256:a8f22384230d481c775c4dcb785672993d632d5ec1967fcea27e9c4e41bea1a1",
+  "lint": {
+    "findings": 124,
+    "grade": "F",
+    "report_fingerprint": "4c31fb49f68f9656cdce1b735e40bd2a02680b894940054628473064785e373e",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 93,
+      "warning": 31
+    }
+  },
+  "snapshot_version": 1
+}

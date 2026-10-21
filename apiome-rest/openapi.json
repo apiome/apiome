@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.275.0",
+    "version": "1.276.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -30888,7 +30888,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-21T03:49:22Z"
+                          "example": "2026-10-21T04:20:58Z"
                         },
                         "method": {
                           "type": "string",
@@ -112260,7 +112260,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "completed_at": {
             "anyOf": [
@@ -114215,7 +114215,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "comment_count": {
             "type": "integer",
@@ -114443,7 +114443,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "comment_count": {
             "type": "integer",
@@ -115210,14 +115210,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -118503,7 +118503,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "d6fe5706-d18c-4109-988e-542e6ef2b67e"
+            "example": "22abfa78-fa0a-45f6-870b-1bfec286f688"
           },
           "method": {
             "type": "string",
@@ -121030,7 +121030,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -122926,7 +122926,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "browse_url": {
             "anyOf": [
@@ -168588,7 +168588,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           }
         },
         "additionalProperties": false,
@@ -180010,13 +180010,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           }
         },
         "additionalProperties": false,
@@ -181520,7 +181520,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "detected_by": {
             "anyOf": [
@@ -189726,14 +189726,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-21T03:49:22Z"
+            "example": "2026-10-21T04:20:58Z"
           },
           "outcome": {
             "anyOf": [

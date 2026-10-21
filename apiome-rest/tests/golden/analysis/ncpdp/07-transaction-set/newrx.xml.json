@@ -1,0 +1,1522 @@
+{
+  "adapter": "ncpdp",
+  "corpus_path": "ncpdp/07-transaction-set/newrx.xml",
+  "document": {
+    "analyzer": {
+      "key": "ncpdp",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "ncpdp.script_attributes",
+        "ncpdp.script_elements",
+        "ncpdp.script_message",
+        "ncpdp.script_relates_to",
+        "ncpdp.script_transaction_type",
+        "ncpdp.telecom_byte_offsets",
+        "ncpdp.telecom_fields",
+        "ncpdp.telecom_header",
+        "ncpdp.telecom_segments",
+        "ncpdp.telecom_transaction_code",
+        "ncpdp.telecom_transaction_count"
+      ],
+      "unsupported": [
+        "ncpdp.implementation_guide_validation",
+        "ncpdp.script_source_positions",
+        "ncpdp.telecom_data_dictionary",
+        "ncpdp.telecom_response_transmissions"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "attribute": 8,
+        "element": 52,
+        "message": 2
+      },
+      "maxDepth": 7,
+      "nodeCount": 62,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "ncpdp",
+    "sourceHash": "sha256:808641a5a73d51593f5d9479853ef7905ef79f3bcc227e2760d89e02714c4e59",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "implementationGuideConsulted": false,
+          "messageId": "MSG-20260824-0100",
+          "recognized": true,
+          "sourceFile": "newrx.xml",
+          "transactionType": "NewRx",
+          "version": "10.6"
+        },
+        "children": [
+          {
+            "attributes": {},
+            "children": [],
+            "id": "0.0",
+            "kind": "attribute",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "Message/@version"
+            },
+            "name": "version",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "010",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {},
+            "children": [],
+            "id": "0.1",
+            "kind": "attribute",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "Message/@release"
+            },
+            "name": "release",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "006",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "childCount": 5
+            },
+            "children": [
+              {
+                "attributes": {
+                  "childCount": 0
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "0.2.0.0",
+                    "kind": "attribute",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "Message/Header/To/@Qualifier"
+                    },
+                    "name": "Qualifier",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "P",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.2.0",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "Message/Header/To"
+                },
+                "name": "To",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childCount": 0
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "0.2.1.0",
+                    "kind": "attribute",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "Message/Header/From/@Qualifier"
+                    },
+                    "name": "Qualifier",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "D",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.2.1",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "Message/Header/From"
+                },
+                "name": "From",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "0.2.2",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "Message/Header/MessageID"
+                },
+                "name": "MessageID",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "MSG-20260824-0100",
+                "valueLength": 17,
+                "valuePresent": true
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "0.2.3",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "Message/Header/SentTime"
+                },
+                "name": "SentTime",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "2026-08-24T09:30:00Z",
+                "valueLength": 20,
+                "valuePresent": true
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "0.2.4",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "Message/Header/PrescriberOrderNumber"
+                },
+                "name": "PrescriberOrderNumber",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "RX-2026-005510",
+                "valueLength": 14,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.2",
+            "kind": "element",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "Message/Header"
+            },
+            "name": "Header",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childCount": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "childCount": 4
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "childCount": 1
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "childCount": 3
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "childCount": 2
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.0.0.0.0",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 0,
+                                  "path": "Message/Body/NewRx/Patient/HumanPatient/Name/LastName"
+                                },
+                                "name": "LastName",
+                                "ordinal": 0,
+                                "redacted": false,
+                                "value": "Sample",
+                                "valueLength": 6,
+                                "valuePresent": true
+                              },
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.0.0.0.1",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 1,
+                                  "path": "Message/Body/NewRx/Patient/HumanPatient/Name/FirstName"
+                                },
+                                "name": "FirstName",
+                                "ordinal": 1,
+                                "redacted": false,
+                                "value": "Chris",
+                                "valueLength": 5,
+                                "valuePresent": true
+                              }
+                            ],
+                            "id": "0.3.0.0.0.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/Patient/HumanPatient/Name"
+                            },
+                            "name": "Name",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": null,
+                            "valueLength": null,
+                            "valuePresent": null
+                          },
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.0.0.1",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "Message/Body/NewRx/Patient/HumanPatient/Gender"
+                            },
+                            "name": "Gender",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "M",
+                            "valueLength": 1,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "childCount": 1
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.0.0.2.0",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 0,
+                                  "path": "Message/Body/NewRx/Patient/HumanPatient/DateOfBirth/Date"
+                                },
+                                "name": "Date",
+                                "ordinal": 0,
+                                "redacted": false,
+                                "value": "1962-09-05",
+                                "valueLength": 10,
+                                "valuePresent": true
+                              }
+                            ],
+                            "id": "0.3.0.0.0.2",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 2,
+                              "path": "Message/Body/NewRx/Patient/HumanPatient/DateOfBirth"
+                            },
+                            "name": "DateOfBirth",
+                            "ordinal": 2,
+                            "redacted": false,
+                            "value": null,
+                            "valueLength": null,
+                            "valuePresent": null
+                          }
+                        ],
+                        "id": "0.3.0.0.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "Message/Body/NewRx/Patient/HumanPatient"
+                        },
+                        "name": "HumanPatient",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.3.0.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "Message/Body/NewRx/Patient"
+                    },
+                    "name": "Patient",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "childCount": 2
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "childCount": 1
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.1.0.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/Pharmacy/Identification/NCPDPID"
+                            },
+                            "name": "NCPDPID",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "1234567",
+                            "valueLength": 7,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.3.0.1.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "Message/Body/NewRx/Pharmacy/Identification"
+                        },
+                        "name": "Identification",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.1.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "Message/Body/NewRx/Pharmacy/BusinessName"
+                        },
+                        "name": "BusinessName",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": "Example Community Pharmacy",
+                        "valueLength": 26,
+                        "valuePresent": true
+                      }
+                    ],
+                    "id": "0.3.0.1",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "Message/Body/NewRx/Pharmacy"
+                    },
+                    "name": "Pharmacy",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "childCount": 1
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "childCount": 2
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "childCount": 1
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.2.0.0.0",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 0,
+                                  "path": "Message/Body/NewRx/Prescriber/NonVeterinarian/Identification/NPI"
+                                },
+                                "name": "NPI",
+                                "ordinal": 0,
+                                "redacted": false,
+                                "value": "1234567893",
+                                "valueLength": 10,
+                                "valuePresent": true
+                              }
+                            ],
+                            "id": "0.3.0.2.0.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/Prescriber/NonVeterinarian/Identification"
+                            },
+                            "name": "Identification",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": null,
+                            "valueLength": null,
+                            "valuePresent": null
+                          },
+                          {
+                            "attributes": {
+                              "childCount": 2
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.2.0.1.0",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 0,
+                                  "path": "Message/Body/NewRx/Prescriber/NonVeterinarian/Name/LastName"
+                                },
+                                "name": "LastName",
+                                "ordinal": 0,
+                                "redacted": false,
+                                "value": "Clinician",
+                                "valueLength": 9,
+                                "valuePresent": true
+                              },
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "id": "0.3.0.2.0.1.1",
+                                "kind": "element",
+                                "label": null,
+                                "location": {
+                                  "column": null,
+                                  "file": null,
+                                  "length": null,
+                                  "line": null,
+                                  "offset": null,
+                                  "ordinal": 1,
+                                  "path": "Message/Body/NewRx/Prescriber/NonVeterinarian/Name/FirstName"
+                                },
+                                "name": "FirstName",
+                                "ordinal": 1,
+                                "redacted": false,
+                                "value": "Robin",
+                                "valueLength": 5,
+                                "valuePresent": true
+                              }
+                            ],
+                            "id": "0.3.0.2.0.1",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "Message/Body/NewRx/Prescriber/NonVeterinarian/Name"
+                            },
+                            "name": "Name",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": null,
+                            "valueLength": null,
+                            "valuePresent": null
+                          }
+                        ],
+                        "id": "0.3.0.2.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "Message/Body/NewRx/Prescriber/NonVeterinarian"
+                        },
+                        "name": "NonVeterinarian",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.3.0.2",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "Message/Body/NewRx/Prescriber"
+                    },
+                    "name": "Prescriber",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "childCount": 7
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.3.0",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 0,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/DrugDescription"
+                        },
+                        "name": "DrugDescription",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": "Ramipril 5 MG oral capsule",
+                        "valueLength": 26,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "childCount": 2
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.1.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/DrugCoded/ProductCode"
+                            },
+                            "name": "ProductCode",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "00093721101",
+                            "valueLength": 11,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.1.1",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/DrugCoded/ProductCodeQualifier"
+                            },
+                            "name": "ProductCodeQualifier",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "ND",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.3.0.3.1",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 1,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/DrugCoded"
+                        },
+                        "name": "DrugCoded",
+                        "ordinal": 1,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "childCount": 2
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.2.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/Quantity/Value"
+                            },
+                            "name": "Value",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "90",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.2.1",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 1,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/Quantity/CodeListQualifier"
+                            },
+                            "name": "CodeListQualifier",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "38",
+                            "valueLength": 2,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.3.0.3.2",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 2,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/Quantity"
+                        },
+                        "name": "Quantity",
+                        "ordinal": 2,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.3.3",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 3,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/DaysSupply"
+                        },
+                        "name": "DaysSupply",
+                        "ordinal": 3,
+                        "redacted": false,
+                        "value": "90",
+                        "valueLength": 2,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {},
+                        "children": [],
+                        "id": "0.3.0.3.4",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 4,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/NumberOfRefills"
+                        },
+                        "name": "NumberOfRefills",
+                        "ordinal": 4,
+                        "redacted": false,
+                        "value": "3",
+                        "valueLength": 1,
+                        "valuePresent": true
+                      },
+                      {
+                        "attributes": {
+                          "childCount": 1
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.5.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/WrittenDate/Date"
+                            },
+                            "name": "Date",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "2026-08-24",
+                            "valueLength": 10,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.3.0.3.5",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 5,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/WrittenDate"
+                        },
+                        "name": "WrittenDate",
+                        "ordinal": 5,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      },
+                      {
+                        "attributes": {
+                          "childCount": 1
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "id": "0.3.0.3.6.0",
+                            "kind": "element",
+                            "label": null,
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": null,
+                              "line": null,
+                              "offset": null,
+                              "ordinal": 0,
+                              "path": "Message/Body/NewRx/MedicationPrescribed/Sig/SigText"
+                            },
+                            "name": "SigText",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "Take one capsule by mouth once daily.",
+                            "valueLength": 37,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.3.0.3.6",
+                        "kind": "element",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": null,
+                          "line": null,
+                          "offset": null,
+                          "ordinal": 6,
+                          "path": "Message/Body/NewRx/MedicationPrescribed/Sig"
+                        },
+                        "name": "Sig",
+                        "ordinal": 6,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.3.0.3",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 3,
+                      "path": "Message/Body/NewRx/MedicationPrescribed"
+                    },
+                    "name": "MedicationPrescribed",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "Message/Body/NewRx"
+                },
+                "name": "NewRx",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "element",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "Message/Body"
+            },
+            "name": "Body",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "message",
+        "label": "NewRx MSG-20260824-0100",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "Message"
+        },
+        "name": "NewRx",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      },
+      {
+        "attributes": {
+          "implementationGuideConsulted": false,
+          "messageId": "MSG-20260824-0101",
+          "recognized": true,
+          "relatesToMessageId": "MSG-20260824-0100",
+          "relatesToResolved": true,
+          "sourceFile": "status.xml",
+          "transactionType": "Status",
+          "version": "10.6"
+        },
+        "children": [
+          {
+            "attributes": {},
+            "children": [],
+            "id": "1.0",
+            "kind": "attribute",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "status.xml:Message/@version"
+            },
+            "name": "version",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "010",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {},
+            "children": [],
+            "id": "1.1",
+            "kind": "attribute",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "status.xml:Message/@release"
+            },
+            "name": "release",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "006",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "childCount": 6
+            },
+            "children": [
+              {
+                "attributes": {
+                  "childCount": 0
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "1.2.0.0",
+                    "kind": "attribute",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "status.xml:Message/Header/To/@Qualifier"
+                    },
+                    "name": "Qualifier",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "D",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "1.2.0",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "status.xml:Message/Header/To"
+                },
+                "name": "To",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "childCount": 0
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "1.2.1.0",
+                    "kind": "attribute",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "status.xml:Message/Header/From/@Qualifier"
+                    },
+                    "name": "Qualifier",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "P",
+                    "valueLength": 1,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "1.2.1",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "status.xml:Message/Header/From"
+                },
+                "name": "From",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "1.2.2",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "status.xml:Message/Header/MessageID"
+                },
+                "name": "MessageID",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "MSG-20260824-0101",
+                "valueLength": 17,
+                "valuePresent": true
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "1.2.3",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "status.xml:Message/Header/RelatesToMessageID"
+                },
+                "name": "RelatesToMessageID",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "MSG-20260824-0100",
+                "valueLength": 17,
+                "valuePresent": true
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "1.2.4",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 4,
+                  "path": "status.xml:Message/Header/SentTime"
+                },
+                "name": "SentTime",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "2026-08-24T09:30:12Z",
+                "valueLength": 20,
+                "valuePresent": true
+              },
+              {
+                "attributes": {},
+                "children": [],
+                "id": "1.2.5",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 5,
+                  "path": "status.xml:Message/Header/PrescriberOrderNumber"
+                },
+                "name": "PrescriberOrderNumber",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "RX-2026-005510",
+                "valueLength": 14,
+                "valuePresent": true
+              }
+            ],
+            "id": "1.2",
+            "kind": "element",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "status.xml:Message/Header"
+            },
+            "name": "Header",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "childCount": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "childCount": 2
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "1.3.0.0",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "status.xml:Message/Body/Status/Code"
+                    },
+                    "name": "Code",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "010",
+                    "valueLength": 3,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {},
+                    "children": [],
+                    "id": "1.3.0.1",
+                    "kind": "element",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "status.xml:Message/Body/Status/Description"
+                    },
+                    "name": "Description",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "Transaction accepted by the pharmacy.",
+                    "valueLength": 37,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "1.3.0",
+                "kind": "element",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "status.xml:Message/Body/Status"
+                },
+                "name": "Status",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "1.3",
+            "kind": "element",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "status.xml:Message/Body"
+            },
+            "name": "Body",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "1",
+        "kind": "message",
+        "label": "Status MSG-20260824-0101",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 1,
+          "path": "status.xml:Message"
+        },
+        "name": "Status",
+        "ordinal": 1,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

@@ -286,6 +286,9 @@ const KIND_LABEL: Record<string, string> = {
   item: 'Item',
   'content-item': 'Content item',
   'pixel-data': 'Pixel data (not read)',
+  // NCPDP (ncpdp_analysis.py) — `message`, `element`, `attribute`, `transmission`, `segment` and `field` are shared
+  header: 'Header',
+  transaction: 'Transaction',
   // COBOL copybook (cobolcopybook_analysis.py)
   record: 'Record',
   group: 'Group',

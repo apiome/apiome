@@ -357,7 +357,7 @@
       "marker": "`DDM Name ......` header + the `T L DB Name \u2026 F Leng S D Remark` banner"
     },
     "ncpdp": {
-      "label": "NCPDP SCRIPT / Telecom (pending #5452)",
+      "label": "NCPDP SCRIPT / Telecom",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header"
@@ -18015,7 +18015,7 @@
     {
       "path": "ncpdp/01-minimal-newrx.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18024,8 +18024,7 @@
       "features": [
         "script",
         "NewRx",
-        "participants",
-        "pending-adapter"
+        "participants"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18036,7 +18035,7 @@
     {
       "path": "ncpdp/02-typical-newrx.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18048,8 +18047,7 @@
         "coded-drug",
         "diagnosis",
         "sig",
-        "sender-software",
-        "pending-adapter"
+        "sender-software"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18060,7 +18058,7 @@
     {
       "path": "ncpdp/03-composition-rxchangerequest.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18071,8 +18069,7 @@
         "RxChangeRequest",
         "prescribed-and-requested",
         "prior-authorization",
-        "benefits-coordination",
-        "pending-adapter"
+        "benefits-coordination"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18083,7 +18080,7 @@
     {
       "path": "ncpdp/04-stress-multiple-transactions.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18096,8 +18093,7 @@
         "CancelRx",
         "Status",
         "Error",
-        "multi-transaction",
-        "pending-adapter"
+        "multi-transaction"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18108,7 +18104,7 @@
     {
       "path": "ncpdp/05-real-world-telecom-b1-claim.dat",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18121,19 +18117,19 @@
         "insurance-segment",
         "claim-segment",
         "pricing-segment",
-        "control-characters",
-        "pending-adapter"
+        "control-characters"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Reconstructed in-repo from the shape of an NCPDP Telecommunication D.0 billing claim; all ids are synthetic and no upstream text was copied.",
-      "rung": "real-world"
+      "rung": "real-world",
+      "notes": "Since FMT-6.8 the transaction header is followed directly by its first segment; an earlier draft carried a stray field between them, which D.0 does not allow."
     },
     {
       "path": "ncpdp/06-typical-telecom-b2-reversal.dat",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18144,8 +18140,7 @@
         "D0",
         "B2",
         "reversal",
-        "control-characters",
-        "pending-adapter"
+        "control-characters"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18156,7 +18151,7 @@
     {
       "path": "ncpdp/07-transaction-set/newrx.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18164,8 +18159,7 @@
       },
       "features": [
         "NewRx",
-        "script",
-        "pending-adapter"
+        "script"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18177,7 +18171,7 @@
     {
       "path": "ncpdp/07-transaction-set/status.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18186,8 +18180,7 @@
       "features": [
         "Status",
         "RelatesToMessageID",
-        "script",
-        "pending-adapter"
+        "script"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -18200,7 +18193,7 @@
     {
       "path": "ncpdp/negative/01-syntactic-unclosed-body.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18209,8 +18202,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18222,7 +18214,7 @@
     {
       "path": "ncpdp/negative/02-semantic-empty-body.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18231,8 +18223,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-transaction",
-        "pending-adapter"
+        "no-transaction"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18244,7 +18235,7 @@
     {
       "path": "ncpdp/negative/03-truncated-mid-medication.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18253,8 +18244,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-element",
-        "pending-adapter"
+        "mid-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18266,7 +18256,7 @@
     {
       "path": "ncpdp/negative/04-wrong-format-hl7v2.hl7",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18276,8 +18266,7 @@
         "negative",
         "wrong-format",
         "hl7v2",
-        "RDE",
-        "pending-adapter"
+        "RDE"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18290,7 +18279,7 @@
     {
       "path": "ncpdp/negative/05-encoding-utf16.xml",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18299,8 +18288,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18312,7 +18300,7 @@
     {
       "path": "ncpdp/negative/06-semantic-unknown-telecom-version.dat",
       "format": "ncpdp",
-      "adapter_key": null,
+      "adapter_key": "ncpdp",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ncpdp",
@@ -18322,8 +18310,7 @@
         "negative",
         "semantic",
         "unknown-version",
-        "telecom",
-        "pending-adapter"
+        "telecom"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

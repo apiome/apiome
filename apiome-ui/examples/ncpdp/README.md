@@ -2,8 +2,8 @@
 
 Fixtures for **FMT-6.8** ([#5452](https://github.com/apiome/apiome/issues/5452)). NCPDP SCRIPT
 (e-prescribing, XML) and NCPDP Telecommunication (pharmacy claims, a delimited/positional format) are
-mandated in US pharmacy workflows. Narrow, but there is no competitor in our category. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+mandated in US pharmacy workflows. Narrow, but there is no competitor in our category. Entries are
+read by the shipped `ncpdp` adapter (`apiome-rest/src/app/ncpdp_import_source.py`).
 
 **Two sub-formats, one adapter.**
 

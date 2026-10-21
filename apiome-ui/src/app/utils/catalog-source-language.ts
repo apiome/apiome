@@ -59,6 +59,7 @@ const FORMAT_LANGUAGE: Readonly<Record<string, string>> = {
   cobolcopybook: 'plaintext',
   // Healthcare / finance / mainframe
   dicom: 'json',
+  ncpdp: 'xml',
   fhir: 'json',
   hl7v2: 'plaintext',
   hl7v3: 'xml',

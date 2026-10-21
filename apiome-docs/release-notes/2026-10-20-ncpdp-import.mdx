@@ -1,0 +1,22 @@
+---
+slug: ncpdp-import
+title: NCPDP SCRIPT and Telecom import
+description: E-prescriptions and pharmacy claims join the Catalog with each transaction type recorded.
+authors: [apiome]
+---
+
+Apiome now reads [**NCPDP SCRIPT and Telecom**](/bring-in/ncpdp-import) — the e-prescribing
+messages and pharmacy claims US pharmacies run on — beside the HL7, FHIR and DICOM formats it
+already imports.
+
+{/* truncate */}
+
+- **Both sub-formats, one importer.** SCRIPT XML messages (`NewRx`, `RxFill`, `RxChangeRequest`,
+  `CancelRx`, `Status`…) and Telecommunication D.0 request transmissions (`B1` billing, `B2`
+  reversal…) are told apart by how they open.
+- **Transaction types recorded.** Each SCRIPT message's transaction is detected per message, and a
+  Telecom transmission's transaction code and declared versus observed transaction count are kept.
+- **Native structure, no patient data.** SCRIPT elements and Telecom segments become record types;
+  no value enters the schema, and the analysis follows the value-visibility policy.
+- **Honest boundaries.** The capability panel names the versions read — any SCRIPT version,
+  Telecom D.0 only — and states that no NCPDP implementation guide was consulted.

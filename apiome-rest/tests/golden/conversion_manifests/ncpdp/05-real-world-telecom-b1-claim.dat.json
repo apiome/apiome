@@ -1,0 +1,3294 @@
+{
+  "adapter": "ncpdp",
+  "conversion_mode": "lossy",
+  "corpus_path": "ncpdp/05-real-world-telecom-b1-claim.dat",
+  "manifest": {
+    "bounds": {
+      "maxAnalysisEdges": 200,
+      "maxConstructEdges": 2000
+    },
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edges": [
+      {
+        "count": 8,
+        "detail": "named types carried from the source into components.schemas",
+        "evidence": [],
+        "id": "checklist:components.schemas",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:components.schemas",
+        "status": "retained",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no construct is marked deprecated",
+        "evidence": [],
+        "id": "checklist:deprecated",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:deprecated",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain request/response examples",
+        "evidence": [],
+        "id": "checklist:examples",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:examples",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain external-documentation links",
+        "evidence": [],
+        "id": "checklist:externalDocs",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:externalDocs",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain contact information",
+        "evidence": [],
+        "id": "checklist:info.contact",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.contact",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source carries no top-level API description",
+        "evidence": [],
+        "id": "checklist:info.description",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.description",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain license information",
+        "evidence": [],
+        "id": "checklist:info.license",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.license",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "title carried from the source",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/title"
+          }
+        ],
+        "id": "checklist:info.title",
+        "reason": null,
+        "remediation": null,
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:info.title",
+        "status": "retained",
+        "target": "target:/info/title"
+      },
+      {
+        "count": 1,
+        "detail": "source declares no API version; a placeholder was emitted",
+        "evidence": [
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/info/version"
+          }
+        ],
+        "id": "checklist:info.version",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:info.version",
+        "status": "dropped",
+        "target": "target:/info/version"
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:operation.metadata",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:operation.metadata",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares parameters",
+        "evidence": [],
+        "id": "checklist:parameters",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:parameters",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines types only; there are no operations to route",
+        "evidence": [],
+        "id": "checklist:paths",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:paths",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation carries a request body",
+        "evidence": [],
+        "id": "checklist:requestBody",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:requestBody",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source defines no operations",
+        "evidence": [],
+        "id": "checklist:responses",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:responses",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "the canonical model does not retain security schemes or requirements",
+        "evidence": [],
+        "id": "checklist:security",
+        "reason": "emitter_unsupported",
+        "remediation": "apiome's converter does not yet place this construct in the OpenAPI document; the source detail is intact and a later converter version can carry it.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:security",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source declares no servers; the base URL is unknown",
+        "evidence": [],
+        "id": "checklist:servers",
+        "reason": "source_incomplete",
+        "remediation": "Supply the missing detail — re-convert with --title / --api-version / --server, or complete the source artifact and re-import it.",
+        "scope": "checklist",
+        "severity": "warn",
+        "source": "source:checklist:servers",
+        "status": "dropped",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "source is not OpenAPI 3.2",
+        "evidence": [],
+        "id": "checklist:source.openapi-version",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:source.openapi-version",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 0,
+        "detail": "no operation declares tags",
+        "evidence": [],
+        "id": "checklist:tags",
+        "reason": "not_applicable",
+        "remediation": "No action needed — the source has no such construct.",
+        "scope": "checklist",
+        "severity": "info",
+        "source": "source:checklist:tags",
+        "status": "not-applicable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D2"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D2",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D3"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D3"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D3",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D3",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D3"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D5"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D5"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D5",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D5",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D5"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D6"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D6"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D6",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D6",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D6"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D7"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D7"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D7",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D7",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D7"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.D8"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D8"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.D8",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.D8",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D8"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.DE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DE"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.DE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.DE",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.DF"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DF"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.DF",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.DF",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DF"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.E1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E1"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.E1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.E1",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.E7"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E7"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.E7",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.E7",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E7"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment.EM"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/EM"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.ClaimSegment.EM",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment.EM",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/EM"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment.C1"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C1"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.InsuranceSegment.C1",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment.C1",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C1"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment.C2"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C2"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.InsuranceSegment.C2",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment.C2",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C2"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment.CC"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CC"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.InsuranceSegment.CC",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment.CC",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CC"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment.CD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CD"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.InsuranceSegment.CD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment.CD",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment.FO"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/FO"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.InsuranceSegment.FO",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment.FO",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/FO"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment.C4"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C4"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PatientSegment.C4",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment.C4",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/C4"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment.C5"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C5"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PatientSegment.C5",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment.C5",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/C5"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment.CA"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CA"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PatientSegment.CA",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment.CA",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CA"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment.CB"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CB"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PatientSegment.CB",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment.CB",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CB"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment.CP"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CP"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PatientSegment.CP",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment.CP",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CP"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PrescriberSegment.DB"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DB"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PrescriberSegment.DB",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PrescriberSegment.DB",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DB"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PrescriberSegment.DR"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DR"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PrescriberSegment.DR",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PrescriberSegment.DR",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DR"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PrescriberSegment.EZ"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/EZ"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PrescriberSegment.EZ",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PrescriberSegment.EZ",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/EZ"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment.D9"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/D9"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PricingSegment.D9",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment.D9",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/D9"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment.DC"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DC"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PricingSegment.DC",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment.DC",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DC"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment.DN"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DN"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PricingSegment.DN",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment.DN",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DN"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment.DQ"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DQ"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PricingSegment.DQ",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment.DQ",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DQ"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment.DU"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DU"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.PricingSegment.DU",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment.DU",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DU"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TelecomTransmission.header"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/header"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TelecomTransmission.header",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TelecomTransmission.header",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/header"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TelecomTransmission.insurance"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/insurance"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TelecomTransmission.insurance",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TelecomTransmission.insurance",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/insurance"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TelecomTransmission.patient"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/patient"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TelecomTransmission.patient",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TelecomTransmission.patient",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/patient"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TelecomTransmission.transactions"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/transactions"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TelecomTransmission.transactions",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TelecomTransmission.transactions",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/transactions"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.Transaction.claim"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.Transaction/properties/claim"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.Transaction.claim",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.Transaction.claim",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/claim"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.Transaction.prescriber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.Transaction/properties/prescriber"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.Transaction.prescriber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.Transaction.prescriber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/prescriber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.Transaction.pricing"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.Transaction/properties/pricing"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.Transaction.pricing",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.Transaction.pricing",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/pricing"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.binNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/binNumber"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.binNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.binNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/binNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.dateOfService"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/dateOfService"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.dateOfService",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.dateOfService",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/dateOfService"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.processorControlNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/processorControlNumber"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.processorControlNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.processorControlNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/processorControlNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.serviceProviderId"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderId"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.serviceProviderId",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.serviceProviderId",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderId"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderIdQualifier"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderIdQualifier"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/softwareVendorCertificationId"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/softwareVendorCertificationId"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.transactionCode"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCode"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.transactionCode",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.transactionCode",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCode"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.transactionCount"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCount"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.transactionCount",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.transactionCount",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCount"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader.versionReleaseNumber"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/versionReleaseNumber"
+          }
+        ],
+        "id": "construct:field:NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/versionReleaseNumber"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.ClaimSegment"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.ClaimSegment"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.ClaimSegment",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.ClaimSegment",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.ClaimSegment"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.InsuranceSegment"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.InsuranceSegment"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.InsuranceSegment",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.InsuranceSegment",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PatientSegment"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PatientSegment"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.PatientSegment",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PatientSegment",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PatientSegment"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PrescriberSegment"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PrescriberSegment"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.PrescriberSegment",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PrescriberSegment",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.PricingSegment"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.PricingSegment"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.PricingSegment",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.PricingSegment",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.PricingSegment"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TelecomTransmission"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TelecomTransmission"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.TelecomTransmission",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TelecomTransmission",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.Transaction"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.Transaction"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.Transaction",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.Transaction",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.Transaction"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "NCPDP-Telecom.TransactionHeader"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/NCPDP-Telecom.TransactionHeader"
+          }
+        ],
+        "id": "construct:type:NCPDP-Telecom.TransactionHeader",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:NCPDP-Telecom.TransactionHeader",
+        "status": "retained",
+        "target": "target:/components/schemas/NCPDP-Telecom.TransactionHeader"
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.implementation_guide_validation, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.implementation_guide_validation",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.implementation_guide_validation",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.script_source_positions, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.script_source_positions",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.script_source_positions",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.telecom_data_dictionary, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.telecom_data_dictionary",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.telecom_data_dictionary",
+        "status": "unavailable",
+        "target": null
+      },
+      {
+        "count": 1,
+        "detail": "the ncpdp analyzer does not model ncpdp.telecom_response_transmissions, so the conversion could not have carried it even if the source declared it",
+        "evidence": [],
+        "id": "analysis:unsupported:ncpdp.telecom_response_transmissions",
+        "reason": "source_parse_limit",
+        "remediation": "apiome's analyzer could not fully read this from the source; the source data itself may be intact. Re-import once analyzer support lands.",
+        "scope": "analysis",
+        "severity": "info",
+        "source": "source:analysis:ncpdp.telecom_response_transmissions",
+        "status": "unavailable",
+        "target": null
+      }
+    ],
+    "manifest_hash": "[volatile]",
+    "nodes": [
+      {
+        "construct_key": "ncpdp.implementation_guide_validation",
+        "id": "source:analysis:ncpdp.implementation_guide_validation",
+        "kind": "source",
+        "label": "ncpdp.implementation_guide_validation",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.implementation_guide_validation",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.script_source_positions",
+        "id": "source:analysis:ncpdp.script_source_positions",
+        "kind": "source",
+        "label": "ncpdp.script_source_positions",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.script_source_positions",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.telecom_data_dictionary",
+        "id": "source:analysis:ncpdp.telecom_data_dictionary",
+        "kind": "source",
+        "label": "ncpdp.telecom_data_dictionary",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.telecom_data_dictionary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ncpdp.telecom_response_transmissions",
+        "id": "source:analysis:ncpdp.telecom_response_transmissions",
+        "kind": "source",
+        "label": "ncpdp.telecom_response_transmissions",
+        "source": {
+          "construct_kind": "analysis",
+          "native_id": null,
+          "native_name": "ncpdp.telecom_response_transmissions",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "components.schemas",
+        "id": "source:checklist:components.schemas",
+        "kind": "source",
+        "label": "Component schemas",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Component schemas",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "deprecated",
+        "id": "source:checklist:deprecated",
+        "kind": "source",
+        "label": "Deprecation flags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Deprecation flags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "examples",
+        "id": "source:checklist:examples",
+        "kind": "source",
+        "label": "Examples",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Examples",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "externalDocs",
+        "id": "source:checklist:externalDocs",
+        "kind": "source",
+        "label": "External docs",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "External docs",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.contact",
+        "id": "source:checklist:info.contact",
+        "kind": "source",
+        "label": "Contact info",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Contact info",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.description",
+        "id": "source:checklist:info.description",
+        "kind": "source",
+        "label": "API description",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API description",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.license",
+        "id": "source:checklist:info.license",
+        "kind": "source",
+        "label": "License",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "License",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.title",
+        "id": "source:checklist:info.title",
+        "kind": "source",
+        "label": "API title",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API title",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "info.version",
+        "id": "source:checklist:info.version",
+        "kind": "source",
+        "label": "API version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "API version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "operation.metadata",
+        "id": "source:checklist:operation.metadata",
+        "kind": "source",
+        "label": "Operation id / summary",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Operation id / summary",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "parameters",
+        "id": "source:checklist:parameters",
+        "kind": "source",
+        "label": "Parameters",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Parameters",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "paths",
+        "id": "source:checklist:paths",
+        "kind": "source",
+        "label": "Paths & methods",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Paths & methods",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "requestBody",
+        "id": "source:checklist:requestBody",
+        "kind": "source",
+        "label": "Request body",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Request body",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "responses",
+        "id": "source:checklist:responses",
+        "kind": "source",
+        "label": "Responses",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Responses",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "security",
+        "id": "source:checklist:security",
+        "kind": "source",
+        "label": "Security schemes",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Security schemes",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "servers",
+        "id": "source:checklist:servers",
+        "kind": "source",
+        "label": "Servers",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Servers",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "source.openapi-version",
+        "id": "source:checklist:source.openapi-version",
+        "kind": "source",
+        "label": "Source OpenAPI version",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Source OpenAPI version",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "tags",
+        "id": "source:checklist:tags",
+        "kind": "source",
+        "label": "Tags",
+        "source": {
+          "construct_kind": "checklist",
+          "native_id": null,
+          "native_name": "Tags",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment",
+        "kind": "source",
+        "label": "ClaimSegment",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "ClaimSegment",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D2",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D2",
+        "kind": "source",
+        "label": "D2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D3",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D3",
+        "kind": "source",
+        "label": "D3",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D3",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D5",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D5",
+        "kind": "source",
+        "label": "D5",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D5",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D6",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D6",
+        "kind": "source",
+        "label": "D6",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D6",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D7",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D7",
+        "kind": "source",
+        "label": "D7",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D7",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D8",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.D8",
+        "kind": "source",
+        "label": "D8",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D8",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.DE",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.DE",
+        "kind": "source",
+        "label": "DE",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.DF",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.DF",
+        "kind": "source",
+        "label": "DF",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DF",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.E1",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.E1",
+        "kind": "source",
+        "label": "E1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.E7",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.E7",
+        "kind": "source",
+        "label": "E7",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "E7",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.EM",
+        "id": "source:construct:NCPDP-Telecom.ClaimSegment.EM",
+        "kind": "source",
+        "label": "EM",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "EM",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment",
+        "kind": "source",
+        "label": "InsuranceSegment",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "InsuranceSegment",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.C1",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment.C1",
+        "kind": "source",
+        "label": "C1",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "C1",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.C2",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment.C2",
+        "kind": "source",
+        "label": "C2",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "C2",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.CC",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment.CC",
+        "kind": "source",
+        "label": "CC",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CC",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.CD",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment.CD",
+        "kind": "source",
+        "label": "CD",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.FO",
+        "id": "source:construct:NCPDP-Telecom.InsuranceSegment.FO",
+        "kind": "source",
+        "label": "FO",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "FO",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment",
+        "kind": "source",
+        "label": "PatientSegment",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PatientSegment",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.C4",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment.C4",
+        "kind": "source",
+        "label": "C4",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "C4",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.C5",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment.C5",
+        "kind": "source",
+        "label": "C5",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "C5",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CA",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment.CA",
+        "kind": "source",
+        "label": "CA",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CA",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CB",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment.CB",
+        "kind": "source",
+        "label": "CB",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CB",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CP",
+        "id": "source:construct:NCPDP-Telecom.PatientSegment.CP",
+        "kind": "source",
+        "label": "CP",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CP",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment",
+        "id": "source:construct:NCPDP-Telecom.PrescriberSegment",
+        "kind": "source",
+        "label": "PrescriberSegment",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PrescriberSegment",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.DB",
+        "id": "source:construct:NCPDP-Telecom.PrescriberSegment.DB",
+        "kind": "source",
+        "label": "DB",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DB",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.DR",
+        "id": "source:construct:NCPDP-Telecom.PrescriberSegment.DR",
+        "kind": "source",
+        "label": "DR",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DR",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.EZ",
+        "id": "source:construct:NCPDP-Telecom.PrescriberSegment.EZ",
+        "kind": "source",
+        "label": "EZ",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "EZ",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment",
+        "kind": "source",
+        "label": "PricingSegment",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PricingSegment",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.D9",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment.D9",
+        "kind": "source",
+        "label": "D9",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "D9",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DC",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment.DC",
+        "kind": "source",
+        "label": "DC",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DC",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DN",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment.DN",
+        "kind": "source",
+        "label": "DN",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DN",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DQ",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment.DQ",
+        "kind": "source",
+        "label": "DQ",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DQ",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DU",
+        "id": "source:construct:NCPDP-Telecom.PricingSegment.DU",
+        "kind": "source",
+        "label": "DU",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "DU",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission",
+        "id": "source:construct:NCPDP-Telecom.TelecomTransmission",
+        "kind": "source",
+        "label": "TelecomTransmission",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "TelecomTransmission",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.header",
+        "id": "source:construct:NCPDP-Telecom.TelecomTransmission.header",
+        "kind": "source",
+        "label": "header",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "header",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.insurance",
+        "id": "source:construct:NCPDP-Telecom.TelecomTransmission.insurance",
+        "kind": "source",
+        "label": "insurance",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "insurance",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.patient",
+        "id": "source:construct:NCPDP-Telecom.TelecomTransmission.patient",
+        "kind": "source",
+        "label": "patient",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "patient",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.transactions",
+        "id": "source:construct:NCPDP-Telecom.TelecomTransmission.transactions",
+        "kind": "source",
+        "label": "transactions",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "transactions",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction",
+        "id": "source:construct:NCPDP-Telecom.Transaction",
+        "kind": "source",
+        "label": "Transaction",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "Transaction",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.claim",
+        "id": "source:construct:NCPDP-Telecom.Transaction.claim",
+        "kind": "source",
+        "label": "claim",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "claim",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.prescriber",
+        "id": "source:construct:NCPDP-Telecom.Transaction.prescriber",
+        "kind": "source",
+        "label": "prescriber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "prescriber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.pricing",
+        "id": "source:construct:NCPDP-Telecom.Transaction.pricing",
+        "kind": "source",
+        "label": "pricing",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "pricing",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader",
+        "kind": "source",
+        "label": "TransactionHeader",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "TransactionHeader",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.binNumber",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.binNumber",
+        "kind": "source",
+        "label": "binNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "binNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.dateOfService",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.dateOfService",
+        "kind": "source",
+        "label": "dateOfService",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "dateOfService",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.processorControlNumber",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.processorControlNumber",
+        "kind": "source",
+        "label": "processorControlNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "processorControlNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.serviceProviderId",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.serviceProviderId",
+        "kind": "source",
+        "label": "serviceProviderId",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "serviceProviderId",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+        "kind": "source",
+        "label": "serviceProviderIdQualifier",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "serviceProviderIdQualifier",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+        "kind": "source",
+        "label": "softwareVendorCertificationId",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "softwareVendorCertificationId",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.transactionCode",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.transactionCode",
+        "kind": "source",
+        "label": "transactionCode",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "transactionCode",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.transactionCount",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.transactionCount",
+        "kind": "source",
+        "label": "transactionCount",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "transactionCount",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+        "id": "source:construct:NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+        "kind": "source",
+        "label": "versionReleaseNumber",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "versionReleaseNumber",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D2",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D2",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D3",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D3",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D3",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D3",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D5",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D5",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D5",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D5",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D6",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D6",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D6",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D6",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D7",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D7",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D7",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D7",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.D8",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D8",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D8",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/D8",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.DE",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DE",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DE",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.DF",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DF",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DF",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/DF",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.E1",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E1",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.E7",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E7",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E7",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/E7",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.ClaimSegment.EM",
+        "id": "target:/components/schemas/NCPDP-Telecom.ClaimSegment/properties/EM",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/EM",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.ClaimSegment/properties/EM",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.C1",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C1",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C1",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C1",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.C2",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C2",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C2",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/C2",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.CC",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CC",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CC",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CC",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.CD",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CD",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/CD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.InsuranceSegment.FO",
+        "id": "target:/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/FO",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/FO",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.InsuranceSegment/properties/FO",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.C4",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/C4",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C4",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C4",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.C5",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/C5",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C5",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/C5",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CA",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CA",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CA",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CA",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CB",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CB",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CB",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CB",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PatientSegment.CP",
+        "id": "target:/components/schemas/NCPDP-Telecom.PatientSegment/properties/CP",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CP",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PatientSegment/properties/CP",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment",
+        "id": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PrescriberSegment",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PrescriberSegment",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.DB",
+        "id": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DB",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DB",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DB",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.DR",
+        "id": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DR",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DR",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/DR",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PrescriberSegment.EZ",
+        "id": "target:/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/EZ",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/EZ",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PrescriberSegment/properties/EZ",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.D9",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/D9",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/D9",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/D9",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DC",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DC",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DC",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DC",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DN",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DN",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DN",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DN",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DQ",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DQ",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DQ",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DQ",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.PricingSegment.DU",
+        "id": "target:/components/schemas/NCPDP-Telecom.PricingSegment/properties/DU",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DU",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.PricingSegment/properties/DU",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission",
+        "id": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TelecomTransmission",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TelecomTransmission",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.header",
+        "id": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/header",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/header",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/header",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.insurance",
+        "id": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/insurance",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/insurance",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/insurance",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.patient",
+        "id": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/patient",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/patient",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/patient",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TelecomTransmission.transactions",
+        "id": "target:/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/transactions",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/transactions",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TelecomTransmission/properties/transactions",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction",
+        "id": "target:/components/schemas/NCPDP-Telecom.Transaction",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.Transaction",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.Transaction",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.claim",
+        "id": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/claim",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.Transaction/properties/claim",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.Transaction/properties/claim",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.prescriber",
+        "id": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/prescriber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.Transaction/properties/prescriber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.Transaction/properties/prescriber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.Transaction.pricing",
+        "id": "target:/components/schemas/NCPDP-Telecom.Transaction/properties/pricing",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.Transaction/properties/pricing",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.Transaction/properties/pricing",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.binNumber",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/binNumber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/binNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/binNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.dateOfService",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/dateOfService",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/dateOfService",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/dateOfService",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.processorControlNumber",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/processorControlNumber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/processorControlNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/processorControlNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.serviceProviderId",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderId",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderId",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderId",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderIdQualifier",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderIdQualifier",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/serviceProviderIdQualifier",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/softwareVendorCertificationId",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/softwareVendorCertificationId",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/softwareVendorCertificationId",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.transactionCode",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCode",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCode",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCode",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.transactionCount",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCount",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCount",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/transactionCount",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+        "id": "target:/components/schemas/NCPDP-Telecom.TransactionHeader/properties/versionReleaseNumber",
+        "kind": "target",
+        "label": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/versionReleaseNumber",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/NCPDP-Telecom.TransactionHeader/properties/versionReleaseNumber",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.title",
+        "id": "target:/info/title",
+        "kind": "target",
+        "label": "/info/title",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/title",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "info.version",
+        "id": "target:/info/version",
+        "kind": "target",
+        "label": "/info/version",
+        "source": null,
+        "target": {
+          "json_pointer": "/info/version",
+          "native_path": null
+        }
+      }
+    ],
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 4,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 4,
+      "checklist": 18,
+      "construct": 53,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "ncpdp",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 46,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "ncpdp.implementation_guide_validation",
+          "ncpdp.script_source_positions",
+          "ncpdp.telecom_data_dictionary",
+          "ncpdp.telecom_response_transmissions"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-ncpdp-05-real-world-telecom-b1-claim-dat",
+      "source_format": "ncpdp",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 55,
+      "transformed": 0,
+      "unavailable": 4
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 75,
+    "truncated": false
+  },
+  "snapshot_version": 1,
+  "summary": {
+    "conversion_mode": "lossy",
+    "defaults": {},
+    "dropped_edge_count": 0,
+    "edge_count": 75,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 130,
+    "reason_counts": {
+      "destination_unsupported": 0,
+      "emitter_unsupported": 5,
+      "not_applicable": 8,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 3,
+      "source_parse_limit": 4,
+      "target_tool_unavailable": 0
+    },
+    "schema_version": "1.0.0",
+    "scope_counts": {
+      "analysis": 4,
+      "checklist": 18,
+      "construct": 53,
+      "loss": 0
+    },
+    "source": {
+      "analysis": {
+        "analyzer_key": "ncpdp",
+        "analyzer_version": "1.0.0",
+        "available": true,
+        "node_count": 46,
+        "status": "available",
+        "status_reason": null,
+        "truncated": false,
+        "unsupported_constructs": [
+          "ncpdp.implementation_guide_validation",
+          "ncpdp.script_source_positions",
+          "ncpdp.telecom_data_dictionary",
+          "ncpdp.telecom_response_transmissions"
+        ]
+      },
+      "paradigm": "data_schema",
+      "project_id": "corpus-ncpdp-05-real-world-telecom-b1-claim-dat",
+      "source_format": "ncpdp",
+      "source_protocol": null,
+      "source_version_label": null,
+      "version_record_id": "rev-corpus"
+    },
+    "status_counts": {
+      "dropped": 3,
+      "inferred": 0,
+      "not-applicable": 13,
+      "retained": 55,
+      "transformed": 0,
+      "unavailable": 4
+    },
+    "target_format": "openapi-3.1",
+    "tool_versions": {
+      "apiome-rest": "[volatile]",
+      "conversion-mode": "lossy",
+      "emitter": "openapi-3.1",
+      "fidelity-analyzer": "MFI-22.3"
+    },
+    "total_constructs": 75,
+    "truncated": false,
+    "worst_severity": "warn"
+  }
+}

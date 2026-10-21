@@ -141,6 +141,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   tradacoms: 'TRADACOMS',
   nacha: 'NACHA ACH',
   dicom: 'DICOM',
+  ncpdp: 'NCPDP SCRIPT / Telecom',
   idoc: 'SAP IDoc',
   'swift-mt': 'SWIFT MT',
   iso20022: 'ISO 20022',

@@ -1,0 +1,519 @@
+{
+  "adapter": "ncpdp",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "ncpdp",
+        "evidence": [
+          "Transaction header version/release `D0`, transaction code `B2` (Reversal)."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "ncpdp-telecom",
+        "label": "NCPDP Telecommunication D.0"
+      },
+      "ncpdp_sub_format": "telecom",
+      "ncpdp_telecom": {
+        "segments": [
+          "AM07"
+        ],
+        "separators": [
+          "GS"
+        ],
+        "transactionCode": "B2",
+        "transactionCount": {
+          "compared": true,
+          "consistent": true,
+          "declared": 1,
+          "observed": 1
+        },
+        "transactionName": "Reversal",
+        "version": "D0"
+      },
+      "ncpdp_transaction_types": [
+        "B2"
+      ],
+      "ncpdp_transactions": [
+        {
+          "index": 1,
+          "segments": [
+            "AM07"
+          ],
+          "transactionName": "Reversal",
+          "transactionType": "B2"
+        }
+      ]
+    },
+    "format": "ncpdp",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "NCPDP Telecom D.0 B2 (Reversal)",
+      "namespace": "NCPDP-Telecom"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "NCPDP Telecom D.0 B2 (Reversal)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Claim segment (AM07)",
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "segment",
+          "ncpdp_segment_id": "AM07"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "402-D2 Prescription/Service Reference Number",
+            "extras": {
+              "ncpdp_data_element": "402-D2",
+              "ncpdp_field_id": "D2"
+            },
+            "field_number": 2,
+            "key": "NCPDP-Telecom.ClaimSegment.D2",
+            "name": "D2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "403-D3 Fill Number",
+            "extras": {
+              "ncpdp_data_element": "403-D3",
+              "ncpdp_field_id": "D3"
+            },
+            "field_number": 5,
+            "key": "NCPDP-Telecom.ClaimSegment.D3",
+            "name": "D3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "407-D7 Product/Service ID",
+            "extras": {
+              "ncpdp_data_element": "407-D7",
+              "ncpdp_field_id": "D7"
+            },
+            "field_number": 4,
+            "key": "NCPDP-Telecom.ClaimSegment.D7",
+            "name": "D7",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "436-E1 Product/Service ID Qualifier",
+            "extras": {
+              "ncpdp_data_element": "436-E1",
+              "ncpdp_field_id": "E1"
+            },
+            "field_number": 3,
+            "key": "NCPDP-Telecom.ClaimSegment.E1",
+            "name": "E1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "455-EM Prescription/Service Reference Number Qualifier",
+            "extras": {
+              "ncpdp_data_element": "455-EM",
+              "ncpdp_field_id": "EM"
+            },
+            "field_number": 1,
+            "key": "NCPDP-Telecom.ClaimSegment.EM",
+            "name": "EM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-Telecom.ClaimSegment",
+        "key_type": null,
+        "kind": "record",
+        "name": "ClaimSegment",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "An NCPDP Telecommunication D.0 request",
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "structure"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Fixed transaction header",
+            "extras": {
+              "ncpdp_kind": "structure"
+            },
+            "field_number": 1,
+            "key": "NCPDP-Telecom.TelecomTransmission.header",
+            "name": "header",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-Telecom.TransactionHeader",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Transactions in transmission order",
+            "extras": {
+              "ncpdp_kind": "structure"
+            },
+            "field_number": 2,
+            "key": "NCPDP-Telecom.TelecomTransmission.transactions",
+            "name": "transactions",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "NCPDP-Telecom.Transaction",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-Telecom.TelecomTransmission",
+        "key_type": null,
+        "kind": "record",
+        "name": "TelecomTransmission",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "One transaction of the transmission",
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "structure"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Claim segment (AM07)",
+            "extras": {
+              "ncpdp_kind": "structure"
+            },
+            "field_number": 1,
+            "key": "NCPDP-Telecom.Transaction.claim",
+            "name": "claim",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NCPDP-Telecom.ClaimSegment",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-Telecom.Transaction",
+        "key_type": null,
+        "kind": "record",
+        "name": "Transaction",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The fixed 56-character request transaction header",
+        "enum_values": [],
+        "extras": {
+          "ncpdp_kind": "header"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "101-A1 BIN Number",
+            "extras": {
+              "ncpdp_length": 6,
+              "ncpdp_position": [
+                1,
+                6
+              ]
+            },
+            "field_number": 1,
+            "key": "NCPDP-Telecom.TransactionHeader.binNumber",
+            "name": "binNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "401-D1 Date of Service",
+            "extras": {
+              "ncpdp_length": 8,
+              "ncpdp_position": [
+                39,
+                46
+              ]
+            },
+            "field_number": 8,
+            "key": "NCPDP-Telecom.TransactionHeader.dateOfService",
+            "name": "dateOfService",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "104-A4 Processor Control Number",
+            "extras": {
+              "ncpdp_length": 10,
+              "ncpdp_position": [
+                11,
+                20
+              ]
+            },
+            "field_number": 4,
+            "key": "NCPDP-Telecom.TransactionHeader.processorControlNumber",
+            "name": "processorControlNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "201-B1 Service Provider ID",
+            "extras": {
+              "ncpdp_length": 15,
+              "ncpdp_position": [
+                24,
+                38
+              ]
+            },
+            "field_number": 7,
+            "key": "NCPDP-Telecom.TransactionHeader.serviceProviderId",
+            "name": "serviceProviderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "202-B2 Service Provider ID Qualifier",
+            "extras": {
+              "ncpdp_length": 2,
+              "ncpdp_position": [
+                22,
+                23
+              ]
+            },
+            "field_number": 6,
+            "key": "NCPDP-Telecom.TransactionHeader.serviceProviderIdQualifier",
+            "name": "serviceProviderIdQualifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "110-AK Software Vendor/Certification ID",
+            "extras": {
+              "ncpdp_length": 10,
+              "ncpdp_position": [
+                47,
+                56
+              ]
+            },
+            "field_number": 9,
+            "key": "NCPDP-Telecom.TransactionHeader.softwareVendorCertificationId",
+            "name": "softwareVendorCertificationId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "103-A3 Transaction Code",
+            "extras": {
+              "ncpdp_length": 2,
+              "ncpdp_position": [
+                9,
+                10
+              ]
+            },
+            "field_number": 3,
+            "key": "NCPDP-Telecom.TransactionHeader.transactionCode",
+            "name": "transactionCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "109-A9 Transaction Count",
+            "extras": {
+              "ncpdp_length": 1,
+              "ncpdp_position": [
+                21,
+                21
+              ]
+            },
+            "field_number": 5,
+            "key": "NCPDP-Telecom.TransactionHeader.transactionCount",
+            "name": "transactionCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "102-A2 Version/Release Number",
+            "extras": {
+              "ncpdp_length": 2,
+              "ncpdp_position": [
+                7,
+                8
+              ]
+            },
+            "field_number": 2,
+            "key": "NCPDP-Telecom.TransactionHeader.versionReleaseNumber",
+            "name": "versionReleaseNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NCPDP-Telecom.TransactionHeader",
+        "key_type": null,
+        "kind": "record",
+        "name": "TransactionHeader",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ncpdp/06-typical-telecom-b2-reversal.dat",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ncpdp"
+  },
+  "fingerprint": "sha256:e6f92cd3863782068400bbc7301fb837471a1508870ab142d463275b7de30c09",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "eee2b20843b050f4a04914c5febbaa02c3c4ad829b4d5b7d38705d8ddeacc575",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

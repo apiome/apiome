@@ -5,6 +5,41 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.412.0] - 2026-10-20
+
+### Added
+- **NCPDP SCRIPT and Telecom import (#5452, FMT-6.8)**: US pharmacy messaging — e-prescribing and pharmacy claims.
+  - The new **`ncpdp`** import source (formats `ncpdp` / `ncpdp-script` / `ncpdp-telecom`; `.xml` / `.dat` /
+    `.ncpdp`; file / URL / paste / fileset) reads two sub-formats, told apart by how they open
+    (`app/ncpdp_parser.py`): SCRIPT XML (`app/ncpdp_script.py`) — a `Message` or `Messages` root in the
+    `http://www.ncpdp.org/schema/SCRIPT` namespace — and Telecommunication D.0 request transmissions
+    (`app/ncpdp_telecom.py`) — the 56-character fixed transaction header and `AM` segments of two-character fields.
+  - **Transaction type detected and recorded.** A SCRIPT message's transaction is its `Body`'s one child (`NewRx`,
+    `RxFill`, `RxChangeRequest`, `CancelRx`, `Status`, `Error`…), detected per message; an unrecognised name is read
+    and stated (`ncpdp.transaction_not_recognized`). A Telecom transmission's transaction code (`B1` billing, `B2`
+    reversal…) is read from its header. Both are recorded in `ncpdp_transactions` / `ncpdp_transaction_types`, and
+    the sub-format is lifted into provenance as `format_metadata.formatProfile` (`ncpdp-script` / `ncpdp-telecom`).
+  - `app/ncpdp_normalizer.py`: SCRIPT imports as one record type per element name inferred across every message
+    (attributes, repeats and optionality included); Telecom as `TelecomTransmission` → `Transaction` → one record
+    per segment id with a field per field id (described by its data element where a short label table knows it),
+    plus a positional `TransactionHeader`. No payload value enters the model.
+  - `app/ncpdp_analysis.py` (analyzer `ncpdp@1.0.0`) builds on the shared EDI analysis base: the Telecom header's
+    transaction count is recorded as declared versus observed (compared for B1/B2/B3,
+    `ncpdp.transaction_count_mismatch` info warning), segments carry byte offsets, values follow the
+    value-visibility policy, and `implementation_guide_statement` names the guides not consulted.
+  - A SCRIPT fileset is read as one conversation (root plus its SCRIPT siblings); `relatesToResolved` records
+    whether a response's `RelatesToMessageID` names a message in the upload.
+  - Refusals: XML or Telecom header cut short `INPUT_TRUNCATED`; ill-formed XML, a segment without its `AM` id, a
+    field without a two-character id or a line break in a transmission `INPUT_MALFORMED`; an empty `Body`, a `Body`
+    with several transactions, a missing `Header`/`Body`, a Telecom version other than `D0`, an unknown transaction
+    code or a header with no segments `INPUT_SEMANTIC_INVALID`; anything else `FORMAT_MISMATCH`; encoding faults
+    are left code-less.
+  - Capability registry `ncpdp` seed (registry version `22`) naming the supported versions (any SCRIPT version,
+    recorded; Telecom D.0 only, checked) and stating no implementation guide was consulted; version coverage for
+    `ncpdp`; the `ncpdp/` corpus is activated with canonical, analysis and conversion goldens and a matrix row.
+    Corpus fixture `ncpdp/05-real-world-telecom-b1-claim.dat` lost a stray field between its header and first
+    segment.
+
 ## [1.411.0] - 2026-10-20
 
 ### Added
