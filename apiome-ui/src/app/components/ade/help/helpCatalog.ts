@@ -711,6 +711,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mt103', 'mt202', 'mt940', 'mx', 'pacs.008', 'camt.053', 'cbpr+', 'payments'],
   },
   {
+    id: 'hl7v3-cda-import',
+    title: 'Import HL7 v3 / CDA documents',
+    summary: 'Catalog CCDs, discharge summaries and other C-CDA clinical documents.',
+    page: 'apiome-docs/docs/bring-in/hl7v3-cda-import.md',
+    section: 'reference',
+    keywords: ['c-cda', 'ccd', 'clinical document', 'templateid', 'discharge summary', 'healthcare'],
+  },
+  {
     id: 'agents-manifest-import',
     title: 'Import agentic-web site manifests',
     summary: "Catalog a site's agents.json, agent.json, agents.txt or llms.txt and its discovery seeds.",

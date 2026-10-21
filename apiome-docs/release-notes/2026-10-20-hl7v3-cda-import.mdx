@@ -1,0 +1,20 @@
+---
+slug: hl7v3-cda-import
+title: Import HL7 v3 / CDA documents
+description: CCDs, discharge summaries and other C-CDA documents join HL7 v2 and FHIR.
+authors: [apiome]
+---
+
+Apiome now reads [**HL7 v3 / CDA**](/bring-in/hl7v3-cda-import) clinical documents, completing the HL7
+set beside HL7 v2 and FHIR.
+
+{/* truncate */}
+
+- **Header and sections, kept.** The `ClinicalDocument` header and its `component` → `section` →
+  `entry` hierarchy become record types, and the section tree is recorded beside the model.
+- **RIM data types as canonical types.** `II`, `CD`, `CE`, `IVL_TS`, `AD`, `PN`, `PQ`, `TEL`, `ED` and
+  the rest map to records with their declared members; anything else is a declared parsing limit.
+- **Template ids are claims.** Every `templateId` is recorded as an asserted conformance claim, marked
+  **not validated** — an unknown template imports like any other.
+- **Transmission wrappers.** Upload a wrapper with its payload as an archive and Apiome follows the
+  reference to the CDA document.

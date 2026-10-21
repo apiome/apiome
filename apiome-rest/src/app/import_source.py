@@ -1206,6 +1206,9 @@ def load_builtin_import_sources() -> None:
     # ``swift_mt_import_source`` (FMT-6.3) self-registers the ``swift-mt`` adapter — SWIFT MT103,
     # MT202 (COV), MT940 and MT942 messages — and its normalizer.
     from . import swift_mt_import_source as _swift_mt  # noqa: F401
+    # ``hl7v3_import_source`` (FMT-6.4) self-registers the ``hl7v3`` adapter — HL7 v3 / CDA
+    # documents (CCD, discharge summary …), optionally inside a transmission wrapper — and its normalizer.
+    from . import hl7v3_import_source as _hl7v3  # noqa: F401
     from . import oncrpc_import_source as _oncrpc  # noqa: F401
     from . import corbaidl_import_source as _corbaidl  # noqa: F401
     from . import odata_import_source as _odata  # noqa: F401

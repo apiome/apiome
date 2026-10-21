@@ -60,6 +60,7 @@ const FORMAT_LANGUAGE: Readonly<Record<string, string>> = {
   // Healthcare / finance / mainframe
   fhir: 'json',
   hl7v2: 'plaintext',
+  hl7v3: 'xml',
   edix12: 'plaintext',
   edifact: 'plaintext',
   idoc: 'plaintext',

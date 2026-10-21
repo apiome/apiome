@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.408.0] - 2026-10-20
+
+### Added
+- **HL7 v3 / CDA import (#5448, FMT-6.4)**: the new **`hl7v3`** import source (formats `hl7v3`, `cda`, `c-cda`,
+  `hl7-cda`; `.xml` / `.cda`; file / URL / paste / fileset) for CDA R2 documents — CCDs, discharge summaries and
+  the other C-CDA document types — completing the HL7 set beside HL7 v2 and FHIR:
+  - `app/hl7v3_parser.py` — reads the `ClinicalDocument` through the hardened XML reader: the header, the
+    structured body's `component` → `section` → `entry` tree, and every `templateId` as an asserted claim. An HL7
+    v3 transmission wrapper (`MCCI_IN000002UV01` …) is read as a fileset root whose payload `reference` names the
+    member holding the document. Refusals carry intake codes: truncation `INPUT_TRUNCATED`, ill-formed XML
+    `INPUT_MALFORMED`, a non-v3 root `FORMAT_MISMATCH`, a header missing id / code / effectiveTime / recordTarget /
+    author / custodian / body `INPUT_SEMANTIC_INVALID`, a dangling narrative `#anchor` or a wrapper without its
+    payload `INPUT_REFERENCE_UNRESOLVED`; encoding faults are left for the pipeline to name.
+  - `app/hl7v3_datatypes.py` — the stated RIM data-type table (`II`, `CD`, `CE`, `CV`, `CS`, `TS`, `IVL_TS`, `PQ`,
+    `IVL_PQ`, `RTO_PQ_PQ`, `INT`, `REAL`, `BL`, `AD`, `PN`, `TEL`, `ED`, `ST`, `SC`, `ON`), the CDA R2 element
+    bindings, the C-CDA R2.1 template names and the "not validated" claim statement.
+  - `app/hl7v3_normalizer.py` — the document's shape inferred from the instance: one record type per RIM class
+    (context-named relationships such as `StructuredBodyComponent` / `OrganizerComponent`), data types as records
+    with their declared members, `xsi:type` choices as unions, unmapped data types as declared limits
+    (`cda_datatype_limits`). Extras: `cda_sections`, `cda_template_claims` (each `status: "asserted"`,
+    `validated: false`), `cda_template_statement`, `cda_document_code`, `cda_type_id`, `cda_transmission`.
+  - Reviewed `hl7v3` capability entry stating that template ids are asserted, not validated (registry contract
+    `18`), version coverage, corpus activation of the 14 `apiome-ui/examples/hl7v3/` fixtures, goldens and the
+    round-trip matrix row (import-only, 45 xfails).
+
 ## [1.407.0] - 2026-10-20
 
 ### Added

@@ -3,7 +3,7 @@
 Fixtures for **FMT-6.4** ([#5448](https://github.com/apiome/apiome/issues/5448)). Apiome supports HL7
 v2 and FHIR but not HL7 v3 / Clinical Document Architecture — the XML document standard required by
 several national health programmes and still the format of record for clinical documents (CCD,
-C-CDA). Entries carry `adapter_key: null` and the `pending-adapter` tag.
+C-CDA). Every entry is read by the `hl7v3` adapter (`apiome-rest/src/app/hl7v3_import_source.py`).
 
 **Detection marker.** Root element `ClinicalDocument` in the `urn:hl7-org:v3` namespace, with a
 `typeId` of `2.16.840.1.113883.1.3` / `POCD_HD000040`.
