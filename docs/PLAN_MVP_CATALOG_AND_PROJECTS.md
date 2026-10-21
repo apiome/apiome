@@ -215,7 +215,7 @@ Roadmap candidates.
 
 MCP is held back.
 
-- [ ] [#3637](https://github.com/apiome/apiome/issues/3637) V2-MCP External MCP Catalog (consume third-party MCP servers)
+- [x] [#3637](https://github.com/apiome/apiome/issues/3637) V2-MCP External MCP Catalog (consume third-party MCP servers)
 - [x] [#3714](https://github.com/apiome/apiome/issues/3714) V2-MCP-27.4 Catalog analytics dashboard — delivered by #4645
 - [x] [#5724](https://github.com/apiome/apiome/issues/5724) AAU-5.3 MCP Registry API endpoint over the MCP server catalog
 
@@ -223,13 +223,13 @@ MCP is held back.
 
 More import formats.
 
-- [ ] [#5406](https://github.com/apiome/apiome/issues/5406) FMT-EPIC-6 B2B / EDI / vertical depth
+- [x] [#5406](https://github.com/apiome/apiome/issues/5406) FMT-EPIC-6 B2B / EDI / vertical depth
 - [ ] [#5407](https://github.com/apiome/apiome/issues/5407) FMT-EPIC-7 Gateway & infrastructure route sources
 - [ ] [#5408](https://github.com/apiome/apiome/issues/5408) FMT-EPIC-8 Code-first & type-system sources
 - [ ] [#5409](https://github.com/apiome/apiome/issues/5409) FMT-EPIC-9 Industrial, IoT & semantic web
 - [ ] [#5410](https://github.com/apiome/apiome/issues/5410) FMT-EPIC-10 Client workspace long tail
 - [ ] [#5411](https://github.com/apiome/apiome/issues/5411) FMT-EPIC-11 Mainframe long tail
-- [ ] [#5447](https://github.com/apiome/apiome/issues/5447) FMT-6.3 SWIFT MT import with MT↔MX projection notes
+- [x] [#5447](https://github.com/apiome/apiome/issues/5447) FMT-6.3 SWIFT MT import with MT↔MX projection notes
 - [ ] [#5477](https://github.com/apiome/apiome/issues/5477) FMT-10.3 SoapUI / ReadyAPI project import
 - [ ] [#5484](https://github.com/apiome/apiome/issues/5484) FMT-11.3 VSAM catalog and CICS BMS map import
 
