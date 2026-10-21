@@ -102,6 +102,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "fix",
         "flatbuffers",
         "hl7v2",
+        "hl7v3",
         "iso20022",
         "iso8583",
         "json-schema",

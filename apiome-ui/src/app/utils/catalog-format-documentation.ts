@@ -74,6 +74,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   // Healthcare
   fhir: 'https://hl7.org/fhir/R4/',
   hl7v2: 'https://www.hl7.org/implement/standards/product_brief.cfm?product_id=185',
+  hl7v3: 'https://www.hl7.org/implement/standards/product_brief.cfm?product_id=7',
 
   // Finance / B2B
   edix12: 'https://x12.org/products/industry-data-standards',

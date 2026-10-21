@@ -138,7 +138,7 @@ The corpus holds **1465 files** across **107 format directories**. Every file ha
 | `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 11 |
 | `fix-orchestra/` | FIX Orchestra (pending #5453) | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
-| `hl7v3/` | HL7 v3 / CDA (pending #5448) | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
+| `hl7v3/` | HL7 v3 / CDA | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
 | `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
 | `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 12 |
 | `iso8583/` | ISO 8583 | message | `mti` + numbered `dataElements` | 11 |
@@ -1066,24 +1066,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-fix-order.fix` | — | `hl7v2` (no guarantee) | invalid | `negative`, `wrong-format`, `fix-message` |
 | `negative/05-encoding-utf16-ack.hl7` | — | `hl7v2` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
 
-### `hl7v3/` — HL7 v3 / CDA (pending #5448)
+### `hl7v3/` — HL7 v3 / CDA
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-clinical-document.xml` | minimal | `hl7v3` ≥ 0.9 | valid | `header`, `recordTarget`, `structuredBody`, `narrative-section`, `pending-adapter` |
-| `02-typical-ccd.xml` | typical | `hl7v3` ≥ 0.9 | valid | `CCD`, `templateId`, `sections`, `entries`, `substanceAdministration`, `narrative-table`, `pending-adapter` |
-| `03-composition-nested-entries.xml` | composition | `hl7v3` ≥ 0.9 | valid | `organizer`, `entryRelationship`, `nested-observations`, `translation`, `referenceRange`, `pending-adapter` |
-| `04-stress-rim-datatypes.xml` | stress | `hl7v3` ≥ 0.9 | valid | `II`, `CD`, `IVL-TS`, `AD`, `PN`, `TEL`, `PQ`, `RTO-PQ-PQ`, `ED`, `nullFlavor`, `sdtc-extension`, `relatedDocument`, `pending-adapter` |
-| `05-real-world-discharge-summary.xml` | real-world | `hl7v3` ≥ 0.9 | valid | `discharge-summary`, `encompassingEncounter`, `informationRecipient`, `coded-diagnosis`, `procedure`, `pending-adapter` |
-| `06-typical-unknown-template.xml` ⚠ | typical | `hl7v3` ≥ 0.9 | valid | `unknown-templateId`, `asserted-conformance`, `local-section`, `pending-adapter` |
-| `07-transmission-set/discharge-summary.xml` ⚠ | multi-file (member) | `hl7v3` (no guarantee) | valid | `cda`, `payload`, `sections`, `pending-adapter` |
-| `07-transmission-set/transmission-wrapper.xml` | multi-file (root) | `hl7v3` ≥ 0.9 | valid | `transmission-wrapper`, `MCCI`, `sender-receiver`, `payload-reference`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-section.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-record-target.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `semantic`, `missing-participations`, `pending-adapter` |
-| `negative/03-truncated-mid-entry.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-fhir.json` ⚠ | — | `hl7v3` (no guarantee) | invalid | `negative`, `wrong-format`, `fhir`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-narrative-reference.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `dangling-narrative-anchor`, `pending-adapter` |
+| `01-minimal-clinical-document.xml` | minimal | `hl7v3` ≥ 0.9 | valid | `header`, `recordTarget`, `structuredBody`, `narrative-section` |
+| `02-typical-ccd.xml` | typical | `hl7v3` ≥ 0.9 | valid | `CCD`, `templateId`, `sections`, `entries`, `substanceAdministration`, `narrative-table` |
+| `03-composition-nested-entries.xml` | composition | `hl7v3` ≥ 0.9 | valid | `organizer`, `entryRelationship`, `nested-observations`, `translation`, `referenceRange` |
+| `04-stress-rim-datatypes.xml` | stress | `hl7v3` ≥ 0.9 | valid | `II`, `CD`, `IVL-TS`, `AD`, `PN`, `TEL`, `PQ`, `RTO-PQ-PQ`, `ED`, `nullFlavor`, `sdtc-extension`, `relatedDocument` |
+| `05-real-world-discharge-summary.xml` | real-world | `hl7v3` ≥ 0.9 | valid | `discharge-summary`, `encompassingEncounter`, `informationRecipient`, `coded-diagnosis`, `procedure` |
+| `06-typical-unknown-template.xml` ⚠ | typical | `hl7v3` ≥ 0.9 | valid | `unknown-templateId`, `asserted-conformance`, `local-section` |
+| `07-transmission-set/discharge-summary.xml` ⚠ | multi-file (member) | `hl7v3` (no guarantee) | valid | `cda`, `payload`, `sections` |
+| `07-transmission-set/transmission-wrapper.xml` | multi-file (root) | `hl7v3` ≥ 0.9 | valid | `transmission-wrapper`, `MCCI`, `sender-receiver`, `payload-reference` |
+| `negative/01-syntactic-unclosed-section.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-record-target.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `semantic`, `missing-participations` |
+| `negative/03-truncated-mid-entry.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-fhir.json` ⚠ | — | `hl7v3` (no guarantee) | invalid | `negative`, `wrong-format`, `fhir` |
+| `negative/05-encoding-utf16.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-narrative-reference.xml` | — | `hl7v3` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `dangling-narrative-anchor` |
 
 > ⚠ **`06-typical-unknown-template.xml`** — The FMT-6.4 acceptance case: template ids are asserted claims, so an unrecognised OID must import with a 'not validated' statement rather than failing.
 

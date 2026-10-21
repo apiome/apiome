@@ -551,6 +551,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="IDoc XML (EDI_DC40 control record)",
     ),
+    "hl7v3": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="CDA R2 (POCD_HD000040), including C-CDA R2.1 documents",
+                format_key="hl7v3",
+                support=VersionSupport.UNGATED,
+                note="Every CDA document is read by one CDA R2 reader: the typeId is recorded, not "
+                "branched on, and C-CDA template versions are recorded as asserted claims rather "
+                "than selecting different rules.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "swift-mt": VersionCoverage(
         reads=[
             FormatVersion(

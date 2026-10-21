@@ -237,7 +237,7 @@
       "marker": "`MSH|^~\\&|` message header"
     },
     "hl7v3": {
-      "label": "HL7 v3 / CDA (pending #5448)",
+      "label": "HL7 v3 / CDA",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace"
@@ -12027,7 +12027,7 @@
     {
       "path": "hl7v3/01-minimal-clinical-document.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12037,8 +12037,7 @@
         "header",
         "recordTarget",
         "structuredBody",
-        "narrative-section",
-        "pending-adapter"
+        "narrative-section"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12049,7 +12048,7 @@
     {
       "path": "hl7v3/02-typical-ccd.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12061,8 +12060,7 @@
         "sections",
         "entries",
         "substanceAdministration",
-        "narrative-table",
-        "pending-adapter"
+        "narrative-table"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12073,7 +12071,7 @@
     {
       "path": "hl7v3/03-composition-nested-entries.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12084,8 +12082,7 @@
         "entryRelationship",
         "nested-observations",
         "translation",
-        "referenceRange",
-        "pending-adapter"
+        "referenceRange"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12096,7 +12093,7 @@
     {
       "path": "hl7v3/04-stress-rim-datatypes.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12114,8 +12111,7 @@
         "ED",
         "nullFlavor",
         "sdtc-extension",
-        "relatedDocument",
-        "pending-adapter"
+        "relatedDocument"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12126,7 +12122,7 @@
     {
       "path": "hl7v3/05-real-world-discharge-summary.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12137,8 +12133,7 @@
         "encompassingEncounter",
         "informationRecipient",
         "coded-diagnosis",
-        "procedure",
-        "pending-adapter"
+        "procedure"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12149,7 +12144,7 @@
     {
       "path": "hl7v3/06-typical-unknown-template.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12158,8 +12153,7 @@
       "features": [
         "unknown-templateId",
         "asserted-conformance",
-        "local-section",
-        "pending-adapter"
+        "local-section"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12171,7 +12165,7 @@
     {
       "path": "hl7v3/07-transmission-set/discharge-summary.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12180,8 +12174,7 @@
       "features": [
         "cda",
         "payload",
-        "sections",
-        "pending-adapter"
+        "sections"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12194,7 +12187,7 @@
     {
       "path": "hl7v3/07-transmission-set/transmission-wrapper.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12204,8 +12197,7 @@
         "transmission-wrapper",
         "MCCI",
         "sender-receiver",
-        "payload-reference",
-        "pending-adapter"
+        "payload-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -12217,7 +12209,7 @@
     {
       "path": "hl7v3/negative/01-syntactic-unclosed-section.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12226,8 +12218,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12239,7 +12230,7 @@
     {
       "path": "hl7v3/negative/02-semantic-no-record-target.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12248,8 +12239,7 @@
       "features": [
         "negative",
         "semantic",
-        "missing-participations",
-        "pending-adapter"
+        "missing-participations"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12261,7 +12251,7 @@
     {
       "path": "hl7v3/negative/03-truncated-mid-entry.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12270,8 +12260,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12283,7 +12272,7 @@
     {
       "path": "hl7v3/negative/04-wrong-format-fhir.json",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12292,8 +12281,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "fhir",
-        "pending-adapter"
+        "fhir"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12306,7 +12294,7 @@
     {
       "path": "hl7v3/negative/05-encoding-utf16.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12315,8 +12303,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12328,7 +12315,7 @@
     {
       "path": "hl7v3/negative/06-unresolvable-narrative-reference.xml",
       "format": "hl7v3",
-      "adapter_key": null,
+      "adapter_key": "hl7v3",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hl7v3",
@@ -12337,8 +12324,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "dangling-narrative-anchor",
-        "pending-adapter"
+        "dangling-narrative-anchor"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

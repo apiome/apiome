@@ -1460,6 +1460,49 @@
       "waivers": {}
     },
     {
+      "format_key": "hl7v3",
+      "label": "HL7 v3 / CDA",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "hl7v3"
+      ],
+      "corpus_directories": [
+        "hl7v3"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "hl7v3"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "http-file",
       "label": "HTTP Request File",
       "paradigm": "rest",
@@ -3053,7 +3096,6 @@
     "envoy-xds",
     "fix-orchestra",
     "haproxy",
-    "hl7v3",
     "hoppscotch",
     "ims",
     "istio",

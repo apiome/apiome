@@ -88,6 +88,7 @@ from .payload_analysis import (
     ValueVisibility,
 )
 from .payload_analyzer import GENERIC_ANALYZER_KEY
+from .hl7v3_datatypes import TEMPLATE_CLAIM_STATEMENT
 from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -143,7 +144,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "17"
+REGISTRY_VERSION = "18"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1139,6 +1140,72 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "match its documented shape is kept as lines and flagged, never refused.",
             "SWIFT network-validated rules and usage rules are not evaluated, BICs are not looked "
             "up, and CHK/MAC trailers are recorded but not verified.",
+        ],
+    ),
+    # FMT-6.4 (#5448): HL7 v3 / CDA, seeded because a ``templateId`` is a conformance *claim* the
+    # document makes about itself, and the capability panel must say it is recorded, not validated.
+    "hl7v3": _Seed(
+        # The payload analysis is still the format-blind walk, so the first three fields restate
+        # what derivation produces. The reviewed judgements are the projection and the notes.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.PATH_ONLY,
+            note=(
+                "Elements locate by structural path and sibling ordinal only "
+                "(``ClinicalDocument/component/structuredBody/component[2]/section``). The "
+                "hardened XML reader exposes no positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "A clinical document is patient data: names, identifiers, dates and observation "
+                "values are leaf values, so the stored record carries whatever the "
+                "value-visibility policy allows — the default keeps only presence and length."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "hl7v3.datatype_part_qualifiers",
+                "hl7v3.narrative_markup",
+                "hl7v3.unmapped_datatypes",
+                "hl7v3.vocabulary_bindings",
+            ],
+            note=(
+                "The canonical model is the document's shape inferred from the instance: one "
+                "record type per RIM class, every occurrence folded together (a member that "
+                "repeats anywhere is a list, one missing anywhere is nullable). Relationships "
+                "that depend on their parent are named by it (``StructuredBodyComponent``, "
+                "``OrganizerComponent``), so the header → body → section → entry hierarchy reads "
+                "from the types. The RIM data types II, CD, CE, CV, CS, TS, IVL_TS, PQ, IVL_PQ, "
+                "RTO_PQ_PQ, INT, REAL, BL, AD, PN, TEL and ED become record types with their "
+                "declared members, ST, SC, ON and the section narrative become strings, and a "
+                "member written with several ``xsi:type`` s becomes a union. Any other data type "
+                "is a declared parsing limit: kept as text and listed in ``cda_datatype_limits``. "
+                "The section hierarchy (codes, titles, template claims, the statement each entry "
+                "holds) is recorded beside the model in ``cda_sections``."
+            ),
+        ),
+        notes=[
+            "Template ids are recorded as asserted conformance claims (``cda_template_claims``, "
+            "each ``validated: false``). " + TEMPLATE_CLAIM_STATEMENT,
+            "A template id the importer does not recognise imports like any other; a recognised "
+            "one gains its C-CDA R2.1 name and nothing more.",
+            "CDA R2 documents are read (``typeId`` POCD_HD000040). The header must carry id, code, "
+            "effectiveTime, recordTarget, author, custodian and a body component, and every "
+            "narrative ``reference`` (``#anchor``) must resolve to an ``ID`` in the document; "
+            "nothing else is checked against the CDA schema or any implementation guide, and codes "
+            "are recorded as written, never looked up in a terminology.",
+            "An HL7 v3 transmission wrapper (for example ``MCCI_IN000002UV01``) is read as the root "
+            "of an archive: its payload reference names the member holding the CDA document, and "
+            "the wrapper is recorded in ``cda_transmission``. A wrapper uploaded alone is refused.",
         ],
     ),
     "relaxng": _Seed(

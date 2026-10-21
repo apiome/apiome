@@ -135,6 +135,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   cobolcopybook: 'COBOL Copybook',
   fhir: 'FHIR',
   hl7v2: 'HL7 v2',
+  hl7v3: 'HL7 v3 / CDA',
   edix12: 'EDI X12',
   edifact: 'UN/EDIFACT',
   idoc: 'SAP IDoc',

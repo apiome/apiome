@@ -1,0 +1,3031 @@
+{
+  "adapter": "hl7v3",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "cda_body": "structuredBody",
+      "cda_datatype_limits": [],
+      "cda_document_code": {
+        "code": "34133-9",
+        "codeSystem": "2.16.840.1.113883.6.1",
+        "codeSystemName": "LOINC",
+        "displayName": "Summarization of Episode Note"
+      },
+      "cda_sections": [
+        {
+          "code": {
+            "code": "48765-2",
+            "codeSystem": "2.16.840.1.113883.6.1",
+            "displayName": "Allergies"
+          },
+          "entries": [
+            {
+              "path": "ClinicalDocument/component/structuredBody/component[1]/section/entry",
+              "statement": "act",
+              "typeCode": "DRIV"
+            }
+          ],
+          "path": "ClinicalDocument/component/structuredBody/component[1]/section",
+          "sections": [],
+          "templateIds": [
+            {
+              "extension": "2015-08-01",
+              "root": "2.16.840.1.113883.10.20.22.2.6.1"
+            }
+          ],
+          "title": "Allergies and Intolerances"
+        },
+        {
+          "code": {
+            "code": "10160-0",
+            "codeSystem": "2.16.840.1.113883.6.1",
+            "displayName": "History of Medication Use"
+          },
+          "entries": [
+            {
+              "path": "ClinicalDocument/component/structuredBody/component[2]/section/entry",
+              "statement": "substanceAdministration",
+              "typeCode": "DRIV"
+            }
+          ],
+          "path": "ClinicalDocument/component/structuredBody/component[2]/section",
+          "sections": [],
+          "templateIds": [
+            {
+              "extension": "2014-06-09",
+              "root": "2.16.840.1.113883.10.20.22.2.1.1"
+            }
+          ],
+          "title": "Medications"
+        },
+        {
+          "code": {
+            "code": "11450-4",
+            "codeSystem": "2.16.840.1.113883.6.1",
+            "displayName": "Problem List"
+          },
+          "entries": [],
+          "path": "ClinicalDocument/component/structuredBody/component[3]/section",
+          "sections": [],
+          "templateIds": [
+            {
+              "extension": "2015-08-01",
+              "root": "2.16.840.1.113883.10.20.22.2.5.1"
+            }
+          ],
+          "title": "Problems"
+        }
+      ],
+      "cda_template_claims": [
+        {
+          "extension": "2015-08-01",
+          "name": "US Realm Header",
+          "path": "ClinicalDocument",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.1.1",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2015-08-01",
+          "name": "Continuity of Care Document (CCD)",
+          "path": "ClinicalDocument",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.1.2",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2015-08-01",
+          "name": "Allergies and Intolerances Section (entries required)",
+          "path": "ClinicalDocument/component/structuredBody/component[1]/section",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.2.6.1",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2015-08-01",
+          "name": "Allergy Concern Act",
+          "path": "ClinicalDocument/component/structuredBody/component[1]/section/entry/act",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.4.30",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2014-06-09",
+          "name": "Medications Section (entries required)",
+          "path": "ClinicalDocument/component/structuredBody/component[2]/section",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.2.1.1",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2014-06-09",
+          "name": "Medication Activity",
+          "path": "ClinicalDocument/component/structuredBody/component[2]/section/entry/substanceAdministration",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.4.16",
+          "status": "asserted",
+          "validated": false
+        },
+        {
+          "extension": "2015-08-01",
+          "name": "Problem Section (entries required)",
+          "path": "ClinicalDocument/component/structuredBody/component[3]/section",
+          "recognised": true,
+          "root": "2.16.840.1.113883.10.20.22.2.5.1",
+          "status": "asserted",
+          "validated": false
+        }
+      ],
+      "cda_template_statement": "Asserted by the document, not validated: a templateId records which implementation-guide template the document claims to conform to. Apiome reads the claim; it does not check the document against the template's constraints, and a recognised template name is not a conformance verdict.",
+      "cda_transmission": null,
+      "cda_type_id": {
+        "extension": "POCD_HD000040",
+        "root": "2.16.840.1.113883.1.3"
+      }
+    },
+    "format": "hl7v3",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Continuity of Care Document",
+      "namespace": "POCD_HD000040"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Continuity of Care Document",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 AD — Postal address",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "AD"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.AD.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "POCD_HD000040.AD.country",
+            "name": "country",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.AD.county",
+            "name": "county",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.AD.houseNumber",
+            "name": "houseNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "POCD_HD000040.AD.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "POCD_HD000040.AD.postalCode",
+            "name": "postalCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.AD.state",
+            "name": "state",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.AD.streetAddressLine",
+            "name": "streetAddressLine",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.AD.streetName",
+            "name": "streetName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.AD.use",
+            "name": "use",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "POCD_HD000040.AD.useablePeriod",
+            "name": "useablePeriod",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.IVL_TS",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.AD",
+        "key_type": null,
+        "kind": "record",
+        "name": "AD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "POCD_HD000040.Act.classCode",
+            "name": "classCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.Act.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CD",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.Act.effectiveTime",
+            "name": "effectiveTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.IVL_TS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.Act.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 2,
+            "key": "POCD_HD000040.Act.moodCode",
+            "name": "moodCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.Act.statusCode",
+            "name": "statusCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.Act.templateId",
+            "name": "templateId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Act",
+        "key_type": null,
+        "kind": "record",
+        "name": "Act",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.AssignedAuthor.assignedPerson",
+            "name": "assignedPerson",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.AssignedPerson",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.AssignedAuthor.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.AssignedAuthor.representedOrganization",
+            "name": "representedOrganization",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.RepresentedOrganization",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.AssignedAuthor",
+        "key_type": null,
+        "kind": "record",
+        "name": "AssignedAuthor",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.AssignedCustodian.representedCustodianOrganization",
+            "name": "representedCustodianOrganization",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.RepresentedCustodianOrganization",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.AssignedCustodian",
+        "key_type": null,
+        "kind": "record",
+        "name": "AssignedCustodian",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.AssignedPerson.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.PN",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.AssignedPerson",
+        "key_type": null,
+        "kind": "record",
+        "name": "AssignedPerson",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.Author.assignedAuthor",
+            "name": "assignedAuthor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.AssignedAuthor",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.Author.time",
+            "name": "time",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Author",
+        "key_type": null,
+        "kind": "record",
+        "name": "Author",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 BL — Boolean",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "BL"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.BL.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.BL.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.BL",
+        "key_type": null,
+        "kind": "record",
+        "name": "BL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 CD — Concept descriptor",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "CD"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.CD.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.CD.codeSystem",
+            "name": "codeSystem",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.CD.codeSystemName",
+            "name": "codeSystemName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.CD.codeSystemVersion",
+            "name": "codeSystemVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.CD.displayName",
+            "name": "displayName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "POCD_HD000040.CD.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.CD.originalText",
+            "name": "originalText",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.CD.translation",
+            "name": "translation",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "POCD_HD000040.CD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.CD",
+        "key_type": null,
+        "kind": "record",
+        "name": "CD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 CE — Coded with equivalents",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "CE"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.CE.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.CE.codeSystem",
+            "name": "codeSystem",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.CE.codeSystemName",
+            "name": "codeSystemName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.CE.codeSystemVersion",
+            "name": "codeSystemVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.CE.displayName",
+            "name": "displayName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "POCD_HD000040.CE.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.CE.originalText",
+            "name": "originalText",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.CE.translation",
+            "name": "translation",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "POCD_HD000040.CD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.CE",
+        "key_type": null,
+        "kind": "record",
+        "name": "CE",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 CS — Coded simple value",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "CS"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.CS.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.CS.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.CS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "CDA ClinicalDocument — Summarization of Episode Note",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "POCD_HD000040.ClinicalDocument.author",
+            "name": "author",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Author",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.ClinicalDocument.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CD",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 16,
+            "key": "POCD_HD000040.ClinicalDocument.component",
+            "name": "component",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.ClinicalDocumentComponent",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "POCD_HD000040.ClinicalDocument.confidentialityCode",
+            "name": "confidentialityCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CE",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 14,
+            "key": "POCD_HD000040.ClinicalDocument.custodian",
+            "name": "custodian",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Custodian",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 15,
+            "key": "POCD_HD000040.ClinicalDocument.documentationOf",
+            "name": "documentationOf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.DocumentationOf",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.ClinicalDocument.effectiveTime",
+            "name": "effectiveTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.ClinicalDocument.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "POCD_HD000040.ClinicalDocument.languageCode",
+            "name": "languageCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.ClinicalDocument.realmCode",
+            "name": "realmCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "POCD_HD000040.ClinicalDocument.recordTarget",
+            "name": "recordTarget",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.RecordTarget",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "POCD_HD000040.ClinicalDocument.setId",
+            "name": "setId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.ClinicalDocument.templateId",
+            "name": "templateId",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "POCD_HD000040.II",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.ClinicalDocument.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.ClinicalDocument.typeId",
+            "name": "typeId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "POCD_HD000040.ClinicalDocument.versionNumber",
+            "name": "versionNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.INT",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.ClinicalDocument",
+        "key_type": null,
+        "kind": "record",
+        "name": "ClinicalDocument",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.ClinicalDocumentComponent.structuredBody",
+            "name": "structuredBody",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.StructuredBody",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.ClinicalDocumentComponent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ClinicalDocumentComponent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.Consumable.manufacturedProduct",
+            "name": "manufacturedProduct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.ManufacturedProduct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Consumable",
+        "key_type": null,
+        "kind": "record",
+        "name": "Consumable",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.Custodian.assignedCustodian",
+            "name": "assignedCustodian",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.AssignedCustodian",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Custodian",
+        "key_type": null,
+        "kind": "record",
+        "name": "Custodian",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.DocumentationOf.serviceEvent",
+            "name": "serviceEvent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.ServiceEvent",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.DocumentationOf",
+        "key_type": null,
+        "kind": "record",
+        "name": "DocumentationOf",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.Entry.act",
+            "name": "act",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Act",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.Entry.substanceAdministration",
+            "name": "substanceAdministration",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.SubstanceAdministration",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "POCD_HD000040.Entry.typeCode",
+            "name": "typeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Entry",
+        "key_type": null,
+        "kind": "record",
+        "name": "Entry",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 II — Instance identifier",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "II"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.II.assigningAuthorityName",
+            "name": "assigningAuthorityName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.II.displayable",
+            "name": "displayable",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.II.extension",
+            "name": "extension",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.II.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.II.root",
+            "name": "root",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.II",
+        "key_type": null,
+        "kind": "record",
+        "name": "II",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 INT — Integer number",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "INT"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.INT.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.INT.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.INT",
+        "key_type": null,
+        "kind": "record",
+        "name": "INT",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 IVL_TS — Interval of points in time",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "IVL_TS"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.IVL_TS.center",
+            "name": "center",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.IVL_TS.high",
+            "name": "high",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.IVL_TS.low",
+            "name": "low",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.IVL_TS.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^\\d{4}(\\d{2}(\\d{2}(\\d{2}(\\d{2}(\\d{2}(\\.\\d+)?)?)?)?)?)?([+-]\\d{4})?$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.IVL_TS.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.IVL_TS.width",
+            "name": "width",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.PQ",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.IVL_TS",
+        "key_type": null,
+        "kind": "record",
+        "name": "IVL_TS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.LanguageCommunication.languageCode",
+            "name": "languageCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.LanguageCommunication.preferenceInd",
+            "name": "preferenceInd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.BL",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.LanguageCommunication",
+        "key_type": null,
+        "kind": "record",
+        "name": "LanguageCommunication",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.ManufacturedMaterial.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CD",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.ManufacturedMaterial",
+        "key_type": null,
+        "kind": "record",
+        "name": "ManufacturedMaterial",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "POCD_HD000040.ManufacturedProduct.classCode",
+            "name": "classCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.ManufacturedProduct.manufacturedMaterial",
+            "name": "manufacturedMaterial",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.ManufacturedMaterial",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.ManufacturedProduct",
+        "key_type": null,
+        "kind": "record",
+        "name": "ManufacturedProduct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 PN — Person name",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "PN"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.PN.family",
+            "name": "family",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.PN.given",
+            "name": "given",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.PN.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.PN.prefix",
+            "name": "prefix",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.PN.suffix",
+            "name": "suffix",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.PN.use",
+            "name": "use",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.PN.validTime",
+            "name": "validTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.IVL_TS",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.PN",
+        "key_type": null,
+        "kind": "record",
+        "name": "PN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 PQ — Physical quantity",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "PQ"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.PQ.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.PQ.unit",
+            "name": "unit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.PQ.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.PQ",
+        "key_type": null,
+        "kind": "record",
+        "name": "PQ",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.Patient.administrativeGenderCode",
+            "name": "administrativeGenderCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CE",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.Patient.birthTime",
+            "name": "birthTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.Patient.languageCommunication",
+            "name": "languageCommunication",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.LanguageCommunication",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.Patient.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.PN",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Patient",
+        "key_type": null,
+        "kind": "record",
+        "name": "Patient",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.PatientRole.addr",
+            "name": "addr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.AD",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.PatientRole.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.PatientRole.patient",
+            "name": "patient",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Patient",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.PatientRole.telecom",
+            "name": "telecom",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TEL",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.PatientRole",
+        "key_type": null,
+        "kind": "record",
+        "name": "PatientRole",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.RecordTarget.patientRole",
+            "name": "patientRole",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.PatientRole",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.RecordTarget",
+        "key_type": null,
+        "kind": "record",
+        "name": "RecordTarget",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.RepresentedCustodianOrganization.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.RepresentedCustodianOrganization.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.RepresentedCustodianOrganization.telecom",
+            "name": "telecom",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.TEL",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.RepresentedCustodianOrganization",
+        "key_type": null,
+        "kind": "record",
+        "name": "RepresentedCustodianOrganization",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.RepresentedOrganization.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.RepresentedOrganization.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.RepresentedOrganization",
+        "key_type": null,
+        "kind": "record",
+        "name": "RepresentedOrganization",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.Section.code",
+            "name": "code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CD",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.Section.entry",
+            "name": "entry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Entry",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.Section.templateId",
+            "name": "templateId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.Section.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.Section.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.Section",
+        "key_type": null,
+        "kind": "record",
+        "name": "Section",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "POCD_HD000040.ServiceEvent.classCode",
+            "name": "classCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.ServiceEvent.effectiveTime",
+            "name": "effectiveTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.IVL_TS",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.ServiceEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ServiceEvent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.StructuredBody.component",
+            "name": "component",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "POCD_HD000040.StructuredBodyComponent",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.StructuredBody",
+        "key_type": null,
+        "kind": "record",
+        "name": "StructuredBody",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.StructuredBodyComponent.section",
+            "name": "section",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Section",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.StructuredBodyComponent",
+        "key_type": null,
+        "kind": "record",
+        "name": "StructuredBodyComponent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 1,
+            "key": "POCD_HD000040.SubstanceAdministration.classCode",
+            "name": "classCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "POCD_HD000040.SubstanceAdministration.consumable",
+            "name": "consumable",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.Consumable",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "POCD_HD000040.SubstanceAdministration.doseQuantity",
+            "name": "doseQuantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.PQ",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "POCD_HD000040.SubstanceAdministration.effectiveTime",
+            "name": "effectiveTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.IVL_TS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "POCD_HD000040.SubstanceAdministration.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hl7v3_xml": "attribute"
+            },
+            "field_number": 2,
+            "key": "POCD_HD000040.SubstanceAdministration.moodCode",
+            "name": "moodCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "POCD_HD000040.SubstanceAdministration.statusCode",
+            "name": "statusCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.SubstanceAdministration.templateId",
+            "name": "templateId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "POCD_HD000040.II",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "POCD_HD000040.SubstanceAdministration",
+        "key_type": null,
+        "kind": "record",
+        "name": "SubstanceAdministration",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 TEL — Telecommunication address",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "TEL"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "POCD_HD000040.TEL.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.TEL.use",
+            "name": "use",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.TEL.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.TEL",
+        "key_type": null,
+        "kind": "record",
+        "name": "TEL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "HL7 v3 TS — Point in time",
+        "enum_values": [],
+        "extras": {
+          "hl7v3_datatype": "TS"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "POCD_HD000040.TS.nullFlavor",
+            "name": "nullFlavor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^\\d{4}(\\d{2}(\\d{2}(\\d{2}(\\d{2}(\\d{2}(\\.\\d+)?)?)?)?)?)?([+-]\\d{4})?$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "POCD_HD000040.TS.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "POCD_HD000040.TS",
+        "key_type": null,
+        "kind": "record",
+        "name": "TS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "hl7v3/02-typical-ccd.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 36
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "hl7v3"
+  },
+  "fingerprint": "sha256:04a2ba01354a2cdaa568bd74e762be9c0fcf18756ef5b3533019c1b282b3a7d5",
+  "lint": {
+    "findings": 156,
+    "grade": "F",
+    "report_fingerprint": "441ce56ef6d6e2d1119c77d289830c953e5a4626265144ccad601fb89b9772dc",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 133,
+      "warning": 23
+    }
+  },
+  "snapshot_version": 1
+}
