@@ -2,12 +2,9 @@ name: Apiome Docs
 
 # Runs the docs gate (`yarn docs:check`) on every pull request — documentation is part of the
 # definition of done (DOCS-1.13, #5630), and a change anywhere (an apiome-ui route, a REST endpoint)
-# can leave a page, a screenshot or a generated reference stale. Deploys the site to GitHub Pages
-# from `main`. The apiome-docs Docker image (nginx serving the static build) is built and
-# smoke-tested on pull requests that touch its inputs; apiome-docs-publish.yml pushes it to the
-# registry from `main`.
-#
-# One-time repository setting: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# can leave a page, a screenshot or a generated reference stale. The apiome-docs Docker image
+# (nginx serving the static build) is built and smoke-tested on pull requests that touch its
+# inputs; apiome-docs-publish.yml pushes it to the registry from `main`.
 
 on:
   push:
@@ -72,14 +69,14 @@ on:
       - 'scripts/package.json'
       # Stale-screenshot rule: a screenshot is stale when its route's source changed after it.
       - 'apiome-ui/src/**'
-  # Allow manual trigger (deploys when run on main)
+  # Allow manual trigger
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# One Pages deployment at a time; a newer push supersedes a queued one but never cancels a
-# deployment already in progress.
+# One run per ref at a time; a newer push supersedes a queued run but never cancels one in
+# progress.
 concurrency:
   group: apiome-docs-${{ github.ref }}
   cancel-in-progress: false
@@ -125,12 +122,6 @@ jobs:
       - name: Check and build the site
         run: yarn docs:check
 
-      - name: Upload Pages artifact
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: apiome-docs/build
-
   # The REST, CLI and MCP reference pages are generated from source (DOCS-1.11, #5628). Each
   # generator re-renders in memory with --check and fails when a committed page differs, so a
   # change to the OpenAPI document, the command tree or the tool registry cannot ship without
@@ -170,25 +161,6 @@ jobs:
 
       - name: CI action pages (diff-action / mock-action READMEs)
         run: node apiome-docs/scripts/sync-action-pages.mjs --check
-
-  deploy:
-    name: Deploy Apiome Docs to GitHub Pages
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [build, reference]
-    runs-on: self-hosted
-
-    permissions:
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
 
   # The gate runs on every docs-affecting pull request; the image only needs rebuilding when its own inputs moved.
   # (On `main`, apiome-docs-publish.yml decides that with its own path filter.)

@@ -152,13 +152,13 @@ Milestone: **RC6** (epic and every issue).
 - Two content instances: `docs/` (the guide) and a `release-notes/` blog instance (DOCS-1.12). Sidebars grouped by the product’s jobs, mirroring the rail: Getting started · Build · Bring in · Ship · Govern · Workspace & account · Admin & tools · Reference · Release notes.
 - Theme: Hive tokens from `docs/mockups/assets/hive.css` as Infima variables (navy ink, azure accent, honey ornament only), Inter + JetBrains Mono, the bee glyph as logo and favicon (`apiome-ui/public`), dark mode following the OS with a toggle, local search plugin (`@easyops-cn/docusaurus-search-local`) until Algolia is set up.
 - Scripts: `yarn docs:dev`, `yarn docs:build`, `yarn docs:serve`, `yarn docs:check` (DOCS-1.13); `onBrokenLinks: "throw"`, `onBrokenMarkdownLinks: "throw"`.
-- CI: `.github/workflows/apiome-docs.yml` builds on every PR touching `apiome-docs/**` or `docs/**`, deploys to GitHub Pages on `main` (`actions/deploy-pages`), same self-hosted runner conventions as `apiome-ui.yml`. Base URL and `trailingSlash` documented in the README.
+- CI: `.github/workflows/apiome-docs.yml` builds on every PR touching `apiome-docs/**` or `docs/**`; the site ships as the apiome-docs Docker image (`apiome-docs-publish.yml`), not GitHub Pages (removed — Pages is not enabled for the repo). Same self-hosted runner conventions as `apiome-ui.yml`. Base URL and `trailingSlash` documented in the README.
 - MDX components folder with `<Screenshot/>` placeholder (implemented in DOCS-1.3), `<Route/>` (renders a route badge), `<Kbd/>`.
 - The repository `README.md` and `docs/guide/README.md` link to the site; `docs/mockups/README.md` keeps pointing at the design mockups (design docs stay in the repo, not on the site).
 
 **Acceptance criteria.**
 - [x] `yarn workspace apiome-docs build` succeeds from a clean clone; `turbo run build` includes it
-- [x] Site deploys from `main` to GitHub Pages and the URL is recorded in `README.md` (`.github/workflows/apiome-docs.yml`; needs **Settings → Pages → Source: GitHub Actions** once)
+- [x] Site deploys from `main` as the apiome-docs Docker image (`.github/workflows/apiome-docs-publish.yml`); the GitHub Pages deploy was removed because Pages is not enabled for the repo
 - [x] Light and dark themes use Hive tokens; the bee mark is the logo and favicon; honey appears only as ornament
 - [x] Sidebar skeleton has the nine job groups with an index page each (content lands in DOCS-1.2 → 1.11)
 - [x] Broken links fail the build; the README explains how to run and write docs

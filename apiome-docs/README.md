@@ -1,7 +1,7 @@
 # apiome-docs — the Apiome documentation site
 
 The user documentation for Apiome, built with [Docusaurus 3](https://docusaurus.io/) (classic
-preset, TypeScript). Published at **<https://apiome.github.io/apiome/>**.
+preset, TypeScript). Published as the apiome-docs Docker image (see [Docker image](#docker-image)).
 
 ## Run it
 
@@ -198,9 +198,8 @@ favicon. Dark mode follows the operating system and can be toggled from the navb
 ## Deploy
 
 `.github/workflows/apiome-docs.yml` runs the tests, type-check and `yarn docs:check` on **every**
-pull request (DOCS-1.13), and deploys `apiome-docs/build` to GitHub Pages
-on every push to `main`. The repository's **Settings → Pages → Source** must be set to
-“GitHub Actions” once.
+pull request (DOCS-1.13) and on every push to `main`. The site is not deployed to GitHub Pages; it
+ships as the Docker image below.
 
 ### Docker image
 
