@@ -916,6 +916,49 @@
       "waivers": {}
     },
     {
+      "format_key": "dicom",
+      "label": "DICOM",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "dicom"
+      ],
+      "corpus_directories": [
+        "dicom"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "dicom"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "discovery",
       "label": "Google API Discovery",
       "paradigm": "rest",
@@ -3186,7 +3229,6 @@
     "consul",
     "cue",
     "dhall",
-    "dicom",
     "envoy-xds",
     "fix-orchestra",
     "haproxy",

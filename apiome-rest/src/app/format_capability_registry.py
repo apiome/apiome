@@ -92,6 +92,8 @@ from .payload_analyzer import GENERIC_ANALYZER_KEY
 from .hl7v3_datatypes import TEMPLATE_CLAIM_STATEMENT
 from .swift_mt_fields import MX_CORRESPONDENCE_DISCLAIMER
 from .nacha_analysis import NACHA_OPERATING_RULES_STATEMENT
+from .dicom_dictionary import PIXEL_DATA_BOUNDARY_STATEMENT
+from .dicom_normalizer import DICOM_VALUE_STATEMENT
 from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -147,7 +149,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "20"
+REGISTRY_VERSION = "21"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -1037,6 +1039,75 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "its own adapter.",
             profile_statement(EANCOM),
             profile_statement(ODETTE),
+        ],
+    ),
+    # FMT-6.7 (#5451): DICOM, seeded because the panel must state the pixel-data boundary — pixel
+    # data is never read, stored or analysed — and that no patient-identifying value is stored at
+    # the default value-visibility policy.
+    "dicom": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "Dataset → attribute, in DICOM's own vocabulary: each attribute with its tag, VR, VM and "
+            "length; a sequence (`SQ`) → its items → their attributes, to any depth; a Structured "
+            "Report's `ContentSequence` items as content items with their value type, relationship "
+            "type and concept name. A Part 10 file adds its file meta group, and every pixel-data "
+            "element is a `pixel-data` node with `read: false`."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "A Part 10 element carries the byte offset and length of its header and value "
+                "(offsets into the inflated dataset for a deflated transfer syntax), beside its tag "
+                "path (``(0040,A730)[1]/(0040,A043)``). A DICOM JSON attribute carries its JSON "
+                "pointer only."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Attribute values are patient data — names, identifiers, dates, UIDs, report text "
+                "— so the stored record carries whatever the value-visibility policy allows; the "
+                "default keeps only presence and length, so no patient-identifying value is stored. "
+                "Tags, VRs, multiplicities, the SOP class, transfer syntax, modality and an SR "
+                "content item's value type and concept name are structure and are always shown. "
+                "The verbatim upload is not kept as the version's source."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "dicom.byte_offsets",
+                "dicom.pixel_data",
+                "dicom.private_attribute_meaning",
+                "dicom.sr_content_values",
+            ],
+            note=(
+                "The canonical model is DICOM's information model as the instances realise it: one "
+                "record type per SOP class (or per query level, for a query result), one field per "
+                "attribute keyed by its tag and typed by its VR — an alias over string, integer or "
+                "number, with `PN` a record of its component groups — a list where the VM allows "
+                "several values, and one nested record type per sequence tag, folded across every "
+                "item (`ContentSequence` folds into a recursive `ContentSequenceItem`). The Part 10 "
+                "file meta group is its own type. A Structured Report's content tree is recorded "
+                "beside the model as a hierarchy (``dicom_sr_content_trees``). "
+                + DICOM_VALUE_STATEMENT
+            ),
+        ),
+        notes=[
+            PIXEL_DATA_BOUNDARY_STATEMENT,
+            "Attributes PS3.15 Annex E lists for de-identification, and every private attribute, are "
+            "marked ``dicom_patient_identifying`` on their field; the mark describes the attribute, "
+            "since no value is in the model at all.",
+            "Read: Part 10 files in implicit or explicit VR little endian, explicit VR big endian, "
+            "deflated explicit VR little endian and every encapsulated transfer syntax (only its "
+            "pixel data is compressed, and that is never read); the DICOM JSON model (PS3.18 Annex "
+            "F), one dataset or an array; and archives of DICOM JSON documents. A Part 10 file "
+            "inside an archive is skipped and stated, because archive members are read as text.",
+            "Not checked: IOD module requirements (Type 1/2/3), SR templates and the codes a "
+            "content item names. A dataset must name its SOP Class UID (0008,0016) unless it is a "
+            "query/retrieve result; a file without the `DICM` magic is refused, as is one that "
+            "stops inside an element.",
         ],
     ),
     # FMT-6.6 (#5450): NACHA ACH, seeded because its control totals must be stated as declared

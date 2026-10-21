@@ -3,7 +3,8 @@
 Fixtures for **FMT-6.7** ([#5451](https://github.com/apiome/apiome/issues/5451)). DICOM is the imaging
 half of healthcare and sits beside FHIR in every hospital estate; its information model — SOP classes,
 IODs, modules, attributes with tags and value representations — is a genuine schema that nothing in
-the API-catalog market describes. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+the API-catalog market describes. Entries run through the `dicom` adapter
+(`apiome-rest/src/app/dicom_import_source.py`).
 
 > **Pixel data is never read, never stored, never analyzed.** This is a schema importer, not an image
 > tool. `04-stress-part10-sequences-and-pixeldata.dcm` deliberately *contains* a `(7FE0,0010)` element

@@ -1,0 +1,1991 @@
+{
+  "adapter": "dicom",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "dicom_datasets": [
+        {
+          "attributeCount": 39,
+          "deflated": false,
+          "elementCount": 46,
+          "form": "part10",
+          "kind": "instance",
+          "maxSequenceDepth": 2,
+          "mediaStorageMatchesSopClass": true,
+          "mediaStorageSopClassUid": "1.2.840.10008.5.1.4.1.1.2",
+          "modality": "CT",
+          "pixelData": [
+            {
+              "declaredLength": 8,
+              "path": "(7FE0,0010)",
+              "read": false,
+              "tag": "(7FE0,0010)",
+              "vr": "OW"
+            }
+          ],
+          "privateAttributeCount": 1,
+          "sequenceCount": 3,
+          "sopClassName": "CT Image Storage",
+          "sopClassUid": "1.2.840.10008.5.1.4.1.1.2",
+          "specificCharacterSet": [
+            "ISO_IR 192"
+          ],
+          "transferSyntaxName": "Explicit VR Little Endian",
+          "transferSyntaxUid": "1.2.840.10008.1.2.1",
+          "typeName": "CTImageStorage"
+        }
+      ],
+      "dicom_declared_limits": [
+        {
+          "count": 1,
+          "detail": "Private attributes are not in the DICOM data dictionary: their tag, VR and length are modelled, their meaning is not.",
+          "key": "dicom.private_attributes"
+        },
+        {
+          "count": 1,
+          "detail": "An attribute written with VR UN carries bytes whose representation the file does not state; its length is recorded and its value is not decoded.",
+          "key": "dicom.unknown_vr"
+        }
+      ],
+      "dicom_form": "part10",
+      "dicom_pixel_data": {
+        "elements": [
+          {
+            "declaredLength": 8,
+            "path": "(7FE0,0010)",
+            "read": false,
+            "tag": "(7FE0,0010)",
+            "vr": "OW"
+          }
+        ],
+        "present": true,
+        "read": false,
+        "statement": "Pixel data is never read, never stored and never analysed. Apiome imports DICOM's metadata layer — the file meta information, the attribute structure and Structured Report content trees — and steps over every Pixel Data, Float Pixel Data, Double Float Pixel Data and Overlay Data value by its declared length without decoding it. Each one is recorded as present and skipped, with its VR and length, so its absence from the model is stated, not implied.",
+        "stored": false
+      },
+      "dicom_values": {
+        "inModel": false,
+        "statement": "No attribute value is in this model: patient names, identifiers, dates, UIDs and report text are payload. The model holds each attribute's tag, keyword, VR and multiplicity; values are only in the native analysis, under the value-visibility policy (presence and length by default)."
+      },
+      "source_retention": {
+        "reason": "dicom-patient-and-pixel-data",
+        "verbatim": false
+      }
+    },
+    "format": "dicom",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "DICOM CT Image Storage",
+      "namespace": "DICOM"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "DICOM CT Image Storage",
+    "types": [
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 4,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Age String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "AS"
+        },
+        "fields": [],
+        "key": "DICOM.AS",
+        "key_type": null,
+        "kind": "alias",
+        "name": "AS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 16,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Code String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "CS"
+        },
+        "fields": [],
+        "key": "DICOM.CS",
+        "key_type": null,
+        "kind": "alias",
+        "name": "CS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Instances of the CT Image Storage SOP class (1.2.840.10008.5.1.4.1.1.2)",
+        "enum_values": [],
+        "extras": {
+          "dicom_kind": "information-object",
+          "dicom_occurrences": 1,
+          "dicom_sop_class_name": "CT Image Storage",
+          "dicom_sop_class_uid": "1.2.840.10008.5.1.4.1.1.2"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Specific Character Set",
+            "extras": {
+              "dicom_keyword": "SpecificCharacterSet",
+              "dicom_tag": "(0008,0005)",
+              "dicom_vm": "1-n",
+              "dicom_vr": "CS"
+            },
+            "field_number": 1,
+            "key": "DICOM.CTImageStorage.00080005",
+            "name": "SpecificCharacterSet",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.CS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Image Type",
+            "extras": {
+              "dicom_keyword": "ImageType",
+              "dicom_observed_max_values": 3,
+              "dicom_tag": "(0008,0008)",
+              "dicom_vm": "2-n",
+              "dicom_vr": "CS"
+            },
+            "field_number": 2,
+            "key": "DICOM.CTImageStorage.00080008",
+            "name": "ImageType",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.CS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "SOP Class UID",
+            "extras": {
+              "dicom_keyword": "SOPClassUID",
+              "dicom_tag": "(0008,0016)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 3,
+            "key": "DICOM.CTImageStorage.00080016",
+            "name": "SOPClassUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "SOP Instance UID",
+            "extras": {
+              "dicom_keyword": "SOPInstanceUID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,0018)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 4,
+            "key": "DICOM.CTImageStorage.00080018",
+            "name": "SOPInstanceUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Study Date",
+            "extras": {
+              "dicom_keyword": "StudyDate",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,0020)",
+              "dicom_vm": "1",
+              "dicom_vr": "DA"
+            },
+            "field_number": 5,
+            "key": "DICOM.CTImageStorage.00080020",
+            "name": "StudyDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DA",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Study Time",
+            "extras": {
+              "dicom_keyword": "StudyTime",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,0030)",
+              "dicom_vm": "1",
+              "dicom_vr": "TM"
+            },
+            "field_number": 6,
+            "key": "DICOM.CTImageStorage.00080030",
+            "name": "StudyTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.TM",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Accession Number",
+            "extras": {
+              "dicom_keyword": "AccessionNumber",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,0050)",
+              "dicom_vm": "1",
+              "dicom_vr": "SH"
+            },
+            "field_number": 7,
+            "key": "DICOM.CTImageStorage.00080050",
+            "name": "AccessionNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.SH",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Modality",
+            "extras": {
+              "dicom_keyword": "Modality",
+              "dicom_tag": "(0008,0060)",
+              "dicom_vm": "1",
+              "dicom_vr": "CS"
+            },
+            "field_number": 8,
+            "key": "DICOM.CTImageStorage.00080060",
+            "name": "Modality",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Manufacturer",
+            "extras": {
+              "dicom_keyword": "Manufacturer",
+              "dicom_tag": "(0008,0070)",
+              "dicom_vm": "1",
+              "dicom_vr": "LO"
+            },
+            "field_number": 9,
+            "key": "DICOM.CTImageStorage.00080070",
+            "name": "Manufacturer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.LO",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Referring Physician's Name",
+            "extras": {
+              "dicom_keyword": "ReferringPhysicianName",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,0090)",
+              "dicom_vm": "1",
+              "dicom_vr": "PN"
+            },
+            "field_number": 10,
+            "key": "DICOM.CTImageStorage.00080090",
+            "name": "ReferringPhysicianName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.PN",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Study Description",
+            "extras": {
+              "dicom_keyword": "StudyDescription",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,1030)",
+              "dicom_vm": "1",
+              "dicom_vr": "LO"
+            },
+            "field_number": 11,
+            "key": "DICOM.CTImageStorage.00081030",
+            "name": "StudyDescription",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.LO",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Referenced Image Sequence",
+            "extras": {
+              "dicom_keyword": "ReferencedImageSequence",
+              "dicom_tag": "(0008,1140)",
+              "dicom_vm": "1",
+              "dicom_vr": "SQ"
+            },
+            "field_number": 12,
+            "key": "DICOM.CTImageStorage.00081140",
+            "name": "ReferencedImageSequence",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.ReferencedImageSequenceItem",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Private Creator",
+            "extras": {
+              "dicom_private": true,
+              "dicom_tag": "(0009,0010)",
+              "dicom_vr": "LO"
+            },
+            "field_number": 13,
+            "key": "DICOM.CTImageStorage.00090010",
+            "name": "Private_0009_0010",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.LO",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Private attribute of EXAMPLE PRIVATE (not in the DICOM data dictionary)",
+            "extras": {
+              "dicom_patient_identifying": true,
+              "dicom_private": true,
+              "dicom_private_creator": "EXAMPLE PRIVATE",
+              "dicom_tag": "(0009,1001)",
+              "dicom_vr": "UN"
+            },
+            "field_number": 14,
+            "key": "DICOM.CTImageStorage.00091001",
+            "name": "Private_0009_1001",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UN",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Patient's Name",
+            "extras": {
+              "dicom_keyword": "PatientName",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0010,0010)",
+              "dicom_vm": "1",
+              "dicom_vr": "PN"
+            },
+            "field_number": 15,
+            "key": "DICOM.CTImageStorage.00100010",
+            "name": "PatientName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.PN",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Patient ID",
+            "extras": {
+              "dicom_keyword": "PatientID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0010,0020)",
+              "dicom_vm": "1",
+              "dicom_vr": "LO"
+            },
+            "field_number": 16,
+            "key": "DICOM.CTImageStorage.00100020",
+            "name": "PatientID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.LO",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Patient's Birth Date",
+            "extras": {
+              "dicom_keyword": "PatientBirthDate",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0010,0030)",
+              "dicom_vm": "1",
+              "dicom_vr": "DA"
+            },
+            "field_number": 17,
+            "key": "DICOM.CTImageStorage.00100030",
+            "name": "PatientBirthDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DA",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Patient's Sex",
+            "extras": {
+              "dicom_keyword": "PatientSex",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0010,0040)",
+              "dicom_vm": "1",
+              "dicom_vr": "CS"
+            },
+            "field_number": 18,
+            "key": "DICOM.CTImageStorage.00100040",
+            "name": "PatientSex",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Patient's Age",
+            "extras": {
+              "dicom_keyword": "PatientAge",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0010,1010)",
+              "dicom_vm": "1",
+              "dicom_vr": "AS"
+            },
+            "field_number": 19,
+            "key": "DICOM.CTImageStorage.00101010",
+            "name": "PatientAge",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.AS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Slice Thickness",
+            "extras": {
+              "dicom_keyword": "SliceThickness",
+              "dicom_tag": "(0018,0050)",
+              "dicom_vm": "1",
+              "dicom_vr": "DS"
+            },
+            "field_number": 20,
+            "key": "DICOM.CTImageStorage.00180050",
+            "name": "SliceThickness",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "KVP",
+            "extras": {
+              "dicom_keyword": "KVP",
+              "dicom_tag": "(0018,0060)",
+              "dicom_vm": "1",
+              "dicom_vr": "DS"
+            },
+            "field_number": 21,
+            "key": "DICOM.CTImageStorage.00180060",
+            "name": "KVP",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "X-Ray Tube Current",
+            "extras": {
+              "dicom_keyword": "XRayTubeCurrent",
+              "dicom_tag": "(0018,1151)",
+              "dicom_vm": "1",
+              "dicom_vr": "IS"
+            },
+            "field_number": 22,
+            "key": "DICOM.CTImageStorage.00181151",
+            "name": "XRayTubeCurrent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.IS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Study Instance UID",
+            "extras": {
+              "dicom_keyword": "StudyInstanceUID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0020,000D)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 23,
+            "key": "DICOM.CTImageStorage.0020000D",
+            "name": "StudyInstanceUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Series Instance UID",
+            "extras": {
+              "dicom_keyword": "SeriesInstanceUID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0020,000E)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 24,
+            "key": "DICOM.CTImageStorage.0020000E",
+            "name": "SeriesInstanceUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Series Number",
+            "extras": {
+              "dicom_keyword": "SeriesNumber",
+              "dicom_tag": "(0020,0011)",
+              "dicom_vm": "1",
+              "dicom_vr": "IS"
+            },
+            "field_number": 25,
+            "key": "DICOM.CTImageStorage.00200011",
+            "name": "SeriesNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.IS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Instance Number",
+            "extras": {
+              "dicom_keyword": "InstanceNumber",
+              "dicom_tag": "(0020,0013)",
+              "dicom_vm": "1",
+              "dicom_vr": "IS"
+            },
+            "field_number": 26,
+            "key": "DICOM.CTImageStorage.00200013",
+            "name": "InstanceNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.IS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Image Position (Patient)",
+            "extras": {
+              "dicom_keyword": "ImagePositionPatient",
+              "dicom_observed_max_values": 3,
+              "dicom_tag": "(0020,0032)",
+              "dicom_vm": "3",
+              "dicom_vr": "DS"
+            },
+            "field_number": 27,
+            "key": "DICOM.CTImageStorage.00200032",
+            "name": "ImagePositionPatient",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.DS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Image Orientation (Patient)",
+            "extras": {
+              "dicom_keyword": "ImageOrientationPatient",
+              "dicom_observed_max_values": 6,
+              "dicom_tag": "(0020,0037)",
+              "dicom_vm": "6",
+              "dicom_vr": "DS"
+            },
+            "field_number": 28,
+            "key": "DICOM.CTImageStorage.00200037",
+            "name": "ImageOrientationPatient",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.DS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Samples per Pixel",
+            "extras": {
+              "dicom_keyword": "SamplesPerPixel",
+              "dicom_tag": "(0028,0002)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 29,
+            "key": "DICOM.CTImageStorage.00280002",
+            "name": "SamplesPerPixel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Photometric Interpretation",
+            "extras": {
+              "dicom_keyword": "PhotometricInterpretation",
+              "dicom_tag": "(0028,0004)",
+              "dicom_vm": "1",
+              "dicom_vr": "CS"
+            },
+            "field_number": 30,
+            "key": "DICOM.CTImageStorage.00280004",
+            "name": "PhotometricInterpretation",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Rows",
+            "extras": {
+              "dicom_keyword": "Rows",
+              "dicom_tag": "(0028,0010)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 31,
+            "key": "DICOM.CTImageStorage.00280010",
+            "name": "Rows",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Columns",
+            "extras": {
+              "dicom_keyword": "Columns",
+              "dicom_tag": "(0028,0011)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 32,
+            "key": "DICOM.CTImageStorage.00280011",
+            "name": "Columns",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Bits Allocated",
+            "extras": {
+              "dicom_keyword": "BitsAllocated",
+              "dicom_tag": "(0028,0100)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 33,
+            "key": "DICOM.CTImageStorage.00280100",
+            "name": "BitsAllocated",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Bits Stored",
+            "extras": {
+              "dicom_keyword": "BitsStored",
+              "dicom_tag": "(0028,0101)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 34,
+            "key": "DICOM.CTImageStorage.00280101",
+            "name": "BitsStored",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Pixel Representation",
+            "extras": {
+              "dicom_keyword": "PixelRepresentation",
+              "dicom_tag": "(0028,0103)",
+              "dicom_vm": "1",
+              "dicom_vr": "US"
+            },
+            "field_number": 35,
+            "key": "DICOM.CTImageStorage.00280103",
+            "name": "PixelRepresentation",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.US",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Rescale Intercept",
+            "extras": {
+              "dicom_keyword": "RescaleIntercept",
+              "dicom_tag": "(0028,1052)",
+              "dicom_vm": "1",
+              "dicom_vr": "DS"
+            },
+            "field_number": 36,
+            "key": "DICOM.CTImageStorage.00281052",
+            "name": "RescaleIntercept",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Rescale Slope",
+            "extras": {
+              "dicom_keyword": "RescaleSlope",
+              "dicom_tag": "(0028,1053)",
+              "dicom_vm": "1",
+              "dicom_vr": "DS"
+            },
+            "field_number": 37,
+            "key": "DICOM.CTImageStorage.00281053",
+            "name": "RescaleSlope",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.DS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Content Sequence",
+            "extras": {
+              "dicom_keyword": "ContentSequence",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0040,A730)",
+              "dicom_vm": "1",
+              "dicom_vr": "SQ"
+            },
+            "field_number": 38,
+            "key": "DICOM.CTImageStorage.0040A730",
+            "name": "ContentSequence",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.ContentSequenceItem",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Pixel Data — value never read (pixel data)",
+            "extras": {
+              "dicom_dictionary_vr": "OB or OW",
+              "dicom_keyword": "PixelData",
+              "dicom_pixel_data": {
+                "read": false,
+                "stored": false
+              },
+              "dicom_tag": "(7FE0,0010)",
+              "dicom_vm": "1",
+              "dicom_vr": "OW"
+            },
+            "field_number": 39,
+            "key": "DICOM.CTImageStorage.7FE00010",
+            "name": "PixelData",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.OW",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DICOM.CTImageStorage",
+        "key_type": null,
+        "kind": "record",
+        "name": "CTImageStorage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "One item of ConceptNameCodeSequence",
+        "enum_values": [],
+        "extras": {
+          "dicom_kind": "sequence-item",
+          "dicom_occurrences": 1
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Code Value",
+            "extras": {
+              "dicom_keyword": "CodeValue",
+              "dicom_tag": "(0008,0100)",
+              "dicom_vm": "1",
+              "dicom_vr": "SH"
+            },
+            "field_number": 1,
+            "key": "DICOM.ConceptNameCodeSequenceItem.00080100",
+            "name": "CodeValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.SH",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Coding Scheme Designator",
+            "extras": {
+              "dicom_keyword": "CodingSchemeDesignator",
+              "dicom_tag": "(0008,0102)",
+              "dicom_vm": "1",
+              "dicom_vr": "SH"
+            },
+            "field_number": 2,
+            "key": "DICOM.ConceptNameCodeSequenceItem.00080102",
+            "name": "CodingSchemeDesignator",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.SH",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Code Meaning",
+            "extras": {
+              "dicom_keyword": "CodeMeaning",
+              "dicom_tag": "(0008,0104)",
+              "dicom_vm": "1",
+              "dicom_vr": "LO"
+            },
+            "field_number": 3,
+            "key": "DICOM.ConceptNameCodeSequenceItem.00080104",
+            "name": "CodeMeaning",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.LO",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DICOM.ConceptNameCodeSequenceItem",
+        "key_type": null,
+        "kind": "record",
+        "name": "ConceptNameCodeSequenceItem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "One item of ContentSequence",
+        "enum_values": [],
+        "extras": {
+          "dicom_kind": "sequence-item",
+          "dicom_occurrences": 1
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Value Type",
+            "extras": {
+              "dicom_keyword": "ValueType",
+              "dicom_tag": "(0040,A040)",
+              "dicom_vm": "1",
+              "dicom_vr": "CS"
+            },
+            "field_number": 1,
+            "key": "DICOM.ContentSequenceItem.0040A040",
+            "name": "ValueType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.CS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Concept Name Code Sequence",
+            "extras": {
+              "dicom_keyword": "ConceptNameCodeSequence",
+              "dicom_tag": "(0040,A043)",
+              "dicom_vm": "1",
+              "dicom_vr": "SQ"
+            },
+            "field_number": 2,
+            "key": "DICOM.ContentSequenceItem.0040A043",
+            "name": "ConceptNameCodeSequence",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DICOM.ConceptNameCodeSequenceItem",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DICOM.ContentSequenceItem",
+        "key_type": null,
+        "kind": "record",
+        "name": "ContentSequenceItem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 8,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Date",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "DA"
+        },
+        "fields": [],
+        "key": "DICOM.DA",
+        "key_type": null,
+        "kind": "alias",
+        "name": "DA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "number",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 16,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Decimal String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "DS"
+        },
+        "fields": [],
+        "key": "DICOM.DS",
+        "key_type": null,
+        "kind": "alias",
+        "name": "DS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Part 10 file meta information (group 0002), always explicit VR little endian",
+        "enum_values": [],
+        "extras": {
+          "dicom_kind": "file-meta",
+          "dicom_occurrences": 1
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File Meta Information Group Length",
+            "extras": {
+              "dicom_keyword": "FileMetaInformationGroupLength",
+              "dicom_tag": "(0002,0000)",
+              "dicom_vm": "1",
+              "dicom_vr": "UL"
+            },
+            "field_number": 1,
+            "key": "DICOM.FileMetaInformation.00020000",
+            "name": "FileMetaInformationGroupLength",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UL",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "File Meta Information Version",
+            "extras": {
+              "dicom_keyword": "FileMetaInformationVersion",
+              "dicom_tag": "(0002,0001)",
+              "dicom_vm": "1",
+              "dicom_vr": "OB"
+            },
+            "field_number": 2,
+            "key": "DICOM.FileMetaInformation.00020001",
+            "name": "FileMetaInformationVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.OB",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Media Storage SOP Class UID",
+            "extras": {
+              "dicom_keyword": "MediaStorageSOPClassUID",
+              "dicom_tag": "(0002,0002)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 3,
+            "key": "DICOM.FileMetaInformation.00020002",
+            "name": "MediaStorageSOPClassUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Media Storage SOP Instance UID",
+            "extras": {
+              "dicom_keyword": "MediaStorageSOPInstanceUID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0002,0003)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 4,
+            "key": "DICOM.FileMetaInformation.00020003",
+            "name": "MediaStorageSOPInstanceUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Transfer Syntax UID",
+            "extras": {
+              "dicom_keyword": "TransferSyntaxUID",
+              "dicom_tag": "(0002,0010)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 5,
+            "key": "DICOM.FileMetaInformation.00020010",
+            "name": "TransferSyntaxUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Implementation Class UID",
+            "extras": {
+              "dicom_keyword": "ImplementationClassUID",
+              "dicom_tag": "(0002,0012)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 6,
+            "key": "DICOM.FileMetaInformation.00020012",
+            "name": "ImplementationClassUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Implementation Version Name",
+            "extras": {
+              "dicom_keyword": "ImplementationVersionName",
+              "dicom_tag": "(0002,0013)",
+              "dicom_vm": "1",
+              "dicom_vr": "SH"
+            },
+            "field_number": 7,
+            "key": "DICOM.FileMetaInformation.00020013",
+            "name": "ImplementationVersionName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.SH",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DICOM.FileMetaInformation",
+        "key_type": null,
+        "kind": "record",
+        "name": "FileMetaInformation",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 12,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Integer String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "IS"
+        },
+        "fields": [],
+        "key": "DICOM.IS",
+        "key_type": null,
+        "kind": "alias",
+        "name": "IS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 64,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Long String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "LO"
+        },
+        "fields": [],
+        "key": "DICOM.LO",
+        "key_type": null,
+        "kind": "alias",
+        "name": "LO",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": "Other Byte",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": true,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "OB"
+        },
+        "fields": [],
+        "key": "DICOM.OB",
+        "key_type": null,
+        "kind": "alias",
+        "name": "OB",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": "Other Word",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": true,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "OW"
+        },
+        "fields": [],
+        "key": "DICOM.OW",
+        "key_type": null,
+        "kind": "alias",
+        "name": "OW",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Person Name — one value per component group (PS3.18 F.2.2)",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "PN"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "DICOM.PN.Alphabetic",
+            "name": "Alphabetic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "DICOM.PN.Ideographic",
+            "name": "Ideographic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "DICOM.PN.Phonetic",
+            "name": "Phonetic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "DICOM.PN",
+        "key_type": null,
+        "kind": "record",
+        "name": "PN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "One item of ReferencedImageSequence",
+        "enum_values": [],
+        "extras": {
+          "dicom_kind": "sequence-item",
+          "dicom_occurrences": 1
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Referenced SOP Class UID",
+            "extras": {
+              "dicom_keyword": "ReferencedSOPClassUID",
+              "dicom_tag": "(0008,1150)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 1,
+            "key": "DICOM.ReferencedImageSequenceItem.00081150",
+            "name": "ReferencedSOPClassUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Referenced SOP Instance UID",
+            "extras": {
+              "dicom_keyword": "ReferencedSOPInstanceUID",
+              "dicom_patient_identifying": true,
+              "dicom_tag": "(0008,1155)",
+              "dicom_vm": "1",
+              "dicom_vr": "UI"
+            },
+            "field_number": 2,
+            "key": "DICOM.ReferencedImageSequenceItem.00081155",
+            "name": "ReferencedSOPInstanceUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DICOM.UI",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DICOM.ReferencedImageSequenceItem",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReferencedImageSequenceItem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 16,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Short String",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "SH"
+        },
+        "fields": [],
+        "key": "DICOM.SH",
+        "key_type": null,
+        "kind": "alias",
+        "name": "SH",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 14,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Time",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "TM"
+        },
+        "fields": [],
+        "key": "DICOM.TM",
+        "key_type": null,
+        "kind": "alias",
+        "name": "TM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 64,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "Unique Identifier (UID)",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": false,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "UI"
+        },
+        "fields": [],
+        "key": "DICOM.UI",
+        "key_type": null,
+        "kind": "alias",
+        "name": "UI",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": "Unsigned Long",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": true,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "UL"
+        },
+        "fields": [],
+        "key": "DICOM.UL",
+        "key_type": null,
+        "kind": "alias",
+        "name": "UL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": "Unknown",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": true,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "UN"
+        },
+        "fields": [],
+        "key": "DICOM.UN",
+        "key_type": null,
+        "kind": "alias",
+        "name": "UN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": "Unsigned Short",
+        "enum_values": [],
+        "extras": {
+          "dicom_binary": true,
+          "dicom_kind": "value-representation",
+          "dicom_vr": "US"
+        },
+        "fields": [],
+        "key": "DICOM.US",
+        "key_type": null,
+        "kind": "alias",
+        "name": "US",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "dicom/04-stress-part10-sequences-and-pixeldata.dcm",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 20
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "dicom"
+  },
+  "fingerprint": "sha256:ffa928e9c2754f047121d0eebe63f1c100c2173636107d7b2104468aa8aad20e",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "d246ed86f1f8a6231495caec53a91e278fff812afa4ea7dde5b1ef748ce9ff74",
+    "score": 96,
+    "severity_counts": {
+      "error": 0,
+      "info": 4,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

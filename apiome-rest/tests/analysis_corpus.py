@@ -8,7 +8,7 @@ whole document, one golden per corpus fixture, the same way ``corpus_snapshot`` 
 model and ``projection_corpus`` pins the export manifest.
 
 Selection is by corpus tag, never by path (the corpus rule since IXH-1.1): every valid ``edix12``,
-``edifact``, ``tradacoms``, ``idoc``, ``swift-mt``, ``nacha`` and ``cobolcopybook`` entry — the
+``edifact``, ``tradacoms``, ``idoc``, ``swift-mt``, ``nacha``, ``dicom`` and ``cobolcopybook`` entry — the
 format-native extractors — plus the ``minimal``/``typical`` valid ``json-schema`` and ``graphql``
 entries as generic-extractor controls.
 
@@ -35,7 +35,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from corpus_adapter_support import adapter_for, missing_tools, parse_native
+from corpus_adapter_support import adapter_for, is_binary_entry, missing_tools, parse_native
 from corpus_loader import CorpusEntry, FilesetRole, Rung, ValidityClass, load_corpus
 
 from app.import_source import ImportSource
@@ -63,6 +63,7 @@ NATIVE_ANALYSIS_FORMATS = (
     "idoc",
     "swift-mt",
     "nacha",
+    "dicom",
     "cobolcopybook",
 )
 
@@ -117,7 +118,8 @@ def build_analysis_document(
         The analysis document the import pipeline would have stored.
     """
     source = adapter or adapter_for(entry)
-    text = entry.read_text()
+    # A binary entry (a DICOM Part 10 file) has no text: its analyzer hashes its own material.
+    text = None if is_binary_entry(entry) else entry.read_text()
     native_ast = parse_native(source, entry)
     return analyze_import(source, native_ast, source=text)
 

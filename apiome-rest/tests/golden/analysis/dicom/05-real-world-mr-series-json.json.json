@@ -1,0 +1,2016 @@
+{
+  "adapter": "dicom",
+  "corpus_path": "dicom/05-real-world-mr-series-json.json",
+  "document": {
+    "analyzer": {
+      "key": "dicom",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "dicom.attributes",
+        "dicom.byte_offsets",
+        "dicom.deflated_dataset",
+        "dicom.encapsulated_transfer_syntaxes",
+        "dicom.explicit_vr_big_endian",
+        "dicom.explicit_vr_little_endian",
+        "dicom.implicit_vr_little_endian",
+        "dicom.json_model",
+        "dicom.part10_file_meta",
+        "dicom.private_attribute_structure",
+        "dicom.query_results",
+        "dicom.sequences",
+        "dicom.structured_report_content_tree",
+        "dicom.undefined_length_sequences",
+        "dicom.unknown_vr_sequences",
+        "dicom.value_multiplicity",
+        "dicom.value_representations"
+      ],
+      "unsupported": [
+        "dicom.iod_module_validation",
+        "dicom.iso2022_character_sets",
+        "dicom.overlay_data",
+        "dicom.part10_in_archives",
+        "dicom.pixel_data",
+        "dicom.private_attribute_meaning",
+        "dicom.sr_template_validation"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "attribute": 63,
+        "dataset": 1,
+        "item": 1,
+        "sequence": 1
+      },
+      "maxDepth": 4,
+      "nodeCount": 66,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "dicom",
+    "sourceHash": "sha256:bbe646f448e9eb04458c8856c17e138ddd2187898b9b49fcc6d9c88404db8752",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "attributeCount": 62,
+          "form": "json",
+          "modality": "MR",
+          "pixelDataPresent": false,
+          "pixelDataRead": false,
+          "sopClassName": "MR Image Storage",
+          "sopClassUid": "1.2.840.10008.5.1.4.1.1.4",
+          "structuredReport": false,
+          "typeName": "MRImageStorage"
+        },
+        "children": [
+          {
+            "attributes": {
+              "keyword": "SpecificCharacterSet",
+              "tag": "(0008,0005)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "attribute",
+            "label": "Specific Character Set",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "/00080005"
+            },
+            "name": "SpecificCharacterSet",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "ISO_IR 192",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImageType",
+              "tag": "(0008,0008)",
+              "valueCount": 5,
+              "valueForm": "inline",
+              "vm": "2-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "attribute",
+            "label": "Image Type",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "/00080008"
+            },
+            "name": "ImageType",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "ORIGINAL\\PRIMARY\\M\\NORM\\DIS2D",
+            "valueLength": 29,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "InstanceCreationDate",
+              "tag": "(0008,0012)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "attribute",
+            "label": "Instance Creation Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "/00080012"
+            },
+            "name": "InstanceCreationDate",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "20260818",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SOPClassUID",
+              "tag": "(0008,0016)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "attribute",
+            "label": "SOP Class UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "/00080016"
+            },
+            "name": "SOPClassUID",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "1.2.840.10008.5.1.4.1.1.4",
+            "valueLength": 25,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SOPInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0008,0018)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "attribute",
+            "label": "SOP Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "/00080018"
+            },
+            "name": "SOPInstanceUID",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.3.3.20260818094500.112",
+            "valueLength": 42,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyDate",
+              "patientIdentifying": true,
+              "tag": "(0008,0020)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "attribute",
+            "label": "Study Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "/00080020"
+            },
+            "name": "StudyDate",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "20260818",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesDate",
+              "patientIdentifying": true,
+              "tag": "(0008,0021)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "attribute",
+            "label": "Series Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 6,
+              "path": "/00080021"
+            },
+            "name": "SeriesDate",
+            "ordinal": 6,
+            "redacted": false,
+            "value": "20260818",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyTime",
+              "patientIdentifying": true,
+              "tag": "(0008,0030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "TM"
+            },
+            "children": [],
+            "id": "0.7",
+            "kind": "attribute",
+            "label": "Study Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 7,
+              "path": "/00080030"
+            },
+            "name": "StudyTime",
+            "ordinal": 7,
+            "redacted": false,
+            "value": "094500.000",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "AccessionNumber",
+              "patientIdentifying": true,
+              "tag": "(0008,0050)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "SH"
+            },
+            "children": [],
+            "id": "0.8",
+            "kind": "attribute",
+            "label": "Accession Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 8,
+              "path": "/00080050"
+            },
+            "name": "AccessionNumber",
+            "ordinal": 8,
+            "redacted": false,
+            "value": "ACC-000311",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Modality",
+              "tag": "(0008,0060)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.9",
+            "kind": "attribute",
+            "label": "Modality",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 9,
+              "path": "/00080060"
+            },
+            "name": "Modality",
+            "ordinal": 9,
+            "redacted": false,
+            "value": "MR",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Manufacturer",
+              "tag": "(0008,0070)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.10",
+            "kind": "attribute",
+            "label": "Manufacturer",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 10,
+              "path": "/00080070"
+            },
+            "name": "Manufacturer",
+            "ordinal": 10,
+            "redacted": false,
+            "value": "EXAMPLE MEDICAL SYSTEMS",
+            "valueLength": 23,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "InstitutionName",
+              "patientIdentifying": true,
+              "tag": "(0008,0080)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.11",
+            "kind": "attribute",
+            "label": "Institution Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 11,
+              "path": "/00080080"
+            },
+            "name": "InstitutionName",
+            "ordinal": 11,
+            "redacted": false,
+            "value": "EXAMPLE GENERAL HOSPITAL",
+            "valueLength": 24,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ReferringPhysicianName",
+              "patientIdentifying": true,
+              "tag": "(0008,0090)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "PN"
+            },
+            "children": [],
+            "id": "0.12",
+            "kind": "attribute",
+            "label": "Referring Physician's Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 12,
+              "path": "/00080090"
+            },
+            "name": "ReferringPhysicianName",
+            "ordinal": 12,
+            "redacted": false,
+            "value": "CLINICIAN^ASH^^DR^",
+            "valueLength": 18,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StationName",
+              "patientIdentifying": true,
+              "tag": "(0008,1010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "SH"
+            },
+            "children": [],
+            "id": "0.13",
+            "kind": "attribute",
+            "label": "Station Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 13,
+              "path": "/00081010"
+            },
+            "name": "StationName",
+            "ordinal": 13,
+            "redacted": false,
+            "value": "MR-SCANNER-02",
+            "valueLength": 13,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyDescription",
+              "patientIdentifying": true,
+              "tag": "(0008,1030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.14",
+            "kind": "attribute",
+            "label": "Study Description",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 14,
+              "path": "/00081030"
+            },
+            "name": "StudyDescription",
+            "ordinal": 14,
+            "redacted": false,
+            "value": "MRI BRAIN^WITHOUT CONTRAST",
+            "valueLength": 26,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesDescription",
+              "patientIdentifying": true,
+              "tag": "(0008,103E)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.15",
+            "kind": "attribute",
+            "label": "Series Description",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 15,
+              "path": "/0008103E"
+            },
+            "name": "SeriesDescription",
+            "ordinal": 15,
+            "redacted": false,
+            "value": "AX T2 FLAIR",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ManufacturerModelName",
+              "tag": "(0008,1090)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.16",
+            "kind": "attribute",
+            "label": "Manufacturer's Model Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 16,
+              "path": "/00081090"
+            },
+            "name": "ManufacturerModelName",
+            "ordinal": 16,
+            "redacted": false,
+            "value": "EXAMPLE MR 3T",
+            "valueLength": 13,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "itemCount": 1,
+              "keyword": "ReferencedPerformedProcedureStepSequence",
+              "tag": "(0008,1111)",
+              "valueForm": "sequence",
+              "vm": "1",
+              "vr": "SQ"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "attributeCount": 2
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "keyword": "ReferencedSOPClassUID",
+                      "tag": "(0008,1150)",
+                      "valueCount": 1,
+                      "valueForm": "inline",
+                      "vm": "1",
+                      "vr": "UI"
+                    },
+                    "children": [],
+                    "id": "0.17.0.0",
+                    "kind": "attribute",
+                    "label": "Referenced SOP Class UID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "/00081111/Value/0/00081150"
+                    },
+                    "name": "ReferencedSOPClassUID",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "1.2.840.10008.3.1.2.3.3",
+                    "valueLength": 23,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "keyword": "ReferencedSOPInstanceUID",
+                      "patientIdentifying": true,
+                      "tag": "(0008,1155)",
+                      "valueCount": 1,
+                      "valueForm": "inline",
+                      "vm": "1",
+                      "vr": "UI"
+                    },
+                    "children": [],
+                    "id": "0.17.0.1",
+                    "kind": "attribute",
+                    "label": "Referenced SOP Instance UID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": null,
+                      "line": null,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "/00081111/Value/0/00081155"
+                    },
+                    "name": "ReferencedSOPInstanceUID",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "1.2.826.0.1.9999999.3.9.20260818094500.1",
+                    "valueLength": 40,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.17.0",
+                "kind": "item",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "/00081111/Value/0"
+                },
+                "name": "item",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.17",
+            "kind": "sequence",
+            "label": "Referenced Performed Procedure Step Sequence",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 17,
+              "path": "/00081111"
+            },
+            "name": "ReferencedPerformedProcedureStepSequence",
+            "ordinal": 17,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientName",
+              "patientIdentifying": true,
+              "tag": "(0010,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "PN"
+            },
+            "children": [],
+            "id": "0.18",
+            "kind": "attribute",
+            "label": "Patient's Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 18,
+              "path": "/00100010"
+            },
+            "name": "PatientName",
+            "ordinal": 18,
+            "redacted": false,
+            "value": "SAMPLE^CHRIS",
+            "valueLength": 12,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientID",
+              "patientIdentifying": true,
+              "tag": "(0010,0020)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.19",
+            "kind": "attribute",
+            "label": "Patient ID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 19,
+              "path": "/00100020"
+            },
+            "name": "PatientID",
+            "ordinal": 19,
+            "redacted": false,
+            "value": "PAT-0311",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientBirthDate",
+              "patientIdentifying": true,
+              "tag": "(0010,0030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.20",
+            "kind": "attribute",
+            "label": "Patient's Birth Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 20,
+              "path": "/00100030"
+            },
+            "name": "PatientBirthDate",
+            "ordinal": 20,
+            "redacted": false,
+            "value": "19620905",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientSex",
+              "patientIdentifying": true,
+              "tag": "(0010,0040)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.21",
+            "kind": "attribute",
+            "label": "Patient's Sex",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 21,
+              "path": "/00100040"
+            },
+            "name": "PatientSex",
+            "ordinal": 21,
+            "redacted": false,
+            "value": "M",
+            "valueLength": 1,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientAge",
+              "patientIdentifying": true,
+              "tag": "(0010,1010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "AS"
+            },
+            "children": [],
+            "id": "0.22",
+            "kind": "attribute",
+            "label": "Patient's Age",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 22,
+              "path": "/00101010"
+            },
+            "name": "PatientAge",
+            "ordinal": 22,
+            "redacted": false,
+            "value": "063Y",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientWeight",
+              "patientIdentifying": true,
+              "tag": "(0010,1030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.23",
+            "kind": "attribute",
+            "label": "Patient's Weight",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 23,
+              "path": "/00101030"
+            },
+            "name": "PatientWeight",
+            "ordinal": 23,
+            "redacted": false,
+            "value": "82.5",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "BodyPartExamined",
+              "tag": "(0018,0015)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.24",
+            "kind": "attribute",
+            "label": "Body Part Examined",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 24,
+              "path": "/00180015"
+            },
+            "name": "BodyPartExamined",
+            "ordinal": 24,
+            "redacted": false,
+            "value": "BRAIN",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ScanningSequence",
+              "tag": "(0018,0020)",
+              "valueCount": 2,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.25",
+            "kind": "attribute",
+            "label": "Scanning Sequence",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 25,
+              "path": "/00180020"
+            },
+            "name": "ScanningSequence",
+            "ordinal": 25,
+            "redacted": false,
+            "value": "SE\\IR",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SequenceVariant",
+              "tag": "(0018,0021)",
+              "valueCount": 3,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.26",
+            "kind": "attribute",
+            "label": "Sequence Variant",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 26,
+              "path": "/00180021"
+            },
+            "name": "SequenceVariant",
+            "ordinal": 26,
+            "redacted": false,
+            "value": "SK\\MTC\\SP",
+            "valueLength": 9,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ScanOptions",
+              "tag": "(0018,0022)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.27",
+            "kind": "attribute",
+            "label": "Scan Options",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 27,
+              "path": "/00180022"
+            },
+            "name": "ScanOptions",
+            "ordinal": 27,
+            "redacted": false,
+            "value": "PFP",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "MRAcquisitionType",
+              "tag": "(0018,0023)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.28",
+            "kind": "attribute",
+            "label": "MR Acquisition Type",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 28,
+              "path": "/00180023"
+            },
+            "name": "MRAcquisitionType",
+            "ordinal": 28,
+            "redacted": false,
+            "value": "2D",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SliceThickness",
+              "tag": "(0018,0050)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.29",
+            "kind": "attribute",
+            "label": "Slice Thickness",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 29,
+              "path": "/00180050"
+            },
+            "name": "SliceThickness",
+            "ordinal": 29,
+            "redacted": false,
+            "value": "5.0",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "RepetitionTime",
+              "tag": "(0018,0080)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.30",
+            "kind": "attribute",
+            "label": "Repetition Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 30,
+              "path": "/00180080"
+            },
+            "name": "RepetitionTime",
+            "ordinal": 30,
+            "redacted": false,
+            "value": "9000",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "EchoTime",
+              "tag": "(0018,0081)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.31",
+            "kind": "attribute",
+            "label": "Echo Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 31,
+              "path": "/00180081"
+            },
+            "name": "EchoTime",
+            "ordinal": 31,
+            "redacted": false,
+            "value": "81",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "InversionTime",
+              "tag": "(0018,0082)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.32",
+            "kind": "attribute",
+            "label": "Inversion Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 32,
+              "path": "/00180082"
+            },
+            "name": "InversionTime",
+            "ordinal": 32,
+            "redacted": false,
+            "value": "2500",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "MagneticFieldStrength",
+              "tag": "(0018,0087)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.33",
+            "kind": "attribute",
+            "label": "Magnetic Field Strength",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 33,
+              "path": "/00180087"
+            },
+            "name": "MagneticFieldStrength",
+            "ordinal": 33,
+            "redacted": false,
+            "value": "3.0",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SpacingBetweenSlices",
+              "tag": "(0018,0088)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.34",
+            "kind": "attribute",
+            "label": "Spacing Between Slices",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 34,
+              "path": "/00180088"
+            },
+            "name": "SpacingBetweenSlices",
+            "ordinal": 34,
+            "redacted": false,
+            "value": "6.5",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ProtocolName",
+              "patientIdentifying": true,
+              "tag": "(0018,1030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.35",
+            "kind": "attribute",
+            "label": "Protocol Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 35,
+              "path": "/00181030"
+            },
+            "name": "ProtocolName",
+            "ordinal": 35,
+            "redacted": false,
+            "value": "BRAIN_ROUTINE",
+            "valueLength": 13,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "AcquisitionMatrix",
+              "tag": "(0018,1310)",
+              "valueCount": 4,
+              "valueForm": "inline",
+              "vm": "4",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.36",
+            "kind": "attribute",
+            "label": "Acquisition Matrix",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 36,
+              "path": "/00181310"
+            },
+            "name": "AcquisitionMatrix",
+            "ordinal": 36,
+            "redacted": false,
+            "value": "0\\256\\232\\0",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "FlipAngle",
+              "tag": "(0018,1314)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.37",
+            "kind": "attribute",
+            "label": "Flip Angle",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 37,
+              "path": "/00181314"
+            },
+            "name": "FlipAngle",
+            "ordinal": 37,
+            "redacted": false,
+            "value": "150",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000D)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.38",
+            "kind": "attribute",
+            "label": "Study Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 38,
+              "path": "/0020000D"
+            },
+            "name": "StudyInstanceUID",
+            "ordinal": 38,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.3.1.20260818094500",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000E)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.39",
+            "kind": "attribute",
+            "label": "Series Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 39,
+              "path": "/0020000E"
+            },
+            "name": "SeriesInstanceUID",
+            "ordinal": 39,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.3.2.20260818094500",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyID",
+              "patientIdentifying": true,
+              "tag": "(0020,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "SH"
+            },
+            "children": [],
+            "id": "0.40",
+            "kind": "attribute",
+            "label": "Study ID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 40,
+              "path": "/00200010"
+            },
+            "name": "StudyID",
+            "ordinal": 40,
+            "redacted": false,
+            "value": "STUDY-0311",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesNumber",
+              "tag": "(0020,0011)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "IS"
+            },
+            "children": [],
+            "id": "0.41",
+            "kind": "attribute",
+            "label": "Series Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 41,
+              "path": "/00200011"
+            },
+            "name": "SeriesNumber",
+            "ordinal": 41,
+            "redacted": false,
+            "value": "4",
+            "valueLength": 1,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "InstanceNumber",
+              "tag": "(0020,0013)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "IS"
+            },
+            "children": [],
+            "id": "0.42",
+            "kind": "attribute",
+            "label": "Instance Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 42,
+              "path": "/00200013"
+            },
+            "name": "InstanceNumber",
+            "ordinal": 42,
+            "redacted": false,
+            "value": "112",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImagePositionPatient",
+              "tag": "(0020,0032)",
+              "valueCount": 3,
+              "valueForm": "inline",
+              "vm": "3",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.43",
+            "kind": "attribute",
+            "label": "Image Position (Patient)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 43,
+              "path": "/00200032"
+            },
+            "name": "ImagePositionPatient",
+            "ordinal": 43,
+            "redacted": false,
+            "value": "-119.5\\-142.3\\62.1",
+            "valueLength": 18,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImageOrientationPatient",
+              "tag": "(0020,0037)",
+              "valueCount": 6,
+              "valueForm": "inline",
+              "vm": "6",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.44",
+            "kind": "attribute",
+            "label": "Image Orientation (Patient)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 44,
+              "path": "/00200037"
+            },
+            "name": "ImageOrientationPatient",
+            "ordinal": 44,
+            "redacted": false,
+            "value": "1.0\\0.0\\0.0\\0.0\\0.9998\\-0.0175",
+            "valueLength": 30,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "FrameOfReferenceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,0052)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.45",
+            "kind": "attribute",
+            "label": "Frame of Reference UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 45,
+              "path": "/00200052"
+            },
+            "name": "FrameOfReferenceUID",
+            "ordinal": 45,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.3.4.20260818094500",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SliceLocation",
+              "tag": "(0020,1041)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.46",
+            "kind": "attribute",
+            "label": "Slice Location",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 46,
+              "path": "/00201041"
+            },
+            "name": "SliceLocation",
+            "ordinal": 46,
+            "redacted": false,
+            "value": "62.1",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SamplesPerPixel",
+              "tag": "(0028,0002)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.47",
+            "kind": "attribute",
+            "label": "Samples per Pixel",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 47,
+              "path": "/00280002"
+            },
+            "name": "SamplesPerPixel",
+            "ordinal": 47,
+            "redacted": false,
+            "value": "1",
+            "valueLength": 1,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PhotometricInterpretation",
+              "tag": "(0028,0004)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.48",
+            "kind": "attribute",
+            "label": "Photometric Interpretation",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 48,
+              "path": "/00280004"
+            },
+            "name": "PhotometricInterpretation",
+            "ordinal": 48,
+            "redacted": false,
+            "value": "MONOCHROME2",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Rows",
+              "tag": "(0028,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.49",
+            "kind": "attribute",
+            "label": "Rows",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 49,
+              "path": "/00280010"
+            },
+            "name": "Rows",
+            "ordinal": 49,
+            "redacted": false,
+            "value": "256",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Columns",
+              "tag": "(0028,0011)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.50",
+            "kind": "attribute",
+            "label": "Columns",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 50,
+              "path": "/00280011"
+            },
+            "name": "Columns",
+            "ordinal": 50,
+            "redacted": false,
+            "value": "232",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PixelSpacing",
+              "tag": "(0028,0030)",
+              "valueCount": 2,
+              "valueForm": "inline",
+              "vm": "2",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.51",
+            "kind": "attribute",
+            "label": "Pixel Spacing",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 51,
+              "path": "/00280030"
+            },
+            "name": "PixelSpacing",
+            "ordinal": 51,
+            "redacted": false,
+            "value": "0.898\\0.898",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "BitsAllocated",
+              "tag": "(0028,0100)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.52",
+            "kind": "attribute",
+            "label": "Bits Allocated",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 52,
+              "path": "/00280100"
+            },
+            "name": "BitsAllocated",
+            "ordinal": 52,
+            "redacted": false,
+            "value": "16",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "BitsStored",
+              "tag": "(0028,0101)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.53",
+            "kind": "attribute",
+            "label": "Bits Stored",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 53,
+              "path": "/00280101"
+            },
+            "name": "BitsStored",
+            "ordinal": 53,
+            "redacted": false,
+            "value": "12",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "HighBit",
+              "tag": "(0028,0102)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.54",
+            "kind": "attribute",
+            "label": "High Bit",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 54,
+              "path": "/00280102"
+            },
+            "name": "HighBit",
+            "ordinal": 54,
+            "redacted": false,
+            "value": "11",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PixelRepresentation",
+              "tag": "(0028,0103)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.55",
+            "kind": "attribute",
+            "label": "Pixel Representation",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 55,
+              "path": "/00280103"
+            },
+            "name": "PixelRepresentation",
+            "ordinal": 55,
+            "redacted": false,
+            "value": "0",
+            "valueLength": 1,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "WindowCenter",
+              "tag": "(0028,1050)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.56",
+            "kind": "attribute",
+            "label": "Window Center",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 56,
+              "path": "/00281050"
+            },
+            "name": "WindowCenter",
+            "ordinal": 56,
+            "redacted": false,
+            "value": "608",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "WindowWidth",
+              "tag": "(0028,1051)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.57",
+            "kind": "attribute",
+            "label": "Window Width",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 57,
+              "path": "/00281051"
+            },
+            "name": "WindowWidth",
+            "ordinal": 57,
+            "redacted": false,
+            "value": "1216",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "RequestedProcedureDescription",
+              "patientIdentifying": true,
+              "tag": "(0032,1060)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.58",
+            "kind": "attribute",
+            "label": "Requested Procedure Description",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 58,
+              "path": "/00321060"
+            },
+            "name": "RequestedProcedureDescription",
+            "ordinal": 58,
+            "redacted": false,
+            "value": "MRI BRAIN",
+            "valueLength": 9,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PerformedProcedureStepStartDate",
+              "patientIdentifying": true,
+              "tag": "(0040,0244)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.59",
+            "kind": "attribute",
+            "label": "Performed Procedure Step Start Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 59,
+              "path": "/00400244"
+            },
+            "name": "PerformedProcedureStepStartDate",
+            "ordinal": 59,
+            "redacted": false,
+            "value": "20260818",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PerformedProcedureStepStartTime",
+              "patientIdentifying": true,
+              "tag": "(0040,0245)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "TM"
+            },
+            "children": [],
+            "id": "0.60",
+            "kind": "attribute",
+            "label": "Performed Procedure Step Start Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 60,
+              "path": "/00400245"
+            },
+            "name": "PerformedProcedureStepStartTime",
+            "ordinal": 60,
+            "redacted": false,
+            "value": "094500",
+            "valueLength": 6,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PerformedProcedureStepID",
+              "patientIdentifying": true,
+              "tag": "(0040,0253)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "SH"
+            },
+            "children": [],
+            "id": "0.61",
+            "kind": "attribute",
+            "label": "Performed Procedure Step ID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 61,
+              "path": "/00400253"
+            },
+            "name": "PerformedProcedureStepID",
+            "ordinal": 61,
+            "redacted": false,
+            "value": "STEP-0311-04",
+            "valueLength": 12,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "dataset",
+        "label": "MR Image Storage",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "/"
+        },
+        "name": "MRImageStorage",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

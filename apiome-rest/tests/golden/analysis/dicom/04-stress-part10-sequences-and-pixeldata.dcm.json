@@ -1,0 +1,1787 @@
+{
+  "adapter": "dicom",
+  "corpus_path": "dicom/04-stress-part10-sequences-and-pixeldata.dcm",
+  "document": {
+    "analyzer": {
+      "key": "dicom",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "dicom.attributes",
+        "dicom.byte_offsets",
+        "dicom.deflated_dataset",
+        "dicom.encapsulated_transfer_syntaxes",
+        "dicom.explicit_vr_big_endian",
+        "dicom.explicit_vr_little_endian",
+        "dicom.implicit_vr_little_endian",
+        "dicom.json_model",
+        "dicom.part10_file_meta",
+        "dicom.private_attribute_structure",
+        "dicom.query_results",
+        "dicom.sequences",
+        "dicom.structured_report_content_tree",
+        "dicom.undefined_length_sequences",
+        "dicom.unknown_vr_sequences",
+        "dicom.value_multiplicity",
+        "dicom.value_representations"
+      ],
+      "unsupported": [
+        "dicom.iod_module_validation",
+        "dicom.iso2022_character_sets",
+        "dicom.overlay_data",
+        "dicom.part10_in_archives",
+        "dicom.pixel_data",
+        "dicom.private_attribute_meaning",
+        "dicom.sr_template_validation"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "attribute": 49,
+        "content-item": 1,
+        "dataset": 1,
+        "file-meta": 1,
+        "item": 2,
+        "pixel-data": 1,
+        "sequence": 3
+      },
+      "maxDepth": 6,
+      "nodeCount": 58,
+      "truncated": false,
+      "warningCount": 2
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "dicom",
+    "sourceHash": "sha256:409546f04aac9447f76133df338203750f080d73539e95f9dc41818d903579b8",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "attributeCount": 39,
+          "deflated": false,
+          "form": "part10",
+          "modality": "CT",
+          "pixelDataPresent": true,
+          "pixelDataRead": false,
+          "sopClassName": "CT Image Storage",
+          "sopClassUid": "1.2.840.10008.5.1.4.1.1.2",
+          "structuredReport": false,
+          "transferSyntaxName": "Explicit VR Little Endian",
+          "transferSyntaxUid": "1.2.840.10008.1.2.1",
+          "typeName": "CTImageStorage"
+        },
+        "children": [
+          {
+            "attributes": {
+              "attributeCount": 7
+            },
+            "children": [
+              {
+                "attributes": {
+                  "keyword": "FileMetaInformationGroupLength",
+                  "tag": "(0002,0000)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "UL"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "attribute",
+                "label": "File Meta Information Group Length",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 12,
+                  "line": null,
+                  "offset": 132,
+                  "ordinal": 0,
+                  "path": "(0002,0000)"
+                },
+                "name": "FileMetaInformationGroupLength",
+                "ordinal": 0,
+                "redacted": false,
+                "value": "182",
+                "valueLength": 4,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "FileMetaInformationVersion",
+                  "tag": "(0002,0001)",
+                  "valueCount": 0,
+                  "valueForm": "binary",
+                  "vm": "1",
+                  "vr": "OB"
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "attribute",
+                "label": "File Meta Information Version",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 14,
+                  "line": null,
+                  "offset": 144,
+                  "ordinal": 1,
+                  "path": "(0002,0001)"
+                },
+                "name": "FileMetaInformationVersion",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": 2,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "MediaStorageSOPClassUID",
+                  "tag": "(0002,0002)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "UI"
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "attribute",
+                "label": "Media Storage SOP Class UID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 34,
+                  "line": null,
+                  "offset": 158,
+                  "ordinal": 2,
+                  "path": "(0002,0002)"
+                },
+                "name": "MediaStorageSOPClassUID",
+                "ordinal": 2,
+                "redacted": false,
+                "value": "1.2.840.10008.5.1.4.1.1.2",
+                "valueLength": 26,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "MediaStorageSOPInstanceUID",
+                  "patientIdentifying": true,
+                  "tag": "(0002,0003)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "UI"
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "attribute",
+                "label": "Media Storage SOP Instance UID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 50,
+                  "line": null,
+                  "offset": 192,
+                  "ordinal": 3,
+                  "path": "(0002,0003)"
+                },
+                "name": "MediaStorageSOPInstanceUID",
+                "ordinal": 3,
+                "redacted": false,
+                "value": "1.2.826.0.1.9999999.1.3.20260819100000.1.2",
+                "valueLength": 42,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "TransferSyntaxUID",
+                  "tag": "(0002,0010)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "UI"
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "attribute",
+                "label": "Transfer Syntax UID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 28,
+                  "line": null,
+                  "offset": 242,
+                  "ordinal": 4,
+                  "path": "(0002,0010)"
+                },
+                "name": "TransferSyntaxUID",
+                "ordinal": 4,
+                "redacted": false,
+                "value": "1.2.840.10008.1.2.1",
+                "valueLength": 20,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "ImplementationClassUID",
+                  "tag": "(0002,0012)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "UI"
+                },
+                "children": [],
+                "id": "0.0.5",
+                "kind": "attribute",
+                "label": "Implementation Class UID",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 32,
+                  "line": null,
+                  "offset": 270,
+                  "ordinal": 5,
+                  "path": "(0002,0012)"
+                },
+                "name": "ImplementationClassUID",
+                "ordinal": 5,
+                "redacted": false,
+                "value": "1.2.826.0.1.9999999.4.1",
+                "valueLength": 24,
+                "valuePresent": true
+              },
+              {
+                "attributes": {
+                  "keyword": "ImplementationVersionName",
+                  "tag": "(0002,0013)",
+                  "valueCount": 1,
+                  "valueForm": "inline",
+                  "vm": "1",
+                  "vr": "SH"
+                },
+                "children": [],
+                "id": "0.0.6",
+                "kind": "attribute",
+                "label": "Implementation Version Name",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 24,
+                  "line": null,
+                  "offset": 302,
+                  "ordinal": 6,
+                  "path": "(0002,0013)"
+                },
+                "name": "ImplementationVersionName",
+                "ordinal": 6,
+                "redacted": false,
+                "value": "APIOME_CORPUS_1",
+                "valueLength": 16,
+                "valuePresent": true
+              }
+            ],
+            "id": "0.0",
+            "kind": "file-meta",
+            "label": "File meta information",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": 132,
+              "ordinal": 0,
+              "path": "(0002,xxxx)"
+            },
+            "name": "FileMetaInformation",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "keyword": "SpecificCharacterSet",
+              "tag": "(0008,0005)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "attribute",
+            "label": "Specific Character Set",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 18,
+              "line": null,
+              "offset": 326,
+              "ordinal": 1,
+              "path": "(0008,0005)"
+            },
+            "name": "SpecificCharacterSet",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "ISO_IR 192",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImageType",
+              "tag": "(0008,0008)",
+              "valueCount": 3,
+              "valueForm": "inline",
+              "vm": "2-n",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "attribute",
+            "label": "Image Type",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 30,
+              "line": null,
+              "offset": 344,
+              "ordinal": 2,
+              "path": "(0008,0008)"
+            },
+            "name": "ImageType",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "ORIGINAL\\PRIMARY\\AXIAL",
+            "valueLength": 22,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SOPClassUID",
+              "tag": "(0008,0016)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "attribute",
+            "label": "SOP Class UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 34,
+              "line": null,
+              "offset": 374,
+              "ordinal": 3,
+              "path": "(0008,0016)"
+            },
+            "name": "SOPClassUID",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "1.2.840.10008.5.1.4.1.1.2",
+            "valueLength": 26,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SOPInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0008,0018)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "attribute",
+            "label": "SOP Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 50,
+              "line": null,
+              "offset": 408,
+              "ordinal": 4,
+              "path": "(0008,0018)"
+            },
+            "name": "SOPInstanceUID",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.3.20260819100000.1.2",
+            "valueLength": 42,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyDate",
+              "patientIdentifying": true,
+              "tag": "(0008,0020)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "attribute",
+            "label": "Study Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 16,
+              "line": null,
+              "offset": 458,
+              "ordinal": 5,
+              "path": "(0008,0020)"
+            },
+            "name": "StudyDate",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "20260819",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyTime",
+              "patientIdentifying": true,
+              "tag": "(0008,0030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "TM"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "attribute",
+            "label": "Study Time",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 18,
+              "line": null,
+              "offset": 474,
+              "ordinal": 6,
+              "path": "(0008,0030)"
+            },
+            "name": "StudyTime",
+            "ordinal": 6,
+            "redacted": false,
+            "value": "101530.000",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "AccessionNumber",
+              "patientIdentifying": true,
+              "tag": "(0008,0050)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "SH"
+            },
+            "children": [],
+            "id": "0.7",
+            "kind": "attribute",
+            "label": "Accession Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 18,
+              "line": null,
+              "offset": 492,
+              "ordinal": 7,
+              "path": "(0008,0050)"
+            },
+            "name": "AccessionNumber",
+            "ordinal": 7,
+            "redacted": false,
+            "value": "ACC-000042",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Modality",
+              "tag": "(0008,0060)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.8",
+            "kind": "attribute",
+            "label": "Modality",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 510,
+              "ordinal": 8,
+              "path": "(0008,0060)"
+            },
+            "name": "Modality",
+            "ordinal": 8,
+            "redacted": false,
+            "value": "CT",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Manufacturer",
+              "tag": "(0008,0070)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.9",
+            "kind": "attribute",
+            "label": "Manufacturer",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 24,
+              "line": null,
+              "offset": 520,
+              "ordinal": 9,
+              "path": "(0008,0070)"
+            },
+            "name": "Manufacturer",
+            "ordinal": 9,
+            "redacted": false,
+            "value": "EXAMPLE IMAGING",
+            "valueLength": 16,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ReferringPhysicianName",
+              "patientIdentifying": true,
+              "tag": "(0008,0090)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "PN"
+            },
+            "children": [],
+            "id": "0.10",
+            "kind": "attribute",
+            "label": "Referring Physician's Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 28,
+              "line": null,
+              "offset": 544,
+              "ordinal": 10,
+              "path": "(0008,0090)"
+            },
+            "name": "ReferringPhysicianName",
+            "ordinal": 10,
+            "redacted": false,
+            "value": "CLINICIAN^ROBIN^^DR^",
+            "valueLength": 20,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyDescription",
+              "patientIdentifying": true,
+              "tag": "(0008,1030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.11",
+            "kind": "attribute",
+            "label": "Study Description",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 22,
+              "line": null,
+              "offset": 572,
+              "ordinal": 11,
+              "path": "(0008,1030)"
+            },
+            "name": "StudyDescription",
+            "ordinal": 11,
+            "redacted": false,
+            "value": "CHEST^ROUTINE",
+            "valueLength": 14,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "itemCount": 1,
+              "keyword": "ReferencedImageSequence",
+              "tag": "(0008,1140)",
+              "valueForm": "sequence",
+              "vm": "1",
+              "vr": "SQ"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "attributeCount": 2
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "keyword": "ReferencedSOPClassUID",
+                      "tag": "(0008,1150)",
+                      "valueCount": 1,
+                      "valueForm": "inline",
+                      "vm": "1",
+                      "vr": "UI"
+                    },
+                    "children": [],
+                    "id": "0.12.0.0",
+                    "kind": "attribute",
+                    "label": "Referenced SOP Class UID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": 34,
+                      "line": null,
+                      "offset": 614,
+                      "ordinal": 0,
+                      "path": "(0008,1140)[0]/(0008,1150)"
+                    },
+                    "name": "ReferencedSOPClassUID",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "1.2.840.10008.5.1.4.1.1.2",
+                    "valueLength": 26,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "keyword": "ReferencedSOPInstanceUID",
+                      "patientIdentifying": true,
+                      "tag": "(0008,1155)",
+                      "valueCount": 1,
+                      "valueForm": "inline",
+                      "vm": "1",
+                      "vr": "UI"
+                    },
+                    "children": [],
+                    "id": "0.12.0.1",
+                    "kind": "attribute",
+                    "label": "Referenced SOP Instance UID",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": 48,
+                      "line": null,
+                      "offset": 648,
+                      "ordinal": 1,
+                      "path": "(0008,1140)[0]/(0008,1155)"
+                    },
+                    "name": "ReferencedSOPInstanceUID",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": "1.2.826.0.1.9999999.1.3.20260819100000.1",
+                    "valueLength": 40,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.12.0",
+                "kind": "item",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 82,
+                  "line": null,
+                  "offset": 606,
+                  "ordinal": 0,
+                  "path": "(0008,1140)[0]"
+                },
+                "name": "item",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.12",
+            "kind": "sequence",
+            "label": "Referenced Image Sequence",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 102,
+              "line": null,
+              "offset": 594,
+              "ordinal": 12,
+              "path": "(0008,1140)"
+            },
+            "name": "ReferencedImageSequence",
+            "ordinal": 12,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientName",
+              "patientIdentifying": true,
+              "tag": "(0010,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "PN"
+            },
+            "children": [],
+            "id": "0.13",
+            "kind": "attribute",
+            "label": "Patient's Name",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 24,
+              "line": null,
+              "offset": 696,
+              "ordinal": 13,
+              "path": "(0010,0010)"
+            },
+            "name": "PatientName",
+            "ordinal": 13,
+            "redacted": false,
+            "value": "SAMPLE^JORDAN^^^",
+            "valueLength": 16,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientID",
+              "patientIdentifying": true,
+              "tag": "(0010,0020)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.14",
+            "kind": "attribute",
+            "label": "Patient ID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 16,
+              "line": null,
+              "offset": 720,
+              "ordinal": 14,
+              "path": "(0010,0020)"
+            },
+            "name": "PatientID",
+            "ordinal": 14,
+            "redacted": false,
+            "value": "PAT-0042",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientBirthDate",
+              "patientIdentifying": true,
+              "tag": "(0010,0030)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DA"
+            },
+            "children": [],
+            "id": "0.15",
+            "kind": "attribute",
+            "label": "Patient's Birth Date",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 16,
+              "line": null,
+              "offset": 736,
+              "ordinal": 15,
+              "path": "(0010,0030)"
+            },
+            "name": "PatientBirthDate",
+            "ordinal": 15,
+            "redacted": false,
+            "value": "19850214",
+            "valueLength": 8,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientSex",
+              "patientIdentifying": true,
+              "tag": "(0010,0040)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.16",
+            "kind": "attribute",
+            "label": "Patient's Sex",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 752,
+              "ordinal": 16,
+              "path": "(0010,0040)"
+            },
+            "name": "PatientSex",
+            "ordinal": 16,
+            "redacted": false,
+            "value": "F",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PatientAge",
+              "patientIdentifying": true,
+              "tag": "(0010,1010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "AS"
+            },
+            "children": [],
+            "id": "0.17",
+            "kind": "attribute",
+            "label": "Patient's Age",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 12,
+              "line": null,
+              "offset": 762,
+              "ordinal": 17,
+              "path": "(0010,1010)"
+            },
+            "name": "PatientAge",
+            "ordinal": 17,
+            "redacted": false,
+            "value": "041Y",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SliceThickness",
+              "tag": "(0018,0050)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.18",
+            "kind": "attribute",
+            "label": "Slice Thickness",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 12,
+              "line": null,
+              "offset": 774,
+              "ordinal": 18,
+              "path": "(0018,0050)"
+            },
+            "name": "SliceThickness",
+            "ordinal": 18,
+            "redacted": false,
+            "value": "1.25",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "KVP",
+              "tag": "(0018,0060)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.19",
+            "kind": "attribute",
+            "label": "KVP",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 12,
+              "line": null,
+              "offset": 786,
+              "ordinal": 19,
+              "path": "(0018,0060)"
+            },
+            "name": "KVP",
+            "ordinal": 19,
+            "redacted": false,
+            "value": "120",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "XRayTubeCurrent",
+              "tag": "(0018,1151)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "IS"
+            },
+            "children": [],
+            "id": "0.20",
+            "kind": "attribute",
+            "label": "X-Ray Tube Current",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 12,
+              "line": null,
+              "offset": 798,
+              "ordinal": 20,
+              "path": "(0018,1151)"
+            },
+            "name": "XRayTubeCurrent",
+            "ordinal": 20,
+            "redacted": false,
+            "value": "250",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "StudyInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000D)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.21",
+            "kind": "attribute",
+            "label": "Study Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 46,
+              "line": null,
+              "offset": 810,
+              "ordinal": 21,
+              "path": "(0020,000D)"
+            },
+            "name": "StudyInstanceUID",
+            "ordinal": 21,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.1.20260819100000",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesInstanceUID",
+              "patientIdentifying": true,
+              "tag": "(0020,000E)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "UI"
+            },
+            "children": [],
+            "id": "0.22",
+            "kind": "attribute",
+            "label": "Series Instance UID",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 46,
+              "line": null,
+              "offset": 856,
+              "ordinal": 22,
+              "path": "(0020,000E)"
+            },
+            "name": "SeriesInstanceUID",
+            "ordinal": 22,
+            "redacted": false,
+            "value": "1.2.826.0.1.9999999.1.2.20260819100000",
+            "valueLength": 38,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SeriesNumber",
+              "tag": "(0020,0011)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "IS"
+            },
+            "children": [],
+            "id": "0.23",
+            "kind": "attribute",
+            "label": "Series Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 902,
+              "ordinal": 23,
+              "path": "(0020,0011)"
+            },
+            "name": "SeriesNumber",
+            "ordinal": 23,
+            "redacted": false,
+            "value": "2",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "InstanceNumber",
+              "tag": "(0020,0013)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "IS"
+            },
+            "children": [],
+            "id": "0.24",
+            "kind": "attribute",
+            "label": "Instance Number",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 912,
+              "ordinal": 24,
+              "path": "(0020,0013)"
+            },
+            "name": "InstanceNumber",
+            "ordinal": 24,
+            "redacted": false,
+            "value": "17",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImagePositionPatient",
+              "tag": "(0020,0032)",
+              "valueCount": 3,
+              "valueForm": "inline",
+              "vm": "3",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.25",
+            "kind": "attribute",
+            "label": "Image Position (Patient)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 28,
+              "line": null,
+              "offset": 922,
+              "ordinal": 25,
+              "path": "(0020,0032)"
+            },
+            "name": "ImagePositionPatient",
+            "ordinal": 25,
+            "redacted": false,
+            "value": "-150.0\\-150.0\\-25.0",
+            "valueLength": 20,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "ImageOrientationPatient",
+              "tag": "(0020,0037)",
+              "valueCount": 6,
+              "valueForm": "inline",
+              "vm": "6",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.26",
+            "kind": "attribute",
+            "label": "Image Orientation (Patient)",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 32,
+              "line": null,
+              "offset": 950,
+              "ordinal": 26,
+              "path": "(0020,0037)"
+            },
+            "name": "ImageOrientationPatient",
+            "ordinal": 26,
+            "redacted": false,
+            "value": "1.0\\0.0\\0.0\\0.0\\1.0\\0.0",
+            "valueLength": 24,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "itemCount": 1,
+              "keyword": "ContentSequence",
+              "patientIdentifying": true,
+              "tag": "(0040,A730)",
+              "valueForm": "sequence",
+              "vm": "1",
+              "vr": "SQ"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "attributeCount": 2,
+                  "conceptCode": "113704",
+                  "conceptMeaning": "Clinical Trial Protocol",
+                  "conceptScheme": "DCM",
+                  "valueType": "CONTAINER"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "keyword": "ValueType",
+                      "tag": "(0040,A040)",
+                      "valueCount": 1,
+                      "valueForm": "inline",
+                      "vm": "1",
+                      "vr": "CS"
+                    },
+                    "children": [],
+                    "id": "0.27.0.0",
+                    "kind": "attribute",
+                    "label": "Value Type",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": 18,
+                      "line": null,
+                      "offset": 1002,
+                      "ordinal": 0,
+                      "path": "(0040,A730)[0]/(0040,A040)"
+                    },
+                    "name": "ValueType",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": "CONTAINER",
+                    "valueLength": 10,
+                    "valuePresent": true
+                  },
+                  {
+                    "attributes": {
+                      "itemCount": 1,
+                      "keyword": "ConceptNameCodeSequence",
+                      "tag": "(0040,A043)",
+                      "valueForm": "sequence",
+                      "vm": "1",
+                      "vr": "SQ"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "attributeCount": 3
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "keyword": "CodeValue",
+                              "tag": "(0008,0100)",
+                              "valueCount": 1,
+                              "valueForm": "inline",
+                              "vm": "1",
+                              "vr": "SH"
+                            },
+                            "children": [],
+                            "id": "0.27.0.1.0.0",
+                            "kind": "attribute",
+                            "label": "Code Value",
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": 14,
+                              "line": null,
+                              "offset": 1040,
+                              "ordinal": 0,
+                              "path": "(0040,A730)[0]/(0040,A043)[0]/(0008,0100)"
+                            },
+                            "name": "CodeValue",
+                            "ordinal": 0,
+                            "redacted": false,
+                            "value": "113704",
+                            "valueLength": 6,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "keyword": "CodingSchemeDesignator",
+                              "tag": "(0008,0102)",
+                              "valueCount": 1,
+                              "valueForm": "inline",
+                              "vm": "1",
+                              "vr": "SH"
+                            },
+                            "children": [],
+                            "id": "0.27.0.1.0.1",
+                            "kind": "attribute",
+                            "label": "Coding Scheme Designator",
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": 12,
+                              "line": null,
+                              "offset": 1054,
+                              "ordinal": 1,
+                              "path": "(0040,A730)[0]/(0040,A043)[0]/(0008,0102)"
+                            },
+                            "name": "CodingSchemeDesignator",
+                            "ordinal": 1,
+                            "redacted": false,
+                            "value": "DCM",
+                            "valueLength": 4,
+                            "valuePresent": true
+                          },
+                          {
+                            "attributes": {
+                              "keyword": "CodeMeaning",
+                              "tag": "(0008,0104)",
+                              "valueCount": 1,
+                              "valueForm": "inline",
+                              "vm": "1",
+                              "vr": "LO"
+                            },
+                            "children": [],
+                            "id": "0.27.0.1.0.2",
+                            "kind": "attribute",
+                            "label": "Code Meaning",
+                            "location": {
+                              "column": null,
+                              "file": null,
+                              "length": 32,
+                              "line": null,
+                              "offset": 1066,
+                              "ordinal": 2,
+                              "path": "(0040,A730)[0]/(0040,A043)[0]/(0008,0104)"
+                            },
+                            "name": "CodeMeaning",
+                            "ordinal": 2,
+                            "redacted": false,
+                            "value": "Clinical Trial Protocol",
+                            "valueLength": 24,
+                            "valuePresent": true
+                          }
+                        ],
+                        "id": "0.27.0.1.0",
+                        "kind": "item",
+                        "label": null,
+                        "location": {
+                          "column": null,
+                          "file": null,
+                          "length": 58,
+                          "line": null,
+                          "offset": 1032,
+                          "ordinal": 0,
+                          "path": "(0040,A730)[0]/(0040,A043)[0]"
+                        },
+                        "name": "item",
+                        "ordinal": 0,
+                        "redacted": false,
+                        "value": null,
+                        "valueLength": null,
+                        "valuePresent": null
+                      }
+                    ],
+                    "id": "0.27.0.1",
+                    "kind": "sequence",
+                    "label": "Concept Name Code Sequence",
+                    "location": {
+                      "column": null,
+                      "file": null,
+                      "length": 78,
+                      "line": null,
+                      "offset": 1020,
+                      "ordinal": 1,
+                      "path": "(0040,A730)[0]/(0040,A043)"
+                    },
+                    "name": "ConceptNameCodeSequence",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": true
+                  }
+                ],
+                "id": "0.27.0",
+                "kind": "content-item",
+                "label": "Clinical Trial Protocol",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": 96,
+                  "line": null,
+                  "offset": 994,
+                  "ordinal": 0,
+                  "path": "(0040,A730)[0]"
+                },
+                "name": "CONTAINER",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.27",
+            "kind": "sequence",
+            "label": "Content Sequence",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 116,
+              "line": null,
+              "offset": 982,
+              "ordinal": 27,
+              "path": "(0040,A730)"
+            },
+            "name": "ContentSequence",
+            "ordinal": 27,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "SamplesPerPixel",
+              "tag": "(0028,0002)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.28",
+            "kind": "attribute",
+            "label": "Samples per Pixel",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1098,
+              "ordinal": 28,
+              "path": "(0028,0002)"
+            },
+            "name": "SamplesPerPixel",
+            "ordinal": 28,
+            "redacted": false,
+            "value": "1",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PhotometricInterpretation",
+              "tag": "(0028,0004)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "CS"
+            },
+            "children": [],
+            "id": "0.29",
+            "kind": "attribute",
+            "label": "Photometric Interpretation",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 20,
+              "line": null,
+              "offset": 1108,
+              "ordinal": 29,
+              "path": "(0028,0004)"
+            },
+            "name": "PhotometricInterpretation",
+            "ordinal": 29,
+            "redacted": false,
+            "value": "MONOCHROME2",
+            "valueLength": 12,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Rows",
+              "tag": "(0028,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.30",
+            "kind": "attribute",
+            "label": "Rows",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1128,
+              "ordinal": 30,
+              "path": "(0028,0010)"
+            },
+            "name": "Rows",
+            "ordinal": 30,
+            "redacted": false,
+            "value": "2",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "Columns",
+              "tag": "(0028,0011)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.31",
+            "kind": "attribute",
+            "label": "Columns",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1138,
+              "ordinal": 31,
+              "path": "(0028,0011)"
+            },
+            "name": "Columns",
+            "ordinal": 31,
+            "redacted": false,
+            "value": "2",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "BitsAllocated",
+              "tag": "(0028,0100)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.32",
+            "kind": "attribute",
+            "label": "Bits Allocated",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1148,
+              "ordinal": 32,
+              "path": "(0028,0100)"
+            },
+            "name": "BitsAllocated",
+            "ordinal": 32,
+            "redacted": false,
+            "value": "16",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "BitsStored",
+              "tag": "(0028,0101)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.33",
+            "kind": "attribute",
+            "label": "Bits Stored",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1158,
+              "ordinal": 33,
+              "path": "(0028,0101)"
+            },
+            "name": "BitsStored",
+            "ordinal": 33,
+            "redacted": false,
+            "value": "12",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "PixelRepresentation",
+              "tag": "(0028,0103)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "US"
+            },
+            "children": [],
+            "id": "0.34",
+            "kind": "attribute",
+            "label": "Pixel Representation",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1168,
+              "ordinal": 34,
+              "path": "(0028,0103)"
+            },
+            "name": "PixelRepresentation",
+            "ordinal": 34,
+            "redacted": false,
+            "value": "0",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "RescaleIntercept",
+              "tag": "(0028,1052)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.35",
+            "kind": "attribute",
+            "label": "Rescale Intercept",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 14,
+              "line": null,
+              "offset": 1178,
+              "ordinal": 35,
+              "path": "(0028,1052)"
+            },
+            "name": "RescaleIntercept",
+            "ordinal": 35,
+            "redacted": false,
+            "value": "-1024",
+            "valueLength": 6,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "keyword": "RescaleSlope",
+              "tag": "(0028,1053)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vm": "1",
+              "vr": "DS"
+            },
+            "children": [],
+            "id": "0.36",
+            "kind": "attribute",
+            "label": "Rescale Slope",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 10,
+              "line": null,
+              "offset": 1192,
+              "ordinal": 36,
+              "path": "(0028,1053)"
+            },
+            "name": "RescaleSlope",
+            "ordinal": 36,
+            "redacted": false,
+            "value": "1",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "private": true,
+              "tag": "(0009,0010)",
+              "valueCount": 1,
+              "valueForm": "inline",
+              "vr": "LO"
+            },
+            "children": [],
+            "id": "0.37",
+            "kind": "attribute",
+            "label": "Private Creator",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 24,
+              "line": null,
+              "offset": 1202,
+              "ordinal": 37,
+              "path": "(0009,0010)"
+            },
+            "name": "Private_0009_0010",
+            "ordinal": 37,
+            "redacted": false,
+            "value": "EXAMPLE PRIVATE",
+            "valueLength": 16,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "patientIdentifying": true,
+              "private": true,
+              "tag": "(0009,1001)",
+              "valueCount": 0,
+              "valueForm": "binary",
+              "vr": "UN"
+            },
+            "children": [],
+            "id": "0.38",
+            "kind": "attribute",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 16,
+              "line": null,
+              "offset": 1226,
+              "ordinal": 38,
+              "path": "(0009,1001)"
+            },
+            "name": "Private_0009_1001",
+            "ordinal": 38,
+            "redacted": false,
+            "value": null,
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "declaredLength": 8,
+              "read": false,
+              "stored": false,
+              "tag": "(7FE0,0010)",
+              "vr": "OW"
+            },
+            "children": [],
+            "id": "0.39",
+            "kind": "pixel-data",
+            "label": "Pixel Data",
+            "location": {
+              "column": null,
+              "file": null,
+              "length": 20,
+              "line": null,
+              "offset": 1242,
+              "ordinal": 39,
+              "path": "(7FE0,0010)"
+            },
+            "name": "PixelData",
+            "ordinal": 39,
+            "redacted": false,
+            "value": null,
+            "valueLength": 8,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "dataset",
+        "label": "CT Image Storage",
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": "/"
+        },
+        "name": "CTImageStorage",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "dicom.pixel_data_not_read",
+        "location": null,
+        "message": "(7FE0,0010) Pixel Data (OW, 8 byte(s)) is present and was stepped over without being read. Pixel data is never read, never stored and never analysed. Apiome imports DICOM's metadata layer — the file meta information, the attribute structure and Structured Report content trees — and steps over every Pixel Data, Float Pixel Data, Double Float Pixel Data and Overlay Data value by its declared length without decoding it. Each one is recorded as present and skipped, with its VR and length, so its absence from the model is stated, not implied.",
+        "nodeId": null,
+        "severity": "info"
+      },
+      {
+        "code": "dicom.private_attributes_not_modelled",
+        "location": null,
+        "message": "Dataset 0 carries 1 private attribute(s). Their tag, VR and length are recorded; their meaning is not in the DICOM data dictionary and is not modelled.",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

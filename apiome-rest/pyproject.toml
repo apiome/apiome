@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.410.0"
+version = "1.411.0"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -57,6 +57,9 @@ dependencies = [
     "boto3>=1.34.0",
     # Apigee connector (CDG-1.5): service-account keys and workload identity federation.
     "google-auth>=2.30.0",
+    # DICOM import (FMT-6.7): the PS3.6 data dictionary and UID registry only. Element bytes are
+    # read by app.dicom_part10, which never decodes pixel data.
+    "pydicom>=3.0.0",
 ]
 
 [project.optional-dependencies]

@@ -529,6 +529,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "dicom": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="DICOM Part 10 (PS3.10) and the DICOM JSON model (PS3.18 Annex F)",
+                format_key="dicom",
+                support=VersionSupport.UNGATED,
+                note="DICOM is one continuously maintained standard with no edition number in a "
+                "file. The transfer syntax is branched on (implicit/explicit VR, byte order, "
+                "deflate); the SOP class and the data dictionary edition shipped with pydicom name "
+                "attributes, and nothing is gated on a release.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "nacha": VersionCoverage(
         reads=[
             FormatVersion(

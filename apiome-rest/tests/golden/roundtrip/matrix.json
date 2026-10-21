@@ -44562,6 +44562,4527 @@
       "unexplained": []
     },
     {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 15,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'DICOM CT Image Storage', added type 'CTImageStorage', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'PN'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "DICOM CT Image Storage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: 'Type' object has no attribute 'alias_of' (observed: Emit failed: 'Type' object has no attribute 'alias_of')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to AsyncAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 3,
+      "loss_drop": 39,
+      "loss_ok": 11,
+      "loss_synth": 3,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 14,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CTImageStorage', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'PN'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 23,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CS', added type 'CTImageStorage', added type 'DA', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "LO"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SH"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TM"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "UI"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 15,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added channel 'com.example.dicom.ct.image.storage', added operation '36c4550d-9436-431f-9a06-3dde963347ea', changed root '', added service 'com.example.dicom.ct.image.storage', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "channel",
+          "key": "com.example.dicom.ct.image.storage"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "36c4550d-9436-431f-9a06-3dde963347ea"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "com.example.dicom.ct.image.storage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 39,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-89kjok7s/DICOM.proto:9:12:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:11:12:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:13:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:15:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:17:3:cannot find `.DICOM.DA` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:19:3:cannot find `.DICOM.TM` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:21:3:cannot find `.DICOM.SH` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:23:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:25:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:27:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:29:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:33:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:35:3:cannot find `.DICOM.DA` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:37:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:39:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:41:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:43:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:45:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:47:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:49:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:51:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:53:12:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:55:12:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:57:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:59:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:61:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:63:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:65:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:67:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:69:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:71:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-89kjok7s/DICOM.proto:73:3:cannot find `.DICOM.DS` in this scope)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a CORBA IDL definition (observed: Re-import failed: Content does not appear to be a CORBA IDL definition)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 17,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /CS', added operation 'GET /CS/{id}', added operation 'POST /CS', changed root '', added service 'CS.CS', added type 'CS.CS', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /CS"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /CS/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /CS"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "CS.CS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CS.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 11,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothin... (observed: Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing).)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 14,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Query._', changed root '', added service 'Query', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 48,
+      "loss_drop": 36,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 36,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 24,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CS', added type 'CTImageStorage', added type 'DA', added type 'DICOM CT Image Storage', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DA"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DICOM CT Image Storage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "LO"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SH"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TM"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "UI"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 23,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CS', added type 'CTImageStorage', added type 'DA', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "LO"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SH"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TM"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "UI"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 14,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'cses.dicom', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'dicom/v1.CS'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "cses.dicom"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom/v1.CS"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 11,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a conf... (observed: Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none).)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 15,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 12,
+      "loss_drop": 36,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'dicom->llm-tools.CTImageStorage', added service 'dicom->llm-tools', added type 'CTImageStorageParams', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "dicom->llm-tools.CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "dicom->llm-tools"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorageParams"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', changed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 14,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 7,
+      "matched_count": 3,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'CTImageStorage', added type 'CTImageStorage.PatientName', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage.PatientName"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (dicom->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (dicom->oncrpc))",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'DICOM.CS', changed type 'DICOM.DA', changed type 'DICOM.DS', changed type 'DICOM.IS', changed type 'DICOM.LO', changed type 'DICOM.SH', changed type 'DICOM.TM', changed type 'DICOM.UI', changed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 24,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'DICOM CT Image Storage', added type 'CS', added type 'CTImageStorage', added type 'DA', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "DICOM CT Image Storage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "LO"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SH"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TM"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "UI"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Postman requests found in collection (dicom->postman) (observed: Re-import failed: No Postman requests found in collection (dicom->postman))",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 39,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:8:12:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:10:12:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:12:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:14:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:16:3:cannot find `.DICOM.DA` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:18:3:cannot find `.DICOM.TM` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:20:3:cannot find `.DICOM.SH` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:22:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:24:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:26:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:28:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:32:3:cannot find `.DICOM.LO` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:34:3:cannot find `.DICOM.DA` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:36:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:38:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:40:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:42:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:44:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:46:3:cannot find `.DICOM.UI` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:48:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:50:3:cannot find `.DICOM.IS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:52:12:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:54:12:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:56:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:58:3:cannot find `.DICOM.CS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:60:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:62:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:64:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:66:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:68:3:cannot find `.DICOM.US` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:70:3:cannot find `.DICOM.DS` in this scope\n/tmp/apiome-proto-jrkvk4oz/DICOM.proto:72:3:cannot find `.DICOM.DS` in this scope)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 15,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'DICOM CT Image Storage', added type 'CTImageStorage', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'PN'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "DICOM CT Image Storage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'DICOM.CS', changed type 'DICOM.DA', changed type 'DICOM.DS', changed type 'DICOM.IS', changed type 'DICOM.LO', changed type 'DICOM.SH', changed type 'DICOM.TM', changed type 'DICOM.UI', changed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 14,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CTImageStorage', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.PN', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'PN'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PN"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', changed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 23,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 3,
+      "loss_drop": 36,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'dicom:dicom-ct-image-storage.types.cs', added type 'dicom:dicom-ct-image-storage.types.ct-image-storage', added type 'dicom:dicom-ct-image-storage.types.da', added type 'dicom:dicom-ct-image-storage.types.ds', added type 'dicom:dicom-ct-image-storage.types.is', added type 'dicom:dicom-ct-image-storage.types.lo', added type 'dicom:dicom-ct-image-storage.types.pn', added type 'dicom:dicom-ct-image-storage.types.sh', added type 'dicom:dicom-ct-image-storage.types.tm', added type 'dicom:dicom-ct-image-storage.types.ui', added type 'dicom:dicom-ct-image-storage.types.us'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.cs"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.ct-image-storage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.da"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.ds"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.is"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.lo"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.pn"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.sh"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.tm"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.ui"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "dicom:dicom-ct-image-storage.types.us"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 12,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DICOM.CS",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.CTImageStorage",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DA",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.DS",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.IS",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.LO",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.PN",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.SH",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.TM",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.UI",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "DICOM.US",
+          "kind": "ok",
+          "message": "alias type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', changed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.CS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.CTImageStorage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DA"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.DS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.IS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.LO"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.SH"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.TM"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.UI"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "DICOM.US"
+        }
+      ]
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 36,
+      "loss_drop": 0,
+      "loss_ok": 11,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "dicom",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "discovery/01-bookstore-api.json",
       "diff_count": 11,
       "emit_format": "apiblueprint",
@@ -200395,6 +204916,7 @@
     "connectrpc",
     "corbaidl",
     "dbt",
+    "dicom",
     "discovery",
     "dtd",
     "edifact",

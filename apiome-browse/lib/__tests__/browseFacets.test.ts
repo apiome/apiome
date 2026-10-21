@@ -75,6 +75,7 @@ describe('formatLabel', () => {
     expect(formatLabel('hl7v3')).toBe('HL7 v3 / CDA');
     expect(formatLabel('tradacoms')).toBe('TRADACOMS');
     expect(formatLabel('nacha')).toBe('NACHA ACH');
+    expect(formatLabel('dicom')).toBe('DICOM');
     expect(formatLabel('asn1')).toBe('ASN.1');
   });
 

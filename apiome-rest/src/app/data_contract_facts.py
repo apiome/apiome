@@ -95,6 +95,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "avro",
         "cddl",
         "cobolcopybook",
+        "dicom",
         "dtd",
         "edifact",
         "edix12",

@@ -84,6 +84,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('c-cda')?.sourceKind).toBe('hl7v3');
     expect(catalogAdapterForFormat('tradacom')?.sourceKind).toBe('tradacoms');
     expect(catalogAdapterForFormat('ach')?.sourceKind).toBe('nacha');
+    expect(catalogAdapterForFormat('dcm')?.sourceKind).toBe('dicom');
+    expect(catalogAdapterForFormat('dicom-json')?.sourceKind).toBe('dicom');
     expect(catalogAdapterForFormat('sepa')?.sourceKind).toBe('iso20022');
     expect(catalogAdapterForFormat('iso20022')?.sourceKind).toBe('iso20022');
     expect(catalogAdapterForFormat('iso8583')?.sourceKind).toBe('iso8583');
@@ -118,7 +120,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -400,6 +402,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('hl7v3')).toBe('dataschema');
     expect(paradigmForFormat('tradacoms')).toBe('dataschema');
     expect(paradigmForFormat('nacha')).toBe('dataschema');
+    expect(paradigmForFormat('dicom')).toBe('dataschema');
     expect(paradigmForFormat('iso20022')).toBe('dataschema');
     expect(paradigmForFormat('iso8583')).toBe('dataschema');
     expect(paradigmForFormat('cobolcopybook')).toBe('dataschema');
