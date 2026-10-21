@@ -1,5 +1,7 @@
 # Roadmap — API Products & Application Access (APX)
 
+**Umbrella:** [#6096](https://github.com/apiome/apiome/issues/6096) · issues #6096–#6128 filed 2026-10-21 (labels: `roadmap-application-access`).
+
 ## 0. Roadmap request
 
 > Create roadmaps for features that Kong provides that Apiome does not (yet) if there's a good fit. If Kong
@@ -141,16 +143,16 @@ Each provisioner diffs that against the gateway and applies the difference idemp
 
 ## 3. Epics
 
-### APX-EPIC-1 — API products and plans
+### APX-EPIC-1 (#6097) — API products and plans
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-1.1 | API product model | `api_products` bundling projects/versions, MCP servers and event channels, with owner team and visibility; a catalog kind and graph node | `catalog`, `data-model`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
-| APX-1.2 | Plans | Tiers per product: auth strategy, declared limits, approval mode, environments, terms | `catalog`, `api-keys`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
-| APX-1.3 | Product pages in Browse | Product landing page listing its APIs and plans, with a Request access action | `portal`, `browser` | Y | N | M | apiome-browse |
-| APX-1.4 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
+| APX-1.1 · #6098 | API product model | `api_products` bundling projects/versions, MCP servers and event channels, with owner team and visibility; a catalog kind and graph node | `catalog`, `data-model`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
+| APX-1.2 · #6099 | Plans | Tiers per product: auth strategy, declared limits, approval mode, environments, terms | `catalog`, `api-keys`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
+| APX-1.3 · #6100 | Product pages in Browse | Product landing page listing its APIs and plans, with a Request access action | `portal`, `browser` | Y | N | M | apiome-browse |
+| APX-1.4 · #6101 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
 
-#### APX-1.1 — API product model
+#### APX-1.1 (#6098) — API product model
 
 - **Problem Statement:** Access is granted to *a thing a consumer understands* (“Payments API”), which is usually
   several projects and versions, possibly MCP servers and event channels. Apiome has projects and catalog items but
@@ -178,7 +180,7 @@ API product "Payments"
  Plans: Sandbox (auto, 10/min) · Standard (manual, 100/min) · Partner (manual, mTLS, 1 000/min)
 ```
 
-#### APX-1.2 — Plans
+#### APX-1.2 (#6099) — Plans
 
 - **Problem Statement:** A gateway holds rate limits per consumer group, but the *intent* (what the Standard tier
   promises) lives in wikis and contracts.
@@ -194,7 +196,7 @@ API product "Payments"
 - **Parallelism/Dependencies:** After 1.1.
 - **Documentation (Docusaurus):** “Plans” section in `ship/api-products.mdx`; screenshot `api-plan-editor`.
 
-#### APX-1.3 — Product pages in Browse
+#### APX-1.3 (#6100) — Product pages in Browse
 
 - **Solution/Scope:** `apiome-browse` route `/{tenant}/products/{slug}`: summary, member APIs (links into existing
   version pages), plan cards (auth strategy, limits, approval), **Request access** (requires PCX-1.1 sign-in; for
@@ -204,7 +206,7 @@ API product "Payments"
 - **Parallelism/Dependencies:** After 1.2; request flow after 2.3.
 - **Documentation (Docusaurus):** update `ship/browse-published-specs.md`; screenshot `browse-product-page`.
 
-#### APX-1.4 — Product and plan lifecycle
+#### APX-1.4 (#6101) — Product and plan lifecycle
 
 - **Solution/Scope:** Deprecating a plan blocks new subscriptions, notifies subscribed application owners and
   offers a **migrate to plan** action (re-provisions consumers into the new group without new keys). Retiring a
@@ -215,17 +217,17 @@ API product "Payments"
 
 ---
 
-### APX-EPIC-2 — Applications and access requests
+### APX-EPIC-2 (#6102) — Applications and access requests
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-2.1 | Application model linked to consumers | `applications` owned by a user or team, each 1:1 with a `consumer` so contracts, graph and usage line up | `data-model`, `contracts`, `rest` | N | Y | M | apiome-db, apiome-rest |
-| APX-2.2 | Access request and approval engine | Subscription requests with auto/manual approval, approver role, reasons, expiry; reusable by PCX-4.3 | `governance`, `roles`, `rest` | N | Y | L | apiome-rest, apiome-db, apiome-ui |
-| APX-2.3 | My apps for portal developers | Signed-in portal readers register apps, request plans and manage keys in Browse | `portal`, `browser` | Y | N | L | apiome-browse, apiome-rest |
-| APX-2.4 | Applications admin in apiome-ui | Workspace view of all applications, requests queue, suspend/revoke, owners | `ui`, `governance` | Y | Y | M | apiome-ui |
-| APX-2.5 | Shadow consumers | Gateway consumers Apiome did not provision, surfaced beside Shadow APIs, with Adopt as application | `gateway`, `governance`, `catalog` | Y | N | M | apiome-rest, apiome-ui |
+| APX-2.1 · #6103 | Application model linked to consumers | `applications` owned by a user or team, each 1:1 with a `consumer` so contracts, graph and usage line up | `data-model`, `contracts`, `rest` | N | Y | M | apiome-db, apiome-rest |
+| APX-2.2 · #6104 | Access request and approval engine | Subscription requests with auto/manual approval, approver role, reasons, expiry; reusable by PCX-4.3 | `governance`, `roles`, `rest` | N | Y | L | apiome-rest, apiome-db, apiome-ui |
+| APX-2.3 · #6105 | My apps for portal developers | Signed-in portal readers register apps, request plans and manage keys in Browse | `portal`, `browser` | Y | N | L | apiome-browse, apiome-rest |
+| APX-2.4 · #6106 | Applications admin in apiome-ui | Workspace view of all applications, requests queue, suspend/revoke, owners | `ui`, `governance` | Y | Y | M | apiome-ui |
+| APX-2.5 · #6107 | Shadow consumers | Gateway consumers Apiome did not provision, surfaced beside Shadow APIs, with Adopt as application | `gateway`, `governance`, `catalog` | Y | N | M | apiome-rest, apiome-ui |
 
-#### APX-2.1 — Application model linked to consumers
+#### APX-2.1 (#6103) — Application model linked to consumers
 
 - **Problem Statement:** Apiome's `consumer` is inferred from traffic or declared for contracts; to grant access,
   something must *own* a credential and be accountable.
@@ -239,7 +241,7 @@ API product "Payments"
 - **Parallelism/Dependencies:** After 1.1.
 - **Documentation (Docusaurus):** new `govern/applications.mdx`; update `govern/dependency-graph.mdx` (new node kind).
 
-#### APX-2.2 — Access request and approval engine
+#### APX-2.2 (#6104) — Access request and approval engine
 
 - **Problem Statement:** Approval flows exist ad hoc (PCX-4.3 plans an agent-key queue; #1591 handled workspace
   joins). A generic engine avoids three more.
@@ -270,7 +272,7 @@ stateDiagram-v2
   expired --> [*]
 ```
 
-#### APX-2.3 — My apps for portal developers
+#### APX-2.3 (#6105) — My apps for portal developers
 
 - **Problem Statement:** The Kong Dev Portal equivalent is external developers self-serving; MVP covers internal
   developers only.
@@ -284,7 +286,7 @@ stateDiagram-v2
 - **Documentation (Docusaurus):** new `ship/developer-self-service.mdx`; screenshots `browse-my-apps`,
   `browse-key-show-once`.
 
-#### APX-2.4 — Applications admin in apiome-ui
+#### APX-2.4 (#6106) — Applications admin in apiome-ui
 
 - **Solution/Scope:** Govern → **Applications**: list (owner, products, plan, state, last seen from usage),
   **Requests** queue with approve/reject, application detail (subscriptions, credentials metadata, provisioning
@@ -294,7 +296,7 @@ stateDiagram-v2
 - **Parallelism/Dependencies:** After 2.2.
 - **Documentation (Docusaurus):** screenshots `apx-applications-list`, `apx-application-detail`.
 
-#### APX-2.5 — Shadow consumers
+#### APX-2.5 (#6107) — Shadow consumers
 
 - **Problem Statement:** Gateways already hold consumers created by hand. Like shadow APIs, they run but nobody can
   govern them.
@@ -310,17 +312,17 @@ stateDiagram-v2
 
 ---
 
-### APX-EPIC-3 — Credential issuance
+### APX-EPIC-3 (#6108) — Credential issuance
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-3.1 | API key issuance | Generate keys with a tenant prefix, show once, store hash + vault seal for provisioning, auto-create usage binding | `api-keys`, `security`, `rest` | N | Y | M | apiome-rest, apiome-db |
-| APX-3.2 | Key rotation, expiry and revocation | Multiple active keys, grace overlap, max age from plan, revoke propagates to gateways | `api-keys`, `security` | Y | Y | M | apiome-rest, apiome-ui |
-| APX-3.3 | OAuth2 client credentials via DCR | RFC 7591 registration at Okta, Entra ID, Auth0, Keycloak, Curity or an HTTP bridge | `auth`, `security`, `integrations` | Y | N | L | apiome-rest, apiome-ui |
-| APX-3.4 | mTLS client certificates | Register client certificates (or CSRs signed by a tenant CA in the vault) per application | `security`, `auth` | Y | N | M | apiome-rest |
-| APX-3.5 | Leaked-key response | Issued-key prefix registered with ASP-3 scanning; detection triggers notify, suspend or rotate | `security`, `governance` | Y | N | M | apiome-rest |
+| APX-3.1 · #6109 | API key issuance | Generate keys with a tenant prefix, show once, store hash + vault seal for provisioning, auto-create usage binding | `api-keys`, `security`, `rest` | N | Y | M | apiome-rest, apiome-db |
+| APX-3.2 · #6110 | Key rotation, expiry and revocation | Multiple active keys, grace overlap, max age from plan, revoke propagates to gateways | `api-keys`, `security` | Y | Y | M | apiome-rest, apiome-ui |
+| APX-3.3 · #6111 | OAuth2 client credentials via DCR | RFC 7591 registration at Okta, Entra ID, Auth0, Keycloak, Curity or an HTTP bridge | `auth`, `security`, `integrations` | Y | N | L | apiome-rest, apiome-ui |
+| APX-3.4 · #6112 | mTLS client certificates | Register client certificates (or CSRs signed by a tenant CA in the vault) per application | `security`, `auth` | Y | N | M | apiome-rest |
+| APX-3.5 · #6113 | Leaked-key response | Issued-key prefix registered with ASP-3 scanning; detection triggers notify, suspend or rotate | `security`, `governance` | Y | N | M | apiome-rest |
 
-#### APX-3.1 — API key issuance
+#### APX-3.1 (#6109) — API key issuance
 
 - **Problem Statement:** The meetup request: one place that issues and tracks keys for live traffic.
 - **Solution/Scope:** Key format `<tenant_prefix>_<env>_<32 bytes base62>` with a CRC suffix (detectable by
@@ -338,7 +340,7 @@ stateDiagram-v2
 - **Technical Stack:** `secrets` module, CVT resolver, V292 binding helpers.
 - **Documentation (Docusaurus):** “Credentials” section in `govern/applications.mdx`, including the hash-only trade-off.
 
-#### APX-3.2 — Key rotation, expiry and revocation
+#### APX-3.2 (#6110) — Key rotation, expiry and revocation
 
 - **Solution/Scope:** Up to two active keys per credential slot; **Rotate** issues a new key, provisions it,
   and schedules revocation of the old one after a grace period (default 24 h, plan-configurable) — CVT-4.2 pattern.
@@ -349,7 +351,7 @@ stateDiagram-v2
 - **Parallelism/Dependencies:** After 3.1, 4.2.
 - **Documentation (Docusaurus):** rotation section; screenshot `apx-rotate-key`.
 
-#### APX-3.3 — OAuth2 client credentials via DCR
+#### APX-3.3 (#6111) — OAuth2 client credentials via DCR
 
 - **Problem Statement:** Larger tenants do not want static keys; Kong's portal registers OAuth clients at the
   tenant's IdP via RFC 7591 (§0.1).
@@ -366,7 +368,7 @@ stateDiagram-v2
 - **Parallelism/Dependencies:** After 3.1; CVT-1.6.
 - **Documentation (Docusaurus):** new `govern/oauth-client-registration.mdx` with per-IdP setup.
 
-#### APX-3.4 — mTLS client certificates
+#### APX-3.4 (#6112) — mTLS client certificates
 
 - **Solution/Scope:** Application uploads a client certificate (or a CSR that Apiome signs with a tenant CA held
   in the vault as a `certificate` secret). Fingerprint and subject are recorded; provisioning pushes the CA /
@@ -375,7 +377,7 @@ stateDiagram-v2
 - **Acceptance Criteria:** issued cert chains to the tenant CA; expiry alerts reach the application owner.
 - **Documentation (Docusaurus):** mTLS section in `govern/applications.mdx`.
 
-#### APX-3.5 — Leaked-key response
+#### APX-3.5 (#6113) — Leaked-key response
 
 - **Solution/Scope:** Register each tenant's key prefix + CRC with ASP-3.1 `app.sensitive_data` so a leaked key in
   an imported spec, captured payload or connected repository is matched to its credential by hash. Plan setting
@@ -388,19 +390,19 @@ stateDiagram-v2
 
 ---
 
-### APX-EPIC-4 — Gateway provisioning
+### APX-EPIC-4 (#6114) — Gateway provisioning
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-4.1 | Provisioning framework | Desired-state rendering, provider interface, dry run, idempotent apply, retries, per-environment status | `gateway`, `integrations`, `rest` | N | Y | L | apiome-rest, apiome-db |
-| APX-4.2 | Kong provisioner | Consumers, consumer groups with rate limits, key-auth / OIDC / mTLS credentials via Admin API and Konnect | `gateway`, `integrations` | N | Y | L | apiome-rest |
-| APX-4.3 | AWS API Gateway provisioner | API keys and usage plans (throttle + quota) per stage | `gateway`, `integrations` | Y | N | M | apiome-rest |
-| APX-4.4 | Azure API Management provisioner | Products, subscriptions and keys | `gateway`, `integrations` | Y | N | M | apiome-rest |
-| APX-4.5 | Apigee provisioner | Developers, developer apps, API products and quota | `gateway`, `integrations` | Y | N | M | apiome-rest |
-| APX-4.6 | Provisioning drift detection | Each sync compares gateway state to desired state; drift shown and optionally auto-corrected | `gateway`, `governance` | Y | N | M | apiome-rest, apiome-ui |
-| APX-4.7 | Revocation propagation and audit | Revoke/suspend reaches every environment within an SLA; failures escalate | `gateway`, `security` | Y | Y | S | apiome-rest |
+| APX-4.1 · #6115 | Provisioning framework | Desired-state rendering, provider interface, dry run, idempotent apply, retries, per-environment status | `gateway`, `integrations`, `rest` | N | Y | L | apiome-rest, apiome-db |
+| APX-4.2 · #6116 | Kong provisioner | Consumers, consumer groups with rate limits, key-auth / OIDC / mTLS credentials via Admin API and Konnect | `gateway`, `integrations` | N | Y | L | apiome-rest |
+| APX-4.3 · #6117 | AWS API Gateway provisioner | API keys and usage plans (throttle + quota) per stage | `gateway`, `integrations` | Y | N | M | apiome-rest |
+| APX-4.4 · #6118 | Azure API Management provisioner | Products, subscriptions and keys | `gateway`, `integrations` | Y | N | M | apiome-rest |
+| APX-4.5 · #6119 | Apigee provisioner | Developers, developer apps, API products and quota | `gateway`, `integrations` | Y | N | M | apiome-rest |
+| APX-4.6 · #6120 | Provisioning drift detection | Each sync compares gateway state to desired state; drift shown and optionally auto-corrected | `gateway`, `governance` | Y | N | M | apiome-rest, apiome-ui |
+| APX-4.7 · #6121 | Revocation propagation and audit | Revoke/suspend reaches every environment within an SLA; failures escalate | `gateway`, `security` | Y | Y | S | apiome-rest |
 
-#### APX-4.1 — Provisioning framework
+#### APX-4.1 (#6115) — Provisioning framework
 
 - **Problem Statement:** Connectors today only **read**. Writing to a production gateway needs dry runs,
   idempotency, ownership markers and an audit trail, or nobody will grant Apiome write credentials.
@@ -420,7 +422,7 @@ stateDiagram-v2
 - **Documentation (Docusaurus):** new `govern/gateway-provisioning.mdx` (safety model, ownership tags, dry run);
   update `bring-in/connectors.mdx` (write credential, provision capability).
 
-#### APX-4.2 — Kong provisioner
+#### APX-4.2 (#6116) — Kong provisioner
 
 - **Solution/Scope:** For `kong-admin` and `kong-konnect` connectors: `consumers` (`username` = app slug,
   `custom_id` = application id, `tags`), `consumer_groups` per plan with `rate-limiting-advanced` (Enterprise /
@@ -444,7 +446,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
                                           └─ key-auth  key=<from vault, apx_provisioner use>
 ```
 
-#### APX-4.3 / 4.4 / 4.5 — AWS, Azure and Apigee provisioners
+#### APX-4.3 / 4.4 / 4.5 (#6117 / #6118 / #6119) — AWS, Azure and Apigee provisioners
 
 - **AWS API Gateway:** usage plan per (plan, stage) with throttle (rate/burst) and quota; API key imported with
   Apiome's value (`value` param) or generated by AWS and returned once; usage-plan keys. Tagging per 4.1.
@@ -459,7 +461,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Parallelism/Dependencies:** After 4.1; mutually parallel.
 - **Documentation (Docusaurus):** one section each in `govern/gateway-provisioning.mdx`, with a limits-mapping table.
 
-#### APX-4.6 — Provisioning drift detection
+#### APX-4.6 (#6120) — Provisioning drift detection
 
 - **Solution/Scope:** Each connector sync reads Apiome-tagged objects and compares to the last applied hash:
   missing, changed (e.g. someone raised the limit by hand), extra credentials. Application page and Govern →
@@ -467,7 +469,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Acceptance Criteria:** a hand-edited Kong rate limit is reported on the next sync and restored when `correct`.
 - **Documentation (Docusaurus):** drift section.
 
-#### APX-4.7 — Revocation propagation and audit
+#### APX-4.7 (#6121) — Revocation propagation and audit
 
 - **Solution/Scope:** Revoke/suspend/expire triggers immediate high-priority provisioning runs for every
   environment; target SLA 60 s; failures retry every 30 s and raise `apx.revocation.failed` to the product owner
@@ -478,18 +480,18 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 
 ---
 
-### APX-EPIC-5 — Usage, governance and surfaces
+### APX-EPIC-5 (#6122) — Usage, governance and surfaces
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-5.1 | Per-application usage | Application and plan views over the usage index: calls, errors, latency, observed vs declared limits | `analytics`, `observability` | Y | N | M | apiome-rest, apiome-ui |
-| APX-5.2 | Breaking-change impact by application | Classified diffs and blast radius name the subscribed applications and notify their owners | `diff`, `contracts`, `governance` | Y | N | M | apiome-rest |
-| APX-5.3 | Plan conformance checks | Gateway posture (V298) vs declared plan: auth scheme and limits; lint findings and scorecard signal | `governance`, `linting`, `gateway` | Y | N | M | apiome-rest |
-| APX-5.4 | Try-It with the developer's own key | Signed-in developers try APIs with their application credential injected server-side | `portal`, `browser`, `security` | Y | N | S | apiome-browse, apiome-rest |
-| APX-5.5 | REST, CLI and MCP surfaces | `apiome products`, `apiome apps`, `apiome subscriptions`; MCP metadata tools | `cli`, `mcp`, `rest` | Y | Y | M | apiome-cli, apiome-mcp, apiome-rest |
-| APX-5.6 | Documentation and overview | Overview page, safety model, Kong walkthrough, release notes | `documentation` | Y | Y | S | apiome-docs |
+| APX-5.1 · #6123 | Per-application usage | Application and plan views over the usage index: calls, errors, latency, observed vs declared limits | `analytics`, `observability` | Y | N | M | apiome-rest, apiome-ui |
+| APX-5.2 · #6124 | Breaking-change impact by application | Classified diffs and blast radius name the subscribed applications and notify their owners | `diff`, `contracts`, `governance` | Y | N | M | apiome-rest |
+| APX-5.3 · #6125 | Plan conformance checks | Gateway posture (V298) vs declared plan: auth scheme and limits; lint findings and scorecard signal | `governance`, `linting`, `gateway` | Y | N | M | apiome-rest |
+| APX-5.4 · #6126 | Try-It with the developer's own key | Signed-in developers try APIs with their application credential injected server-side | `portal`, `browser`, `security` | Y | N | S | apiome-browse, apiome-rest |
+| APX-5.5 · #6127 | REST, CLI and MCP surfaces | `apiome products`, `apiome apps`, `apiome subscriptions`; MCP metadata tools | `cli`, `mcp`, `rest` | Y | Y | M | apiome-cli, apiome-mcp, apiome-rest |
+| APX-5.6 · #6128 | Documentation and overview | Overview page, safety model, Kong walkthrough, release notes | `documentation` | Y | Y | S | apiome-docs |
 
-#### APX-5.1 — Per-application usage
+#### APX-5.1 (#6123) — Per-application usage
 
 - **Solution/Scope:** Because 3.1 creates usage bindings, the usage index already counts per application's consumer.
   Add application and plan aggregations: calls, error rate, p95 latency, top operations, and **observed peak vs
@@ -499,7 +501,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Parallelism/Dependencies:** After 3.1; RDG ingest sources.
 - **Documentation (Docusaurus):** update `govern/runtime-usage.mdx`; screenshot `apx-application-usage`.
 
-#### APX-5.2 — Breaking-change impact by application
+#### APX-5.2 (#6124) — Breaking-change impact by application
 
 - **Solution/Scope:** CTG classified diff + blast radius already walk consumers; with applications they name an
   **owner** and **plan**. Publishing a breaking change to a product member notifies subscribed application owners
@@ -508,7 +510,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Acceptance Criteria:** a breaking publish lists affected applications with last-seen traffic.
 - **Documentation (Docusaurus):** update `ship/compare-published-versions.md` and dependency-graph page.
 
-#### APX-5.3 — Plan conformance checks
+#### APX-5.3 (#6125) — Plan conformance checks
 
 - **Solution/Scope:** For each plan environment, compare `catalog_gateway_configs.posture` (auth schemes, rate
   limits read from the gateway) with the plan: missing auth plugin, looser or absent limits, consumers on the wrong
@@ -518,7 +520,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
   `plan-auth-not-enforced`.
 - **Documentation (Docusaurus):** rules added to `build/lint-rules.md`; update `govern/scorecards.mdx`.
 
-#### APX-5.4 — Try-It with the developer's own key
+#### APX-5.4 (#6126) — Try-It with the developer's own key
 
 - **Solution/Scope:** Uses CVT-2.7 injection with the signed-in reader's own active credential for the plan whose
   environment matches the selected server. Hash-only credentials cannot be injected (panel explains).
@@ -526,7 +528,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Parallelism/Dependencies:** After CVT-2.7, 2.3.
 - **Documentation (Docusaurus):** update `ship/mock-try-out.mdx`.
 
-#### APX-5.5 — REST, CLI and MCP surfaces
+#### APX-5.5 (#6127) — REST, CLI and MCP surfaces
 
 - **Solution/Scope:** REST resources from 1.1–4.7 completed and consistent; CLI `apiome products
   list|create|add-member`, `apiome plans …`, `apiome apps create|list|describe|delete`, `apiome subscriptions
@@ -536,7 +538,7 @@ Apiome subscription                       Kong (tags: apiome-managed, apiome-app
 - **Acceptance Criteria:** CLI reference regenerated; secret sweep covers CLI `--json` output.
 - **Documentation (Docusaurus):** regenerate REST, CLI and MCP references.
 
-#### APX-5.6 — Documentation and overview
+#### APX-5.6 (#6128) — Documentation and overview
 
 - **Solution/Scope:** Overview `ship/api-products.mdx` (what products, plans, applications and subscriptions are;
   how Apiome differs from a gateway: *Apiome decides, the gateway enforces*), `govern/applications.mdx`,

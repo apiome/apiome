@@ -1,5 +1,7 @@
 # Roadmap — Credential Vault (CVT)
 
+**Umbrella:** [#6129](https://github.com/apiome/apiome/issues/6129) · issues #6129–#6164 filed 2026-10-21 (labels: `roadmap-credential-vault`, `vault`). Sibling: APX umbrella [#6096](https://github.com/apiome/apiome/issues/6096).
+
 ## 0. Roadmap request
 
 > Create roadmaps for features that Kong provides that Apiome does not (yet) if there's a good fit. If Kong
@@ -163,18 +165,18 @@ vault://env/KONG_ADMIN_TOKEN                  environment variable on the apiome
 
 ## 3. Epics
 
-### CVT-EPIC-1 — Vault core
+### CVT-EPIC-1 (#6130) — Vault core
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CVT-1.1 | Vault data model and sealed storage | `vault_secrets` + `vault_secret_versions` (V308), typed kinds, paths, labels, `EnvelopeCipher` under one key map | `security`, `database`, `rest` | N | Y | L | apiome-db, apiome-rest |
-| CVT-1.2 | Write-only secrets REST API | Create, list/describe metadata, add version, disable version, soft-delete with recovery window — no read-back | `security`, `rest` | N | Y | M | apiome-rest |
-| CVT-1.3 | Vault permissions | `vault:manage` and `vault:use` RBAC resources, project scoping, no `vault:read` | `security`, `roles`, `rest` | Y | Y | M | apiome-rest, apiome-db, apiome-ui |
-| CVT-1.4 | Audit events and use ledger | `vault.secret.*` audit + `vault_secret_uses` (consumer, target host, outcome) generalised from AGX-2.2 | `security`, `observability`, `rest` | Y | Y | M | apiome-rest, apiome-db |
-| CVT-1.5 | Master-key rotation and re-wrap job | Re-seal data keys under a new key version, resumable, with progress and an admin CLI | `security`, `infrastructure` | Y | N | M | apiome-rest, apiome-cli |
-| CVT-1.6 | Secret references and resolver | `vault://` grammar, in-process resolver with TTL cache, host binding, typed errors | `security`, `rest` | N | Y | L | apiome-rest |
+| CVT-1.1 · #6131 | Vault data model and sealed storage | `vault_secrets` + `vault_secret_versions` (V308), typed kinds, paths, labels, `EnvelopeCipher` under one key map | `security`, `database`, `rest` | N | Y | L | apiome-db, apiome-rest |
+| CVT-1.2 · #6132 | Write-only secrets REST API | Create, list/describe metadata, add version, disable version, soft-delete with recovery window — no read-back | `security`, `rest` | N | Y | M | apiome-rest |
+| CVT-1.3 · #6133 | Vault permissions | `vault:manage` and `vault:use` RBAC resources, project scoping, no `vault:read` | `security`, `roles`, `rest` | Y | Y | M | apiome-rest, apiome-db, apiome-ui |
+| CVT-1.4 · #6134 | Audit events and use ledger | `vault.secret.*` audit + `vault_secret_uses` (consumer, target host, outcome) generalised from AGX-2.2 | `security`, `observability`, `rest` | Y | Y | M | apiome-rest, apiome-db |
+| CVT-1.5 · #6135 | Master-key rotation and re-wrap job | Re-seal data keys under a new key version, resumable, with progress and an admin CLI | `security`, `infrastructure` | Y | N | M | apiome-rest, apiome-cli |
+| CVT-1.6 · #6136 | Secret references and resolver | `vault://` grammar, in-process resolver with TTL cache, host binding, typed errors | `security`, `rest` | N | Y | L | apiome-rest |
 
-#### CVT-1.1 — Vault data model and sealed storage
+#### CVT-1.1 (#6131) — Vault data model and sealed storage
 
 - **Problem Statement:** Nine stores, nine key env vars (§0.2). A tenant has no single inventory, and every new
   feature that needs a credential re-implements sealing, redaction and rotation.
@@ -210,7 +212,7 @@ vault_secrets 1 ──── * vault_secret_versions
   allowed_hosts [kong-admin.example.com]
 ```
 
-#### CVT-1.2 — Write-only secrets REST API
+#### CVT-1.2 (#6132) — Write-only secrets REST API
 
 - **Problem Statement:** Every store has its own route shape; a client automating credential setup must learn
   nine. The existing guarantee — no read-back — must hold for a general API.
@@ -231,7 +233,7 @@ vault_secrets 1 ──── * vault_secret_versions
 - **Technical Stack:** FastAPI routers, existing pagination helpers, scheduler used by webhook-secret sweep.
 - **Documentation (Docusaurus):** regenerate `reference/rest/` (new `vault.md`); release-notes entry.
 
-#### CVT-1.3 — Vault permissions
+#### CVT-1.3 (#6133) — Vault permissions
 
 - **Problem Statement:** Today credential routes ride on unrelated permissions (`versions:edit`, connector admin).
   A vault needs to separate *who manages secrets* from *who may attach one to a feature*.
@@ -245,7 +247,7 @@ vault_secrets 1 ──── * vault_secret_versions
 - **Technical Stack:** existing roles/permissions tables and `require_permission` dependencies; apiome-ui role editor.
 - **Documentation (Docusaurus):** update `workspace/roles` page permission matrix; screenshot `roles-vault-permissions`.
 
-#### CVT-1.4 — Audit events and use ledger
+#### CVT-1.4 (#6134) — Audit events and use ledger
 
 - **Problem Statement:** Only some stores audit, and only AGX-2.2 records *use*. “Is this credential still used,
   and by what?” is unanswerable for connectors and MCP endpoints.
@@ -261,7 +263,7 @@ vault_secrets 1 ──── * vault_secret_versions
 - **Technical Stack:** PostgreSQL upsert counters, existing audit writer.
 - **Documentation (Docusaurus):** section “Uses and audit” in `workspace/vault.mdx` (CVT-5.6).
 
-#### CVT-1.5 — Master-key rotation and re-wrap job
+#### CVT-1.5 (#6135) — Master-key rotation and re-wrap job
 
 - **Problem Statement:** Adding a new master key version today only affects new writes; old rows stay under the old
   key until each is rewritten, so retiring a key is unprovable.
@@ -275,7 +277,7 @@ vault_secrets 1 ──── * vault_secret_versions
 - **Technical Stack:** existing job runner, `EnvelopeCipher.rewrap`.
 - **Documentation (Docusaurus):** runbook section in `admin/vault-encryption-keys.mdx`; CLI reference regen.
 
-#### CVT-1.6 — Secret references and resolver
+#### CVT-1.6 (#6136) — Secret references and resolver
 
 - **Problem Statement:** Consumers hold foreign keys into their own credential tables. To support external backends
   and pinning, they need a portable reference, and the resolution rules (host binding, caching, errors) must be
@@ -314,7 +316,7 @@ sequenceDiagram
 
 ---
 
-### CVT-EPIC-2 — Adopt the vault across Apiome
+### CVT-EPIC-2 (#6137) — Adopt the vault across Apiome
 
 Every credential form in Apiome takes either a **new value** (stored as an `apiome` vault secret automatically,
 path `auto/<feature>/<id>`) or a **reference** chosen in the picker. Legacy tables are migrated, dual-read for one
@@ -322,15 +324,15 @@ release, then dropped.
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CVT-2.1 | Connectors use vault references | `catalog_connector_credentials` → vault refs; CLI `--credentials-ref` | `security`, `integrations`, `gateway` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui |
-| CVT-2.2 | MCP endpoints and verification targets use the vault | V129 rows and `verification_target.auth_kind=vault` | `security`, `mcp`, `contracts` | Y | Y | M | apiome-rest, apiome-ui |
-| CVT-2.3 | Agent upstream credentials on the vault | AGX `upstream_credentials` becomes vault-backed; use ledger becomes a view | `security`, `ai`, `mcp` | Y | N | M | apiome-rest, apiome-db |
-| CVT-2.4 | SDK registry and Slate git credentials on the vault | V256 and V197 secrets move under the vault | `security`, `sdk`, `slate` | Y | N | S | apiome-rest, apiome-db |
-| CVT-2.5 | Broker bindings on the vault | XPC-2.1 SASL secrets as references (no new key map) | `security`, `mock-server`, `asyncapi` | Y | N | S | apiome-rest |
-| CVT-2.6 | Legacy store migration and key retirement | Backfill, dual-read window, drop legacy columns and env keys | `security`, `database`, `infrastructure` | N | Y | L | apiome-db, apiome-rest |
-| CVT-2.7 | Try-It server-side credential injection | Try-It relay injects a vault secret the reader is entitled to, never sending it to the browser | `security`, `browser`, `portal` | Y | N | M | apiome-browse, apiome-rest |
+| CVT-2.1 · #6138 | Connectors use vault references | `catalog_connector_credentials` → vault refs; CLI `--credentials-ref` | `security`, `integrations`, `gateway` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui |
+| CVT-2.2 · #6139 | MCP endpoints and verification targets use the vault | V129 rows and `verification_target.auth_kind=vault` | `security`, `mcp`, `contracts` | Y | Y | M | apiome-rest, apiome-ui |
+| CVT-2.3 · #6140 | Agent upstream credentials on the vault | AGX `upstream_credentials` becomes vault-backed; use ledger becomes a view | `security`, `ai`, `mcp` | Y | N | M | apiome-rest, apiome-db |
+| CVT-2.4 · #6141 | SDK registry and Slate git credentials on the vault | V256 and V197 secrets move under the vault | `security`, `sdk`, `slate` | Y | N | S | apiome-rest, apiome-db |
+| CVT-2.5 · #6142 | Broker bindings on the vault | XPC-2.1 SASL secrets as references (no new key map) | `security`, `mock-server`, `asyncapi` | Y | N | S | apiome-rest |
+| CVT-2.6 · #6143 | Legacy store migration and key retirement | Backfill, dual-read window, drop legacy columns and env keys | `security`, `database`, `infrastructure` | N | Y | L | apiome-db, apiome-rest |
+| CVT-2.7 · #6144 | Try-It server-side credential injection | Try-It relay injects a vault secret the reader is entitled to, never sending it to the browser | `security`, `browser`, `portal` | Y | N | M | apiome-browse, apiome-rest |
 
-#### CVT-2.1 — Connectors use vault references
+#### CVT-2.1 (#6138) — Connectors use vault references
 
 - **Problem Statement:** Connector credentials (Kong admin tokens, AWS keys, Azure service principals, Apigee
   service accounts, registry passwords) are the most sensitive and most copied secrets Apiome holds.
@@ -347,7 +349,7 @@ release, then dropped.
 - **Documentation (Docusaurus):** update `bring-in/connectors.mdx` (credentials step, CLI example); screenshot
   `connector-credentials-vault`; regenerate CLI `connectors` reference and REST `connectors.md`.
 
-#### CVT-2.2 — MCP endpoints and verification targets use the vault
+#### CVT-2.2 (#6139) — MCP endpoints and verification targets use the vault
 
 - **Problem Statement:** V129 MCP credentials and V211 verification targets have their own reference rules
   (`auth_kind` `env` | `stored`).
@@ -361,7 +363,7 @@ release, then dropped.
 - **Technical Stack:** `mcp_catalog_routes.py`, verification target module.
 - **Documentation (Docusaurus):** update MCP catalog credentials page and `reference/ci` verification docs; REST regen.
 
-#### CVT-2.3 — Agent upstream credentials on the vault
+#### CVT-2.3 (#6140) — Agent upstream credentials on the vault
 
 - **Problem Statement:** AGX-2.2 built the best of the nine stores; it should be the vault, not beside it.
 - **Solution/Scope:** `upstream_credentials` rows gain `secret_ref`; the invocation proxy resolves through the
@@ -372,7 +374,7 @@ release, then dropped.
 - **Technical Stack:** apiome-rest AGX proxy, SQL view.
 - **Documentation (Docusaurus):** update agent toolset credentials page to point at the vault.
 
-#### CVT-2.4 — SDK registry and Slate git credentials on the vault
+#### CVT-2.4 (#6141) — SDK registry and Slate git credentials on the vault
 
 - **Problem Statement / Scope:** Same move for `sdk_registry_credentials` (npm/PyPI tokens) and
   `slate_git_connections` tokens/webhook secrets. Registry hosts become `allowed_hosts` (`registry.npmjs.org`,
@@ -381,7 +383,7 @@ release, then dropped.
 - **Parallelism/Dependencies:** After 1.6.
 - **Documentation (Docusaurus):** update SDK delivery and Slate hosting pages.
 
-#### CVT-2.5 — Broker bindings on the vault
+#### CVT-2.5 (#6142) — Broker bindings on the vault
 
 - **Problem Statement / Scope:** XPC-2.1 (#5735) proposes another key map. Store `credential_ref` instead;
   `bootstrap` hosts become `allowed_hosts`. If XPC-2.1 ships first, migrate its rows here.
@@ -390,7 +392,7 @@ release, then dropped.
 - **Parallelism/Dependencies:** After 1.6; coordinate with #5735.
 - **Documentation (Docusaurus):** update `reference/mock-runtime/event-mock-brokers.md`.
 
-#### CVT-2.6 — Legacy store migration and key retirement
+#### CVT-2.6 (#6143) — Legacy store migration and key retirement
 
 - **Problem Statement:** Adoption is only real when the legacy tables and their env keys are gone.
 - **Solution/Scope:** For each legacy store: (1) migration adds `secret_ref`; (2) backfill job decrypts with the
@@ -413,7 +415,7 @@ release N+1   legacy ciphertext nulled                         env: APIOME_VAULT
 release N+2   legacy env vars ignored                          env: APIOME_VAULT_ENCRYPTION_KEYS
 ```
 
-#### CVT-2.7 — Try-It server-side credential injection
+#### CVT-2.7 (#6144) — Try-It server-side credential injection
 
 - **Problem Statement:** Try-It (SIM-3.6) keeps reader-typed credentials in `sessionStorage`. Internal teams want
   to try a staging API with a shared sandbox key without pasting it, and the key must never reach the browser.
@@ -431,19 +433,19 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 
 ---
 
-### CVT-EPIC-3 — External secret backends
+### CVT-EPIC-3 (#6145) — External secret backends
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CVT-3.1 | Backend registry, `env` and `file` backends | Pluggable backend interface, per-tenant backend config with its own credential, health | `security`, `integrations` | N | Y | M | apiome-rest, apiome-db |
-| CVT-3.2 | HashiCorp Vault / OpenBao backend | KV v1/v2, token / AppRole / Kubernetes auth, namespaces | `security`, `integrations` | Y | Y | M | apiome-rest |
-| CVT-3.3 | AWS Secrets Manager backend | Static keys or assumed role; JSON field selection; version stages | `security`, `integrations` | Y | N | M | apiome-rest |
-| CVT-3.4 | Azure Key Vault backend | Service principal / managed identity; secrets and certificates | `security`, `integrations` | Y | N | M | apiome-rest |
-| CVT-3.5 | GCP Secret Manager backend | Service account / workload identity; versions | `security`, `integrations` | Y | N | M | apiome-rest |
-| CVT-3.6 | CyberArk Conjur and HTTP bridge backends | Conjur API plus a documented HTTP bridge contract for anything else | `security`, `integrations` | Y | N | M | apiome-rest |
-| CVT-3.7 | KMS-wrapped master keys | Optional AWS KMS / Azure Key Vault keys / GCP KMS wrapping of `APIOME_VAULT_ENCRYPTION_KEYS` | `security`, `infrastructure` | Y | N | L | apiome-rest |
+| CVT-3.1 · #6146 | Backend registry, `env` and `file` backends | Pluggable backend interface, per-tenant backend config with its own credential, health | `security`, `integrations` | N | Y | M | apiome-rest, apiome-db |
+| CVT-3.2 · #6147 | HashiCorp Vault / OpenBao backend | KV v1/v2, token / AppRole / Kubernetes auth, namespaces | `security`, `integrations` | Y | Y | M | apiome-rest |
+| CVT-3.3 · #6148 | AWS Secrets Manager backend | Static keys or assumed role; JSON field selection; version stages | `security`, `integrations` | Y | N | M | apiome-rest |
+| CVT-3.4 · #6149 | Azure Key Vault backend | Service principal / managed identity; secrets and certificates | `security`, `integrations` | Y | N | M | apiome-rest |
+| CVT-3.5 · #6150 | GCP Secret Manager backend | Service account / workload identity; versions | `security`, `integrations` | Y | N | M | apiome-rest |
+| CVT-3.6 · #6151 | CyberArk Conjur and HTTP bridge backends | Conjur API plus a documented HTTP bridge contract for anything else | `security`, `integrations` | Y | N | M | apiome-rest |
+| CVT-3.7 · #6152 | KMS-wrapped master keys | Optional AWS KMS / Azure Key Vault keys / GCP KMS wrapping of `APIOME_VAULT_ENCRYPTION_KEYS` | `security`, `infrastructure` | Y | N | L | apiome-rest |
 
-#### CVT-3.1 — Backend registry, `env` and `file` backends
+#### CVT-3.1 (#6146) — Backend registry, `env` and `file` backends
 
 - **Problem Statement:** Enterprises will not copy secrets out of their system of record (Kong supports env,
   AWS, Azure, GCP, HashiCorp, Conjur, file and custom backends — §0.1).
@@ -461,7 +463,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Technical Stack:** FastAPI, plugin registry pattern used by connectors.
 - **Documentation (Docusaurus):** new page `workspace/vault-backends.mdx` (overview + per-backend sections added by 3.2–3.6).
 
-#### CVT-3.2 — HashiCorp Vault / OpenBao backend
+#### CVT-3.2 (#6147) — HashiCorp Vault / OpenBao backend
 
 - **Solution/Scope:** `hvac`-based client; KV v1 and v2 (`data/` path handling, `@version` → KV v2 version);
   auth methods token, AppRole (role id + secret id in the local vault), Kubernetes (service-account JWT from a
@@ -473,7 +475,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Technical Stack:** `hvac`, docker-compose test profile.
 - **Documentation (Docusaurus):** HashiCorp Vault section, with a policy snippet granting read on the mount path.
 
-#### CVT-3.3 / 3.4 / 3.5 — AWS, Azure and GCP backends
+#### CVT-3.3 / 3.4 / 3.5 (#6148 / #6149 / #6150) — AWS, Azure and GCP backends
 
 - **Solution/Scope (each):** official SDK (`boto3`, `azure-keyvault-secrets` + `azure-identity`,
   `google-cloud-secret-manager`); JSON secret field selection via `#field`; version/stage mapping (`@AWSPREVIOUS`,
@@ -485,7 +487,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Parallelism/Dependencies:** After 3.1; mutually parallel.
 - **Documentation (Docusaurus):** one section per backend in `workspace/vault-backends.mdx` with minimal IAM policy.
 
-#### CVT-3.6 — CyberArk Conjur and HTTP bridge backends
+#### CVT-3.6 (#6151) — CyberArk Conjur and HTTP bridge backends
 
 - **Solution/Scope:** Conjur REST client (API key auth). **HTTP bridge**: a documented contract
   (`GET {base}/secrets/{path}?field=&version=` with HMAC-signed request, JSON response) so a customer can front
@@ -494,7 +496,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Acceptance Criteria:** reference bridge implementation in `scripts/vault-bridge-example/` used in tests.
 - **Documentation (Docusaurus):** bridge contract in `reference/vault-http-bridge.md`.
 
-#### CVT-3.7 — KMS-wrapped master keys
+#### CVT-3.7 (#6152) — KMS-wrapped master keys
 
 - **Solution/Scope:** `APIOME_VAULT_KEY_PROVIDER=aws-kms|azure-kv|gcp-kms` — the master key map holds KMS-wrapped
   keys unwrapped once at startup; rewrap (1.5) supports moving from raw keys to KMS.
@@ -503,16 +505,16 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 
 ---
 
-### CVT-EPIC-4 — Lifecycle: expiry, rotation, certificates and posture
+### CVT-EPIC-4 (#6153) — Lifecycle: expiry, rotation, certificates and posture
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CVT-4.1 | Expiry and rotation policies | Max age, expiry dates, reminder schedule, owner team notifications | `security`, `governance` | Y | N | M | apiome-rest, apiome-ui |
-| CVT-4.2 | Grace-window rotation | Previous version stays resolvable for a configured window; consumers report which version they used | `security` | Y | N | M | apiome-rest |
-| CVT-4.3 | Certificate inventory | Certificates from the vault and from gateway connectors, with chain, SANs and expiry alerts | `security`, `gateway`, `catalog` | Y | N | L | apiome-rest, apiome-db, apiome-ui |
-| CVT-4.4 | Secret posture report | Expiring, overdue, unused and leaked secrets in one Govern page; “move literal to vault” fix from ASP-3 findings | `security`, `governance` | Y | N | M | apiome-rest, apiome-ui |
+| CVT-4.1 · #6154 | Expiry and rotation policies | Max age, expiry dates, reminder schedule, owner team notifications | `security`, `governance` | Y | N | M | apiome-rest, apiome-ui |
+| CVT-4.2 · #6155 | Grace-window rotation | Previous version stays resolvable for a configured window; consumers report which version they used | `security` | Y | N | M | apiome-rest |
+| CVT-4.3 · #6156 | Certificate inventory | Certificates from the vault and from gateway connectors, with chain, SANs and expiry alerts | `security`, `gateway`, `catalog` | Y | N | L | apiome-rest, apiome-db, apiome-ui |
+| CVT-4.4 · #6157 | Secret posture report | Expiring, overdue, unused and leaked secrets in one Govern page; “move literal to vault” fix from ASP-3 findings | `security`, `governance` | Y | N | M | apiome-rest, apiome-ui |
 
-#### CVT-4.1 — Expiry and rotation policies
+#### CVT-4.1 (#6154) — Expiry and rotation policies
 
 - **Problem Statement:** A gateway does not tell you its admin token is a year old; a catalog can.
 - **Solution/Scope:** `rotation_policy` on a secret or as a tenant default per kind: `max_age_days`,
@@ -524,7 +526,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Parallelism/Dependencies:** After 1.4.
 - **Documentation (Docusaurus):** “Rotation policies” section in `workspace/vault.mdx`; screenshot `vault-rotation-policy`.
 
-#### CVT-4.2 — Grace-window rotation
+#### CVT-4.2 (#6155) — Grace-window rotation
 
 - **Solution/Scope:** Adding a version may set `previous_valid_for` (e.g. 24 h) — for `apiome`-held secrets that
   Apiome itself presents (webhook signing secrets, APX-issued keys) both versions remain resolvable for the window;
@@ -533,7 +535,7 @@ release N+2   legacy env vars ignored                          env: APIOME_VAULT
 - **Acceptance Criteria:** during the window both versions verify; after it only the new; ledger shows the cut-over.
 - **Documentation (Docusaurus):** section in `workspace/vault.mdx`.
 
-#### CVT-4.3 — Certificate inventory
+#### CVT-4.3 (#6156) — Certificate inventory
 
 - **Problem Statement:** Kong, AWS API Gateway, Azure APIM and Apigee each hold TLS certificates; expiries cause
   outages and are tracked nowhere central. Apiome already syncs those gateways (gateway configs, V298).
@@ -562,7 +564,7 @@ Govern → Certificates
  └──────────────────────────┴───────────────┴──────────────┴────────────┴──────────┘
 ```
 
-#### CVT-4.4 — Secret posture report
+#### CVT-4.4 (#6157) — Secret posture report
 
 - **Solution/Scope:** Govern → **Secret posture**: expiring/overdue (4.1), unused for N days (1.4 ledger),
   failing (`auth_failed` uses), legacy stores not yet migrated (2.6), credentials redacted on gateway import
@@ -575,18 +577,18 @@ Govern → Certificates
 
 ---
 
-### CVT-EPIC-5 — Surfaces
+### CVT-EPIC-5 (#6158) — Surfaces
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CVT-5.1 | Vault page in apiome-ui | Settings → Vault: list, create wizard per kind, versions, uses, backends | `ui`, `security` | Y | Y | L | apiome-ui |
-| CVT-5.2 | SecretPicker component | One picker for every credential field: choose, create inline, or paste a reference (absorbs #3702) | `ui`, `security`, `design-system` | Y | Y | M | apiome-ui |
-| CVT-5.3 | `apiome vault` CLI | create/rotate/list/describe/delete, values only from stdin or file, never echoed | `cli`, `security` | Y | Y | M | apiome-cli |
-| CVT-5.4 | MCP vault metadata tools | `vault.list` / `vault.describe` metadata-only tools for agents, with redaction tests | `mcp`, `security` | Y | N | S | apiome-mcp, apiome-rest |
-| CVT-5.5 | Push-back emits references, not literals | Kong decK export writes `{vault://…}` for credentials when the backend is shared with Kong | `gateway`, `export`, `security` | Y | N | M | apiome-rest |
-| CVT-5.6 | Vault documentation and security model | Overview, security model, threat model and migration guide | `documentation`, `security` | Y | Y | S | apiome-docs |
+| CVT-5.1 · #6159 | Vault page in apiome-ui | Settings → Vault: list, create wizard per kind, versions, uses, backends | `ui`, `security` | Y | Y | L | apiome-ui |
+| CVT-5.2 · #6160 | SecretPicker component | One picker for every credential field: choose, create inline, or paste a reference (absorbs #3702) | `ui`, `security`, `design-system` | Y | Y | M | apiome-ui |
+| CVT-5.3 · #6161 | `apiome vault` CLI | create/rotate/list/describe/delete, values only from stdin or file, never echoed | `cli`, `security` | Y | Y | M | apiome-cli |
+| CVT-5.4 · #6162 | MCP vault metadata tools | `vault.list` / `vault.describe` metadata-only tools for agents, with redaction tests | `mcp`, `security` | Y | N | S | apiome-mcp, apiome-rest |
+| CVT-5.5 · #6163 | Push-back emits references, not literals | Kong decK export writes `{vault://…}` for credentials when the backend is shared with Kong | `gateway`, `export`, `security` | Y | N | M | apiome-rest |
+| CVT-5.6 · #6164 | Vault documentation and security model | Overview, security model, threat model and migration guide | `documentation`, `security` | Y | Y | S | apiome-docs |
 
-#### CVT-5.1 — Vault page in apiome-ui
+#### CVT-5.1 (#6159) — Vault page in apiome-ui
 
 - **Solution/Scope:** Route `/ade/dashboard/settings/vault` (under Workspace & account). List with path tree,
   kind, backend, fingerprint, expiry, last used, owner; filters. Create wizard: kind → fields (masked inputs, paste
@@ -598,7 +600,7 @@ Govern → Certificates
 - **Parallelism/Dependencies:** After 1.2.
 - **Documentation (Docusaurus):** screenshots `vault-list`, `vault-create`, `vault-secret-uses`.
 
-#### CVT-5.2 — SecretPicker component
+#### CVT-5.2 (#6160) — SecretPicker component
 
 - **Solution/Scope:** `<SecretPicker kind=… host=…>` — search existing secrets filtered by kind and whose
   `allowed_hosts` match the consumer host; **Create new** inline (opens the wizard in a dialog); **Reference**
@@ -609,7 +611,7 @@ Govern → Certificates
   inputs outside the vault wizard); keyboard accessible.
 - **Documentation (Docusaurus):** screenshot `secret-picker`.
 
-#### CVT-5.3 — `apiome vault` CLI
+#### CVT-5.3 (#6161) — `apiome vault` CLI
 
 - **Solution/Scope:** `apiome vault secrets create <path> --kind bearer --value-file token.txt` (or `--value -`
   for stdin), `rotate`, `list`, `describe`, `disable-version`, `delete`, `restore`; `apiome vault backends
@@ -617,14 +619,14 @@ Govern → Certificates
 - **Acceptance Criteria:** clig.dev conformance tests; value never printed, including in `--verbose`/debug HTTP logs.
 - **Documentation (Docusaurus):** regenerate CLI reference; quickstart snippet in `workspace/vault.mdx`.
 
-#### CVT-5.4 — MCP vault metadata tools
+#### CVT-5.4 (#6162) — MCP vault metadata tools
 
 - **Solution/Scope:** read-only `vault.list` and `vault.describe` in apiome-mcp returning metadata (path, kind,
   expiry, last used) scoped to the key's tenant; never values. Lets an agent answer “which credentials expire
   this month?”. MCP trust-posture rules updated to flag any tool that returns a `SecretValue`.
 - **Documentation (Docusaurus):** regenerate MCP tool reference.
 
-#### CVT-5.5 — Push-back emits references, not literals
+#### CVT-5.5 (#6163) — Push-back emits references, not literals
 
 - **Problem Statement:** “Push back” to Kong Declarative Config (connectors.mdx) currently drops credentials
   (redacted at import). Teams that run both Apiome and Kong against the same HashiCorp Vault want the exported
@@ -638,7 +640,7 @@ Govern → Certificates
 - **Parallelism/Dependencies:** After 3.2; export fidelity engine.
 - **Documentation (Docusaurus):** update `ship/export-fidelity.md` and the push-back section of `bring-in/connectors.mdx`.
 
-#### CVT-5.6 — Vault documentation and security model
+#### CVT-5.6 (#6164) — Vault documentation and security model
 
 - **Solution/Scope:** Overview page `workspace/vault.mdx` (what it is, when to use it, references, permissions,
   uses, rotation), `admin/vault-encryption-keys.mdx`, `workspace/vault-backends.mdx`, `reference/vault-references.md`,
