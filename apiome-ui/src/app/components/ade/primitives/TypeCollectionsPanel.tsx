@@ -46,7 +46,6 @@ import {
   DataTableFilterChip,
   DataTableFoot,
   DataTableToolbar,
-  DataTableToolbarSpacer,
   type DataTableColumn,
   type DataTableSortState,
 } from '@/app/components/ui/DataTable';
@@ -442,7 +441,8 @@ export default function TypeCollectionsPanel({
           <span className="prm-panel-head__sub">{collectionsSubtitle(grouped)}</span>
         </span>
       </span>
-      <DataTableToolbarSpacer />
+      {/* No spacer: the heading grows into the free space itself (HIVE-11.8), so its subtitle
+          wraps before Group and the scope switch drop to a row of their own. */}
       <DataTableFilterChip
         active={grouped}
         data-testid="namespace-group-toggle"

@@ -18871,6 +18871,60 @@ html[data-motion='reduce'] .prm-spin {
   background: var(--bg-subtle);
 }
 
+/* ---- Facts line (HIVE-11.8, #5604) --------------------------------------
+   The KPI strip folded into a `FactsLine`; the strip itself is behind Show
+   stats. The unresolved-`$ref` fact is a `danger` chip that opens the Resolver
+   tab: the status vocabulary's soft fill with its calibrated `-fg` ink (the
+   pair `Badge` uses), and the saturated hue on the glyph's `stroke` only —
+   a mark, never text. */
+.prm-facts-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.prm-facts-chip:hover {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.prm-facts-chip > svg {
+  flex: none;
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  stroke: var(--danger);
+}
+
+/* `.facts__item b` sets the figure in `--fg`; inside the chip it keeps the
+   chip's own ink, so the pair stays the calibrated one. */
+.prm-facts-chip b {
+  color: inherit;
+}
+
+/* ---- "How resolution works" (HIVE-11.8, #5604) ---------------------------
+   The rail's old `$ref` explainer card, as a dialog (`size="default"`). The
+   worked example reuses `.prm-code`. */
+.prm-resolution__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-6);
+}
+
+.prm-resolution__head > svg {
+  flex: none;
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  color: var(--fg-muted);
+}
+
 .prm-kpi-skeleton {
   display: flex;
   flex-direction: column;
@@ -18935,6 +18989,16 @@ html[data-motion='reduce'] .prm-spin {
   color: var(--fg-muted);
 }
 
+/* The collections toolbar's heading gives way before its controls do
+   (HIVE-11.8): with a `rem` basis rather than its max-content width, and
+   growing into the free space in place of a spacer, the subtitle wraps inside
+   the heading and Group and the scope switch stay on the first row, instead of
+   the switch dropping to a row of its own — which cost the registry ≈ 45 px
+   above the types table. */
+.prm-collections__toolbar > .prm-panel-head {
+  flex: 1 1 14rem;
+}
+
 /* ---- The right rail ----------------------------------------------------- */
 .prm-rail {
   display: flex;
@@ -18950,39 +19014,6 @@ html[data-motion='reduce'] .prm-spin {
    to edge under its header. */
 .prm-rail__card--flush {
   padding: 0;
-}
-
-.prm-rail__head {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--fg);
-}
-
-.prm-rail__head > svg {
-  inline-size: var(--icon-dense);
-  block-size: var(--icon-dense);
-  color: var(--fg-muted);
-}
-
-.prm-rail__desc {
-  margin-block-start: var(--space-1);
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
-/* The rail's two links.
-
-   `--accent` measures 4.14:1 on the surface at 12px, under AA for normal text —
-   axe catches it in the light, Solarized and Darcula themes. `--accent-fg` is
-   the ink calibrated to be *read*: 7.00:1 at worst across the nine. Same
-   deviation, same reason, as the `$ref` links in the resolver's table. */
-.prm-rail__link {
-  margin-block-start: var(--space-2);
-  padding-inline: 0;
-  color: var(--accent-fg);
 }
 
 .prm-rail__activity-head {
@@ -21573,7 +21604,8 @@ html[data-motion='reduce'] .prm-spin {
 
 /* The ghost link in the page description: accent ink, no chrome, underlined
    on hover. A `<button>` (it opens a dialog), so the browser's button chrome
-   is reset here. */
+   is reset here. Shared by every quiet-pass page that moves an explainer into
+   a dialog — Primitives & types' "How resolution works" (HIVE-11.8) too. */
 .cat-about-link {
   display: inline-flex;
   align-items: center;

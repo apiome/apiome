@@ -24,6 +24,14 @@
  * parameter**. Both now switch to the Resolver tab directly, and {@link viewFromFocusParam}
  * makes the address itself work when it is pasted or bookmarked.
  *
+ * ### The quiet pass (HIVE-11.8, #5604)
+ *
+ * The registry tab no longer opens with the five-tile strip: `PrimitivesFactsLine` says the same
+ * five numbers in one line (the strip is behind its **Show stats**), and the unresolved-`$ref`
+ * count is a `danger` chip that opens the Resolver tab. The rail's *Relative `$ref` resolution*
+ * card moved into `RefResolutionDialog`, opened from the **How resolution works** ghost link in
+ * the page description; Recent activity stays in the rail.
+ *
  * `?edit=<id>` is the same bug on the other side, closed by HIVE-6.6 (#5317): the type-detail
  * page's Edit action linked here with it and nothing read it either, so "edit this type" landed
  * on an unfiltered list. {@link primitiveIdFromEditParam} admits the id and the effect below
@@ -33,7 +41,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
-import { FolderTree, GitFork, Library, Plus, Settings2, Upload } from 'lucide-react';
+import { CircleHelp, FolderTree, GitFork, Library, Plus, Settings2, Upload } from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
@@ -49,7 +57,8 @@ import {
   PRIMITIVES_VIEWS,
   PRIMITIVES_VIEW_LABEL,
   PrimitiveTypesTable,
-  PrimitivesKpiStrip,
+  PrimitivesFactsLine,
+  RefResolutionDialog,
   RegistryRail,
   RegistrySettingsPanel,
   ResolverPanel,
@@ -165,6 +174,8 @@ export default function PrimitivesManagementClient() {
   const [showEditorDialog, setShowEditorDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingPrimitive, setEditingPrimitive] = useState<Primitive | null>(null);
+  /** Whether the "How resolution works" dialog is open. */
+  const [resolutionOpen, setResolutionOpen] = useState(false);
 
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
 
@@ -453,8 +464,18 @@ export default function PrimitivesManagementClient() {
         title="Primitives & types"
         description={
           <>
-            JSON Schema 2020-12 type registry · core system &amp; tenant scopes · relative{' '}
-            <span className="mono">$ref</span> resolution
+            {/* One line with the link at 1440 px: relative `$ref` resolution, which this used to
+                name, is what the link explains (HIVE-11.8). */}
+            JSON Schema 2020-12 types · core &amp; tenant scopes{' '}
+            <button
+              type="button"
+              className="cat-about-link"
+              onClick={() => setResolutionOpen(true)}
+              data-testid="primitives-resolution-link"
+            >
+              <CircleHelp aria-hidden />
+              How resolution works
+            </button>
           </>
         }
         actions={
@@ -504,7 +525,7 @@ export default function PrimitivesManagementClient() {
           />
         ) : (
           <>
-            <PrimitivesKpiStrip
+            <PrimitivesFactsLine
               stats={stats}
               loading={registryLoading}
               onOpenResolver={() => setActiveView('resolver')}
@@ -521,11 +542,7 @@ export default function PrimitivesManagementClient() {
                 detectedNamespaces={detectedNamespaces}
                 loading={registryLoading}
               />
-              <RegistryRail
-                imports={imports}
-                loading={registryLoading}
-                onOpenResolver={() => setActiveView('resolver')}
-              />
+              <RegistryRail imports={imports} loading={registryLoading} />
             </div>
 
             <PrimitiveTypesTable
@@ -551,6 +568,12 @@ export default function PrimitivesManagementClient() {
           </>
         )}
       </PageBody>
+
+      <RefResolutionDialog
+        open={resolutionOpen}
+        onOpenChange={setResolutionOpen}
+        onOpenResolver={() => setActiveView('resolver')}
+      />
 
       {showEditorDialog && (
         <PrimitiveEditorDialog

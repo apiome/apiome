@@ -31,6 +31,7 @@ import {
   namespaceStatusBadge,
   primitiveDetailHref,
   primitiveScopeBadge,
+  registryFacts,
   registryKpis,
   registryStorageBadge,
   reresolveSummary,
@@ -116,6 +117,55 @@ describe('the KPI strip', () => {
   it('formats every figure for the reader’s locale', () => {
     const kpis = registryKpis({ ...STATS, properties_bound_count: 12345 });
     expect(kpis[3].value).toBe((12345).toLocaleString());
+  });
+});
+
+describe('the facts line (HIVE-11.8)', () => {
+  it('says the strip’s five numbers, in the strip’s order', () => {
+    const facts = registryFacts(STATS);
+    expect(facts.map((fact) => fact.id)).toEqual(registryKpis(STATS).map((kpi) => kpi.id));
+    expect(facts.map((fact) => `${fact.value} ${fact.label}`)).toEqual([
+      '24 core system types',
+      '17 tenant types',
+      '6 imported schemas',
+      '88 properties bound',
+      '3 unresolved $ref',
+    ]);
+  });
+
+  it('agrees in number with each figure', () => {
+    const one = registryFacts({
+      ...STATS,
+      core_type_count: 1,
+      tenant_type_count: 1,
+      imported_count: 1,
+      properties_bound_count: 1,
+    });
+    expect(one.slice(0, 4).map((fact) => fact.label)).toEqual([
+      'core system type',
+      'tenant type',
+      'imported schema',
+      'property bound',
+    ]);
+  });
+
+  it('marks only an unresolved count above zero as an alert', () => {
+    expect(registryFacts(STATS).filter((fact) => fact.alert).map((fact) => fact.id)).toEqual([
+      'unresolved',
+    ]);
+    expect(registryFacts({ ...STATS, unresolved_ref_count: 0 }).some((fact) => fact.alert)).toBe(
+      false
+    );
+  });
+
+  it('draws nothing before the first read lands', () => {
+    expect(registryFacts(null)).toEqual([]);
+  });
+
+  it('formats a figure for the reader’s locale', () => {
+    expect(registryFacts({ ...STATS, properties_bound_count: 12345 })[3].value).toBe(
+      (12345).toLocaleString()
+    );
   });
 });
 

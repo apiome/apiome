@@ -12,7 +12,8 @@
  *      tenant → vendor → core and the promotion button is still inert.
  *   3. **The resolver is reachable.** This is the mockup's one *Adds*: the KPI strip's amber
  *      tile and the rail's explainer link used to point at `?focus=resolver`, a query nothing
- *      read. Both switch panes now, and the address itself works.
+ *      read. Both switch panes now, and the address itself works. Since HIVE-11.8 (#5604) the
+ *      way in is the facts line's unresolved chip and the "How resolution works" dialog.
  *   4. **The editor is opened by the same rows, and refused by the same ones.**
  *
  * Plus the page chrome DESIGN.md §5.3 asks for: one breadcrumb, one `h1`, one primary action,
@@ -232,6 +233,8 @@ function typeRow(id: string): HTMLTableRowElement {
 }
 
 beforeEach(() => {
+  // FactsLine remembers Show stats per device; one test's click must not open the next one's.
+  window.localStorage.clear();
   searchParams = new URLSearchParams('');
   currentTenantId = 'tenant-1';
   mockPush.mockClear();
@@ -280,39 +283,121 @@ describe('the page chrome', () => {
   });
 });
 
-describe('the KPI strip and the resolver deep link', () => {
-  it('draws the five tiles from the stats endpoint', async () => {
+describe('the facts line and the resolver deep link (HIVE-11.8)', () => {
+  it('says the five numbers from the stats endpoint in one line', async () => {
+    await renderScreen();
+
+    const line = await screen.findByRole('list', { name: 'Registry coverage' });
+    expect(within(line).getByTestId('primitives-fact-core')).toHaveTextContent('24 core system types');
+    expect(within(line).getByTestId('primitives-fact-tenant')).toHaveTextContent('17 tenant types');
+    expect(within(line).getByTestId('primitives-fact-imported')).toHaveTextContent('6 imported schemas');
+    expect(within(line).getByTestId('primitives-fact-bound')).toHaveTextContent('88 properties bound');
+    expect(within(line).getByTestId('primitives-fact-unresolved')).toHaveTextContent('3 unresolved $ref');
+  });
+
+  it('keeps the five tiles behind Show stats, unchanged', async () => {
     await renderScreen();
 
     const strip = await screen.findByTestId('primitives-kpis');
-    expect(within(strip).getByTestId('primitives-kpi-core')).toHaveTextContent('24');
+    const region = strip.closest('.facts-line__stats') as HTMLElement;
+    expect(region).toHaveAttribute('hidden');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show stats' }));
+
+    expect(region).not.toHaveAttribute('hidden');
     expect(within(strip).getByTestId('primitives-kpi-core')).toHaveTextContent('std/* · all tenants');
     expect(within(strip).getByTestId('primitives-kpi-tenant')).toHaveTextContent('3 namespaces');
     expect(within(strip).getByTestId('primitives-kpi-bound')).toHaveTextContent('across 31 classes');
   });
 
-  it('makes the unresolved tile a button that opens the resolver', async () => {
-    // The mockup's one "Adds": this used to be a `next/link` to `?focus=resolver`, and nothing
-    // on the screen read that parameter — the link appeared to do nothing at all.
+  it('makes the unresolved count a danger chip that opens the resolver', async () => {
     await renderScreen();
 
-    const tile = await screen.findByTestId('primitives-kpi-unresolved');
-    expect(tile.tagName).toBe('BUTTON');
+    const chip = await screen.findByTestId('primitives-fact-unresolved');
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip).toHaveClass('prm-facts-chip');
 
-    fireEvent.click(tile);
+    fireEvent.click(chip);
 
     expect(screen.getByTestId('primitives-tab-resolver')).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('table', { name: 'Primitives' })).not.toBeInTheDocument();
   });
 
-  it('opens the resolver from the rail’s explainer link as well', async () => {
+  it('keeps the strip’s unresolved tile a button that opens the resolver too', async () => {
     await renderScreen();
 
-    fireEvent.click(screen.getByTestId('primitives-open-resolver-rail'));
+    const tile = await screen.findByTestId('primitives-kpi-unresolved');
+    expect(tile.tagName).toBe('BUTTON');
+    fireEvent.click(tile);
 
     expect(screen.getByTestId('primitives-tab-resolver')).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('draws a resolved registry’s zero as plain text, not a chip', async () => {
+    PAYLOADS['/api/primitives/stats'] = { success: true, stats: { ...STATS, unresolved_ref_count: 0 } };
+    try {
+      await renderScreen();
+      const fact = await screen.findByTestId('primitives-fact-unresolved');
+      expect(fact.tagName).toBe('SPAN');
+      expect(fact).toHaveTextContent('0 unresolved $ref');
+    } finally {
+      PAYLOADS['/api/primitives/stats'] = { success: true, stats: STATS };
+    }
+  });
+});
+
+describe('How resolution works (HIVE-11.8)', () => {
+  it('moves the rail’s $ref explainer into a dialog and leaves Recent activity', async () => {
+    await renderScreen();
+
+    const rail = screen.getByRole('complementary', { name: 'Registry reference' });
+    expect(within(rail).getByText('Recent activity')).toBeInTheDocument();
+    expect(within(rail).queryByTestId('primitives-ref-example')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens from the page description’s ghost link, with the same copy', async () => {
+    await renderScreen();
+
+    const link = screen.getByTestId('primitives-resolution-link');
+    expect(link).toHaveTextContent('How resolution works');
+    fireEvent.click(link);
+
+    const dialog = await screen.findByRole('dialog', { name: 'How resolution works' });
+    expect(dialog).toHaveTextContent(
+      'references resolve against the type’s import-source base URL in the API server.'
+    );
+    expect(within(dialog).getByTestId('primitives-ref-example')).toHaveTextContent(
+      '"$ref": "../primitives/string"'
+    );
+  });
+
+  it('opens the resolver from the dialog, closing it first', async () => {
+    await renderScreen();
+
+    fireEvent.click(screen.getByTestId('primitives-resolution-link'));
+    const dialog = await screen.findByRole('dialog', { name: 'How resolution works' });
+    fireEvent.click(within(dialog).getByTestId('primitives-resolution-open-resolver'));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('primitives-tab-resolver')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('returns focus to the ghost link when it closes', async () => {
+    await renderScreen();
+
+    const link = screen.getByTestId('primitives-resolution-link');
+    link.focus();
+    fireEvent.click(link);
+    const dialog = await screen.findByRole('dialog', { name: 'How resolution works' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Got it' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(link);
+  });
+});
+
+describe('the address-bar deep links', () => {
   it('honours ?focus= in the address bar, so the old link still resolves', async () => {
     searchParams = new URLSearchParams('focus=resolver');
     global.fetch = mockFetch() as unknown as typeof fetch;
@@ -598,7 +683,7 @@ describe('the browser fixtures', () => {
 
   it('renders every surface the browser spec mounts (and writes the fixtures on request)', async () => {
     await renderScreen();
-    await screen.findByTestId('primitives-kpis');
+    await screen.findByTestId('primitives-fact-unresolved');
     write('registry', page().outerHTML);
 
     fireEvent.click(screen.getByTestId('primitives-tab-namespaces'));
@@ -640,5 +725,15 @@ describe('the browser fixtures', () => {
     fireEvent.click(screen.getByTestId('primitives-import'));
     await screen.findByRole('heading', { name: 'Import primitives' });
     write('import', dialog().outerHTML);
+  });
+
+  it('renders the How resolution works dialog over the registry', async () => {
+    await renderScreen();
+    await screen.findByTestId('primitives-fact-unresolved');
+
+    fireEvent.click(screen.getByTestId('primitives-resolution-link'));
+    await screen.findByRole('dialog', { name: 'How resolution works' });
+    // The page and the Radix portal (scrim + content), the way the docs screenshot shows it.
+    write('resolution', page().outerHTML + (dialog().parentElement as HTMLElement).outerHTML);
   });
 });
