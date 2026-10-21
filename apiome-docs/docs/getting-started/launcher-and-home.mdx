@@ -28,7 +28,7 @@ in it, and counts its projects and published versions.
 
 Home is the Control Panel's first page: what is moving in your workspace, and what needs you.
 
-<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pick up where you left off, Recently viewed, Quick actions and Needs attention" />
+<Screenshot id="home" alt="Home: a getting-started checklist, six workspace statistics, Pinned projects, Pick up where you left off, Recently viewed, Quick actions and Needs attention" />
 
 From top to bottom:
 
@@ -38,21 +38,46 @@ From top to bottom:
    version**, **Publish it**, **View it in Browse** (with two Designer steps first when your plan
    includes the Designer). The button on the next step takes you there. Dismiss it with **×**.
 3. **Statistics** — tenants, projects, versions, published versions, classes and properties.
-4. **Pick up where you left off** — a card per project someone in your workspaces recently changed,
+4. **Pinned projects** — the projects you pinned, newest first, up to eight. Click one to open its
+   versions, or click its pin button to unpin it. See [Pinned projects](#pinned-projects).
+5. **Pick up where you left off** — a card per project someone in your workspaces recently changed,
    with its latest version and quality score. Click one to open its versions.
-5. **Recently viewed** — the projects *you* last opened in this workspace, most recent first, up to
+6. **Recently viewed** — the projects *you* last opened in this workspace, most recent first, up to
    five. Each row shows the latest version, when you last viewed it and, after the first visit, how
    many times. Click one to open its versions. See [Recently viewed](#recently-viewed).
-6. **Recent activity** — your latest changes.
-7. **Quick actions** — **Import a spec**, **Browse the catalog**, **Create an API key** and **Invite
+7. **Recent activity** — your latest changes.
+8. **Quick actions** — **Import a spec**, **Browse the catalog**, **Create an API key** and **Invite
    a teammate**.
-8. **Needs attention** — blocking lint findings, expiring API keys, versions near their sunset and
+9. **Needs attention** — blocking lint findings, expiring API keys, versions near their sunset and
    reviews waiting on you. It is hidden when nothing needs you.
 
 The sidebar groups the rest of the Control Panel by job: **Build**, **Bring in**, **Ship**,
 **Govern**, and your workspace settings. **Primitives & types**, **MCP servers**, **Export studio**,
 **SDK settings**, **Style guides** and **Access audit** are marked as coming soon: they are not yet
 available and cannot be opened.
+
+## Pinned projects
+
+Pin the projects you come back to most, and they stay at the top of Home.
+
+1. **Browse to Projects**.
+2. On a project's card or row, **open its menu (⋯)** and **choose “Pin to Home”**.
+3. Back on Home, the project is listed under **Pinned projects**.
+
+To unpin, click the pin button at the end of its row on Home, or **choose “Unpin from Home”** in its
+menu on **Projects**.
+
+You can pin up to **8** projects in each workspace; the panel's footer counts them. Pinning a ninth
+says *You can pin up to 8 projects. Unpin one on Home first.* Pins are yours alone and follow you
+across browsers and devices. A project moved to the trash leaves the list, and comes back if it is
+restored.
+
+The REST API reads and changes the same pins:
+[`GET /v1/projects/{tenant_slug}/pinned`](../reference/rest/projects.md#list-pinned-projects-v1-projects-tenant-slug-pinned-get)
+lists them, [`PUT /v1/projects/{tenant_slug}/{project_id}/pin`](../reference/rest/projects.md#pin-project-v1-projects-tenant-slug-project-id-pin-put)
+pins a project (409 `pin_limit_reached` past eight) and
+[`DELETE /v1/projects/{tenant_slug}/{project_id}/pin`](../reference/rest/projects.md#unpin-project-v1-projects-tenant-slug-project-id-pin-delete)
+unpins it.
 
 ## Recently viewed
 

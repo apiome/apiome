@@ -7607,6 +7607,125 @@ class Database:
         """
         return self._execute_write(query, (tenant_id, user_id))
 
+    # --- Pinned projects (#513) -------------------------------------------------------------
+
+    def pin_project(
+        self, tenant_id: str, user_id: str, project_id: str, *, limit: int
+    ) -> Dict[str, Any]:
+        """Pin a project for a user, unless they already hold ``limit`` pins in the tenant (#513).
+
+        Runs in one transaction under a per-(user, tenant) advisory lock, so two concurrent pins
+        cannot both pass the limit check. Only pins on live projects count toward the limit, the
+        same pins the list shows. Pinning a project that is already pinned changes nothing.
+
+        Args:
+            tenant_id: The caller's tenant (from the token, never the request).
+            user_id: The caller.
+            project_id: The project to pin.
+            limit: The most pins a user may hold in one tenant.
+
+        Returns:
+            ``{"status": ..., "pin": row or None, "count": int}``, where ``status`` is
+            ``"pinned"`` (new pin), ``"already_pinned"``, ``"limit_reached"`` (nothing written) or
+            ``"not_found"`` (missing, deleted or another tenant's project). ``pin`` holds
+            ``project_id`` and ``pinned_at``; ``count`` is the user's live pins afterwards.
+        """
+        select_project = """
+            SELECT p.id FROM apiome.projects p
+            WHERE p.id = %s::uuid AND p.tenant_id = %s::uuid AND p.deleted_at IS NULL
+        """
+        select_pin = """
+            SELECT project_id, pinned_at FROM apiome.project_pins
+            WHERE user_id = %s::uuid AND project_id = %s::uuid
+        """
+        count_pins = """
+            SELECT COUNT(*) AS n
+            FROM apiome.project_pins pp
+            JOIN apiome.projects p ON p.id = pp.project_id
+            WHERE pp.tenant_id = %s::uuid AND pp.user_id = %s::uuid AND p.deleted_at IS NULL
+        """
+        insert_pin = """
+            INSERT INTO apiome.project_pins (user_id, project_id, tenant_id)
+            VALUES (%s::uuid, %s::uuid, %s::uuid)
+            RETURNING project_id, pinned_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                # Serialize per (user, tenant) so the count below cannot race a concurrent pin.
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                    (f"project_pins:{user_id}:{tenant_id}",),
+                )
+                cursor.execute(select_project, (project_id, tenant_id))
+                if cursor.fetchone() is None:
+                    conn.commit()
+                    return {"status": "not_found", "pin": None, "count": 0}
+
+                cursor.execute(count_pins, (tenant_id, user_id))
+                count = int(dict(cursor.fetchone())["n"])
+
+                cursor.execute(select_pin, (user_id, project_id))
+                existing = cursor.fetchone()
+                if existing is not None:
+                    conn.commit()
+                    return {"status": "already_pinned", "pin": dict(existing), "count": count}
+
+                if count >= limit:
+                    conn.commit()
+                    return {"status": "limit_reached", "pin": None, "count": count}
+
+                cursor.execute(insert_pin, (user_id, project_id, tenant_id))
+                row = cursor.fetchone()
+                conn.commit()
+                return {"status": "pinned", "pin": dict(row), "count": count + 1}
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def unpin_project(self, tenant_id: str, user_id: str, project_id: str) -> bool:
+        """Remove a user's pin on a project in a tenant (#513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            project_id: The project to unpin.
+
+        Returns:
+            Whether a pin was removed (``False`` when the project was not pinned).
+        """
+        query = """
+            DELETE FROM apiome.project_pins
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND project_id = %s::uuid
+        """
+        return self._execute_write(query, (tenant_id, user_id, project_id)) > 0
+
+    def list_pinned_projects(
+        self, tenant_id: str, user_id: str, limit: int
+    ) -> List[Dict[str, Any]]:
+        """List a user's pinned projects in a tenant, newest pin first (#513).
+
+        Soft-deleted projects are skipped; their pins come back if the project is restored.
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            limit: Maximum rows to return.
+
+        Returns:
+            Rows with the project's ``id``, ``name``, ``slug``, ``description`` and ``pinned_at``.
+        """
+        query = """
+            SELECT p.id, p.name, p.slug, p.description, pp.pinned_at
+            FROM apiome.project_pins pp
+            JOIN apiome.projects p ON p.id = pp.project_id
+            WHERE pp.tenant_id = %s::uuid AND pp.user_id = %s::uuid
+              AND p.tenant_id = pp.tenant_id AND p.deleted_at IS NULL
+            ORDER BY pp.pinned_at DESC, p.name ASC
+            LIMIT %s
+        """
+        return [dict(r) for r in self.execute_query(query, (tenant_id, user_id, limit))]
+
     # --- Bulk-import reconciliation reads (BLK-1.2, #5524) -------------------------------
     #
     # What `app.bulk_import_reconciliation` needs to answer "does a project for this spec

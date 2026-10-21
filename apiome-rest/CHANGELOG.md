@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.416.0] - 2026-10-21
+
+### Added
+- **Pinned projects (#513)**: each member can pin up to 8 projects per workspace to Home's new **Pinned
+  projects** panel.
+  - `GET /v1/projects/{tenant_slug}/pinned` lists the caller's pins, newest first, with `pinLimit`
+    (`PinnedProjectsResponse`). Deleted projects are left out.
+  - `PUT /v1/projects/{tenant_slug}/{project_id}/pin` pins a project and returns `ProjectPinRecord`
+    (`projectId`, `pinnedAt`, `pinnedCount`, `pinLimit`). Idempotent. 409 `pin_limit_reached` when the caller
+    already has 8 pins; 404 when the project is missing, deleted or in another tenant.
+  - `DELETE /v1/projects/{tenant_slug}/{project_id}/pin` unpins it (204, idempotent).
+  - Pins are personal: tenant and user come from the credentials (403 when they cannot be attributed to a
+    user); listing and pinning need `projects:view`. The limit check runs under a per-member advisory lock.
+  - Migration `V309__project_pins_513.sql`: `apiome.project_pins`, one row per (user, project), cascading
+    with the user, project and tenant.
+  - OpenAPI version 1.280.0.
+
 ## [1.415.0] - 2026-10-21
 
 ### Added

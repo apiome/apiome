@@ -28,6 +28,7 @@ import {
   Globe,
   History,
   KeyRound,
+  Pin,
   Library,
   MessageSquareCheck,
   Network,
@@ -485,6 +486,18 @@ export function revisionMetaLine(
 }
 
 /**
+ * A "Pinned projects" row's quiet line (#513): the newest revision and when it was pinned.
+ *
+ * @param versionLabel The newest revision's semantic id, or `null` when the project has none.
+ * @param pinnedAt When the reader pinned it, ISO.
+ * @param now The instant to measure from. Defaults to the current time.
+ * @returns A `·`-separated line, e.g. `"v2.4.0 · Pinned 3 days ago"`.
+ */
+export function pinnedLine(versionLabel: string | null, pinnedAt: string, now: Date = new Date()): string {
+  return [versionLabel ?? 'No versions yet', `Pinned ${formatTimeAgo(pinnedAt, now)}`].join(' · ');
+}
+
+/**
  * A "Recently viewed" row's quiet line (#510): the newest revision, then when the reader last
  * opened the project and, once they have opened it more than once, how often.
  *
@@ -608,6 +621,7 @@ export const PULSE_SPAN_LABEL = 'last 12 weeks';
 /** The heading and glyph of each added panel, in one place so the tests can name them. */
 export const PANEL = {
   continue: { title: 'Pick up where you left off' },
+  pinned: { title: 'Pinned projects', icon: Pin, subtitle: 'Your favorites' },
   recentlyViewed: { title: 'Recently viewed', icon: History, subtitle: 'Projects you opened' },
   activity: { title: 'Recent activity', icon: Activity, subtitle: 'Your latest actions' },
   quickActions: { title: 'Quick actions', icon: Zap },

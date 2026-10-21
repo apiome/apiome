@@ -82,6 +82,7 @@ import {
 } from '@/app/utils/project-quality-score-history';
 import { PROJECT_DOMAIN_CATEGORY_NONE } from '@/app/utils/project-domain-categories';
 import type { ProjectOpenApiMetadata } from '@/app/utils/project-templates';
+import { useProjectPins } from '@/app/hooks/useProjectPins';
 
 /** Where the breadcrumb's first crumb goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -143,6 +144,9 @@ export default function ProjectsClient() {
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)
     ?.current_tenant_id;
   const currentUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
+
+  // Pin to Home from each ⋯ menu (#513).
+  const { isPinned, togglePin } = useProjectPins(currentTenantId);
 
   // ---- the list ---------------------------------------------------------------------------
 
@@ -865,6 +869,8 @@ export default function ProjectsClient() {
                 toolbar={toolbar}
                 empty={emptyState}
                 onOwnerChange={updateOwner}
+                isPinned={isPinned}
+                onTogglePin={(project) => void togglePin(project)}
               />
             ) : (
               <Card className="prj-cards-panel" data-testid="projects-cards">
@@ -896,6 +902,8 @@ export default function ProjectsClient() {
                         onRestore={(target) => void handleRestore(target)}
                         onPermanentDelete={(target) => void handlePermanentDelete(target)}
                         onOwnerChange={updateOwner}
+                        pinned={isPinned(project.id)}
+                        onTogglePin={(target) => void togglePin(target)}
                       />
                     ))}
                     <ProjectCreateTile onCreate={openCreate} />

@@ -37,6 +37,8 @@ import Link from 'next/link';
 import { Ellipsis, Pencil, Trash2, TrendingUp, Undo2, Users } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
+import { PinMenuItem } from './ProjectCard';
+
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -136,6 +138,10 @@ export interface ProjectsTableProps {
   empty?: React.ReactNode;
   /** A row's owner changed in place (a suggestion confirmed from the list, CDG-2.4). */
   onOwnerChange?: (id: string, owner: EntityOwner | null) => void;
+  /** Whether the reader pinned a project to Home (#513). Words each ⋯ menu's pin item. */
+  isPinned?: (projectId: string) => boolean;
+  /** Pin or unpin a project (#513). The ⋯ menu offers the item only when this is given. */
+  onTogglePin?: (project: Project) => void;
 }
 
 /**
@@ -165,6 +171,8 @@ export default function ProjectsTable({
   toolbar,
   empty,
   onOwnerChange,
+  isPinned,
+  onTogglePin,
 }: ProjectsTableProps) {
   const columns = React.useMemo<DataTableColumn<Project>[]>(
     () => [
@@ -384,6 +392,13 @@ export default function ProjectsTable({
                           <Pencil aria-hidden />
                           Edit project
                         </DropdownMenu.Item>
+                        {onTogglePin ? (
+                          <PinMenuItem
+                            project={project}
+                            pinned={isPinned?.(project.id) ?? false}
+                            onTogglePin={onTogglePin}
+                          />
+                        ) : null}
                         <DropdownMenu.Item
                           className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
                           onSelect={() => onDelete(project)}
@@ -413,6 +428,7 @@ export default function ProjectsTable({
     [
       busy,
       historyById,
+      isPinned,
       onDelete,
       onEdit,
       onOpen,
@@ -420,6 +436,7 @@ export default function ProjectsTable({
       onOwnerChange,
       onPermanentDelete,
       onRestore,
+      onTogglePin,
       reviewsByProjectId,
     ]
   );

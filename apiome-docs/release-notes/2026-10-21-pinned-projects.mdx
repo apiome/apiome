@@ -1,0 +1,20 @@
+---
+slug: pinned-projects
+title: Pin your favorite projects to Home
+description: Pin up to eight projects so they stay at the top of Home.
+authors: [apiome]
+---
+
+Pin the projects you come back to most, and Home keeps them at the top in a new **Pinned projects**
+panel. [How to pin a project](/getting-started/launcher-and-home#pinned-projects).
+
+{/* truncate */}
+
+- **Pin from Projects.** Open a project's **⋯** menu, on a card or a table row, and choose **Pin to
+  Home**. The same menu offers **Unpin from Home** afterwards.
+- **Unpin from Home.** Each pinned row has its own pin button; the panel counts your pins against
+  the limit of eight.
+- **Yours, everywhere.** Pins are kept per person on the server, so they follow you across devices,
+  and nobody else in the workspace sees them.
+- **In the API too.** `GET /v1/projects/{tenant_slug}/pinned`, `PUT` and `DELETE
+  /v1/projects/{tenant_slug}/{project_id}/pin` — see the [Projects reference](/reference/rest/projects).
