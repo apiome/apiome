@@ -29,6 +29,7 @@ from app.auth import validate_session_credentials
 from app.cobolcopybook_analysis import analyze_cobolcopybook
 from app.cobolcopybook_parser import parse_cobolcopybook
 from app.format_capability_registry import (
+    IMPLEMENTATION_GUIDE_FAMILY,
     REASON_ABSENCE_CATEGORIES,
     REGISTRY_VERSION,
     REVIEW_DATE,
@@ -49,6 +50,7 @@ from app.format_capability_registry import (
     explain_analysis_absence,
     explain_construct,
     format_capabilities,
+    implementation_guide,
     is_valid_format_key,
     registry_snapshot,
     render_absence,
@@ -288,6 +290,106 @@ def test_x12_and_copybook_are_reviewed_not_derived() -> None:
         assert entry.canonical_projection.coverage is ProjectionCoverage.PARTIAL, key
         assert entry.canonical_projection.dropped_constructs, key
         assert len(entry.notes) >= 3, key
+
+
+# ---------------------------------------------------------------------------
+# FMT-6.10 (#5454): the implementation-guide family
+# ---------------------------------------------------------------------------
+
+#: Adapters that own an ``industry-messaging`` corpus directory but sit outside the FMT-EPIC-6
+#: family, each with the reason it carries no implementation-guide statement (yet). A new
+#: industry-messaging adapter must join :data:`IMPLEMENTATION_GUIDE_FAMILY` or be listed here.
+_OUTSIDE_THE_FAMILY: Dict[str, str] = {
+    "fhir": "FHIR R4 predates FMT-EPIC-6; its profiles and IGs are a separate statement.",
+    "fix": "Message instances: the schema is inferred, so there is no guide to name beside it.",
+    "hl7v2": "HL7 v2 predates FMT-EPIC-6.",
+    "iso20022": "ISO 20022 (and the SEPA files routed to it) predates FMT-EPIC-6.",
+    "iso8583": "ISO 8583 predates FMT-EPIC-6.",
+}
+
+
+def _industry_messaging_adapters() -> set:
+    from corpus_loader import load_manifest
+
+    manifest = load_manifest()
+    directories = {
+        name for name, meta in manifest.directories.items() if meta.category == "industry-messaging"
+    }
+    return {
+        entry.adapter_key
+        for entry in manifest.entries
+        if entry.adapter_key and entry.path.split("/", 1)[0] in directories
+    }
+
+
+def test_every_family_format_ships_a_reviewed_entry_with_a_guide_statement() -> None:
+    """The acceptance test: no EDI-family format without a reviewed, dated guide statement."""
+    for key in IMPLEMENTATION_GUIDE_FAMILY:
+        entry = capability_for(key)
+        assert entry.provenance is CapabilityProvenance.REVIEWED, key
+        assert entry.review_date == REVIEW_DATE, key
+        guide = entry.implementation_guide
+        assert guide is not None, f"{key} ships without an implementation-guide statement"
+        assert guide.consulted is False, key
+        assert guide.standard_read.strip(), key
+        assert guide.guides_not_consulted, key
+        assert "No implementation guide is consulted" in guide.statement, key
+        assert "not claimed to be conformant" in guide.statement, key
+        for name in guide.guides_not_consulted:
+            assert name in guide.statement, (key, name)
+        assert entry.limits, f"{key} states no numeric budgets"
+        assert entry.supported_constructs, f"{key} states nothing it models"
+
+
+def test_every_industry_messaging_adapter_is_in_the_family_or_explained() -> None:
+    adapters = _industry_messaging_adapters()
+    unclassified = sorted(adapters - set(IMPLEMENTATION_GUIDE_FAMILY) - set(_OUTSIDE_THE_FAMILY))
+    assert not unclassified, (
+        "industry-messaging adapters with no implementation-guide statement and no stated reason: "
+        f"{unclassified}"
+    )
+    assert set(IMPLEMENTATION_GUIDE_FAMILY) <= adapters | {"edix12"}
+    stale = sorted(set(_OUTSIDE_THE_FAMILY) - adapters)
+    assert not stale, f"exemptions for adapters that own no industry-messaging corpus: {stale}"
+
+
+def test_only_the_family_carries_a_guide_statement(entries: List[FormatCapability]) -> None:
+    carrying = {entry.format for entry in entries if entry.implementation_guide is not None}
+    assert carrying == set(IMPLEMENTATION_GUIDE_FAMILY)
+
+
+def test_unknown_format_states_no_guide() -> None:
+    assert capability_for("no-such-format").implementation_guide is None
+
+
+def test_guide_statement_vocabulary() -> None:
+    statement = implementation_guide("A syntax", ["Guide one", "Guide two"], ["a version"])
+    assert statement.statement == (
+        "Only the A syntax is read. No implementation guide is consulted — not Guide one or Guide "
+        "two — so a document that imports is structurally readable, not claimed to be conformant. "
+        "A version is recorded as the sender's claim, not checked."
+    )
+    plural = implementation_guide("B", ["G"], ["one claim", "another"])
+    assert plural.statement.endswith("One claim and another are recorded as the sender's claim, not checked.")
+    assert implementation_guide("C", ["G"]).claims_recorded == []
+
+
+def test_guide_statement_must_name_a_guide() -> None:
+    with pytest.raises(ValueError):
+        implementation_guide("A syntax", [])
+
+
+def test_x12_guide_statement_keeps_the_st03_claim() -> None:
+    guide = capability_for("edix12").implementation_guide
+    assert guide is not None
+    assert any("ST03" in claim for claim in guide.claims_recorded)
+    assert "4010 and 5010" in guide.statement
+
+
+def test_fix_orchestra_entry_states_rules_are_not_evaluated() -> None:
+    entry = capability_for("fix-orchestra")
+    assert entry.canonical_projection.coverage is ProjectionCoverage.PARTIAL
+    assert any("never evaluated" in note for note in entry.notes)
 
 
 def test_x12_states_its_envelope_and_grammar_boundaries() -> None:

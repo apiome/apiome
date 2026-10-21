@@ -1,0 +1,22 @@
+---
+slug: implementation-guide-statements
+title: Implementation-guide statements for every EDI format
+description: Format details now says plainly which implementation guides Apiome does not check.
+authors: [apiome]
+---
+
+A green import of an EDI or vertical-messaging document means it was **structurally readable** —
+not that it conforms to an implementation guide. The **Format details** tab now
+[says so on every format in the family](/bring-in/catalog-format-details#implementation-guides-what-is-not-checked).
+
+{/* truncate */}
+
+- **One banner, one vocabulary.** X12, EDIFACT, TRADACOMS, IDoc, SWIFT MT, HL7 v3 / CDA, NACHA,
+  DICOM, NCPDP and FIX Orchestra show **No implementation guide was consulted**, naming the syntax
+  that is read and the guides that are not — 5010 TR3s, EANCOM, the NACHA Operating Rules, C-CDA,
+  payer sheets…
+- **Claims stay claims.** What a document says about itself — an X12 `ST03`, a CDA `templateId`, a
+  NACHA SEC code — is listed as recorded as the sender's claim, never checked.
+- **Reviewed and dated.** Every statement comes from the format's hand-reviewed capability entry,
+  so the tab, the [supported formats](/bring-in/supported-formats#format-boundaries) page and the
+  API agree.

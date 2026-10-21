@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.414.0] - 2026-10-21
+
+### Added
+- **Implementation-guide capability statements for every EDI family format (#5454, FMT-6.10)**: say plainly what
+  is validated and what is not, in one vocabulary.
+  - `app/format_capability_registry.py`: new `ImplementationGuideStatement` (`consulted` — always false —,
+    `standard_read`, `guides_not_consulted`, `claims_recorded`, `statement`) and the `implementation_guide()`
+    builder that renders every statement in the same words. `FormatCapability.implementation_guide` (and
+    `FormatCapabilitySummary.implementation_guide` on `GET /v1/formats/matrix`) carries it for the
+    `IMPLEMENTATION_GUIDE_FAMILY` — EDI X12, EDIFACT, TRADACOMS, IDoc, SWIFT MT, HL7 v3 / CDA, NACHA, DICOM, NCPDP
+    and FIX Orchestra — and is null for every other format.
+  - Each family entry is hand-reviewed and dated (`review_date` 2026-10-21, registry version `23`); FIX Orchestra
+    gains its reviewed seed (projection coverage, Score DSL rules recorded not evaluated, fileset-only XInclude).
+  - `test_format_capability_registry` asserts no family format ships without a reviewed entry and statement, that
+    only the family carries one, and that every adapter owning an `industry-messaging` corpus directory is either in
+    the family or listed with its reason.
+  - The generated supported-formats page renders each family format's statement in **Format boundaries**.
+
 ## [1.413.0] - 2026-10-21
 
 ### Added

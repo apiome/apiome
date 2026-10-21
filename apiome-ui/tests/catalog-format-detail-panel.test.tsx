@@ -701,5 +701,41 @@ describe('format capability registry', () => {
     expect(
       screen.queryByRole('heading', { name: /what apiome records/i }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-implementation-guide-banner')).not.toBeInTheDocument();
+  });
+});
+
+describe('implementation-guide banner (FMT-6.10)', () => {
+  it('states that no implementation guide was consulted for an EDI-family record', async () => {
+    await renderLoadedPanel();
+
+    const banner = await screen.findByTestId('catalog-implementation-guide-banner');
+    expect(banner).toHaveAttribute('data-format', 'edix12');
+    expect(banner).toHaveAccessibleName('EDI X12: no implementation guide was consulted');
+    expect(within(banner).getByTestId('catalog-implementation-guide-statement')).toHaveTextContent(
+      /not claimed to be conformant/,
+    );
+    expect(within(banner).getByTestId('catalog-implementation-guide-claims')).toHaveTextContent('ST03');
+  });
+
+  it('renders nothing for a format outside the family', async () => {
+    const snapshot = {
+      ...REGISTRY_SNAPSHOT,
+      formats: REGISTRY_SNAPSHOT.formats.map((entry) => ({ ...entry, implementation_guide: null })),
+    };
+    fetchMock = jest.fn(async (input: unknown) => {
+      const url = String(input);
+      if (url.includes('/format-capabilities')) {
+        return { ok: true, status: 200, json: async () => ({ success: true, ...snapshot }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ success: true, record: x12Record() }) };
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await renderLoadedPanel();
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /what apiome records/i })).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId('catalog-implementation-guide-banner')).not.toBeInTheDocument();
   });
 });

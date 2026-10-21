@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.277.0
+  version: 1.278.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -97340,6 +97340,14 @@ components:
             a projection or a downgrade (FMT-3.8). A claim about *versions*: how completely
             the format''s constructs are modelled is what ``unsupported_constructs``
             and ``canonical_projection`` above answer.'
+        implementation_guide:
+          anyOf:
+          - $ref: '#/components/schemas/ImplementationGuideStatement'
+          - type: 'null'
+            description: Format Capability schema.
+          description: 'For an EDI or vertical-messaging format (FMT-6.10): the syntax
+            read and the implementation guides not consulted. Null for every other
+            format.'
         notes:
           items:
             type: string
@@ -97508,6 +97516,14 @@ components:
             — the format's unsupported grammar. Their absence from an analysis means
             nothing about the source.
           maxItems: 1000
+        implementation_guide:
+          anyOf:
+          - $ref: '#/components/schemas/ImplementationGuideStatement'
+          - type: 'null'
+            description: Format Capability schema.
+          description: 'For an EDI or vertical-messaging format (FMT-6.10): the syntax
+            read and the implementation guides not consulted. Null for every other
+            format.'
         notes:
           items:
             type: string
@@ -99754,6 +99770,61 @@ components:
 
 
         Suggestions are never auto-applied — the user must confirm a link action.'
+    ImplementationGuideStatement:
+      properties:
+        consulted:
+          type: boolean
+          title: Consulted
+          description: Whether any implementation guide is consulted. Always false.
+          default: false
+          example: false
+        standard_read:
+          type: string
+          title: Standard Read
+          description: The syntax that is read and checked.
+          example: example
+        guides_not_consulted:
+          items:
+            type: string
+          type: array
+          title: Guides Not Consulted
+          description: The implementation guides, operating rules and specifications
+            not applied.
+          maxItems: 1000
+        claims_recorded:
+          items:
+            type: string
+          type: array
+          title: Claims Recorded
+          description: Claims the document makes about itself, recorded as the sender's
+            claim.
+          maxItems: 1000
+        statement:
+          type: string
+          title: Statement
+          description: The reviewed sentence the Format details tab renders.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - standard_read
+      - guides_not_consulted
+      - statement
+      title: ImplementationGuideStatement
+      description: "What a format's reader validates against, and the guides it does\
+        \ not consult (FMT-6.10).\n\nEvery EDI and vertical-messaging format reads\
+        \ a **syntax** — segments, records, elements — and\nnothing above it: no implementation\
+        \ guide, operating rule, template or companion guide. A green\nimport therefore\
+        \ means *structurally readable*, never *conformant*, and this statement says\
+        \ so\nin one vocabulary for the whole family (:data:`IMPLEMENTATION_GUIDE_FAMILY`).\
+        \ The Format\ndetails tab renders :attr:`statement` as a banner on every record\
+        \ of these formats.\n\nAttributes:\n    consulted: Always ``False``: apiome\
+        \ consults no implementation guide for any format.\n    standard_read: The\
+        \ syntax that *is* read and checked.\n    guides_not_consulted: The guides,\
+        \ rules and specifications that are not applied, by name.\n    claims_recorded:\
+        \ Conformance or version claims the document makes about itself, recorded\n\
+        \        as the sender's claim and never checked.\n    statement: The reviewed\
+        \ sentence rendered to the reader."
     ImportAdapterReference:
       properties:
         adapter_key:

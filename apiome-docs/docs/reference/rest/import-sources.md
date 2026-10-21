@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.277.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.278.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `import-sources` · 4 operations
 
@@ -166,6 +166,7 @@ normalization, and whether it converts — each backed by the analyzer and tool 
 | `canonical_projection` | `CanonicalProjectionSupport` | yes | Canonical Projection. |
 | `conversion` | `ConversionSupportEntry` | yes | Whether this format participates in the conversion graph, and by which route. |
 | `version_coverage` | `VersionCoverage` | yes | Which versions of this format are read and written, which one an export produces by default, and where a version is reached through a projection or a downgrade (FMT-3.8). A claim about *versions*: how completely the format's constructs are modelled is what ``unsupported_constructs`` and ``canonical_projection`` above answer. |
+| `implementation_guide` | `ImplementationGuideStatement` or null | no | For an EDI or vertical-messaging format (FMT-6.10): the syntax read and the implementation guides not consulted. Null for every other format. |
 | `notes` | array of string | no | Reviewed prose about this format's boundaries, in reading order. |
 | `registry_version` | string | yes | The registry contract version this entry belongs to. |
 | `review_date` | string | yes | When this entry's claims were last reviewed. |
