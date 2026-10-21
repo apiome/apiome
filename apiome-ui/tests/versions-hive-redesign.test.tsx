@@ -30,6 +30,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -1118,6 +1119,51 @@ describe('the dialogs', () => {
     await waitFor(() => expect(screen.queryByTestId('new-version-dialog')).not.toBeInTheDocument());
   });
 
+  it('copies from a version with or without its paths (#771)', async () => {
+    // user-event installs its own clipboard; keep the suite's mock for the tests after this one.
+    const clipboard = navigator.clipboard;
+    const user = userEvent.setup();
+    try {
+      await renderVersions();
+      fireEvent.click(screen.getByTestId('versions-new-button'));
+      const dialog = await screen.findByTestId('new-version-dialog');
+      // Blank version: nothing to copy, so no choice.
+      expect(within(dialog).queryByTestId('new-version-copy-paths')).not.toBeInTheDocument();
+      await user.click(within(dialog).getByRole('combobox', { name: 'Copy from version' }));
+      await user.click(await screen.findByRole('option', { name: /v2\.3\.1/ }));
+      const copyPaths = within(dialog).getByRole('checkbox', { name: 'Copy paths' });
+      expect(copyPaths).toBeChecked();
+      expect(within(dialog).getByTestId('new-version-copy-note')).toHaveTextContent(
+        'Classes, properties and paths will be copied from the selected revision.'
+      );
+      await user.click(copyPaths);
+      expect(copyPaths).not.toBeChecked();
+      expect(within(dialog).getByTestId('new-version-copy-note')).toHaveTextContent('Paths will not be copied');
+      fireEvent.change(within(dialog).getByTestId('new-version-message'), { target: { value: 'Schemas only' } });
+      await waitFor(() => expect(within(dialog).getByTestId('new-version-submit')).toBeEnabled());
+      fireEvent.click(within(dialog).getByTestId('new-version-submit'));
+      await waitFor(() => {
+        const post = calls.find((c) => c.method === 'POST' && c.url === '/api/versions');
+        expect(post?.body).toMatchObject({ source_version_id: V231_ID, copyPaths: false });
+      });
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+    }
+  });
+
+  it('sends no copyPaths for a blank version', async () => {
+    await renderVersions();
+    fireEvent.click(screen.getByTestId('versions-new-button'));
+    const dialog = await screen.findByTestId('new-version-dialog');
+    fireEvent.change(within(dialog).getByTestId('new-version-message'), { target: { value: 'Blank' } });
+    await waitFor(() => expect(within(dialog).getByTestId('new-version-submit')).toBeEnabled());
+    fireEvent.click(within(dialog).getByTestId('new-version-submit'));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.url === '/api/versions')).toBe(true));
+    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/versions');
+    expect(post?.body).not.toHaveProperty('copyPaths');
+    expect(post?.body).not.toHaveProperty('source_version_id');
+  });
+
   it('opens Edit on a draft with its note, and saves through PUT', async () => {
     await renderVersions();
     fireEvent.click(screen.getByTestId(`versions-quick-edit-${HEAD_ID}`));
@@ -1434,7 +1480,15 @@ describe('the browser fixtures', () => {
     await waitFor(() => expect(screen.queryByTestId(`versions-row-menu-content-${HEAD_ID}`)).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('versions-new-button'));
-    write('new', (await screen.findByTestId('new-version-dialog')).outerHTML);
+    const newDialog = await screen.findByTestId('new-version-dialog');
+    // Copying from v2.3.1, so the docs screenshot shows the Copy paths choice (#771).
+    const clipboard = navigator.clipboard;
+    const user = userEvent.setup();
+    await user.click(within(newDialog).getByRole('combobox', { name: 'Copy from version' }));
+    await user.click(await screen.findByRole('option', { name: /v2\.3\.1/ }));
+    Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+    await within(newDialog).findByTestId('new-version-copy-paths');
+    write('new', newDialog.outerHTML);
     fireEvent.keyDown(document.body, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId('new-version-dialog')).not.toBeInTheDocument());
 

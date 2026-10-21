@@ -76,6 +76,7 @@ from .revision_deprecation import (
     successor_revision_id_from_metadata,
 )
 from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
+from .version_path_copy import copy_paths_between_versions
 from .review_lifecycle import (
     AUDIT_DECISION,
     AUDIT_RE_REQUESTED,
@@ -15451,9 +15452,15 @@ class Database:
         client_base_revision_id: str,
         source_commit_sha: Optional[str] = None,
         source_committed_at: Optional[Any] = None,
+        copy_paths: bool = False,
     ) -> Tuple[Dict[str, Any], int]:
         """
         Insert version (optional parent), copy classes from source, advance branch tip under lock.
+
+        With ``copy_paths`` (#771) the source's paths — operations, parameters, request bodies,
+        responses and canvases — are copied too, after the classes so their class references
+        re-point at the copies; the counts land on the returned row as ``copied_paths`` and
+        ``copied_operations``. Ignored without ``source_version_id``.
 
         ``source_commit_sha`` / ``source_committed_at`` record RAR-4.2 refresh
         provenance on the new revision (the repository source commit that produced it).
@@ -15463,6 +15470,7 @@ class Database:
         src = (source_version_id or "").strip() or None
         conn = self.connect()
         copied_count = 0
+        path_counts: Optional[Dict[str, int]] = None
         new_id: Optional[str] = None
         prev_autocommit = self._begin_tx(conn)
         no_prior_revision = False
@@ -15546,6 +15554,8 @@ class Database:
 
                 if src:
                     copied_count = self.copy_classes_from_version_for_merge(cursor, src, new_id)
+                    if copy_paths:
+                        path_counts = copy_paths_between_versions(cursor, src, new_id)
 
                 if branch_row is not None:
                     cursor.execute(
@@ -15590,6 +15600,12 @@ class Database:
         full = self.get_version_by_id(new_id, tenant_id)
         if not full:
             raise ValueError("Version created but could not be loaded")
+        if path_counts is not None:
+            full = {
+                **full,
+                "copied_paths": path_counts["paths"],
+                "copied_operations": path_counts["operations"],
+            }
         return full, copied_count
 
     _MERGE_SESSION_TRANSITIONS: Dict[str, Set[str]] = {

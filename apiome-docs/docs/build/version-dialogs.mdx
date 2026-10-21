@@ -13,7 +13,8 @@ one, in the order you are likely to meet them.
 **Click “New version”** in the page header.
 
 1. **Copy source** — **Copy from version** starts from an existing version's classes; leave it on
-   **Create blank version** to start empty.
+   **Create blank version** to start empty. Once you pick a version, **Copy paths** decides whether
+   its paths come too (see [Copy paths](#copy-paths)).
 2. **Version** — keep **Auto-generate version** and pick a **Bump strategy** (**Minor** by default,
    or **Patch**); the dialog shows the number it will create. Or choose **Manual entry** and type a
    **Version ID** such as `2.5.0`.
@@ -21,7 +22,20 @@ one, in the order you are likely to meet them.
    **External reference** (a ticket id) and **Changelog** are optional.
 4. **Click “Create version”.**
 
-<Screenshot id="version-new-dialog" alt="The New version dialog: copy source, version strategy and bump, and the release message and changelog" />
+<Screenshot id="version-new-dialog" alt="The New version dialog copying from v2.3.1: the Copy paths checkbox ticked, version strategy and bump, and the release message" />
+
+### Copy paths
+
+When you copy from a version, its **classes and properties are always copied** — paths point at
+classes, so the classes have to come along. **Copy paths** (ticked by default) also copies the
+version's paths: every operation with its parameters, request bodies, responses and the path's
+Studio canvas. Each copied reference to a class points at the new version's class of the same name,
+so editing the new version never touches the old one.
+
+**Untick “Copy paths”** to start the new version with the schemas only — for example, to redesign
+the API surface on top of the same models. The note under the checkbox says what will be copied.
+
+After **“Create version”**, the confirmation says how many classes and paths were copied.
 
 ## Edit
 

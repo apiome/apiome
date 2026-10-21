@@ -856,6 +856,23 @@ export function newestPublishedSummary(
 // ---------------------------------------------------------------------------------------
 
 /**
+ * What a New version copy brought along, for the success toast (#771).
+ *
+ * @param classes `copied_classes` from the create response (absent or `null` when none).
+ * @param paths `copied_paths` — present only when **Copy paths** was on.
+ * @returns E.g. `"4 classes and 2 paths"`, `"1 class"`, or `null` when nothing was copied.
+ */
+export function versionCopySummary(
+  classes: number | null | undefined,
+  paths: number | null | undefined
+): string | null {
+  const parts: string[] = [];
+  if (typeof classes === 'number' && classes > 0) parts.push(`${classes} class${classes === 1 ? '' : 'es'}`);
+  if (typeof paths === 'number' && paths > 0) parts.push(`${paths} path${paths === 1 ? '' : 's'}`);
+  return parts.length ? parts.join(' and ') : null;
+}
+
+/**
  * The delete confirm — red primary, version named, consequence stated.
  *
  * @param version The revision.
