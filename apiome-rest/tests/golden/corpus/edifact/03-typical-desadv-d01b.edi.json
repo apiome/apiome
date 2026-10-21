@@ -1,0 +1,1320 @@
+{
+  "adapter": "edifact",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "edifact_directory": "D:01B",
+      "edifact_envelope": {
+        "association_code": null,
+        "component_separator": ":",
+        "controlling_agency": "UN",
+        "decimal_mark": ".",
+        "element_separator": "+",
+        "group_id": null,
+        "group_reference": null,
+        "interchange_control_reference": "000000003",
+        "message_reference": "3",
+        "recipient_id": "BUYER01",
+        "recipient_qualifier": "14",
+        "release_character": "?",
+        "repetition_separator": null,
+        "segment_terminator": "'",
+        "sender_id": "SUPPLIER1",
+        "sender_qualifier": "14",
+        "service_string_advice": false,
+        "syntax_identifier": "UNOC",
+        "syntax_version": "3"
+      },
+      "edifact_message_type": "DESADV",
+      "edifact_messages": [
+        {
+          "directory": "D:01B",
+          "message_type": "DESADV",
+          "reference": "3",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "BGM01",
+                  "repetitions": [
+                    [
+                      "351"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "BGM02",
+                  "repetitions": [
+                    [
+                      "DESADV-88120"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "BGM03",
+                  "repetitions": [
+                    [
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "BGM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "137",
+                      "202608160700",
+                      "203"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "11",
+                      "202608170900",
+                      "203"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "PO-0001"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "SU"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "SUPPLIER1",
+                      "",
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "ST"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "BUYER01WH1",
+                      "",
+                      "9"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "NAD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "NAD04",
+                  "repetitions": [
+                    [
+                      "Acme Retail Warehouse 1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "NAD05",
+                  "repetitions": [
+                    [
+                      "Havenweg 12"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "NAD06",
+                  "repetitions": [
+                    [
+                      "Rotterdam"
+                    ]
+                  ]
+                },
+                {
+                  "position": "07",
+                  "reference": "NAD07",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "08",
+                  "reference": "NAD08",
+                  "repetitions": [
+                    [
+                      "3011 XX"
+                    ]
+                  ]
+                },
+                {
+                  "position": "09",
+                  "reference": "NAD09",
+                  "repetitions": [
+                    [
+                      "NL"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TDT01",
+                  "repetitions": [
+                    [
+                      "20"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TDT02",
+                  "repetitions": [
+                    [
+                      "TRK-4471"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TDT03",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "TDT04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "TDT05",
+                  "repetitions": [
+                    [
+                      "CARRIER01",
+                      "",
+                      "172"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TDT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CPS01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CPS"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PAC01",
+                  "repetitions": [
+                    [
+                      "3"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PAC02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "PAC03",
+                  "repetitions": [
+                    [
+                      "201"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PAC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MEA01",
+                  "repetitions": [
+                    [
+                      "PD"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "MEA02",
+                  "repetitions": [
+                    [
+                      "AAB"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "MEA03",
+                  "repetitions": [
+                    [
+                      "KGM",
+                      "412.5"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MEA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PCI01",
+                  "repetitions": [
+                    [
+                      "33E"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PCI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "GIN01",
+                  "repetitions": [
+                    [
+                      "BJ"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "GIN02",
+                  "repetitions": [
+                    [
+                      "00312345678900001234"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "GIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "WIDGET-001",
+                      "BP"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "12",
+                      "100"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "PO-0001",
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "GADGET-007",
+                      "BP"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "12",
+                      "50"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "PO-0001",
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CNT01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CNT"
+            }
+          ]
+        }
+      ]
+    },
+    "format": "edifact",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EDIFACT DESADV",
+      "namespace": "EDIFACT-DESADV"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EDIFACT DESADV",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "137",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.DTM.DTM01-1",
+            "name": "DTM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "202608160700",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.DTM.DTM01-2",
+            "name": "DTM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "203",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DESADV.DTM.DTM01-3",
+            "name": "DTM01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.DTM",
+        "key_type": null,
+        "kind": "record",
+        "name": "DTM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.LIN.LIN01",
+            "name": "LIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.LIN.LIN03-1",
+            "name": "LIN03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "BP",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DESADV.LIN.LIN03-2",
+            "name": "LIN03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.LIN",
+        "key_type": null,
+        "kind": "record",
+        "name": "LIN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "351",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.MessageDESADV.BGM01",
+            "name": "BGM01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DESADV-88120",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.MessageDESADV.BGM02",
+            "name": "BGM02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DESADV.MessageDESADV.BGM03",
+            "name": "BGM03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 24,
+            "key": "EDIFACT-DESADV.MessageDESADV.CNT01-1",
+            "name": "CNT01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 25,
+            "key": "EDIFACT-DESADV.MessageDESADV.CNT01-2",
+            "name": "CNT01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "EDIFACT-DESADV.MessageDESADV.CPS01",
+            "name": "CPS01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-DESADV.MessageDESADV.DTM",
+            "name": "DTM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DESADV.DTM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "BJ",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 20,
+            "key": "EDIFACT-DESADV.MessageDESADV.GIN01",
+            "name": "GIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "00312345678900001234",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 21,
+            "key": "EDIFACT-DESADV.MessageDESADV.GIN02",
+            "name": "GIN02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 22,
+            "key": "EDIFACT-DESADV.MessageDESADV.LIN",
+            "name": "LIN",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DESADV.LIN",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PD",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 15,
+            "key": "EDIFACT-DESADV.MessageDESADV.MEA01",
+            "name": "MEA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "AAB",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 16,
+            "key": "EDIFACT-DESADV.MessageDESADV.MEA02",
+            "name": "MEA02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "KGM",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 17,
+            "key": "EDIFACT-DESADV.MessageDESADV.MEA03-1",
+            "name": "MEA03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "412.5",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 18,
+            "key": "EDIFACT-DESADV.MessageDESADV.MEA03-2",
+            "name": "MEA03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "EDIFACT-DESADV.MessageDESADV.NAD",
+            "name": "NAD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DESADV.NAD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "3",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "EDIFACT-DESADV.MessageDESADV.PAC01",
+            "name": "PAC01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "201",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 14,
+            "key": "EDIFACT-DESADV.MessageDESADV.PAC03",
+            "name": "PAC03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "33E",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 19,
+            "key": "EDIFACT-DESADV.MessageDESADV.PCI01",
+            "name": "PCI01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 23,
+            "key": "EDIFACT-DESADV.MessageDESADV.QTY",
+            "name": "QTY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DESADV.QTY",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-DESADV.MessageDESADV.RFF",
+            "name": "RFF",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-DESADV.RFF",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "EDIFACT-DESADV.MessageDESADV.TDT01",
+            "name": "TDT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "TRK-4471",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "EDIFACT-DESADV.MessageDESADV.TDT02",
+            "name": "TDT02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "3",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "EDIFACT-DESADV.MessageDESADV.TDT03",
+            "name": "TDT03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CARRIER01",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "EDIFACT-DESADV.MessageDESADV.TDT05-1",
+            "name": "TDT05-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "172",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "EDIFACT-DESADV.MessageDESADV.TDT05-3",
+            "name": "TDT05-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.MessageDESADV",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageDESADV",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SU",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.NAD.NAD01",
+            "name": "NAD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SUPPLIER1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.NAD.NAD02-1",
+            "name": "NAD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-DESADV.NAD.NAD02-3",
+            "name": "NAD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.NAD",
+        "key_type": null,
+        "kind": "record",
+        "name": "NAD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "12",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.QTY.QTY01-1",
+            "name": "QTY01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "100",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.QTY.QTY01-2",
+            "name": "QTY01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.QTY",
+        "key_type": null,
+        "kind": "record",
+        "name": "QTY",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "ON",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-DESADV.RFF.RFF01-1",
+            "name": "RFF01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PO-0001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-DESADV.RFF.RFF01-2",
+            "name": "RFF01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-DESADV.RFF",
+        "key_type": null,
+        "kind": "record",
+        "name": "RFF",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "edifact/03-typical-desadv-d01b.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "edifact"
+  },
+  "fingerprint": "sha256:6c7abb9f99ddf2261e429e756803aab463fe26a1762823d0b5a1221f53ffc0e5",
+  "lint": {
+    "findings": 45,
+    "grade": "F",
+    "report_fingerprint": "bbcfa5ac89f4de0846bf1a3de4ef69c268a63a8b3f2270e336cb29e706007afd",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 39,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

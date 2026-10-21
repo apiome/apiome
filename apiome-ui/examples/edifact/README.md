@@ -3,7 +3,7 @@
 Fixtures for **FMT-6.1** ([#5445](https://github.com/apiome/apiome/issues/5445)), with the EANCOM and
 ODETTE dialect samples **FMT-6.5** ([#5449](https://github.com/apiome/apiome/issues/5449)) needs.
 Apiome reads ANSI X12; EDIFACT is its rest-of-world twin, and every EDI platform in the market
-documents both. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+documents both. Every entry is read by the `edifact` adapter (`apiome-rest/src/app/edifact_import_source.py`).
 
 **Detection marker.** A `UNB` interchange header (optionally preceded by `UNA` service string advice)
 followed by `UNH` message headers.

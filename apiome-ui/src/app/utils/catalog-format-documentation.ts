@@ -77,6 +77,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
 
   // Finance / B2B
   edix12: 'https://x12.org/products/industry-data-standards',
+  edifact: 'https://unece.org/trade/uncefact/introducing-unedifact',
   iso20022: 'https://www.iso20022.org/iso-20022-message-definitions',
   iso8583: 'https://www.iso.org/standard/31628.html',
   fix: 'https://www.fixtrading.org/standards/',

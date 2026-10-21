@@ -136,6 +136,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   fhir: 'FHIR',
   hl7v2: 'HL7 v2',
   edix12: 'EDI X12',
+  edifact: 'UN/EDIFACT',
   iso20022: 'ISO 20022',
   iso8583: 'ISO 8583',
   fix: 'FIX',

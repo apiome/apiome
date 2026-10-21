@@ -511,6 +511,23 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="X12 interchange (004010, 005010, …)",
     ),
+    "edifact": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="UN/EDIFACT syntax 1–4 (ISO 9735), any directory (D.96A, D.01B, …)",
+                format_key="edifact",
+                support=VersionSupport.UNGATED,
+                note="The syntax version `UNB` declares decides one thing — whether a "
+                "repetition separator exists (version 4 only) — and is otherwise recorded. "
+                "The directory a message claims (`UNH` S009, e.g. D:96A) and any association "
+                "code (EANCOM's EAN008) are recorded as the sender's claim: the segment "
+                "grammar read is the same for every directory and no implementation guide is "
+                "consulted.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "fhir": VersionCoverage(
         reads=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
         writes=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],

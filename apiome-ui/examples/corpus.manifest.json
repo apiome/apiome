@@ -177,7 +177,7 @@
       "marker": "`ISA`/`GS`/`ST` envelopes"
     },
     "edifact": {
-      "label": "UN/EDIFACT (pending #5445)",
+      "label": "UN/EDIFACT",
       "category": "industry-messaging",
       "paradigm": "message",
       "marker": "`UNB`/`UNH` envelopes, optional `UNA` service string advice"
@@ -8933,7 +8933,7 @@
     {
       "path": "edifact/01-minimal-orders-d96a.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -8942,8 +8942,7 @@
       "features": [
         "ORDERS",
         "D96A",
-        "default-delimiters",
-        "pending-adapter"
+        "default-delimiters"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -8954,7 +8953,7 @@
     {
       "path": "edifact/02-typical-invoic-d96a.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -8967,8 +8966,7 @@
         "NAD",
         "TAX",
         "MOA",
-        "CUX",
-        "pending-adapter"
+        "CUX"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -8979,7 +8977,7 @@
     {
       "path": "edifact/03-typical-desadv-d01b.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -8992,8 +8990,7 @@
         "MEA",
         "GIN",
         "TDT",
-        "CPS",
-        "pending-adapter"
+        "CPS"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9004,7 +9001,7 @@
     {
       "path": "edifact/04-stress-multi-message-group.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9016,8 +9013,7 @@
         "multi-message",
         "comma-decimal",
         "release-character",
-        "empty-elements",
-        "pending-adapter"
+        "empty-elements"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9029,7 +9025,7 @@
     {
       "path": "edifact/05-real-world-eancom-orders.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9042,8 +9038,7 @@
         "PIA",
         "IMD",
         "LOC",
-        "association-code",
-        "pending-adapter"
+        "association-code"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9054,7 +9049,7 @@
     {
       "path": "edifact/06-typical-odette-delfor.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9065,8 +9060,7 @@
         "DELFOR",
         "SCC",
         "schedule-lines",
-        "UNOA",
-        "pending-adapter"
+        "UNOA"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9078,7 +9072,7 @@
     {
       "path": "edifact/07-stress-control-count-mismatch.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9087,8 +9081,7 @@
       "features": [
         "control-counts",
         "declared-vs-observed",
-        "self-inconsistent",
-        "pending-adapter"
+        "self-inconsistent"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9100,7 +9093,7 @@
     {
       "path": "edifact/08-composition-nested-segment-groups.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9111,8 +9104,7 @@
         "contact-group",
         "allowance-charge",
         "tax-group",
-        "INVOIC",
-        "pending-adapter"
+        "INVOIC"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9123,7 +9115,7 @@
     {
       "path": "edifact/09-interchange-set/contrl.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9133,8 +9125,7 @@
         "CONTRL",
         "functional-acknowledgment",
         "UCI",
-        "UCM",
-        "pending-adapter"
+        "UCM"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9147,7 +9138,7 @@
     {
       "path": "edifact/09-interchange-set/orders.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "valid",
       "expected_detection": {
         "format": "edifact",
@@ -9155,8 +9146,7 @@
       },
       "features": [
         "ORDERS",
-        "interchange",
-        "pending-adapter"
+        "interchange"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -9168,7 +9158,7 @@
     {
       "path": "edifact/negative/01-syntactic-missing-segment-terminator.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9177,8 +9167,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-terminator",
-        "pending-adapter"
+        "missing-terminator"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9190,7 +9179,7 @@
     {
       "path": "edifact/negative/02-semantic-no-message-in-interchange.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9199,8 +9188,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-message",
-        "pending-adapter"
+        "no-message"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9212,7 +9200,7 @@
     {
       "path": "edifact/negative/03-truncated-mid-segment.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9221,8 +9209,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-segment",
-        "pending-adapter"
+        "mid-segment"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9234,7 +9221,7 @@
     {
       "path": "edifact/negative/04-wrong-format-x12.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9243,8 +9230,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "x12",
-        "pending-adapter"
+        "x12"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9257,7 +9243,7 @@
     {
       "path": "edifact/negative/05-encoding-utf16.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9266,8 +9252,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9279,7 +9264,7 @@
     {
       "path": "edifact/negative/06-semantic-unh-without-unt.edi",
       "format": "edifact",
-      "adapter_key": null,
+      "adapter_key": "edifact",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "edifact",
@@ -9288,8 +9273,7 @@
       "features": [
         "negative",
         "semantic",
-        "unterminated-message",
-        "pending-adapter"
+        "unterminated-message"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

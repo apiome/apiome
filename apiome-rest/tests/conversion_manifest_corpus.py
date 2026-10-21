@@ -59,11 +59,12 @@ VOLATILE = "[volatile]"
 PARITY_ENVELOPE_PATH = Path(__file__).resolve().parent / "fixtures" / "conversion_projection_parity.json"
 
 #: Formats whose entries attach their real payload analysis to the conversion.
-NATIVE_ANALYSIS_FORMATS = ("edix12", "cobolcopybook")
+NATIVE_ANALYSIS_FORMATS = ("edix12", "edifact", "cobolcopybook")
 
 # The representative selection: every distinct construct family the roadmap names, one fixture
 # each, selected by manifest tag (never path). X12: a plain envelope, the multi-group composition,
-# the HIPAA real-world shape, the composite-element fixture. Copybook: ODO, REDEFINES, the
+# the HIPAA real-world shape, the composite-element fixture. EDIFACT: the default-delimiter envelope
+# and the multi-group, multi-message interchange. Copybook: ODO, REDEFINES, the
 # binary/stress layout, the unmodelled clauses, the imperfect overlays. Controls: the minimal
 # JSON Schema and GraphQL fixtures, converting through the generic (no native analysis) path.
 _SELECTORS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
@@ -71,6 +72,8 @@ _SELECTORS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("edix12", ("multi-functional-group",)),
     ("edix12", ("hipaa-5010",)),
     ("edix12", ("composite-elements",)),
+    ("edifact", ("ORDERS", "default-delimiters")),
+    ("edifact", ("multi-message",)),
     ("cobolcopybook", ("occurs",)),
     ("cobolcopybook", ("redefines", "level-88")),
     ("cobolcopybook", ("binary",)),
@@ -87,6 +90,8 @@ SOURCE_VALUE_PROBES: Dict[str, Tuple[str, ...]] = {
     "edi-x12/04-multi-group-po-ack.edi": ("PO-0002", "SENDERID"),
     "edi-x12/06-834-benefit-enrollment.edi": ("SUBSCRIBER-001", "555443333"),
     "edi-x12/07-837-composite-claim.edi": ("CLAIM-001", "SENDERID"),
+    "edifact/01-minimal-orders-d96a.edi": ("PO-0001", "WIDGET-001"),
+    "edifact/04-stress-multi-message-group.edi": ("PO-0002", "INV-10043"),
     "graphql/01-simple-user.graphql": ("type Query {",),
 }
 

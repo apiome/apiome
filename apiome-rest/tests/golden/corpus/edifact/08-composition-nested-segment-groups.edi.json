@@ -1,0 +1,2442 @@
+{
+  "adapter": "edifact",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "edifact_directory": "D:96A",
+      "edifact_envelope": {
+        "association_code": null,
+        "component_separator": ":",
+        "controlling_agency": "UN",
+        "decimal_mark": ".",
+        "element_separator": "+",
+        "group_id": null,
+        "group_reference": null,
+        "interchange_control_reference": "000000008",
+        "message_reference": "8",
+        "recipient_id": "BUYER01",
+        "recipient_qualifier": "14",
+        "release_character": "?",
+        "repetition_separator": null,
+        "segment_terminator": "'",
+        "sender_id": "SUPPLIER1",
+        "sender_qualifier": "14",
+        "service_string_advice": true,
+        "syntax_identifier": "UNOC",
+        "syntax_version": "3"
+      },
+      "edifact_message_type": "INVOIC",
+      "edifact_messages": [
+        {
+          "directory": "D:96A",
+          "message_type": "INVOIC",
+          "reference": "8",
+          "segments": [
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "BGM01",
+                  "repetitions": [
+                    [
+                      "380"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "BGM02",
+                  "repetitions": [
+                    [
+                      "INV-10099"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "BGM03",
+                  "repetitions": [
+                    [
+                      "9"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "BGM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "137",
+                      "20260821",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "PO-0002"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "171",
+                      "20260817",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "SU"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "SUPPLIER1",
+                      "",
+                      "9"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "NAD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "NAD04",
+                  "repetitions": [
+                    [
+                      "Example Supplies BV"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "VA",
+                      "NL123456789B01"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CTA01",
+                  "repetitions": [
+                    [
+                      "IC"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CTA02",
+                  "repetitions": [
+                    [
+                      "",
+                      "A. Seller"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CTA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "COM01",
+                  "repetitions": [
+                    [
+                      "a.seller@example.com",
+                      "EM"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "COM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "COM01",
+                  "repetitions": [
+                    [
+                      "31205550100",
+                      "TE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "COM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "NAD01",
+                  "repetitions": [
+                    [
+                      "BY"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "NAD02",
+                  "repetitions": [
+                    [
+                      "BUYER01",
+                      "",
+                      "9"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "NAD03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "NAD04",
+                  "repetitions": [
+                    [
+                      "Acme Retail BV"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "NAD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "VA",
+                      "NL987654321B01"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CTA01",
+                  "repetitions": [
+                    [
+                      "PD"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "CTA02",
+                  "repetitions": [
+                    [
+                      "",
+                      "A. Buyer"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CTA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "COM01",
+                  "repetitions": [
+                    [
+                      "a.buyer@example.com",
+                      "EM"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "COM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CUX01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "EUR",
+                      "4"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CUX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PAT01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PAT02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "PAT03",
+                  "repetitions": [
+                    [
+                      "5",
+                      "3",
+                      "D",
+                      "30"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PAT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "DTM01",
+                  "repetitions": [
+                    [
+                      "13",
+                      "20260920",
+                      "102"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "DTM"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "WIDGET-001",
+                      "BP"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "8712345001234",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Stainless widget 40mm"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "47",
+                      "480"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "203",
+                      "86400.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PRI01",
+                  "repetitions": [
+                    [
+                      "AAA",
+                      "180.00",
+                      "CA",
+                      "",
+                      "",
+                      "1",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PRI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "RFF01",
+                  "repetitions": [
+                    [
+                      "ON",
+                      "PO-0002",
+                      "1"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "RFF"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TAX01",
+                  "repetitions": [
+                    [
+                      "7"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TAX02",
+                  "repetitions": [
+                    [
+                      "VAT"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TAX03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "TAX04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "TAX05",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "21"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "TAX06",
+                  "repetitions": [
+                    [
+                      "S"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TAX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "124",
+                      "18144.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "ALC01",
+                  "repetitions": [
+                    [
+                      "A"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "ALC02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "ALC03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "ALC04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "ALC05",
+                  "repetitions": [
+                    [
+                      "DI"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "ALC"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PCD01",
+                  "repetitions": [
+                    [
+                      "1",
+                      "2.5"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PCD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "8",
+                      "2160.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "LIN01",
+                  "repetitions": [
+                    [
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "LIN02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "LIN03",
+                  "repetitions": [
+                    [
+                      "GADGET-007",
+                      "BP"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "LIN"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PIA01",
+                  "repetitions": [
+                    [
+                      "1"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "PIA02",
+                  "repetitions": [
+                    [
+                      "8712345005678",
+                      "SA"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PIA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "IMD01",
+                  "repetitions": [
+                    [
+                      "F"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "IMD02",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "IMD03",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "Gadget boxed"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "IMD"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "QTY01",
+                  "repetitions": [
+                    [
+                      "47",
+                      "120"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "QTY"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "203",
+                      "5040.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "PRI01",
+                  "repetitions": [
+                    [
+                      "AAA",
+                      "42.00",
+                      "CA",
+                      "",
+                      "",
+                      "1",
+                      "PCE"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "PRI"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TAX01",
+                  "repetitions": [
+                    [
+                      "7"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TAX02",
+                  "repetitions": [
+                    [
+                      "VAT"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TAX03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "TAX04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "TAX05",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "21"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "TAX06",
+                  "repetitions": [
+                    [
+                      "S"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TAX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "124",
+                      "1058.40"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "UNS01",
+                  "repetitions": [
+                    [
+                      "S"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "UNS"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "CNT01",
+                  "repetitions": [
+                    [
+                      "2",
+                      "2"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "CNT"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "79",
+                      "91440.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "124",
+                      "19202.40"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "128",
+                      "110642.40"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "TAX01",
+                  "repetitions": [
+                    [
+                      "7"
+                    ]
+                  ]
+                },
+                {
+                  "position": "02",
+                  "reference": "TAX02",
+                  "repetitions": [
+                    [
+                      "VAT"
+                    ]
+                  ]
+                },
+                {
+                  "position": "03",
+                  "reference": "TAX03",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "04",
+                  "reference": "TAX04",
+                  "repetitions": [
+                    [
+                      ""
+                    ]
+                  ]
+                },
+                {
+                  "position": "05",
+                  "reference": "TAX05",
+                  "repetitions": [
+                    [
+                      "",
+                      "",
+                      "",
+                      "21"
+                    ]
+                  ]
+                },
+                {
+                  "position": "06",
+                  "reference": "TAX06",
+                  "repetitions": [
+                    [
+                      "S"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "TAX"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "124",
+                      "19202.40"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            },
+            {
+              "elements": [
+                {
+                  "position": "01",
+                  "reference": "MOA01",
+                  "repetitions": [
+                    [
+                      "125",
+                      "91440.00"
+                    ]
+                  ]
+                }
+              ],
+              "tag": "MOA"
+            }
+          ]
+        }
+      ]
+    },
+    "format": "edifact",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EDIFACT INVOIC",
+      "namespace": "EDIFACT-INVOIC"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EDIFACT INVOIC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "a.seller@example.com",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.COM.COM01-1",
+            "name": "COM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EM",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.COM.COM01-2",
+            "name": "COM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.COM",
+        "key_type": null,
+        "kind": "record",
+        "name": "COM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "IC",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.CTA.CTA01",
+            "name": "CTA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "A. Seller",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.CTA.CTA02-2",
+            "name": "CTA02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.CTA",
+        "key_type": null,
+        "kind": "record",
+        "name": "CTA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "137",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.DTM.DTM01-1",
+            "name": "DTM01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "20260821",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.DTM.DTM01-2",
+            "name": "DTM01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "102",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.DTM.DTM01-3",
+            "name": "DTM01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.DTM",
+        "key_type": null,
+        "kind": "record",
+        "name": "DTM",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "F",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.IMD.IMD01",
+            "name": "IMD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Stainless widget 40mm",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.IMD.IMD03-4",
+            "name": "IMD03-4",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.IMD",
+        "key_type": null,
+        "kind": "record",
+        "name": "IMD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.LIN.LIN01",
+            "name": "LIN01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "WIDGET-001",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.LIN.LIN03-1",
+            "name": "LIN03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "BP",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.LIN.LIN03-2",
+            "name": "LIN03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.LIN",
+        "key_type": null,
+        "kind": "record",
+        "name": "LIN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "203",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.MOA.MOA01-1",
+            "name": "MOA01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "86400.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.MOA.MOA01-2",
+            "name": "MOA01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.MOA",
+        "key_type": null,
+        "kind": "record",
+        "name": "MOA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "A",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 24,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.ALC01",
+            "name": "ALC01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "DI",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 25,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.ALC05",
+            "name": "ALC05",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "380",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.BGM01",
+            "name": "BGM01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "INV-10099",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.BGM02",
+            "name": "BGM02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.BGM03",
+            "name": "BGM03",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 29,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CNT01-1",
+            "name": "CNT01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 30,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CNT01-2",
+            "name": "CNT01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 8,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.COM",
+            "name": "COM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.COM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 7,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CTA",
+            "name": "CTA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.CTA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 9,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CUX01-1",
+            "name": "CUX01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "EUR",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 10,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CUX01-2",
+            "name": "CUX01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "4",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 11,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.CUX01-3",
+            "name": "CUX01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.DTM",
+            "name": "DTM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.DTM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 19,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.IMD",
+            "name": "IMD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.IMD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 17,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.LIN",
+            "name": "LIN",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.LIN",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 21,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.MOA",
+            "name": "MOA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.MOA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 6,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.NAD",
+            "name": "NAD",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.NAD",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 12,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PAT01",
+            "name": "PAT01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "5",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 13,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PAT03-1",
+            "name": "PAT03-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "3",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 14,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PAT03-2",
+            "name": "PAT03-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "D",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 15,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PAT03-3",
+            "name": "PAT03-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "30",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 16,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PAT03-4",
+            "name": "PAT03-4",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 26,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PCD01-1",
+            "name": "PCD01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "2.5",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 27,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PCD01-2",
+            "name": "PCD01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 18,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PIA",
+            "name": "PIA",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.PIA",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 22,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.PRI",
+            "name": "PRI",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.PRI",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 20,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.QTY",
+            "name": "QTY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.QTY",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.RFF",
+            "name": "RFF",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.RFF",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 23,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.TAX",
+            "name": "TAX",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "EDIFACT-INVOIC.TAX",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "S",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 28,
+            "key": "EDIFACT-INVOIC.MessageINVOIC.UNS01",
+            "name": "UNS01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.MessageINVOIC",
+        "key_type": null,
+        "kind": "record",
+        "name": "MessageINVOIC",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "SU",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.NAD.NAD01",
+            "name": "NAD01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SUPPLIER1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.NAD.NAD02-1",
+            "name": "NAD02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "9",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.NAD.NAD02-3",
+            "name": "NAD02-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Example Supplies BV",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-INVOIC.NAD.NAD04",
+            "name": "NAD04",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.NAD",
+        "key_type": null,
+        "kind": "record",
+        "name": "NAD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.PIA.PIA01",
+            "name": "PIA01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "8712345001234",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.PIA.PIA02-1",
+            "name": "PIA02-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "SA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.PIA.PIA02-2",
+            "name": "PIA02-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.PIA",
+        "key_type": null,
+        "kind": "record",
+        "name": "PIA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "AAA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.PRI.PRI01-1",
+            "name": "PRI01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "180.00",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.PRI.PRI01-2",
+            "name": "PRI01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "CA",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.PRI.PRI01-3",
+            "name": "PRI01-3",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "1",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-INVOIC.PRI.PRI01-6",
+            "name": "PRI01-6",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PCE",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 5,
+            "key": "EDIFACT-INVOIC.PRI.PRI01-7",
+            "name": "PRI01-7",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.PRI",
+        "key_type": null,
+        "kind": "record",
+        "name": "PRI",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "47",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.QTY.QTY01-1",
+            "name": "QTY01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "480",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.QTY.QTY01-2",
+            "name": "QTY01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.QTY",
+        "key_type": null,
+        "kind": "record",
+        "name": "QTY",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "ON",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.RFF.RFF01-1",
+            "name": "RFF01-1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "PO-0002",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.RFF.RFF01-2",
+            "name": "RFF01-2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.RFF",
+        "key_type": null,
+        "kind": "record",
+        "name": "RFF",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "7",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "EDIFACT-INVOIC.TAX.TAX01",
+            "name": "TAX01",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "VAT",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "EDIFACT-INVOIC.TAX.TAX02",
+            "name": "TAX02",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "21",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "EDIFACT-INVOIC.TAX.TAX05-4",
+            "name": "TAX05-4",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "S",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "EDIFACT-INVOIC.TAX.TAX06",
+            "name": "TAX06",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EDIFACT-INVOIC.TAX",
+        "key_type": null,
+        "kind": "record",
+        "name": "TAX",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "edifact/08-composition-nested-segment-groups.edi",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 13
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "edifact"
+  },
+  "fingerprint": "sha256:60b0c5a5b7838082689203c43e847f27ec034eb3a983a6f81119f68a01951b1c",
+  "lint": {
+    "findings": 78,
+    "grade": "F",
+    "report_fingerprint": "08227833b8d63ab4c4d14ca280cb44145d89458e27f281737839c3b1d08b1ed3",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 65,
+      "warning": 13
+    }
+  },
+  "snapshot_version": 1
+}

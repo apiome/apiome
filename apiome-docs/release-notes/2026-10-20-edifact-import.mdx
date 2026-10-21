@@ -1,0 +1,23 @@
+---
+slug: edifact-import
+title: Import UN/EDIFACT interchanges
+description: The rest-of-world EDI standard joins X12 in the Catalog, with a native analysis.
+authors: [apiome]
+---
+
+Apiome now reads [**UN/EDIFACT**](/bring-in/edifact-import) interchanges (ISO 9735) — ORDERS,
+INVOIC, DESADV and every other message — into the Catalog, beside EDI X12.
+
+{/* truncate */}
+
+- **The delimiters the interchange declares.** A `UNA` segment's service characters are honoured
+  exactly (a comma decimal mark included); without one, the ISO 9735 defaults apply. Release
+  characters and syntax-4 repetitions are read too.
+- **The whole interchange, natively.** The **Format details** tab shows interchange → functional
+  group → message → segment → element, with exact source positions and the five element-presence
+  facts X12 shows.
+- **Declared versus observed.** The control counts and references `UNT`, `UNE` and `UNZ` declare
+  are shown beside what was observed. A self-inconsistent interchange imports with a warning for
+  each disagreement rather than being rejected.
+- **Honest about guides.** Only the syntax is read: no implementation guide (D.96A, D.01B,
+  EANCOM…) is consulted, and the capability panel says so.

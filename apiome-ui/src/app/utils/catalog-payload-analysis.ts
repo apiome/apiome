@@ -254,10 +254,11 @@ export function valueVisibilityStatement(visibility: string): string {
 
 /** Human labels for the node kinds the shipped analyzers emit. Unknown kinds render verbatim. */
 const KIND_LABEL: Record<string, string> = {
-  // X12 (edix12_analysis.py)
+  // X12 (edix12_analysis.py) and UN/EDIFACT (edifact_analysis.py)
   interchange: 'Interchange',
   functional_group: 'Functional group',
   transaction_set: 'Transaction set',
+  message: 'Message',
   segment: 'Segment',
   element: 'Element',
   composite: 'Composite',

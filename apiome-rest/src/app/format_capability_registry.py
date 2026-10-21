@@ -67,6 +67,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .edifact_analysis import EDIFACT_IMPLEMENTATION_GUIDE_STATEMENT
 from .format_version_coverage import (
     UNDECLARED_VERSION_COVERAGE,
     FormatVersion,
@@ -141,11 +142,11 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "14"
+REGISTRY_VERSION = "15"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
-REVIEW_DATE = "2026-08-22"
+REVIEW_DATE = "2026-10-20"
 
 #: Accepted shape of a format key. The registry resolves an *arbitrary caller-supplied* string
 #: (a stored ``source_format`` whose adapter may have been retired), so the key is constrained
@@ -950,6 +951,78 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "No 4010/5010 implementation-guide conformance is evaluated — a structurally valid "
             "interchange is not claimed to be a conformant one, and an ST03 implementation "
             "convention reference is recorded as the sender's claim rather than as a checked fact.",
+        ],
+    ),
+    # FMT-6.1 (#5445): X12's rest-of-world twin, seeded for the same reason X12 is — the gap
+    # between what the analysis holds and what the canonical model holds is the whole story, and
+    # the acceptance criterion is that the panel says no implementation guide was consulted.
+    "edifact": _Seed(
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "Interchange → functional group (when the interchange uses them) → message → segment "
+            "→ element, with composite components under their element position and syntax-4 "
+            "repetitions under the element they repeat."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.BYTE_OFFSETS,
+            note=(
+                "The interchange text is read directly on its own service characters — the ones a "
+                "`UNA` declares, or the ISO 9735 defaults when it is absent — so every segment, "
+                "group and message carries the exact offset, length and line of the bytes it was "
+                "read from, alongside its envelope path (``UNB/UNG[0]/UNH[1]/NAD[3]``). There is "
+                "no second reading to disagree with, so every record carries positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Element values are observed, so the stored record carries whatever the "
+                "value-visibility policy in force allows — nothing more. An EDIFACT element is "
+                "business data (party ids, prices, addresses); the default withholds it and keeps "
+                "only presence and length. The `UNB` recipient password is never lifted out of "
+                "its element."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "edifact.control_references",
+                "edifact.delimiters",
+                "edifact.empty_elements",
+                "edifact.envelope_control_totals",
+                "edifact.functional_group",
+                "edifact.interchange_envelope",
+                "edifact.release_character",
+                "edifact.repeating_elements",
+                "edifact.segment_ordinals",
+                "edifact.segment_repeat_counts",
+                "edifact.service_string_advice",
+            ],
+            note=(
+                "The canonical model describes one schema, so normalization reads the first "
+                "functional group's first message (or the first message, when the interchange "
+                "carries no groups) and drops the envelope around it. Every group and message the "
+                "interchange carried is in the analysis, and only there. An analysis of an "
+                "interchange carrying more than one says so explicitly, naming the message the "
+                "conversion was derived from."
+            ),
+        ),
+        notes=[
+            EDIFACT_IMPLEMENTATION_GUIDE_STATEMENT,
+            "Segment groups are described as the flat segments they are, not as the nesting a "
+            "directory would give them, and code values (qualifiers, units, party roles) are "
+            "recorded as written rather than looked up.",
+            "Control counts and control references declared by the UNT, UNE and UNZ trailers are "
+            "recorded beside what was actually observed, and every disagreement is stated as a "
+            "warning, so an interchange that disagrees with itself can be seen to — it is read, "
+            "not rejected.",
+            "An element position the source wrote and left empty is recorded as present with a "
+            "zero length; a position the source never wrote is not recorded at all. The decimal "
+            "mark a UNA declares is recorded, and values are never re-read as numbers.",
+            "One batch interchange is read per document. Interactive EDIFACT (UIB/UIH), packages "
+            "(UNO/UNP) and files carrying several interchanges are refused rather than read in "
+            "part.",
         ],
     ),
     "relaxng": _Seed(
