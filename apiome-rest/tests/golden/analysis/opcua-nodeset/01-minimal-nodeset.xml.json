@@ -1,0 +1,402 @@
+{
+  "adapter": "opcua-nodeset",
+  "corpus_path": "opcua-nodeset/01-minimal-nodeset.xml",
+  "document": {
+    "analyzer": {
+      "key": "opcua-nodeset",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "opcua.address_space_instances",
+        "opcua.aliases",
+        "opcua.data_type_definitions",
+        "opcua.instance_declarations",
+        "opcua.models",
+        "opcua.namespaces",
+        "opcua.node_classes",
+        "opcua.references",
+        "opcua.source_locations"
+      ],
+      "unsupported": [
+        "opcua.access_levels",
+        "opcua.extensions",
+        "opcua.role_permissions",
+        "opcua.variable_values"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "alias": 4,
+        "group": 5,
+        "namespace": 1,
+        "node": 2,
+        "nodeset": 1,
+        "reference": 5
+      },
+      "maxDepth": 4,
+      "nodeCount": 18,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "opcua-nodeset",
+    "sourceHash": "sha256:d00bcc59a6abe5b5ecc8f8055436b5a5b088dbfa2dd332ebf42b3f0a2ae50308",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "nodeCount": 2
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "index": 1,
+                  "uri": "http://example.com/UA/Beacon/"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Beacon/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "namespaces",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 0
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "models",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 4
+            },
+            "children": [
+              {
+                "attributes": {
+                  "nodeId": "i=1"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Boolean",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=12"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "String",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=45"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasSubtype",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=47"
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasComponent",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "aliases",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "ObjectType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:BeaconType",
+                  "namespaceUri": "http://example.com/UA/Beacon/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1001",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=58"
+                    },
+                    "children": [],
+                    "id": "0.3.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6001",
+                      "targetBrowseName": "1:Identifier"
+                    },
+                    "children": [],
+                    "id": "0.3.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "node",
+                "label": "BeaconType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 14,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1001"
+                },
+                "name": "BeaconType",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "objectTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "Variable"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:Identifier",
+                  "dataType": "i=12",
+                  "namespaceUri": "http://example.com/UA/Beacon/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6001",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1001",
+                      "targetBrowseName": "1:BeaconType"
+                    },
+                    "children": [],
+                    "id": "0.4.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.4.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.4.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.0",
+                "kind": "node",
+                "label": "Identifier",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 23,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6001"
+                },
+                "name": "Identifier",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.4",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "variables",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "nodeset",
+        "label": null,
+        "location": null,
+        "name": "opcua-nodeset/01-minimal-nodeset.xml",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

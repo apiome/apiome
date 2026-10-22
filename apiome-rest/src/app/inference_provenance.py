@@ -119,6 +119,7 @@ INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "cue": "Anonymous types are synthesized.",
     "pkl": "Anonymous types are synthesized.",
     "dhall": "Anonymous types are synthesized.",
+    "opcua-nodeset": "The request and response records a method's arguments become are synthesized.",
 }
 
 

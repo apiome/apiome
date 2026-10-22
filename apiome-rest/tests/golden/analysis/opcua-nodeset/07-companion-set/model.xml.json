@@ -1,0 +1,941 @@
+{
+  "adapter": "opcua-nodeset",
+  "corpus_path": "opcua-nodeset/07-companion-set/model.xml",
+  "document": {
+    "analyzer": {
+      "key": "opcua-nodeset",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "opcua.address_space_instances",
+        "opcua.aliases",
+        "opcua.data_type_definitions",
+        "opcua.instance_declarations",
+        "opcua.models",
+        "opcua.namespaces",
+        "opcua.node_classes",
+        "opcua.references",
+        "opcua.source_locations"
+      ],
+      "unsupported": [
+        "opcua.access_levels",
+        "opcua.extensions",
+        "opcua.role_permissions",
+        "opcua.variable_values"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "alias": 6,
+        "field": 4,
+        "group": 6,
+        "model": 2,
+        "namespace": 2,
+        "node": 6,
+        "nodeset": 1,
+        "reference": 15,
+        "requiredModel": 3
+      },
+      "maxDepth": 4,
+      "nodeCount": 45,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "opcua-nodeset",
+    "sourceHash": "sha256:0609a1204152e251b7db0160fda6a32b1ea623479d75041329476034ab1e908c",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "modelUris": [
+            "http://example.com/UA/Vendor/",
+            "http://example.com/UA/Companion/"
+          ],
+          "nodeCount": 6
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 2
+            },
+            "children": [
+              {
+                "attributes": {
+                  "index": 1,
+                  "uri": "http://example.com/UA/Vendor/"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Vendor/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "index": 2,
+                  "uri": "http://example.com/UA/Companion/"
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Companion/",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "namespaces",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 2
+            },
+            "children": [
+              {
+                "attributes": {
+                  "modelUri": "http://example.com/UA/Vendor/",
+                  "publicationDate": "2026-08-19T00:00:00Z",
+                  "version": "1.0.0"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "modelUri": "http://opcfoundation.org/UA/",
+                      "version": "1.05.03"
+                    },
+                    "children": [],
+                    "id": "0.1.0.0",
+                    "kind": "requiredModel",
+                    "label": null,
+                    "location": null,
+                    "name": "http://opcfoundation.org/UA/",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "modelUri": "http://example.com/UA/Companion/",
+                      "publicationDate": "2026-06-01T00:00:00Z",
+                      "version": "2.0.0"
+                    },
+                    "children": [],
+                    "id": "0.1.0.1",
+                    "kind": "requiredModel",
+                    "label": null,
+                    "location": null,
+                    "name": "http://example.com/UA/Companion/",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.1.0",
+                "kind": "model",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Vendor/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "modelUri": "http://example.com/UA/Companion/",
+                  "publicationDate": "2026-06-01T00:00:00Z",
+                  "version": "2.0.0"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "modelUri": "http://opcfoundation.org/UA/",
+                      "version": "1.05.03"
+                    },
+                    "children": [],
+                    "id": "0.1.1.0",
+                    "kind": "requiredModel",
+                    "label": null,
+                    "location": null,
+                    "name": "http://opcfoundation.org/UA/",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.1.1",
+                "kind": "model",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Companion/",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "models",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 6
+            },
+            "children": [
+              {
+                "attributes": {
+                  "nodeId": "i=11"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Double",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=12"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "String",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=45"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasSubtype",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=47"
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasComponent",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=40"
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasTypeDefinition",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=37"
+                },
+                "children": [],
+                "id": "0.2.5",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasModellingRule",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "aliases",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 2,
+              "nodeClass": "ObjectType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:VendorFillerType",
+                  "namespaceUri": "http://example.com/UA/Vendor/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1200",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "ns=2;i=1100",
+                      "targetBrowseName": "1:MachineBaseType"
+                    },
+                    "children": [],
+                    "id": "0.3.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6500",
+                      "targetBrowseName": "1:CurrentRecipeState"
+                    },
+                    "children": [],
+                    "id": "0.3.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6501",
+                      "targetBrowseName": "1:NozzlePressure"
+                    },
+                    "children": [],
+                    "id": "0.3.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "node",
+                "label": "VendorFillerType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 30,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1200"
+                },
+                "name": "VendorFillerType",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:MachineBaseType",
+                  "isAbstract": true,
+                  "namespaceUri": "http://example.com/UA/Companion/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=2;i=1100",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=58"
+                    },
+                    "children": [],
+                    "id": "0.3.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=2;i=6100",
+                      "targetBrowseName": "1:SerialNumber"
+                    },
+                    "children": [],
+                    "id": "0.3.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.1",
+                "kind": "node",
+                "label": "MachineBaseType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 37,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=2;i=1100"
+                },
+                "name": "MachineBaseType",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "objectTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "DataType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:RecipeState",
+                  "namespaceUri": "http://example.com/UA/Companion/",
+                  "nodeClass": "DataType",
+                  "nodeId": "ns=2;i=3100",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "value": 0,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Idle",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 1,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Loading",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 2,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Running",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 3,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Complete",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=29"
+                    },
+                    "children": [],
+                    "id": "0.4.0.4",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.0",
+                "kind": "node",
+                "label": "RecipeState",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 24,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=2;i=3100"
+                },
+                "name": "RecipeState",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.4",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "dataTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 3,
+              "nodeClass": "Variable"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:CurrentRecipeState",
+                  "dataType": "ns=2;i=3100",
+                  "namespaceUri": "http://example.com/UA/Vendor/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6500",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1200",
+                      "targetBrowseName": "1:VendorFillerType"
+                    },
+                    "children": [],
+                    "id": "0.5.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.5.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.5.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.0",
+                "kind": "node",
+                "label": "CurrentRecipeState",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 40,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6500"
+                },
+                "name": "CurrentRecipeState",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:NozzlePressure",
+                  "dataType": "i=11",
+                  "namespaceUri": "http://example.com/UA/Vendor/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6501",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1200",
+                      "targetBrowseName": "1:VendorFillerType"
+                    },
+                    "children": [],
+                    "id": "0.5.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=2368"
+                    },
+                    "children": [],
+                    "id": "0.5.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.5.1.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.1",
+                "kind": "node",
+                "label": "NozzlePressure",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 50,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6501"
+                },
+                "name": "NozzlePressure",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:SerialNumber",
+                  "dataType": "i=12",
+                  "namespaceUri": "http://example.com/UA/Companion/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=2;i=6100",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=2;i=1100",
+                      "targetBrowseName": "1:MachineBaseType"
+                    },
+                    "children": [],
+                    "id": "0.5.2.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.5.2.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.5.2.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.2",
+                "kind": "node",
+                "label": "SerialNumber",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 45,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=2;i=6100"
+                },
+                "name": "SerialNumber",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.5",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "variables",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "nodeset",
+        "label": null,
+        "location": null,
+        "name": "opcua-nodeset/07-companion-set/model.xml",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

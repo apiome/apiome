@@ -156,6 +156,8 @@ from .inference_provenance import (
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
 from .odcs_normalizer import ODCS_EXTRAS_KEY
+from .opcua_nodeset_normalizer import OPCUA_EXTRAS_KEY
+from .opcua_nodeset_normalizer import PARTIAL_LIMITS as OPCUA_PARTIAL_LIMITS
 from .pkl_parser import PARTIAL_LIMITS as PKL_PARTIAL_LIMITS
 from .pkl_parser import PKL_FORMAT
 from .projection_taxonomy import ProjectionReason, ProjectionStatus
@@ -263,6 +265,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-8.4: the Pydantic projection record (root module, modules, exports, declared
         # limits). Our own bookkeeping about the read.
         PYDANTIC_EXTRAS_KEY,
+        # FMT-9.1: the NodeSet projection record (namespaces, models, aliases, reference types,
+        # node counts, declared limits). Our own bookkeeping about the read — a type's own
+        # references and modelling rules ride under their `opcua_*` keys and read as partial.
+        OPCUA_EXTRAS_KEY,
         # FMT-8.5: the CUE / Pkl / Dhall projection records (root file, files, exports, validated
         # instances, declared limits) sit under the format's own key. Our own bookkeeping.
         CUE_FORMAT,
@@ -1212,6 +1218,7 @@ def _document_scope_rows(
     ledger.extend(_zod_capability_rows(api))
     ledger.extend(_trpc_capability_rows(api))
     ledger.extend(_pydantic_capability_rows(api))
+    ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
@@ -2013,6 +2020,24 @@ def _trpc_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     """
     return _graded_limit_rows(
         api, format_key="trpc", extras_key=TRPC_EXTRAS_KEY, partial=TRPC_PARTIAL_LIMITS
+    )
+
+
+def _opcua_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-9.1 OPC UA NodeSet2 declared limits as document-scoped ledger rows.
+
+    Unions, option sets, nested arrays, base structures, data types without a definition and
+    unresolved references keep their type or field, so they are ``partially-mapped``; the
+    address-space instances the model does not promote are ``not-parsed-by-adapter``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="opcua-nodeset", extras_key=OPCUA_EXTRAS_KEY, partial=OPCUA_PARTIAL_LIMITS
     )
 
 

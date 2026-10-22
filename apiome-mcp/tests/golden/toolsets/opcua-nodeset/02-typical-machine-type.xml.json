@@ -1,0 +1,22 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Start the machine with a named programme.",
+      "inputSchema": {
+        "properties": {
+          "ProgrammeName": {
+            "description": "Programme to run.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ProgrammeName"
+        ],
+        "type": "object"
+      },
+      "name": "Start",
+      "operation": "MachineType.Start"
+    }
+  ]
+}

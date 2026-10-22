@@ -66,6 +66,7 @@ NATIVE_ANALYSIS_FORMATS = (
     "dicom",
     "ncpdp",
     "cobolcopybook",
+    "opcua-nodeset",
 )
 
 #: Generic-extractor control formats, limited to the low rungs: the controls exist to prove the

@@ -1,0 +1,48 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "AbortBatch",
+      "operation": "BatchMachineType.AbortBatch"
+    },
+    {
+      "description": "Returns BatchMachineType_StartBatch_Response.",
+      "inputSchema": {
+        "properties": {
+          "Quantity": {
+            "format": "uint32",
+            "type": "integer"
+          },
+          "Recipe": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Quantity",
+          "Recipe"
+        ],
+        "type": "object"
+      },
+      "name": "StartBatch",
+      "operation": "BatchMachineType.StartBatch",
+      "output": {
+        "schema": {
+          "properties": {
+            "BatchId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "BatchId"
+          ],
+          "type": "object"
+        },
+        "shape": "BatchMachineType_StartBatch_Response"
+      }
+    }
+  ]
+}

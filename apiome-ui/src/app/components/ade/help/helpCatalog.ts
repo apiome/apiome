@@ -711,6 +711,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['provenance', 'badge', 'evidence', 'postman', 'gateway', 'lint', 'style guide', 'publish'],
   },
   {
+    id: 'opcua-nodeset-import',
+    title: 'Import an OPC UA NodeSet2 model',
+    summary: "Catalog an OPC UA information model's types, methods and references.",
+    page: 'apiome-docs/docs/bring-in/opcua-nodeset-import.md',
+    section: 'reference',
+    keywords: ['industrial', 'automation', 'companion specification', 'address space', 'iot', 'xml', 'namespace'],
+  },
+  {
     id: 'trpc-router-import',
     title: 'Import a tRPC router',
     summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',

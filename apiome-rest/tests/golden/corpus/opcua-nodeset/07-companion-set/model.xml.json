@@ -1,0 +1,354 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Double": "i=11",
+          "HasComponent": "i=47",
+          "HasModellingRule": "i=37",
+          "HasSubtype": "i=45",
+          "HasTypeDefinition": "i=40",
+          "String": "i=12"
+        },
+        "capability_limits": [],
+        "instance_count": 0,
+        "models": [
+          {
+            "model_uri": "http://example.com/UA/Vendor/",
+            "publication_date": "2026-08-19T00:00:00Z",
+            "required_models": [
+              {
+                "model_uri": "http://opcfoundation.org/UA/",
+                "publication_date": null,
+                "version": "1.05.03"
+              },
+              {
+                "model_uri": "http://example.com/UA/Companion/",
+                "publication_date": "2026-06-01T00:00:00Z",
+                "version": "2.0.0"
+              }
+            ],
+            "version": "1.0.0"
+          },
+          {
+            "model_uri": "http://example.com/UA/Companion/",
+            "publication_date": "2026-06-01T00:00:00Z",
+            "required_models": [
+              {
+                "model_uri": "http://opcfoundation.org/UA/",
+                "publication_date": null,
+                "version": "1.05.03"
+              }
+            ],
+            "version": "2.0.0"
+          }
+        ],
+        "namespace_uris": [
+          "http://example.com/UA/Vendor/",
+          "http://example.com/UA/Companion/"
+        ],
+        "node_counts": {
+          "UADataType": 1,
+          "UAObjectType": 2,
+          "UAVariable": 3
+        },
+        "reference_types": []
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Vendor",
+      "namespace": "http://example.com/UA/Vendor/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Vendor",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=2;i=1100",
+          "opcua_abstract": true,
+          "opcua_browse_name": "1:MachineBaseType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=58",
+              "targetName": "BaseObjectType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=2;i=6100",
+              "targetName": "SerialNumber"
+            }
+          ],
+          "opcua_supertype": "BaseObjectType",
+          "source_file": "companion.xml",
+          "source_location": "37:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=2;i=6100",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "45:1"
+            },
+            "field_number": null,
+            "key": "MachineBaseType.SerialNumber",
+            "name": "SerialNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MachineBaseType",
+        "key_type": null,
+        "kind": "record",
+        "name": "MachineBaseType",
+        "namespace": "http://example.com/UA/Companion/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RecipeState.Idle",
+            "name": "Idle",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RecipeState.Loading",
+            "name": "Loading",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RecipeState.Running",
+            "name": "Running",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RecipeState.Complete",
+            "name": "Complete",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "native_id": "ns=2;i=3100",
+          "opcua_browse_name": "1:RecipeState",
+          "opcua_node_class": "DataType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=29",
+              "targetName": "Enumeration"
+            }
+          ],
+          "opcua_supertype": "Enumeration",
+          "source_file": "companion.xml",
+          "source_location": "24:1"
+        },
+        "fields": [],
+        "key": "RecipeState",
+        "key_type": null,
+        "kind": "enum",
+        "name": "RecipeState",
+        "namespace": "http://example.com/UA/Companion/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1200",
+          "opcua_browse_name": "1:VendorFillerType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "ns=2;i=1100",
+              "targetName": "MachineBaseType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6500",
+              "targetName": "CurrentRecipeState"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6501",
+              "targetName": "NozzlePressure"
+            }
+          ],
+          "opcua_supertype": "MachineBaseType",
+          "source_file": "model.xml",
+          "source_location": "30:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6500",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "40:1"
+            },
+            "field_number": null,
+            "key": "VendorFillerType.CurrentRecipeState",
+            "name": "CurrentRecipeState",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RecipeState",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6501",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "AnalogItemType",
+              "source_location": "50:1"
+            },
+            "field_number": null,
+            "key": "VendorFillerType.NozzlePressure",
+            "name": "NozzlePressure",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=2;i=6100",
+              "opcua_inherited_from": "MachineBaseType",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "45:1"
+            },
+            "field_number": null,
+            "key": "VendorFillerType.SerialNumber",
+            "name": "SerialNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "VendorFillerType",
+        "key_type": null,
+        "kind": "record",
+        "name": "VendorFillerType",
+        "namespace": "http://example.com/UA/Vendor/",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.0.0"
+  },
+  "corpus_path": "opcua-nodeset/07-companion-set/model.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:7028cc7359fffffc3e881ad7948d6c5c3e05eca452376454ac76181b4e798677",
+  "lint": {
+    "findings": 8,
+    "grade": "B",
+    "report_fingerprint": "dff8c600c740498cac159696d7f8925c4fcfd345348c18e2575ec3aefd49bdf8",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 5,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

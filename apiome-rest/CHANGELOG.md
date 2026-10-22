@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.429.0] - 2026-10-22
+
+### Added
+- **OPC UA NodeSet2 import (#5468, FMT-9.1)**: an `opcua-nodeset` import source (aliases `nodeset2`, `opcua`; file,
+  URL, paste and fileset) reads an OPC UA information model through the hardened XML intake (`app.secure_xml`).
+  - `UAObjectType` → a record of its instance declarations (modelling rules → required / optional / list fields; a
+    supertype in the file contributes its fields), `UAVariableType` → an alias of its data type, `UADataType` →
+    record (structure), enum (enumeration, OptionSet bits) or alias (a subtype of a scalar), unions as records of
+    optional fields; `ValueRank` / `ArrayDimensions` → lists and `maxItems`; the ns=0 built-in data types → scalars
+    with a `format`. Well-known ns=0 names resolve without an alias.
+  - `UAMethod` → an RPC `request_response` operation per owning type; `InputArguments` / `OutputArguments` become
+    request / response records stamped `synthesized` (FMT-8.6).
+  - Each type keeps its references (`extras.opcua_references`); namespace URIs, models (URI, version, publication date,
+    required models), aliases and reference types are recorded in `extras.opcua`; the first model URI is the identity
+    namespace and its version the API version.
+  - Address-space instances (`UAObject` / `UAVariable` / `UAView` that are not a type's declarations) are never
+    promoted; a native analyzer (`opcua-nodeset@1.0.0`) describes the whole nodeset — namespaces, models, aliases,
+    one group per node class, each node's role (type / declaration / signature / instance), definition fields and
+    references — with references at the bottom so an over-budget model keeps every node and reports
+    `partial` / `bounds_exceeded`.
+  - Filesets merge a model with the companion models it requires, re-indexing each member's namespaces by URI. A
+    reference to a missing node in the nodeset's own namespace is refused (`INPUT_REFERENCE_UNRESOLVED`); one into
+    another model's namespace is a declared limit.
+  - Capability registry v30, version coverage, preview-ledger rows (`_opcua_capability_rows`), the corpus entries
+    (previously `pending-adapter`) wired to the adapter with canonical, analysis and MCP toolset goldens, and the
+    round-trip matrix row.
+
+### Changed
+- OpenAPI document version 1.293.0 (no schema change).
+
 ## [1.428.0] - 2026-10-22
 
 ### Added
