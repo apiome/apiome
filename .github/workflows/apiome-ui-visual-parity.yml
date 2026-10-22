@@ -106,7 +106,7 @@ jobs:
             exit 0
           fi
           if ! sudo -n true 2>/dev/null; then
-            echo "::error::Chromium cannot start on $(hostname): system libraries are missing and the runner has no passwordless sudo. Run once on that host: cd apiome-ui && yarn playwright install-deps chromium"
+            echo "::error::Chromium cannot start on $(hostname): system libraries are missing and the runner has no passwordless sudo. Run once on that host: sudo npx -y playwright@1.64.1 install-deps chromium"
             exit 1
           fi
           yarn playwright install-deps chromium
