@@ -10,6 +10,7 @@
  */
 
 import { ownedEntityHref } from '@lib/owners';
+import { PLATFORM_NAV_SDK_SETTINGS_HREF } from '@lib/platform-nav';
 
 /** Every node kind an edge end can be (apiome-db V288, V298). */
 export const GRAPH_NODE_KINDS = [
@@ -469,7 +470,8 @@ export function evidenceItem(
         key: String(row.id),
         title: `${text(row.ecosystem) ?? 'SDK'} · ${text(row.delivery_mode) ?? ''}`.trim(),
         detail: null,
-        href: '/ade/dashboard/sdk-settings',
+        // SDK settings is Export studio's SDK & branding tab since HIVE-12.2.
+        href: PLATFORM_NAV_SDK_SETTINGS_HREF,
       };
     case 'agent_toolset_tools':
       return {

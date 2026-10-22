@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Braces, Globe, Package, Scale, Tag } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
@@ -43,7 +43,10 @@ import {
 } from './sdkSettingsModel';
 
 /**
- * SDK settings — `/ade/dashboard/sdk-settings` (SDK-3.4, #4494).
+ * SDK settings — the **SDK & branding** tab of Export studio (SDK-3.4, #4494; re-homed by
+ * HIVE-12.2, #5609). It was `/ade/dashboard/sdk-settings` with a rail row of its own; that route
+ * now redirects to `/ade/dashboard/export/studio?tab=sdk`, which mounts this component under
+ * the Export studio header and its tab strip.
  *
  * ### What this page owns
  *
@@ -127,7 +130,19 @@ const FIELDS: {
 /** The substitution tokens the API accepts, shown once above the form. */
 const TOKENS = ['{tenant}', '{project}', '{version}', '{year}'];
 
-export default function SdkSettingsClient() {
+/** Props for {@link SdkSettingsClient}. */
+export interface SdkSettingsClientProps {
+  /** The Export studio tab strip, drawn under the header (HIVE-12.2). */
+  tabs?: ReactNode;
+}
+
+/**
+ * Render the SDK & branding tab.
+ *
+ * @param props See {@link SdkSettingsClientProps}.
+ * @returns The screen, under the Export studio header.
+ */
+export default function SdkSettingsClient({ tabs }: SdkSettingsClientProps = {}) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [permissions, setPermissions] = useState<MyPermissions | null>(null);
   const [scopeRef, setScopeRef] = useState<string>(WORKSPACE);
@@ -259,10 +274,11 @@ export default function SdkSettingsClient() {
         breadcrumb={[
           { label: 'Home', href: '/ade/dashboard' },
           { label: 'Ship' },
-          { label: 'SDK settings' },
+          { label: 'Export studio' },
         ]}
-        title="SDK settings"
+        title="Export studio"
         description="How generated packages are named and branded, for this workspace and per project."
+        tabs={tabs}
       />
       <PageBody>
         {readOnly && permissions !== null ? (

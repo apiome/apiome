@@ -1,5 +1,6 @@
 import {
   PLATFORM_USER_MENU_ITEMS,
+  getPlatformOffRailItems,
   platformNavGatedReason,
   type ResolvedPlatformNavGroup,
 } from '@lib/platform-nav';
@@ -181,10 +182,12 @@ function keywordsFor(label: string, meta?: string): string[] {
 /**
  * **Jump to** — every destination the session can reach.
  *
- * The rail's groups first, in rail order, then the account destinations the rail keeps in
+ * The rail's groups first, in rail order, then the destinations that live off the rail
+ * (`PLATFORM_OFF_RAIL_ITEMS`, HIVE-12.2 — Tenants, SDK settings, Data browser, Migrations,
+ * each under the section it belongs with), then the account destinations the rail keeps in
  * its user menu (`PLATFORM_USER_MENU_ITEMS`): the palette is the one surface where those
- * two lists are the same kind of thing, because a reader typing "profile" does not know
- * which menu it lives in.
+ * lists are the same kind of thing, because a reader typing "profile" does not know which
+ * menu it lives in.
  *
  * @param groups Nav groups from `getPlatformNavGroups()`, gating already resolved.
  * @param currentTenantId The active workspace, for gating the account destinations.
@@ -209,6 +212,22 @@ export function buildJumpCommands(
     }));
   });
 
+  // A host that injects its own groups may already list one of these; never list it twice.
+  const listed = new Set(fromRail.map((command) => command.id));
+  const offRail = getPlatformOffRailItems({ currentTenantId })
+    .filter((item) => !listed.has(`jump-${item.id}`))
+    .map<PaletteCommand>((item) => ({
+      id: `jump-${item.id}`,
+      group: 'jump',
+      label: item.label,
+      meta: item.disabled ? item.disabledReason : item.section,
+      icon: item.icon,
+      href: item.href,
+      disabled: item.disabled,
+      disabledReason: item.disabledReason,
+      keywords: keywordsFor(item.label, item.section),
+    }));
+
   const fromUserMenu = PLATFORM_USER_MENU_ITEMS.map<PaletteCommand>((item) => {
     const disabled = Boolean(item.requiresTenant) && !currentTenantId;
     return {
@@ -224,7 +243,7 @@ export function buildJumpCommands(
     };
   });
 
-  return [...fromRail, ...fromUserMenu];
+  return [...fromRail, ...offRail, ...fromUserMenu];
 }
 
 /**

@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronsUpDown, Plus, Shield } from 'lucide-react';
+import { Building2, Check, ChevronsUpDown, Plus, Shield } from 'lucide-react';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Input } from '@/app/components/ui/Input';
 import { Skeleton } from '@/app/components/ui/Skeleton';
@@ -22,6 +23,7 @@ import {
   DEFAULT_PLAN_NAME,
   type TenantMembershipRow,
 } from '@lib/auth/tenant-membership-context-mapping';
+import { findPlatformNavItem } from '@lib/platform-nav';
 import { cn } from '@lib/utils';
 import { RAIL_ITEM_HOVER_CLASS, RailTooltip } from './railChrome';
 import {
@@ -89,6 +91,12 @@ export interface WorkspaceSwitcherProps {
 
 /** Copy for a signed-in user who has not joined or created a workspace yet. */
 const NO_WORKSPACE = 'No workspace';
+
+/** The switcher's last row: the Tenants page, which left the rail (HIVE-12.2). */
+const MANAGE_WORKSPACES_LABEL = 'Manage workspaces…';
+
+/** Where {@link MANAGE_WORKSPACES_LABEL} goes — read from the navigation model's `tenants` entry. */
+const MANAGE_WORKSPACES_HREF = findPlatformNavItem('tenants')?.href ?? '/ade/dashboard/tenants';
 
 /** What the trigger promises, for the reader who cannot see the chevron. */
 const TRIGGER_ACTION = 'Switch workspace';
@@ -333,7 +341,9 @@ export default function WorkspaceSwitcher({
    * and a filter matching nothing would produce exactly that — so the menu element is
    * rendered only when at least one row or the create entry will be.
    */
-  const hasMenuItems = filtered.length > 0 || Boolean(createGate);
+  // Manage workspaces… is always the last row (HIVE-12.2), so the menu always has an item.
+  /** Roving index of the Manage workspaces… row: after the workspaces and the create entry. */
+  const manageIndex = filtered.length + (createGate ? 1 : 0);
 
   /**
    * Make a workspace the active one: session, cookie, then a re-render of the page.
@@ -509,127 +519,139 @@ export default function WorkspaceSwitcher({
             </p>
           )}
 
-          {hasMenuItems && (
-            <>
-              {/* Above the menu rather than inside it: the heading repeats the menu's own
-                  accessible name, and a paragraph is not a permitted child of `role="menu"`. */}
+          <>
+            {/* Above the menu rather than inside it: the heading repeats the menu's own
+                accessible name, and a paragraph is not a permitted child of `role="menu"`. */}
+            {filtered.length > 0 && (
+              <p className={cn(RAIL_MENU_LABEL_CLASS, 'shrink-0')} aria-hidden>
+                Workspaces
+              </p>
+            )}
+            <div
+              ref={menuRef}
+              role="menu"
+              aria-label="Your workspaces"
+              onKeyDown={onMenuKeyDown}
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            >
               {filtered.length > 0 && (
-                <p className={cn(RAIL_MENU_LABEL_CLASS, 'shrink-0')} aria-hidden>
-                  Workspaces
-                </p>
+                <div role="none" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {filtered.map((row, index) => {
+                    const isCurrent = row.id === currentTenantId;
+                    const isSuspended = row.status === 'suspended';
+                    return (
+                      <button
+                        key={row.id}
+                        type="button"
+                        // A single-choice list: exactly one workspace is the current one,
+                        // and `aria-checked` is what says so to a reader who cannot see
+                        // the tick. `menuitemradio` is a permitted child of `role="menu"`.
+                        role="menuitemradio"
+                        aria-checked={isCurrent}
+                        // `aria-disabled`, never `disabled`: a suspended membership has to
+                        // stay reachable, or the reader who needs the explanation is the
+                        // one who can never focus the row that carries it.
+                        aria-disabled={isSuspended || undefined}
+                        title={isSuspended ? SUSPENDED_TITLE : undefined}
+                        tabIndex={itemTabIndex(index)}
+                        onFocus={() => onItemFocus(index)}
+                        onClick={() => void handleSelect(row)}
+                        data-testid={`workspace-option-${row.id}`}
+                        className={cn(
+                          RAIL_MENU_ITEM_CLASS,
+                          isSuspended && RAIL_MENU_ITEM_DISABLED_CLASS,
+                          isCurrent && 'font-semibold',
+                          switching && !isCurrent && 'opacity-50'
+                        )}
+                      >
+                        <Avatar
+                          size="xs"
+                          shape="hex"
+                          seed={row.id}
+                          name={row.name}
+                          className="shrink-0"
+                        />
+                        <span className="min-w-0 flex-1 truncate">{row.name}</span>
+                        {isSuspended && (
+                          <span
+                            className={cn(
+                              'inline-flex shrink-0 items-center rounded-xs px-1.5 py-0.5',
+                              'text-2xs font-semibold uppercase tracking-[var(--track-caps)]',
+                              STATUS_TONE_SOFT_CLASS[statusTone('suspended')]
+                            )}
+                          >
+                            Suspended
+                          </span>
+                        )}
+                        <WorkspaceRoleBadge
+                          role={row.role}
+                          isLegacyAdmin={adminTenantIds.has(row.id)}
+                        />
+                        <WorkspaceLicenseChip
+                          name={row.licenseName}
+                          type={row.licenseType}
+                          role={row.role}
+                        />
+                        {isCurrent && (
+                          <Check size={ICON_SIZE.dense} className="shrink-0 text-accent" aria-hidden />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-              <div
-                ref={menuRef}
-                role="menu"
-                aria-label="Your workspaces"
-                onKeyDown={onMenuKeyDown}
-                className="flex min-h-0 flex-1 flex-col overflow-hidden"
-              >
-                {filtered.length > 0 && (
-                  <div role="none" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                    {filtered.map((row, index) => {
-                      const isCurrent = row.id === currentTenantId;
-                      const isSuspended = row.status === 'suspended';
-                      return (
-                        <button
-                          key={row.id}
-                          type="button"
-                          // A single-choice list: exactly one workspace is the current one,
-                          // and `aria-checked` is what says so to a reader who cannot see
-                          // the tick. `menuitemradio` is a permitted child of `role="menu"`.
-                          role="menuitemradio"
-                          aria-checked={isCurrent}
-                          // `aria-disabled`, never `disabled`: a suspended membership has to
-                          // stay reachable, or the reader who needs the explanation is the
-                          // one who can never focus the row that carries it.
-                          aria-disabled={isSuspended || undefined}
-                          title={isSuspended ? SUSPENDED_TITLE : undefined}
-                          tabIndex={itemTabIndex(index)}
-                          onFocus={() => onItemFocus(index)}
-                          onClick={() => void handleSelect(row)}
-                          data-testid={`workspace-option-${row.id}`}
-                          className={cn(
-                            RAIL_MENU_ITEM_CLASS,
-                            isSuspended && RAIL_MENU_ITEM_DISABLED_CLASS,
-                            isCurrent && 'font-semibold',
-                            switching && !isCurrent && 'opacity-50'
-                          )}
-                        >
-                          <Avatar
-                            size="xs"
-                            shape="hex"
-                            seed={row.id}
-                            name={row.name}
-                            className="shrink-0"
-                          />
-                          <span className="min-w-0 flex-1 truncate">{row.name}</span>
-                          {isSuspended && (
-                            <span
-                              className={cn(
-                                'inline-flex shrink-0 items-center rounded-xs px-1.5 py-0.5',
-                                'text-2xs font-semibold uppercase tracking-[var(--track-caps)]',
-                                STATUS_TONE_SOFT_CLASS[statusTone('suspended')]
-                              )}
-                            >
-                              Suspended
-                            </span>
-                          )}
-                          <WorkspaceRoleBadge
-                            role={row.role}
-                            isLegacyAdmin={adminTenantIds.has(row.id)}
-                          />
-                          <WorkspaceLicenseChip
-                            name={row.licenseName}
-                            type={row.licenseType}
-                            role={row.role}
-                          />
-                          {isCurrent && (
-                            <Check size={ICON_SIZE.dense} className="shrink-0 text-accent" aria-hidden />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
+              <div role="none" className="mt-1.5 shrink-0 border-t border-border pt-1.5">
                 {createGate && (
-                  <div role="none" className="mt-1.5 shrink-0 border-t border-border pt-1.5">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      data-testid="create-tenant-entry"
-                      aria-disabled={!createGate.allowed || undefined}
-                      title={
-                        createGate.allowed
-                          ? undefined
-                          : `Workspace limit reached (${createGate.used} of ${createGate.max} used) — upgrade your plan to create more`
-                      }
-                      tabIndex={itemTabIndex(filtered.length)}
-                      onFocus={() => onItemFocus(filtered.length)}
-                      onClick={() => {
-                        if (!createGate.allowed) return;
-                        // Focus back on the trigger *before* the dialog opens: that is the
-                        // element Radix will return focus to when the dialog closes, and a
-                        // menu item that is about to unmount is not one.
-                        closeMenu(true);
-                        setCreateOpen(true);
-                      }}
-                      className={cn(
-                        RAIL_MENU_ITEM_CLASS,
-                        createGate.allowed ? 'text-accent' : RAIL_MENU_ITEM_DISABLED_CLASS
-                      )}
-                    >
-                      <Plus size={ICON_SIZE.dense} className="shrink-0" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">Create workspace</span>
-                      <span className="shrink-0 text-2xs font-medium text-fg-muted">
-                        {createGate.used}/{createGate.max}
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid="create-tenant-entry"
+                    aria-disabled={!createGate.allowed || undefined}
+                    title={
+                      createGate.allowed
+                        ? undefined
+                        : `Workspace limit reached (${createGate.used} of ${createGate.max} used) — upgrade your plan to create more`
+                    }
+                    tabIndex={itemTabIndex(filtered.length)}
+                    onFocus={() => onItemFocus(filtered.length)}
+                    onClick={() => {
+                      if (!createGate.allowed) return;
+                      // Focus back on the trigger *before* the dialog opens: that is the
+                      // element Radix will return focus to when the dialog closes, and a
+                      // menu item that is about to unmount is not one.
+                      closeMenu(true);
+                      setCreateOpen(true);
+                    }}
+                    className={cn(
+                      RAIL_MENU_ITEM_CLASS,
+                      createGate.allowed ? 'text-accent' : RAIL_MENU_ITEM_DISABLED_CLASS
+                    )}
+                  >
+                    <Plus size={ICON_SIZE.dense} className="shrink-0" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate">Create workspace</span>
+                    <span className="shrink-0 text-2xs font-medium text-fg-muted">
+                      {createGate.used}/{createGate.max}
+                    </span>
+                  </button>
                 )}
+                {/* Tenants left the rail for here (HIVE-12.2, #5609): the page that lists and
+                    administers workspaces sits beside the menu that switches them. */}
+                <Link
+                  href={MANAGE_WORKSPACES_HREF}
+                  role="menuitem"
+                  data-testid="manage-workspaces-entry"
+                  tabIndex={itemTabIndex(manageIndex)}
+                  onFocus={() => onItemFocus(manageIndex)}
+                  onClick={() => closeMenu(false)}
+                  className={RAIL_MENU_ITEM_CLASS}
+                >
+                  <Building2 size={ICON_SIZE.dense} className="shrink-0 text-fg-subtle" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{MANAGE_WORKSPACES_LABEL}</span>
+                </Link>
               </div>
-            </>
-          )}
+            </div>
+          </>
         </div>
       )}
 

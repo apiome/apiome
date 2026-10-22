@@ -15,6 +15,7 @@ import { jest } from '@jest/globals';
 const mockSearchParams = jest.fn();
 jest.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams(),
+  usePathname: () => '/ade/dashboard/export/studio',
 }));
 
 jest.mock('@lib/auth/session-client', () => ({
@@ -25,8 +26,14 @@ jest.mock('@lib/auth/session-client', () => ({
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={typeof href === 'string' ? href : '#'}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...rest
+  }: { children: React.ReactNode; href: string } & Record<string, unknown>) => (
+    <a href={typeof href === 'string' ? href : '#'} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -37,6 +44,20 @@ jest.mock('../src/app/components/ade/dashboard/export/ExportStudio', () => ({
   ExportStudio: (props: Record<string, unknown>) => {
     studioProps.push(props);
     return <div data-testid="export-studio-stub" />;
+  },
+}));
+
+/** The SDK & branding tab mounts the SDK settings client; stub it and record its props. */
+const sdkProps: Record<string, unknown>[] = [];
+jest.mock('../src/app/ade/dashboard/sdk-settings/SdkSettingsClient', () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => {
+    sdkProps.push(props);
+    return (
+      <div data-testid="sdk-settings-stub">
+        {props.tabs as React.ReactNode}
+      </div>
+    );
   },
 }));
 
@@ -114,3 +135,60 @@ describe('Export Studio route — deep links (MFX-41.4)', () => {
     expect(screen.queryByTestId('export-studio-stub')).not.toBeInTheDocument();
   });
 });
+
+describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    sdkProps.length = 0;
+  });
+
+  it('mounts the SDK settings screen for ?tab=sdk, with the tab strip, whether or not a source is set', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    for (const query of ['tab=sdk', 'tab=sdk&artifact=proj-1']) {
+      mockSearchParams.mockReturnValue(new URLSearchParams(query));
+      const { unmount } = render(<ExportStudioPage />);
+      expect(screen.getByTestId('sdk-settings-stub')).toBeInTheDocument();
+      expect(screen.queryByTestId('export-studio-stub')).not.toBeInTheDocument();
+      expect(screen.getByTestId('export-studio-tabs')).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('marks SDK & branding current, and links back to Export keeping the session', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    mockSearchParams.mockReturnValue(new URLSearchParams('tab=sdk&artifact=proj-1&step=verify'));
+    render(<ExportStudioPage />);
+    const strip = screen.getByRole('navigation', { name: 'Export studio sections' });
+    const links = strip.querySelectorAll('a');
+    expect([...links].map((link) => link.textContent)).toEqual(['Export', 'SDK & branding']);
+    expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Export' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Export' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/export/studio?artifact=proj-1&step=verify'
+    );
+  });
+
+  it('passes the strip to the Studio and draws it on the no-source screen too', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    const props = renderRoute('artifact=proj-1');
+    expect(props.tabs).toBeTruthy();
+
+    mockSearchParams.mockReturnValue(new URLSearchParams(''));
+    render(<ExportStudioPage />);
+    expect(screen.getByRole('heading', { level: 1, name: /Export studio/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/export/studio?tab=sdk'
+    );
+  });
+
+  it('keeps the SDK settings release gate on the tab', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    mockSearchParams.mockReturnValue(new URLSearchParams('tab=sdk'));
+    render(<ExportStudioPage />);
+    expect(screen.getByTestId('unreleased-feature-gate')).toBeInTheDocument();
+    expect(screen.queryByTestId('sdk-settings-stub')).not.toBeInTheDocument();
+  });
+});
+

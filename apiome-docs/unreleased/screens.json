@@ -207,9 +207,13 @@
     },
     {
       "id": "sdk-settings",
-      "route": "/ade/dashboard/sdk-settings",
+      "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/sdk-settings.html"
+      "data": "fixture:hive-a11y/sdk-settings.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/sdk-settings/SdkSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/export-studio/ExportStudioTabs.tsx"
+      ]
     },
     {
       "id": "style-guides",

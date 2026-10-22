@@ -739,6 +739,24 @@
       "data": "fixture:hive-a11y/notifications-menu.html"
     },
     {
+      "id": "workspace-menu",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"workspace-menu\"]",
+      "data": "fixture:hive-a11y/workspace-menu.html",
+      "sources": [
+        "apiome-ui/src/app/components/shell/WorkspaceSwitcher.tsx"
+      ]
+    },
+    {
+      "id": "user-menu",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"user-menu\"]",
+      "data": "fixture:hive-a11y/user-menu.html",
+      "sources": [
+        "apiome-ui/src/app/components/shell/UserMenu.tsx"
+      ]
+    },
+    {
       "id": "members",
       "route": "/ade/dashboard/members",
       "waitFor": "[data-testid=\"members-table\"]",

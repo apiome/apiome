@@ -140,7 +140,7 @@ describe('pointers and notices', () => {
     expect(evidenceItem('deploy_gate_evaluations', { id: 'g', purpose: 'deploy', passed: false }, CENTRE).title)
       .toBe('Deploy gate · failed');
     expect(evidenceItem('sdk_regen_targets', { id: 's', ecosystem: 'npm', delivery_mode: 'registry' }, CENTRE).href)
-      .toBe('/ade/dashboard/sdk-settings');
+      .toBe('/ade/dashboard/export/studio?tab=sdk');
     expect(evidenceItem('agent_toolset_tools', { id: 't', tool_name: 'get_pet', operation_key: 'GET /p' }, CENTRE))
       .toMatchObject({ title: 'get_pet', detail: 'GET /p' });
     expect(evidenceItem('mock_fixture_packs', { kind: 'scenario', name: 'slow', operations: ['GET /p'] }, CENTRE))

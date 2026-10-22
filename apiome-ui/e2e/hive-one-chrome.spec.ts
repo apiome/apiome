@@ -109,3 +109,58 @@ test.describe('one chrome on every /ade route', () => {
     }
   });
 });
+
+/**
+ * Re-homed destinations (HIVE-12.2, #5609): Tenants, SDK settings and the Tools left (or never
+ * had) a rail row, and each is reachable in at most two clicks from its new home and from ⌘K.
+ */
+test.describe('destinations that live off the rail', () => {
+  test.beforeEach(async ({ page }) => {
+    const signedIn = await signIn(page);
+    test.skip(!signedIn, 'Seeded test user could not sign in — skipping');
+  });
+
+  test('the rail carries no Tenants or SDK settings row', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+    const rail = page.getByTestId('app-rail');
+    await expect(rail.locator('a[href="/ade/dashboard/tenants"]')).toHaveCount(0);
+    await expect(rail.locator('a[href="/ade/dashboard/sdk-settings"]')).toHaveCount(0);
+  });
+
+  test('Manage workspaces… opens the Tenants page in two clicks', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.getByTestId('rail-workspace').click();
+    await page.getByTestId('manage-workspaces-entry').click();
+    await page.waitForURL(/\/ade\/dashboard\/tenants$/);
+  });
+
+  test('the user menu opens the Data browser and Migrations in two clicks', async ({ page }) => {
+    for (const [row, path] of [
+      ['user-menu-data-browser', /\/ade\/database/],
+      ['user-menu-migrations', /\/ade\/migration/],
+    ] as const) {
+      await page.goto('/ade/dashboard');
+      await page.waitForLoadState('networkidle');
+      await page.getByTestId('rail-user').click();
+      await page.getByTestId(row).click();
+      await page.waitForURL(path);
+      await expect(page.getByTestId('app-rail')).toHaveCount(1);
+    }
+  });
+
+  test('⌘K still jumps to Tenants', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+k' : 'Control+k');
+    await page.keyboard.type('Tenants');
+    await page.keyboard.press('Enter');
+    await page.waitForURL(/\/ade\/dashboard\/tenants$/);
+  });
+
+  test('the old SDK settings address lands on the Export studio tab', async ({ page }) => {
+    await page.goto('/ade/dashboard/sdk-settings');
+    await page.waitForURL(/\/ade\/dashboard\/export\/studio\?tab=sdk$/);
+  });
+});
