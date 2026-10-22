@@ -1,0 +1,302 @@
+{
+  "adapter": "cue",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "cue": {
+        "capability_limits": [
+          {
+            "construct": "cue.default",
+            "count": 2,
+            "detail": "A default (`*\"new\"`) is applied by CUE's evaluation; the JSON Schema CUE generates does not carry it, so the field is modelled with its type and without the default.",
+            "locations": [
+              "Product.currency",
+              "Product.discontinued"
+            ]
+          }
+        ],
+        "exports": [
+          "Product",
+          "Catalogue"
+        ],
+        "files": [
+          "06-typical-schema-and-data.cue"
+        ],
+        "instances": [
+          "catalogue"
+        ],
+        "root_file": "06-typical-schema-and-data.cue",
+        "root_type": "Product"
+      }
+    },
+    "format": "cue",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Product",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Product",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Catalogue.products",
+            "name": "products",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Product",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Catalogue.version",
+            "name": "version",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Catalogue",
+        "key_type": null,
+        "kind": "record",
+        "name": "Catalogue",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": [
+                "EUR"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.discontinued",
+            "name": "discontinued",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Z]{3}-[0-9]{4}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Product",
+        "key_type": null,
+        "kind": "record",
+        "name": "Product",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cue/06-typical-schema-and-data.cue",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cue"
+  },
+  "fingerprint": "sha256:063288ed0b53da4e41250ebd2bc65361f130a1b1e5c34f4f8ab3fc0c82437532",
+  "lint": {
+    "findings": 11,
+    "grade": "B",
+    "report_fingerprint": "973d153a10e9de58c11442c45a03c9a42cf9696f4ce6fc488dbf5d407925d6d1",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 9,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

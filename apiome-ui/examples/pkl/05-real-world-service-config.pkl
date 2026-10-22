@@ -23,7 +23,7 @@ class Probe {
 
 class Ingress {
   enabled: Boolean = false
-  host: String?(matches(Regex("^[a-z0-9.-]+$")))
+  host: String(matches(Regex("^[a-z0-9.-]+$")))?
   paths: Listing<String(startsWith("/"))> = new { "/" }
   tls: Boolean = true
 }

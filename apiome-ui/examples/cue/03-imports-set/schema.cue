@@ -1,7 +1,7 @@
 // Root of the set: imports the shared package and constrains a shipment with it.
 package shipping
 
-import "example.com/shared:shared"
+import "example.com/shipping/shared"
 
 #Shipment: {
 	shipmentId:  string & =~"^SHP-[0-9]{6}$"

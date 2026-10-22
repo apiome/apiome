@@ -82,12 +82,20 @@ __all__ = [
 #: ``zod-schema-extractor`` likewise (FMT-8.2, #5463): a Zod schema is a value, and only Zod itself,
 #: running the module, can produce it.
 #:
+#: ``cue``, ``pkl`` and ``dhall`` likewise (FMT-8.5, #5466): each typed configuration language is
+#: read by its own evaluator — unification, late binding and import resolution exist nowhere
+#: else — so CUE, Pkl and Dhall import have no fallback reader either. They are native binaries
+#: pinned in ``BUNDLED_TOOLS`` and the Dockerfile, with no npm manifest entry.
+#:
 #: Every other bundled tool stays optional: ``buf``, ``tsp``, ``smithy``, the linters and the
 #: diff CLIs gate formats or advisory checks that degrade to a stated "unavailable" instead.
 REQUIRED_TOOL_KEYS: Tuple[str, ...] = (
     "asyncapi-parser",
     "typescript-types-extractor",
     "zod-schema-extractor",
+    "cue",
+    "pkl",
+    "dhall",
 )
 
 #: Required tool key → the npm package the toolchain manifest pins for it. Only the tools whose
@@ -125,6 +133,10 @@ def manifest_pins() -> Dict[str, str]:
 #: Trailing semantic-version token of a tool's ``--version`` banner (e.g. the ``3.6.0`` in
 #: ``asyncapi-parse (apiome) @asyncapi/parser 3.6.0``). Pre-release / build metadata is kept.
 _VERSION_RE = re.compile(r"(\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.\-]+)?)\s*$")
+
+#: Fallback for a banner that does not *end* with its version — ``Pkl 0.32.2 (Linux …, native)``
+#: (FMT-8.5): the first dotted three-part version token anywhere in the line.
+_EMBEDDED_VERSION_RE = re.compile(r"\b(\d+\.\d+\.\d+)\b")
 
 #: The most recent :func:`run_toolchain_selfcheck` result, so the health surface can report the
 #: startup verdict without re-spawning one subprocess per required tool on every probe.
@@ -263,12 +275,12 @@ def _parse_version(banner: Optional[str]) -> Optional[str]:
         banner: The first line the tool printed, or ``None``.
 
     Returns:
-        The version string (``"3.6.0"``), or ``None`` when the banner is absent or carries no
-        recognizable version.
+        The version string (``"3.6.0"``) — the trailing version, else the first ``x.y.z`` token
+        in the line — or ``None`` when the banner is absent or carries no recognizable version.
     """
     if not banner:
         return None
-    match = _VERSION_RE.search(banner.strip())
+    match = _VERSION_RE.search(banner.strip()) or _EMBEDDED_VERSION_RE.search(banner)
     return match.group(1) if match else None
 
 

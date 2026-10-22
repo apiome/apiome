@@ -1,8 +1,6 @@
 -- Above the divider: types a JSON Schema projection can carry.
 -- Below it: Dhall constructs that exceed it, which FMT-8.5 requires declared as limits.
 
-let Prelude = ./prelude.dhall
-
 -- ---------------------------------------------------------------- expressible
 
 let Scalars =
@@ -52,12 +50,21 @@ let withEnvelope =
         , meta : List { mapKey : Text, mapValue : Text }
         }
 
--- Fold and list comprehension at type-check time.
-let total = Prelude.Natural.sum [ 1, 2, 3 ]
+-- A fold, evaluated during normalization.
+let total =
+      List/fold
+        Natural
+        [ 1, 2, 3 ]
+        Natural
+        (\(x : Natural) -> \(acc : Natural) -> x + acc)
+        0
 
--- Imports as values, including one with an integrity hash.
+-- Imports as values, including one with an integrity hash (with a fallback, because this
+-- file is imported on its own and the pinned file is not beside it).
 let remoteType =
-      ./shared.dhall sha256:0000000000000000000000000000000000000000000000000000000000000000
+        ./shared.dhall
+          sha256:0000000000000000000000000000000000000000000000000000000000000000
+      ? { line1 : Text }
 
 in  { Scalars
     , Level

@@ -1,0 +1,111 @@
+{
+  "adapter": "pkl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pkl": {
+        "capability_limits": [],
+        "exports": [
+          "Beacon"
+        ],
+        "files": [
+          "01-minimal-schema.pkl"
+        ],
+        "instances": [],
+        "root_file": "01-minimal-schema.pkl",
+        "root_type": "Beacon"
+      }
+    },
+    "format": "pkl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Beacon",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Beacon",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Beacon.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Beacon.seenAt",
+            "name": "seenAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Beacon",
+        "key_type": null,
+        "kind": "record",
+        "name": "Beacon",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pkl/01-minimal-schema.pkl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pkl"
+  },
+  "fingerprint": "sha256:6075b6977ea73e37efd7690ebec4783f7c83643ed8861a6dd081152f77916b22",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "6153af4036f98389d8dc765fdedfd6ecc8e51960f3a5d3fd44342cf25f827218",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

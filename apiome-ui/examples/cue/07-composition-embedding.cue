@@ -18,13 +18,15 @@ package composition
 	label: string
 }
 
-// Unification narrows an existing definition rather than restating it.
-#ActiveRecord: #Record & {
-	status: "active"
+// Embedding a closed definition and narrowing it, rather than restating it.
+#ActiveRecord: {
+	#Record
+	status:    "active"
 	updatedAt: string
 }
 
-#ArchivedRecord: #Record & {
+#ArchivedRecord: {
+	#Record
 	status:     "archived"
 	archivedAt: string
 }

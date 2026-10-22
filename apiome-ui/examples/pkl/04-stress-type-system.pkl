@@ -17,14 +17,14 @@ class Scalars {
   pattern: String(matches(Regex("^[a-z0-9-]+$")))
   count: Int
   small: Int8
-  big: Int64
+  big: Int32
   unsignedish: UInt16
   ratio: Float
   precise: Number
   flag: Boolean
   duration: Duration
   size: DataSize
-  nothing: Null
+  empty: Null
   anything: Any
 }
 

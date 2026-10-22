@@ -1,0 +1,128 @@
+{
+  "adapter": "dhall",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "dhall": {
+        "capability_limits": [],
+        "exports": [
+          "MinimalSchema"
+        ],
+        "files": [
+          "01-minimal-schema.dhall"
+        ],
+        "instances": [],
+        "root_file": "01-minimal-schema.dhall",
+        "root_type": "MinimalSchema"
+      }
+    },
+    "format": "dhall",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "MinimalSchema",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "MinimalSchema",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "MinimalSchema.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "MinimalSchema.seenAt",
+            "name": "seenAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "MinimalSchema",
+        "key_type": null,
+        "kind": "record",
+        "name": "MinimalSchema",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "dhall/01-minimal-schema.dhall",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "dhall"
+  },
+  "fingerprint": "sha256:41d6c1afa6bcdc67ae4483deb8be8caa12a95f0ae98fecb2e787853f13b1e94b",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "cb3bb0aae7d063cf733e3d2e7fa8835cf1575b97f272730506a12632ed22077c",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

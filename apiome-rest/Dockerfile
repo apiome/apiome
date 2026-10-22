@@ -59,6 +59,11 @@ ARG SPECTRAL_VERSION=6.16.1
 ARG VACUUM_VERSION=0.29.9
 ARG REDOCLY_VERSION=2.39.0
 ARG OASDIFF_VERSION=1.23.0
+# Typed configuration evaluators (FMT-8.5, #5466) — REQUIRED tools: CUE, Pkl and Dhall import read
+# each language with its own evaluator and have no fallback reader.
+ARG CUE_VERSION=0.17.1
+ARG PKL_VERSION=0.32.2
+ARG DHALL_VERSION=1.42.2
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -118,6 +123,38 @@ RUN TRIPLE="$(cat /tmp/arch_rust)"; \
       | tar -xz -C /tmp \
     && mv /tmp/dist/rover ${TOOLS_PREFIX}/bin/rover \
     && chmod +x ${TOOLS_PREFIX}/bin/rover
+
+# cue — static Go binary from the cue-lang release (FMT-8.5). Assets use linux_amd64 / linux_arm64.
+RUN case "${TARGETARCH}" in \
+      amd64) CUE_ARCH=amd64 ;; \
+      arm64) CUE_ARCH=arm64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/cue-lang/cue/releases/download/v${CUE_VERSION}/cue_v${CUE_VERSION}_linux_${CUE_ARCH}.tar.gz" \
+      | tar -xz -C /tmp cue \
+    && mv /tmp/cue ${TOOLS_PREFIX}/bin/cue \
+    && chmod +x ${TOOLS_PREFIX}/bin/cue
+
+# pkl — native (GraalVM) binary from the apple/pkl release (FMT-8.5). Assets use amd64 / aarch64.
+RUN case "${TARGETARCH}" in \
+      amd64) PKL_ARCH=amd64 ;; \
+      arm64) PKL_ARCH=aarch64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/apple/pkl/releases/download/${PKL_VERSION}/pkl-linux-${PKL_ARCH}" \
+      -o ${TOOLS_PREFIX}/bin/pkl \
+    && chmod +x ${TOOLS_PREFIX}/bin/pkl
+
+# dhall — the dhall-haskell interpreter (FMT-8.5). dhall-haskell publishes an x86_64 Linux build
+# only, so an arm64 image fails here, loudly, rather than shipping without a required tool.
+RUN if [ "${TARGETARCH}" != "amd64" ]; then \
+      echo "dhall ${DHALL_VERSION} has no linux/${TARGETARCH} release; Dhall import is required (FMT-8.5)" >&2; \
+      exit 1; \
+    fi; \
+    curl -fsSL "https://github.com/dhall-lang/dhall-haskell/releases/download/${DHALL_VERSION}/dhall-${DHALL_VERSION}-x86_64-linux.tar.bz2" \
+      | tar -xj -C /tmp bin/dhall \
+    && mv /tmp/bin/dhall ${TOOLS_PREFIX}/bin/dhall \
+    && chmod +x ${TOOLS_PREFIX}/bin/dhall
 
 # smithy — official CLI zip ships its own bundled runtime (no separate JRE needed for it).
 RUN ARCH="$(cat /tmp/arch_gnu)"; \
@@ -211,6 +248,18 @@ RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && grep -q '"path":"ping"' /tmp/trpc-smoke.json \
     && rm -f /tmp/zod-smoke.json /tmp/trpc-smoke.json
 
+# Typed configuration smoke test (FMT-8.5, #5466): each evaluator runs and evaluates a one-line
+# schema, so a broken download fails the build instead of the first CUE, Pkl or Dhall import.
+RUN ${TOOLS_PREFIX}/bin/cue version \
+    && printf 'package smoke\n#Smoke: {id: string}\n' > /tmp/smoke.cue \
+    && ${TOOLS_PREFIX}/bin/cue export --out jsonschema -e '#Smoke' /tmp/smoke.cue | grep -q '"id"' \
+    && ${TOOLS_PREFIX}/bin/pkl --version \
+    && printf 'class Smoke { id: String }\n' > /tmp/smoke.pkl \
+    && ${TOOLS_PREFIX}/bin/pkl eval --no-cache -x 'import("pkl:reflect").Class(Smoke).properties.keys' /tmp/smoke.pkl | grep -q id \
+    && ${TOOLS_PREFIX}/bin/dhall version \
+    && echo '{ Smoke = { id : Text } }' | ${TOOLS_PREFIX}/bin/dhall --plain | ${TOOLS_PREFIX}/bin/dhall encode --json | grep -q '"id"' \
+    && rm -f /tmp/smoke.cue /tmp/smoke.pkl
+
 # drafter — API Blueprint parser; no official static binary, so build the pinned tag from
 # source and install just the resulting CLI. The `drafter` CMake target is the static library
 # (libdrafter.a); the command-line tool is the `drafter-cli` target, whose executable is named
@@ -230,11 +279,13 @@ WORKDIR /app
 
 # libpq5 for psycopg; nodejs to run the tsx-based spec-import worker. Create the non-root
 # user up front so the workspace copies below can be chowned in a single layer.
-# libpq5 for psycopg; libstdc++6 for native tools (buf/rover/drafter); default-jre-headless
+# libpq5 for psycopg; libstdc++6 for native tools (buf/rover/drafter); libgmp10 for dhall
+# (FMT-8.5); default-jre-headless
 # for the AMF jar wrapper (MFI-5.2). smithy's CLI ships its own runtime, so it needs no JRE.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libpq5 \
       libstdc++6 \
+      libgmp10 \
       default-jre-headless \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 1000 appuser
@@ -259,7 +310,7 @@ COPY --from=uideps --chown=appuser:appuser /repo/apiome-ui /apiome-ui
 
 # Polyglot toolchain binaries (MFI-5.2, #3751). Copy the whole bundled-tools tree and put its
 # bin/ on PATH so the toolchain runner resolves
-# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/asyncapi-diff/rover/graphql-inspector-diff/
+# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/cue/pkl/dhall/asyncapi-diff/rover/graphql-inspector-diff/
 # spectral/vacuum/redocly by name. The tree is read-only to the app user (owned by root); the
 # runner never writes to it.
 COPY --from=tools /opt/apiome-tools /opt/apiome-tools
@@ -273,7 +324,7 @@ ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     # Put the bundled toolchain (MFI-5.2) ahead of the system path so the runner resolves
-    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/asyncapi-diff/rover/graphql-inspector-diff/
+    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/cue/pkl/dhall/asyncapi-diff/rover/graphql-inspector-diff/
     # spectral/vacuum/redocly by bare name. A deployment can still point any
     # APIOME_<TOOL>_BIN at a custom binary; an absent tool degrades that format to
     # "unavailable" (surfaced by GET /v1/ops/toolchain) rather than failing the service.
@@ -288,11 +339,12 @@ ENV PYTHONPATH=/app/src \
     # the worker's relative imports against /apiome-ui and its tsconfig paths.
     SPEC_IMPORT_WORKER_ARGV='["node","--import","tsx","apiome-ui/scripts/rest-spec-import-worker.ts"]' \
     # Hard-dependency enforcement (FMT-1.3, #5414). This image *ships* the required toolchain,
-    # so a container where `asyncapi-parser`, `typescript-types-extract` or `zod-extract` cannot run is broken,
+    # so a container where `asyncapi-parser`, `typescript-types-extract`, `zod-extract`, `cue`, `pkl` or
+    # `dhall` cannot run is broken,
     # not merely degraded: the startup self-check logs the resolved versions and refuses to
     # start rather than serving with a shipped format silently missing. Set
     # APIOME_REQUIRE_TOOLCHAIN=0 only for a deliberately slimmed deployment that accepts losing
-    # AsyncAPI, TypeScript-types and Zod import.
+    # AsyncAPI, TypeScript-types, Zod, CUE, Pkl and Dhall import.
     APIOME_REQUIRE_TOOLCHAIN=1
 
 EXPOSE 8000

@@ -1,0 +1,1628 @@
+{
+  "adapter": "pkl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pkl": {
+        "capability_limits": [
+          {
+            "construct": "pkl.computed_default",
+            "count": 3,
+            "detail": "A default that can only be computed from other members, or from the module, has no single value to record. The member is modelled without a default.",
+            "locations": [
+              "Computed.total",
+              "Computed.upper",
+              "Conditional.seats"
+            ]
+          },
+          {
+            "construct": "pkl.external_read",
+            "count": 1,
+            "detail": "`read(…)` reads an environment variable, a file or a URL at evaluation time, and the evaluation sandbox refuses every resource. The member is modelled without the value it would have read.",
+            "locations": [
+              "FromEnvironment.region"
+            ]
+          },
+          {
+            "construct": "pkl.generator",
+            "count": 1,
+            "detail": "A `for` or `when` generator builds a member's value during evaluation. The member's type is modelled; how its value is generated is not.",
+            "locations": [
+              "Computed.upper"
+            ]
+          },
+          {
+            "construct": "pkl.late_binding",
+            "count": 1,
+            "detail": "A constraint written in terms of another member (`Int(this > minimum)`) is checked against the object it belongs to, at evaluation. The member's type is modelled; the relation is not.",
+            "locations": [
+              "SelfReferential.maximum"
+            ]
+          },
+          {
+            "construct": "pkl.method",
+            "count": 1,
+            "detail": "A method (`function`) describes behaviour, not data. It is not modelled.",
+            "locations": [
+              "Stress"
+            ]
+          },
+          {
+            "construct": "pkl.output",
+            "count": 1,
+            "detail": "A module's `output` block decides how the module renders, not what its data is. It is not modelled.",
+            "locations": [
+              "Stress"
+            ]
+          },
+          {
+            "construct": "pkl.unit_type",
+            "count": 2,
+            "detail": "A `Duration` or `DataSize` is a number with a unit. It is modelled as text (`5.min`, `512.mb`), so its unit and magnitude are not checked.",
+            "locations": [
+              "Scalars.duration",
+              "Scalars.size"
+            ]
+          }
+        ],
+        "exports": [
+          "Percent",
+          "NonEmpty",
+          "Port",
+          "Level",
+          "Scalars",
+          "Collections",
+          "Defaults",
+          "Base",
+          "Derived",
+          "Shape",
+          "Circle",
+          "Square",
+          "Union",
+          "SelfReferential",
+          "Computed",
+          "Conditional",
+          "FromEnvironment"
+        ],
+        "files": [
+          "04-stress-type-system.pkl"
+        ],
+        "instances": [
+          "amended"
+        ],
+        "root_file": "04-stress-type-system.pkl",
+        "root_type": "Scalars"
+      }
+    },
+    "format": "pkl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Scalars",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Scalars",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Base.createdAt",
+            "name": "createdAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Base.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NonEmpty",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Base",
+        "key_type": null,
+        "kind": "record",
+        "name": "Base",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_extends": [
+            "Shape"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "circle",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Circle.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Circle.radius",
+            "name": "radius",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Circle",
+        "key_type": null,
+        "kind": "record",
+        "name": "Circle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 10,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.bounded",
+            "name": "bounded",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.items",
+            "name": "items",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.lookup",
+            "name": "lookup",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Collections_lookup",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.nested",
+            "name": "nested",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Collections_nested_item",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.pairs",
+            "name": "pairs",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Collections_pairs",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.plainList",
+            "name": "plainList",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": true
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Collections.uniqueSet",
+            "name": "uniqueSet",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Collections",
+        "key_type": null,
+        "kind": "record",
+        "name": "Collections",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Collections_lookup",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Collections_lookup",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Collections_nested_item",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Collections_nested_item",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": {
+            "extras": {},
+            "item": null,
+            "name": "integer",
+            "nullable": false
+          },
+          "name": null,
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Collections_pairs",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Collections_pairs",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A generator expression: values computed from other values.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Computed.inputs",
+            "name": "inputs",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Computed.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Computed.upper",
+            "name": "upper",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Computed",
+        "key_type": null,
+        "kind": "record",
+        "name": "Computed",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Conditional members: presence depends on another member's value.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Conditional.seats",
+            "name": "seats",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "free",
+                "paid"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Conditional.tier",
+            "name": "tier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Conditional",
+        "key_type": null,
+        "kind": "record",
+        "name": "Conditional",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": 42,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Defaults.computedDefault",
+            "name": "computedDefault",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "unnamed",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Defaults.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "info",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Defaults.level",
+            "name": "level",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Level",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Defaults.optional",
+            "name": "optional",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 3,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Defaults.retries",
+            "name": "retries",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Defaults",
+        "key_type": null,
+        "kind": "record",
+        "name": "Defaults",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_extends": [
+            "Base"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Derived.createdAt",
+            "name": "createdAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Derived.extra",
+            "name": "extra",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Percent",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Derived.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "NonEmpty",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Derived",
+        "key_type": null,
+        "kind": "record",
+        "name": "Derived",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "External resource read at evaluation time — the sandbox must refuse it.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "FromEnvironment.region",
+            "name": "region",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "FromEnvironment",
+        "key_type": null,
+        "kind": "record",
+        "name": "FromEnvironment",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Level.debug",
+            "name": "debug",
+            "value": "debug"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Level.info",
+            "name": "info",
+            "value": "info"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Level.warn",
+            "name": "warn",
+            "value": "warn"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Level.error",
+            "name": "error",
+            "value": "error"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "literal_union"
+        },
+        "fields": [],
+        "key": "Level",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Level",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": null,
+          "maximum": null,
+          "min_items": null,
+          "min_length": 1,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "NonEmpty",
+        "key_type": null,
+        "kind": "alias",
+        "name": "NonEmpty",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "number",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": null,
+          "maximum": 100.0,
+          "min_items": null,
+          "min_length": null,
+          "minimum": 0.0,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Percent",
+        "key_type": null,
+        "kind": "alias",
+        "name": "Percent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": null,
+          "maximum": 65535.0,
+          "min_items": null,
+          "min_length": null,
+          "minimum": 1024.0,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Port",
+        "key_type": null,
+        "kind": "alias",
+        "name": "Port",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.anything",
+            "name": "anything",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 2147483647.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -2147483648.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.big",
+            "name": "big",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.bounded",
+            "name": "bounded",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.count",
+            "name": "count",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.duration",
+            "name": "duration",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.empty",
+            "name": "empty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "null",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.flag",
+            "name": "flag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z0-9-]+$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.pattern",
+            "name": "pattern",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.precise",
+            "name": "precise",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.ratio",
+            "name": "ratio",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.size",
+            "name": "size",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 127.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -128.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.small",
+            "name": "small",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 65535.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.unsignedish",
+            "name": "unsignedish",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Scalars",
+        "key_type": null,
+        "kind": "record",
+        "name": "Scalars",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Late binding and self-reference through `this`.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": 10,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "SelfReferential.maximum",
+            "name": "maximum",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 1,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "SelfReferential.minimum",
+            "name": "minimum",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "SelfReferential",
+        "key_type": null,
+        "kind": "record",
+        "name": "SelfReferential",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Shape.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Shape",
+        "key_type": null,
+        "kind": "record",
+        "name": "Shape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_extends": [
+            "Shape"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": "square",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Square.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Square.side",
+            "name": "side",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Square",
+        "key_type": null,
+        "kind": "record",
+        "name": "Square",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Union.either",
+            "name": "either",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Union_either",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Union.shape",
+            "name": "shape",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Union_shape",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Union",
+        "key_type": null,
+        "kind": "record",
+        "name": "Union",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Union_either",
+        "key_type": null,
+        "kind": "union",
+        "name": "Union_either",
+        "namespace": null,
+        "union_members": [
+          "string",
+          "integer"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Union_shape",
+        "key_type": null,
+        "kind": "union",
+        "name": "Union_shape",
+        "namespace": null,
+        "union_members": [
+          "Circle",
+          "Square"
+        ],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pkl/04-stress-type-system.pkl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 22
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pkl"
+  },
+  "fingerprint": "sha256:006fce482c7190f1399f10086e55a568674bd1676fb5bff85d7457cbf9f97893",
+  "lint": {
+    "findings": 65,
+    "grade": "F",
+    "report_fingerprint": "d1f2c8d7677beb947f27b961639a181d0082312fee584e79ff05fece9736498e",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 47,
+      "warning": 18
+    }
+  },
+  "snapshot_version": 1
+}

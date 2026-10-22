@@ -23,6 +23,7 @@ Declared limits use the Zod vocabulary (:data:`app.zod_parser.LIMIT_DETAILS`) an
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from .canonical_model import ApiIdentity, ApiParadigm, CanonicalApi
@@ -31,7 +32,14 @@ from .typescript_types_normalizer import _limits_payload, _Model
 from .typescript_types_parser import TsDocument
 from .zod_parser import ZodDocument, zod_limit_recorder
 
-__all__ = ["ZOD_EXTRAS_KEY", "ZOD_FORMAT", "ZodNormalizer", "translate_schema"]
+__all__ = [
+    "JsonSchemaDialect",
+    "ZOD_DIALECT",
+    "ZOD_EXTRAS_KEY",
+    "ZOD_FORMAT",
+    "ZodNormalizer",
+    "translate_schema",
+]
 
 #: The format key the normalizer registers under.
 ZOD_FORMAT = "zod"
@@ -41,6 +49,35 @@ ZOD_EXTRAS_KEY = "zod"
 
 #: The id prefix every translated declaration carries (``zod#Order``).
 _ID_PREFIX = "zod#"
+
+
+@dataclass(frozen=True)
+class JsonSchemaDialect:
+    """The reader-specific spellings :func:`translate_schema` reads and writes.
+
+    The translation itself is format-neutral JSON Schema → neutral AST; what differs between the
+    readers that reuse it (FMT-8.2's Zod reader, FMT-8.5's CUE / Pkl / Dhall readers) is only the
+    id prefix their declarations carry, the vendor keywords their extractor writes, and the
+    extras key that records an object's unknown-key policy.
+
+    Attributes:
+        id_prefix: Prefix of every declaration id and reference target (``zod#Order``).
+        limits_keyword: Vendor keyword listing declared limits on a node whose shape is modelled.
+        unsupported_keyword: Vendor keyword naming the construct of a node with no shape at all.
+        type_keyword: Vendor keyword that refines ``type`` (``undefined``, ``unknown``, ``map``).
+        unknown_keys_extra: Extras key recording ``additionalProperties: false`` / ``true`` on an
+            object (``strict`` / ``passthrough``); ``None`` records nothing.
+    """
+
+    id_prefix: str
+    limits_keyword: str = "x-zod-limits"
+    unsupported_keyword: str = "x-zod-unsupported"
+    type_keyword: str = "x-zod-type"
+    unknown_keys_extra: Optional[str] = "zod_unknown_keys"
+
+
+#: The Zod extractor's dialect — the default of every translation function here.
+ZOD_DIALECT = JsonSchemaDialect(id_prefix=_ID_PREFIX)
 
 #: JSON Schema keywords that are constraints on a use site, copied onto the AST node for
 #: :func:`app.normalizer.coerce_constraints`.
@@ -74,22 +111,26 @@ def _ref_name(ref: str) -> str:
     return ref.rsplit("/", 1)[-1]
 
 
-def _decorate(node: Dict[str, Any], schema: Dict[str, Any]) -> Dict[str, Any]:
+def _decorate(
+    node: Dict[str, Any], schema: Dict[str, Any], dialect: JsonSchemaDialect = ZOD_DIALECT
+) -> Dict[str, Any]:
     """Attach a schema's constraints, declared limits and description to its AST node."""
     constraints = {key: schema[key] for key in _CONSTRAINT_KEYWORDS if key in schema}
     if constraints:
         node["constraints"] = constraints
-    limits = schema.get("x-zod-limits")
+    limits = schema.get(dialect.limits_keyword)
     if isinstance(limits, list) and limits:
         node["limits"] = [str(limit) for limit in limits]
     return node
 
 
-def translate_schema(schema: Any) -> Dict[str, Any]:
+def translate_schema(schema: Any, dialect: JsonSchemaDialect = ZOD_DIALECT) -> Dict[str, Any]:
     """Translate one JSON Schema node (the extractor's dialect) into a neutral AST node.
 
     Args:
         schema: The JSON Schema node.
+        dialect: The reader's spellings (:data:`ZOD_DIALECT` unless a sibling reader passes its
+            own).
 
     Returns:
         The AST node FMT-8.1's model builder reads: ``primitive``, ``literal``, ``ref``,
@@ -99,7 +140,7 @@ def translate_schema(schema: Any) -> Dict[str, Any]:
     if not isinstance(schema, dict):
         return {"kind": "unsupported", "construct": "zod.unrepresentable", "text": repr(schema)}
 
-    unsupported = schema.get("x-zod-unsupported")
+    unsupported = schema.get(dialect.unsupported_keyword)
     if isinstance(unsupported, str):
         return {
             "kind": "unsupported",
@@ -111,47 +152,53 @@ def translate_schema(schema: Any) -> Dict[str, Any]:
     if isinstance(ref, str):
         name = _ref_name(ref)
         return _decorate(
-            {"kind": "ref", "target": f"{_ID_PREFIX}{name}", "name": name, "typeArguments": []},
+            {
+                "kind": "ref",
+                "target": f"{dialect.id_prefix}{name}",
+                "name": name,
+                "typeArguments": [],
+            },
             schema,
+            dialect,
         )
 
     if "const" in schema:
-        return _decorate({"kind": "literal", "value": schema["const"]}, schema)
+        return _decorate({"kind": "literal", "value": schema["const"]}, schema, dialect)
 
     if isinstance(schema.get("enum"), list):
         members = [{"kind": "literal", "value": value} for value in schema["enum"]]
-        return _decorate({"kind": "union", "members": members}, schema)
+        return _decorate({"kind": "union", "members": members}, schema, dialect)
 
     for keyword in ("oneOf", "anyOf"):
         if isinstance(schema.get(keyword), list):
-            members = [translate_schema(member) for member in schema[keyword]]
-            return _decorate({"kind": "union", "members": members}, schema)
+            members = [translate_schema(member, dialect) for member in schema[keyword]]
+            return _decorate({"kind": "union", "members": members}, schema, dialect)
 
     if isinstance(schema.get("allOf"), list):
-        members = [translate_schema(member) for member in schema["allOf"]]
-        return _decorate({"kind": "intersection", "members": members}, schema)
+        members = [translate_schema(member, dialect) for member in schema["allOf"]]
+        return _decorate({"kind": "intersection", "members": members}, schema, dialect)
 
     type_ = schema.get("type")
     if type_ == "array":
-        return _decorate(_array(schema), schema)
+        return _decorate(_array(schema, dialect), schema, dialect)
     if type_ == "object":
-        return _decorate(_object(schema), schema)
-    if type_ == "null" and schema.get("x-zod-type") == "undefined":
-        return _decorate({"kind": "primitive", "name": "undefined"}, schema)
+        return _decorate(_object(schema, dialect), schema, dialect)
+    if type_ == "null" and schema.get(dialect.type_keyword) == "undefined":
+        return _decorate({"kind": "primitive", "name": "undefined"}, schema, dialect)
     if type_ in _SCALARS:
-        return _decorate({"kind": "primitive", "name": _SCALARS[type_]}, schema)
-    if schema.get("x-zod-type") == "unknown":
-        return _decorate({"kind": "primitive", "name": "unknown"}, schema)
+        return _decorate({"kind": "primitive", "name": _SCALARS[type_]}, schema, dialect)
+    if schema.get(dialect.type_keyword) == "unknown":
+        return _decorate({"kind": "primitive", "name": "unknown"}, schema, dialect)
     # `{}` is `z.any()`: the author wrote "any value", which is modelled as exactly that.
-    return _decorate({"kind": "primitive", "name": "any"}, schema)
+    return _decorate({"kind": "primitive", "name": "any"}, schema, dialect)
 
 
-def _array(schema: Dict[str, Any]) -> Dict[str, Any]:
+def _array(schema: Dict[str, Any], dialect: JsonSchemaDialect = ZOD_DIALECT) -> Dict[str, Any]:
     """A JSON Schema array: a tuple when it has ``prefixItems``, else a list."""
     prefix = schema.get("prefixItems")
     if isinstance(prefix, list):
         elements = [
-            {"name": None, "type": translate_schema(item), "optional": False, "rest": False}
+            {"name": None, "type": translate_schema(item, dialect), "optional": False, "rest": False}
             for item in prefix
         ]
         rest = schema.get("items")
@@ -159,7 +206,7 @@ def _array(schema: Dict[str, Any]) -> Dict[str, Any]:
             elements.append(
                 {
                     "name": None,
-                    "type": {"kind": "array", "element": translate_schema(rest), "readonly": False},
+                    "type": {"kind": "array", "element": translate_schema(rest, dialect), "readonly": False},
                     "optional": False,
                     "rest": True,
                 }
@@ -167,24 +214,24 @@ def _array(schema: Dict[str, Any]) -> Dict[str, Any]:
         return {"kind": "tuple", "elements": elements}
     return {
         "kind": "array",
-        "element": translate_schema(schema.get("items", {})),
+        "element": translate_schema(schema.get("items", {}), dialect),
         "readonly": False,
     }
 
 
-def _object(schema: Dict[str, Any]) -> Dict[str, Any]:
+def _object(schema: Dict[str, Any], dialect: JsonSchemaDialect = ZOD_DIALECT) -> Dict[str, Any]:
     """A JSON Schema object: a map (``record`` / ``map``) or an object shape."""
     properties = schema.get("properties")
     additional = schema.get("additionalProperties")
-    key_node = translate_schema(schema.get("propertyNames", {"type": "string"}))
+    key_node = translate_schema(schema.get("propertyNames", {"type": "string"}), dialect)
 
     if not isinstance(properties, dict):
         if isinstance(additional, dict):
-            lib = "Map" if schema.get("x-zod-type") == "map" else "Record"
+            lib = "Map" if schema.get(dialect.type_keyword) == "map" else "Record"
             return {
                 "kind": "lib",
                 "name": lib,
-                "typeArguments": [key_node, translate_schema(additional)],
+                "typeArguments": [key_node, translate_schema(additional, dialect)],
             }
         properties = {}
 
@@ -196,7 +243,7 @@ def _object(schema: Dict[str, Any]) -> Dict[str, Any]:
             "name": name,
             "optional": name not in required,
             "readonly": False,
-            "type": translate_schema(member),
+            "type": translate_schema(member, dialect),
             "doc": member.get("description")
             if isinstance(member.get("description"), str)
             else None,
@@ -218,14 +265,14 @@ def _object(schema: Dict[str, Any]) -> Dict[str, Any]:
             {
                 "keyName": "key",
                 "keyType": key_node,
-                "valueType": translate_schema(additional),
+                "valueType": translate_schema(additional, dialect),
                 "readonly": False,
             }
         ]
-    elif additional is False:
-        node["extras"] = {"zod_unknown_keys": "strict"}
-    elif additional is True:
-        node["extras"] = {"zod_unknown_keys": "passthrough"}
+    elif additional is False and dialect.unknown_keys_extra:
+        node["extras"] = {dialect.unknown_keys_extra: "strict"}
+    elif additional is True and dialect.unknown_keys_extra:
+        node["extras"] = {dialect.unknown_keys_extra: "passthrough"}
     return node
 
 

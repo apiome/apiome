@@ -30,7 +30,7 @@ import (
 }
 
 #Collections: {
-	list: [...string]
+	items: [...string]
 	nonEmpty: [_, ...int]
 	fixed: [string, int, bool]
 	bounded: list.MaxItems(10) & [...#Enum]

@@ -35,7 +35,7 @@ import "strings"
 
 	resources: #Resources
 	liveness:  #Probe
-	readiness: #Probe & {path: string | *"/readyz"}
+	readiness: #Probe
 	ingress:   #Ingress
 
 	envVars: [string]: string
@@ -62,7 +62,7 @@ platform: #Platform & {
 			replicas: 4
 			resources: {cpu: "1000m", memory: "2Gi"}
 			liveness: {}
-			readiness: {periodSeconds: 5}
+			readiness: {path: "/readyz", periodSeconds: 5}
 			ingress: {enabled: true, host: "api.example.com", paths: ["/v2/orders"]}
 			envVars: {LOG_LEVEL: "info", REGION: "eu-west-1"}
 			secrets: ["orders-db", "orders-signing-key"]
@@ -72,7 +72,7 @@ platform: #Platform & {
 			image: "registry.example.com/catalogue:1.9.4"
 			resources: {}
 			liveness: {}
-			readiness: {}
+			readiness: {path: "/readyz"}
 			ingress: {enabled: true, host: "api.example.com", paths: ["/v2/products"]}
 			envVars: {LOG_LEVEL: "warn"}
 			secrets: []

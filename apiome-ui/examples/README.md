@@ -98,9 +98,9 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `cddl/` | CDDL (RFC 8610) | data_schema | `name = { … }` rules with `tstr`/`bstr`/`uint` prelude types | 14 |
 | `cics-bms/` | CICS BMS maps (pending #5484) | data_schema | `DFHMSD`/`DFHMDI`/`DFHMDF` macro source with column-72 continuations | 14 |
 | `cobol-copybook/` | COBOL copybook | data_schema | level numbers + `PIC` clauses | 13 |
-| `cue/` | CUE (pending #5466) | data_schema | `package …` + `#Definition: {…}` with `&`/`\|`/`=~` constraints | 15 |
+| `cue/` | CUE | data_schema | `package …` + `#Definition: {…}` with `&`/`\|`/`=~` constraints | 15 |
 | `dbt/` | dbt models and manifests | data_schema | `version: 2` + `models:`/`sources:`, or `metadata.dbt_schema_version` in a manifest | 16 |
-| `dhall/` | Dhall (pending #5466) | data_schema | `let … in …` with type annotations, union types and `::` completion | 14 |
+| `dhall/` | Dhall | data_schema | `let … in …` with type annotations, union types and `::` completion | 14 |
 | `dtd/` | DTD | data_schema | `<!ELEMENT>`/`<!ATTLIST>` declarations, or a `<!DOCTYPE …[…]>` internal subset | 15 |
 | `flatbuffers/` | FlatBuffers | data_schema | `table`/`struct` + `root_type` | 11 |
 | `ims/` | IMS DBD and PSB (pending #5482) | data_schema | `DBD NAME=…,ACCESS=(…)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG` | 14 |
@@ -115,7 +115,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `odcs/` | Open Data Contract Standard v3.1 | data_schema | `apiVersion: v3.x` + `kind: DataContract` + `schema:` | 15 |
 | `opcua-nodeset/` | OPC UA NodeSet2 (pending #5468) | rpc | `<UANodeSet>` root in the OPC Foundation NodeSet2 namespace | 14 |
 | `owl/` | OWL / RDFS ontologies (pending #5471) | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 14 |
-| `pkl/` | Pkl (pending #5466) | data_schema | `module …` + `class`/`typealias` with member constraints and `Listing<…>` types | 14 |
+| `pkl/` | Pkl | data_schema | `module …` + `class`/`typealias` with member constraints and `Listing<…>` types | 14 |
 | `pli/` | PL/I structures (pending #5480) | data_schema | `DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE` | 15 |
 | `pydantic/` | Pydantic models | data_schema | `from pydantic import BaseModel` + `class X(BaseModel):` definitions | 15 |
 | `relaxng/` | RELAX NG (pending #5434) | data_schema | `grammar`/`element` root in the RELAX NG namespace, or a `.rnc` compact grammar | 15 |
@@ -656,25 +656,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/02-unresolvable-ref-missing-include.idl`** — is_corbaidl hard-rejects any text containing `include "` (an anti-Thrift guard) so the corbaidl sniffer never claims the file, and the thrift sniffer claims the #include line at 0.95 — the pipeline therefore grounds FORMAT_MISMATCH rather than an unresolved-reference code.
 
-### `cue/` — CUE (pending #5466)
+### `cue/` — CUE
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-schema.cue` | minimal | `cue` ≥ 0.85 | valid | `definition`, `scalars`, `pending-adapter` |
-| `02-typical-order-schema.cue` | typical | `cue` ≥ 0.85 | valid | `disjunction`, `regex-constraint`, `range-constraint`, `list-type`, `optional-field`, `default-branch`, `pending-adapter` |
-| `03-imports-set/cue.mod` ⚠ | multi-file (member) | `cue` (no guarantee) | valid | `multi-file`, `module-file`, `pending-adapter` |
-| `03-imports-set/schema.cue` | multi-file (root) | `cue` ≥ 0.85 | valid | `multi-file`, `import`, `package`, `pending-adapter` |
-| `03-imports-set/shared.cue` | multi-file (member) | `cue` (no guarantee) | valid | `multi-file`, `package`, `definitions`, `pending-adapter` |
-| `04-stress-lattice.cue` ⚠ | stress | `cue` ≥ 0.85 | valid | `open-struct`, `closed-struct`, `embedding`, `unification`, `comprehension`, `conditional-field`, `hidden-field`, `let-binding`, `recursion`, `interpolation`, `pattern-constraint`, `pending-adapter` |
-| `05-real-world-service-config.cue` | real-world | `cue` ≥ 0.85 | valid | `defaults`, `cross-field-constraint`, `pattern-keyed-map`, `schema-plus-instance`, `pending-adapter` |
-| `06-typical-schema-and-data.cue` | typical | `cue` ≥ 0.85 | valid | `schema-plus-data`, `unification`, `defaults`, `pending-adapter` |
-| `07-composition-embedding.cue` | composition | `cue` ≥ 0.85 | valid | `embedding`, `unification`, `disjunction`, `pattern-constraint`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-struct.cue` | — | `cue` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-struct`, `pending-adapter` |
-| `negative/02-semantic-conflicting-unification.cue` | — | `cue` (no guarantee) | invalid | `negative`, `semantic`, `bottom-value`, `conflicting-constraints`, `pending-adapter` |
-| `negative/03-truncated-mid-constraint.cue` | — | `cue` (no guarantee) | invalid | `negative`, `truncated`, `mid-constraint`, `pending-adapter` |
-| `negative/04-wrong-format-hcl.hcl` | — | `cue` (no guarantee) | invalid | `negative`, `wrong-format`, `hcl`, `pending-adapter` |
-| `negative/05-encoding-utf16.cue` | — | `cue` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-incomplete-value.cue` ⚠ | — | `cue` (no guarantee) | invalid | `negative`, `semantic`, `incomplete-value`, `pending-adapter` |
+| `01-minimal-schema.cue` | minimal | `cue` ≥ 0.85 | valid | `definition`, `scalars` |
+| `02-typical-order-schema.cue` | typical | `cue` ≥ 0.85 | valid | `disjunction`, `regex-constraint`, `range-constraint`, `list-type`, `optional-field`, `default-branch` |
+| `03-imports-set/cue.mod` ⚠ | multi-file (member) | `cue` (no guarantee) | valid | `multi-file`, `module-file` |
+| `03-imports-set/schema.cue` | multi-file (root) | `cue` ≥ 0.85 | valid | `multi-file`, `import`, `package` |
+| `03-imports-set/shared.cue` | multi-file (member) | `cue` (no guarantee) | valid | `multi-file`, `package`, `definitions` |
+| `04-stress-lattice.cue` ⚠ | stress | `cue` ≥ 0.85 | valid | `open-struct`, `closed-struct`, `embedding`, `unification`, `comprehension`, `conditional-field`, `hidden-field`, `let-binding`, `recursion`, `interpolation`, `pattern-constraint` |
+| `05-real-world-service-config.cue` | real-world | `cue` ≥ 0.85 | valid | `defaults`, `cross-field-constraint`, `pattern-keyed-map`, `schema-plus-instance` |
+| `06-typical-schema-and-data.cue` | typical | `cue` ≥ 0.85 | valid | `schema-plus-data`, `unification`, `defaults` |
+| `07-composition-embedding.cue` | composition | `cue` ≥ 0.85 | valid | `embedding`, `unification`, `disjunction`, `pattern-constraint` |
+| `negative/01-syntactic-unclosed-struct.cue` | — | `cue` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-struct` |
+| `negative/02-semantic-conflicting-unification.cue` | — | `cue` (no guarantee) | invalid | `negative`, `semantic`, `bottom-value`, `conflicting-constraints` |
+| `negative/03-truncated-mid-constraint.cue` | — | `cue` (no guarantee) | invalid | `negative`, `truncated`, `mid-constraint` |
+| `negative/04-wrong-format-hcl.hcl` | — | `cue` (no guarantee) | invalid | `negative`, `wrong-format`, `hcl` |
+| `negative/05-encoding-utf16.cue` | — | `cue` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-incomplete-value.cue` ⚠ | — | `cue` (no guarantee) | invalid | `negative`, `semantic`, `incomplete-value` |
 
 > ⚠ **`03-imports-set/cue.mod`** — Fileset member: the module descriptor that makes the import path resolvable.
 
@@ -707,24 +707,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-unresolvable-ref.yml`** — The FMT-5.4 acceptance case: a project with a broken ref().
 
-### `dhall/` — Dhall (pending #5466)
+### `dhall/` — Dhall
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-schema.dhall` | minimal | `dhall` ≥ 0.85 | valid | `schema-record`, `default`, `pending-adapter` |
-| `02-typical-order-schema.dhall` | typical | `dhall` ≥ 0.85 | valid | `record-type`, `union-type`, `Optional`, `List`, `typed-default`, `pending-adapter` |
-| `03-imports-set/package.dhall` | multi-file (root) | `dhall` ≥ 0.85 | valid | `multi-file`, `package-file`, `import`, `pending-adapter` |
-| `03-imports-set/shared.dhall` | multi-file (member) | `dhall` (no guarantee) | valid | `multi-file`, `shared-types`, `pending-adapter` |
-| `04-stress-type-system.dhall` ⚠ | stress | `dhall` ≥ 0.85 | valid | `union-with-payload`, `map-list`, `record-type-merge`, `record-prefer`, `type-function`, `generic-record`, `fold`, `hash-pinned-import`, `pending-adapter` |
-| `05-real-world-service-config.dhall` | real-world | `dhall` ≥ 0.85 | valid | `nested-schema-records`, `completion-operator`, `defaults`, `enumerated-environment`, `pending-adapter` |
-| `06-typical-union-and-defaults.dhall` | typical | `dhall` ≥ 0.85 | valid | `union-constructors`, `completion-operator`, `defaults`, `pending-adapter` |
-| `07-composition-record-merge.dhall` | composition | `dhall` ≥ 0.85 | valid | `record-type-merge`, `record-prefer`, `schema-record-reuse`, `union-of-composed`, `pending-adapter` |
-| `negative/01-syntactic-missing-in.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `syntactic`, `missing-in`, `pending-adapter` |
-| `negative/02-semantic-type-mismatch.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `semantic`, `type-mismatch`, `pending-adapter` |
-| `negative/03-truncated-mid-record.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `truncated`, `mid-union`, `pending-adapter` |
-| `negative/04-wrong-format-nickel.ncl` | — | `dhall` (no guarantee) | invalid | `negative`, `wrong-format`, `nickel`, `pending-adapter` |
-| `negative/05-encoding-utf16.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-import.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-import`, `pending-adapter` |
+| `01-minimal-schema.dhall` | minimal | `dhall` ≥ 0.85 | valid | `schema-record`, `default` |
+| `02-typical-order-schema.dhall` | typical | `dhall` ≥ 0.85 | valid | `record-type`, `union-type`, `Optional`, `List`, `typed-default` |
+| `03-imports-set/package.dhall` | multi-file (root) | `dhall` ≥ 0.85 | valid | `multi-file`, `package-file`, `import` |
+| `03-imports-set/shared.dhall` | multi-file (member) | `dhall` (no guarantee) | valid | `multi-file`, `shared-types` |
+| `04-stress-type-system.dhall` ⚠ | stress | `dhall` ≥ 0.85 | valid | `union-with-payload`, `map-list`, `record-type-merge`, `record-prefer`, `type-function`, `generic-record`, `fold`, `hash-pinned-import` |
+| `05-real-world-service-config.dhall` | real-world | `dhall` ≥ 0.85 | valid | `nested-schema-records`, `completion-operator`, `defaults`, `enumerated-environment` |
+| `06-typical-union-and-defaults.dhall` | typical | `dhall` ≥ 0.85 | valid | `union-constructors`, `completion-operator`, `defaults` |
+| `07-composition-record-merge.dhall` | composition | `dhall` ≥ 0.85 | valid | `record-type-merge`, `record-prefer`, `schema-record-reuse`, `union-of-composed` |
+| `negative/01-syntactic-missing-in.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `syntactic`, `missing-in` |
+| `negative/02-semantic-type-mismatch.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `semantic`, `type-mismatch` |
+| `negative/03-truncated-mid-record.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `truncated`, `mid-union` |
+| `negative/04-wrong-format-nickel.ncl` | — | `dhall` (no guarantee) | invalid | `negative`, `wrong-format`, `nickel` |
+| `negative/05-encoding-utf16.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-import.dhall` | — | `dhall` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-import` |
 
 > ⚠ **`04-stress-type-system.dhall`** — Type-level functions and the hash-pinned import are the declared limits; the sandbox must also refuse remote imports outright.
 
@@ -1815,24 +1815,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`04-stress-owl-constructs.ttl`** — The second half is open-world reasoning, not record structure; FMT-9.4 requires it declared rather than approximated.
 
-### `pkl/` — Pkl (pending #5466)
+### `pkl/` — Pkl
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-schema.pkl` | minimal | `pkl` ≥ 0.85 | valid | `module-properties`, `scalars`, `pending-adapter` |
-| `02-typical-order-schema.pkl` | typical | `pkl` ≥ 0.85 | valid | `typealias`, `union-type`, `regex-constraint`, `range-constraint`, `listing`, `nullable`, `default`, `pending-adapter` |
-| `03-modules-set/shared.pkl` | multi-file (member) | `pkl` (no guarantee) | valid | `multi-file`, `classes`, `pending-adapter` |
-| `03-modules-set/shipping.pkl` | multi-file (root) | `pkl` ≥ 0.85 | valid | `multi-file`, `import`, `cross-module-class`, `pending-adapter` |
-| `04-stress-type-system.pkl` ⚠ | stress | `pkl` ≥ 0.85 | valid | `Duration`, `DataSize`, `Mapping`, `Listing`, `open-class`, `abstract-class`, `inheritance`, `union`, `amending`, `late-binding`, `generator`, `conditional`, `read-env`, `output-renderer`, `function`, `pending-adapter` |
-| `05-real-world-service-config.pkl` | real-world | `pkl` ≥ 0.85 | valid | `open-class-template`, `amending`, `subclass-tightening`, `defaults`, `mapping-of-services`, `pending-adapter` |
-| `06-typical-template-and-instance.pkl` | typical | `pkl` ≥ 0.85 | valid | `template-plus-instance`, `listing-of-objects`, `defaults`, `pending-adapter` |
-| `07-composition-mixins.pkl` | composition | `pkl` ≥ 0.85 | valid | `open-class`, `inheritance-chain`, `amending`, `listing-of-classes`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-class.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-class`, `pending-adapter` |
-| `negative/02-semantic-type-constraint-violation.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `semantic`, `constraint-violation`, `pending-adapter` |
-| `negative/03-truncated-mid-property.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `truncated`, `mid-constraint`, `pending-adapter` |
-| `negative/04-wrong-format-cue.cue` | — | `pkl` (no guarantee) | invalid | `negative`, `wrong-format`, `cue`, `pending-adapter` |
-| `negative/05-encoding-utf16.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-import.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module`, `pending-adapter` |
+| `01-minimal-schema.pkl` | minimal | `pkl` ≥ 0.85 | valid | `module-properties`, `scalars` |
+| `02-typical-order-schema.pkl` | typical | `pkl` ≥ 0.85 | valid | `typealias`, `union-type`, `regex-constraint`, `range-constraint`, `listing`, `nullable`, `default` |
+| `03-modules-set/shared.pkl` | multi-file (member) | `pkl` (no guarantee) | valid | `multi-file`, `classes` |
+| `03-modules-set/shipping.pkl` | multi-file (root) | `pkl` ≥ 0.85 | valid | `multi-file`, `import`, `cross-module-class` |
+| `04-stress-type-system.pkl` ⚠ | stress | `pkl` ≥ 0.85 | valid | `Duration`, `DataSize`, `Mapping`, `Listing`, `open-class`, `abstract-class`, `inheritance`, `union`, `amending`, `late-binding`, `generator`, `conditional`, `read-env`, `output-renderer`, `function` |
+| `05-real-world-service-config.pkl` | real-world | `pkl` ≥ 0.85 | valid | `open-class-template`, `amending`, `subclass-tightening`, `defaults`, `mapping-of-services` |
+| `06-typical-template-and-instance.pkl` | typical | `pkl` ≥ 0.85 | valid | `template-plus-instance`, `listing-of-objects`, `defaults` |
+| `07-composition-mixins.pkl` | composition | `pkl` ≥ 0.85 | valid | `open-class`, `inheritance-chain`, `amending`, `listing-of-classes` |
+| `negative/01-syntactic-unclosed-class.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-class` |
+| `negative/02-semantic-type-constraint-violation.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `semantic`, `constraint-violation` |
+| `negative/03-truncated-mid-property.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `truncated`, `mid-constraint` |
+| `negative/04-wrong-format-cue.cue` | — | `pkl` (no guarantee) | invalid | `negative`, `wrong-format`, `cue` |
+| `negative/05-encoding-utf16.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-import.pkl` | — | `pkl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module` |
 
 > ⚠ **`04-stress-type-system.pkl`** — Second half exceeds JSON Schema and the sandbox: `read("env:…")` must be refused by the evaluation sandbox, and amending/late binding declared as limits.
 

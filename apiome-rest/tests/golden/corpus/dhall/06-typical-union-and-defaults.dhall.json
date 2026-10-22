@@ -1,0 +1,426 @@
+{
+  "adapter": "dhall",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "dhall": {
+        "capability_limits": [],
+        "exports": [
+          "Currency",
+          "Payment",
+          "Product"
+        ],
+        "files": [
+          "06-typical-union-and-defaults.dhall"
+        ],
+        "instances": [
+          "catalogue"
+        ],
+        "root_file": "06-typical-union-and-defaults.dhall",
+        "root_type": "Product"
+      }
+    },
+    "format": "dhall",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Product",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Product",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.EUR",
+            "name": "EUR",
+            "value": "EUR"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.GBP",
+            "name": "GBP",
+            "value": "GBP"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.USD",
+            "name": "USD",
+            "value": "USD"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "literal_union"
+        },
+        "fields": [],
+        "key": "Currency",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Currency",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Payment",
+        "key_type": null,
+        "kind": "union",
+        "name": "Payment",
+        "namespace": null,
+        "union_members": [
+          "PaymentBankTransfer",
+          "PaymentCard",
+          "Payment_literal"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "PaymentBankTransfer.bic",
+            "name": "bic",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PaymentBankTransfer.iban",
+            "name": "iban",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PaymentBankTransfer",
+        "key_type": null,
+        "kind": "record",
+        "name": "PaymentBankTransfer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PaymentCard.expiryMonth",
+            "name": "expiryMonth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PaymentCard.expiryYear",
+            "name": "expiryYear",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PaymentCard.networkToken",
+            "name": "networkToken",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PaymentCard",
+        "key_type": null,
+        "kind": "record",
+        "name": "PaymentCard",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Payment_literal.Cash",
+            "name": "Cash",
+            "value": "Cash"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "literal_union"
+        },
+        "fields": [],
+        "key": "Payment_literal",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Payment_literal",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": "EUR",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Currency",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": false,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.discontinued",
+            "name": "discontinued",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Product.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": [],
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Product.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Product",
+        "key_type": null,
+        "kind": "record",
+        "name": "Product",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "dhall/06-typical-union-and-defaults.dhall",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "dhall"
+  },
+  "fingerprint": "sha256:98e0f34ea7347805863776470b41607acec0cd44c3ae3c704162fc31543298e0",
+  "lint": {
+    "findings": 18,
+    "grade": "D",
+    "report_fingerprint": "3e0a1d32e6da15153692fc355bb3e36f4ceed46bf7855dee1bb9eaa241dc3f91",
+    "score": 68,
+    "severity_counts": {
+      "error": 0,
+      "info": 12,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

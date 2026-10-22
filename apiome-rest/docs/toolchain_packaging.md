@@ -16,12 +16,13 @@ instead of a crash.
 which tools ship and at what version. The Dockerfile installs exactly these versions via
 build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 
-Three tools are different. `asyncapi-parser` (FMT-1.3, #5414), `typescript-types-extractor`
-(FMT-8.1, #5462) and `zod-schema-extractor` (FMT-8.2, #5463) are **hard dependencies**: their
+Six tools are different. `asyncapi-parser` (FMT-1.3, #5414), `typescript-types-extractor`
+(FMT-8.1, #5462) and `zod-schema-extractor` (FMT-8.2, #5463) are **hard dependencies** whose
 exact pins live in the toolchain manifest
 `apiome-rest/toolchain/package.json`, which the container build installs from and CI installs
 from, and they have no build arg — so no build can quietly ship a reader the runtime never
-verified. See
+verified. `cue`, `pkl` and `dhall` (FMT-8.5, #5466) are hard dependencies too; they are native
+release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile build arg. See
 [Required tools & the startup self-check](#required-tools--the-startup-self-check) below.
 
 | Key | Tool | Pinned | Runtime | Installed by |
@@ -35,6 +36,9 @@ verified. See
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
 | `zod-schema-extractor` **(required)** | Evaluates a module's exported Zod schemas → JSON Schema (`zod`, FMT-8.2), and in `routers` mode its tRPC routers' procedures (`@trpc/server` 11.19.0, FMT-8.3) — permission-locked, network-free, time-bounded | `3.25.76` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/zod-extract.mjs`) |
+| `cue` **(required)** | CUE evaluator: `cue export` validates a package and its JSON Schema generator projects the definitions (FMT-8.5) | `0.17.1` | native | GitHub release tarball |
+| `pkl` **(required)** | Pkl evaluator: `pkl eval` runs the reflection program over a module (FMT-8.5) | `0.32.2` | native | GitHub release binary |
+| `dhall` **(required)** | Dhall interpreter: resolve, type-check, normalize and `encode --json` (FMT-8.5) | `1.42.2` | native | dhall-haskell release tarball — **x86_64 only**, so an arm64 image build fails at this step |
 | `asyncapi-diff` | AsyncAPI diff → breaking/non-breaking/unclassified (`@asyncapi/diff`, MFI-8.4) | `0.5.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-diff.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 | `graphql-inspector-diff` | GraphQL diff → breaking/dangerous/non-breaking (`@graphql-inspector/core`, MFI-10.5) | `6.2.0` | node | npm into tools prefix + Node wrapper (`toolchain/graphql-inspector-diff.mjs`) |
@@ -89,13 +93,14 @@ sidecar mount, or omit a tool entirely and accept its format degrading to "unava
 ## Required tools & the startup self-check
 
 `REQUIRED_TOOL_KEYS` in `src/app/toolchain_selfcheck.py` names the tools this runtime treats as
-**hard dependencies**. Today that is three:
+**hard dependencies**. Today that is six:
 
 | Key | Why it cannot be optional |
 |-----|---------------------------|
 | `asyncapi-parser` | The AsyncAPI adapter has no fallback parser — there is no pure-Python AsyncAPI 2.x/3.x parser behind it — and AsyncAPI is a shipped, documented, fixture-covered format. Losing it is losing a product surface. |
 | `typescript-types-extractor` | TypeScript type declarations are read by the TypeScript compiler itself (FMT-8.1); there is no Python reader of the language to fall back on, and the FMT-1.3 rule forbids a runtime `available: false` for a shipped format. |
 | `zod-schema-extractor` | A Zod schema — and a tRPC router — is a value, and only running the module can produce it (FMT-8.2, FMT-8.3). |
+| `cue`, `pkl`, `dhall` | Each typed configuration language is read by its own evaluator — CUE's unification, Pkl's reflection and late binding, Dhall's import resolution and normalization exist nowhere else (FMT-8.5). |
 
 At startup `app.main` calls `enforce_toolchain_selfcheck()`, which:
 
@@ -122,9 +127,17 @@ uv run python -m app.toolchain_selfcheck        # exits 1 when a required tool i
 The build proves the same thing before the image is finished: the Dockerfile pipes a tiny
 AsyncAPI document through `asyncapi-parser`, a one-line TypeScript module through
 `typescript-types-extract` and a one-line Zod module through `zod-extract`, and fails the build
-unless all three come back `ok`.
+unless all three come back `ok`. It then evaluates a one-line schema with each of `cue`, `pkl` and
+`dhall`.
 
-### The one tool that runs user code
+### The tools that evaluate user code
+
+`zod-extract` and the three typed-configuration evaluators (`cue`, `pkl`, `dhall`) all *evaluate*
+the upload, so all four run under `SandboxPolicy.for_untrusted_code()`. The FMT-8.5 evaluators run
+in a private temporary directory that is also their `HOME` and cache, with a 20-second wall-clock
+limit. Pkl is further locked to modules from the upload and its standard library and may read no
+resource (`--root-dir`, `--allowed-modules`, `--allowed-resources`); Dhall imports from URLs,
+environment variables and paths outside the upload are refused before Dhall runs.
 
 `zod-extract` *evaluates* the uploaded module, so it is held to more than the sandbox every tool
 gets. It re-executes itself under Node's permission model with read access to its own directory

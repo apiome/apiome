@@ -1498,6 +1498,49 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "cue": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="CUE (evaluated with the bundled cue 0.17.1)",
+                format_key="cue",
+                support=VersionSupport.UNGATED,
+                note="A CUE file declares no version the reader branches on; it is evaluated by "
+                "the bundled `cue`, which itself checks a module's `language: version` and "
+                "rejects a module written for a newer language than it implements. The JSON "
+                "Schema projection is CUE's own generator, which CUE marks experimental.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "pkl": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Pkl (evaluated with the bundled pkl 0.32.2)",
+                format_key="pkl",
+                support=VersionSupport.UNGATED,
+                note="A Pkl module declares no version the reader branches on (a "
+                "`@ModuleInfo { minPklVersion }` annotation is checked by Pkl itself); it is "
+                "reflected and evaluated by the bundled `pkl`.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "dhall": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Dhall (standard as implemented by the bundled dhall 1.42.2)",
+                format_key="dhall",
+                support=VersionSupport.UNGATED,
+                note="A Dhall expression declares no version; it is resolved, type-checked and "
+                "normalized by the bundled `dhall`, whose encoding of the normal form is the "
+                "standard binary encoding the reader walks.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pydantic": VersionCoverage(
         reads=[
             FormatVersion(

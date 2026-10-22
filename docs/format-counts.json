@@ -1,16 +1,16 @@
 {
   "version": "1",
-  "capability_registry_version": "28",
-  "total": 78,
-  "importable": 78,
+  "capability_registry_version": "29",
+  "total": 81,
+  "importable": 81,
   "exportable": 51,
   "round_trip": 51,
-  "import_only": 27,
+  "import_only": 30,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 77,
-  "toolchain_gated": 6,
+  "catalog": 80,
+  "toolchain_gated": 9,
   "paradigms": [
     {
       "id": "rest",
@@ -43,8 +43,8 @@
     {
       "id": "data_schema",
       "label": "Data schema",
-      "total": 33,
-      "importable": 33,
+      "total": 36,
+      "importable": 36,
       "exportable": 17
     },
     {

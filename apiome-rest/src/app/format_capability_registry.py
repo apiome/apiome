@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "28"
+REGISTRY_VERSION = "29"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2535,6 +2535,218 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "import with `INPUT_REFERENCE_UNRESOLVED` rather than being modelled as `Any`.",
             "Pydantic *output* is not implemented here, so models imported through this adapter "
             "are exported through another target's emitter and are not written back as Python.",
+        ],
+    ),
+    "cue": _Seed(
+        # CUE's payload analysis is the format-blind walk; the reviewed judgement is the projection
+        # statement. FMT-8.5's acceptance criteria are that CUE imports through its own export tool
+        # inside the sandbox and that constraints beyond JSON Schema are declared limits.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "Definitions are located by name (`#Order`, `Order.lines`). The JSON Schema CUE's "
+                "generator writes carries no positions, and a field reached by embedding or "
+                "unification is modelled on the definition that uses it."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "Definitions describe data; the concrete values a file also defines are validated "
+                "by `cue export` and listed by name in `extras['cue']['instances']`, not modelled as "
+                "types."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "cue.additional_properties",
+                "cue.builtin_validator",
+                "cue.bytes",
+                "cue.comprehension",
+                "cue.conditional_field",
+                "cue.default",
+                "cue.hidden_field",
+                "cue.interpolation",
+                "cue.intersection",
+                "cue.label_reference",
+                "cue.let_binding",
+                "cue.tuple_positions",
+                "cue.unmodelled_reference",
+                "cue.unrepresentable",
+            ],
+            note=(
+                "The bundled `cue` evaluates the upload (`cue export`, which rejects a conflict, an "
+                "incomplete value or a syntax error with CUE's own reason) and its JSON Schema "
+                "generator projects every `#Definition` of the root package, and of an imported "
+                "package a definition refers to. A struct definition is a closed `RECORD` (an "
+                "optional `?:` field is nullable); embedding and unification (`#Narrowed: #Scalars "
+                "& {…}`) become one record that extends its base; a disjunction of literals is an "
+                "`ENUM` and any other disjunction a `UNION`; a pattern constraint "
+                "(`[string]: int`) is a `MAP`; lists are lists. Bounds (`>=0`, `<=9999`), regular "
+                "expressions (`=~`), `int`, and the rune and item-count validators become "
+                "canonical constraints. The listed constructs are declared, never approximated: "
+                "comprehensions and interpolations leave their field out; conditional fields, "
+                "`let` bindings, hidden fields, defaults, other standard-library validators, "
+                "`bytes` and label references are recorded on what they touch. Every occurrence is "
+                "counted and located in `extras['cue']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Evaluation runs in the sandboxed toolchain runner with network isolation forced on and "
+            "strict, a private home and cache, and a time limit; an evaluation that does not finish fails "
+            "the import with `INPUT_TIME_LIMIT`.",
+            "A CUE module may be uploaded as a directory (`cue.mod/module.cue`, one directory per package) "
+            "or flat (a `cue.mod` file beside the package files); a flat upload is laid out as the module "
+            "CUE expects before it is evaluated.",
+            "CUE *output* is not implemented here, so definitions imported through this adapter are "
+            "exported through another target's emitter.",
+        ],
+    ),
+    "pkl": _Seed(
+        # Pkl's payload analysis is the format-blind walk; the reviewed judgement is the projection
+        # statement. FMT-8.5's acceptance criteria are that Pkl imports through its own evaluator
+        # inside the sandbox and that constraints beyond JSON Schema are declared limits.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "Classes and type aliases are located by name (`Order`, `Order.lines`); an "
+                "inherited property is modelled on the class that declares it and reached through "
+                "the subclass's base."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A module of classes describes data; module-level values that evaluate are "
+                "validated (a value that breaks its own type's constraint rejects the import) and "
+                "listed by name in `extras['pkl']['instances']`; defaults that evaluate to a "
+                "single value are field defaults."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "pkl.additional_properties",
+                "pkl.computed_default",
+                "pkl.external_read",
+                "pkl.generator",
+                "pkl.intersection",
+                "pkl.late_binding",
+                "pkl.method",
+                "pkl.non_string_key",
+                "pkl.output",
+                "pkl.tuple_positions",
+                "pkl.type_constraint",
+                "pkl.unit_type",
+                "pkl.unmodelled_reference",
+                "pkl.unrepresentable",
+            ],
+            note=(
+                "The bundled `pkl eval` runs a reflection program over the upload: `pkl:reflect` "
+                "resolves every class, type alias, import and superclass, and each property's "
+                "default is evaluated. A class is a closed `RECORD` that extends its superclass; a "
+                "union of string literals is an `ENUM` and any other union a `UNION`; `T?` is "
+                "nullable; `Listing`/`List` and `Set` are lists, `Mapping`/`Map` are `MAP`s; a type "
+                "alias of a constrained type is an `ALIAS` with constraints; a template module's own "
+                "properties (`id: String` with no value) are a record named after the module. "
+                "Constraints are read from the annotation the source declares: "
+                "`isBetween`, `isPositive`, `isNonNegative`, `this <op> n`, `length` comparisons, "
+                "`!isEmpty`, `isDistinct`, `matches(Regex(…))`, `startsWith` and `endsWith` become "
+                "canonical constraints, and `Int8`…`UInt` their bounds. The listed constructs are "
+                "declared: any other predicate, late binding, computed and generated defaults, "
+                "refused resource reads, `output` blocks, methods, `Duration`/`DataSize` and "
+                "non-string map keys. Every occurrence is counted and located in "
+                "`extras['pkl']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Evaluation is locked down: modules load only from the upload and Pkl's standard library, no "
+            "resource may be read (`read(\"env:…\")` is refused and declared), there is no network, and a "
+            "time limit stops an evaluation that does not finish.",
+            "A module that imports a module the upload does not contain is rejected with "
+            "`INPUT_REFERENCE_UNRESOLVED`, naming the module.",
+            "Pkl *output* is not implemented here, so classes imported through this adapter are exported "
+            "through another target's emitter.",
+        ],
+    ),
+    "dhall": _Seed(
+        # Dhall's payload analysis is the format-blind walk; the reviewed judgement is the
+        # projection statement. FMT-8.5's acceptance criteria are that Dhall imports through its own
+        # tooling inside the sandbox and that constraints beyond JSON Schema are declared limits.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "Types are located by the name the root expression binds them to (`Order`, "
+                "`Order.lines`); normalization inlines every `let`, so a source line would point "
+                "at a binding that no longer exists."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "Type-valued fields are modelled; data-valued fields (a default record, a list of "
+                "services) are type-checked by the interpreter and listed by name in "
+                "`extras['dhall']['instances']`. A schema record's `default` fields are field "
+                "defaults."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "dhall.additional_properties",
+                "dhall.computed_default",
+                "dhall.function",
+                "dhall.integrity_check",
+                "dhall.intersection",
+                "dhall.tuple_positions",
+                "dhall.unmodelled_reference",
+                "dhall.unrepresentable",
+            ],
+            note=(
+                "The bundled `dhall` resolves the upload's imports, type-checks and normalizes the "
+                "root expression, then encodes the normal form as JSON. Each record type is a "
+                "closed `RECORD` (an `Optional` field is nullable and not required); each schema "
+                "record (`{ Type = …, default = … }`) is the record of its `Type` with its "
+                "`default` fields as defaults; a union of empty alternatives is an `ENUM`, and a "
+                "union with payloads a `UNION` whose record payloads are named `<Union><Alternative>`; "
+                "`List { mapKey, mapValue }` is a `MAP`, as `dhall-to-json` renders it; `Natural` "
+                "is an integer with a minimum of 0. A nested type equal to a named one is a "
+                "reference to it (Dhall's types are structural, so the match is exact). Functions "
+                "(including type-level ones) and integrity-hash pins are declared. Every occurrence "
+                "is counted and located in `extras['dhall']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Imports from URLs, environment variables, absolute or home paths, and relative paths outside "
+            "the upload are refused before Dhall runs, with `INPUT_REFERENCE_UNRESOLVED`; the evaluation "
+            "has no network and a time limit.",
+            "`dhall-to-json` renders values, not types, so the reader projects the types itself from the "
+            "encoded normal form, following `dhall-to-json`'s conventions for what a value of each type "
+            "looks like in JSON.",
+            "Dhall *output* is not implemented here, so types imported through this adapter are exported "
+            "through another target's emitter.",
         ],
     ),
     "trpc": _Seed(

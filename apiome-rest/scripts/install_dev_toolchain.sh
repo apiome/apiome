@@ -19,12 +19,16 @@
 #                    REQUIRED (FMT-8.2, #5463; FMT-8.3, #5464) — evaluates a module's Zod schemas
 #                    and tRPC routers with the pinned `zod` and `@trpc/server` (and transpiles
 #                    with the pinned `typescript`).
+#   cue, pkl, dhall  REQUIRED (FMT-8.5, #5466) — the CUE, Pkl and Dhall evaluators. Native release
+#                    binaries pinned in BUNDLED_TOOLS (src/app/toolchain_packaging.py); dhall-haskell
+#                    publishes Linux x86_64 and macOS x86_64 builds only.
 #
 # Usage:
 #   ./scripts/install_dev_toolchain.sh [--force] [tool ...]
 #
 # With no tool named, everything above is installed. Name one or more (`buf`,
-# `asyncapi-parser`, `typescript-types-extractor`, `zod-schema-extractor`) to install just those — CI uses that to add
+# `asyncapi-parser`, `typescript-types-extractor`, `zod-schema-extractor`, `cue`, `pkl`, `dhall`) to
+# install just those — CI uses that to add
 # the required Node tools without re-downloading buf.
 
 set -euo pipefail
@@ -51,11 +55,12 @@ Run from the apiome-rest directory (or via ./run.sh / yarn dev).
 
   --force   Re-install even when a working tool is already present.
   tool      Install only the named tool(s): buf, asyncapi-parser,
-            typescript-types-extractor, zod-schema-extractor. Default: all.
+            typescript-types-extractor, zod-schema-extractor, cue, pkl, dhall.
+            Default: all.
 EOF
       exit 0
       ;;
-    buf|asyncapi-parser|typescript-types-extractor|zod-schema-extractor) SELECTED+=("$arg") ;;
+    buf|asyncapi-parser|typescript-types-extractor|zod-schema-extractor|cue|pkl|dhall) SELECTED+=("$arg") ;;
     *)
       echo "install_dev_toolchain: unknown argument '${arg}' (try --help)" >&2
       exit 1
@@ -326,6 +331,76 @@ install_zod_schema_extractor() {
   echo "install_dev_toolchain: installed ${ZOD_BIN} ($("$ZOD_BIN" --version 2>/dev/null | head -1))"
 }
 
+# ---------------------------------------------------------------------------------------
+# cue, pkl, dhall — REQUIRED (FMT-8.5, #5466)
+# ---------------------------------------------------------------------------------------
+#
+# Native release binaries, each pinned in BUNDLED_TOOLS. An installed binary counts only when it
+# reports the pinned version, exactly like buf.
+
+# The pinned version of a bundled tool, read from BUNDLED_TOOLS.
+pinned_version() {
+  grep -E "^\s+key=\"$1\"" -A4 src/app/toolchain_packaging.py \
+    | grep -E 'version=' | head -1 \
+    | sed -E 's/.*version="([^"]+)".*/\1/'
+}
+
+# Whether `$1` is installed at the pinned version (its version banner contains it).
+native_ok() {
+  local bin="${TOOLS_BIN}/$1" probe="$2"
+  [[ -x "$bin" ]] || return 1
+  "$bin" $probe 2>/dev/null | head -1 | grep -qF "$(pinned_version "$1")"
+}
+
+install_native() {
+  local tool="$1" probe="$2" version os arch url
+  version="$(pinned_version "$tool")"
+  if [[ -z "$version" ]]; then
+    echo "install_dev_toolchain: could not read the ${tool} pin from src/app/toolchain_packaging.py" >&2
+    exit 1
+  fi
+  if native_ok "$tool" "$probe" && [[ "$FORCE" -eq 0 ]]; then
+    echo "install_dev_toolchain: ${tool} already installed at ${TOOLS_BIN}/${tool} (${version})"
+    return 0
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "install_dev_toolchain: curl is required to download ${tool}" >&2
+    exit 1
+  fi
+  os="$(uname -s)"
+  arch="$(uname -m)"
+  local tmp
+  tmp="$(mktemp -d)"
+  case "${tool}" in
+    cue)
+      case "${os}" in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "install_dev_toolchain: unsupported OS ${os}" >&2; exit 1 ;; esac
+      case "${arch}" in x86_64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; esac
+      url="https://github.com/cue-lang/cue/releases/download/v${version}/cue_v${version}_${os}_${arch}.tar.gz"
+      curl -fsSL "${url}" | tar -xz -C "${tmp}" cue
+      mv "${tmp}/cue" "${TOOLS_BIN}/cue"
+      ;;
+    pkl)
+      case "${os}" in Linux) os=linux ;; Darwin) os=macos ;; *) echo "install_dev_toolchain: unsupported OS ${os}" >&2; exit 1 ;; esac
+      case "${arch}" in x86_64) arch=amd64 ;; aarch64|arm64) arch=aarch64 ;; esac
+      url="https://github.com/apple/pkl/releases/download/${version}/pkl-${os}-${arch}"
+      curl -fsSL "${url}" -o "${TOOLS_BIN}/pkl"
+      ;;
+    dhall)
+      case "${os}" in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "install_dev_toolchain: unsupported OS ${os}" >&2; exit 1 ;; esac
+      url="https://github.com/dhall-lang/dhall-haskell/releases/download/${version}/dhall-${version}-x86_64-${os}.tar.bz2"
+      curl -fsSL "${url}" | tar -xj -C "${tmp}" bin/dhall
+      mv "${tmp}/bin/dhall" "${TOOLS_BIN}/dhall"
+      ;;
+  esac
+  rm -rf "${tmp}"
+  chmod +x "${TOOLS_BIN}/${tool}"
+  if ! native_ok "$tool" "$probe"; then
+    echo "install_dev_toolchain: installed ${tool} but '${TOOLS_BIN}/${tool} ${probe}' does not report ${version}" >&2
+    exit 1
+  fi
+  echo "install_dev_toolchain: installed ${TOOLS_BIN}/${tool} (${version})"
+}
+
 if wanted buf; then
   install_buf
 fi
@@ -337,6 +412,15 @@ if wanted typescript-types-extractor; then
 fi
 if wanted zod-schema-extractor; then
   install_zod_schema_extractor
+fi
+if wanted cue; then
+  install_native cue version
+fi
+if wanted pkl; then
+  install_native pkl --version
+fi
+if wanted dhall; then
+  install_native dhall --version
 fi
 
 echo "install_dev_toolchain: restart the REST API (yarn dev) if it is already running."

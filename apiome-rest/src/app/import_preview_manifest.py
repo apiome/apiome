@@ -118,7 +118,11 @@ from .arrow_normalizer import ARROW_EXTRAS_KEY
 from .breaking_change import classify_models, get_breaking_change_classifier
 from .canonical_model import CanonicalApi
 from .cddl_normalizer import CDDL_EXTRAS_KEY
+from .cue_parser import CUE_FORMAT
+from .cue_parser import PARTIAL_LIMITS as CUE_PARTIAL_LIMITS
 from .dbt_normalizer import DBT_EXTRAS_KEY
+from .dhall_parser import DHALL_FORMAT
+from .dhall_parser import PARTIAL_LIMITS as DHALL_PARTIAL_LIMITS
 from .dtd_normalizer import DTD_EXTRAS_KEY
 from .export_projection import (
     NATIVE_ID_EXTRA_KEYS,
@@ -146,6 +150,8 @@ from .import_source_pipeline import ImportRunArtifacts, _normalize_import_projec
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
 from .odcs_normalizer import ODCS_EXTRAS_KEY
+from .pkl_parser import PARTIAL_LIMITS as PKL_PARTIAL_LIMITS
+from .pkl_parser import PKL_FORMAT
 from .projection_taxonomy import ProjectionReason, ProjectionStatus
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY as PROTO_EDITIONS_EXTRA_KEY,
@@ -250,6 +256,11 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-8.4: the Pydantic projection record (root module, modules, exports, declared
         # limits). Our own bookkeeping about the read.
         PYDANTIC_EXTRAS_KEY,
+        # FMT-8.5: the CUE / Pkl / Dhall projection records (root file, files, exports, validated
+        # instances, declared limits) sit under the format's own key. Our own bookkeeping.
+        CUE_FORMAT,
+        PKL_FORMAT,
+        DHALL_FORMAT,
         # FMT-5.3: the Kafka Connect projection record (root schemas, whether the intake
         # was enveloped, the source files, the declared limits). Our own bookkeeping about
         # the read — the schema's own constructs are the structs and fields it declares,
@@ -1191,6 +1202,7 @@ def _document_scope_rows(
     ledger.extend(_zod_capability_rows(api))
     ledger.extend(_trpc_capability_rows(api))
     ledger.extend(_pydantic_capability_rows(api))
+    ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
     ledger.extend(_dbt_capability_rows(api))
@@ -2010,6 +2022,30 @@ def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="pydantic", extras_key=PYDANTIC_EXTRAS_KEY, partial=PYDANTIC_PARTIAL_LIMITS
     )
+
+
+def _typed_config_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-8.5 CUE / Pkl / Dhall declared limits as document-scoped ledger rows.
+
+    A constraint, default or detail the language states and JSON Schema cannot keeps its field
+    or definition, so it is ``partially-mapped``; a computed field, a function or anything else
+    left out of the model is ``not-parsed-by-adapter``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    partial_by_format = {
+        CUE_FORMAT: CUE_PARTIAL_LIMITS,
+        PKL_FORMAT: PKL_PARTIAL_LIMITS,
+        DHALL_FORMAT: DHALL_PARTIAL_LIMITS,
+    }
+    partial = partial_by_format.get(api.format)
+    if partial is None:
+        return []
+    return _graded_limit_rows(api, format_key=api.format, extras_key=api.format, partial=partial)
 
 
 def _odcs_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

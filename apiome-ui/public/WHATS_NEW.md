@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Zod schemas import — a module's exported Zod schemas with their validation constraints (lengths, patterns, formats, bounds), run in a sandbox with no network and a time limit; `refine`, `transform` and `brand` are listed in the coverage ledger
     - tRPC router import — procedures as query, mutation and subscription operations, nested routers as operation groups, and Zod inputs and outputs with their constraints
     - Pydantic models import — models, `Field` constraints, enums and unions from a Python module, read as text so the module is never run; `create_model` and validators are listed in the coverage ledger
+    - CUE, Pkl and Dhall import — typed configuration schemas with their constraints, evaluated by each language's own tool in a sandbox with no network; CUE comprehensions, Pkl late binding and Dhall functions are listed in the coverage ledger
     - Gateway export to Envoy xDS, Istio, Traefik, AWS API Gateway, Azure API Management and Apigee — six new Export Studio cards under REST & HTTP, each checked against its product's rules; **Push back** now works for AWS, Azure APIM and Apigee gateway configs
     - A2A Agent Card import (skills and tags, live discovery from `/.well-known/agent-card.json`)
     - ACP agent manifest import (agents and capabilities, live discovery from a server's `/agents`)
