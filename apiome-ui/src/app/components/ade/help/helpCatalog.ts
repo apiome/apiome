@@ -687,6 +687,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['traefik', 'nginx', 'haproxy', 'consul', 'tyk', 'reverse proxy', 'location', 'use_backend', 'ingressroute'],
   },
   {
+    id: 'typescript-types-import',
+    title: 'Import TypeScript types',
+    summary: 'Catalog the interfaces, type aliases and enums a TypeScript module exports.',
+    page: 'apiome-docs/docs/bring-in/typescript-types-import.md',
+    section: 'reference',
+    keywords: ['ts', 'd.ts', 'interface', 'type alias', 'enum', 'generics', 'declaration file'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

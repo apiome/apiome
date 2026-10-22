@@ -16,10 +16,11 @@ instead of a crash.
 which tools ship and at what version. The Dockerfile installs exactly these versions via
 build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 
-One tool is different. `asyncapi-parser` is a **hard dependency** (FMT-1.3, #5414): its exact
-pin lives in the toolchain manifest `apiome-rest/toolchain/package.json`, which the container
-build installs from and CI installs from, and it has no build arg — so no build can quietly
-ship a parser the runtime never verified. See
+Two tools are different. `asyncapi-parser` (FMT-1.3, #5414) and `typescript-types-extractor`
+(FMT-8.1, #5462) are **hard dependencies**: their exact pins live in the toolchain manifest
+`apiome-rest/toolchain/package.json`, which the container build installs from and CI installs
+from, and they have no build arg — so no build can quietly ship a reader the runtime never
+verified. See
 [Required tools & the startup self-check](#required-tools--the-startup-self-check) below.
 
 | Key | Tool | Pinned | Runtime | Installed by |
@@ -31,6 +32,7 @@ ship a parser the runtime never verified. See
 | `amf` | AML Modeling Framework (RAML/OAS) | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
+| `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
 | `asyncapi-diff` | AsyncAPI diff → breaking/non-breaking/unclassified (`@asyncapi/diff`, MFI-8.4) | `0.5.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-diff.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 | `graphql-inspector-diff` | GraphQL diff → breaking/dangerous/non-breaking (`@graphql-inspector/core`, MFI-10.5) | `6.2.0` | node | npm into tools prefix + Node wrapper (`toolchain/graphql-inspector-diff.mjs`) |
@@ -38,7 +40,7 @@ ship a parser the runtime never verified. See
 | `vacuum` | OpenAPI lint (`daveshanley/vacuum`, CLX-2.2) | `0.29.9` | native | GitHub release tarball |
 | `redocly` | OpenAPI lint/resolve (`@redocly/cli`, CLX-2.2) | `2.39.0` | node | npm into tools prefix + wrapper |
 
-All thirteen land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
+All of them land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
 wrappers so the runner invokes them by bare name exactly like the native binaries. The
 `asyncapi-parser` tool is a small repo-committed Node script (`apiome-rest/toolchain/
 asyncapi-parse.mjs`) that imports `@asyncapi/parser`: it reads a document on `stdin` and writes
@@ -85,11 +87,12 @@ sidecar mount, or omit a tool entirely and accept its format degrading to "unava
 ## Required tools & the startup self-check
 
 `REQUIRED_TOOL_KEYS` in `src/app/toolchain_selfcheck.py` names the tools this runtime treats as
-**hard dependencies**. Today that is exactly one:
+**hard dependencies**. Today that is two:
 
 | Key | Why it cannot be optional |
 |-----|---------------------------|
 | `asyncapi-parser` | The AsyncAPI adapter has no fallback parser — there is no pure-Python AsyncAPI 2.x/3.x parser behind it — and AsyncAPI is a shipped, documented, fixture-covered format. Losing it is losing a product surface. |
+| `typescript-types-extractor` | TypeScript type declarations are read by the TypeScript compiler itself (FMT-8.1); there is no Python reader of the language to fall back on, and the FMT-1.3 rule forbids a runtime `available: false` for a shipped format. |
 
 At startup `app.main` calls `enforce_toolchain_selfcheck()`, which:
 
@@ -114,7 +117,8 @@ uv run python -m app.toolchain_selfcheck        # exits 1 when a required tool i
 ```
 
 The build proves the same thing before the image is finished: the Dockerfile pipes a tiny
-AsyncAPI document through `asyncapi-parser` and fails the build unless it comes back `ok`.
+AsyncAPI document through `asyncapi-parser`, and a one-line TypeScript module through
+`typescript-types-extract`, and fails the build unless both come back `ok`.
 
 ### Keeping the hard pin in sync
 

@@ -1188,6 +1188,12 @@ def load_builtin_import_sources() -> None:
     # endpoint — and, via its own imports, the Arrow normalizer under ``arrow``.
     from . import arrow_import_source as _arrow  # noqa: F401
 
+    # ``typescript_types_import_source`` (FMT-8.1) self-registers the ``typescript-types``
+    # adapter — a module, a paste or a module set of `interface` / `type` / `enum`
+    # declarations, read by the bundled TypeScript compiler — and, via its own imports, the
+    # normalizer under ``typescript-types``.
+    from . import typescript_types_import_source as _typescript_types  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

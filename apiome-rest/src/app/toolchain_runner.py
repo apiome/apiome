@@ -45,6 +45,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -81,6 +82,7 @@ __all__ = [
     "resolve_executable",
     "default_runner",
     "run_tool",
+    "run_tool_blocking",
     "SAMPLE_ECHO_TOOL_KEY",
 ]
 
@@ -893,3 +895,56 @@ async def run_tool(
     return await default_runner.run(
         key, args, stdin=stdin, timeout=timeout, cwd=cwd, extra_env=extra_env, policy=policy
     )
+
+
+def run_tool_blocking(
+    key: str,
+    args: Sequence[str] = (),
+    *,
+    stdin: Optional[str] = None,
+    timeout: Optional[float] = None,
+    thread_name: str = "toolchain-run",
+) -> ToolRunResult:
+    """Run a registered tool to completion from synchronous code.
+
+    The :class:`~app.import_source.ImportSource` SPI is synchronous, but it is called from the
+    service's running event loop, where :func:`asyncio.run` is illegal. This runs the tool on a
+    dedicated worker thread with its own event loop and a fresh sibling runner — so the
+    runner's loop-bound semaphore is created on *that* loop rather than reused across loops —
+    and re-raises anything the worker raised on the caller's thread.
+
+    Args:
+        key: The registered tool key.
+        args: Per-call arguments.
+        stdin: Text fed to the tool's standard input.
+        timeout: Per-call timeout in seconds; falls back to the tool/service default.
+        thread_name: Name for the worker thread, so a stuck call is identifiable.
+
+    Returns:
+        The tool's :class:`ToolRunResult`.
+
+    Raises:
+        ToolchainError: Any runner failure (tool missing, timed out, bad output, …).
+    """
+    box: Dict[str, Any] = {}
+
+    def _worker() -> None:
+        async def _drive() -> ToolRunResult:
+            runner = ToolchainRunner(
+                max_concurrency=default_runner.max_concurrency,
+                default_timeout_seconds=default_runner.default_timeout_seconds,
+                default_policy=default_runner.default_policy,
+            )
+            return await runner.run(key, args, stdin=stdin, timeout=timeout)
+
+        try:
+            box["value"] = asyncio.run(_drive())
+        except BaseException as exc:  # noqa: BLE001 - re-raised on the caller's thread below
+            box["error"] = exc
+
+    thread = threading.Thread(target=_worker, name=thread_name, daemon=True)
+    thread.start()
+    thread.join()
+    if "error" in box:
+        raise box["error"]
+    return box["value"]

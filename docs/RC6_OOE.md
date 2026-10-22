@@ -181,7 +181,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 54 | 3 | C2 | [#5467](https://github.com/apiome/apiome/issues/5467) | FMT-8.6 | Inference provenance and confidence labelling for code-first sources | — | Core |
 | 55 | 3 | C2 | [#5465](https://github.com/apiome/apiome/issues/5465) | FMT-8.4 | Pydantic model import | FMT-8.6 | Core |
 | 56 | 3 | C2 | [#5463](https://github.com/apiome/apiome/issues/5463) | FMT-8.2 | Zod schema import | FMT-8.6 | Core |
-| 57 | 3 | C2 | [#5462](https://github.com/apiome/apiome/issues/5462) | FMT-8.1 | TypeScript type declaration import | FMT-8.6 | Core |
 | 58 | 3 | C2 | [#5464](https://github.com/apiome/apiome/issues/5464) | FMT-8.3 | tRPC router import | FMT-8.1, FMT-8.2 | Core |
 | 59 | 3 | C2 | [#5466](https://github.com/apiome/apiome/issues/5466) | FMT-8.5 | CUE, Pkl and Dhall import | FMT-8.6 | Core |
 | 60 | 3 | C2 | [#5408](https://github.com/apiome/apiome/issues/5408) | FMT-EPIC-8 | Code-first & type-system sources | close after FMT-8.1…8.6 | Core |

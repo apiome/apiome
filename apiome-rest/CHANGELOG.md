@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.423.0] - 2026-10-22
+
+### Added
+- **TypeScript type declaration import (#5462, FMT-8.1)**: a new `typescript-types` import source reads the
+  exported `interface`, `type` and `enum` declarations of a `.ts` / `.d.ts` module — or a set of modules that
+  `import type` from one another — as a schemas-only catalog source (`data_schema`).
+  - The module is read by the TypeScript compiler itself: `toolchain/typescript-types-extract.mjs` runs the
+    `typescript` compiler API in the Node toolchain sandbox and emits a neutral JSON AST that
+    `app.typescript_types_normalizer` maps to canonical types.
+  - Primitives, literals, unions (discriminated unions name their variants), intersections of object shapes,
+    arrays, tuples, index signatures, `Record` / `Map` / `Set`, optional and readonly modifiers, enums and
+    `extends` all model; `Pick`, `Omit`, `Partial`, `Required`, `Readonly`, indexed access and `keyof` are
+    evaluated by the compiler. Optional members and `| null` / `| undefined` map to nullability.
+  - Generics are resolved where they are instantiated (`type OrderPage = Page<Order>` is a concrete record).
+    Uninstantiated generics, conditional, mapped and template-literal types, function types, symbol keys and
+    declaration merging are **declared parsing limits** in `extras['typescript']['capability_limits']` and on
+    the import preview's coverage ledger — never flattened to `any`.
+  - Rejections are classified: syntax error `INPUT_MALFORMED`, text cut short `INPUT_TRUNCATED`, no exported
+    types `INPUT_SEMANTIC_INVALID`, a reference to a module outside the upload `INPUT_REFERENCE_UNRESOLVED`,
+    a Zod (or other schema-builder) module `FORMAT_MISMATCH`, UTF-16 `INPUT_ENCODING_INVALID`.
+  - Reviewed capability seed (registry version 24 -> 25), version coverage, golden snapshots for the 7 valid
+    corpus entries, the round-trip matrix row and the corpus parity row.
+- **Toolchain**: `typescript` 6.0.3 is a **required** Node dependency under the FMT-1.3 packaging rule — pinned in
+  `toolchain/package.json`, installed and smoke-tested by the Dockerfile, invoked by the startup self-check
+  (`typescript-types-extractor` joins `asyncapi-parser` in `REQUIRED_TOOL_KEYS`), and installed for local dev
+  and CI by `./scripts/install_dev_toolchain.sh typescript-types-extractor`.
+- `app.toolchain_runner.run_tool_blocking` runs a bundled tool to completion from the synchronous
+  `ImportSource` SPI (a worker thread with its own event loop).
+
 ## [1.422.0] - 2026-10-21
 
 ### Added

@@ -1,0 +1,20 @@
+---
+slug: typescript-types-import
+title: Import TypeScript types
+description: Catalog the interfaces, type aliases and enums a TypeScript module exports.
+authors: [apiome]
+---
+
+A `types.ts` is often the only description a team has of its data. Apiome now imports the exported
+`interface`, `type` and `enum` declarations of a TypeScript module as catalog schema types.
+[What gets imported](/bring-in/typescript-types-import).
+
+{/* truncate */}
+
+- **Read by the TypeScript compiler.** References resolve across `import type` and re-exports, and
+  `Pick`, `Omit`, `Partial`, indexed access and `keyof` become the shape the compiler computes.
+- **Modules and sets.** Upload one `.ts` or `.d.ts` file, paste the source, or upload an archive of
+  modules that import one another.
+- **Generics where they are used.** `type OrderPage = Page<Order>` becomes a concrete record.
+- **Nothing becomes `any`.** Conditional, mapped and template-literal types, uninstantiated generics
+  and merged interfaces are listed in the coverage ledger instead of being guessed.

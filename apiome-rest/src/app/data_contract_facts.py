@@ -118,6 +118,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "sql-ddl",
         "swift-mt",
         "tradacoms",
+        "typescript-types",
         "xsd",
     }
 )

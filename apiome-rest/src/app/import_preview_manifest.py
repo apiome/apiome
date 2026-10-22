@@ -152,6 +152,7 @@ from .proto_editions import (
 )
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
+from .typescript_types_normalizer import TYPESCRIPT_EXTRAS_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +231,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # metadata carried through, the Flight envelope). Our own bookkeeping about the
         # read — the schema's own constructs are the fields it declares.
         ARROW_EXTRAS_KEY,
+        # FMT-8.1: the TypeScript projection record (root module, the module set, the export
+        # list, declared limits). Our own bookkeeping about the read — the module's own
+        # constructs are the declarations it exports.
+        TYPESCRIPT_EXTRAS_KEY,
         # FMT-5.3: the Kafka Connect projection record (root schemas, whether the intake
         # was enveloped, the source files, the declared limits). Our own bookkeeping about
         # the read — the schema's own constructs are the structs and fields it declares,
@@ -1167,6 +1172,7 @@ def _document_scope_rows(
     ledger.extend(_dtd_capability_rows(api))
     ledger.extend(_cddl_capability_rows(api))
     ledger.extend(_arrow_capability_rows(api))
+    ledger.extend(_typescript_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
     ledger.extend(_dbt_capability_rows(api))
@@ -1849,6 +1855,67 @@ def _arrow_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         location_label="Field(s)",
         normalized_noun="field",
     )
+
+
+#: The FMT-8.1 limits whose construct *is* modelled, with only a detail carried in extras —
+#: a tuple's per-position types, an index signature beside named properties, an
+#: intersection's non-object member. Every other TypeScript limit leaves its declaration or
+#: member out of the model, which is a parse limit rather than a partial mapping.
+_TYPESCRIPT_PARTIAL_LIMITS = frozenset(
+    {"typescript.tuple_positions", "typescript.index_signature", "typescript.intersection"}
+)
+
+
+def _typescript_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-8.1 TypeScript declared limits as document-scoped ledger rows.
+
+    Unlike the readers that only ever *approximate*, the TypeScript reader leaves things out:
+    FMT-8.1 forbids flattening a conditional, mapped or template-literal type, an
+    uninstantiated generic or a merged interface to ``any``, so the declaration or member that
+    needs one is not modelled. Those rows are graded ``not-parsed-by-adapter`` — the parser's
+    subset stops there, and the ledger says so per construct and per location. The three
+    limits whose construct *is* modelled (:data:`_TYPESCRIPT_PARTIAL_LIMITS`) are
+    ``partially-mapped``, exactly as :func:`_declared_limit_rows` grades every other reader's.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit, or an empty list for a module that met none.
+    """
+    report = api.extras.get(TYPESCRIPT_EXTRAS_KEY) if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict) or api.format != "typescript-types":
+        return []
+    rows: List[CoverageEntry] = []
+    for limit in report.get("capability_limits") or []:
+        if not isinstance(limit, dict) or not limit.get("construct"):
+            continue
+        construct = str(limit.get("construct"))
+        coverage = (
+            CoverageClass.PARTIALLY_MAPPED
+            if construct in _TYPESCRIPT_PARTIAL_LIMITS
+            else CoverageClass.NOT_PARSED_BY_ADAPTER
+        )
+        status, reason = STATUS_FOR_COVERAGE[coverage]
+        count = int(limit.get("count") or 1)
+        locations = [str(name) for name in (limit.get("locations") or [])]
+        where = f" Declaration(s): {', '.join(locations)}." if locations else ""
+        consequence = (
+            "the declaration itself is normalized"
+            if coverage is CoverageClass.PARTIALLY_MAPPED
+            else "left out of the model, never widened to `any`"
+        )
+        rows.append(
+            CoverageEntry(
+                source_construct=construct,
+                coverage=coverage,
+                status=status,
+                reason=reason,
+                detail=f"{limit.get('detail')} ({count} occurrence(s); {consequence}.){where}",
+                document_scoped=True,
+            )
+        )
+    return rows
 
 
 def _odcs_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

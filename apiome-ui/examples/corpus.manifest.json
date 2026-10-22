@@ -573,7 +573,7 @@
       "marker": "`api_id` + `proxy.listen_path`, or an OpenAPI document with `x-tyk-api-gateway`"
     },
     "typescript-types": {
-      "label": "TypeScript type declarations (pending #5462)",
+      "label": "TypeScript type declarations",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts`"
@@ -29337,7 +29337,7 @@
     {
       "path": "typescript-types/01-minimal-model.d.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29345,8 +29345,7 @@
       },
       "features": [
         "interface",
-        "primitives",
-        "pending-adapter"
+        "primitives"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29357,7 +29356,7 @@
     {
       "path": "typescript-types/02-typical-order-model.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29370,8 +29369,7 @@
         "array",
         "readonly",
         "Pick",
-        "Omit",
-        "pending-adapter"
+        "Omit"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29382,7 +29380,7 @@
     {
       "path": "typescript-types/03-modules-set/customer.d.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29390,8 +29388,7 @@
       },
       "features": [
         "multi-file",
-        "interface",
-        "pending-adapter"
+        "interface"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29403,7 +29400,7 @@
     {
       "path": "typescript-types/03-modules-set/index.d.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29412,8 +29409,7 @@
       "features": [
         "multi-file",
         "re-export",
-        "import-type",
-        "pending-adapter"
+        "import-type"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29425,7 +29421,7 @@
     {
       "path": "typescript-types/03-modules-set/order.d.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29433,8 +29429,7 @@
       },
       "features": [
         "multi-file",
-        "cross-module-type",
-        "pending-adapter"
+        "cross-module-type"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29446,7 +29441,7 @@
     {
       "path": "typescript-types/04-stress-type-system.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29464,8 +29459,7 @@
         "template-literal-type",
         "declaration-merging",
         "unique-symbol",
-        "function-type",
-        "pending-adapter"
+        "function-type"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29477,7 +29471,7 @@
     {
       "path": "typescript-types/05-real-world-api-client-types.d.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29488,8 +29482,7 @@
         "generic-instantiation",
         "discriminated-union",
         "money",
-        "pagination",
-        "pending-adapter"
+        "pagination"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29500,7 +29493,7 @@
     {
       "path": "typescript-types/06-typical-discriminated-unions.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29510,8 +29503,7 @@
         "discriminated-union",
         "extends",
         "indexed-access",
-        "nested-object",
-        "pending-adapter"
+        "nested-object"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29522,7 +29514,7 @@
     {
       "path": "typescript-types/07-composition-inheritance.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "valid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29532,8 +29524,7 @@
         "multiple-extends",
         "intersection",
         "generic-instantiation",
-        "index-signature",
-        "pending-adapter"
+        "index-signature"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29544,7 +29535,7 @@
     {
       "path": "typescript-types/negative/01-syntactic-missing-brace.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29553,8 +29544,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-brace",
-        "pending-adapter"
+        "missing-brace"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29566,7 +29556,7 @@
     {
       "path": "typescript-types/negative/02-semantic-no-exported-types.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29575,8 +29565,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-exported-types",
-        "pending-adapter"
+        "no-exported-types"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29588,7 +29577,7 @@
     {
       "path": "typescript-types/negative/03-truncated-mid-interface.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29597,8 +29586,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-type-reference",
-        "pending-adapter"
+        "mid-type-reference"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29610,7 +29598,7 @@
     {
       "path": "typescript-types/negative/04-wrong-format-zod.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29619,8 +29607,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "zod",
-        "pending-adapter"
+        "zod"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29633,7 +29620,7 @@
     {
       "path": "typescript-types/negative/05-encoding-utf16.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29642,8 +29629,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29655,7 +29641,7 @@
     {
       "path": "typescript-types/negative/06-unresolvable-import.ts",
       "format": "typescript-types",
-      "adapter_key": null,
+      "adapter_key": "typescript-types",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "typescript-types",
@@ -29664,8 +29650,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-module",
-        "pending-adapter"
+        "missing-module"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

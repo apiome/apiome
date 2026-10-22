@@ -27,6 +27,7 @@ from app.toolchain_runner import (
     get_tool,
     register_tool,
     run_tool,
+    run_tool_blocking,
 )
 
 
@@ -84,6 +85,23 @@ async def test_runs_sample_tool_returns_parsed_json():
     }
     assert result.duration_ms >= 0
     assert result.argv[0] == sys.executable
+
+
+def test_run_tool_blocking_runs_from_synchronous_code():
+    """The sync ImportSource SPI can drive a tool without an event loop of its own."""
+    result = run_tool_blocking(SAMPLE_ECHO_TOOL_KEY, ["gamma"], stdin="sync")
+    assert result.parsed_json == {"tool": "sample-echo", "args": ["gamma"], "stdin": "sync"}
+
+
+async def test_run_tool_blocking_works_inside_a_running_loop():
+    """Called from a coroutine (where asyncio.run is illegal) it still completes."""
+    result = run_tool_blocking(SAMPLE_ECHO_TOOL_KEY, stdin="in-loop")
+    assert result.parsed_json["stdin"] == "in-loop"
+
+
+def test_run_tool_blocking_reraises_on_the_callers_thread():
+    with pytest.raises(ToolNotRegisteredError):
+        run_tool_blocking("no-such-tool")
 
 
 async def test_run_spec_without_registry():
