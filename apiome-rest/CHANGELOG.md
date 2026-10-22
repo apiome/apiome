@@ -5,6 +5,37 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.428.0] - 2026-10-22
+
+### Added
+- **Inference provenance and confidence labelling (#5467, FMT-8.6)**: one vocabulary, `app.inference_provenance`,
+  for whether a construct was **declared** (the source stated it — the default, and what an unstamped construct
+  means), **inferred** (Apiome deduced it from an instance or from code) or **synthesized** (Apiome supplied it). A
+  stamp is `extras.provenance` plus an optional one-sentence `extras.provenance_evidence`; the older structured
+  evidence (`inference_evidence`, `sample_count`, a gateway regex `pattern`) is read into the same sentence.
+  - **Retrofit**: `http-file` (all inferred, unchanged), `postman` (request / response schemas and the types built
+    from example bodies inferred; a non-JSON raw body synthesized as a string), the gateway family (the
+    `provenance_stamp` classifier now uses the shared constants; parameters and messages of an inferred operation
+    count as inferred), and EPIC-8 — `typescript-types`, `zod`, `trpc`, `pydantic`, `cue`, `pkl`, `dhall` stamp every
+    type Apiome named (an anonymous object, union or map, a generic instantiation, a tRPC procedure's inline payload
+    type) as synthesized with its evidence.
+  - **Catalog detail**: `GET /v1/catalog/{tenant_slug}/{item_id}` — each `parsed` entity carries `provenance` and
+    `provenanceEvidence`, and the detail carries `provenanceSummary` (`declared`, `inferred`, `synthesized`, `total`,
+    `inferredRatio`), from the one reconstructed model.
+  - **Lint**: a third unconditional pack, `provenance`, with `provenance.inferred-construct-ratio` (category
+    `provenance`, `info`): one finding per artifact with any inferred construct, e.g. "62% of this item's constructs
+    are inferred (13 of 21)." Seeded into *Apiome Recommended* by `V311__style_guide_builtin_reseed_provenance_pack_5467.sql`.
+  - **Publish gate**: when the resolved style guide sets the rule to `error`, publishing a Project converted from a
+    catalog item with an inferred construct is refused (422) naming the source item, unless force-published. Never
+    blocks under the default guide; best-effort on any fault.
+  - The import preview ledger reads the class through the vocabulary and shows explicit evidence; the AsyncAPI emitter
+    no longer copies the stamp keys into emitted objects.
+
+### Changed
+- Corpus golden lint roll-ups gain the `info` finding for inferred sources (http-file, postman, the gateway family),
+  and EPIC-8 goldens carry the synthesized stamps.
+- OpenAPI document version 1.292.0.
+
 ## [1.427.0] - 2026-10-22
 
 ### Added

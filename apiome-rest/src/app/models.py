@@ -2825,9 +2825,46 @@ class CatalogParsedEntity(BaseModel):
     tag: str
     meta: Optional[str] = None
     fields: List[CatalogParsedField] = Field(default_factory=list)
+    provenance: Literal["declared", "inferred", "synthesized"] = Field(
+        default="declared",
+        description=(
+            "FMT-8.6 inference provenance of the construct behind this entity: declared (the source "
+            "stated it), inferred (Apiome deduced it from an instance or from code) or synthesized "
+            "(Apiome supplied it, such as a name for an anonymous type)."
+        ),
+    )
+    provenance_evidence: Optional[str] = Field(
+        default=None,
+        serialization_alias="provenanceEvidence",
+        description="One sentence saying what produced an inferred or synthesized entity; null when declared.",
+    )
 
     class Config:
         from_attributes = True
+        populate_by_name = True
+
+
+class CatalogProvenanceSummary(BaseModel):
+    """How many of a catalog item's constructs fall in each FMT-8.6 provenance class.
+
+    Counts services, operations, parameters, messages, named types and channels of the item's
+    canonical model (:func:`app.inference_provenance.summarize_provenance`). All zero when no
+    model can be reconstructed.
+    """
+
+    declared: int = 0
+    inferred: int = 0
+    synthesized: int = 0
+    total: int = 0
+    inferred_ratio: float = Field(
+        default=0.0,
+        serialization_alias="inferredRatio",
+        description="inferred / total, 0 for an empty model.",
+    )
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 
 class CatalogParsedGroup(BaseModel):
@@ -2866,6 +2903,14 @@ class CatalogItemDetailSchema(CatalogItemSchema):
     summary: CatalogNormalizedSummary = Field(default_factory=CatalogNormalizedSummary)
     source: CatalogSourceDescriptor = Field(default_factory=CatalogSourceDescriptor)
     parsed: List[CatalogParsedGroup] = Field(default_factory=list)
+    provenance_summary: CatalogProvenanceSummary = Field(
+        default_factory=CatalogProvenanceSummary,
+        serialization_alias="provenanceSummary",
+        description=(
+            "FMT-8.6: per-class counts of the item's constructs (declared / inferred / synthesized) "
+            "and the inferred ratio, from the same reconstructed model as parsed."
+        ),
+    )
     analysis: PayloadAnalysisSummary = Field(
         default_factory=PayloadAnalysisSummary,
         description=(

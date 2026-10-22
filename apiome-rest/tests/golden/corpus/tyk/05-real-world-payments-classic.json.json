@@ -456,13 +456,13 @@
   },
   "fingerprint": "sha256:2ad71be39d16b2bd84b20774e666cd574b27913429af9658f4e3f037c56cecbe",
   "lint": {
-    "findings": 6,
+    "findings": 7,
     "grade": "C",
-    "report_fingerprint": "a8cd1796ac27262baf51261d541dd207c73c11d4f700763a213ae65e8d372669",
-    "score": 79,
+    "report_fingerprint": "f32bcd401b8bdb8bbe1c47e4f40b61a44c38e8f02f065e603e87b5211e7ee56c",
+    "score": 78,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 5
     }
   },

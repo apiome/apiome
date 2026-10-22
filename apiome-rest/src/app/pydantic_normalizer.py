@@ -98,7 +98,7 @@ class PydanticNormalizer(Normalizer, register=True):
             format=self.format,
             identity=ApiIdentity(name=name),
             title=name,
-            types=list(model.types.values()),
+            types=model.stamped_types(),
             raw=raw,
             extras={PYDANTIC_EXTRAS_KEY: pydantic},
         )

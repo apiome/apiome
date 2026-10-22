@@ -388,7 +388,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.fixed.item."
+        },
         "fields": [],
         "key": "Collections_fixed_item",
         "key_type": null,
@@ -409,6 +412,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.nested.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -441,7 +446,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections_nested.value.item."
+        },
         "fields": [
           {
             "constraints": null,
@@ -490,7 +498,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.nonEmpty.item."
+        },
         "fields": [],
         "key": "Collections_nonEmpty_item",
         "key_type": null,
@@ -510,6 +521,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.table.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -1547,7 +1560,7 @@
     "confidence": 0.95,
     "format": "cue"
   },
-  "fingerprint": "sha256:52d6f4c6080897ac62e83ca2a5aa17688506f101becf5a614f8e775e0a65f8ca",
+  "fingerprint": "sha256:989cd2cb1dc559c7749a5bdccebb2da435d8a9dc256ecd993c0c6c57fd68c0cd",
   "lint": {
     "findings": 55,
     "grade": "F",

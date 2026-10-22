@@ -176,6 +176,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.pairs.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -287,7 +289,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Nested.inner."
+        },
         "fields": [
           {
             "constraints": null,
@@ -320,7 +325,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Nested_inner.deep."
+        },
         "fields": [
           {
             "constraints": {
@@ -697,6 +705,8 @@
           }
         ],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.literal.",
           "typescript_kind": "literal_union"
         },
         "fields": [],
@@ -971,7 +981,7 @@
     "confidence": 0.95,
     "format": "dhall"
   },
-  "fingerprint": "sha256:5230779b4d2c97f9b0af4682b2e00ee6bae4e6efd70112114bc7347354616d71",
+  "fingerprint": "sha256:8cf0ad74fd39cf9239c803600894af0d804911457fde50639340f1abdc3856a3",
   "lint": {
     "findings": 45,
     "grade": "F",

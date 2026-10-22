@@ -204,6 +204,13 @@ class TrpcNormalizer(Normalizer, register=True):
             sources={},
         )
         model = _Model(projection, limits)
+        for (path, role), (kind, type_name) in payloads.pending.items():
+            # FMT-8.6: an inline payload is declared by the procedure, but the named type that
+            # holds it is Apiome's — the source never wrote `InvoiceListInput`.
+            if kind == "type":
+                model.mark_synthesized(
+                    type_name, f"Named by Apiome after the {role.lower()} of procedure {path}."
+                )
         for declaration in projection.exported():
             model.reserve(declaration["name"])
         for declaration in projection.exported():
@@ -246,7 +253,7 @@ class TrpcNormalizer(Normalizer, register=True):
             identity=ApiIdentity(name=name),
             title=name,
             services=services,
-            types=list(model.types.values()),
+            types=model.stamped_types(),
             raw=raw,
             extras={TRPC_EXTRAS_KEY: trpc},
         )

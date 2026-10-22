@@ -703,6 +703,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['z.object', 'refine', 'transform', 'validation', 'constraints', 'sandbox', 'typescript'],
   },
   {
+    id: 'inference-provenance',
+    title: 'Declared, inferred and synthesized',
+    summary: 'See which parts of a catalog item Apiome read and which it inferred.',
+    page: 'apiome-docs/docs/bring-in/inference-provenance.mdx',
+    section: 'reference',
+    keywords: ['provenance', 'badge', 'evidence', 'postman', 'gateway', 'lint', 'style guide', 'publish'],
+  },
+  {
     id: 'trpc-router-import',
     title: 'Import a tRPC router',
     summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',

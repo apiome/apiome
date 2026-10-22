@@ -214,7 +214,9 @@
                 "description": null,
                 "extras": {
                   "http_status": "200",
-                  "postman_body_raw": "{\n  \"id\": \"ch_000000000000\",\n  \"object\": \"charge\",\n  \"amount\": 2000,\n  \"currency\": \"usd\",\n  \"paid\": true,\n  \"status\": \"succeeded\"\n}"
+                  "postman_body_raw": "{\n  \"id\": \"ch_000000000000\",\n  \"object\": \"charge\",\n  \"amount\": 2000,\n  \"currency\": \"usd\",\n  \"paid\": true,\n  \"status\": \"succeeded\"\n}",
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example 200 response body of POST /v1/charges."
                 },
                 "headers": [],
                 "key": "POST /v1/charges#response.200",
@@ -286,15 +288,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:b6c0aef052157b9fa55d58e7623bea44a91c421e6eefd4a3fa83d92415ca75ad",
+  "fingerprint": "sha256:5b60cac5c2a806cdb2419df49b0d63b393ece4645eced34ec0aac06c3c1fb853",
   "lint": {
-    "findings": 1,
+    "findings": 2,
     "grade": "A",
-    "report_fingerprint": "3e5d860553f36d3e087d72057c727a50a0040d0dda9b5e7466681278fe7e1875",
-    "score": 99,
+    "report_fingerprint": "ab8fcb309432da9509b7e4f031af3a23a4db121ec6230264ff0f6f09a6a1731a",
+    "score": 98,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 0
     }
   },

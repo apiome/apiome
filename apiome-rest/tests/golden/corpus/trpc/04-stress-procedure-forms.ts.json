@@ -322,6 +322,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure stressRouter.chained.",
           "typescript_kind": "intersection"
         },
         "fields": [
@@ -372,7 +374,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure stressRouter.nested.inner."
+        },
         "fields": [
           {
             "constraints": null,
@@ -405,7 +410,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure stressRouter.onUpdate."
+        },
         "fields": [
           {
             "constraints": null,
@@ -438,7 +446,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure stressRouter.read."
+        },
         "fields": [
           {
             "constraints": null,
@@ -471,7 +482,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the output of procedure stressRouter.read."
+        },
         "fields": [
           {
             "constraints": null,
@@ -520,7 +534,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the output of procedure stressRouter.status."
+        },
         "fields": [
           {
             "constraints": null,
@@ -553,7 +570,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure stressRouter.write."
+        },
         "fields": [
           {
             "constraints": null,
@@ -611,7 +631,7 @@
     "confidence": 0.97,
     "format": "trpc"
   },
-  "fingerprint": "sha256:08f31babe47837104ec5eefa7502e118ae2c0ad65dca2b4cbe450a2298b9f21b",
+  "fingerprint": "sha256:ad33c9d13652c0a28b42517f03e8dcc47ff6c64250eee3c56555ce02e9488340",
   "lint": {
     "findings": 32,
     "grade": "F",

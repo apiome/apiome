@@ -147,6 +147,12 @@ from .import_source import (
     load_builtin_import_sources,
 )
 from .import_source_pipeline import ImportRunArtifacts, _normalize_import_project_slug
+from .inference_provenance import (
+    INFERRED,
+    PROVENANCE_EVIDENCE_KEY,
+    PROVENANCE_STAMP_KEYS,
+    provenance_of,
+)
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
 from .odcs_normalizer import ODCS_EXTRAS_KEY
@@ -212,7 +218,8 @@ PREVIEW_MANIFEST_CACHE_MAX_ENTRIES = 32
 #: bag is our own bookkeeping, not an unmodeled source attribute.
 PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE_ID_EXTRA_KEYS) | frozenset(
     {
-        "provenance",
+        # FMT-8.6: the shared inference-provenance stamp (class + evidence sentence).
+        *PROVENANCE_STAMP_KEYS,
         "sample_count",
         "sample_counts",
         "inference_evidence",
@@ -987,7 +994,7 @@ def _entity_rows(
     destination lane.
     """
     unmodeled = _unmodeled_extras(extras)
-    if extras.get("provenance") == "inferred":
+    if provenance_of(extras) == INFERRED:
         coverage = CoverageClass.INFERRED
     elif unmodeled:
         coverage = CoverageClass.PARTIALLY_MAPPED
@@ -1002,7 +1009,10 @@ def _entity_rows(
         sample_count = extras.get("sample_count")
         sample_bit = f" from {sample_count} sample(s)" if sample_count is not None else ""
         path_evidence = extras.get("inference_evidence")
-        if isinstance(path_evidence, dict) and path_evidence.get("template"):
+        explicit = extras.get(PROVENANCE_EVIDENCE_KEY)
+        if isinstance(explicit, str) and explicit.strip():
+            detail = f"Inferred: {explicit.strip()}"
+        elif isinstance(path_evidence, dict) and path_evidence.get("template"):
             detail = (
                 f"Inferred{sample_bit}: path template {path_evidence['template']!r} "
                 f"from samples {path_evidence.get('sample_urls', [])!r}."

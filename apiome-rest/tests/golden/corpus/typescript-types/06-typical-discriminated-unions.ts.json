@@ -280,7 +280,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: OrderCancelledEvent.data."
+        },
         "fields": [
           {
             "constraints": null,
@@ -482,7 +485,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: OrderPlacedEvent.data."
+        },
         "fields": [
           {
             "constraints": null,
@@ -665,7 +671,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: OrderShippedEvent.data."
+        },
         "fields": [
           {
             "constraints": null,
@@ -864,7 +873,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: PaymentSettledEvent.data."
+        },
         "fields": [
           {
             "constraints": null,
@@ -994,7 +1006,7 @@
     "confidence": 0.95,
     "format": "typescript-types"
   },
-  "fingerprint": "sha256:a6960b295ae2d12f2cc20be55ece629ba57a10a409351ecdbe9ac2bd7289009d",
+  "fingerprint": "sha256:19b611584e5eace1c5405da0bdac766ccec8e74efd63febde51a671fe5cedb37",
   "lint": {
     "findings": 48,
     "grade": "F",

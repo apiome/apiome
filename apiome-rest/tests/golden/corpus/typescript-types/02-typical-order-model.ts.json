@@ -119,7 +119,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: NewOrder.lines.item."
+        },
         "fields": [
           {
             "constraints": null,
@@ -617,7 +620,7 @@
     "confidence": 0.95,
     "format": "typescript-types"
   },
-  "fingerprint": "sha256:e523b937e7e6c51a76c5006a44f7a358cb03556475141e0e457e43c895603abc",
+  "fingerprint": "sha256:a36e83668cc171014f4b8e1dfa729a7a8389845cb798d7cc0e3bde435e3d7de0",
   "lint": {
     "findings": 30,
     "grade": "F",

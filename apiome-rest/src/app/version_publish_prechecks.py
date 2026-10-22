@@ -14,6 +14,7 @@ from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .database import db
 from .models import VersionPublishRequest
+from .provenance_publish_gate import converted_source_provenance_violation
 from .publication_change_report import resolve_baseline_revision_id_for_change_report
 from .schema_compatibility import CompatibilityRules
 from .verification_policy_routes import decision_payload_for_http
@@ -112,10 +113,12 @@ def enforce_publish_prechecks(
     # GOV-1.4 / GOV-2.5: lint the materialized head under the resolved style guide. A lint
     # fault degrades to "no signal" so other gates still run; error-level violations block.
     outcome = PublishPrecheckOutcome()
+    resolved_guide = None
     try:
         from .style_guide_engine import guided_lint_openapi_spec
 
         result, guide = guided_lint_openapi_spec(head_spec, tenant_id, project_id=project_id)
+        resolved_guide = guide
         # #5259: publishing is a version change — store the report just computed on the
         # revision (with its content fingerprint) so the versions list and later report
         # opens read it back instead of re-linting. Best-effort; never blocks publish.
@@ -167,6 +170,26 @@ def enforce_publish_prechecks(
                 f"{outcome.lint_error_count} style-guide error violation(s) under "
                 f"{guide_label!r}{first_hint}. Fix the violations or force-publish with a "
                 "reason."
+            ),
+        )
+
+    # FMT-8.6: a guide that sets `provenance.inferred-construct-ratio` to error keeps a Project
+    # converted from an inferred catalog source (a Postman collection, a route table) from
+    # publishing. The OpenAPI document cannot say what was inferred, so the gate reads the
+    # source item's model. Never blocks under the default guide (the rule ships at info).
+    violation = converted_source_provenance_violation(
+        db=db, tenant_id=tenant_id, project_id=project_id, guide=resolved_guide
+    )
+    if violation is not None:
+        guide_label = outcome.guide_name or "style guide"
+        source_label = violation.source_item_name or violation.source_item_id
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"1 style-guide error violation under {guide_label!r} (rule "
+                f"{violation.rule!r}): this Project was converted from catalog item "
+                f"{source_label!r}, and {violation.message} Import a declared source or "
+                "force-publish with a reason."
             ),
         )
 

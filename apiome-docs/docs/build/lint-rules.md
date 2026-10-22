@@ -737,3 +737,12 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Removed field/value numbers should be reserved, not left as gaps.
+
+
+## Pack: `provenance`
+
+### `provenance.inferred-construct-ratio` {#provenance-inferred-construct-ratio}
+
+- **Category:** provenance
+- **Default severity:** info
+- **Rationale:** Reports the share of constructs Apiome inferred rather than read from a declaration; raise it to error in a style guide to keep inferred APIs from being published.

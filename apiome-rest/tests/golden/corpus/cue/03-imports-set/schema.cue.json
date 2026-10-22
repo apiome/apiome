@@ -392,7 +392,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shipment.parcels.item."
+        },
         "fields": [
           {
             "constraints": null,
@@ -452,7 +455,7 @@
     "confidence": 0.95,
     "format": "cue"
   },
-  "fingerprint": "sha256:db24c0d4605e14ccc3ace31e11a91da3e84b92d67f73916756ccfa513efac9b3",
+  "fingerprint": "sha256:a4ae711efa26d09c63406825fd3de1f53b126caf6d59c11ed008eb5fdd9fd73e",
   "lint": {
     "findings": 19,
     "grade": "D",

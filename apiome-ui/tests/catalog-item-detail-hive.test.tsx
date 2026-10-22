@@ -634,6 +634,97 @@ describe('the browser fixtures', () => {
     }
   });
 
+  /**
+   * FMT-8.6 (#5467): the Overview of an item Apiome partly inferred — a Postman collection whose
+   * request and response schemas were read from example bodies. The docs page on inference
+   * provenance (`apiome-docs` screenshot `catalog-item-inference-provenance`) shows its badges and
+   * the Provenance filter.
+   */
+  it('writes the Overview of an inferred source, with its provenance badges and filter', async () => {
+    mockReads({
+      ...ITEM,
+      name: 'Orders API',
+      slug: 'orders-api',
+      description: 'Orders service collection exported from Postman (Collection v2.1).',
+      sourceFormat: 'postman',
+      protocol: 'http',
+      formatMetadata: {
+        ...ITEM.formatMetadata,
+        sourceLabel: 'orders.postman_collection.json',
+        routingReason: 'postman is OpenAPI-worthy but not OpenAPI (3 operation(s), 2 type(s), 0 channel(s)) → catalog item.',
+      },
+      toolVersions: { 'postman-adapter': '2.1.0' },
+      paradigm: 'rest',
+      domain: 'commerce',
+      tags: ['orders', 'postman'],
+      summary: { services: 1, operations: 3, types: 2, channels: null },
+      source: { ...ITEM.source, label: 'orders.postman_collection.json', uri: 'upload://orders.postman_collection.json' },
+      conversion: null,
+      provenanceSummary: { declared: 7, inferred: 4, synthesized: 1, total: 12, inferredRatio: 0.3333 },
+      parsed: [
+        {
+          title: 'Operations',
+          subtitle: 'callable operations',
+          entities: [
+            {
+              name: 'Create order',
+              tag: 'POST',
+              meta: '/orders',
+              fields: [],
+              provenance: 'declared',
+              provenanceEvidence: null,
+            },
+            {
+              name: 'Get order',
+              tag: 'GET',
+              meta: '/orders/{orderId}',
+              fields: [],
+              provenance: 'declared',
+              provenanceEvidence: null,
+            },
+            {
+              name: 'List orders',
+              tag: 'GET',
+              meta: '/orders',
+              fields: [],
+              provenance: 'declared',
+              provenanceEvidence: null,
+            },
+          ],
+        },
+        {
+          title: 'Types',
+          subtitle: 'named types',
+          entities: [
+            {
+              name: 'Order',
+              tag: 'OBJECT',
+              meta: null,
+              fields: [],
+              provenance: 'inferred',
+              provenanceEvidence: 'Schema inferred from the example request body of POST /orders.',
+            },
+            {
+              name: 'Order_lines_item',
+              tag: 'OBJECT',
+              meta: null,
+              fields: [],
+              provenance: 'synthesized',
+              provenanceEvidence: 'Named by Apiome after the place it is written: Order.lines.',
+            },
+          ],
+        },
+      ],
+    });
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: /Orders API/ })).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId('catalog-detail-provenance-filter')).toBeInTheDocument();
+    expect(screen.getAllByTestId('catalog-detail-parsed-provenance')).toHaveLength(2);
+    write('overview-provenance', page().outerHTML);
+  });
+
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
     await renderDetail({
       ...ITEM,

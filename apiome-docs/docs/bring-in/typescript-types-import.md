@@ -87,6 +87,12 @@ ledger.
 | `FORMAT_MISMATCH` | The module imports a schema library such as Zod, so its schemas are values rather than type declarations. |
 | `INPUT_ENCODING_INVALID` | The file is not UTF-8 (for example, it was saved as UTF-16). |
 
+## What is inferred
+
+On the catalog item, a type Apiome names (an anonymous object, union or map, or a generic instantiation) is **synthesized**. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Supported formats](./supported-formats.md#format-typescript-types): what this importer reads,

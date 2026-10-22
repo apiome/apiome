@@ -421,6 +421,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.lookup.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -449,6 +451,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.nested.item.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -482,6 +486,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.pairs.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -1565,7 +1571,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Union.either."
+        },
         "fields": [],
         "key": "Union_either",
         "key_type": null,
@@ -1584,7 +1593,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Union.shape."
+        },
         "fields": [],
         "key": "Union_shape",
         "key_type": null,
@@ -1612,7 +1624,7 @@
     "confidence": 0.95,
     "format": "pkl"
   },
-  "fingerprint": "sha256:006fce482c7190f1399f10086e55a568674bd1676fb5bff85d7457cbf9f97893",
+  "fingerprint": "sha256:93364d664df57b48d076afb76872c0ac8a51a078ea6ed43b1a5cdc0e1ed30f4d",
   "lint": {
     "findings": 65,
     "grade": "F",

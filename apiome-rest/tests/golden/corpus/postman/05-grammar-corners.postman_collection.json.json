@@ -69,7 +69,9 @@
                 "description": null,
                 "extras": {
                   "http_status": "200",
-                  "postman_body_raw": "{\n  \"total\": 2,\n  \"hits\": [\n    { \"id\": \"d-1\", \"score\": 0.98 },\n    { \"id\": \"d-2\", \"score\": 0.71 }\n  ]\n}"
+                  "postman_body_raw": "{\n  \"total\": 2,\n  \"hits\": [\n    { \"id\": \"d-1\", \"score\": 0.98 },\n    { \"id\": \"d-2\", \"score\": 0.71 }\n  ]\n}",
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example 200 response body of GET /search."
                 },
                 "headers": [],
                 "key": "GET /search#response.200",
@@ -90,7 +92,9 @@
                 "description": null,
                 "extras": {
                   "http_status": "400",
-                  "postman_body_raw": "{\n  \"error\": \"unbalanced quotes in q\"\n}"
+                  "postman_body_raw": "{\n  \"error\": \"unbalanced quotes in q\"\n}",
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example 400 response body of GET /search."
                 },
                 "headers": [],
                 "key": "GET /search#response.400",
@@ -276,15 +280,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:35c9896c9411a62095eda6df49c5f15855f3ffc22bee7fd4ac905e27f5c62f13",
+  "fingerprint": "sha256:d6839f065d358ebbc80f016e47fb820c871310be5ea95e18df1e1adf792847c8",
   "lint": {
-    "findings": 3,
+    "findings": 4,
     "grade": "A",
-    "report_fingerprint": "1e3552808b09460329b54b9ac6cc215cda3f4b4ac177fd0261918c885eedd9b7",
-    "score": 94,
+    "report_fingerprint": "aed74a56b32a476737c5cf1cef97597659af6e0aad11e35f9c1c220338a30de1",
+    "score": 93,
     "severity_counts": {
       "error": 0,
-      "info": 2,
+      "info": 3,
       "warning": 1
     }
   },

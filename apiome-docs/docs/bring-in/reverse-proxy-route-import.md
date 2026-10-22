@@ -103,6 +103,12 @@ coverage ledger instead of dropping it silently:
 | `FORMAT_MISMATCH` | The file is not configuration for the chosen importer. |
 | `INPUT_MALFORMED`, `INPUT_ENCODING_INVALID` | The file has a syntax error (an unknown HAProxy section, a missing nginx `}`, a Traefik rule that does not parse, bad JSON or HCL), or it is not UTF-8. |
 
+## What is inferred
+
+On the catalog item, every service, route and parameter is **inferred**; a Tyk OAS document is declared. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Supported formats](./supported-formats.md): the versions these importers read, and the full nginx

@@ -205,7 +205,7 @@ class TypedConfigNormalizer(Normalizer):
             format=self.format,
             identity=ApiIdentity(name=name),
             title=name,
-            types=list(model.types.values()),
+            types=model.stamped_types(),
             raw=raw,
             extras={self.format: record},
         )

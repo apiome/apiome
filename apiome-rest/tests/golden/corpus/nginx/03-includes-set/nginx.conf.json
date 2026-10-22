@@ -201,13 +201,13 @@
   },
   "fingerprint": "sha256:50af199de418751eada9d555fdb74ec418b5fb5d6d1240afdbcad8f8c60312e8",
   "lint": {
-    "findings": 3,
+    "findings": 4,
     "grade": "A",
-    "report_fingerprint": "329517e5d1193090a1fecefea2b6fbb1760c41003f6f139bded0d05b844edc1c",
-    "score": 91,
+    "report_fingerprint": "e4fede0d9d03dd929a8b654d0f77b1af0d1633cc0d436ed68b2e3eef4bd4e6a4",
+    "score": 90,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 2
     }
   },

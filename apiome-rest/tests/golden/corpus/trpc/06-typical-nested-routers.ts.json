@@ -297,7 +297,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.admin.audit.search."
+        },
         "fields": [
           {
             "constraints": {
@@ -376,7 +379,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.admin.users.disable."
+        },
         "fields": [
           {
             "constraints": null,
@@ -409,7 +415,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.admin.users.list."
+        },
         "fields": [
           {
             "constraints": null,
@@ -444,7 +453,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.catalogue.products.bySku."
+        },
         "fields": [
           {
             "constraints": null,
@@ -477,7 +489,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.catalogue.products.list."
+        },
         "fields": [
           {
             "constraints": null,
@@ -521,7 +536,7 @@
     "confidence": 0.97,
     "format": "trpc"
   },
-  "fingerprint": "sha256:51b8a84e20d1fa09421f087cf7e1fe9974044ca683ea5621196ada8fe3078e3f",
+  "fingerprint": "sha256:cbe70f56759e2d0f1720d1debfe942743561dd1cd6c977774fa2b8e9017547cd",
   "lint": {
     "findings": 23,
     "grade": "F",

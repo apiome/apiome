@@ -20,6 +20,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, Optional, Tuple
 
+from . import inference_provenance
+
 __all__ = [
     "DECLARED",
     "INFERRED",
@@ -34,11 +36,12 @@ __all__ = [
     "provenance_stamp",
 ]
 
-#: Route provenance of a flavor that *declares* its API surface to a gateway.
-DECLARED = "declared"
+#: Route provenance of a flavor that *declares* its API surface to a gateway (the shared
+#: FMT-8.6 vocabulary, :mod:`app.inference_provenance`).
+DECLARED = inference_provenance.DECLARED
 
 #: Route provenance of a flavor whose surface is reconstructed from runtime plumbing.
-INFERRED = "inferred"
+INFERRED = inference_provenance.INFERRED
 
 
 @dataclass(frozen=True)
@@ -174,5 +177,5 @@ def provenance_stamp(flavor_key: str, *, derived: bool = False) -> Dict[str, str
     if flavor is None:
         raise KeyError(f"{flavor_key!r} is not a gateway flavor")
     if derived or flavor.route_provenance == INFERRED:
-        return {"provenance": INFERRED}
+        return inference_provenance.provenance_extras(INFERRED)
     return {}

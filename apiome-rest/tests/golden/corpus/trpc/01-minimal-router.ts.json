@@ -83,7 +83,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the input of procedure appRouter.ping."
+        },
         "fields": [
           {
             "constraints": null,
@@ -125,7 +128,7 @@
     "confidence": 0.97,
     "format": "trpc"
   },
-  "fingerprint": "sha256:95086bf9364d8305ecbed138cb4742b113a14bb41daeeade10e2c5ca83fd63f7",
+  "fingerprint": "sha256:3550d5f731adb8b9e0a58cd1b7850ecb4775f6f305134d976def33feb25ac9cc",
   "lint": {
     "findings": 5,
     "grade": "B",

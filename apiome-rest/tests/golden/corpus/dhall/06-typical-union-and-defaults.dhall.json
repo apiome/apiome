@@ -260,6 +260,8 @@
           }
         ],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Payment.literal.",
           "typescript_kind": "literal_union"
         },
         "fields": [],
@@ -410,7 +412,7 @@
     "confidence": 0.95,
     "format": "dhall"
   },
-  "fingerprint": "sha256:98e0f34ea7347805863776470b41607acec0cd44c3ae3c704162fc31543298e0",
+  "fingerprint": "sha256:442fea679bc209aa91806919e54ecb2011f41f5fbd41bb04f010bce34ff41fb5",
   "lint": {
     "findings": 18,
     "grade": "D",

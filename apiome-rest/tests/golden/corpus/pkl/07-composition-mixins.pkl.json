@@ -647,6 +647,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: RecordSet.byId.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -734,7 +736,7 @@
     "confidence": 0.95,
     "format": "pkl"
   },
-  "fingerprint": "sha256:325fea7132aa796a9cb560e56cbadf7dda8112b4789bc99378946b6625618fc9",
+  "fingerprint": "sha256:43b17fdc37b9a6d575c757cef9165aa1e20055d1671e084b2885837de5ee9ff4",
   "lint": {
     "findings": 31,
     "grade": "F",

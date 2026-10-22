@@ -162,7 +162,9 @@
                   "postman_body_raw": "{\n  \"email\": \"kai@example.com\",\n  \"role\": \"member\"\n}",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Invitation"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /users/invitations."
                 },
                 "headers": [],
                 "key": "POST /users/invitations#request",
@@ -195,7 +197,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /users/invitations."
+        },
         "fields": [
           {
             "constraints": null,
@@ -253,15 +258,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:3b3009c90a26c5ada0a6c4f7505894e740413c9e2f09bc5ae6dc87999316976e",
+  "fingerprint": "sha256:413e2d24fe4437dece12e9f44da5e7ef0182ba9acf0e6a4898dcfdd05b6b56fb",
   "lint": {
-    "findings": 8,
+    "findings": 9,
     "grade": "C",
-    "report_fingerprint": "82c7b9a28bbe57b9399ba041de09d5d601a8c33eaae4707356cfb6fc53e36b49",
-    "score": 77,
+    "report_fingerprint": "589b4153d65f5f4b6ff0772dc8de527ca2b44e0e749d48bac0e8b624bd6742e5",
+    "score": 76,
     "severity_counts": {
       "error": 0,
-      "info": 3,
+      "info": 4,
       "warning": 5
     }
   },

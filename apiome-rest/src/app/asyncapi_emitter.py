@@ -95,6 +95,7 @@ from .emitter import (
     SchemaEmitter,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .inference_provenance import without_provenance_stamp
 
 __all__ = ["AsyncApiEmitOptions", "AsyncApiEmitter", "AsyncApiFidelityRulePack"]
 
@@ -536,8 +537,10 @@ class AsyncApiEmitter(Emitter, register=True):
         entry: Dict[str, Any] = {}
         # The fidelity `extras` bag holds every key the canonical Server fields do not
         # model (host, pathname, protocolVersion, security, bindings, …); merge it
-        # first so first-class fields below win on any overlap.
-        for key, value in sorted(server.extras.items()):
+        # first so first-class fields below win on any overlap. The FMT-8.6 provenance stamp
+        # is Apiome's bookkeeping, not an AsyncAPI attribute, so it never rides along (here or
+        # on any other object below).
+        for key, value in sorted(without_provenance_stamp(server.extras).items()):
             entry[key] = value
 
         host, pathname, scheme = self._split_url(server.url)
@@ -663,7 +666,7 @@ class AsyncApiEmitter(Emitter, register=True):
         ``extras``.
         """
         obj: Dict[str, Any] = {}
-        for key, value in sorted(message.extras.items()):
+        for key, value in sorted(without_provenance_stamp(message.extras).items()):
             obj[key] = value
         if message.name:
             obj["name"] = message.name
@@ -812,7 +815,7 @@ class _ChannelBuilder:
         base = ProvenanceTracker.child("/channels", doc)
         obj: Dict[str, Any] = {}
         # Merge fidelity extras (title, tags, externalDocs, servers) first.
-        for key, value in sorted(channel.extras.items()):
+        for key, value in sorted(without_provenance_stamp(channel.extras).items()):
             obj[key] = value
         obj["address"] = channel.address
         self._tracker.record(f"{base}/address", Provenance.SOURCE)
@@ -830,7 +833,7 @@ class _ChannelBuilder:
         parameters: Dict[str, Any] = {}
         for param in sorted(channel.parameters, key=lambda p: p.key):
             spec: Dict[str, Any] = {}
-            for key, value in sorted(param.extras.items()):  # location, examples
+            for key, value in sorted(without_provenance_stamp(param.extras).items()):  # location, examples
                 spec[key] = value
             if param.description:
                 spec["description"] = param.description
@@ -902,7 +905,7 @@ class _ChannelBuilder:
             "channel": {"$ref": f"#/channels/{doc_channel}"},
         }
         # Carry harmless fidelity extras (bindings, traits, security, …) back.
-        for key, value in sorted(operation.extras.items()):
+        for key, value in sorted(without_provenance_stamp(operation.extras).items()):
             if key not in _OPERATION_RESERVED_EXTRAS:
                 obj.setdefault(key, value)
 

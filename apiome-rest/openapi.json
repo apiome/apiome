@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.291.0",
+    "version": "1.292.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -111232,6 +111232,10 @@
             "description": "Parsed.",
             "maxItems": 1000
           },
+          "provenanceSummary": {
+            "$ref": "#/components/schemas/CatalogProvenanceSummary",
+            "description": "FMT-8.6: per-class counts of the item's constructs (declared / inferred / synthesized) and the inferred ratio, from the same reconstructed model as parsed."
+          },
           "analysis": {
             "$ref": "#/components/schemas/PayloadAnalysisSummary",
             "description": "Summary of the revision-scoped native payload analysis: status, reason code, analyzer identity and node counts. Carries no payload material; fetch the native tree from GET /v1/catalog/{tenant_slug}/{item_id}/analysis, which requires imports:view."
@@ -111702,6 +111706,32 @@
             "title": "Fields",
             "description": "Fields.",
             "maxItems": 1000
+          },
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "declared",
+              "inferred",
+              "synthesized"
+            ],
+            "title": "Provenance",
+            "description": "FMT-8.6 inference provenance of the construct behind this entity: declared (the source stated it), inferred (Apiome deduced it from an instance or from code) or synthesized (Apiome supplied it, such as a name for an anonymous type).",
+            "default": "declared",
+            "example": "declared"
+          },
+          "provenanceEvidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Parsed Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Parsed Entity schema."
+              }
+            ],
+            "title": "Provenanceevidence",
+            "description": "One sentence saying what produced an inferred or synthesized entity; null when declared."
           }
         },
         "type": "object",
@@ -111909,6 +111939,48 @@
         ],
         "title": "CatalogProjectionResponse",
         "description": "One bounded page of a catalog item's conversion projection manifest (CPDO-1.3).\n\nCarries the snapshot ``summary`` (hash, tool versions, tallies) alongside the ``page`` of edges\nand the nodes they reference, so a caller can render a page without a second request and can\ntell \u2014 via the hash \u2014 whether two pages came from the same snapshot."
+      },
+      "CatalogProvenanceSummary": {
+        "properties": {
+          "declared": {
+            "type": "integer",
+            "title": "Declared",
+            "default": 0,
+            "description": "Declared.",
+            "example": 1
+          },
+          "inferred": {
+            "type": "integer",
+            "title": "Inferred",
+            "default": 0,
+            "description": "Inferred.",
+            "example": 1
+          },
+          "synthesized": {
+            "type": "integer",
+            "title": "Synthesized",
+            "default": 0,
+            "description": "Synthesized.",
+            "example": 50
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0,
+            "description": "Total.",
+            "example": 1
+          },
+          "inferredRatio": {
+            "type": "number",
+            "title": "Inferredratio",
+            "description": "inferred / total, 0 for an empty model.",
+            "default": 0.0,
+            "example": 1.0
+          }
+        },
+        "type": "object",
+        "title": "CatalogProvenanceSummary",
+        "description": "How many of a catalog item's constructs fall in each FMT-8.6 provenance class.\n\nCounts services, operations, parameters, messages, named types and channels of the item's\ncanonical model (:func:`app.inference_provenance.summarize_provenance`). All zero when no\nmodel can be reconstructed."
       },
       "CatalogSourceDescriptor": {
         "properties": {

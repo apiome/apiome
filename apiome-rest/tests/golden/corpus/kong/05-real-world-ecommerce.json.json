@@ -464,13 +464,13 @@
   },
   "fingerprint": "sha256:42870701822b6f703fd23e50c4a47b148b2b0e77feb50d095737b314402a5a53",
   "lint": {
-    "findings": 11,
+    "findings": 12,
     "grade": "C",
-    "report_fingerprint": "9ee0162d89e41ed43e967d0a254003020f5b35a652385f0a9888494fafd62752",
-    "score": 79,
+    "report_fingerprint": "d58f011b4530ef5b1ed31d8c245b6dc0ffd0a8d5b014d67dc982a95d3d4997db",
+    "score": 78,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 10
     }
   },

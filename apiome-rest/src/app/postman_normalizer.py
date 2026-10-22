@@ -10,6 +10,14 @@ AST either way. The minor itself is published as ``postman_collection_version`` 
 the model's extras — the "with its version recorded" half of FMT-3.6 — and the
 collection's and each request's auth **scheme** (never its credentials) as
 ``postman_auth``.
+
+**What is inferred (FMT-8.6).** A collection declares its requests — methods, URLs, path and
+query parameters, headers, example responses — and every operation and parameter is declared.
+It declares no *schemas*: a request or response body is an example, so each named type and each
+message whose payload schema was read from an example body is stamped
+:data:`~app.inference_provenance.INFERRED`, with the request it came from as evidence. A raw
+body that is not JSON is typed as a string by Apiome and stamped
+:data:`~app.inference_provenance.SYNTHESIZED`.
 """
 
 from __future__ import annotations
@@ -33,6 +41,7 @@ from .canonical_model import (
     StreamingMode,
     TypeRef,
 )
+from .inference_provenance import INFERRED, SYNTHESIZED, provenance_extras
 from .normalizer import Keys, Normalizer, SchemaCoercer, normalize_ordering
 from .postman_parser import (
     PostmanAuth,
@@ -44,6 +53,9 @@ from .postman_parser import (
 __all__ = ["PostmanNormalizer"]
 
 _FORMAT_KEY = "postman"
+
+#: FMT-8.6 evidence for a raw request body that is not JSON: Apiome types it as a string.
+_TEXT_BODY_EVIDENCE = "The raw body is not JSON, so Apiome typed it as a string."
 _REF_PREFIX = "#/components/schemas/"
 
 
@@ -118,7 +130,25 @@ def _merge_object_schemas(
     }
 
 
-def _collect_components(document: PostmanDocument) -> Dict[str, Any]:
+def _body_evidence(operation: PostmanOperation, what: str) -> str:
+    """The FMT-8.6 evidence sentence for a schema read from one request's example body."""
+    path = postman_http_path(operation.request.url)
+    return f"Schema inferred from the example {what} body of {operation.request.method} {path}."
+
+
+def _collect_components(
+    document: PostmanDocument, evidence: Optional[Dict[str, str]] = None
+) -> Dict[str, Any]:
+    """Infer one named schema per resource from the collection's JSON request bodies.
+
+    Args:
+        document: The parsed collection.
+        evidence: When given, filled with type name → the evidence sentence of the first
+            request body the schema was inferred from (FMT-8.6).
+
+    Returns:
+        Type name → inferred JSON Schema (bodies naming the same resource are merged).
+    """
     components: Dict[str, Any] = {}
     for operation in document.operations:
         body = operation.request.body
@@ -140,6 +170,8 @@ def _collect_components(document: PostmanDocument) -> Dict[str, Any]:
             components[type_name] = _merge_object_schemas(components[type_name], schema)
         else:
             components[type_name] = schema
+            if evidence is not None:
+                evidence[type_name] = _body_evidence(operation, "request")
     return components
 
 
@@ -238,6 +270,7 @@ def _request_message(
                     "postman_body_raw": body.raw,
                     "postman_body_language": body.language,
                     "postman_body_schema": schema,
+                    **provenance_extras(SYNTHESIZED, _TEXT_BODY_EVIDENCE),
                 },
             )
         if isinstance(payload, dict) and type_name in components:
@@ -245,9 +278,11 @@ def _request_message(
         else:
             schema = _infer_schema_from_json(payload)
         payload_ref = coercer.type_ref(schema, required=True)
+        stamp = provenance_extras(INFERRED, _body_evidence(operation, "request"))
     else:
         schema = {"type": "string"}
         payload_ref = coercer.type_ref(schema, required=True)
+        stamp = provenance_extras(SYNTHESIZED, _TEXT_BODY_EVIDENCE)
     return Message(
         key=Keys.request_message(op_key),
         role=MessageRole.REQUEST,
@@ -258,6 +293,7 @@ def _request_message(
             "postman_body_raw": body.raw,
             "postman_body_language": body.language,
             "postman_body_schema": schema,
+            **stamp,
         },
     )
 
@@ -274,7 +310,8 @@ class PostmanNormalizer(Normalizer, register=True):
                 "Postman source must be a PostmanDocument (see app.postman_parser.parse_postman)"
             )
 
-        components = _collect_components(source)
+        component_evidence: Dict[str, str] = {}
+        components = _collect_components(source, component_evidence)
         coercer = SchemaCoercer(components=components, ref_prefix=_REF_PREFIX)
         service_key = Keys.type(source.name, None)
         operations: List[Operation] = []
@@ -303,6 +340,11 @@ class PostmanNormalizer(Normalizer, register=True):
                             payload_json = json.loads(response_body.raw)
                             schema = _infer_schema_from_json(payload_json)
                             payload = coercer.type_ref(schema, required=True)
+                            extras.update(
+                                provenance_extras(
+                                    INFERRED, _body_evidence(endpoint, f"{status} response")
+                                )
+                            )
                         except json.JSONDecodeError:
                             payload = None
                 messages.append(
@@ -344,7 +386,23 @@ class PostmanNormalizer(Normalizer, register=True):
         if base_url:
             servers.append(Server(url=base_url, description="From Postman collection variable"))
 
-        types = coercer.named_types_from_components()
+        # Every type is a schema read from an example body (FMT-8.6): inferred, never declared.
+        types = [
+            type_.model_copy(
+                update={
+                    "extras": {
+                        **type_.extras,
+                        **provenance_extras(
+                            INFERRED,
+                            component_evidence.get(
+                                type_.name, "Schema inferred from an example body."
+                            ),
+                        ),
+                    }
+                }
+            )
+            for type_ in coercer.named_types_from_components()
+        ]
         document_extras: Dict[str, Any] = {
             "postman_schema_url": source.schema_url,
             "postman_variables": [
