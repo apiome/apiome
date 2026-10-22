@@ -11,12 +11,16 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
+import { hasSeen } from '@lib/seen';
 
 import {
   AssignGuideDialog,
   DeleteGuideDialog,
   EditGuideDialog,
   GuideFormDialog,
+  STYLE_GUIDES_READ_ONLY,
+  StyleGuidesReadOnlyCallout,
+  StyleGuidesReadOnlyLock,
   StyleGuidesTable,
   findBuiltinGuide,
   type AssignableProject,
@@ -147,6 +151,23 @@ export default function StyleGuidesClient() {
   const [createMode, setCreateMode] = React.useState<GuideFormMode>('new');
 
   const canMutate = Boolean(permissions?.is_admin);
+
+  // Whether this device has dismissed the read-only callout — then the lock beside the title
+  // carries the note instead. Read after mount, like the callout itself, so SSR agrees.
+  const [readOnlySeen, setReadOnlySeen] = React.useState(false);
+  const readOnlyLockRef = React.useRef<HTMLButtonElement | null>(null);
+  const focusLockOnShow = React.useRef(false);
+  React.useEffect(() => {
+    setReadOnlySeen(hasSeen(STYLE_GUIDES_READ_ONLY.id));
+  }, []);
+  React.useEffect(() => {
+    // **Got it** removed the button the reader pressed; land them on where the note went.
+    if (readOnlySeen && focusLockOnShow.current) {
+      focusLockOnShow.current = false;
+      readOnlyLockRef.current?.focus();
+    }
+  }, [readOnlySeen]);
+  const showReadOnly = !loading && !canMutate;
   const recommended = React.useMemo(() => findBuiltinGuide(guides), [guides]);
   const overlayGuide = React.useMemo(
     () => guides.find((guide) => guide.id === overlayGuideId) ?? null,
@@ -324,6 +345,9 @@ export default function StyleGuidesClient() {
           { label: 'Style guides' },
         ]}
         title="Style guides"
+        badge={
+          showReadOnly && readOnlySeen ? <StyleGuidesReadOnlyLock ref={readOnlyLockRef} /> : undefined
+        }
         description="Governance rules your specs are scored against."
         actions={
           canMutate && tab === 'guides' ? (
@@ -384,19 +408,14 @@ export default function StyleGuidesClient() {
 
       <PageBody>
         {/* The read-only treatment: the reason the verbs are missing, said once, above
-            everything they are missing from. */}
-        {/* `info`, not the mockup's untinted `.banner--neutral`: `Alert`'s neutral tone is
-            `--fg-muted` on `--bg-subtle`, which measures 4.35:1 in Solarized — under AA, and
-            the same pair HIVE-5.4 measured and avoided. `info` is a designed soft/ink pair
-            and clears AA in all nine themes. */}
-        {!loading && !canMutate && (
-          <Alert variant="info" data-testid="style-guides-readonly">
-            <span>
-              <strong>Read-only for members.</strong> Only tenant administrators can create,
-              assign or edit style guides and policies. You can open any guide and browse its
-              rules.
-            </span>
-          </Alert>
+            everything they are missing from — then kept in the lock's tooltip (HIVE-11.10). */}
+        {showReadOnly && !readOnlySeen && (
+          <StyleGuidesReadOnlyCallout
+            onDismiss={() => {
+              focusLockOnShow.current = true;
+              setReadOnlySeen(true);
+            }}
+          />
         )}
 
         {writeError && overlay !== 'assign' && (

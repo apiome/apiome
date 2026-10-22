@@ -105,7 +105,9 @@ export const VERSIONS_HREF = '/ade/dashboard/versions';
 export const ALL_PROJECTS = 'all';
 
 /**
- * The `#507` banner, shown only when at least one row carries a structured warning.
+ * The `#507` note, reachable only when at least one row carries a structured warning. Until
+ * HIVE-11.10 (#5606) it stood as a banner above the drawing; it is now the body of the
+ * {@link SUNSET_WARNINGS_LINK} dialog, word for word.
  *
  * Three parts rather than one sentence because the middle one is a link, and a sentence
  * assembled at the call site with `String.replace` is a sentence that silently loses its
@@ -116,6 +118,9 @@ export const SUNSET_WARNINGS_BANNER = {
   linkLabel: 'Versions',
   tail: 'to see banners in context.',
 } as const;
+
+/** The header's ghost button that opens the `#507` note, and the dialog's title. */
+export const SUNSET_WARNINGS_LINK = 'Where these warnings come from';
 
 /** What the table says while the first read is in flight. */
 export const SUNSET_LOADING_LABEL = 'Loading schedule…';

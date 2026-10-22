@@ -395,6 +395,72 @@ export function postureTiles(summary: LintWorkspaceSummary): PostureTileSpec[] {
   ];
 }
 
+/** One fact of the posture facts line (HIVE-11.10, #5606). */
+export interface PostureFactSpec {
+  /** The tile this fact restates — the drill-down it runs and its `data-testid` suffix. */
+  target: PostureDrillTarget;
+  /** The figure, drawn in full ink. */
+  value: string;
+  /** The words after it — `unwaived security errors`, `of 12 subjects missing coverage`. */
+  label: string;
+  /** Draw it as a danger chip: the one fact on the line that asks to be acted on. */
+  alert: boolean;
+  /** What the click does, as the tooltip — the tile's own hint. */
+  drillHint: string;
+}
+
+/**
+ * The four posture tiles as one line of facts (HIVE-11.10, #5606).
+ *
+ * Built from {@link postureTiles}, so the line and the strip behind **Show stats** can never
+ * state different figures. Each fact keeps its tile's drill-down. Only unwaived security
+ * errors above zero is an alert — the tile that says *Needs attention*.
+ *
+ * @param summary The posture summary.
+ * @returns The facts, in the strip's order.
+ */
+export function postureFacts(summary: LintWorkspaceSummary): PostureFactSpec[] {
+  /** `1 new finding`, `3 new findings`. */
+  const plural = (n: number, singular: string, many: string) => (n === 1 ? singular : many);
+  return postureTiles(summary).map((tile) => {
+    const n = tile.value;
+    let label: string;
+    switch (tile.target) {
+      case 'security-errors':
+        label = plural(n, 'unwaived security error', 'unwaived security errors');
+        break;
+      case 'coverage':
+        label = tile.unit ? `${tile.unit} missing coverage` : 'missing coverage';
+        break;
+      case 'new':
+        label = plural(n, 'new finding', 'new findings');
+        break;
+      case 'waiver-requests':
+        label = plural(n, 'active waiver', 'active waivers');
+        break;
+    }
+    return {
+      target: tile.target,
+      value: n.toLocaleString(),
+      label,
+      alert: tile.target === 'security-errors' && n > 0,
+      drillHint: tile.drillHint,
+    };
+  });
+}
+
+/**
+ * The grade chips the facts line draws inline (HIVE-11.10, #5606): A–F always, so the line
+ * compares week to week like the full strip, and `Ungraded` only when something is — the full
+ * row, zeroes included, stays behind **Show stats**.
+ *
+ * @param summary The posture summary.
+ * @returns The chips, A–F then Ungraded when non-zero.
+ */
+export function postureFactGrades(summary: LintWorkspaceSummary): GradeChipSpec[] {
+  return gradeChips(summary).filter((chip) => chip.key !== 'ungraded' || chip.count > 0);
+}
+
 /**
  * The filter state one summary tile jumps to.
  *

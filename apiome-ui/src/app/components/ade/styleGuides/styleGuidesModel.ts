@@ -285,6 +285,17 @@ export function duplicateGuideName(name: string): string {
   return `${name} (copy)`;
 }
 
+/**
+ * Why a member sees no verbs (HIVE-5.6), drawn by the first-visit callout and, once that is
+ * dismissed, by the lock's tooltip beside the title (HIVE-11.10). `id` is the callout's
+ * `hive.seen.<id>` key.
+ */
+export const STYLE_GUIDES_READ_ONLY = {
+  id: 'style-guides-readonly',
+  title: 'Read-only for members.',
+  body: 'Only tenant administrators can create, assign or edit style guides and policies. You can open any guide and browse its rules.',
+} as const;
+
 /** What a cell shows where a value is missing, in one place so it reads the same everywhere. */
 export const NO_VALUE = '—';
 

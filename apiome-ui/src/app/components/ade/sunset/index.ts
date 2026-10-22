@@ -8,3 +8,4 @@
 export * from './sunsetModel';
 export { SunsetTimelineChart, type SunsetTimelineChartProps } from './SunsetTimelineChart';
 export { SunsetTable, type SunsetTableProps } from './SunsetTable';
+export { SunsetWarningsDialog, type SunsetWarningsDialogProps } from './SunsetWarningsDialog';

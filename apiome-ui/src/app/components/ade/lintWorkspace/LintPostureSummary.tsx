@@ -18,6 +18,7 @@ import {
   axisChips,
   gradeChips,
   postureTiles,
+  type GradeChipSpec,
   type PostureDrillTarget,
   type PostureTileIcon,
 } from './lintWorkspaceModel';
@@ -64,6 +65,22 @@ const TILE_ICON: Readonly<Record<PostureTileIcon, React.ComponentType<{ classNam
   sparkles: Sparkles,
   'file-check': FileCheck2,
 };
+
+/**
+ * One band of the grade distribution: the letter tile in its band colour, then the count.
+ * Shared by the grades card and the facts line (HIVE-11.10), so a B is the same B in both.
+ *
+ * @param props `grade` — the chip, from `gradeChips`.
+ * @returns The chip.
+ */
+export function LintGradeChip({ grade }: { grade: GradeChipSpec }) {
+  return (
+    <span className="lw-grade-chip" data-grade={grade.key}>
+      <span className={cn('lw-grade-chip__letter', grade.band.solidClass)}>{grade.label}</span>
+      <span className="lw-grade-chip__count">{grade.count}</span>
+    </span>
+  );
+}
 
 /**
  * The strip's own shape while the summary is being read.
@@ -158,12 +175,7 @@ export default function LintPostureSummary({
           <h2 className="lw-caps">Grades</h2>
           <div className="lw-chip-row">
             {grades.map((grade) => (
-              <span key={grade.key} className="lw-grade-chip" data-grade={grade.key}>
-                <span className={cn('lw-grade-chip__letter', grade.band.solidClass)}>
-                  {grade.label}
-                </span>
-                <span className="lw-grade-chip__count">{grade.count}</span>
-              </span>
+              <LintGradeChip key={grade.key} grade={grade} />
             ))}
           </div>
         </section>

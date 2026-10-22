@@ -11,8 +11,11 @@
 
 export * from './lintWorkspaceModel';
 
-export { default as LintPostureSummary } from './LintPostureSummary';
+export { default as LintPostureSummary, LintGradeChip } from './LintPostureSummary';
 export type { LintPostureSummaryProps } from './LintPostureSummary';
+
+export { default as LintPostureFactsLine } from './LintPostureFactsLine';
+export type { LintPostureFactsLineProps } from './LintPostureFactsLine';
 
 export { default as LintSavedViewsBar } from './LintSavedViewsBar';
 export type { LintSavedViewsBarProps } from './LintSavedViewsBar';

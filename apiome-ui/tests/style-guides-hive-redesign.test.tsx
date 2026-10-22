@@ -27,6 +27,7 @@ import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
 import StyleGuidesClient from '../src/app/ade/dashboard/style-guides/StyleGuidesClient';
+import { TooltipProvider } from '../src/app/components/ui/Tooltip';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
@@ -161,6 +162,8 @@ function mockFetch() {
 }
 
 beforeEach(() => {
+  // The read-only callout's dismissal is per device; every test starts as a first visit.
+  window.localStorage.clear();
   calls = [];
   isAdmin = true;
   guidesResponse = { ok: true, rows: GUIDES };
@@ -170,7 +173,12 @@ beforeEach(() => {
 
 /** Render the page and wait for the guide list to land. */
 async function renderPage() {
-  const view = render(<StyleGuidesClient />);
+  // The dashboard layout provides the tooltip context the read-only lock needs.
+  const view = render(
+    <TooltipProvider>
+      <StyleGuidesClient />
+    </TooltipProvider>
+  );
   await waitFor(() => expect(calls.some((c) => c.url.startsWith('/api/style-guides'))).toBe(true));
   return view;
 }
@@ -555,6 +563,48 @@ describe('the states', () => {
     // …and the list itself is still fully readable, which is the point of the treatment.
     expect(screen.getByText('Apiome Recommended')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Acme REST' })).toBeInTheDocument();
+  });
+
+  it('shows the note once, then keeps it in a lock beside the title', async () => {
+    isAdmin = false;
+    const user = userEvent.setup();
+    const view = await renderPage();
+    await screen.findByText('Acme REST');
+
+    // First visit: a dismissible callout (a note, not an alert), and no lock yet.
+    const callout = screen.getByRole('note');
+    expect(callout).toHaveAttribute('data-reopen-from', 'Lock beside the page title');
+    expect(screen.queryByTestId('style-guides-readonly-lock')).not.toBeInTheDocument();
+
+    await user.click(within(callout).getByRole('button', { name: 'Got it' }));
+    expect(screen.queryByTestId('style-guides-readonly')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('hive.seen.style-guides-readonly')).toBe('1');
+
+    // The lock sits in the title row and takes the focus the Got it button had.
+    const lock = await screen.findByTestId('style-guides-readonly-lock');
+    expect(lock.closest('.page-header')).not.toBeNull();
+    expect(lock).toHaveAccessibleName('Read-only for members');
+    await waitFor(() => expect(lock).toHaveFocus());
+
+    // Its tooltip carries the banner's sentence, word for word.
+    const tips = await screen.findAllByText(
+      /Only tenant administrators can create, assign or edit style guides and policies\. You can open any guide and browse its rules\./
+    );
+    expect(tips.length).toBeGreaterThan(0);
+
+    // A returning visit opens straight on the lock.
+    view.unmount();
+    await renderPage();
+    await screen.findByText('Acme REST');
+    expect(await screen.findByTestId('style-guides-readonly-lock')).toBeInTheDocument();
+    expect(screen.queryByTestId('style-guides-readonly')).not.toBeInTheDocument();
+  });
+
+  it('shows no read-only note or lock to an administrator', async () => {
+    window.localStorage.setItem('hive.seen.style-guides-readonly', '1');
+    await renderPage();
+    await screen.findByText('Acme REST');
+    expect(screen.queryByTestId('style-guides-readonly-lock')).not.toBeInTheDocument();
   });
 
   it('shows no read-only banner to an administrator', async () => {
