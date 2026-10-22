@@ -1,0 +1,45 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2_products",
+      "operation": "ANY /v2/products#service/catalogue"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2_products_2",
+      "operation": "ANY /v2/products"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_orders",
+      "operation": "GET /v2/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v2_orders",
+      "operation": "POST /v2/orders"
+    }
+  ]
+}

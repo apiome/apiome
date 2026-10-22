@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_shipments_shipments",
+      "operation": "GET /v2/shipments/shipments"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "shipmentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_shipments_shipments_shipmentId",
+      "operation": "GET /v2/shipments/shipments/{shipmentId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v2_shipments_shipments",
+      "operation": "POST /v2/shipments/shipments"
+    }
+  ]
+}

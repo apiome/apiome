@@ -1,0 +1,52 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_catalogue_categories",
+      "operation": "GET /catalogue/categories"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_catalogue_healthz",
+      "operation": "GET /catalogue/healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_catalogue_products",
+      "operation": "GET /catalogue/products"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_catalogue_products_2",
+      "operation": "GET /catalogue/products#catalogue-api@v2/products"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "GET_catalogue_products_sku",
+      "operation": "GET /catalogue/products/{sku}"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v2_orders_orders_id",
+      "operation": "DELETE /v2/orders/orders/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_orders_orders",
+      "operation": "GET /v2/orders/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_orders_orders_id",
+      "operation": "GET /v2/orders/orders/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v2_orders_orders",
+      "operation": "POST /v2/orders/orders"
+    }
+  ]
+}

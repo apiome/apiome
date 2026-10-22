@@ -1,0 +1,90 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_assays_param1_results",
+      "operation": "ANY /assays/{param1}/results"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_ingest",
+      "operation": "ANY /ingest"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_old",
+      "operation": "ANY /old"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_partner",
+      "operation": "ANY /partner"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "x-debug": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q",
+          "x-debug",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_exact",
+      "operation": "GET /exact"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "x-debug": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q",
+          "x-debug",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "HEAD_exact",
+      "operation": "HEAD /exact"
+    }
+  ]
+}

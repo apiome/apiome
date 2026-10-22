@@ -1,0 +1,88 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_2",
+      "operation": "ANY /#public#default"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_3",
+      "operation": "ANY /#public#map-acme-eu"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_4",
+      "operation": "ANY /#public#map-acme-us"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_5",
+      "operation": "ANY /#public#map-globex"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_6",
+      "operation": "ANY /#public#map-globex-eu"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "upgrade": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upgrade"
+        ],
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_2",
+      "operation": "ANY /#edge#default"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_3",
+      "operation": "ANY /#edge#use_backend-storefront_backend-21"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_healthz",
+      "operation": "ANY /healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_orders",
+      "operation": "ANY /v3/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_payments",
+      "operation": "ANY /v3/payments"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_search",
+      "operation": "ANY /v3/search"
+    }
+  ]
+}

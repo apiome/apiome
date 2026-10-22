@@ -1,0 +1,115 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "X-Tenant": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "page",
+          "X-Tenant"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_2",
+      "operation": "ANY /#header-and-query"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_3",
+      "operation": "ANY /#host-regexp"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_exact_resource",
+      "operation": "ANY /exact/resource"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_orders_param1",
+      "operation": "ANY /orders/{param1}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_prefix",
+      "operation": "ANY /prefix/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_public",
+      "operation": "ANY /public"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_shared",
+      "operation": "ANY /shared"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET",
+      "operation": "GET /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "HEAD",
+      "operation": "HEAD /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "OPTIONS",
+      "operation": "OPTIONS /"
+    }
+  ]
+}

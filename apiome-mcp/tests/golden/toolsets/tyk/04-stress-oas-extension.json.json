@@ -1,0 +1,85 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 with no body: Assays",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listAssays",
+      "operation": "GET /assays",
+      "output": {
+        "description": "Assays",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: One assay",
+      "inputSchema": {
+        "properties": {
+          "assayId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assayId"
+        ],
+        "type": "object"
+      },
+      "name": "getAssay",
+      "operation": "GET /assays/{assayId}",
+      "output": {
+        "description": "One assay",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: Rewritten to /assays/{assayId}",
+      "inputSchema": {
+        "properties": {
+          "assayId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assayId"
+        ],
+        "type": "object"
+      },
+      "name": "legacyAssay",
+      "operation": "GET /legacy/{assayId}",
+      "output": {
+        "description": "Rewritten to /assays/{assayId}",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 with no body: Created",
+      "inputSchema": {
+        "properties": {
+          "protocol": {
+            "type": "string"
+          },
+          "replicates": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "protocol"
+        ],
+        "type": "object"
+      },
+      "name": "createAssay",
+      "operation": "POST /assays",
+      "output": {
+        "description": "Created",
+        "status": "201"
+      }
+    }
+  ]
+}

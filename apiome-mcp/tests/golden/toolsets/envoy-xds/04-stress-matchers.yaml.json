@@ -1,0 +1,119 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_checkout",
+      "operation": "ANY /checkout"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_exact_resource",
+      "operation": "ANY /exact/resource"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_example_orders_v1_OrderService",
+      "operation": "ANY /example.orders.v1.OrderService/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_experiment",
+      "operation": "ANY /experiment"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_legacy",
+      "operation": "ANY /legacy/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_old",
+      "operation": "ANY /old"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          },
+          "param2": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1",
+          "param2"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_orders_param1_lines_param2",
+      "operation": "ANY /orders/{param1}/lines/{param2}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_prefix",
+      "operation": "ANY /prefix/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_robots_txt",
+      "operation": "ANY /robots.txt"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_seg",
+      "operation": "ANY /seg"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "page": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "q",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_search",
+      "operation": "GET /search"
+    }
+  ]
+}

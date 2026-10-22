@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /#ingress-gateway/public-ingress#8443/catalogue"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_2",
+      "operation": "ANY /"
+    }
+  ]
+}

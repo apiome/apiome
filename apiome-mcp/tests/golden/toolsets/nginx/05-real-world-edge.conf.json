@@ -1,0 +1,84 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_2",
+      "operation": "ANY /#api.example.com:443@/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_healthz",
+      "operation": "ANY /healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_metrics",
+      "operation": "ANY /metrics"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2",
+      "operation": "ANY /v2/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3",
+      "operation": "ANY /v3/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_3",
+      "operation": "ANY /#example.com:443@return"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_4",
+      "operation": "ANY /#www.example.com:443@/"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_param1",
+      "operation": "ANY /{param1}"
+    }
+  ]
+}
