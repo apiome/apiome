@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now uses `--experimental-permission` on Node 20 and `--permission` on 22.13+, and refuses to evaluate user code on
   a Node with no permission model. The sandbox is unchanged: file reads outside the toolchain, child processes and
   workers are still denied. The build smoke-tests the extractors with the runtime's Node.
+- **Pydantic import on Python 3.11 (#5465)**: the reader looked up `ast.TypeAlias` (the 3.12 `type X = …` statement)
+  for every module-level statement it did not otherwise recognise, so on Python 3.11 — the supported minimum — any
+  such module failed with `AttributeError`. The check now runs only where the node exists.
 
 The OpenAPI version moves to 1.293.1.
 

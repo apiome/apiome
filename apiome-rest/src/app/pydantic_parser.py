@@ -55,6 +55,10 @@ PYTHON_SUFFIXES: Tuple[str, ...] = (".py", ".pyi")
 #: The largest module set (all members together) the reader will parse, in bytes.
 MAX_PYDANTIC_BYTES = 4 * 1024 * 1024
 
+#: The `type X = …` statement node: Python 3.12+ only (the 3.11 parser rejects the syntax, so no
+#: module parsed there can contain one).
+_AST_TYPE_ALIAS: Optional[type] = getattr(ast, "TypeAlias", None)
+
 #: Characters that only appear in source decoded from something that was not UTF-8 text.
 _ENCODING_FAULT_MARKERS: Tuple[str, ...] = ("\x00", "�")
 
@@ -485,8 +489,8 @@ class _Reader:
                         self.module_limits.append(("pydantic.dynamic_model", target.id))
                     elif self._is_type_expression(value):
                         module.aliases[target.id] = value
-            elif isinstance(
-                statement, ast.TypeAlias
+            elif _AST_TYPE_ALIAS is not None and isinstance(
+                statement, _AST_TYPE_ALIAS
             ):  # pragma: no cover - Python 3.12 `type X = …`
                 module.aliases[statement.name.id] = statement.value
 
