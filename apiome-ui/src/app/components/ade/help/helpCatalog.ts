@@ -711,6 +711,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['procedure', 'query', 'mutation', 'subscription', 'approuter', 'zod', 'remote procedure call'],
   },
   {
+    id: 'pydantic-model-import',
+    title: 'Import Pydantic models',
+    summary: 'Catalog the Pydantic models in a Python module, read without running it.',
+    page: 'apiome-docs/docs/bring-in/pydantic-model-import.md',
+    section: 'reference',
+    keywords: ['basemodel', 'field', 'python', 'fastapi', 'constraints', 'ast', 'static analysis'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

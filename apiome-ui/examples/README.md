@@ -117,7 +117,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `owl/` | OWL / RDFS ontologies (pending #5471) | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 14 |
 | `pkl/` | Pkl (pending #5466) | data_schema | `module …` + `class`/`typealias` with member constraints and `Listing<…>` types | 14 |
 | `pli/` | PL/I structures (pending #5480) | data_schema | `DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE` | 15 |
-| `pydantic/` | Pydantic models (pending #5465) | data_schema | `from pydantic import BaseModel` + `class X(BaseModel):` definitions | 15 |
+| `pydantic/` | Pydantic models | data_schema | `from pydantic import BaseModel` + `class X(BaseModel):` definitions | 15 |
 | `relaxng/` | RELAX NG (pending #5434) | data_schema | `grammar`/`element` root in the RELAX NG namespace, or a `.rnc` compact grammar | 15 |
 | `schematron/` | Schematron rules | data_schema | `schema`/`pattern` root in `http://purl.oclc.org/dsdl/schematron` | 13 |
 | `shacl/` | SHACL shapes (pending #5471) | data_schema | `sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD) | 15 |
@@ -1955,25 +1955,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/03-truncated-mid-message.proto`** — Grounded on current behaviour: a .proto cut off mid-message reaches the compiler as unbalanced delimiters, so it is reported as INPUT_MALFORMED rather than INPUT_TRUNCATED (the same re-grounding FMT-3.3/3.4/3.5/3.6 made for truncated text inputs). Only the binary descriptor-set path can tell truncation from corruption, and it does — see protobuf/negative.
 
-### `pydantic/` — Pydantic models (pending #5465)
+### `pydantic/` — Pydantic models
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-model.py` | minimal | `pydantic` ≥ 0.85 | valid | `BaseModel`, `annotations`, `pending-adapter` |
-| `02-typical-order-models.py` | typical | `pydantic` ≥ 0.85 | valid | `Field-constraints`, `str-enum`, `optional`, `list-cardinality`, `EmailStr`, `pattern`, `pending-adapter` |
-| `03-models-set/customer.py` | multi-file (member) | `pydantic` (no guarantee) | valid | `multi-file`, `BaseModel`, `pending-adapter` |
-| `03-models-set/models.py` ⚠ | multi-file (root) | `pydantic` ≥ 0.85 | valid | `multi-file`, `cross-module-import`, `aggregate-model`, `pending-adapter` |
-| `03-models-set/order.py` | multi-file (member) | `pydantic` (no guarantee) | valid | `multi-file`, `cross-module-type`, `enum`, `pending-adapter` |
-| `04-stress-annotation-coverage.py` ⚠ | stress | `pydantic` ≥ 0.85 | valid | `Annotated`, `StringConstraints`, `Decimal`, `Literal`, `discriminator`, `generic-model`, `self-reference`, `ConfigDict`, `alias`, `default-factory`, `field-validator`, `computed-field`, `create-model-constants`, `pending-adapter` |
-| `05-real-world-api-models.py` | real-world | `pydantic` ≥ 0.85 | valid | `camelCase-alias`, `Decimal`, `discriminated-union`, `pagination`, `populate-by-name`, `extra-forbid`, `pending-adapter` |
-| `06-typical-dynamic-models.py` ⚠ | typical | `pydantic` ≥ 0.85 | valid | `create-model`, `dynamic-construction`, `declared-limit`, `pending-adapter` |
-| `07-composition-inheritance.py` | composition | `pydantic` ≥ 0.85 | valid | `mixin`, `multiple-inheritance`, `generic-subclass`, `model-of-models`, `discriminated-union`, `pending-adapter` |
-| `negative/01-syntactic-bad-indentation.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation`, `pending-adapter` |
-| `negative/02-semantic-no-basemodel-subclasses.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `semantic`, `no-models`, `pending-adapter` |
-| `negative/03-truncated-mid-class.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `truncated`, `mid-field`, `pending-adapter` |
-| `negative/04-wrong-format-dataclasses.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `wrong-format`, `dataclasses`, `pending-adapter` |
-| `negative/05-encoding-utf16.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-import.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module`, `pending-adapter` |
+| `01-minimal-model.py` | minimal | `pydantic` ≥ 0.85 | valid | `BaseModel`, `annotations` |
+| `02-typical-order-models.py` | typical | `pydantic` ≥ 0.85 | valid | `Field-constraints`, `str-enum`, `optional`, `list-cardinality`, `EmailStr`, `pattern` |
+| `03-models-set/customer.py` | multi-file (member) | `pydantic` (no guarantee) | valid | `multi-file`, `BaseModel` |
+| `03-models-set/models.py` ⚠ | multi-file (root) | `pydantic` ≥ 0.85 | valid | `multi-file`, `cross-module-import`, `aggregate-model` |
+| `03-models-set/order.py` | multi-file (member) | `pydantic` (no guarantee) | valid | `multi-file`, `cross-module-type`, `enum` |
+| `04-stress-annotation-coverage.py` ⚠ | stress | `pydantic` ≥ 0.85 | valid | `Annotated`, `StringConstraints`, `Decimal`, `Literal`, `discriminator`, `generic-model`, `self-reference`, `ConfigDict`, `alias`, `default-factory`, `field-validator`, `computed-field`, `create-model-constants` |
+| `05-real-world-api-models.py` | real-world | `pydantic` ≥ 0.85 | valid | `camelCase-alias`, `Decimal`, `discriminated-union`, `pagination`, `populate-by-name`, `extra-forbid` |
+| `06-typical-dynamic-models.py` ⚠ | typical | `pydantic` ≥ 0.85 | valid | `create-model`, `dynamic-construction`, `declared-limit` |
+| `07-composition-inheritance.py` | composition | `pydantic` ≥ 0.85 | valid | `mixin`, `multiple-inheritance`, `generic-subclass`, `model-of-models`, `discriminated-union` |
+| `negative/01-syntactic-bad-indentation.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation` |
+| `negative/02-semantic-no-basemodel-subclasses.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `semantic`, `no-models` |
+| `negative/03-truncated-mid-class.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `truncated`, `mid-field` |
+| `negative/04-wrong-format-dataclasses.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `wrong-format`, `dataclasses` |
+| `negative/05-encoding-utf16.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-import.py` | — | `pydantic` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module` |
 
 > ⚠ **`03-models-set/models.py`** — Set root: named models.py rather than __init__.py because the corpus path contract forbids a leading underscore; it plays the package-root role.
 

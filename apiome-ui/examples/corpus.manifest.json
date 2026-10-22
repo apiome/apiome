@@ -453,7 +453,7 @@
       "marker": "`edition = \"2023\"` / `\"2024\"` in place of `syntax`"
     },
     "pydantic": {
-      "label": "Pydantic models (pending #5465)",
+      "label": "Pydantic models",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`from pydantic import BaseModel` + `class X(BaseModel):` definitions"
@@ -23392,7 +23392,7 @@
     {
       "path": "pydantic/01-minimal-model.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23400,8 +23400,7 @@
       },
       "features": [
         "BaseModel",
-        "annotations",
-        "pending-adapter"
+        "annotations"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23412,7 +23411,7 @@
     {
       "path": "pydantic/02-typical-order-models.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23424,8 +23423,7 @@
         "optional",
         "list-cardinality",
         "EmailStr",
-        "pattern",
-        "pending-adapter"
+        "pattern"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23436,7 +23434,7 @@
     {
       "path": "pydantic/03-models-set/customer.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23444,8 +23442,7 @@
       },
       "features": [
         "multi-file",
-        "BaseModel",
-        "pending-adapter"
+        "BaseModel"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23457,7 +23454,7 @@
     {
       "path": "pydantic/03-models-set/models.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23466,8 +23463,7 @@
       "features": [
         "multi-file",
         "cross-module-import",
-        "aggregate-model",
-        "pending-adapter"
+        "aggregate-model"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23480,7 +23476,7 @@
     {
       "path": "pydantic/03-models-set/order.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23489,8 +23485,7 @@
       "features": [
         "multi-file",
         "cross-module-type",
-        "enum",
-        "pending-adapter"
+        "enum"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23502,7 +23497,7 @@
     {
       "path": "pydantic/04-stress-annotation-coverage.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23521,8 +23516,7 @@
         "default-factory",
         "field-validator",
         "computed-field",
-        "create-model-constants",
-        "pending-adapter"
+        "create-model-constants"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23534,7 +23528,7 @@
     {
       "path": "pydantic/05-real-world-api-models.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23546,8 +23540,7 @@
         "discriminated-union",
         "pagination",
         "populate-by-name",
-        "extra-forbid",
-        "pending-adapter"
+        "extra-forbid"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23558,7 +23551,7 @@
     {
       "path": "pydantic/06-typical-dynamic-models.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23567,8 +23560,7 @@
       "features": [
         "create-model",
         "dynamic-construction",
-        "declared-limit",
-        "pending-adapter"
+        "declared-limit"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23580,7 +23572,7 @@
     {
       "path": "pydantic/07-composition-inheritance.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pydantic",
@@ -23591,8 +23583,7 @@
         "multiple-inheritance",
         "generic-subclass",
         "model-of-models",
-        "discriminated-union",
-        "pending-adapter"
+        "discriminated-union"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -23603,7 +23594,7 @@
     {
       "path": "pydantic/negative/01-syntactic-bad-indentation.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23612,8 +23603,7 @@
       "features": [
         "negative",
         "syntactic",
-        "bad-indentation",
-        "pending-adapter"
+        "bad-indentation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -23625,7 +23615,7 @@
     {
       "path": "pydantic/negative/02-semantic-no-basemodel-subclasses.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23634,8 +23624,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-models",
-        "pending-adapter"
+        "no-models"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -23647,7 +23636,7 @@
     {
       "path": "pydantic/negative/03-truncated-mid-class.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23656,8 +23645,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-field",
-        "pending-adapter"
+        "mid-field"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -23669,7 +23657,7 @@
     {
       "path": "pydantic/negative/04-wrong-format-dataclasses.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23678,8 +23666,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "dataclasses",
-        "pending-adapter"
+        "dataclasses"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -23691,7 +23678,7 @@
     {
       "path": "pydantic/negative/05-encoding-utf16.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23700,8 +23687,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -23713,7 +23699,7 @@
     {
       "path": "pydantic/negative/06-unresolvable-import.py",
       "format": "pydantic",
-      "adapter_key": null,
+      "adapter_key": "pydantic",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pydantic",
@@ -23722,8 +23708,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-module",
-        "pending-adapter"
+        "missing-module"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

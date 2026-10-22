@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "27"
+REGISTRY_VERSION = "28"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2458,6 +2458,83 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "only, and the two share one type-mapping table (`app.sql_ddl_dialects."
             "SQL_TYPE_SCALARS`) so a round trip cannot disagree with itself about what a "
             "`VARCHAR` is.",
+        ],
+    ),
+    "pydantic": _Seed(
+        # Pydantic's payload analysis is the format-blind walk; the reviewed judgement is the
+        # projection statement. FMT-8.4's acceptance criteria are that models import by *static*
+        # analysis with no user module executed, that `Field` constraints become canonical
+        # constraints, and that dynamic construction is a declared parsing limit.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "Models are located by class and field name (`Order`, `Order.lines`); a field "
+                "inherited from a base or a generic is modelled on the class that uses it, so a "
+                "single source line would mislead."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A module of models describes data without containing any: defaults, literals "
+                "and enum members are part of the schema and are modelled; nothing is executed, "
+                "so there are no runtime values to observe."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "pydantic.alias_generator",
+                    "pydantic.class_hook",
+                    "pydantic.computed_field",
+                    "pydantic.decimal_precision",
+                    "pydantic.dynamic_model",
+                    "pydantic.tuple_positions",
+                    "pydantic.unknown_type",
+                    "pydantic.unmodelled_reference",
+                    "pydantic.unrepresentable",
+                    "pydantic.unresolved_annotation",
+                    "pydantic.unresolved_generic",
+                    "pydantic.validator",
+                ]
+            ),
+            note=(
+                "The source is read with Python's `ast` and never imported or executed. Every "
+                "`BaseModel` subclass the root module defines or re-exports becomes a `RECORD` "
+                "(inheritance flattened in pydantic's field order; a generic model instantiated "
+                "by subclassing — `class OrderPage(Page[Order])` — is concrete); `Enum` "
+                "subclasses and `Literal[...]` are `ENUM`s; `Union` / `X | Y` is a `UNION` (named "
+                "models referenced by key) and `Optional` / `| None` makes the reference "
+                "nullable; `list` / `set` / `tuple` / `dict` are lists and maps; nested and "
+                "self-referencing models point at their record. `Field(gt/ge/lt/le/multiple_of/"
+                "min_length/max_length/pattern)` and `Annotated[..., StringConstraints(...)]` "
+                "become canonical constraints (a length on a collection is an item count); "
+                "`datetime` / `date` / `UUID` / `EmailStr` / `AnyUrl` and kin become formats; "
+                "defaults (literals and enum members), descriptions and `deprecated` are kept; "
+                "`Field(alias=…)` and `alias_generator=to_camel` name the field as it appears on "
+                "the wire. The listed constructs are declared: `create_model` and model "
+                "factories, validators, computed fields, class-creation hooks, annotations and "
+                "types the reader cannot resolve statically, and decimal precision. Each "
+                "occurrence is counted and located in `extras['pydantic']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "No user module is executed: importing arbitrary Python is an unacceptable risk in a "
+            "multi-tenant service, so the reader parses the source and resolves names, imports "
+            "between the upload's modules, aliases and generics without running anything.",
+            "A name used in an annotation that neither the upload nor the standard library and "
+            "pydantic define — an import from a module that was not included — rejects the "
+            "import with `INPUT_REFERENCE_UNRESOLVED` rather than being modelled as `Any`.",
+            "Pydantic *output* is not implemented here, so models imported through this adapter "
+            "are exported through another target's emitter and are not written back as Python.",
         ],
     ),
     "trpc": _Seed(

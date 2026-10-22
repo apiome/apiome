@@ -72,6 +72,7 @@ _PRIMITIVE_SCALARS: Dict[str, Tuple[str, Optional[Constraints]]] = {
     "any": ("any", None),
     "unknown": ("unknown", None),
     "integer": ("integer", None),
+    "decimal": ("decimal", None),
     "object": ("object", None),
     "date": ("string", Constraints(format="date-time")),
     "bytes": ("bytes", None),
@@ -393,6 +394,10 @@ class _Model:
                     "properties": declaration.get("properties") or [],
                     "indexSignatures": declaration.get("indexSignatures") or [],
                     "unsupported": declaration.get("unsupported") or [],
+                    # A sibling reader may attach declared limits and record extras to the class
+                    # itself (FMT-8.4: validators, `extra="forbid"`); the TypeScript extractor
+                    # attaches neither.
+                    **{k: declaration[k] for k in ("limits", "extras") if declaration.get(k)},
                 },
                 env,
             )
@@ -685,7 +690,9 @@ class _Model:
             )
             if shape is None:
                 continue
-            extras = dict(shape.extras)
+            # A sibling reader may carry facts about the member itself (FMT-8.4: the Python
+            # attribute name behind an alias, an excluded field).
+            extras = {**dict(shape.extras), **(prop.get("extras") or {})}
             if prop.get("optional"):
                 extras["typescript_optional"] = True
             if prop.get("readonly"):

@@ -1,0 +1,123 @@
+{
+  "adapter": "pydantic",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pydantic": {
+        "capability_limits": [
+          {
+            "construct": "pydantic.dynamic_model",
+            "count": 3,
+            "detail": "A model built at runtime — `create_model(...)`, or a factory that returns one — has a field set only executing the module would reveal, and this reader never executes the upload. It is left out of the model rather than guessed.",
+            "locations": [
+              "Order",
+              "OrderLine",
+              "model_for"
+            ]
+          }
+        ],
+        "exports": [
+          "Base"
+        ],
+        "modules": [
+          "06-typical-dynamic-models.py"
+        ],
+        "root_module": "06-typical-dynamic-models.py",
+        "root_type": "Base"
+      }
+    },
+    "format": "pydantic",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Base",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Base",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Base.created_at",
+            "name": "created_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Base.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Base",
+        "key_type": null,
+        "kind": "record",
+        "name": "Base",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pydantic/06-typical-dynamic-models.py",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pydantic"
+  },
+  "fingerprint": "sha256:40787688ef35188b13273b18bb5eeb7e6fd05fce6781015e6d3d87463b8a1201",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "c576ed04a7a5a6d84892790141d56f013b74e8afea69c0b4f1ac2ecacbe197bd",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

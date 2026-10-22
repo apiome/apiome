@@ -1,0 +1,1706 @@
+{
+  "adapter": "pydantic",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pydantic": {
+        "capability_limits": [
+          {
+            "construct": "pydantic.class_hook",
+            "count": 1,
+            "detail": "A model that defines `__init_subclass__`, `__get_pydantic_core_schema__` or a custom metaclass can change its subclasses' fields when the class is created. The fields that are written down are modelled; what the hook adds is not.",
+            "locations": [
+              "DynamicBase"
+            ]
+          },
+          {
+            "construct": "pydantic.computed_field",
+            "count": 1,
+            "detail": "A `@computed_field` is a property whose value is computed by code at serialization time. It is not modelled as a field.",
+            "locations": [
+              "WithValidators.doubled"
+            ]
+          },
+          {
+            "construct": "pydantic.decimal_precision",
+            "count": 1,
+            "detail": "`max_digits` / `decimal_places` have no canonical constraint. The field keeps the `decimal` scalar and both are recorded in `pydantic_decimal`.",
+            "locations": [
+              "Scalars.exact"
+            ]
+          },
+          {
+            "construct": "pydantic.tuple_positions",
+            "count": 1,
+            "detail": "A fixed tuple becomes a list bounded by its length whose items are the union of its element types; which type sits at which position is recorded in `typescript_tuple`.",
+            "locations": [
+              "Containers.pair"
+            ]
+          },
+          {
+            "construct": "pydantic.validator",
+            "count": 1,
+            "detail": "A `field_validator`, `model_validator` (or v1 `validator` / `root_validator`) is arbitrary code. The model and its fields are modelled; what the validator accepts, rejects or rewrites is not.",
+            "locations": [
+              "WithValidators"
+            ]
+          }
+        ],
+        "exports": [
+          "Role",
+          "Priority",
+          "Scalars",
+          "Containers",
+          "Shape",
+          "Cat",
+          "Dog",
+          "Pet",
+          "Page",
+          "OrderPage",
+          "Node",
+          "WithValidators",
+          "DynamicBase"
+        ],
+        "modules": [
+          "04-stress-annotation-coverage.py"
+        ],
+        "root_module": "04-stress-annotation-coverage.py",
+        "root_type": "Scalars"
+      }
+    },
+    "format": "pydantic",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Scalars",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Scalars",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": [
+                "cat"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Cat.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": 9,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Cat.lives",
+            "name": "lives",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Cat",
+        "key_type": null,
+        "kind": "record",
+        "name": "Cat",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": true
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Containers.frozen",
+            "name": "frozen",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Containers.items",
+            "name": "items",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Containers.lookup",
+            "name": "lookup",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Containers_lookup",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_default_factory": "list",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Containers.nested",
+            "name": "nested",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Containers_nested_item",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Containers.optional_list",
+            "name": "optional_list",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 2,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 2,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_tuple": [
+                {
+                  "name": null,
+                  "optional": false,
+                  "rest": false,
+                  "type": "String"
+                },
+                {
+                  "name": null,
+                  "optional": false,
+                  "rest": false,
+                  "type": "Integer"
+                }
+              ]
+            },
+            "field_number": null,
+            "key": "Containers.pair",
+            "name": "pair",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Containers_pair_item",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": true
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Containers.unique",
+            "name": "unique",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Containers.variadic",
+            "name": "variadic",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Containers",
+        "key_type": null,
+        "kind": "record",
+        "name": "Containers",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Containers_lookup",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Containers_lookup",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Containers_nested_item",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Containers_nested_item",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": {
+            "extras": {},
+            "item": null,
+            "name": "integer",
+            "nullable": false
+          },
+          "name": null,
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Containers_pair_item",
+        "key_type": null,
+        "kind": "union",
+        "name": "Containers_pair_item",
+        "namespace": null,
+        "union_members": [
+          "string",
+          "integer"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": true,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Dog.good",
+            "name": "good",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "dog"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Dog.kind",
+            "name": "kind",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Dog",
+        "key_type": null,
+        "kind": "record",
+        "name": "Dog",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Base whose fields are assembled at class-creation time.",
+        "enum_values": [],
+        "extras": {
+          "pydantic_extra": "allow"
+        },
+        "fields": [],
+        "key": "DynamicBase",
+        "key_type": null,
+        "kind": "record",
+        "name": "DynamicBase",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Self-referential model.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_default_factory": "list",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Node.children",
+            "name": "children",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Node",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Node.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Node",
+        "key_type": null,
+        "kind": "record",
+        "name": "Node",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Generic instantiated by subclassing: statically resolvable.",
+        "enum_values": [],
+        "extras": {
+          "typescript_extends": [
+            "Page_Scalars"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderPage.items",
+            "name": "items",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Scalars",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "OrderPage.next_cursor",
+            "name": "next_cursor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderPage.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OrderPage",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderPage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Pet.animal",
+            "name": "animal",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Pet_animal",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Pet",
+        "key_type": null,
+        "kind": "record",
+        "name": "Pet",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Pet_animal",
+        "key_type": null,
+        "kind": "union",
+        "name": "Pet_animal",
+        "namespace": null,
+        "union_members": [
+          "Cat",
+          "Dog"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Priority.LOW",
+            "name": "LOW",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Priority.HIGH",
+            "name": "HIGH",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "Priority",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Priority",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Role.READER",
+            "name": "READER",
+            "value": "reader"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Role.WRITER",
+            "name": "WRITER",
+            "value": "writer"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "Role",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Role",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.at",
+            "name": "at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.blob",
+            "name": "blob",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.count",
+            "name": "count",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.day",
+            "name": "day",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_decimal": {
+                "decimal_places": 2,
+                "max_digits": 12
+              }
+            },
+            "field_number": null,
+            "key": "Scalars.exact",
+            "name": "exact",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.flag",
+            "name": "flag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "ipv4",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.host",
+            "name": "host",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "uri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.href",
+            "name": "href",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "uuid",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.ident",
+            "name": "ident",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.ratio",
+            "name": "ratio",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.raw",
+            "name": "raw",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Scalars_raw",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "password",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.secret",
+            "name": "secret",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "duration",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.span",
+            "name": "span",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.when",
+            "name": "when",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "path",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Scalars.where",
+            "name": "where",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Scalars",
+        "key_type": null,
+        "kind": "record",
+        "name": "Scalars",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Scalars_raw",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Scalars_raw",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "pydantic_extra": "forbid"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "aliased"
+            },
+            "field_number": null,
+            "key": "Shape.aliasedName",
+            "name": "aliasedName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": true,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.deprecated_field",
+            "name": "deprecated_field",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 0,
+            "deprecated": false,
+            "description": "Documented field.",
+            "extras": {
+              "pydantic_examples": [
+                1,
+                2
+              ],
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.described",
+            "name": "described",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_exclude": true,
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.excluded",
+            "name": "excluded",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_default_factory": "list",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.factory_default",
+            "name": "factory_default",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "a",
+                "b",
+                "c"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "a",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.literal",
+            "name": "literal",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.modern_union",
+            "name": "modern_union",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Shape_modern_union",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 100.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 0.0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.percent",
+            "name": "percent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 1,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.priority",
+            "name": "priority",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Priority",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "reader",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.role",
+            "name": "role",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Role",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 80,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "x",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.short",
+            "name": "short",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Z]{3}-[0-9]{4}$",
+              "unique_items": null
+            },
+            "default": "ABC-0001",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.union",
+            "name": "union",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Shape_union",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "unset",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Shape.with_default",
+            "name": "with_default",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Shape",
+        "key_type": null,
+        "kind": "record",
+        "name": "Shape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Shape_modern_union",
+        "key_type": null,
+        "kind": "union",
+        "name": "Shape_modern_union",
+        "namespace": null,
+        "union_members": [
+          "integer",
+          "string"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "Shape_union",
+        "key_type": null,
+        "kind": "union",
+        "name": "Shape_union",
+        "namespace": null,
+        "union_members": [
+          "integer",
+          "string"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Validators are arbitrary code: their effect on the schema cannot be read statically.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "WithValidators.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "WithValidators",
+        "key_type": null,
+        "kind": "record",
+        "name": "WithValidators",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pydantic/04-stress-annotation-coverage.py",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 19
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pydantic"
+  },
+  "fingerprint": "sha256:008e3306156689a2b1310aa6beae08cb5f96df4765da8ece563532a4251a3432",
+  "lint": {
+    "findings": 64,
+    "grade": "F",
+    "report_fingerprint": "3cfe5b59b09bcf5517868b4dcfe7b454fe8a5d6c90b507f505734a8b930e7488",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 49,
+      "warning": 15
+    }
+  },
+  "snapshot_version": 1
+}

@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 77
+- **Formats gated:** 78
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -70,6 +70,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `openapi` | OpenAPI / Swagger | rest | 47 | 12 | 0 | 0 | 59 | 6/6 | 42 | `openapi` |
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
 | `postman` | Postman | rest | 13 | 11 | 0 | 0 | 24 | 6/6 | 12 | `postman` |
+| `pydantic` | Pydantic models | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `raml` | RAML | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `raml` |
 | `relaxng` | RELAX NG | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `smithy` | Smithy | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `smithy` |
@@ -154,6 +155,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `openapi` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `postman` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `pydantic` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `raml` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `relaxng` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `smithy` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -193,4 +195,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`

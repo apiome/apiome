@@ -113,6 +113,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "kafka-connect",
         "nacha",
         "ncpdp",
+        "pydantic",
         "relaxng",
         "sample",
         "sql-ddl",

@@ -69,6 +69,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   'typescript-types': 'https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html',
   zod: 'https://v3.zod.dev/',
   trpc: 'https://trpc.io/docs/server/routers',
+  pydantic: 'https://docs.pydantic.dev/latest/concepts/models/',
   dbt: 'https://docs.getdbt.com/reference/configs-and-properties',
   odcs: 'https://bitol-io.github.io/open-data-contract-standard/latest/',
   'kafka-connect': 'https://kafka.apache.org/documentation/#connect_schemas',

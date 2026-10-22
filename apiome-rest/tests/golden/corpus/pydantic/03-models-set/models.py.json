@@ -1,0 +1,702 @@
+{
+  "adapter": "pydantic",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pydantic": {
+        "capability_limits": [],
+        "exports": [
+          "CustomerWithOrders",
+          "Address",
+          "Customer",
+          "OrderStatus",
+          "OrderLine",
+          "Order"
+        ],
+        "modules": [
+          "customer.py",
+          "models.py",
+          "order.py"
+        ],
+        "root_module": "models.py",
+        "root_type": "CustomerWithOrders"
+      }
+    },
+    "format": "pydantic",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CustomerWithOrders",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CustomerWithOrders",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.country_code",
+            "name": "country_code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.line1",
+            "name": "line1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Address.line2",
+            "name": "line2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.postal_code",
+            "name": "postal_code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Address",
+        "key_type": null,
+        "kind": "record",
+        "name": "Address",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Customer.address",
+            "name": "address",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Address",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Customer.customer_id",
+            "name": "customer_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Customer.display_name",
+            "name": "display_name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "email",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Customer.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_default_factory": "list",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Customer.segments",
+            "name": "segments",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Customer",
+        "key_type": null,
+        "kind": "record",
+        "name": "Customer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Aggregate declared in the root, built from types defined in both members.",
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "CustomerWithOrders.customer",
+            "name": "customer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Customer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "CustomerWithOrders.orders",
+            "name": "orders",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Order",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": 0.0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "CustomerWithOrders.total_spend",
+            "name": "total_spend",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "CustomerWithOrders",
+        "key_type": null,
+        "kind": "record",
+        "name": "CustomerWithOrders",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.customer_id",
+            "name": "customer_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "OrderLine",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.order_id",
+            "name": "order_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.ship_to",
+            "name": "ship_to",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Address",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "new",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Order.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrderStatus",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Order.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Order",
+        "key_type": null,
+        "kind": "record",
+        "name": "Order",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderLine.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderLine.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OrderLine.unit_price",
+            "name": "unit_price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OrderLine",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderLine",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.NEW",
+            "name": "NEW",
+            "value": "new"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.PAID",
+            "name": "PAID",
+            "value": "paid"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.SHIPPED",
+            "name": "SHIPPED",
+            "value": "shipped"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.CANCELLED",
+            "name": "CANCELLED",
+            "value": "cancelled"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "OrderStatus",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrderStatus",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pydantic/03-models-set/models.py",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pydantic"
+  },
+  "fingerprint": "sha256:75a5e767abc9fdb2fcdea576cf320c6e16324581ac586a13ab7a594e3145ff5f",
+  "lint": {
+    "findings": 28,
+    "grade": "F",
+    "report_fingerprint": "8fcf003078f1deb1dd865cfcea9e03df71ca9cb80c7323d2921f5658d65c9846",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 23,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

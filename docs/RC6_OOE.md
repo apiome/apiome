@@ -179,7 +179,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 52 | 3 | B | [#2553](https://github.com/apiome/apiome/issues/2553) | TFA umbrella | Add Authy application as 2FA option | close after TFA-1.1…1.4 | Core |
 | 53 | 3 | C1 | [#5407](https://github.com/apiome/apiome/issues/5407) | FMT-EPIC-7 | Gateway & infrastructure route sources | close after FMT-7.1…7.7 | Core |
 | 54 | 3 | C2 | [#5467](https://github.com/apiome/apiome/issues/5467) | FMT-8.6 | Inference provenance and confidence labelling for code-first sources | — | Core |
-| 55 | 3 | C2 | [#5465](https://github.com/apiome/apiome/issues/5465) | FMT-8.4 | Pydantic model import | FMT-8.6 | Core |
 | 59 | 3 | C2 | [#5466](https://github.com/apiome/apiome/issues/5466) | FMT-8.5 | CUE, Pkl and Dhall import | FMT-8.6 | Core |
 | 60 | 3 | C2 | [#5408](https://github.com/apiome/apiome/issues/5408) | FMT-EPIC-8 | Code-first & type-system sources | close after FMT-8.1…8.6 | Core |
 | 61 | 3 | C3 | [#5475](https://github.com/apiome/apiome/issues/5475) | FMT-10.2 | Thunder Client collection import | — | Core |

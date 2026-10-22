@@ -1203,6 +1203,10 @@ def load_builtin_import_sources() -> None:
     # router set, evaluated in the same sandboxed extractor as Zod — and its normalizer.
     from . import trpc_import_source as _trpc  # noqa: F401
 
+    # ``pydantic_import_source`` (FMT-8.4) self-registers the ``pydantic`` adapter — a module or
+    # package of Pydantic models, read statically with ``ast`` and never executed.
+    from . import pydantic_import_source as _pydantic  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

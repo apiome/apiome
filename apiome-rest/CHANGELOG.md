@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.426.0] - 2026-10-22
+
+### Added
+- **Pydantic model import (#5465, FMT-8.4)**: a new `pydantic` import source reads a module or package of Pydantic
+  models as a schemas-only catalog source — **statically, with `ast`; no user module is ever imported or executed**.
+  No toolchain is needed.
+  - `BaseModel` subclasses (inheritance in pydantic's field order, generics instantiated by subclassing), `Enum`
+    subclasses, `Literal`, `Optional` / `Union` / `X | Y`, containers, nested and self-referencing models, and
+    module-level `Annotated` and union aliases; imports between the upload's modules resolve.
+  - `Field(gt/ge/lt/le/multiple_of/min_length/max_length/pattern)` and `Annotated[..., StringConstraints(...)]`
+    become canonical constraints (a length on a collection is an item count); `datetime`, `UUID`, `EmailStr`,
+    `AnyUrl` and kin become formats; literal and enum-member defaults, descriptions and `deprecated` are kept;
+    `Field(alias=…)` and `alias_generator=to_camel` name the wire field (`pydantic_name` keeps the attribute).
+  - Declared limits: `create_model` and model factories (`pydantic.dynamic_model`), validators, computed fields,
+    class-creation hooks, annotations and types the reader cannot resolve, decimal precision.
+  - An annotation naming something neither the upload nor the standard library and pydantic define →
+    `INPUT_REFERENCE_UNRESOLVED`; a module that does not import pydantic → `FORMAT_MISMATCH`.
+  - Shares the FMT-8.1 model, so Pydantic models, Zod schemas and TypeScript types of the same shape model alike.
+  - Reviewed capability seed (registry version 27 -> 28), version coverage, goldens for the 7 valid corpus entries,
+    the round-trip matrix row, the parity row and MCP toolset goldens.
+
 ## [1.425.0] - 2026-10-22
 
 ### Added
