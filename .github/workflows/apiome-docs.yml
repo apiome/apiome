@@ -230,5 +230,9 @@ jobs:
             curl -fsS "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
             sleep 1
           done
-          curl -fsS "http://127.0.0.1:${port}/" | grep -q '<title>'
-          curl -fsS "http://127.0.0.1:${port}/release-notes" | grep -q 'Release notes'
+          # Docusaurus minifies to `<title data-rh=true>`, so match the tag's opening only. Each body
+          # is saved first: under pipefail, `curl | grep -q` fails when grep exits before curl does.
+          curl -fsS "http://127.0.0.1:${port}/" -o /tmp/docs-home.html
+          grep -q '<title' /tmp/docs-home.html || { echo "::error::/ has no <title>"; exit 1; }
+          curl -fsS "http://127.0.0.1:${port}/release-notes" -o /tmp/docs-release-notes.html
+          grep -q 'Release notes' /tmp/docs-release-notes.html || { echo "::error::/release-notes has no 'Release notes'"; exit 1; }
