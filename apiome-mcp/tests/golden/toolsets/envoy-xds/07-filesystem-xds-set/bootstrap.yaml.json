@@ -1,0 +1,44 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_healthz",
+      "operation": "ANY /healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v2_parcels_param1",
+      "operation": "ANY /v2/parcels/{param1}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2_shipments",
+      "operation": "ANY /v2/shipments"
+    }
+  ]
+}

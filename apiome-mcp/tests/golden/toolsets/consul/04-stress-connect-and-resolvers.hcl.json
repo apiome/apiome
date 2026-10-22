@@ -1,0 +1,55 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1",
+          "mode"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v3_payments_authorizations_param1_captures",
+      "operation": "ANY /v3/payments/authorizations/{param1}/captures"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_payments_healthz",
+      "operation": "ANY /v3/payments/healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-employee": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-employee"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v3_payments_authorizations",
+      "operation": "POST /v3/payments/authorizations"
+    }
+  ]
+}

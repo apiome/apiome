@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "authorizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorizationId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_payments_authorizations_authorizationId",
+      "operation": "GET /v3/payments/authorizations/{authorizationId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v3_payments_healthz",
+      "operation": "GET /v3/payments/healthz"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v3_payments_authorizations",
+      "operation": "POST /v3/payments/authorizations"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "authorizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorizationId"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v3_payments_authorizations_authorizationId_captures",
+      "operation": "POST /v3/payments/authorizations/{authorizationId}/captures"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v3_payments_webhooks",
+      "operation": "POST /v3/payments/webhooks"
+    }
+  ]
+}

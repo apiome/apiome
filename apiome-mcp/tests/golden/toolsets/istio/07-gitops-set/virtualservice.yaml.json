@@ -1,0 +1,28 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "x-canary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-canary"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v2_shipments",
+      "operation": "ANY /v2/shipments"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2_shipments_2",
+      "operation": "ANY /v2/shipments#stable"
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "assay_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assay_id"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_assays_assay_id_results",
+      "operation": "ANY /assays/{assay_id}/results"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_exact",
+      "operation": "ANY /exact"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_experiment",
+      "operation": "ANY /experiment"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_files",
+      "operation": "ANY /files/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_legacy",
+      "operation": "ANY /legacy/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_nested",
+      "operation": "ANY /nested/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_nested_inner",
+      "operation": "ANY /nested/inner"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "param1": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param1"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_orders_param1",
+      "operation": "ANY /orders/{param1}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_static",
+      "operation": "ANY /static/"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_ws",
+      "operation": "ANY /ws"
+    }
+  ]
+}

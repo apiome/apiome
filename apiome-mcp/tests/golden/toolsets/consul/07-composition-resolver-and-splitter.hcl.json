@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-employee": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-employee"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v3_checkout",
+      "operation": "ANY /v3/checkout"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_checkout_2",
+      "operation": "ANY /v3/checkout#service-router/checkout#route-1"
+    }
+  ]
+}

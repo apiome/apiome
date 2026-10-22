@@ -1,0 +1,28 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY",
+      "operation": "ANY /"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "X-Partner-Id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-Partner-Id"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_api",
+      "operation": "ANY /api"
+    }
+  ]
+}

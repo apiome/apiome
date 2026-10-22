@@ -1,0 +1,44 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2",
+      "operation": "ANY /v2"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-employee": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-employee"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v3",
+      "operation": "ANY /v3"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v3_2",
+      "operation": "ANY /v3#public-split"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v3_webhooks",
+      "operation": "POST /v3/webhooks"
+    }
+  ]
+}

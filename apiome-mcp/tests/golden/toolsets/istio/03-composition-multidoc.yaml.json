@@ -1,0 +1,28 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "x-canary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-canary"
+        ],
+        "type": "object"
+      },
+      "name": "ANY_v2_checkout",
+      "operation": "ANY /v2/checkout"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_v2_checkout_2",
+      "operation": "ANY /v2/checkout#split"
+    }
+  ]
+}
