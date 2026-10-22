@@ -141,6 +141,8 @@ const SUNSET_PRELUDES = [
   '.stl-row--current > td:first-child',
   '.stl-foot__hint',
   '.stl-filter',
+  '.stl-warnings__head',
+  '.stl-warnings__head > svg',
 ] as const;
 
 /**

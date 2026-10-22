@@ -42,12 +42,19 @@
  * the badge and the drawing read through it — so the two can never disagree. The **CSV keeps
  * the server's string**, because the export is a contract with whatever consumes it.
  *
+ * ### The `#507` note is a link, not a banner (HIVE-11.10, #5606)
+ *
+ * When a row carries a structured warning the page used to stand a warning banner above the
+ * drawing. Its sentence is now the {@link SunsetWarningsDialog}, opened from the
+ * *Where these warnings come from* ghost button in the header's actions, which shows under the
+ * same condition — so the drawing and the table start one banner higher.
+ *
  * @see `@/app/components/ade/sunset` — the rules, the drawing and the table.
  */
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Download, Sunset } from 'lucide-react';
+import { CircleHelp, Download, Sunset } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import type { ShortcutBinding } from '@lib/shortcuts';
@@ -55,7 +62,6 @@ import type { ShortcutBinding } from '@lib/shortcuts';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
-import { Alert, AlertDescription } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
 import { DataTableFoot, DataTableToolbar } from '@/app/components/ui/DataTable';
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
@@ -77,9 +83,10 @@ import {
   SUNSET_LOAD_ERROR,
   SUNSET_NO_TENANT,
   SUNSET_SIGNED_OUT,
-  SUNSET_WARNINGS_BANNER,
+  SUNSET_WARNINGS_LINK,
   SunsetTable,
   SunsetTimelineChart,
+  SunsetWarningsDialog,
   VERSIONS_HREF,
   hasSunsetWarnings,
   sunsetCsv,
@@ -106,6 +113,7 @@ export default function SunsetTimelinePage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [selectedRevisionId, setSelectedRevisionId] = React.useState<string | null>(null);
+  const [warningsOpen, setWarningsOpen] = React.useState(false);
 
   const filterRef = React.useRef<HTMLButtonElement | null>(null);
 
@@ -278,15 +286,30 @@ export default function SunsetTimelinePage() {
         title="Sunset timeline"
         description={SUNSET_DESCRIPTION}
         actions={
-          <Button
-            variant="outline"
-            onClick={exportCsv}
-            disabled={entries.length === 0}
-            data-testid="sunset-export"
-          >
-            <Download aria-hidden />
-            Export CSV
-          </Button>
+          <>
+            {/* In the actions cluster rather than after the description: the description
+                already fills two lines at 1440 px, and a third would give back most of the
+                height the banner's removal saved. */}
+            {currentTenantId && hasSunsetWarnings(entries) ? (
+              <Button
+                variant="ghost"
+                onClick={() => setWarningsOpen(true)}
+                data-testid="sunset-warnings-link"
+              >
+                <CircleHelp aria-hidden />
+                {SUNSET_WARNINGS_LINK}
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={exportCsv}
+              disabled={entries.length === 0}
+              data-testid="sunset-export"
+            >
+              <Download aria-hidden />
+              Export CSV
+            </Button>
+          </>
         }
       />
 
@@ -298,16 +321,6 @@ export default function SunsetTimelinePage() {
           />
         ) : (
           <>
-            {hasSunsetWarnings(entries) ? (
-              <Alert variant="warning" data-testid="sunset-warnings">
-                <AlertDescription>
-                  {SUNSET_WARNINGS_BANNER.lead}{' '}
-                  <Link href={VERSIONS_HREF}>{SUNSET_WARNINGS_BANNER.linkLabel}</Link>{' '}
-                  {SUNSET_WARNINGS_BANNER.tail}
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
             {layout && layout.plotted > 0 ? (
               <SunsetTimelineChart
                 layout={layout}
@@ -343,6 +356,8 @@ export default function SunsetTimelinePage() {
           </>
         )}
       </PageBody>
+
+      <SunsetWarningsDialog open={warningsOpen} onOpenChange={setWarningsOpen} />
     </Page>
   );
 }

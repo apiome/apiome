@@ -646,16 +646,38 @@ describe('the CSV export', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('the states', () => {
-  it('raises the #507 banner only when a row carries a structured warning', async () => {
+  it('keeps the #507 note behind a ghost header button, shown only when a row carries a warning', async () => {
     await renderScreen();
+    // No standing banner between the header and the drawing (HIVE-11.10).
+    expect(screen.queryByTestId('sunset-warnings')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    const link = screen.getByTestId('sunset-warnings-link');
+    expect(link).toHaveTextContent('Where these warnings come from');
+    expect(link.closest('[data-testid="page-header-actions"]')).not.toBeNull();
+
+    await userEvent.click(link);
+    const dialog = await screen.findByRole('dialog', { name: 'Where these warnings come from' });
+    // The banner's sentence, word for word, with its Versions link.
     expect(screen.getByTestId('sunset-warnings')).toHaveTextContent(
-      'Rows include the same structured warnings as compatibility checks (#507).'
+      'Rows include the same structured warnings as compatibility checks (#507). Open a revision in Versions to see banners in context.'
     );
+    expect(within(dialog).getByRole('link', { name: 'Versions' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/versions'
+    );
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Got it' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    // Focus goes back to the button that opened it.
+    expect(screen.getByTestId('sunset-warnings-link')).toHaveFocus();
 
     timelineResponse = { ok: true, body: { success: true, entries: [PAYMENTS_SCHEDULED] } };
     await userEvent.click(screen.getByRole('combobox', { name: 'Filter by project' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Payments API' }));
-    await waitFor(() => expect(screen.queryByTestId('sunset-warnings')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('sunset-warnings-link')).not.toBeInTheDocument()
+    );
   });
 
   it('draws the empty state inside the table card, with a way to Versions', async () => {
@@ -751,6 +773,14 @@ describe('the browser fixtures', () => {
     await renderScreen();
     await screen.findByTestId('sunset-timeline-card');
     write('timeline', page().outerHTML);
+  });
+
+  it('renders the warnings dialog (and writes its fixture on request)', async () => {
+    await renderScreen();
+    await userEvent.click(screen.getByTestId('sunset-warnings-link'));
+    const dialog = await screen.findByTestId('sunset-warnings-dialog');
+    // The page, then the Radix portal holding the scrim and the dialog.
+    write('warnings', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
   it('renders the empty state (and writes its fixture on request)', async () => {

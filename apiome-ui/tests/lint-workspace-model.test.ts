@@ -37,6 +37,8 @@ import {
   gradeBars,
   gradeChips,
   missingCoverageAxes,
+  postureFactGrades,
+  postureFacts,
   postureTiles,
   queueOffsetForPage,
   queuePageCount,
@@ -224,6 +226,55 @@ describe('the posture summary', () => {
     expect(drillDownFilters('waiver-requests', EMPTY_WORKSPACE_FILTERS, '').state).toEqual([
       'waiver_requested',
     ]);
+  });
+});
+
+describe('the posture facts line (HIVE-11.10)', () => {
+  it('restates the four tiles as facts, with the same figures and drill-downs', () => {
+    const facts = postureFacts(summary());
+    const tiles = postureTiles(summary());
+    expect(facts.map((fact) => fact.target)).toEqual(tiles.map((tile) => tile.target));
+    expect(facts.map((fact) => fact.value)).toEqual(tiles.map((tile) => String(tile.value)));
+    expect(facts.map((fact) => fact.drillHint)).toEqual(tiles.map((tile) => tile.drillHint));
+    expect(facts.map((fact) => `${fact.value} ${fact.label}`)).toEqual([
+      '2 unwaived security errors',
+      '3 of 12 subjects missing coverage',
+      '7 new findings',
+      '4 active waivers',
+    ]);
+  });
+
+  it('alerts only on unwaived security errors above zero', () => {
+    expect(postureFacts(summary()).map((fact) => fact.alert)).toEqual([true, false, false, false]);
+    const clean = summary({ findings: { unwaived_security_errors: 0 } });
+    expect(postureFacts(clean).some((fact) => fact.alert)).toBe(false);
+  });
+
+  it('uses the singular for one and drops the subject total when there is none', () => {
+    const one = summary({
+      findings: { unwaived_security_errors: 1, new_count: 1 },
+      waivers: { active: 1 },
+      subjects: {},
+    });
+    expect(postureFacts(one).map((fact) => `${fact.value} ${fact.label}`)).toEqual([
+      '1 unwaived security error',
+      '3 missing coverage',
+      '1 new finding',
+      '1 active waiver',
+    ]);
+  });
+
+  it('lists A–F always and Ungraded only when something is ungraded', () => {
+    expect(postureFactGrades(summary()).map((chip) => chip.key)).toEqual([
+      'A',
+      'B',
+      'C',
+      'D',
+      'F',
+      'ungraded',
+    ]);
+    const allGraded = summary({ gradeDistribution: { A: 3, B: 5, C: 2, D: 1, F: 0, ungraded: 0 } });
+    expect(postureFactGrades(allGraded).map((chip) => chip.key)).toEqual(['A', 'B', 'C', 'D', 'F']);
   });
 });
 

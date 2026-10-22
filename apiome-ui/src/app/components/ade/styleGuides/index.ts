@@ -26,4 +26,7 @@ export type { AssignGuideDialogProps, AssignableProject } from './AssignGuideDia
 export { default as DeleteGuideDialog } from './DeleteGuideDialog';
 export type { DeleteGuideDialogProps } from './DeleteGuideDialog';
 
+export { StyleGuidesReadOnlyCallout, StyleGuidesReadOnlyLock } from './StyleGuidesReadOnly';
+export type { StyleGuidesReadOnlyCalloutProps } from './StyleGuidesReadOnly';
+
 export * from './styleGuidesModel';

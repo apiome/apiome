@@ -74,9 +74,9 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1100, 1024, TIMELINE_BREAKPOINT, 768, 640, 
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-sunset-timeline');
 
 /** The surfaces the jsdom suite dumps. */
-type Fixture = 'timeline' | 'empty' | 'error';
+type Fixture = 'timeline' | 'empty' | 'error' | 'warnings';
 
-/** All three, for the sweeps that do not care which. */
+/** The three page states, for the sweeps that do not care which (`warnings` is the dialog). */
 const ALL_FIXTURES: Fixture[] = ['timeline', 'empty', 'error'];
 
 /**
@@ -507,4 +507,39 @@ test.describe('accessibility', () => {
       expect(label).toMatch(/sunset \d{2} \w{3} \d{4} \d{2}:\d{2} UTC/);
     }
   });
+});
+
+/* -------------------------------------------------------------------------
+   The #507 note is a link, not a banner (HIVE-11.10, #5606)
+   ------------------------------------------------------------------------- */
+test.describe('the #507 note', () => {
+  test('stands no banner between the header and the drawing', async ({ page }) => {
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, 'timeline');
+    await expect(page.locator('.page-header [data-testid="sunset-warnings-link"]')).toContainText(
+      'Where these warnings come from'
+    );
+    await expect(page.locator('.page [role="alert"]')).toHaveCount(0);
+  });
+
+  test('puts the link in the header actions, not under the description', async ({ page }) => {
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, 'timeline');
+    await expect(
+      page.locator('[data-testid="page-header-actions"] [data-testid="sunset-warnings-link"]')
+    ).toBeVisible();
+    await expect(page.locator('.page-header__desc [data-testid="sunset-warnings-link"]')).toHaveCount(0);
+  });
+
+  for (const theme of THEMES) {
+    test(`the dialog has no serious or critical axe violations in the ${theme ?? 'light'} theme`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+      await mount(page, 'warnings');
+      await applyPreferences(page, { theme });
+      await expect(page.locator('[data-testid="sunset-warnings-dialog"]')).toBeVisible();
+      expect(await blockingViolations(page)).toEqual([]);
+    });
+  }
 });

@@ -156,6 +156,10 @@ const STYLE_GUIDE_PRELUDES = [
   '.vp-skeleton',
   '.vp-skeleton__block',
   '.vp-skeleton__row',
+  '.sg-readonly-lock',
+  '.sg-readonly-lock:hover',
+  '.sg-readonly-lock > svg',
+  '.sg-readonly-tip',
 ] as const;
 
 /**

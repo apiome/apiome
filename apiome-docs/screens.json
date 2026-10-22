@@ -101,6 +101,15 @@
       "fallback": "fixture:hive-sunset-timeline/timeline.html"
     },
     {
+      "id": "sunset-timeline-warnings",
+      "route": "/ade/dashboard/versions/sunset-timeline",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-sunset-timeline/warnings.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/sunset/SunsetWarningsDialog.tsx"
+      ]
+    },
+    {
       "id": "versions-changes",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

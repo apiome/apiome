@@ -155,7 +155,7 @@ Milestone: **RC6** (all epics and issues).
 | 11.7 | #5603 | Repositories and repository detail — facts line, activity chip | Both 5-stat strips fold into facts lines; the Refresh activity panel becomes a “1 stale · 1 failed” chip that opens it | `ui`, `repository`, `redesign` | Y | N | M | `src/app/ade/dashboard/repositories/*`, `e2e/fixtures/hive-repositories/*`, `e2e/fixtures/hive-repository-detail/*` |
 | 11.8 | #5604 | Primitives & types — facts line over the registry ✅ | The 5-stat strip (core · tenant · imported · bound · unresolved) becomes a facts line; unresolved `$ref` stays a danger chip linking to the resolver | `ui`, `redesign` | Y | N | S | `src/app/ade/dashboard/primitives/*`, `e2e/fixtures/hive-primitives/*` |
 | 11.9 | #5605 | Members — seat facts line; Identity provider cards → “Coming next” line | Seat meter folds into “4 of 5 seats · 1 pending”; SSO/SCIM cards with dead buttons become one text line | `ui`, `redesign`, `tenancy` | Y | N | S | `src/app/ade/dashboard/members/*`, `e2e/hive-members.spec.ts` |
-| 11.10 | #5606 | Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts | “Read-only for members” and “Rows include the same structured warnings…” become header links; Lint posture’s two stat rows fold into a facts line + grade chips | `ui`, `governance`, `linting`, `redesign` | Y | N | M | `src/app/ade/dashboard/style-guides/*`, `src/app/ade/dashboard/versions/sunset-timeline/*`, `src/app/ade/dashboard/lint-workspace/*`, `e2e/fixtures/hive-sunset-timeline/*` |
+| 11.10 | #5606 | Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts ✅ | “Read-only for members” and “Rows include the same structured warnings…” become header links; Lint posture’s two stat rows fold into a facts line + grade chips | `ui`, `governance`, `linting`, `redesign` | Y | N | M | `src/app/ade/dashboard/style-guides/*`, `src/app/ade/dashboard/versions/sunset-timeline/*`, `src/app/ade/dashboard/lint-workspace/*`, `e2e/fixtures/hive-sunset-timeline/*` |
 | 11.11 | #5607 | Small chrome fixes — Export studio header, Import wizard height, profile hero | Standard header on Export studio; Import dialog height follows content and “Next →” becomes “Continue”; profile hero gradient → subtle surface | `ui`, `redesign` | Y | N | S | `src/app/ade/dashboard/export/studio/*`, `src/app/components/ade/dashboard/ImportDialog*`, `src/app/ade/dashboard/profile/*` |
 
 ### `apiome: [HIVE-11.1] StatusStrip component — one row of status chips, one open detail` ✅ — [#5597](https://github.com/apiome/apiome/issues/5597)
@@ -343,7 +343,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-11.10] Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts` — [#5606](https://github.com/apiome/apiome/issues/5606)
+### `apiome: [HIVE-11.10] Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts` ✅ — [#5606](https://github.com/apiome/apiome/issues/5606)
 **Problem statement.** Three Govern/Ship pages carry a standing note between header and content. Lint posture additionally opens with four stat tiles plus a grades/axes card (≈ 240 px) before its saved views and filters.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/catalog-quiet.html` (callouts 1, 2); rationale: `docs/mockups/PROPOSALS.md`.
@@ -352,9 +352,9 @@ Milestone: **RC6** (all epics and issues).
 - Lint posture: `FactsLine` (unwaived security errors · missing coverage · new findings · waivers) with the grade distribution as A/B/C/D/F chips inline; **Show stats** reveals the current cards.
 
 **Acceptance criteria.**
-- [ ] Each page’s first data row rises by ≥ 60 px at 1440 × 900 (measured in HIVE-13.3)
-- [ ] No information removed; dialogs/tooltips carry the exact former copy
-- [ ] Suites and gates green
+- [x] Each page’s first data row rises by ≥ 60 px at 1440 × 900 (measured in HIVE-13.3)
+- [x] No information removed; dialogs/tooltips carry the exact former copy
+- [x] Suites and gates green
 
 **Parallelism / dependencies.** Depends on HIVE-11.5.
 

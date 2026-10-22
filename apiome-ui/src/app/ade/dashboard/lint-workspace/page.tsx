@@ -20,7 +20,7 @@ import {
   DEFAULT_QUALITY_RANK_DAYS,
   LINT_QUEUE_PAGE_SIZE,
   LintFindingDrawer,
-  LintPostureSummary,
+  LintPostureFactsLine,
   LintQualityRanksPanel,
   LintQueueTable,
   LintSavedViewsBar,
@@ -495,7 +495,9 @@ function LintWorkspacePageInner() {
       />
 
       <PageBody>
-        <LintPostureSummary
+        {/* The four tiles and the grades card fold into one line (HIVE-11.10, #5606); the
+            full summary is behind its Show stats toggle. */}
+        <LintPostureFactsLine
           summary={summary}
           loading={summaryLoading}
           onDrillDown={handleDrillDown}

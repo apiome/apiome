@@ -21,6 +21,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import '@testing-library/jest-dom';
 
 import LintPostureSummary from '../src/app/components/ade/lintWorkspace/LintPostureSummary';
+import LintPostureFactsLine from '../src/app/components/ade/lintWorkspace/LintPostureFactsLine';
 import LintSavedViewsBar from '../src/app/components/ade/lintWorkspace/LintSavedViewsBar';
 import LintQueueTable from '../src/app/components/ade/lintWorkspace/LintQueueTable';
 import LintWaiverDialog from '../src/app/components/ade/lintWorkspace/LintWaiverDialog';
@@ -106,6 +107,83 @@ describe('LintPostureSummary', () => {
     const { container } = render(
       <LintPostureSummary summary={null} loading={false} onDrillDown={jest.fn()} />
     );
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+// =========================================================================================
+// The posture facts line (HIVE-11.10)
+// =========================================================================================
+
+describe('LintPostureFactsLine', () => {
+  beforeEach(() => window.localStorage.clear());
+
+  it('says the four tile figures as one line, then the grade chips', () => {
+    render(<LintPostureFactsLine summary={summary()} onDrillDown={jest.fn()} />);
+    const line = screen.getByRole('list', { name: 'Posture facts' });
+    expect(within(line).getByTestId('posture-fact-security-errors')).toHaveTextContent(
+      '2 unwaived security errors'
+    );
+    expect(within(line).getByTestId('posture-fact-coverage')).toHaveTextContent(
+      '3 of 12 subjects missing coverage'
+    );
+    expect(within(line).getByTestId('posture-fact-new')).toHaveTextContent('7 new findings');
+    expect(within(line).getByTestId('posture-fact-waiver-requests')).toHaveTextContent(
+      '4 active waivers'
+    );
+    const grades = within(line).getByTestId('posture-fact-grades');
+    for (const letter of ['A', 'B', 'C', 'D', 'F']) {
+      expect(within(grades).getByText(letter)).toBeInTheDocument();
+    }
+    expect(within(grades).getByText('Ungraded')).toBeInTheDocument();
+  });
+
+  it('keeps every fact a drill-down, with the tile’s hint as its tooltip', () => {
+    const onDrillDown = jest.fn();
+    render(<LintPostureFactsLine summary={summary()} onDrillDown={onDrillDown} />);
+    for (const target of ['security-errors', 'coverage', 'new', 'waiver-requests'] as const) {
+      const fact = screen.getByTestId(`posture-fact-${target}`);
+      expect(fact.tagName).toBe('BUTTON');
+      expect(fact).toHaveAttribute('type', 'button');
+      expect(fact.getAttribute('title')).toMatch(/^Drill down: /);
+      fireEvent.click(fact);
+      expect(onDrillDown).toHaveBeenLastCalledWith(target);
+    }
+  });
+
+  it('draws unwaived security errors as a danger chip only while there are some', () => {
+    const { rerender } = render(
+      <LintPostureFactsLine summary={summary()} onDrillDown={jest.fn()} />
+    );
+    expect(screen.getByTestId('posture-fact-security-errors')).toHaveClass('lw-fact--alert');
+    rerender(
+      <LintPostureFactsLine
+        summary={summary({ findings: { unwaived_security_errors: 0 } })}
+        onDrillDown={jest.fn()}
+      />
+    );
+    expect(screen.getByTestId('posture-fact-security-errors')).not.toHaveClass('lw-fact--alert');
+  });
+
+  it('keeps the tiles, grades and axes one Show stats away', () => {
+    render(<LintPostureFactsLine summary={summary()} onDrillDown={jest.fn()} />);
+    const toggle = screen.getByRole('button', { name: 'Show stats' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const region = document.getElementById(toggle.getAttribute('aria-controls') as string);
+    expect(region).not.toBeNull();
+    expect(region).toHaveAttribute('hidden');
+    expect(within(region as HTMLElement).getByTestId('summary-axis-quality')).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(region).not.toHaveAttribute('hidden');
+    expect(window.localStorage.getItem('hive.lint-posture.stats')).toBe('1');
+  });
+
+  it('draws a skeleton line while loading and nothing when the read failed', () => {
+    const { container, rerender } = render(
+      <LintPostureFactsLine summary={null} loading onDrillDown={jest.fn()} />
+    );
+    expect(container.querySelector('.facts-line[aria-busy="true"]')).not.toBeNull();
+    rerender(<LintPostureFactsLine summary={null} loading={false} onDrillDown={jest.fn()} />);
     expect(container).toBeEmptyDOMElement();
   });
 });
@@ -1155,9 +1233,30 @@ describe('the docs fixtures', () => {
     }
   }
 
+  beforeEach(() => {
+    // Show stats is remembered per device; every dump starts with the facts line folded.
+    window.localStorage.clear();
+  });
+
   afterEach(() => {
     global.fetch = originalFetch;
     mockSearchParams = new URLSearchParams();
+  });
+
+  it('opens on the facts line with the full summary folded behind Show stats', async () => {
+    await renderPage();
+    const line = screen.getByRole('list', { name: 'Posture facts' });
+    expect(line.closest('.page')).not.toBeNull();
+    // The tiles and grades card stay mounted but hidden until Show stats.
+    const toggle = screen.getByRole('button', { name: 'Show stats' });
+    expect(screen.getByTestId('lint-workspace-summary').closest('[hidden]')).not.toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Hide stats' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+    expect(screen.getByTestId('lint-workspace-summary').closest('[hidden]')).toBeNull();
+    expect(window.localStorage.getItem('hive.lint-posture.stats')).toBe('1');
   });
 
   it('writes the page and the finding drawer', async () => {

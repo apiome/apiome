@@ -12,7 +12,7 @@ server — with ownership, waivers and remediation trends. **Go to Govern → Li
 <Kbd keys="G"/> then <Kbd keys="L"/>). It is marked **Preview**. Three tabs: **Queue**, **Trends** and
 **Quality ranks**.
 
-<Screenshot id="lint-posture" alt="Lint posture: summary tiles, grade and axis averages, saved views, filter chips and the findings queue" />
+<Screenshot id="lint-posture" alt="Lint posture: the summary line with grade chips, saved views, filter chips and the findings queue" />
 
 What a finding *means* — the rule, its severity, how grades and axes are scored — is in
 [Lint and check quality](../build/lint-and-quality.md), [Built-in lint rules](../build/lint-rules.md),
@@ -21,17 +21,23 @@ page is about working through them.
 
 ## The summary
 
-Four tiles sum up the workspace. **Click a tile** to replace the filters with the ones it describes:
+One line under the header sums up the workspace — for example *2 unwaived security errors · 3 of 12
+subjects missing coverage · 7 new findings · 4 active waivers* — followed by a chip per grade (A–F,
+and **Ungraded** when any subject is). Unwaived security errors above zero is a red chip. **Click a
+figure** to replace the filters with the ones it describes:
 
-| Tile | Shows | Click to filter |
+| Figure | Shows | Click to filter |
 | --- | --- | --- |
 | **Unwaived security errors** | Open errors on the security axis | severity error · axis security · state open |
-| **Missing required coverage** | Subjects missing a required axis | coverage missing |
+| **Missing coverage** | Subjects missing a required axis | coverage missing |
 | **New findings** | Findings since the last scan | new only |
-| **Waivers** | Active waivers, how many are requested, how many expire within 14 days | state waiver requested |
+| **Active waivers** | Waivers in force | state waiver requested |
 
-Below them, **Grades** counts subjects by grade (A–F, Ungraded) and **Axes · average score** gives each
-axis's average — `—` when nothing assessed it.
+**Click “Show stats”** at the end of the line for the full summary: the four tiles (which add how many
+waivers are requested and how many expire within 14 days, and which axes are missing), **Grades**
+with every band including empty ones, and **Axes · average score** — `—` when nothing assessed an
+axis. The tiles are clickable too. **“Hide stats”** folds them away again; your choice is remembered
+on this device.
 
 ## Filter the queue
 
@@ -112,7 +118,7 @@ A waiver is accepted risk with a deadline.
 
 An approver — anyone with the `lint_findings:publish` permission — then:
 
-1. Filters on **State: Waiver requested** (or clicks the **Waivers** tile), selects the findings and
+1. Filters on **State: Waiver requested** (or clicks the **active waivers** figure), selects the findings and
    **clicks “Approve waiver”**.
 2. Confirms the **Rationale** and sets **Expires**, which is required.
 3. **Clicks “Approve waiver”.** The findings move to **Waived** until the expiry date.

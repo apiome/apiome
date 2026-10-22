@@ -208,6 +208,14 @@ const LINT_PRELUDES = [
   '.lr-rule-link',
   '.lr-rule-link:hover',
   '.lr-rule-link > svg',
+  '.lw-fact',
+  '.lw-fact:hover',
+  '.lw-fact--alert',
+  '.lw-fact--alert:hover',
+  '.lw-fact--alert > svg',
+  '.lw-fact--alert b',
+  '.lw-fact-grades',
+  ".lw-grade-chip[data-grade='ungraded'] .lw-grade-chip__letter",
 ] as const;
 
 /**
@@ -330,6 +338,30 @@ describe('the lint-posture section of globals.css', () => {
 /* -------------------------------------------------------------------------
    2. The bands and the tones keep their one definition
    ------------------------------------------------------------------------- */
+
+describe('the posture facts line (HIVE-11.10)', () => {
+  it('paints the security chip on its own calibrated -soft/-fg pair', () => {
+    expect(declaration('.lw-fact--alert', 'background')).toBe('var(--danger-soft)');
+    expect(declaration('.lw-fact--alert', 'color')).toBe('var(--danger-fg)');
+    // The figure keeps the chip's ink rather than `.facts__item b`'s `--fg`.
+    expect(declaration('.lw-fact--alert b', 'color')).toBe('inherit');
+  });
+
+  it('tints the glyph with stroke, not color, so the mark-text ratchet is untouched', () => {
+    expect(declaration('.lw-fact--alert > svg', 'stroke')).toBe('var(--danger)');
+  });
+
+  it('keeps a plain fact in the line\'s own ink', () => {
+    expect(declaration('.lw-fact', 'color')).toBe('inherit');
+    expect(declaration('.lw-fact', 'background')).toBe('none');
+  });
+
+  it('lets the Ungraded tile grow to fit its word', () => {
+    expect(
+      declaration(".lw-grade-chip[data-grade='ungraded'] .lw-grade-chip__letter", 'inline-size')
+    ).toBe('auto');
+  });
+});
 
 describe('what this section deliberately does not paint', () => {
   it('leaves every grade tile to the shared band, which is the component’s class', () => {
