@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pydantic import on Python 3.11 (#5465)**: the reader looked up `ast.TypeAlias` (the 3.12 `type X = …` statement)
   for every module-level statement it did not otherwise recognise, so on Python 3.11 — the supported minimum — any
   such module failed with `AttributeError`. The check now runs only where the node exists.
+- **Version pull sections cover the newest fields (#5921, #771)**: `includeSections` / `excludeSections` on a version
+  pull did not know `securityScore` / `securityGrade` or the create-time copy outcome (`copied_classes`,
+  `copied_paths`, `copied_operations`, `copy_warning`), so an include-only pull dropped them and an exclusion never
+  removed them. The security headline now rides with `governance` (beside `qualityScore`), the copy outcome with
+  `lineage`.
 
 The OpenAPI version moves to 1.293.1.
 

@@ -46,11 +46,25 @@ SECTION_FIELD_KEYS: dict[str, frozenset[str]] = {
             "upstreamProjectName",
             "sourceCommitSha",
             "sourceCommittedAt",
+            # Create-only copy outcome from the source version (#771).
+            "copied_classes",
+            "copied_paths",
+            "copied_operations",
+            "copy_warning",
         }
     ),
-    # Stored lint headline (#5259) rides with governance: it is the style-guide-scored signal.
+    # Stored lint (#5259) and security (ASP-1.3, #5921) headlines ride with governance: both are
+    # style-guide-scored signals.
     "governance": frozenset(
-        {"revisionLocked", "metadata", "lifecycle", "qualityScore", "qualityGrade"}
+        {
+            "revisionLocked",
+            "metadata",
+            "lifecycle",
+            "qualityScore",
+            "qualityGrade",
+            "securityScore",
+            "securityGrade",
+        }
     ),
     "creator": frozenset({"creator_id", "creator_name", "creator_email"}),
     "project": frozenset({"project_name", "project_slug"}),
