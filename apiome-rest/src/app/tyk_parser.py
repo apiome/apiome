@@ -45,8 +45,10 @@ from .gateway_config_model import (
     GatewayServiceDef,
     redact_secret_config,
 )
-from .mesh_route_common import LimitCollector, path_pattern_for, policy_plugin, reject_binary
-from .proxy_route_common import is_json_text, load_json_document, split_address, template_pattern
+from .gateway_family import provenance_stamp
+from .gateway_match import path_pattern
+from .mesh_route_common import LimitCollector, policy_plugin, reject_binary
+from .proxy_route_common import is_json_text, load_json_document, split_address
 
 __all__ = [
     "TYK_FLAVOR",
@@ -236,8 +238,8 @@ def _join(listen_path: str, path: str) -> str:
 def _pattern(path: str) -> GatewayPathPattern:
     """A Tyk route path → pattern (``{param}`` templates, ``*`` / regex → regex)."""
     if _PATTERN_CHARS.search(path.replace("{", "").replace("}", "")):
-        return path_pattern_for("RegularExpression", path.replace("*", ".*"))
-    return template_pattern(path, "exact")
+        return path_pattern("RegularExpression", path.replace("*", ".*"))
+    return path_pattern("Exact", path, templated=True)
 
 
 @dataclass
@@ -505,7 +507,7 @@ def parse_tyk_classic(
         for path, actions, origin_list in route_paths:
             route_name = f"{api_id}@{version_name}{path or ':listen-path'}"
             public = _join(listen_path, path)
-            pattern = _pattern(public) if path else path_pattern_for("PathPrefix", public)
+            pattern = _pattern(public) if path else path_pattern("PathPrefix", public)
             methods = sorted(str(method).upper() for method in actions) or [None]
             plugins = list(version_plugins)
             for rule in version.rules:
@@ -672,13 +674,13 @@ def interpret_tyk_oas(model: CanonicalApi, document: Mapping[str, Any]) -> None:
         redacted, count = redact_secret_config(enabled)
         redactions += count
         operation.extras["plugins"] = sorted(enabled)
-        operation.extras["tyk"] = {"middleware": redacted, "provenance": "inferred"}
+        operation.extras["tyk"] = {"middleware": redacted, **provenance_stamp(TYK_FLAVOR, derived=True)}
         plugin_rows.extend((name, "route") for name in enabled)
 
     global_mw = _enabled_blocks(middleware.get("global"))
     server = extension.get("server") if isinstance(extension.get("server"), Mapping) else {}
     upstream = extension.get("upstream") if isinstance(extension.get("upstream"), Mapping) else {}
-    auth_rows = []
+    auth_hints: List[GatewayAuthHint] = []
     authentication = server.get("authentication") if isinstance(server.get("authentication"), Mapping) else {}
     if authentication.get("enabled") is not False:
         schemes = (
@@ -688,14 +690,13 @@ def interpret_tyk_oas(model: CanonicalApi, document: Mapping[str, Any]) -> None:
             if not isinstance(scheme, Mapping) or scheme.get("enabled") is False:
                 continue
             kind = next((key for key in _OAS_AUTH_KINDS if isinstance(scheme.get(key), Mapping)), None)
-            auth_rows.append(
-                {
-                    "scheme": _OAS_AUTH_KINDS[kind] if kind else "apiKey",
-                    "plugin": f"securitySchemes.{name}",
-                    "scope": "global",
-                    "attached_to": None,
-                    "detail": {"kind": kind or "authToken"},
-                }
+            auth_hints.append(
+                GatewayAuthHint(
+                    scheme=_OAS_AUTH_KINDS[kind] if kind else "apiKey",
+                    plugin=f"securitySchemes.{name}",
+                    scope="global",
+                    detail={"kind": kind or "authToken"},
+                )
             )
     upstream_policy = {
         name: block
@@ -708,30 +709,27 @@ def interpret_tyk_oas(model: CanonicalApi, document: Mapping[str, Any]) -> None:
     info = extension.get("info") if isinstance(extension.get("info"), Mapping) else {}
     model.extras["tyk"] = {
         "form": "oas",
-        "provenance": "inferred",
+        **provenance_stamp(TYK_FLAVOR, derived=True),
         "api_id": info.get("id"),
         "listen_path": listen_path.get("value"),
         "upstream_url": upstream.get("url"),
         "upstream_policy": redacted_upstream,
         "global_middleware": sorted(global_mw),
     }
-    schemaless = sum(1 for operation in model.operations() if not operation.messages)
-    model.extras["gateway"] = {
-        "flavor": TYK_FLAVOR,
-        "route_count": len(model.operations()),
-        "operation_count": len(model.operations()),
-        "schemaless_operation_count": schemaless,
-        "credential_redactions": redactions,
-        "ignored_constructs": [dict(entry) for entry in limits.as_ignored()],
-        "auth": [row for row in auth_rows if row["scheme"] is not None],
-        "unmapped_plugins": [{"name": row["plugin"], "scope": "global"} for row in auth_rows if row["scheme"] is None],
-        "global_plugins": sorted(global_mw),
-        "unmodeled_plugins": [
-            {"name": name, "scope": scope}
-            for name, scope in sorted(
-                set(plugin_rows)
-                | {(name, "global") for name in global_mw}
-                | {(name, "service") for name in upstream_policy}
-            )
-        ],
-    }
+    # FMT-7.6: the same report builder the classic form (and every gateway flavor) uses.
+    from .gateway_config_normalizer import gateway_report
+
+    operations = model.operations()
+    model.extras["gateway"] = gateway_report(
+        flavor=TYK_FLAVOR,
+        route_count=len(operations),
+        operation_count=len(operations),
+        schemaless_operation_count=sum(1 for operation in operations if not operation.messages),
+        credential_redactions=redactions,
+        ignored=limits.as_ignored(),
+        auth_hints=auth_hints,
+        global_plugins=global_mw,
+        policy_plugins=plugin_rows
+        + [(name, "global") for name in global_mw]
+        + [(name, "service") for name in upstream_policy],
+    )

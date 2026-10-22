@@ -4,11 +4,10 @@ The ``envoy-xds`` and ``istio`` adapters read different documents but face the s
 problems, so the answers live here once:
 
 * **One match-normalization table.** Both formats map their path matchers onto the
-  Gateway API path types and then through :data:`app.gateway_api_parser.PATH_TYPE_KINDS`
-  — the table the shipped ``gateway-api`` adapter already uses — so an Envoy ``prefix``,
-  an Istio ``uri.prefix`` and a Gateway API ``PathPrefix`` can never disagree about what
-  a prefix match is. :func:`path_pattern_for` is the only way either parser turns a
-  matcher into a pattern.
+  Gateway API path types and build every pattern through
+  :func:`app.gateway_match.path_pattern` (FMT-7.6) — the one table the whole gateway
+  family shares — so an Envoy ``prefix``, an Istio ``uri.prefix`` and a Gateway API
+  ``PathPrefix`` can never disagree about what a prefix match is.
 * **YAML streams.** Both read multi-document YAML (JSON is a YAML subset, so an xDS
   ``DiscoveryResponse`` in JSON takes the same path), with the same mapping from parser
   failures to intake-error codes.
@@ -30,19 +29,16 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import yaml
 
-from .gateway_api_parser import PATH_TYPE_KINDS
 from .gateway_config_model import (
     GatewayConfigParseError,
-    GatewayPathPattern,
     GatewayPlugin,
-    build_path_pattern,
     redact_secret_config,
 )
+from .gateway_match import render_match_value
 
 __all__ = [
     "LimitCollector",
     "load_yaml_documents",
-    "path_pattern_for",
     "policy_plugin",
     "raise_if_truncated_tail",
     "reject_binary",
@@ -50,24 +46,6 @@ __all__ = [
     "is_duration",
     "is_truncated_cluster_host",
 ]
-
-
-def path_pattern_for(gateway_api_path_type: str, value: str) -> GatewayPathPattern:
-    """Build a path pattern through the shared Gateway API path-type table.
-
-    Args:
-        gateway_api_path_type: ``Exact``, ``PathPrefix`` or ``RegularExpression`` — the
-            Gateway API spelling each format's own matcher table maps onto.
-        value: The path or regex as the source declared it.
-
-    Returns:
-        The flavor-neutral pattern, built exactly as the ``gateway-api`` adapter builds it.
-
-    Raises:
-        KeyError: When ``gateway_api_path_type`` is not a Gateway API path type — a
-            programming error in a format's matcher table, never a property of input.
-    """
-    return build_path_pattern(value, PATH_TYPE_KINDS[gateway_api_path_type])
 
 
 def reject_binary(text: str, *, format_label: str) -> None:
@@ -177,11 +155,10 @@ def render_string_match(spec: Any) -> Optional[str]:
     for operator in ("exact", "prefix", "suffix", "contains", "regex"):
         value = spec.get(operator)
         if isinstance(value, (str, int, float)) and not isinstance(value, bool):
-            text = str(value)
-            return text if operator == "exact" else f"{operator}:{text}"
+            return render_match_value(operator, str(value))
     safe = spec.get("safe_regex")
     if isinstance(safe, Mapping) and isinstance(safe.get("regex"), str):
-        return f"regex:{safe['regex']}"
+        return render_match_value("regex", safe["regex"])
     return None
 
 

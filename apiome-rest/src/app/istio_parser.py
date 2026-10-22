@@ -36,12 +36,12 @@ from .gateway_config_model import (
     GatewayPlugin,
     GatewayRoute,
 )
+from .gateway_match import path_pattern
 from .mesh_route_common import (
     LimitCollector,
     is_duration,
     is_truncated_cluster_host,
     load_yaml_documents,
-    path_pattern_for,
     policy_plugin,
     raise_if_truncated_tail,
     reject_binary,
@@ -84,7 +84,7 @@ ISTIO_KINDS = frozenset(
 
 #: Istio ``uri`` matcher → Gateway API path type; the rest of the mapping is
 #: :data:`app.gateway_api_parser.PATH_TYPE_KINDS`, reached through
-#: :func:`app.mesh_route_common.path_pattern_for`.
+#: :func:`app.gateway_match.path_pattern`.
 ISTIO_URI_MATCHERS: Dict[str, str] = {
     "exact": "Exact",
     "prefix": "PathPrefix",
@@ -319,18 +319,18 @@ def _rule_matches(rule: Mapping[str, Any], limits: LimitCollector) -> Tuple[Tupl
     """Flatten a rule's ``match[]`` to match conditions plus route-level qualifier extras."""
     raw_matches = rule.get("match")
     if not isinstance(raw_matches, list) or not raw_matches:
-        return (GatewayMatch(path=path_pattern_for("PathPrefix", "/")),), {}
+        return (GatewayMatch(path=path_pattern("PathPrefix", "/")),), {}
     matches: List[GatewayMatch] = []
     qualifiers: Dict[str, Any] = {}
     for entry in raw_matches:
         if not isinstance(entry, Mapping):
             continue
         uri = entry.get("uri")
-        pattern = path_pattern_for("PathPrefix", "/")
+        pattern = path_pattern("PathPrefix", "/")
         if isinstance(uri, Mapping):
             for key, path_type in ISTIO_URI_MATCHERS.items():
                 if isinstance(uri.get(key), str):
-                    pattern = path_pattern_for(path_type, uri[key])
+                    pattern = path_pattern(path_type, uri[key])
                     break
         for key, reason in _MATCH_LIMITS.items():
             if key in entry:

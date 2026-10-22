@@ -39,6 +39,7 @@ from enum import Enum
 from typing import Any, Dict
 
 from .canonical_model import ApiParadigm, CanonicalApi
+from .gateway_family import gateway_config_formats
 from .import_source import ImportSource
 
 __all__ = [
@@ -60,27 +61,14 @@ PUBLISHABLE_FORMATS = frozenset(
     {"openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0"}
 )
 
-#: Emitted format keys of the gateway-configuration adapters (IXH-7.8; Envoy xDS and Istio
-#: since FMT-7.4; Traefik, nginx, HAProxy, Consul and Tyk since FMT-7.5). They route to
-#: the catalog like every other non-OpenAPI format; the only specialization is the
-#: routing *reason*, which states the partial-fidelity cause (routes without schemas)
-#: and the promotion path, because that is exactly what the catalog's non-publishable
-#: staging exists for.
-GATEWAY_CONFIG_FORMATS = frozenset(
-    {
-        "kong",
-        "kong-declarative",
-        "gateway-api",
-        "httproute",
-        "envoy-xds",
-        "istio",
-        "traefik",
-        "nginx",
-        "haproxy",
-        "consul",
-        "tyk",
-    }
-)
+#: Format keys of the gateway-configuration adapters — every member of
+#: :data:`app.gateway_family.GATEWAY_FAMILY` and its aliases (IXH-7.8, FMT-7.4, FMT-7.5; derived
+#: since FMT-7.6). They route to the catalog like every other non-OpenAPI format; the only
+#: specialization is the routing *reason*, which states the partial-fidelity cause (routes
+#: without schemas) and the promotion path, because that is exactly what the catalog's
+#: non-publishable staging exists for. :func:`decide_import_routing` reads the live family, so a
+#: front end added with ``register_gateway_flavor`` routes the same way; this is the built-in set.
+GATEWAY_CONFIG_FORMATS = gateway_config_formats()
 
 #: The explicit ``requested_target`` values (from the JSON Schema disambiguation prompt,
 #: MFI-26.7) that mean "import the schema **as current** into Types/Projects" rather than
@@ -294,7 +282,7 @@ def decide_import_routing(
     # UI can state *why* this import is staged rather than published (IXH-7.8).
     # A Tyk OAS definition (FMT-7.5) is an OpenAPI document with schemas, so it takes the
     # generic catalog reason below rather than the "routes without schemas" one.
-    if fmt_key in GATEWAY_CONFIG_FORMATS and not type_count:
+    if fmt_key in gateway_config_formats() and not type_count:
         fmt_label = fmt or paradigm.value
         return ImportRoutingDecision(
             target=ImportTarget.CATALOG,

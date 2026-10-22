@@ -30,9 +30,9 @@ from .gateway_config_model import (
     GatewayPlugin,
     GatewayRoute,
     GatewayServiceDef,
-    build_path_pattern,
     redact_secret_config,
 )
+from .gateway_match import path_pattern
 
 __all__ = [
     "ROUTE_EXTRA_KEYS",
@@ -221,11 +221,11 @@ def _route_matches(entry: Dict[str, Any]) -> Tuple[GatewayMatch, ...]:
         for raw in raw_paths:
             if not isinstance(raw, str) or not raw:
                 continue
-            kind = "regex" if raw.startswith("~") else "prefix"
-            patterns.append(build_path_pattern(raw, kind))
+            # Kong marks a regex path with a leading ``~``; every other path is a prefix.
+            patterns.append(path_pattern("RegularExpression" if raw.startswith("~") else "PathPrefix", raw))
     if not patterns:
         # A route with hosts but no paths matches any path.
-        patterns.append(build_path_pattern("/", "prefix"))
+        patterns.append(path_pattern("PathPrefix", "/"))
 
     methods = [m.upper() for m in _as_str_tuple(entry.get("methods"))]
     if not methods:

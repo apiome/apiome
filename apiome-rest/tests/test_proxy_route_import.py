@@ -7,12 +7,13 @@ import pytest
 from app.consul_import_source import ConsulImportSource
 from app.gateway_config_model import GatewayConfigParseError
 from app.gateway_config_normalizer import INFERRED_ROUTE_FLAVORS, POLICY_PLUGIN_FLAVORS, PROXY_ROUTE_FLAVORS
+from app.gateway_match import path_pattern
 from app.haproxy_import_source import HaproxyImportSource
 from app.import_preview_manifest import KNOWN_PARSER_LIMITS, _gateway_capability_rows
 from app.import_routing import GATEWAY_CONFIG_FORMATS, decide_import_routing
 from app.intake_scrub_policy import ALWAYS_ENFORCED_FORMATS
 from app.nginx_import_source import NginxImportSource
-from app.proxy_route_common import load_json_document, ordered_members, split_address, template_pattern
+from app.proxy_route_common import load_json_document, ordered_members, split_address
 from app.traefik_import_source import TraefikImportSource
 from app.tyk_import_source import TykImportSource
 
@@ -64,7 +65,7 @@ def test_split_address(address: str, expected: tuple) -> None:
 
 
 def test_template_pattern_keeps_parameter_names_once() -> None:
-    pattern = template_pattern("v2/{id}/items/{id}", "prefix")
+    pattern = path_pattern("PathPrefix", "v2/{id}/items/{id}", templated=True)
     assert pattern.template == "/v2/{id}/items/{id}"
     assert pattern.param_names == ("id",)
     assert pattern.kind == "prefix"

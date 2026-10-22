@@ -1,0 +1,20 @@
+---
+slug: gateway-family-shared-middle
+title: One matching rule for every gateway format
+description: All nine gateway importers now read routes through one shared middle.
+authors: [apiome]
+---
+
+Kong, Gateway API, Envoy, Istio, Traefik, nginx, HAProxy, Consul and Tyk imports now read routes
+through one shared layer, so the same route imports the same operation whichever format it came from.
+[How matches are read](/bring-in/envoy-istio-route-import#one-rule-for-every-gateway-format).
+
+{/* truncate */}
+
+- **Paths:** exact, prefix and regular-expression matches are named the same way for every format.
+- **Header and query values:** an exact match is written as the value; any other match as
+  `prefix:…`, `suffix:…`, `contains:…` or `regex:…`; a match with no value means the parameter only has
+  to be present.
+- **Inferred or declared:** decided by the format alone. Kong and Gateway API routes are declared;
+  every other gateway format is inferred.
+- Existing Kong and Gateway API imports produce exactly the same result as before.

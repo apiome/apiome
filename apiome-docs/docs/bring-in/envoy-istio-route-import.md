@@ -49,6 +49,20 @@ add schemas and [convert it to OpenAPI](./convert-to-openapi.md).
 A regular-expression path becomes a template: `^/orders/[0-9]{6}/lines/[0-9]+$` becomes
 `/orders/{param1}/lines/{param2}`, and the original pattern is kept.
 
+## One rule for every gateway format
+
+Every gateway importer — Kong, Gateway API, Envoy, Istio, Traefik, nginx, HAProxy, Consul and Tyk —
+maps matches through the same table, so the same route imports the same operation whichever format
+it came from:
+
+- **Paths** are exact, prefix or regular-expression matches, named as Gateway API names them.
+- **Matched values** on header and query parameters are written as the bare value for an exact
+  match, and as `prefix:acme-`, `suffix:…`, `contains:…` or `regex:…` otherwise. A match with no
+  value only requires the parameter to be present.
+- **Inferred or declared** depends only on the format: Kong and Gateway API declare their routes,
+  every other gateway format is marked inferred. A path parameter recovered from a regular
+  expression is always marked inferred.
+
 ## What is declared, not imported
 
 Some routing has no equivalent HTTP operation. Apiome lists each of these in the import's coverage

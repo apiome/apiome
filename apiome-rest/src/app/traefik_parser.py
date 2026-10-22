@@ -13,7 +13,7 @@ Reads Traefik's two route-config shapes into the flavor-neutral
 **The rule grammar.** A rule is a boolean expression over matchers. It is parsed into
 disjunctive normal form, and each conjunction becomes one match condition: ``Path`` →
 exact, ``PathPrefix`` → prefix, ``PathRegexp`` → regular expression (all through the
-shared Gateway API path-type table, :func:`app.mesh_route_common.path_pattern_for`),
+shared Gateway API path-type table, :func:`app.gateway_match.path_pattern`),
 ``Host`` → server host, ``Method`` → method, ``Header``/``Query`` (and their ``…Regexp``
 forms) → header / query match conditions. What does not reduce to that — a negated
 matcher, ``ClientIP``, ``HostRegexp``, an unknown matcher — is kept on the route as an
@@ -43,15 +43,15 @@ from .gateway_config_model import (
     GatewayRoute,
     GatewayServiceDef,
 )
+from .gateway_match import path_pattern, render_match_value
 from .mesh_route_common import (
     LimitCollector,
     load_yaml_documents,
-    path_pattern_for,
     policy_plugin,
     raise_if_truncated_tail,
     reject_binary,
 )
-from .proxy_route_common import ordered_members, template_pattern
+from .proxy_route_common import ordered_members
 
 __all__ = [
     "TRAEFIK_FLAVOR",
@@ -781,8 +781,8 @@ def _path_pattern(matcher: str, value: str) -> GatewayPathPattern:
     """A path matcher's pattern; v2 ``{name:regex}`` templates keep their parameter names."""
     if matcher != "PathRegexp" and "{" in value:
         template = re.sub(r"\{([A-Za-z_][A-Za-z0-9_]*):[^}]*\}", r"{\1}", value)
-        return template_pattern(template, "exact" if matcher == "Path" else "prefix")
-    return path_pattern_for(TRAEFIK_PATH_MATCHERS[matcher], value)
+        return path_pattern("Exact" if matcher == "Path" else "PathPrefix", template, templated=True)
+    return path_pattern(TRAEFIK_PATH_MATCHERS[matcher], value)
 
 
 def _conjunction_match(
@@ -824,7 +824,7 @@ def _conjunction_match(
                 key, value = args[0].split("=", 1)
             else:
                 key, value = args[0], ""
-            pair = (key, f"regex:{value}" if regex and value else value)
+            pair = (key, render_match_value("regex" if regex else "exact", value))
             (headers if location == "header" else query).append(pair)
         elif name in _CONDITION_MATCHERS:
             limits.add(f"rule.{name}", _CONDITION_MATCHERS[name])
@@ -837,7 +837,7 @@ def _conjunction_match(
             )
             conditions.append(literal.render())
     if path is None:
-        path = path_pattern_for("PathPrefix", "/")
+        path = path_pattern("PathPrefix", "/")
     return (
         GatewayMatch(path=path, method=method, headers=tuple(headers), query=tuple(query)),
         hosts,

@@ -11,9 +11,8 @@ service-mesh rules in :mod:`app.mesh_route_common`, which these parsers also use
   :func:`load_json_document` makes that call from the bracket balance, not the error text.
 * **Upstream addresses.** Every format names its backends as ``host:port`` or a URL.
   :func:`split_address` is the one reader, so a port is parsed the same way everywhere.
-* **Path templates.** Tyk (and Consul's convention tags) write ``/orders/{id}``. Those are
-  templates, not regexes; :func:`template_pattern` keeps the parameter names so the
-  normalizer can emit inferred path parameters for them.
+* **Path templates** are built by :func:`app.gateway_match.path_pattern` with
+  ``templated=True`` (FMT-7.6), not here, so the family has one path builder.
 * **Fileset order.** A set is read root first, then the other members in path order, so
   the merged document never depends on archive order (:func:`ordered_members`).
 * **The capability vocabulary.** Each adapter declares the directives it reads and the
@@ -25,10 +24,9 @@ service-mesh rules in :mod:`app.mesh_route_common`, which these parsers also use
 from __future__ import annotations
 
 import json
-import re
 from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
-from .gateway_config_model import GatewayConfigParseError, GatewayPathPattern
+from .gateway_config_model import GatewayConfigParseError
 from .payload_analysis import AnalyzerCapabilities, analyzer_capabilities
 
 __all__ = [
@@ -37,12 +35,7 @@ __all__ = [
     "load_json_document",
     "ordered_members",
     "split_address",
-    "template_pattern",
 ]
-
-#: ``{name}`` path-template parameter.
-_TEMPLATE_PARAM_RE = re.compile(r"\{([A-Za-z_][A-Za-z0-9_.-]*)\}")
-
 
 def is_json_text(text: str) -> bool:
     """True when ``text`` looks like a JSON object (first non-blank character ``{``)."""
@@ -142,27 +135,6 @@ def split_address(address: str) -> Tuple[str, Optional[str], Optional[int]]:
             port = int(port_text)
         return host.lower(), scheme, port
     return work.lower(), scheme, port
-
-
-def template_pattern(raw: str, kind: str = "exact") -> GatewayPathPattern:
-    """Build a path pattern from a ``{param}`` template (``/orders/{id}``).
-
-    Args:
-        raw: The path as declared.
-        kind: ``exact`` or ``prefix``.
-
-    Returns:
-        The pattern with the template's parameter names, in path order, so each becomes an
-        inferred path parameter on the operation.
-    """
-    path = raw.strip() or "/"
-    if not path.startswith("/"):
-        path = "/" + path
-    names: List[str] = []
-    for name in _TEMPLATE_PARAM_RE.findall(path):
-        if name not in names:
-            names.append(name)
-    return GatewayPathPattern(raw=raw, kind=kind, template=path, param_names=tuple(names))
 
 
 def ordered_members(members: Mapping[str, str], root: Optional[str]) -> List[str]:

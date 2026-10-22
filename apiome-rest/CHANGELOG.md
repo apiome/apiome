@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.421.0] - 2026-10-21
+
+### Changed
+- **Shared gateway middle for the whole family (#5460, FMT-7.6)**: the nine gateway front ends (Kong,
+  Gateway API, Envoy xDS, Istio, Traefik, nginx, HAProxy, Consul, Tyk) now share one implementation of
+  everything but route extraction.
+  - `app.gateway_match` is the single match-normalization table: `path_pattern()` (Gateway API path
+    types, optional `{param}` templates) and `render_match_value()` (exact / prefix / suffix / contains /
+    regex). Kong and Gateway API were migrated onto it; the mesh / proxy helpers `path_pattern_for` and
+    `template_pattern` are removed. A match with an empty value now renders as `""` in every front end
+    (Consul and the Envoy/Istio renderer previously wrote `prefix:`).
+  - `app.gateway_family` declares each front end once (`GatewayFlavor`: ledger label, route provenance,
+    policy plugins, aliases) and owns the only provenance classifier, `provenance_stamp()`.
+    `INFERRED_ROUTE_FLAVORS`, `POLICY_PLUGIN_FLAVORS`, `GATEWAY_CONFIG_FORMATS` and the ledger labels are
+    derived from it.
+  - `register_gateway_flavor()` derives a front end's normalizer; the nine normalizer classes are now
+    generated. `gateway_report()` builds the `extras["gateway"]` report (including the schemaless-loss
+    count) for every flavor, the Tyk OAS form included.
+  - Kong, Gateway API and every other gateway golden is byte-identical. OpenAPI version 1.285.0.
+
 ## [1.420.0] - 2026-10-21
 
 ### Added
