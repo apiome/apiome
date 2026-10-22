@@ -133,6 +133,7 @@ from .export_projection import (
     first_extra,
 )
 from .format_lint_capabilities import FormatLintCapability, capability_for_format
+from .gateway_family import flavor_for
 from .import_preflight import run_import_preflight
 from .import_source import (
     DiffChangeKind,
@@ -1237,18 +1238,6 @@ def _overlay_provenance_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return rows
 
 
-#: Human labels for the gateway-config flavors (IXH-7.8).
-_GATEWAY_FLAVOR_LABELS = {
-    "kong": "Kong declarative config",
-    "gateway-api": "Gateway API HTTPRoute manifests",
-    "envoy-xds": "Envoy xDS route configuration",
-    "istio": "Istio VirtualService manifests",
-    "traefik": "Traefik dynamic configuration",
-    "nginx": "nginx configuration",
-    "haproxy": "HAProxy configuration",
-    "consul": "Consul service definitions",
-    "tyk": "Tyk API definition",
-}
 
 
 def _gateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
@@ -1268,7 +1257,9 @@ def _gateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     if not isinstance(report, dict):
         return []
     flavor = str(report.get("flavor") or "")
-    label = _GATEWAY_FLAVOR_LABELS.get(flavor, "This gateway configuration")
+    # FMT-7.6: the label is part of the flavor's declaration in the gateway family.
+    declaration = flavor_for(flavor)
+    label = declaration.label if declaration is not None else "This gateway configuration"
     rows: List[CoverageEntry] = []
 
     inferred_status, inferred_reason = STATUS_FOR_COVERAGE[CoverageClass.INFERRED]

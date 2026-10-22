@@ -27,8 +27,8 @@ from .gateway_config_model import (
     GatewayMatch,
     GatewayPlugin,
     GatewayRoute,
-    build_path_pattern,
 )
+from .gateway_match import PATH_KIND_TYPES, PATH_TYPE_KINDS, path_pattern
 
 __all__ = [
     "PATH_KIND_TYPES",
@@ -43,22 +43,8 @@ __all__ = [
 #: apiVersion group prefix that marks a Gateway API resource.
 _GATEWAY_API_GROUP = "gateway.networking.k8s.io"
 
-#: Gateway API ``path.type`` → flavor-neutral pattern kind. Public because
-#: :mod:`app.gateway_api_emitter` spells the same mapping in reverse; a private copy
-#: on the emit side is how the two halves of a round trip drift apart.
-PATH_TYPE_KINDS: Dict[str, str] = {
-    "Exact": "exact",
-    "PathPrefix": "prefix",
-    "RegularExpression": "regex",
-}
-
-#: Flavor-neutral pattern kind → Gateway API ``path.type`` — the *derived* reverse
-#: of :data:`PATH_TYPE_KINDS`, so the emitter cannot disagree with the parser about
-#: what an ``exact`` pattern is called. ``test_path_type_table_symmetry`` asserts the
-#: round trip in both directions.
-PATH_KIND_TYPES: Dict[str, str] = {
-    kind: path_type for path_type, kind in PATH_TYPE_KINDS.items()
-}
+# ``PATH_TYPE_KINDS`` / ``PATH_KIND_TYPES`` are re-exported from :mod:`app.gateway_match`
+# (FMT-7.6), the family's one path-match table; the emitter keeps importing them from here.
 
 #: ``GatewayRoute.extras`` keys this parser writes, and therefore the only ones the
 #: emitter can write back (a key readable on the way in but not writable on the way
@@ -133,11 +119,13 @@ def _parse_match(entry: Dict[str, Any]) -> GatewayMatch:
     path = entry.get("path")
     pattern = None
     if isinstance(path, dict):
-        kind = PATH_TYPE_KINDS.get(str(path.get("type") or "PathPrefix"), "prefix")
-        pattern = build_path_pattern(str(path.get("value") or "/"), kind)
+        path_type = str(path.get("type") or "PathPrefix")
+        if path_type not in PATH_TYPE_KINDS:
+            path_type = "PathPrefix"
+        pattern = path_pattern(path_type, str(path.get("value") or "/"))
     else:
         # The Gateway API default match is PathPrefix "/".
-        pattern = build_path_pattern("/", "prefix")
+        pattern = path_pattern("PathPrefix", "/")
     method = entry.get("method")
     return GatewayMatch(
         path=pattern,
@@ -223,7 +211,7 @@ def _parse_httproute(
             )
         else:
             # A rule with no matches defaults to PathPrefix "/".
-            matches = (GatewayMatch(path=build_path_pattern("/", "prefix")),)
+            matches = (GatewayMatch(path=path_pattern("PathPrefix", "/")),)
         route_name = (
             resource_name if len(rules) == 1 else f"{resource_name}#rule-{rule_index}"
         )

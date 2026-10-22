@@ -17,6 +17,7 @@ from app.gateway_api_import_source import GatewayApiImportSource
 from app.gateway_api_parser import PATH_TYPE_KINDS
 from app.gateway_config_model import GatewayConfigParseError
 from app.gateway_config_normalizer import INFERRED_ROUTE_FLAVORS, POLICY_PLUGIN_FLAVORS
+from app.gateway_match import path_pattern
 from app.import_preview_manifest import (
     KNOWN_PARSER_LIMITS,
     CoverageClass,
@@ -31,7 +32,6 @@ from app.mesh_route_common import (
     LimitCollector,
     is_duration,
     is_truncated_cluster_host,
-    path_pattern_for,
     raise_if_truncated_tail,
     render_string_match,
 )
@@ -127,9 +127,9 @@ def test_all_three_formats_normalize_the_same_paths_identically() -> None:
     assert ("/items/{param1}", "regex", "^/items/[0-9]+$") in expected
 
 
-def test_path_pattern_for_refuses_an_unknown_path_type() -> None:
+def test_path_pattern_refuses_an_unknown_path_type() -> None:
     with pytest.raises(KeyError):
-        path_pattern_for("Glob", "/x")
+        path_pattern("Glob", "/x")
 
 
 # ---------------------------------------------------------------------------------------

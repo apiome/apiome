@@ -44,7 +44,8 @@ from .gateway_config_model import (
     GatewayRoute,
     GatewayServiceDef,
 )
-from .mesh_route_common import LimitCollector, path_pattern_for, reject_binary
+from .gateway_match import path_pattern, render_match_value
+from .mesh_route_common import LimitCollector, reject_binary
 from .proxy_route_common import ordered_members, split_address
 
 __all__ = [
@@ -347,8 +348,8 @@ class _Term:
     conditions: List[str] = field(default_factory=list)
 
 
-#: ``-m`` match method → rendered operator for a header/query value.
-_MATCH_OPERATORS = {"beg": "prefix", "end": "suffix", "sub": "contains", "reg": "regex", "str": ""}
+#: ``-m`` match method → operator of the shared vocabulary (:data:`app.gateway_match.STRING_MATCH_OPERATORS`).
+_MATCH_OPERATORS = {"beg": "prefix", "end": "suffix", "sub": "contains", "reg": "regex", "str": "exact"}
 
 
 def _parse_acl(words: Sequence[str]) -> Tuple[str, _Acl]:
@@ -392,7 +393,7 @@ def _operator(acl: _Acl) -> str:
     """The rendered match operator of an ACL (``prefix`` for ``-m beg``)."""
     for flag in acl.flags:
         if flag.startswith("-m "):
-            return _MATCH_OPERATORS.get(flag[3:], flag[3:])
+            return _MATCH_OPERATORS.get(flag[3:], "exact")
     return ""
 
 
@@ -404,7 +405,7 @@ def _reduce_acl(acl: _Acl, rendered: str, state: "_State") -> List[_Term]:
             return [_Term(conditions=[rendered])]
         terms = []
         for pattern in acl.patterns:
-            term = _Term(paths=[path_pattern_for(HAPROXY_PATH_FETCHES[fetch], pattern)])
+            term = _Term(paths=[path_pattern(HAPROXY_PATH_FETCHES[fetch], pattern)])
             if "-i" in acl.flags:
                 term.conditions.append("case-insensitive path match")
             terms.append(term)
@@ -430,7 +431,7 @@ def _reduce_acl(acl: _Acl, rendered: str, state: "_State") -> List[_Term]:
         if "-m found" in acl.flags:
             return [_Term(headers=[(param, "")])]
         values = acl.patterns or ("",)
-        return [_Term(headers=[(param, f"{operator}:{value}" if operator and value else value)]) for value in values]
+        return [_Term(headers=[(param, render_match_value(operator or "exact", value))]) for value in values]
     if fetch in ("urlp", "url_param") and param:
         values = acl.patterns or ("",)
         return [_Term(query=[(param, value)]) for value in values]
@@ -523,7 +524,7 @@ def _matches(terms: Sequence[_Term]) -> Tuple[Tuple[GatewayMatch, ...], Set[str]
         for condition in term.conditions:
             if condition not in conditions:
                 conditions.append(condition)
-        path = term.paths[0] if term.paths else path_pattern_for("PathPrefix", "/")
+        path = term.paths[0] if term.paths else path_pattern("PathPrefix", "/")
         for extra in term.paths[1:]:
             conditions.append(f"also path {extra.kind} {extra.raw}")
         for method in term.methods or [None]:
@@ -769,7 +770,7 @@ def _frontend_routes(
         elif stats_uri:
             add(
                 f"{prefix}#stats",
-                [_Term(paths=[path_pattern_for("PathPrefix", stats_uri)])],
+                [_Term(paths=[path_pattern("PathPrefix", stats_uri)])],
                 None,
                 section.origin,
                 {"handler": {"directive": "stats uri"}},
@@ -806,7 +807,7 @@ def _dynamic_routes(
             GatewayRoute(
                 name=f"{section.name}#map-{key}",
                 service_name=group,
-                matches=(GatewayMatch(path=path_pattern_for("PathPrefix", "/"), headers=headers),),
+                matches=(GatewayMatch(path=path_pattern("PathPrefix", "/"), headers=headers),),
                 protocols=protocols,
                 plugins=plugins,
                 backends=(_backend_ref(backend, backends),),

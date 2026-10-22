@@ -51,7 +51,8 @@ settings are marked inferred.
 
 Methods come from Traefik `Method(…)`, nginx `limit_except … { deny all; }`, HAProxy `method` ACLs,
 Consul `Methods` and Tyk `method_actions`; otherwise the operation's method is `ANY`. Header and
-query matches become required **parameters** with the matched value. A regular-expression path
+query matches become required **parameters** with the matched value, written the same way for every
+gateway format (see [One rule for every gateway format](./envoy-istio-route-import.md#one-rule-for-every-gateway-format)). A regular-expression path
 becomes a template: `^/orders/[0-9]{6}$` becomes `/orders/{param1}`, and the original pattern is
 kept.
 

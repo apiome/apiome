@@ -44,11 +44,11 @@ from .gateway_config_model import (
     GatewayPlugin,
     GatewayRoute,
 )
+from .gateway_match import path_pattern, render_match_value
 from .mesh_route_common import (
     LimitCollector,
     is_duration,
     load_yaml_documents,
-    path_pattern_for,
     policy_plugin,
     raise_if_truncated_tail,
     reject_binary,
@@ -73,7 +73,7 @@ _LABEL = "Envoy xDS"
 
 #: Envoy route path matcher → Gateway API path type. The second half of the mapping —
 #: Gateway API path type → pattern kind — is :data:`app.gateway_api_parser.PATH_TYPE_KINDS`,
-#: reached through :func:`app.mesh_route_common.path_pattern_for`, so this table and the
+#: reached through :func:`app.gateway_match.path_pattern`, so this table and the
 #: Gateway API adapter cannot disagree. ``path_separated_prefix`` is a segment-aware prefix
 #: (``/seg`` matches ``/seg/x`` but not ``/segment``) — Gateway API's ``PathPrefix`` is
 #: segment-aware too, which is why it maps there.
@@ -545,7 +545,7 @@ def _header_value(entry: Mapping[str, Any]) -> Optional[str]:
         return rendered
     safe = entry.get("safe_regex_match")
     if isinstance(safe, Mapping) and isinstance(safe.get("regex"), str):
-        return f"regex:{safe['regex']}"
+        return render_match_value("regex", safe["regex"])
     return None
 
 
@@ -569,7 +569,7 @@ def _route_match(match: Mapping[str, Any], limits: LimitCollector) -> Optional[G
         raw = match[key]
         value = raw.get("regex") if key == "safe_regex" and isinstance(raw, Mapping) else raw
         if isinstance(value, str):
-            pattern = path_pattern_for(path_type, value)
+            pattern = path_pattern(path_type, value)
         break
     if pattern is None:
         if "connect_matcher" in match:

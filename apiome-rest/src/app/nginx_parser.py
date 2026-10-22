@@ -22,7 +22,7 @@ reads a **documented subset** and declares everything else:
 
 Each ``location`` becomes one route: ``=`` → exact, no modifier / ``^~`` → prefix,
 ``~`` / ``~*`` → regular expression, all through the shared Gateway API path-type table
-(:func:`app.mesh_route_common.path_pattern_for`). ``server_name`` gives the hosts and
+(:func:`app.gateway_match.path_pattern`). ``server_name`` gives the hosts and
 ``listen … ssl`` the scheme. A ``proxy_pass`` naming an upstream the configuration does
 not declare is ``INPUT_REFERENCE_UNRESOLVED`` — unless an ``include`` could not be
 followed, in which case the upstream may live in the missing file.
@@ -46,7 +46,8 @@ from .gateway_config_model import (
     GatewayRoute,
     GatewayServiceDef,
 )
-from .mesh_route_common import LimitCollector, path_pattern_for, reject_binary
+from .gateway_match import path_pattern
+from .mesh_route_common import LimitCollector, reject_binary
 from .proxy_route_common import ordered_members, split_address
 
 __all__ = [
@@ -552,7 +553,7 @@ def _server_facts(server: _Server, used_groups: Set[str], state: _State) -> _Ser
 def _location_pattern(args: Sequence[str]) -> Tuple[Optional[GatewayPathPattern], str, bool]:
     """``location`` arguments → (path pattern or None for named, modifier, case-insensitive)."""
     if not args:
-        return path_pattern_for("PathPrefix", "/"), "", False
+        return path_pattern("PathPrefix", "/"), "", False
     if args[0].startswith("@"):
         return None, "@", False
     if len(args) >= 2 and args[0] in NGINX_LOCATION_MODIFIERS:
@@ -564,7 +565,7 @@ def _location_pattern(args: Sequence[str]) -> Tuple[Optional[GatewayPathPattern]
     else:
         modifier, value = "", args[0]
     path_type = NGINX_LOCATION_MODIFIERS[modifier]
-    return path_pattern_for(path_type, value), modifier, modifier == "~*"  # type: ignore[arg-type]
+    return path_pattern(path_type, value), modifier, modifier == "~*"  # type: ignore[arg-type]
 
 
 def _backend(target: str, state: _State, route: str) -> Tuple[Optional[GatewayBackend], Dict[str, Any]]:
@@ -767,7 +768,7 @@ def _server_routes(server: _Server, used_groups: Set[str], state: _State) -> Lis
                 name=route_name,
                 service_name=facts.group,
                 hosts=facts.hosts,
-                matches=(GatewayMatch(path=path_pattern_for("PathPrefix", "/")),),
+                matches=(GatewayMatch(path=path_pattern("PathPrefix", "/")),),
                 protocols=facts.protocols,
                 plugins=_plugins({k: v for k, v in effective.items() if k in NGINX_CARRIED_DIRECTIVES}, route_name),
                 source_location=server_return.origin,

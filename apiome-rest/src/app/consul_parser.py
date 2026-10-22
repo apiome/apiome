@@ -38,7 +38,8 @@ from .gateway_config_model import (
     GatewayRoute,
     GatewayServiceDef,
 )
-from .mesh_route_common import LimitCollector, path_pattern_for, policy_plugin, reject_binary
+from .gateway_match import STRING_MATCH_OPERATORS, path_pattern, render_match_value
+from .mesh_route_common import LimitCollector, policy_plugin, reject_binary
 from .proxy_route_common import is_json_text, load_json_document, ordered_members
 
 __all__ = [
@@ -615,16 +616,10 @@ def _string_match(spec: Mapping[str, Any], limits: LimitCollector, location: str
             "canonical parameter form; the route keeps it as a condition",
         )
         return None
-    for key, operator in (
-        ("exact", ""),
-        ("prefix", "prefix"),
-        ("suffix", "suffix"),
-        ("regex", "regex"),
-        ("contains", "contains"),
-    ):
-        value = _get(spec, key)
+    for operator in STRING_MATCH_OPERATORS:
+        value = _get(spec, operator)
         if isinstance(value, str):
-            return name, f"{operator}:{value}" if operator else value
+            return name, render_match_value(operator, value)
     if _get(spec, "present") is True:
         if location == "query":
             limits.add(
@@ -701,11 +696,11 @@ def _router_routes(state: _State) -> Tuple[List[GatewayRoute], Set[str]]:
                 continue
             http = _get(_get(route, "match"), "http")
             http = http if isinstance(http, Mapping) else {}
-            pattern = path_pattern_for("PathPrefix", "/")
+            pattern = path_pattern("PathPrefix", "/")
             for key, path_type in _PATH_KEYS.items():
                 value = _get(http, key)
                 if isinstance(value, str):
-                    pattern = path_pattern_for(path_type, value)
+                    pattern = path_pattern(path_type, value)
                     break
             headers = tuple(
                 match
@@ -747,7 +742,7 @@ def _router_routes(state: _State) -> Tuple[List[GatewayRoute], Set[str]]:
             GatewayRoute(
                 name=fallthrough,
                 service_name=name,
-                matches=(GatewayMatch(path=path_pattern_for("PathPrefix", "/")),),
+                matches=(GatewayMatch(path=path_pattern("PathPrefix", "/")),),
                 protocols=("http",),
                 plugins=tuple(_split_plugins(name, state, fallthrough)),
                 backends=(GatewayBackend(name=name),),
@@ -804,7 +799,7 @@ def _ingress_routes(state: _State) -> Tuple[List[GatewayRoute], Set[str]]:
                         name=route_name,
                         service_name=name,
                         hosts=hosts,
-                        matches=(GatewayMatch(path=path_pattern_for("PathPrefix", "/")),),
+                        matches=(GatewayMatch(path=path_pattern("PathPrefix", "/")),),
                         protocols=("https",) if tls else ("http",),
                         plugins=tuple(plugins),
                         backends=(GatewayBackend(name=name, port=port if isinstance(port, int) else None),),
@@ -855,7 +850,7 @@ def _registry_routes(state: _State, covered: Set[str]) -> List[GatewayRoute]:
             GatewayRoute(
                 name=route_name,
                 service_name=name,
-                matches=tuple(GatewayMatch(path=path_pattern_for("PathPrefix", path)) for path in (paths or ["/"])),
+                matches=tuple(GatewayMatch(path=path_pattern("PathPrefix", path)) for path in (paths or ["/"])),
                 protocols=("http",),
                 plugins=tuple(_split_plugins(name, state, route_name)),
                 backends=(GatewayBackend(name=name, port=port),),

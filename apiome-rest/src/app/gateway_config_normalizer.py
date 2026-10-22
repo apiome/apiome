@@ -29,7 +29,7 @@ Provenance discipline (this is what makes the import honest):
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Type
 
 from .canonical_model import (
     ApiIdentity,
@@ -49,6 +49,15 @@ from .gateway_config_model import (
     GatewayConfigDocument,
     GatewayMatch,
     GatewayRoute,
+)
+from .gateway_family import (
+    GATEWAY_FAMILY,
+    GatewayFlavor,
+    add_flavor,
+    flavor_for,
+    inferred_route_flavors,
+    policy_plugin_flavors,
+    provenance_stamp,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
 
@@ -74,7 +83,9 @@ __all__ = [
     "HaproxyNormalizer",
     "ConsulNormalizer",
     "TykNormalizer",
+    "gateway_report",
     "normalize_gateway_config",
+    "register_gateway_flavor",
 ]
 
 KONG_FORMAT_KEY = "kong"
@@ -88,25 +99,20 @@ CONSUL_FORMAT_KEY = "consul"
 TYK_FORMAT_KEY = "tyk"
 
 #: The reverse-proxy and registry route sources of FMT-7.5 — "the reverse-proxy config is the
-#: only spec". Like a mesh route table, each is evidence of an API rather than a declaration of
-#: one, so all of them are inferred and carry their middleware / directives as policy.
+#: only spec".
 PROXY_ROUTE_FLAVORS = frozenset(
     {TRAEFIK_FORMAT_KEY, NGINX_FORMAT_KEY, HAPROXY_FORMAT_KEY, CONSUL_FORMAT_KEY, TYK_FORMAT_KEY}
 )
 
-#: Flavors whose routes are stamped ``provenance = "inferred"`` (FMT-7.4). Kong and Gateway API
-#: *declare* an API surface to a gateway; a service mesh's route table is runtime plumbing the
-#: surface is reconstructed from — the import infers an API from where traffic goes, so every
-#: operation and service it builds says so on the ledger. FMT-7.5 adds the proxy flavors.
-INFERRED_ROUTE_FLAVORS = frozenset({ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY}) | PROXY_ROUTE_FLAVORS
+#: Flavors whose operations and services are all stamped ``provenance = "inferred"`` —
+#: derived from :data:`app.gateway_family.GATEWAY_FAMILY` (FMT-7.6), never listed here.
+#: Kong and Gateway API *declare* an API surface; the mesh and proxy flavors are evidence of one.
+INFERRED_ROUTE_FLAVORS = inferred_route_flavors()
 
-#: Flavors whose non-auth plugins are gateway policy the canonical model does not represent
-#: (CDG-1.2 for Kong; FMT-7.4's retries, timeouts, rewrites, CORS for Envoy and Istio) and are
-#: therefore listed on the report so the ledger shows them kept, not dropped. Gateway API
-#: filters stay out: IXH-7.8 reports them through the route extras only.
-POLICY_PLUGIN_FLAVORS = (
-    frozenset({KONG_FORMAT_KEY, ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY}) | PROXY_ROUTE_FLAVORS
-)
+#: Flavors whose non-auth plugins are listed on the report as policy the canonical model does
+#: not represent (so the ledger shows them kept, not dropped) — also derived from the family.
+#: Gateway API filters stay out: IXH-7.8 reports them through the route extras only.
+POLICY_PLUGIN_FLAVORS = policy_plugin_flavors()
 
 #: Method placeholder for a route that matches any HTTP method. Kept explicit
 #: (rather than a fabricated verb) so diffs and keys stay stable and honest.
@@ -124,7 +130,7 @@ def _operation_for_match(
     match: GatewayMatch,
     *,
     used_keys: Set[str],
-    inferred: bool = False,
+    flavor: str,
 ) -> Operation:
     """Build one canonical operation from one flattened match condition.
 
@@ -134,8 +140,8 @@ def _operation_for_match(
         used_keys: Keys already assigned — a collision (same method + template on
             two routes, e.g. two hosts) appends ``#<route name>`` so keys stay
             unique while the base coordinate stays diff-stable.
-        inferred: Stamp the operation ``provenance = "inferred"`` (a flavor in
-            :data:`INFERRED_ROUTE_FLAVORS`).
+        flavor: The document's flavor; :func:`app.gateway_family.provenance_stamp`
+            decides whether the operation is stamped inferred.
 
     Returns:
         The operation, message-less by construction (the formats carry no
@@ -160,7 +166,7 @@ def _operation_for_match(
                     location=ParameterLocation.PATH,
                     required=True,
                     type=TypeRef(name="string", nullable=False),
-                    extras={"provenance": "inferred", "pattern": match.path.raw},
+                    extras={**provenance_stamp(flavor, derived=True), "pattern": match.path.raw},
                 )
             )
     for name, value in match.headers:
@@ -186,9 +192,7 @@ def _operation_for_match(
             )
         )
 
-    extras: Dict[str, Any] = {"gateway_route": route.name}
-    if inferred:
-        extras["provenance"] = "inferred"
+    extras: Dict[str, Any] = {"gateway_route": route.name, **provenance_stamp(flavor)}
     if route.hosts:
         extras["hosts"] = sorted(route.hosts)
     if match.path is not None:
@@ -217,6 +221,73 @@ def _operation_for_match(
     )
 
 
+def gateway_report(
+    *,
+    flavor: str,
+    route_count: int,
+    operation_count: int,
+    schemaless_operation_count: int,
+    credential_redactions: int,
+    ignored: Iterable[Dict[str, Any]],
+    auth_hints: Iterable[GatewayAuthHint],
+    global_plugins: Iterable[str],
+    policy_plugins: Iterable[tuple],
+) -> Dict[str, Any]:
+    """Build the ``CanonicalApi.extras["gateway"]`` report — one shape for every front end.
+
+    The preview manifest renders this report as the import's gateway ledger rows, so every
+    family member states the same things the same way: the schemaless-operation count (the
+    "gateway configs carry no schemas" capability limit, never a drop), the auth schemes
+    inferred from plugins, the auth plugins with no canonical scheme, the declared parsing
+    limits, the credential-redaction count, and — for a flavor whose
+    :attr:`~app.gateway_family.GatewayFlavor.policy_plugins` is set — every non-auth plugin
+    as policy kept by name.
+
+    Args:
+        flavor: The document's flavor key.
+        route_count: Routes the source declared.
+        operation_count: Operations the import produced.
+        schemaless_operation_count: Operations with no request/response messages.
+        credential_redactions: Credential values redacted at parse time.
+        ignored: Declared limits (``{"construct", "count", "reason"}``).
+        auth_hints: Every auth hint in effect (route- and gateway-scoped).
+        global_plugins: Names of gateway-wide non-auth plugins.
+        policy_plugins: ``(name, scope)`` of every non-auth plugin, route- or gateway-scoped.
+
+    Returns:
+        The report.
+    """
+    hints = list(auth_hints)
+    report: Dict[str, Any] = {
+        "flavor": flavor,
+        "route_count": route_count,
+        "operation_count": operation_count,
+        "schemaless_operation_count": schemaless_operation_count,
+        "credential_redactions": credential_redactions,
+        "ignored_constructs": [dict(entry) for entry in ignored],
+        "auth": [
+            hint.as_dict()
+            for hint in sorted(
+                {(h.scheme, h.plugin, h.scope, h.attached_to): h for h in hints if h.scheme is not None}.values(),
+                key=lambda h: (h.scheme or "", h.plugin, h.scope, h.attached_to or ""),
+            )
+        ],
+        "unmapped_plugins": [
+            {"name": name, "scope": scope}
+            for name, scope in sorted({(hint.plugin, hint.scope) for hint in hints if hint.scheme is None})
+        ],
+        "global_plugins": sorted(set(global_plugins)),
+    }
+    declaration = flavor_for(flavor)
+    if declaration is not None and declaration.policy_plugins:
+        # CDG-1.2: every non-auth plugin is gateway policy the canonical model does not
+        # represent (rate limits, transforms, CORS, retries, timeouts, rewrites, middleware).
+        # Its name rides on the operations it applies to and its config stays in the captured
+        # source; the ledger lists it so it is visibly kept, never silently dropped.
+        report["unmodeled_plugins"] = [{"name": name, "scope": scope} for name, scope in sorted(set(policy_plugins))]
+    return report
+
+
 def normalize_gateway_config(
     document: GatewayConfigDocument,
     *,
@@ -240,7 +311,6 @@ def normalize_gateway_config(
     operations_by_service: Dict[str, List[Operation]] = {}
     service_order: List[str] = []
     schemaless_operations = 0
-    inferred = document.flavor in INFERRED_ROUTE_FLAVORS
 
     for route in document.routes:
         group = route.service_name or "(unattached routes)"
@@ -248,7 +318,7 @@ def normalize_gateway_config(
             operations_by_service[group] = []
             service_order.append(group)
         for match in route.matches:
-            operation = _operation_for_match(route, match, used_keys=used_keys, inferred=inferred)
+            operation = _operation_for_match(route, match, used_keys=used_keys, flavor=document.flavor)
             operations_by_service[group].append(operation)
             schemaless_operations += 1
 
@@ -257,7 +327,7 @@ def normalize_gateway_config(
     }
     services: List[Service] = []
     for group in service_order:
-        extras: Dict[str, Any] = {"provenance": "inferred"} if inferred else {}
+        extras: Dict[str, Any] = provenance_stamp(document.flavor)
         definition = service_extras_by_name.get(group)
         if definition is not None:
             backend: Dict[str, Any] = {}
@@ -294,55 +364,21 @@ def normalize_gateway_config(
 
     mapped_auth = [hint for route in document.routes for hint in route.auth]
     mapped_auth.extend(document.global_auth)
-    inferred_schemes = sorted(
-        {hint.scheme for hint in mapped_auth if hint.scheme is not None}
-    )
-    unmapped_plugins = sorted(
-        {
-            (hint.plugin, hint.scope)
-            for hint in mapped_auth
-            if hint.scheme is None
-        }
+    inferred_schemes = sorted({hint.scheme for hint in mapped_auth if hint.scheme is not None})
+    report = gateway_report(
+        flavor=document.flavor,
+        route_count=len(document.routes),
+        operation_count=schemaless_operations,
+        schemaless_operation_count=schemaless_operations,
+        credential_redactions=document.credential_redactions,
+        ignored=document.ignored,
+        auth_hints=mapped_auth,
+        global_plugins=[plugin.name for plugin in document.global_plugins],
+        policy_plugins=[(plugin.name, plugin.scope) for route in document.routes for plugin in route.plugins]
+        + [(plugin.name, plugin.scope) for plugin in document.global_plugins],
     )
 
-    gateway_report: Dict[str, Any] = {
-        "flavor": document.flavor,
-        "route_count": len(document.routes),
-        "operation_count": schemaless_operations,
-        "schemaless_operation_count": schemaless_operations,
-        "credential_redactions": document.credential_redactions,
-        "ignored_constructs": [dict(entry) for entry in document.ignored],
-        "auth": [
-            hint.as_dict()
-            for hint in sorted(
-                {
-                    (h.scheme, h.plugin, h.scope, h.attached_to): h
-                    for h in mapped_auth
-                    if h.scheme is not None
-                }.values(),
-                key=lambda h: (h.scheme or "", h.plugin, h.scope, h.attached_to or ""),
-            )
-        ],
-        "unmapped_plugins": [
-            {"name": name, "scope": scope} for name, scope in unmapped_plugins
-        ],
-        "global_plugins": sorted({plugin.name for plugin in document.global_plugins}),
-    }
-    if document.flavor in POLICY_PLUGIN_FLAVORS:
-        # CDG-1.2: every non-auth plugin is gateway policy the canonical model does not
-        # represent (rate limits, transforms, CORS; FMT-7.4 adds Envoy/Istio retries,
-        # timeouts and rewrites). Its name rides on the operations it applies to and its
-        # config stays in the captured source; the ledger lists it so it is visibly kept,
-        # never silently dropped.
-        gateway_report["unmodeled_plugins"] = [
-            {"name": name, "scope": scope}
-            for name, scope in sorted(
-                {(plugin.name, plugin.scope) for route in document.routes for plugin in route.plugins}
-                | {(plugin.name, plugin.scope) for plugin in document.global_plugins}
-            )
-        ]
-
-    api_extras: Dict[str, Any] = {"gateway": gateway_report}
+    api_extras: Dict[str, Any] = {"gateway": report}
     if inferred_schemes:
         api_extras["inferred_auth_schemes"] = inferred_schemes
 
@@ -365,146 +401,51 @@ def normalize_gateway_config(
     return normalize_ordering(api)
 
 
-class KongNormalizer(Normalizer, register=True):
-    """Normalize a parsed Kong declarative config (format key ``kong``)."""
+def register_gateway_flavor(flavor: GatewayFlavor, *, class_name: Optional[str] = None) -> Type[Normalizer]:
+    """Declare a gateway front end and derive its normalizer — FMT-7.6.
 
-    format = KONG_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        if not isinstance(source, GatewayConfigDocument) or source.flavor != "kong":
-            raise ValueError(
-                "Kong source must be a GatewayConfigDocument with flavor='kong' "
-                "(see app.kong_parser.parse_kong_declarative)"
-            )
-        return normalize_gateway_config(
-            source, format_key=KONG_FORMAT_KEY, include_raw=include_raw
-        )
-
-
-class GatewayApiNormalizer(Normalizer, register=True):
-    """Normalize parsed Gateway API HTTPRoutes (format key ``gateway-api``)."""
-
-    format = GATEWAY_API_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        if (
-            not isinstance(source, GatewayConfigDocument)
-            or source.flavor != "gateway-api"
-        ):
-            raise ValueError(
-                "Gateway API source must be a GatewayConfigDocument with "
-                "flavor='gateway-api' (see app.gateway_api_parser.parse_gateway_api)"
-            )
-        return normalize_gateway_config(
-            source, format_key=GATEWAY_API_FORMAT_KEY, include_raw=include_raw
-        )
-
-
-class EnvoyXdsNormalizer(Normalizer, register=True):
-    """Normalize a parsed Envoy xDS route configuration (format key ``envoy-xds``, FMT-7.4)."""
-
-    format = ENVOY_XDS_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        if not isinstance(source, GatewayConfigDocument) or source.flavor != ENVOY_XDS_FORMAT_KEY:
-            raise ValueError(
-                "Envoy xDS source must be a GatewayConfigDocument with flavor='envoy-xds' "
-                "(see app.envoy_xds_parser.parse_envoy_xds)"
-            )
-        return normalize_gateway_config(
-            source, format_key=ENVOY_XDS_FORMAT_KEY, include_raw=include_raw
-        )
-
-
-class IstioNormalizer(Normalizer, register=True):
-    """Normalize parsed Istio traffic resources (format key ``istio``, FMT-7.4)."""
-
-    format = ISTIO_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        if not isinstance(source, GatewayConfigDocument) or source.flavor != ISTIO_FORMAT_KEY:
-            raise ValueError(
-                "Istio source must be a GatewayConfigDocument with flavor='istio' "
-                "(see app.istio_parser.parse_istio)"
-            )
-        return normalize_gateway_config(
-            source, format_key=ISTIO_FORMAT_KEY, include_raw=include_raw
-        )
-
-
-def _proxy_normalize(source: Any, format_key: str, parser: str, include_raw: bool) -> CanonicalApi:
-    """Shared body of the FMT-7.5 normalizers: check the flavor, then project.
+    This is the whole cost of a new front end on the shared side: a
+    :class:`~app.gateway_family.GatewayFlavor` (key, ledger label, route provenance, whether
+    its plugins are policy) and a route-extraction function returning a
+    :class:`~app.gateway_config_model.GatewayConfigDocument`. Match normalization
+    (:mod:`app.gateway_match`), operation synthesis, provenance classification and the
+    schemaless-loss report are all shared.
 
     Args:
-        source: The parsed document.
-        format_key: The flavor / format key the document must carry.
-        parser: Dotted name of the parser function, for the error message.
-        include_raw: Passed through to :func:`normalize_gateway_config`.
+        flavor: The front end's declaration; added to the family if new.
+        class_name: Name of the generated normalizer class (defaults to the key, CamelCased).
 
-    Raises:
-        ValueError: When ``source`` is not a document of that flavor.
+    Returns:
+        The registered :class:`~app.normalizer.Normalizer` subclass for ``flavor.key``.
     """
-    if not isinstance(source, GatewayConfigDocument) or source.flavor != format_key:
-        raise ValueError(
-            f"{format_key} source must be a GatewayConfigDocument with flavor={format_key!r} "
-            f"(see {parser})"
-        )
-    return normalize_gateway_config(source, format_key=format_key, include_raw=include_raw)
+    add_flavor(flavor)
+    key = flavor.key
+    parser = flavor.parser or "the front end's parser"
+
+    def normalize(self: Normalizer, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        if not isinstance(source, GatewayConfigDocument) or source.flavor != key:
+            raise ValueError(f"{key} source must be a GatewayConfigDocument with flavor={key!r} (see {parser})")
+        return normalize_gateway_config(source, format_key=key, include_raw=include_raw)
+
+    name = class_name or "".join(part.capitalize() for part in key.replace("_", "-").split("-")) + "Normalizer"
+    namespace = {
+        "__doc__": f"Normalize a parsed {flavor.label} (format key ``{key}``) through the shared gateway middle.",
+        "__module__": __name__,
+        "format": key,
+        "paradigm": ApiParadigm.REST,
+        "normalize": normalize,
+    }
+    return type(name, (Normalizer,), namespace, register=True)
 
 
-class TraefikNormalizer(Normalizer, register=True):
-    """Normalize a parsed Traefik dynamic configuration (format key ``traefik``, FMT-7.5)."""
-
-    format = TRAEFIK_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        return _proxy_normalize(source, TRAEFIK_FORMAT_KEY, "app.traefik_parser.parse_traefik", include_raw)
-
-
-class NginxNormalizer(Normalizer, register=True):
-    """Normalize a parsed nginx configuration (format key ``nginx``, FMT-7.5)."""
-
-    format = NGINX_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        return _proxy_normalize(source, NGINX_FORMAT_KEY, "app.nginx_parser.parse_nginx", include_raw)
-
-
-class HaproxyNormalizer(Normalizer, register=True):
-    """Normalize a parsed HAProxy configuration (format key ``haproxy``, FMT-7.5)."""
-
-    format = HAPROXY_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        return _proxy_normalize(source, HAPROXY_FORMAT_KEY, "app.haproxy_parser.parse_haproxy", include_raw)
-
-
-class ConsulNormalizer(Normalizer, register=True):
-    """Normalize parsed Consul definitions and entries (format key ``consul``, FMT-7.5)."""
-
-    format = CONSUL_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        return _proxy_normalize(source, CONSUL_FORMAT_KEY, "app.consul_parser.parse_consul", include_raw)
-
-
-class TykNormalizer(Normalizer, register=True):
-    """Normalize a parsed Tyk classic API definition (format key ``tyk``, FMT-7.5).
-
-    The Tyk OAS form is normalized by :class:`app.tyk_import_source.TykImportSource` through
-    the OpenAPI path instead; only the classic form reaches this normalizer.
-    """
-
-    format = TYK_FORMAT_KEY
-    paradigm = ApiParadigm.REST
-
-    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
-        return _proxy_normalize(source, TYK_FORMAT_KEY, "app.tyk_parser.parse_tyk_classic", include_raw)
+# One derived normalizer per family member. The names are kept as module attributes because
+# callers and tests import them; every one is the same shared projection.
+KongNormalizer = register_gateway_flavor(GATEWAY_FAMILY[KONG_FORMAT_KEY])
+GatewayApiNormalizer = register_gateway_flavor(GATEWAY_FAMILY[GATEWAY_API_FORMAT_KEY])
+EnvoyXdsNormalizer = register_gateway_flavor(GATEWAY_FAMILY[ENVOY_XDS_FORMAT_KEY])
+IstioNormalizer = register_gateway_flavor(GATEWAY_FAMILY[ISTIO_FORMAT_KEY])
+TraefikNormalizer = register_gateway_flavor(GATEWAY_FAMILY[TRAEFIK_FORMAT_KEY])
+NginxNormalizer = register_gateway_flavor(GATEWAY_FAMILY[NGINX_FORMAT_KEY])
+HaproxyNormalizer = register_gateway_flavor(GATEWAY_FAMILY[HAPROXY_FORMAT_KEY])
+ConsulNormalizer = register_gateway_flavor(GATEWAY_FAMILY[CONSUL_FORMAT_KEY])
+TykNormalizer = register_gateway_flavor(GATEWAY_FAMILY[TYK_FORMAT_KEY])
