@@ -52,6 +52,25 @@ jobs:
       - name: Install Playwright Chromium
         run: yarn playwright install chromium
 
+      # The self-hosted runners do not all carry Chromium's system libraries (libatk and the
+      # rest of Ubuntu 26.04's `t64` packages), and the browser download above does not add
+      # them. Try a launch first so a provisioned runner never touches apt; otherwise install
+      # them, which needs passwordless sudo on the runner.
+      - name: Install Chromium's system libraries if missing
+        run: |
+          set -euo pipefail
+          launches() { node -e "require('@playwright/test').chromium.launch().then((b) => b.close())"; }
+          if launches 2>/dev/null; then
+            echo "Chromium launches; its system libraries are present."
+            exit 0
+          fi
+          if ! sudo -n true 2>/dev/null; then
+            echo "::error::Chromium cannot start on $(hostname): system libraries are missing and the runner has no passwordless sudo. Run once on that host: cd apiome-ui && yarn playwright install-deps chromium"
+            exit 1
+          fi
+          yarn playwright install-deps chromium
+          launches
+
       # Python comes from uv, as in golden-path.yml: run.sh drives the apiome CLI through it.
       - name: Install uv
         uses: astral-sh/setup-uv@v6
