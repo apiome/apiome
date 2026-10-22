@@ -5,8 +5,9 @@
  *   or Project; why push-back is not offered.
  * * **Gateway config page**: the APIs served, auth and rate-limit posture, redacted-credential count,
  *   the declared loss and the owner; **Push back** on a Kong config opens the export on the `kong`
- *   target's fidelity report (or the Studio's Verify step once it is released); an AWS config
- *   explains it needs FMT-7.7; the Graph tab draws the edges; axe passes.
+ *   target's fidelity report (or the Studio's Verify step once it is released); an AWS config pushes
+ *   back to `aws-apigateway` (FMT-7.7); a connector with no gateway format explains why not; the
+ *   Graph tab draws the edges; axe passes.
  * * **Connector Environments tab**: one row per gateway config, linked.
  *
  * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `gateway-config-entity` and
@@ -104,7 +105,18 @@ const AWS: GatewayConfig = {
   name: 'AWS · prod',
   connector: { id: CONNECTOR, name: 'AWS', kind: 'aws-apigateway' },
   flavor: 'aws-apigateway',
-  pushBack: { target: null, reason: 'fmt-7.7' },
+  pushBack: { target: 'aws-apigateway', reason: null },
+};
+
+/** A config whose connector has no gateway format to push back to. */
+const PLAIN: GatewayConfig = {
+  ...KONG,
+  id: 'g-plain',
+  slug: 'plain-prod',
+  name: 'Plain · prod',
+  connector: { id: CONNECTOR, name: 'Plain', kind: 'url' },
+  flavor: 'url',
+  pushBack: { target: null, reason: 'unsupported' },
 };
 
 /** A Kong export target and its dry-run fidelity, for the push-back dialog. */
@@ -161,6 +173,7 @@ beforeEach(() => {
     calls.push(url);
     if (url.startsWith('/api/gateway-configs?connector=')) return res({ gatewayConfigs: [KONG, AWS] });
     if (url === '/api/gateway-configs/aws-prod') return res(AWS);
+    if (url === '/api/gateway-configs/plain-prod') return res(PLAIN);
     if (url.startsWith('/api/gateway-configs/')) return res(KONG);
     if (url === '/api/teams') return res({ teams: [{ id: 't-1', slug: 'platform', name: 'Platform' }] });
     if (url.startsWith('/api/graph/edges')) return res({ edges: [], total: 0, truncated: false, limit: 500, offset: 0 });
@@ -186,7 +199,8 @@ describe('the rules', () => {
     expect(servedApiHref({ ...KONG.apis[0], publishable: true })).toBe('/ade/dashboard/versions?projectId=p-orders');
     expect(servedApiHref(KONG.apis[1])).toBeNull();
     expect(pushBackUnavailable(KONG.pushBack)).toBeNull();
-    expect(pushBackUnavailable(AWS.pushBack)).toMatch(/FMT-7\.7/);
+    expect(pushBackUnavailable(AWS.pushBack)).toBeNull();
+    expect(pushBackUnavailable(PLAIN.pushBack)).toMatch(/no gateway format/);
   });
 });
 
@@ -230,9 +244,15 @@ describe('the gateway config page', () => {
     expect(query.get('step')).toBe('verify');
   });
 
-  it('explains that AWS push-back needs FMT-7.7', async () => {
+  it('offers push back on an AWS config (FMT-7.7)', async () => {
     await renderPage('aws-prod');
-    expect(screen.getByTestId('gateway-config-push-back-unavailable')).toHaveTextContent('FMT-7.7, #5461');
+    expect(screen.queryByTestId('gateway-config-push-back-unavailable')).toBeNull();
+    expect(screen.getByTestId('gateway-config-push-back-i-1')).not.toBeDisabled();
+  });
+
+  it('explains why a connector with no gateway format cannot push back', async () => {
+    await renderPage('plain-prod');
+    expect(screen.getByTestId('gateway-config-push-back-unavailable')).toHaveTextContent('no gateway format');
     expect(screen.getByTestId('gateway-config-push-back-i-1')).toBeDisabled();
   });
 

@@ -672,6 +672,13 @@ def load_builtin_emitters() -> None:
     from . import cddl_emitter as _cddl_emitter  # noqa: F401
     from . import odcs_emitter as _odcs_emitter  # noqa: F401
     from . import kafka_connect_emitter as _kafka_connect_emitter  # noqa: F401
+    # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.
+    from . import envoy_xds_emitter as _envoy_xds_emitter  # noqa: F401
+    from . import istio_emitter as _istio_emitter  # noqa: F401
+    from . import traefik_emitter as _traefik_emitter  # noqa: F401
+    from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401
+    from . import azure_apim_emitter as _azure_apim_emitter  # noqa: F401
+    from . import apigee_emitter as _apigee_emitter  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

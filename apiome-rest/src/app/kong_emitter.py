@@ -54,11 +54,7 @@ from pydantic import Field, field_validator
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
-    CanonicalField,
-    Channel,
-    Operation,
     OperationKind,
-    Type,
 )
 from .emitter import (
     CapabilityProfile,
@@ -72,7 +68,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import CapabilityRulePack
 from .gateway_config_emitter import (
     SERVICE_NAMING_STRATEGIES,
     escape_path_literal,
@@ -90,6 +86,7 @@ from .gateway_config_model import (
     GatewayServiceDef,
 )
 from .gateway_config_normalizer import KONG_FORMAT_KEY
+from .gateway_emit_common import RoutingSurfaceRulePack
 from .kong_deck_schema import (
     DECK_FORMAT_VERSIONS,
     deck_document_violations,
@@ -138,94 +135,18 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 # ===========================================================================
 
 
-class KongFidelityRulePack(CapabilityRulePack):
+class KongFidelityRulePack(RoutingSurfaceRulePack):
     """Fidelity rules for Kong declarative export — FMT-2.7 (#5425).
 
     States, construct by construct and *before* an emit runs, the same losses
-    :class:`KongEmitter` records while writing the file, so an Export Studio card
-    and a finished artifact tell the reader the same story.
-
-    A declarative configuration is a **routing surface**: it says where a request
-    goes, never what it carries. So the three things it cannot hold are named
-    directly rather than inferred from the six capability axes — the artifact title
-    (deck has no field for it), every event channel, and every named type. The
-    profile-derived default would call a record ``OK`` here on the strength of
-    ``operations=True``, which over-claims a fidelity a file with no schema section
-    cannot deliver.
+    :class:`KongEmitter` records while writing the file. A declarative configuration is a
+    routing surface, so the rules are the family's shared
+    :class:`~app.gateway_emit_common.RoutingSurfaceRulePack` (FMT-7.7 moved them there):
+    the artifact title (deck has no field for it), every event channel and every named
+    type are named directly rather than inferred from the capability axes.
     """
 
     target_label = "Kong Declarative Config"
-
-    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """Declare the artifact title a deck file has nowhere to put.
-
-        deck's document has no title field, and inventing one would produce a file
-        ``deck validate`` rejects — so a re-import names the configuration after the
-        file it read. Reported only when the source actually carries a title or an
-        identity name; a model with neither loses nothing here.
-        """
-        if not (api.title or api.identity.name):
-            return []
-        return [
-            FidelityVerdict.approx(
-                message=(
-                    f"{self.target_label} has no field for the artifact title; a "
-                    "re-import names the configuration after the file it was read from"
-                ),
-                target_mapping="artifact title → file name",
-            )
-        ]
-
-    def channel_verdict(self, channel: Channel) -> FidelityVerdict:
-        """An event channel has no route to become; it is dropped."""
-        return FidelityVerdict.drop(
-            message=(
-                f"{self.target_label} routes HTTP requests and has no event/channel "
-                f"vocabulary; channel {channel.key!r} is dropped"
-            ),
-            target_mapping="channel → dropped",
-        )
-
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        """Only an HTTP-bound operation becomes a route."""
-        if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.drop(
-                message=(
-                    f"{self.target_label} has no event vocabulary; "
-                    f"{operation.kind.value} operation {operation.key!r} is dropped"
-                ),
-                target_mapping="event operation → dropped",
-            )
-        if not operation.http_method and not operation.http_path:
-            return FidelityVerdict.drop(
-                message=(
-                    f"{self.target_label} matches on method, path and host; operation "
-                    f"{operation.key!r} declares no HTTP binding to route and is dropped"
-                ),
-                target_mapping="non-HTTP operation → dropped",
-            )
-        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}")
-
-    def type_verdict(self, type_: Type) -> FidelityVerdict:
-        """Every named type is dropped: a routing surface has no schema section."""
-        return FidelityVerdict.drop(
-            message=(
-                f"{self.target_label} declares where a request goes, never what it "
-                f"carries; type {type_.key!r} has no declaration to become and is dropped"
-            ),
-            target_mapping="named type → dropped",
-        )
-
-    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        """No per-field verdicts — the owning type is already dropped whole.
-
-        The default pack would report this field's nullability, constraints and
-        field number as three separate losses. On a target with no type system at
-        all that is three restatements of one fact, and it would inflate the loss
-        counts a fidelity badge is computed from, so the type-level ``DROP`` is the
-        single place the loss is recorded.
-        """
-        return []
 
 
 class KongEmitOptions(EmitOptions):

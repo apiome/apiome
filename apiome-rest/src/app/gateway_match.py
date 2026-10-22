@@ -32,6 +32,7 @@ __all__ = [
     "PATH_KIND_TYPES",
     "PATH_TYPE_KINDS",
     "STRING_MATCH_OPERATORS",
+    "parse_match_value",
     "path_pattern",
     "render_match_value",
     "template_params",
@@ -118,3 +119,22 @@ def render_match_value(operator: str, value: str) -> str:
     """
     prefix = STRING_MATCH_OPERATORS[operator]
     return f"{prefix}:{value}" if prefix and value else value
+
+
+def parse_match_value(rendered: str) -> Tuple[str, str]:
+    """Split a rendered ``match_value`` back into ``(operator, value)`` — FMT-7.7.
+
+    The exact inverse of :func:`render_match_value`, so an emitter can write a value match
+    in its own product's syntax: ``prefix:acme-`` → ``("prefix", "acme-")``, ``GET`` →
+    ``("exact", "GET")``, ``""`` → ``("exact", "")`` (presence only).
+
+    Args:
+        rendered: The ``match_value`` as the normalizer wrote it.
+
+    Returns:
+        The operator (a key of :data:`STRING_MATCH_OPERATORS`) and the value.
+    """
+    for operator, prefix in STRING_MATCH_OPERATORS.items():
+        if prefix and rendered.startswith(prefix + ":"):
+            return operator, rendered[len(prefix) + 1 :]
+    return "exact", rendered

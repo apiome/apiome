@@ -231,13 +231,17 @@ and dropped — before anything is exported; acknowledge a lossy conversion to c
 | Connector | Push back to |
 | --- | --- |
 | Kong (Konnect or Admin API) | **Kong Declarative Config** (decK) |
-| AWS API Gateway, Azure API Management, Apigee | Not yet — their export formats are still to come ([FMT-7.7](https://github.com/apiome/apiome/issues/5461)); the button is disabled and says so |
+| AWS API Gateway | **AWS API Gateway** — an OpenAPI 3.0 definition with an integration on every operation |
+| Azure API Management | **Azure API Management** — the OpenAPI definition with its policy XML |
+| Apigee | **Apigee API proxy** — an `apiproxy/` bundle |
 
-How the fidelity report is worked out is in [Understand export fidelity](../ship/export-fidelity.md).
+How the fidelity report is worked out is in [Understand export fidelity](../ship/export-fidelity.md);
+what each gateway export writes is in [Export to an API gateway](../ship/export-to-a-gateway.md).
 
 With the API: `GET /v1/tenants/{tenant}/gateway-configs` (`?connector=` for one connector) and
 `GET /v1/tenants/{tenant}/gateway-configs/{slug}` — see [Gateway configs](../reference/rest/gateway-configs.md).
-`pushBack.target` names the export target (`kong`) to use with `POST /v1/export/{tenant}/preview`.
+`pushBack.target` names the export target (`kong`, `aws-apigateway`, `azure-apim` or `apigee`) to use
+with `POST /v1/export/{tenant}/preview`.
 
 ## What never changes on a refresh
 

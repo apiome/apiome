@@ -214,9 +214,16 @@
       "golden_directories": [
         "apigee"
       ],
-      "emit_key": null,
+      "emit_key": "apigee",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "apigee",
+          "emit_key": "apigee",
+          "status": "xfail",
+          "has_reason": true
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -512,9 +519,16 @@
       "golden_directories": [
         "aws-apigateway"
       ],
-      "emit_key": null,
+      "emit_key": "aws-apigateway",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "aws-apigateway",
+          "emit_key": "aws-apigateway",
+          "status": "xfail",
+          "has_reason": true
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -555,9 +569,16 @@
       "golden_directories": [
         "azure-apim"
       ],
-      "emit_key": null,
+      "emit_key": "azure-apim",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "azure-apim",
+          "emit_key": "azure-apim",
+          "status": "xfail",
+          "has_reason": true
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -1212,9 +1233,16 @@
       "golden_directories": [
         "envoy-xds"
       ],
-      "emit_key": null,
+      "emit_key": "envoy-xds",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "envoy-xds",
+          "emit_key": "envoy-xds",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -1959,9 +1987,16 @@
       "golden_directories": [
         "istio"
       ],
-      "emit_key": null,
+      "emit_key": "istio",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "istio",
+          "emit_key": "istio",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -3141,9 +3176,16 @@
       "golden_directories": [
         "traefik"
       ],
-      "emit_key": null,
+      "emit_key": "traefik",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "traefik",
+          "emit_key": "traefik",
+          "status": "xfail",
+          "has_reason": true
+        }
+      ],
       "capability_provenance": "reviewed",
       "requirements": {
         "valid-examples": "satisfied",

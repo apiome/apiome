@@ -63,9 +63,8 @@ async def read_tenant_gateway_config(
 ) -> GatewayConfigOut:
     """One gateway config, by slug or id, with the APIs its environment serves (`imports:view`).
 
-    `pushBack.target` is the export target that writes this gateway's format (`kong`), or `null` with
-    `pushBack.reason` — `fmt-7.7` for AWS API Gateway, Azure APIM and Apigee, whose emit modes are
-    still to come (#5461).
+    `pushBack.target` is the export target that writes this gateway's format (`kong`,
+    `aws-apigateway`, `azure-apim`, `apigee`), or `null` with `pushBack.reason` `unsupported`.
     """
     _ = tenant_slug
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"gateway-config:{ref}")

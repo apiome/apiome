@@ -152,6 +152,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['fetch', 'yaml', 'json', 'bundle', 'artifact', 'save'],
   },
   {
+    id: 'export-to-a-gateway',
+    title: 'Export to an API gateway',
+    summary: 'Export an API as Kong, Envoy, Istio, Traefik, AWS, Azure or Apigee configuration.',
+    page: 'apiome-docs/docs/ship/export-to-a-gateway.md',
+    section: 'spine',
+    keywords: ['push back', 'envoy', 'istio', 'traefik', 'aws api gateway', 'azure apim', 'apigee', 'migrate'],
+  },
+  {
     id: 'export-fidelity',
     title: 'Understand export fidelity',
     summary:

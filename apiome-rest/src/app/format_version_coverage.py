@@ -233,7 +233,13 @@ _PROTO_SURFACE = "proto2 / proto3 (.proto)"
 _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     "apiblueprint": VersionCoverage(
         reads=[FormatVersion(version="1A", format_key="api-blueprint", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="1A", format_key="apiblueprint", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="1A",
+                format_key="apiblueprint",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="1A",
     ),
     "arazzo": VersionCoverage(
@@ -308,7 +314,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "targets live outside the file.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="Apigee API proxy bundle (apiproxy/)",
+                format_key="apigee",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="Apigee API proxy bundle (apiproxy/)",
     ),
     "aws-apigateway": VersionCoverage(
         reads=[
@@ -329,7 +342,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "the top-level `x-amazon-apigateway-cors` object.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="OpenAPI 3.0 with x-amazon-apigateway-* extensions (REST API import)",
+                format_key="aws-apigateway",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="OpenAPI 3.0 with x-amazon-apigateway-* extensions (REST API import)",
     ),
     "azure-apim": VersionCoverage(
         reads=[
@@ -355,7 +375,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "scoped by file name.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="APIM OpenAPI 3.0 definition with policy XML",
+                format_key="azure-apim",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="APIM OpenAPI 3.0 definition with policy XML",
     ),
     "avro": VersionCoverage(
         reads=[
@@ -406,7 +433,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     ),
     "cloudevents": VersionCoverage(
         reads=[FormatVersion(version="1.0", format_key="cloudevents", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="1.0", format_key="cloudevents", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="1.0",
+                format_key="cloudevents",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="1.0",
     ),
     "xregistry": VersionCoverage(
@@ -649,7 +682,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     ),
     "fhir": VersionCoverage(
         reads=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="R4",
+                format_key="fhir",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="R4",
     ),
     "fix": VersionCoverage(
@@ -744,7 +783,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "accepted; v2-only fields with no v3 equivalent are ignored.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="xDS v3 RouteConfiguration (envoy.config.route.v3)",
+                format_key="envoy-xds",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="xDS v3 RouteConfiguration (envoy.config.route.v3)",
     ),
     "istio": VersionCoverage(
         reads=[
@@ -762,7 +808,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 note="Identical traffic-management schema to v1; read the same way.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="networking.istio.io/v1",
+                format_key="istio",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="networking.istio.io/v1",
     ),
     "traefik": VersionCoverage(
         reads=[
@@ -791,7 +844,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 note="The pre-v3 CRD group; identical route schema, read the same way.",
             ),
         ],
-        writes=[],
+        writes=[
+            FormatVersion(
+                version="Traefik v3 dynamic configuration (file provider, YAML / JSON)",
+                format_key="traefik",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="Traefik v3 dynamic configuration (file provider, YAML / JSON)",
     ),
     "nginx": VersionCoverage(
         reads=[
@@ -1010,7 +1070,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     ),
     "jtd": VersionCoverage(
         reads=[FormatVersion(version="RFC 8927", format_key="jtd", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="RFC 8927", format_key="jtd", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="RFC 8927",
+                format_key="jtd",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="RFC 8927",
     ),
     "k8s-crd": VersionCoverage(
@@ -1168,7 +1234,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 note="Read by projecting the v2 CSDL onto the v4 model, on the same terms as v3.",
             ),
         ],
-        writes=[FormatVersion(version="4.0", format_key="odata", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="4.0",
+                format_key="odata",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="4.0",
     ),
     "oncrpc": VersionCoverage(
@@ -1517,7 +1589,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     ),
     "wadl": VersionCoverage(
         reads=[FormatVersion(version="2009-02-09", format_key="wadl", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="2009-02-09", format_key="wadl", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="2009-02-09",
+                format_key="wadl",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="2009-02-09",
     ),
     "wit": VersionCoverage(
@@ -1556,7 +1634,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
     ),
     "xmlrpc": VersionCoverage(
         reads=[FormatVersion(version="1.0", format_key="xmlrpc", support=VersionSupport.FULL)],
-        writes=[FormatVersion(version="1.0", format_key="xmlrpc", support=VersionSupport.FULL)],
+        writes=[
+            FormatVersion(
+                version="1.0",
+                format_key="xmlrpc",
+                support=VersionSupport.FULL,
+            )
+        ],
         default_write="1.0",
     ),
     "xsd": VersionCoverage(

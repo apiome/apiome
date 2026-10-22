@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**45<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**51<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -225,6 +225,8 @@ not yet available.
   generated from the registries
 - [Understand export fidelity](./export-fidelity.md) — cross-format exports: what is preserved,
   what is lost and why, and the risk acknowledgement
+- [Export to an API gateway](./export-to-a-gateway.md) — Kong, Gateway API, Envoy, Istio, Traefik,
+  AWS API Gateway, Azure API Management and Apigee configuration
 - [Browse published specs](./browse-published-specs.md) — view the same spec rendered
 - [Compare published versions](./compare-published-versions.md) — diff two published versions
   with `apiome schema diff`

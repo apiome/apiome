@@ -265,6 +265,14 @@ class FlavorRules:
 GATEWAY_FLAVOR_RULES: Dict[str, FlavorRules] = {
     "kong": FlavorRules(),
     "gateway-api": FlavorRules(entity_name=preserve_name, require_upstream=False),
+    # FMT-7.7 (#5461). Envoy and Istio name routes and virtual hosts freely and carry the
+    # destination on each route (a cluster / a destination host), so names are preserved and
+    # no service upstream is invented. Traefik and Apigee need a real upstream URL on the
+    # service (a load-balancer server / a target endpoint) and use the conservative names.
+    "envoy-xds": FlavorRules(entity_name=preserve_name, require_upstream=False),
+    "istio": FlavorRules(entity_name=preserve_name, require_upstream=False),
+    "traefik": FlavorRules(),
+    "apigee": FlavorRules(),
 }
 
 

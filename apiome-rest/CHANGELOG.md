@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.422.0] - 2026-10-21
+
+### Added
+- **Gateway emit modes for the rest of the family (#5461, FMT-7.7)**: six new export targets on the shared
+  gateway projection (`plan_gateway_config`), each with a capability profile, a fidelity pack and a product
+  gate in `export_validation`:
+  - `envoy-xds` — a v3 `RouteConfiguration` (virtual host per service, route per match, `:method` header,
+    string matchers, cluster / weighted clusters; duplicate domains merged and reported);
+  - `istio` — `VirtualService` manifests (uri / method / header / query matches, destinations with subset,
+    port and weight; DestinationRules not invented);
+  - `traefik` — file-provider dynamic configuration (router rules rebuilt as the inverse of the importer's
+    DNF, load-balancer services);
+  - `aws-apigateway` — OpenAPI 3.0 with `x-amazon-apigateway-integration` on every operation (recorded
+    integrations, auth, validators, settings, CORS and authorizers re-emitted verbatim; otherwise
+    `http_proxy` to the recorded upstream or a reported `mock`), `x-amazon-apigateway-any-method`;
+  - `azure-apim` — `openapi.json` + `policy.xml` + `operations/{operationId}.xml` (recorded policies
+    verbatim; from an ARM template the recorded backend, rate limits, rewrites, CORS, IP filters and
+    preserved XML are rebuilt at their scope);
+  - `apigee` — an `apiproxy/` bundle (flows conditioned on `MatchesPath` + `request.verb`, a target endpoint
+    per upstream, `VerifyAPIKey` / `OAuthV2` policies; a recorded bundle re-emitted verbatim).
+  - `gateway_emit_common`: `RoutingSurfaceRulePack` (Kong's pack now subclasses it, unchanged), shared
+    options, the plan wrapper, upstream resolution, method/path collision losses and OpenAPI security
+    rebuilt from declared records. Routing packs approximate a route that will be rewritten rather than
+    claiming `OK`.
+  - Push-back: `aws-apigateway`, `azure-apim` and `apigee` gateway configs now name their own target;
+    the `fmt-7.7` reason is gone.
+  - Round-trip matrix: +492 cells (10 pass, including AWS ↔ Azure and HAProxy / Istio → Envoy; the rest
+    are recorded xfails). Version coverage declares each write version. OpenAPI version 1.286.0.
+
 ## [1.421.0] - 2026-10-21
 
 ### Changed

@@ -41,7 +41,7 @@ export interface GatewayServedApi {
 export interface GatewayPushBack {
   /** The export target (`kong`), or `null`. */
   target: string | null;
-  /** Why not: `fmt-7.7` or `unsupported`. */
+  /** Why not: `unsupported` (the connector has no gateway format). */
   reason: string | null;
 }
 
@@ -68,9 +68,6 @@ export function gatewayConfigHref(slug: string): string {
   return `/ade/dashboard/connectors/environments/${encodeURIComponent(slug)}`;
 }
 
-/** The FMT-7.7 issue the AWS, Azure APIM and Apigee emit modes wait on. */
-export const FMT_7_7_ISSUE = 'https://github.com/apiome/apiome/issues/5461';
-
 /**
  * Why push-back is not offered, in words, or `null` when it is.
  *
@@ -78,7 +75,6 @@ export const FMT_7_7_ISSUE = 'https://github.com/apiome/apiome/issues/5461';
  */
 export function pushBackUnavailable(pushBack: GatewayPushBack): string | null {
   if (pushBack.target) return null;
-  if (pushBack.reason === 'fmt-7.7') return 'Push back to this gateway needs its emit mode (FMT-7.7, #5461).';
   return 'This connector has no gateway format to push back to.';
 }
 

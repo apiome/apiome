@@ -120,9 +120,9 @@ def test_names_and_slugs() -> None:
     [
         ("kong-konnect", {"target": "kong", "reason": None}),
         ("kong-admin", {"target": "kong", "reason": None}),
-        ("aws-apigateway", {"target": None, "reason": "fmt-7.7"}),
-        ("azure-apim", {"target": None, "reason": "fmt-7.7"}),
-        ("apigee", {"target": None, "reason": "fmt-7.7"}),
+        ("aws-apigateway", {"target": "aws-apigateway", "reason": None}),
+        ("azure-apim", {"target": "azure-apim", "reason": None}),
+        ("apigee", {"target": "apigee", "reason": None}),
         ("url", {"target": None, "reason": "unsupported"}),
     ],
 )

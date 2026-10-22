@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.285.0",
+    "version": "1.286.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -18293,7 +18293,7 @@
           "gateway-configs"
         ],
         "summary": "Read a gateway config",
-        "description": "One gateway config, by slug or id, with the APIs its environment serves (`imports:view`).\n\n`pushBack.target` is the export target that writes this gateway's format (`kong`), or `null` with\n`pushBack.reason` \u2014 `fmt-7.7` for AWS API Gateway, Azure APIM and Apigee, whose emit modes are\nstill to come (#5461).",
+        "description": "One gateway config, by slug or id, with the APIs its environment serves (`imports:view`).\n\n`pushBack.target` is the export target that writes this gateway's format (`kong`,\n`aws-apigateway`, `azure-apim`, `apigee`), or `null` with `pushBack.reason` `unsupported`.",
         "operationId": "read_tenant_gateway_config_v1_tenants__tenant_slug__gateway_configs__ref__get",
         "parameters": [
           {
@@ -31538,7 +31538,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-22T02:50:59Z"
+                          "example": "2026-10-22T03:42:40Z"
                         },
                         "method": {
                           "type": "string",
@@ -112910,7 +112910,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "completed_at": {
             "anyOf": [
@@ -114865,7 +114865,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "comment_count": {
             "type": "integer",
@@ -115093,7 +115093,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "comment_count": {
             "type": "integer",
@@ -115860,14 +115860,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -119153,7 +119153,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "82e1502a-79cf-4c4b-b1a2-cff61966a9ac"
+            "example": "68ec531f-2063-46a3-9bb3-9fdd82b662b8"
           },
           "method": {
             "type": "string",
@@ -121680,7 +121680,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -123576,7 +123576,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "browse_url": {
             "anyOf": [
@@ -132445,7 +132445,7 @@
               }
             ],
             "title": "Reason",
-            "description": "Why not: `fmt-7.7` (emit mode still to come, #5461) or `unsupported`."
+            "description": "Why not: `unsupported` (the gateway has no emit mode)."
           }
         },
         "type": "object",
@@ -169626,7 +169626,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           }
         },
         "additionalProperties": false,
@@ -181048,13 +181048,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           }
         },
         "additionalProperties": false,
@@ -182558,7 +182558,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "detected_by": {
             "anyOf": [
@@ -190764,14 +190764,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-22T02:50:59Z"
+            "example": "2026-10-22T03:42:40Z"
           },
           "outcome": {
             "anyOf": [
