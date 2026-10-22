@@ -1,0 +1,151 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "Graph API",
+            "detail": {
+              "header": "Authorization"
+            },
+            "plugin": "auth_token",
+            "scheme": "apiKey",
+            "scope": "service"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [
+          "global_rate_limit"
+        ],
+        "ignored_constructs": [
+          {
+            "construct": "graphql",
+            "count": 1,
+            "reason": "the API is a GraphQL proxy; its endpoint is imported as a route and its inline SDL is kept but not read as a schema — import the SDL with the GraphQL adapter"
+          }
+        ],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "global_rate_limit",
+            "scope": "global"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "apiKey"
+      ]
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Graph API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "api_id": "graph-api",
+          "backend": {
+            "url": "http://graph.internal.example.com:4000/graphql"
+          },
+          "listen_path": "/graph/",
+          "provenance": "inferred",
+          "strip_listen_path": true
+        },
+        "key": "Graph API",
+        "name": "Graph API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "graph-api",
+              "api_version": "Default",
+              "backends": [
+                {
+                  "name": "graph.internal.example.com",
+                  "port": 4000
+                }
+              ],
+              "gateway_route": "graph-api@Default:listen-path",
+              "graphql": {
+                "execution_mode": "proxyOnly",
+                "has_schema": true
+              },
+              "listen_path": "/graph/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/graph"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Graph API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/graph",
+            "key": "ANY /graph",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /graph",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Graph API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "tyk/06-typical-graphql-proxy.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:7bb758bbeedde04ab79612ee8b07e92808c8bd69ee135d80033b86a4b499cb39",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "26f65757d3a8fcebd42efcac6e8760e7e2de079052b0d378d9ccb30ab6210617",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

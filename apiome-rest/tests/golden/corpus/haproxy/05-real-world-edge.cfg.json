@@ -1,0 +1,442 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "acl.backend-state",
+            "count": 1,
+            "reason": "the condition reads live backend state (servers up), evaluated at runtime"
+          },
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          }
+        ],
+        "operation_count": 7,
+        "route_count": 7,
+        "schemaless_operation_count": 7,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "http-request deny",
+            "scope": "service"
+          },
+          {
+            "name": "http-request redirect",
+            "scope": "service"
+          },
+          {
+            "name": "http-request track-sc0",
+            "scope": "service"
+          },
+          {
+            "name": "http-response set-header",
+            "scope": "service"
+          },
+          {
+            "name": "stick-table",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/05-real-world-edge.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://www.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend edge",
+        "name": "frontend edge",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "ws_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#use_backend-ws_backend-20",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "websocket"
+                },
+                "key": "ANY /#header.upgrade",
+                "location": "header",
+                "name": "upgrade",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "api_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "edge#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#edge#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "storefront_backend",
+                  "port": 3000
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#use_backend-storefront_backend-21",
+              "hosts": [
+                "www.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#edge#use_backend-storefront_backend-21",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#return-15",
+              "handler": {
+                "directive": "http-request return",
+                "status": "200"
+              },
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/healthz"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/healthz",
+            "key": "ANY /healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#use_backend-orders_backend-18",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/orders"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/orders",
+            "key": "ANY /v3/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments_backend",
+                  "port": 8443
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#use_backend-payments_backend-17",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/payments"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/payments",
+            "key": "ANY /v3/payments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/payments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "search_backend",
+                  "port": 9200
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "edge#use_backend-search_backend-19",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/search"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect",
+                "http-request track-sc0",
+                "http-response set-header",
+                "stick-table"
+              ],
+              "provenance": "inferred",
+              "section": "frontend edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/search",
+            "key": "ANY /v3/search",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/05-real-world-edge.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/05-real-world-edge.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 7,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:ea6a2fef2f1f4ec712c8ebe3c4afe1ef0a74487dcfe01a89034566d2bb70acb2",
+  "lint": {
+    "findings": 8,
+    "grade": "C",
+    "report_fingerprint": "f5dbe64c61237274ed7db0764f4527446e11d38ae6314ee23bce4998ccc7338a",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 7
+    }
+  },
+  "snapshot_version": 1
+}

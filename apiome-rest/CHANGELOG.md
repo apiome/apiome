@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.420.0] - 2026-10-21
+
+### Added
+- **Traefik, nginx, HAProxy, Consul and Tyk import (#5459, FMT-7.5)**: five new import sources on the
+  shared gateway middle — "the reverse-proxy config is the only spec".
+  - `traefik` reads file-provider dynamic configuration (YAML or TOML, one file or a watched directory)
+    and `IngressRoute` / `Middleware` CRDs (`traefik.io`, `traefik.containo.us`). Router rules are parsed
+    into disjunctive normal form: `Path` / `PathPrefix` / `PathRegexp`, `Host`, `Method`, `Header`,
+    `Query`; negations, `ClientIP` and `HostRegexp` stay on the route as unmodelled conditions.
+  - `nginx` reads a **bounded, documented subset** — `server` / `location` / `upstream`, `listen`,
+    `server_name`, the `*_pass` handlers, `return`, `limit_except`, `include` (followed across a file
+    set) — carries request-shaping directives as policy with nginx inheritance, and declares `if`, `map`,
+    `geo`, `try_files`, named / nested locations, variable backends and every other directive.
+  - `haproxy` reads ACL + `use_backend` routing (path, method, host, header and query fetches in DNF),
+    `default_backend`, `http-request return` routes, `defaults` inheritance and map files for computed
+    backends; TCP mode, connection / TLS / rate-counter / Lua conditions are declared.
+  - `consul` reads service definitions, catalog exports and `service-router` / `ingress-gateway` entries
+    (with resolver subsets, splitter and defaults) in JSON or a bundled HCL reader.
+  - `tyk` reads classic API definitions (white-listed paths × `method_actions` under the listen path,
+    per-path rules, auth flags, a policies file) and Tyk OAS definitions through the OpenAPI adapter
+    with `x-tyk-api-gateway` middleware attached; the OpenAPI adapter steps down for such documents.
+  - Every operation is `provenance: inferred` (`PROXY_ROUTE_FLAVORS` joins `INFERRED_ROUTE_FLAVORS` and
+    `POLICY_PLUGIN_FLAVORS`); classic imports are schemaless, non-publishable catalog items.
+  - Reviewed capability-registry seeds for all five (registry version 24); the nginx entry lists the
+    subset directive by directive. Version coverage, declared parser limits and ledger labels added;
+    `traefik` and `tyk` join the always-scrubbed intake formats.
+  - Undeclared services / middlewares / upstreams / backends / ACLs / subsets are
+    `INPUT_REFERENCE_UNRESOLVED`. OpenAPI version 1.284.0.
+
 ## [1.419.0] - 2026-10-21
 
 ### Added

@@ -1,0 +1,361 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "acl.path-suffix-or-substring",
+            "count": 1,
+            "reason": "path_end / path_sub (and url-based) matches have no canonical path form; the route keeps them as conditions and matches every path"
+          },
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          },
+          {
+            "construct": "use_backend.dynamic",
+            "count": 1,
+            "reason": "the backend is computed at runtime from a fetch expression; supply the map file it reads to have each entry imported as a route"
+          }
+        ],
+        "operation_count": 7,
+        "route_count": 7,
+        "schemaless_operation_count": 7,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "http-request deny",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/03-composition-multi-frontend.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend api_public",
+        "name": "frontend api_public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                8443
+              ],
+              "default_route": true,
+              "gateway_route": "api_public#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#api_public#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bind_ports": [
+                8443
+              ],
+              "gateway_route": "api_public#return-6",
+              "handler": {
+                "directive": "http-request return",
+                "status": "410"
+              },
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2",
+            "key": "ANY /v2",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend partner_public",
+        "name": "frontend partner_public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "legacy_backend",
+                  "port": 80
+                }
+              ],
+              "bind_ports": [
+                9443
+              ],
+              "default_route": true,
+              "gateway_route": "partner_public#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "section": "frontend partner_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#partner_public#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "partner_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                9443
+              ],
+              "gateway_route": "partner_public#use_backend-partner_backend-2",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner/v1"
+              },
+              "provenance": "inferred",
+              "section": "frontend partner_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner/v1",
+            "key": "ANY /partner/v1",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner/v1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend www_public",
+        "name": "frontend www_public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "static_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "www_public#use_backend-static_backend-2",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "section": "frontend www_public",
+              "unmodelled_conditions": [
+                "is_static"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "storefront_backend",
+                  "port": 3000
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "www_public#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "section": "frontend www_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#www_public#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "listen admin_stats",
+        "name": "listen admin_stats",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bind_ports": [
+                8404
+              ],
+              "gateway_route": "admin_stats#stats",
+              "handler": {
+                "directive": "stats uri"
+              },
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/stats"
+              },
+              "provenance": "inferred",
+              "section": "listen admin_stats"
+            },
+            "http_method": "ANY",
+            "http_path": "/stats",
+            "key": "ANY /stats",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /stats",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/03-composition-multi-frontend.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/03-composition-multi-frontend.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 7,
+    "servers": 0,
+    "services": 4,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:e596dff6c5b5a33a7828854c9c7496ee4085be348d7b4ab93289ee84190f4286",
+  "lint": {
+    "findings": 8,
+    "grade": "C",
+    "report_fingerprint": "621af8013639d98051ae86832a9c8c7288f117dd176f6b343c7a5dee09e7ec89",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 7
+    }
+  },
+  "snapshot_version": 1
+}

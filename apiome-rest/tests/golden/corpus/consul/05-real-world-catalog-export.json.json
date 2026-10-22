@@ -1,0 +1,268 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "service.non-http",
+            "count": 1,
+            "reason": "a registered service whose protocol is not HTTP (gRPC, TCP) has no canonical HTTP operation; it is kept as a service"
+          }
+        ],
+        "operation_count": 3,
+        "route_count": 3,
+        "schemaless_operation_count": 3,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/05-real-world-catalog-export.json",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "host": "10.20.0.11",
+            "port": 8081,
+            "protocol": "http"
+          },
+          "instances": [
+            {
+              "address": "10.20.0.11",
+              "id": "catalogue-1",
+              "port": 8081
+            }
+          ],
+          "meta": {
+            "protocol": "http",
+            "version": "1.9.4"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v1",
+            "http",
+            "urlprefix-/v2/products"
+          ]
+        },
+        "key": "catalogue",
+        "name": "catalogue",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue",
+                  "port": 8081
+                }
+              ],
+              "gateway_route": "service/catalogue",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "path_source": "urlprefix-tag",
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "host": "10.20.0.11",
+            "port": 8080,
+            "protocol": "http"
+          },
+          "health_checks": [
+            {
+              "name": "orders HTTP health",
+              "target": "http://10.20.0.11:8080/healthz",
+              "type": "http"
+            }
+          ],
+          "instances": [
+            {
+              "address": "10.20.0.11",
+              "id": "orders-1",
+              "port": 8080
+            }
+          ],
+          "meta": {
+            "openapi_url": "https://api.example.com/v2/orders/openapi.json",
+            "protocol": "http",
+            "version": "2.3.0"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v2",
+            "http",
+            "primary",
+            "urlprefix-/v2/orders"
+          ]
+        },
+        "key": "orders",
+        "name": "orders",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "service/orders",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "path_source": "urlprefix-tag",
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "host": "10.20.1.12",
+            "port": 9200,
+            "protocol": "http"
+          },
+          "health_checks": [
+            {
+              "name": "search HTTP health",
+              "status": "warning",
+              "type": "http"
+            }
+          ],
+          "instances": [
+            {
+              "address": "10.20.1.12",
+              "id": "search-1",
+              "port": 9200
+            }
+          ],
+          "meta": {
+            "protocol": "http",
+            "version": "1.2.0-rc.4"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v1",
+            "http",
+            "canary",
+            "urlprefix-/v3/search"
+          ]
+        },
+        "key": "search",
+        "name": "search",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "search",
+                  "port": 9200
+                }
+              ],
+              "gateway_route": "service/search",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/search"
+              },
+              "path_source": "urlprefix-tag",
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/search",
+            "key": "ANY /v3/search",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/05-real-world-catalog-export.json",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/05-real-world-catalog-export.json",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:18eff0c9326c2bb0bb4b28d56820141a4265d060f43e9e2a67e8ec677b97993d",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "97e1566607500ca9e2f51c6379bbb8898cc1f1f52c676c1eb92382de8aaaf8b8",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,7 +1,8 @@
 # HAProxy configuration — `haproxy`
 
 Fixtures for the HAProxy sub-format of **FMT-7.5** ([#5459](https://github.com/apiome/apiome/issues/5459)).
-Entries carry `adapter_key: null` and the `pending-adapter` tag.
+Entries are read by the `haproxy` adapter
+(`apiome-rest/src/app/haproxy_import_source.py`).
 
 **Detection marker.** Section keywords at column 0 — `global`, `defaults`, `frontend`, `backend`,
 `listen` — with indented directives (`bind`, `acl`, `use_backend`, `server`).

@@ -1,0 +1,257 @@
+{
+  "adapter": "traefik",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "traefik",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "rule.HostRegexp",
+            "count": 1,
+            "reason": "a host regular expression names no concrete server host; it is kept on the route as a condition"
+          }
+        ],
+        "operation_count": 3,
+        "route_count": 3,
+        "schemaless_operation_count": 3,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "rateLimit",
+            "scope": "route"
+          },
+          {
+            "name": "redirectScheme",
+            "scope": "route"
+          },
+          {
+            "name": "stripPrefix",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "traefik",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "traefik/02-typical-dynamic.yml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://catalogue.internal.example.com:8080"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://catalogue.internal.example.com:8080"
+          ]
+        },
+        "key": "catalogue-service",
+        "name": "catalogue-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue-service"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "catalogue",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && PathPrefix(`/v2/products`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "noop",
+        "name": "noop",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "noop@internal"
+                }
+              ],
+              "entry_points": [
+                "web"
+              ],
+              "gateway_route": "redirect-to-https",
+              "methods_unrestricted": true,
+              "middlewares": [
+                "https-redirect"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "redirectScheme"
+              ],
+              "provenance": "inferred",
+              "rule": "HostRegexp(`^.+\\.example\\.com$`)",
+              "unmodelled_conditions": [
+                "HostRegexp(`^.+\\.example\\.com$`)"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://orders-1.internal.example.com:8080"
+          },
+          "health_check_path": "/healthz",
+          "provenance": "inferred",
+          "servers": [
+            "http://orders-1.internal.example.com:8080",
+            "http://orders-2.internal.example.com:8080"
+          ]
+        },
+        "key": "orders-service",
+        "name": "orders-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders-service"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "orders",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "rate-limit",
+                "strip-v2"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "rateLimit",
+                "stripPrefix"
+              ],
+              "priority": 100,
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && PathPrefix(`/v2/orders`)",
+              "tls": {
+                "certResolver": "letsencrypt"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "traefik/02-typical-dynamic.yml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "traefik/02-typical-dynamic.yml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 1,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "traefik"
+  },
+  "fingerprint": "sha256:eb570814151212d82f78ccdfe5a0a08601120ee18461a1c71baba676aaf28f48",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "36a60bd01d401597fe2b3ea8ad00f506bdf1c71f78513e3536caab17e8f57833",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

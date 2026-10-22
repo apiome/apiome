@@ -1,0 +1,211 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "service-resolver.Failover",
+            "count": 1,
+            "reason": "the resolver's failover sends traffic to another datacenter, peer or subset at runtime; it is traffic policy, not part of the API surface"
+          }
+        ],
+        "operation_count": 3,
+        "route_count": 3,
+        "schemaless_operation_count": 3,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "NumRetries",
+            "scope": "route"
+          },
+          {
+            "name": "RequestTimeout",
+            "scope": "route"
+          },
+          {
+            "name": "service-splitter",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/07-composition-resolver-and-splitter.hcl",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "checkout",
+        "name": "checkout",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout"
+                }
+              ],
+              "config_entry": "service-router/checkout",
+              "default_route": true,
+              "gateway_route": "service-router/checkout#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "service-splitter"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout",
+                  "subset": "canary"
+                }
+              ],
+              "config_entry": "service-router/checkout",
+              "gateway_route": "service-router/checkout#route-0",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/checkout"
+              },
+              "plugins": [
+                "service-splitter"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/checkout",
+            "key": "ANY /v3/checkout",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/checkout",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "true"
+                },
+                "key": "ANY /v3/checkout#header.x-employee",
+                "location": "header",
+                "name": "x-employee",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout"
+                }
+              ],
+              "config_entry": "service-router/checkout",
+              "gateway_route": "service-router/checkout#route-1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/checkout"
+              },
+              "plugins": [
+                "NumRetries",
+                "RequestTimeout",
+                "service-splitter"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/checkout",
+            "key": "ANY /v3/checkout#service-router/checkout#route-1",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/checkout",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/07-composition-resolver-and-splitter.hcl",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/07-composition-resolver-and-splitter.hcl",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:a185122e2505b38321625f40480d93e5cb42809a38f4c36382549c2bccbc140a",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "cd7d4c17cbe860a7f3eb0e3563e0f5be404347828abaeff936ba6c7d7b34a291",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

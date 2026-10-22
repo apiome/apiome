@@ -61,13 +61,25 @@ PUBLISHABLE_FORMATS = frozenset(
 )
 
 #: Emitted format keys of the gateway-configuration adapters (IXH-7.8; Envoy xDS and Istio
-#: since FMT-7.4). They route to
+#: since FMT-7.4; Traefik, nginx, HAProxy, Consul and Tyk since FMT-7.5). They route to
 #: the catalog like every other non-OpenAPI format; the only specialization is the
 #: routing *reason*, which states the partial-fidelity cause (routes without schemas)
 #: and the promotion path, because that is exactly what the catalog's non-publishable
 #: staging exists for.
 GATEWAY_CONFIG_FORMATS = frozenset(
-    {"kong", "kong-declarative", "gateway-api", "httproute", "envoy-xds", "istio"}
+    {
+        "kong",
+        "kong-declarative",
+        "gateway-api",
+        "httproute",
+        "envoy-xds",
+        "istio",
+        "traefik",
+        "nginx",
+        "haproxy",
+        "consul",
+        "tyk",
+    }
 )
 
 #: The explicit ``requested_target`` values (from the JSON Schema disambiguation prompt,
@@ -280,7 +292,9 @@ def decide_import_routing(
     # Same destination as every non-OpenAPI format; the reason names the capability
     # limit (routes without request/response schemas) and the promotion path, so the
     # UI can state *why* this import is staged rather than published (IXH-7.8).
-    if fmt_key in GATEWAY_CONFIG_FORMATS:
+    # A Tyk OAS definition (FMT-7.5) is an OpenAPI document with schemas, so it takes the
+    # generic catalog reason below rather than the "routes without schemas" one.
+    if fmt_key in GATEWAY_CONFIG_FORMATS and not type_count:
         fmt_label = fmt or paradigm.value
         return ImportRoutingDecision(
             target=ImportTarget.CATALOG,

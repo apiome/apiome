@@ -764,6 +764,90 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         writes=[],
     ),
+    "traefik": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Traefik v3 dynamic configuration (file provider, YAML / TOML)",
+                format_key="traefik",
+                support=VersionSupport.FULL,
+            ),
+            FormatVersion(
+                version="Traefik v2 dynamic configuration",
+                format_key="traefik",
+                support=VersionSupport.PARTIAL,
+                note="Read through the v3 rule grammar: v2's multi-argument matchers (`Host(`a`, "
+                "`b`)`) expand to alternatives and `Headers` / `HostHeader` are accepted; v2 path "
+                "templates (`{id:[0-9]+}`) keep their parameter names.",
+            ),
+            FormatVersion(
+                version="traefik.io/v1alpha1 IngressRoute / Middleware",
+                format_key="traefik",
+                support=VersionSupport.FULL,
+            ),
+            FormatVersion(
+                version="traefik.containo.us/v1alpha1 IngressRoute / Middleware",
+                format_key="traefik",
+                support=VersionSupport.FULL,
+                note="The pre-v3 CRD group; identical route schema, read the same way.",
+            ),
+        ],
+        writes=[],
+    ),
+    "nginx": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="nginx configuration (documented directive subset)",
+                format_key="nginx",
+                support=VersionSupport.UNGATED,
+                note="nginx configuration carries no version marker; one bounded directive subset "
+                "is read for every release, and everything outside it is a declared limit.",
+            ),
+        ],
+        writes=[],
+    ),
+    "haproxy": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="HAProxy configuration (haproxy.cfg)",
+                format_key="haproxy",
+                support=VersionSupport.UNGATED,
+                note="haproxy.cfg carries no version marker; the section / ACL / use_backend "
+                "grammar read is common to HAProxy 2.x and 3.x.",
+            ),
+        ],
+        writes=[],
+    ),
+    "consul": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Consul service definitions, catalog exports and config entries (JSON / HCL)",
+                format_key="consul",
+                support=VersionSupport.UNGATED,
+                note="Consul definitions and configuration entries carry no version marker; "
+                "CamelCase and snake_case keys are read alike.",
+            ),
+        ],
+        writes=[],
+    ),
+    "tyk": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Tyk classic API definition",
+                format_key="tyk",
+                support=VersionSupport.UNGATED,
+                note="A classic definition carries no schema version; one reader covers the "
+                "Gateway and Dashboard (`api_definition`) exports.",
+            ),
+            FormatVersion(
+                version="Tyk OAS (OpenAPI 3 + x-tyk-api-gateway)",
+                format_key="tyk",
+                support=VersionSupport.FULL,
+                note="The OpenAPI document is read by the OpenAPI adapter; the extension is "
+                "interpreted on top as inferred gateway policy.",
+            ),
+        ],
+        writes=[],
+    ),
     "graphql": VersionCoverage(
         reads=[
             FormatVersion(

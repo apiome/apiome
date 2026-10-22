@@ -1,0 +1,27 @@
+---
+slug: reverse-proxy-route-import
+title: Import Traefik, nginx, HAProxy, Consul and Tyk routes
+description: Catalog the routes a reverse proxy, service registry or API gateway serves.
+authors: [apiome]
+---
+
+For many APIs the reverse-proxy configuration is the only spec. Apiome now imports routes from
+**Traefik**, **nginx**, **HAProxy**, **Consul** and **Tyk** configuration.
+[What gets imported](/bring-in/reverse-proxy-route-import).
+
+{/* truncate */}
+
+- **Traefik:** dynamic configuration in YAML or TOML, a watched provider directory, or `IngressRoute`
+  resources. Router rules are expanded, so ``Host(…) && (Method(`GET`) || Method(`HEAD`))`` becomes two
+  operations.
+- **nginx:** `server` and `location` blocks, with `include`s followed across an archive. Apiome reads
+  a documented subset of nginx; `if`, `map`, `try_files` and every other directive outside it are
+  listed in the coverage ledger.
+- **HAProxy:** path, method and host ACLs with `use_backend`, `default_backend` and inline
+  `http-request return` routes; map files resolve computed backends.
+- **Consul:** `service-router` and `ingress-gateway` entries and registered services, in JSON or HCL.
+- **Tyk:** classic API definitions with their policies file, and Tyk OAS definitions, which keep their
+  OpenAPI schemas.
+- **Honest about what it is.** Every operation is marked inferred and lands in the Catalog. Routing
+  with no HTTP equivalent — TCP routers, `mode tcp` sections, Lua conditions — is declared, not
+  dropped.

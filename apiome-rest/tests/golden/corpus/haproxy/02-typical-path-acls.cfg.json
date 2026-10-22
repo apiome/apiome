@@ -1,0 +1,284 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "acl.connection",
+            "count": 1,
+            "reason": "the condition matches on the client or listener address, which has no canonical parameter form"
+          },
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          }
+        ],
+        "operation_count": 5,
+        "route_count": 5,
+        "schemaless_operation_count": 5,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "http-request deny",
+            "scope": "service"
+          },
+          {
+            "name": "http-request redirect",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/02-typical-path-acls.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend api_public",
+        "name": "frontend api_public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "legacy_backend",
+                  "port": 80
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "api_public#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "api_public#return-8",
+              "handler": {
+                "directive": "http-request return",
+                "status": "200"
+              },
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/healthz"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/healthz",
+            "key": "ANY /healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "metrics_backend",
+                  "port": 9090
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "api_public#use_backend-metrics_backend-12",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/metrics"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public",
+              "unmodelled_conditions": [
+                "internal_net"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/metrics",
+            "key": "ANY /metrics",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /metrics",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "api_public#use_backend-orders_backend-10",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                80,
+                443
+              ],
+              "gateway_route": "api_public#use_backend-catalogue_backend-11",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "http-request deny",
+                "http-request redirect"
+              ],
+              "provenance": "inferred",
+              "section": "frontend api_public"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/02-typical-path-acls.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/02-typical-path-acls.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:28d04f23ee87058a94edf90e44f6c925ae2283f4e44f8a8e182d74c99c85bf32",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "c5a7db42fda9cbb796b92d5c207b52a7c47b590a3ad2032cd348ac59be4d502b",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

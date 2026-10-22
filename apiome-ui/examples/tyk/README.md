@@ -1,7 +1,8 @@
 # Tyk API definitions — `tyk`
 
 Fixtures for the Tyk sub-format of **FMT-7.5** ([#5459](https://github.com/apiome/apiome/issues/5459)).
-Entries carry `adapter_key: null` and the `pending-adapter` tag.
+Entries are read by the `tyk` adapter
+(`apiome-rest/src/app/tyk_import_source.py`).
 
 **Two forms.**
 

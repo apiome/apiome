@@ -671,6 +671,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['xds', 'virtualservice', 'service mesh', 'route configuration', 'bootstrap', 'destinationrule'],
   },
   {
+    id: 'reverse-proxy-route-import',
+    title: 'Import reverse-proxy routes',
+    summary: 'Import routes from Traefik, nginx, HAProxy, Consul or Tyk configuration.',
+    page: 'apiome-docs/docs/bring-in/reverse-proxy-route-import.md',
+    section: 'reference',
+    keywords: ['traefik', 'nginx', 'haproxy', 'consul', 'tyk', 'reverse proxy', 'location', 'use_backend', 'ingressroute'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

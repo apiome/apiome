@@ -2,8 +2,10 @@
 
 One projection for every flavor: a flavor-neutral
 :class:`~app.gateway_config_model.GatewayConfigDocument` (from
-:mod:`app.kong_parser`, :mod:`app.gateway_api_parser`, and since FMT-7.4
-:mod:`app.envoy_xds_parser` and :mod:`app.istio_parser`) becomes a canonical
+:mod:`app.kong_parser`, :mod:`app.gateway_api_parser`, since FMT-7.4
+:mod:`app.envoy_xds_parser` and :mod:`app.istio_parser`, and since FMT-7.5 the
+reverse-proxy parsers — :mod:`app.traefik_parser`, :mod:`app.nginx_parser`,
+:mod:`app.haproxy_parser`, :mod:`app.consul_parser` and :mod:`app.tyk_parser`) becomes a canonical
 REST surface — services grouped by gateway service / HTTPRoute resource, one
 operation per flattened match condition, servers from the declared hostnames.
 
@@ -17,7 +19,8 @@ Provenance discipline (this is what makes the import honest):
   never presents them as declared (same convention as IXH-7.4).
 * Service-mesh route tables (Envoy xDS, Istio — :data:`INFERRED_ROUTE_FLAVORS`) are
   read as evidence of an API rather than a declaration of one, so *every* operation
-  and service they produce is stamped ``inferred`` (FMT-7.4).
+  and service they produce is stamped ``inferred`` (FMT-7.4). The reverse-proxy and
+  registry configs of FMT-7.5 (Traefik, nginx, HAProxy, Consul, Tyk classic) join them.
 * The formats carry **no request/response schemas**, so operations have no
   messages. That absence is recorded on ``CanonicalApi.extras["gateway"]``
   (``schemaless_operation_count``) and rendered by the preview manifest as a
@@ -54,12 +57,23 @@ __all__ = [
     "GATEWAY_API_FORMAT_KEY",
     "ENVOY_XDS_FORMAT_KEY",
     "ISTIO_FORMAT_KEY",
+    "TRAEFIK_FORMAT_KEY",
+    "NGINX_FORMAT_KEY",
+    "HAPROXY_FORMAT_KEY",
+    "CONSUL_FORMAT_KEY",
+    "TYK_FORMAT_KEY",
+    "PROXY_ROUTE_FLAVORS",
     "INFERRED_ROUTE_FLAVORS",
     "POLICY_PLUGIN_FLAVORS",
     "KongNormalizer",
     "GatewayApiNormalizer",
     "EnvoyXdsNormalizer",
     "IstioNormalizer",
+    "TraefikNormalizer",
+    "NginxNormalizer",
+    "HaproxyNormalizer",
+    "ConsulNormalizer",
+    "TykNormalizer",
     "normalize_gateway_config",
 ]
 
@@ -67,18 +81,32 @@ KONG_FORMAT_KEY = "kong"
 GATEWAY_API_FORMAT_KEY = "gateway-api"
 ENVOY_XDS_FORMAT_KEY = "envoy-xds"
 ISTIO_FORMAT_KEY = "istio"
+TRAEFIK_FORMAT_KEY = "traefik"
+NGINX_FORMAT_KEY = "nginx"
+HAPROXY_FORMAT_KEY = "haproxy"
+CONSUL_FORMAT_KEY = "consul"
+TYK_FORMAT_KEY = "tyk"
+
+#: The reverse-proxy and registry route sources of FMT-7.5 — "the reverse-proxy config is the
+#: only spec". Like a mesh route table, each is evidence of an API rather than a declaration of
+#: one, so all of them are inferred and carry their middleware / directives as policy.
+PROXY_ROUTE_FLAVORS = frozenset(
+    {TRAEFIK_FORMAT_KEY, NGINX_FORMAT_KEY, HAPROXY_FORMAT_KEY, CONSUL_FORMAT_KEY, TYK_FORMAT_KEY}
+)
 
 #: Flavors whose routes are stamped ``provenance = "inferred"`` (FMT-7.4). Kong and Gateway API
 #: *declare* an API surface to a gateway; a service mesh's route table is runtime plumbing the
 #: surface is reconstructed from — the import infers an API from where traffic goes, so every
-#: operation and service it builds says so on the ledger.
-INFERRED_ROUTE_FLAVORS = frozenset({ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY})
+#: operation and service it builds says so on the ledger. FMT-7.5 adds the proxy flavors.
+INFERRED_ROUTE_FLAVORS = frozenset({ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY}) | PROXY_ROUTE_FLAVORS
 
 #: Flavors whose non-auth plugins are gateway policy the canonical model does not represent
 #: (CDG-1.2 for Kong; FMT-7.4's retries, timeouts, rewrites, CORS for Envoy and Istio) and are
 #: therefore listed on the report so the ledger shows them kept, not dropped. Gateway API
 #: filters stay out: IXH-7.8 reports them through the route extras only.
-POLICY_PLUGIN_FLAVORS = frozenset({KONG_FORMAT_KEY, ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY})
+POLICY_PLUGIN_FLAVORS = (
+    frozenset({KONG_FORMAT_KEY, ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY}) | PROXY_ROUTE_FLAVORS
+)
 
 #: Method placeholder for a route that matches any HTTP method. Kept explicit
 #: (rather than a fabricated verb) so diffs and keys stay stable and honest.
@@ -406,3 +434,77 @@ class IstioNormalizer(Normalizer, register=True):
         return normalize_gateway_config(
             source, format_key=ISTIO_FORMAT_KEY, include_raw=include_raw
         )
+
+
+def _proxy_normalize(source: Any, format_key: str, parser: str, include_raw: bool) -> CanonicalApi:
+    """Shared body of the FMT-7.5 normalizers: check the flavor, then project.
+
+    Args:
+        source: The parsed document.
+        format_key: The flavor / format key the document must carry.
+        parser: Dotted name of the parser function, for the error message.
+        include_raw: Passed through to :func:`normalize_gateway_config`.
+
+    Raises:
+        ValueError: When ``source`` is not a document of that flavor.
+    """
+    if not isinstance(source, GatewayConfigDocument) or source.flavor != format_key:
+        raise ValueError(
+            f"{format_key} source must be a GatewayConfigDocument with flavor={format_key!r} "
+            f"(see {parser})"
+        )
+    return normalize_gateway_config(source, format_key=format_key, include_raw=include_raw)
+
+
+class TraefikNormalizer(Normalizer, register=True):
+    """Normalize a parsed Traefik dynamic configuration (format key ``traefik``, FMT-7.5)."""
+
+    format = TRAEFIK_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        return _proxy_normalize(source, TRAEFIK_FORMAT_KEY, "app.traefik_parser.parse_traefik", include_raw)
+
+
+class NginxNormalizer(Normalizer, register=True):
+    """Normalize a parsed nginx configuration (format key ``nginx``, FMT-7.5)."""
+
+    format = NGINX_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        return _proxy_normalize(source, NGINX_FORMAT_KEY, "app.nginx_parser.parse_nginx", include_raw)
+
+
+class HaproxyNormalizer(Normalizer, register=True):
+    """Normalize a parsed HAProxy configuration (format key ``haproxy``, FMT-7.5)."""
+
+    format = HAPROXY_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        return _proxy_normalize(source, HAPROXY_FORMAT_KEY, "app.haproxy_parser.parse_haproxy", include_raw)
+
+
+class ConsulNormalizer(Normalizer, register=True):
+    """Normalize parsed Consul definitions and entries (format key ``consul``, FMT-7.5)."""
+
+    format = CONSUL_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        return _proxy_normalize(source, CONSUL_FORMAT_KEY, "app.consul_parser.parse_consul", include_raw)
+
+
+class TykNormalizer(Normalizer, register=True):
+    """Normalize a parsed Tyk classic API definition (format key ``tyk``, FMT-7.5).
+
+    The Tyk OAS form is normalized by :class:`app.tyk_import_source.TykImportSource` through
+    the OpenAPI path instead; only the classic form reaches this normalizer.
+    """
+
+    format = TYK_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        return _proxy_normalize(source, TYK_FORMAT_KEY, "app.tyk_parser.parse_tyk_classic", include_raw)

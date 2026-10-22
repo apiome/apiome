@@ -1,0 +1,749 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "acl.body",
+            "count": 1,
+            "reason": "the condition inspects the request body, which this routing import does not model"
+          },
+          {
+            "construct": "acl.lua",
+            "count": 1,
+            "reason": "a Lua-backed fetch runs arbitrary code; what it matches is not knowable from the configuration, so the parser declines to interpret it"
+          },
+          {
+            "construct": "acl.path-suffix-or-substring",
+            "count": 1,
+            "reason": "path_end / path_sub (and url-based) matches have no canonical path form; the route keeps them as conditions and matches every path"
+          },
+          {
+            "construct": "acl.tls",
+            "count": 1,
+            "reason": "the condition matches on TLS/SNI properties of the connection, not on the HTTP request"
+          },
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          }
+        ],
+        "operation_count": 14,
+        "route_count": 10,
+        "schemaless_operation_count": 14,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "http-request capture",
+            "scope": "service"
+          },
+          {
+            "name": "http-request deny",
+            "scope": "service"
+          },
+          {
+            "name": "http-request set-header",
+            "scope": "service"
+          },
+          {
+            "name": "http-request set-var(txn.tenant)",
+            "scope": "service"
+          },
+          {
+            "name": "http-request track-sc0",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/04-stress-acl-vocabulary.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend everything",
+        "name": "frontend everything",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "json_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-json_backend-29",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything",
+              "unmodelled_conditions": [
+                "p_suffix"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "contains:application/json"
+                },
+                "key": "ANY /#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "everything#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#everything#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "big_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-big_backend-34",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything",
+              "unmodelled_conditions": [
+                "body_big"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#everything#use_backend-big_backend-34",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "enriched_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-enriched_backend-33",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything",
+              "unmodelled_conditions": [
+                "enriched",
+                "mutual_tls"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#everything#use_backend-enriched_backend-33",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "assays_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-assays_backend-31",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/ASSAYS/[A-F0-9]{8}$"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything",
+              "unmodelled_conditions": [
+                "case-insensitive path match"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/ASSAYS/{param1}",
+            "key": "ANY /ASSAYS/{param1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ASSAYS/{param1}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/ASSAYS/[A-F0-9]{8}$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /ASSAYS/{param1}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "exact_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-exact_backend-26",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact/resource"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/exact/resource",
+            "key": "ANY /exact/resource",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /exact/resource",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "files_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-files_backend-32",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/files"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/files",
+            "key": "ANY /files",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /files",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-orders_backend-30",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/orders/[0-9]{6}$"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/orders/{param1}",
+            "key": "ANY /orders/{param1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /orders/{param1}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/orders/[0-9]{6}$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /orders/{param1}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "write_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-write_backend-28",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "DELETE",
+            "http_path": "/prefix/",
+            "key": "DELETE /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "DELETE /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "prefix_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-prefix_backend-27",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "GET",
+            "http_path": "/prefix/",
+            "key": "GET /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "prefix_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-prefix_backend-27",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "HEAD",
+            "http_path": "/prefix/",
+            "key": "HEAD /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "HEAD /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "write_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-write_backend-28",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "PATCH",
+            "http_path": "/prefix/",
+            "key": "PATCH /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "PATCH /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "write_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-write_backend-28",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "POST",
+            "http_path": "/prefix/",
+            "key": "POST /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "write_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "everything#use_backend-write_backend-28",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "http-request capture",
+                "http-request deny",
+                "http-request set-header",
+                "http-request set-var(txn.tenant)",
+                "http-request track-sc0"
+              ],
+              "provenance": "inferred",
+              "section": "frontend everything"
+            },
+            "http_method": "PUT",
+            "http_path": "/prefix/",
+            "key": "PUT /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "PUT /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/04-stress-acl-vocabulary.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/04-stress-acl-vocabulary.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 14,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:9b5f67d2aaaf5b05cda756819d1ae30933a142942a467be814833f58acecfd74",
+  "lint": {
+    "findings": 15,
+    "grade": "C",
+    "report_fingerprint": "71c7e25d33af81c9004ef75e162ef14a64be190626d64f83e60c136e5d823579",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 14
+    }
+  },
+  "snapshot_version": 1
+}

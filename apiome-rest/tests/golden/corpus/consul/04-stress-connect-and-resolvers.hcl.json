@@ -1,0 +1,318 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "service.connect-upstreams",
+            "count": 1,
+            "reason": "Connect sidecar upstreams name the services this one calls (its dependencies, not its surface); they are kept on the service, not modelled as routes"
+          }
+        ],
+        "operation_count": 4,
+        "route_count": 4,
+        "schemaless_operation_count": 4,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "NumRetries",
+            "scope": "route"
+          },
+          {
+            "name": "PrefixRewrite",
+            "scope": "route"
+          },
+          {
+            "name": "RequestTimeout",
+            "scope": "route"
+          },
+          {
+            "name": "RetryOnConnectFailure",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/04-stress-connect-and-resolvers.hcl",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "host": "10.30.0.11",
+            "port": 8443,
+            "protocol": "grpc"
+          },
+          "connect_upstreams": [
+            "fraud",
+            "ledger"
+          ],
+          "health_checks": [
+            {
+              "name": "payments gRPC",
+              "target": "10.30.0.11:8443/grpc.health.v1.Health",
+              "type": "grpc"
+            },
+            {
+              "name": "payments alias",
+              "target": "payments",
+              "type": "alias_service"
+            }
+          ],
+          "instances": [
+            {
+              "address": "10.30.0.11",
+              "id": "payments-1",
+              "port": 8443
+            }
+          ],
+          "meta": {
+            "protocol": "grpc",
+            "version": "3.4.1"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v3",
+            "grpc",
+            "canary=false"
+          ]
+        },
+        "key": "payments",
+        "name": "payments",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments"
+                }
+              ],
+              "config_entry": "service-router/payments",
+              "default_route": true,
+              "gateway_route": "service-router/payments#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments"
+                }
+              ],
+              "config_entry": "service-router/payments",
+              "gateway_route": "service-router/payments#route-2",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "/v3/payments/authorizations/[a-z0-9-]+/captures"
+              },
+              "plugins": [
+                "PrefixRewrite"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/payments/authorizations/{param1}/captures",
+            "key": "ANY /v3/payments/authorizations/{param1}/captures",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/payments/authorizations/{param1}/captures",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "/v3/payments/authorizations/[a-z0-9-]+/captures",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /v3/payments/authorizations/{param1}/captures#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "final"
+                },
+                "key": "ANY /v3/payments/authorizations/{param1}/captures#query.mode",
+                "location": "query",
+                "name": "mode",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments",
+                  "subset": "stable"
+                }
+              ],
+              "config_entry": "service-router/payments",
+              "gateway_route": "service-router/payments#route-1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v3/payments/healthz"
+              },
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3/payments/healthz",
+            "key": "ANY /v3/payments/healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3/payments/healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments",
+                  "subset": "canary"
+                }
+              ],
+              "config_entry": "service-router/payments",
+              "gateway_route": "service-router/payments#route-0",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3/payments/authorizations"
+              },
+              "plugins": [
+                "NumRetries",
+                "RequestTimeout",
+                "RetryOnConnectFailure"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "POST",
+            "http_path": "/v3/payments/authorizations",
+            "key": "POST /v3/payments/authorizations",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /v3/payments/authorizations",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "true"
+                },
+                "key": "POST /v3/payments/authorizations#header.x-employee",
+                "location": "header",
+                "name": "x-employee",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/04-stress-connect-and-resolvers.hcl",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/04-stress-connect-and-resolvers.hcl",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:f58b1f066a819305f276a057a9ba91d96046f7294a148856eb953f2c02395847",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "e5371c72b001ca0ab01bddc78bc0e58c9b03f41e67629d38b30c6b9f5f9b0c06",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

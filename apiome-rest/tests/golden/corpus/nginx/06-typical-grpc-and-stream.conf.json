@@ -1,0 +1,206 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "directive.http2",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.ssl_certificate_key",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "error_page",
+            "count": 1,
+            "reason": "redirects errors to another URI or a named location at runtime"
+          },
+          {
+            "construct": "location.internal",
+            "count": 1,
+            "reason": "an `internal` location is reachable only through internal redirects, never from a client, so it is not an operation"
+          },
+          {
+            "construct": "stream",
+            "count": 1,
+            "reason": "TCP/UDP proxying has no HTTP operation"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "grpc_read_timeout",
+            "scope": "route"
+          },
+          {
+            "name": "grpc_set_header",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/06-typical-grpc-and-stream.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://grpc.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "grpc.example.com:8443",
+        "name": "grpc.example.com:8443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "grpc_orders"
+                }
+              ],
+              "gateway_route": "grpc.example.com:8443@/",
+              "handler": {
+                "directive": "grpc_pass",
+                "target": "grpc://grpc_orders",
+                "upstream_servers": [
+                  "orders-grpc.internal.example.com:9090"
+                ]
+              },
+              "hosts": [
+                "grpc.example.com"
+              ],
+              "listen_ports": [
+                8443
+              ],
+              "location": "/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "server_block": "grpc.example.com:8443"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "grpc_orders"
+                }
+              ],
+              "gateway_route": "grpc.example.com:8443@/example.orders.v1.OrderService/",
+              "handler": {
+                "directive": "grpc_pass",
+                "target": "grpc://grpc_orders",
+                "upstream_servers": [
+                  "orders-grpc.internal.example.com:9090"
+                ]
+              },
+              "hosts": [
+                "grpc.example.com"
+              ],
+              "listen_ports": [
+                8443
+              ],
+              "location": "/example.orders.v1.OrderService/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/example.orders.v1.OrderService/"
+              },
+              "plugins": [
+                "grpc_read_timeout",
+                "grpc_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "grpc.example.com:8443"
+            },
+            "http_method": "ANY",
+            "http_path": "/example.orders.v1.OrderService/",
+            "key": "ANY /example.orders.v1.OrderService/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /example.orders.v1.OrderService/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/06-typical-grpc-and-stream.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/06-typical-grpc-and-stream.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:7b924b494bf8a659d03a4f7df7011e48d5bc2587b54aca80d34926a43442f2ca",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "a1c34beba398cf245fffc65b08e87ae4708c8da4ff8d3f6a255d003f7a42853a",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

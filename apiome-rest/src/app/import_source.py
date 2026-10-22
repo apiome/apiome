@@ -1283,6 +1283,15 @@ def load_builtin_import_sources() -> None:
     from . import envoy_xds_import_source as _envoy_xds  # noqa: F401
     from . import istio_import_source as _istio  # noqa: F401
 
+    # FMT-7.5 self-registers the reverse-proxy route sources on the same gateway middle:
+    # Traefik dynamic config, a bounded nginx subset, HAProxy ACL routing, Consul service
+    # definitions and configuration entries, and Tyk API definitions — every one inferred.
+    from . import consul_import_source as _consul  # noqa: F401
+    from . import haproxy_import_source as _haproxy  # noqa: F401
+    from . import nginx_import_source as _nginx  # noqa: F401
+    from . import traefik_import_source as _traefik  # noqa: F401
+    from . import tyk_import_source as _tyk  # noqa: F401
+
 
 # ===========================================================================
 # Shared canonical fingerprint + diff

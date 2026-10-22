@@ -1,0 +1,384 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "directive.http2",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.ssl_certificate_key",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.ssl_protocols",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          }
+        ],
+        "operation_count": 6,
+        "route_count": 6,
+        "schemaless_operation_count": 6,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "access_log",
+            "scope": "route"
+          },
+          {
+            "name": "add_header",
+            "scope": "route"
+          },
+          {
+            "name": "client_max_body_size",
+            "scope": "service"
+          },
+          {
+            "name": "expires",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_http_version",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_read_timeout",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_set_header",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/02-typical-reverse-proxy.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com:443",
+        "name": "api.example.com:443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "api.example.com:443@/",
+              "handler": {
+                "directive": "return",
+                "status": "404"
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "client_max_body_size"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "api.example.com:443@=/healthz",
+              "handler": {
+                "directive": "return",
+                "status": "200",
+                "value": "{\"status\":\"ok\"}"
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "= /healthz",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/healthz"
+              },
+              "plugins": [
+                "access_log",
+                "add_header",
+                "client_max_body_size"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/healthz",
+            "key": "ANY /healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "api.example.com:443@/static/",
+              "handler": {
+                "directive": "alias",
+                "path": "/var/www/static/"
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/static/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/static/"
+              },
+              "plugins": [
+                "client_max_body_size",
+                "expires"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/static/",
+            "key": "ANY /static/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /static/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend"
+                }
+              ],
+              "gateway_route": "api.example.com:443@/v2/orders",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://orders_backend",
+                "upstream_servers": [
+                  "orders-1.internal.example.com:8080",
+                  "orders-2.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/orders",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "client_max_body_size",
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue_backend"
+                }
+              ],
+              "gateway_route": "api.example.com:443@/v2/products",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://catalogue_backend/products",
+                "upstream_servers": [
+                  "catalogue.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/products",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "client_max_body_size",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com:80",
+        "name": "api.example.com:80",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "api.example.com:80@return",
+              "handler": {
+                "directive": "return",
+                "status": "301",
+                "value": "https://$host$request_uri"
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "server_block": "api.example.com:80",
+              "server_level_return": true
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#api.example.com:80@return",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/02-typical-reverse-proxy.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/02-typical-reverse-proxy.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:06ad92d7ef4aa8fd2430117f522429036f3192b8b53b57e25669a775f9fb254c",
+  "lint": {
+    "findings": 7,
+    "grade": "C",
+    "report_fingerprint": "08c602b9bd2829518ee9a1bf59cde47fbfa79ce468bec81bd99ceeb78ea6ddfb",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

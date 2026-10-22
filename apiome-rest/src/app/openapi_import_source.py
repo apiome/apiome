@@ -84,6 +84,7 @@ from .swagger12_projection import (
     project_swagger12,
     swagger12_version,
 )
+from .tyk_parser import has_tyk_extension
 
 __all__ = ["OpenApiImportSource", "SWAGGER_12_EXTRA_KEY"]
 
@@ -143,6 +144,16 @@ class OpenApiImportSource(ImportSource, register=True):
                 format=self._version_format(document),
                 reason="OpenAPI document with `x-amazon-apigateway-*` extensions "
                 "(the aws-apigateway adapter interprets them)",
+            )
+
+        # FMT-7.5: likewise for a Tyk OAS definition — the tyk adapter claims it at 0.97 and
+        # attaches the x-tyk-api-gateway middleware to its operations.
+        if has_tyk_extension(document):
+            return DetectionResult(
+                confidence=0.8,
+                format=self._version_format(document),
+                reason="OpenAPI document with an `x-tyk-api-gateway` extension "
+                "(the tyk adapter interprets it)",
             )
 
         # FMT-7.2: likewise for a definition APIM exported (its subscription-key scheme or an

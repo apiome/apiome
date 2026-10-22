@@ -1,0 +1,469 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": "Tyk OAS form: a normal OpenAPI document whose gateway behaviour lives under x-tyk-api-gateway.",
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": null,
+            "detail": {
+              "kind": "jwt"
+            },
+            "plugin": "securitySchemes.bearerAuth",
+            "scheme": "bearer",
+            "scope": "global"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [
+          "cache",
+          "cors",
+          "transformRequestHeaders"
+        ],
+        "ignored_constructs": [],
+        "operation_count": 4,
+        "route_count": 4,
+        "schemaless_operation_count": 0,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "cache",
+            "scope": "global"
+          },
+          {
+            "name": "cache",
+            "scope": "route"
+          },
+          {
+            "name": "circuitBreaker",
+            "scope": "route"
+          },
+          {
+            "name": "cors",
+            "scope": "global"
+          },
+          {
+            "name": "loadBalancing",
+            "scope": "service"
+          },
+          {
+            "name": "rateLimit",
+            "scope": "route"
+          },
+          {
+            "name": "rateLimit",
+            "scope": "service"
+          },
+          {
+            "name": "transformRequestBody",
+            "scope": "route"
+          },
+          {
+            "name": "transformRequestHeaders",
+            "scope": "global"
+          },
+          {
+            "name": "uptimeTests",
+            "scope": "service"
+          },
+          {
+            "name": "urlRewrite",
+            "scope": "route"
+          },
+          {
+            "name": "validateRequest",
+            "scope": "route"
+          }
+        ]
+      },
+      "tyk": {
+        "api_id": "lab-api",
+        "form": "oas",
+        "global_middleware": [
+          "cache",
+          "cors",
+          "transformRequestHeaders"
+        ],
+        "listen_path": "/lab/",
+        "provenance": "inferred",
+        "upstream_policy": {
+          "loadBalancing": {
+            "enabled": true,
+            "targets": [
+              {
+                "url": "http://lab-1.internal.example.com:8080",
+                "weight": 70
+              },
+              {
+                "url": "http://lab-2.internal.example.com:8080",
+                "weight": 30
+              }
+            ]
+          },
+          "rateLimit": {
+            "enabled": true,
+            "per": "60s",
+            "rate": 200
+          },
+          "uptimeTests": {
+            "enabled": true,
+            "serviceDiscovery": {
+              "enabled": false
+            },
+            "tests": [
+              {
+                "method": "GET",
+                "url": "http://lab.internal.example.com:8080/healthz"
+              }
+            ]
+          }
+        },
+        "upstream_url": "http://lab.internal.example.com:8080"
+      }
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Lab API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://gateway.example.com/lab/",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "listAssays",
+              "plugins": [
+                "cache",
+                "rateLimit"
+              ],
+              "tyk": {
+                "middleware": {
+                  "cache": {
+                    "enabled": true,
+                    "timeout": 30
+                  },
+                  "rateLimit": {
+                    "enabled": true,
+                    "per": "60s",
+                    "rate": 60
+                  }
+                },
+                "provenance": "inferred"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/assays",
+            "key": "GET /assays",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Assays",
+                "extras": {},
+                "headers": [],
+                "key": "GET /assays#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "listAssays",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /assays#query.status",
+                "location": "query",
+                "name": "status",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "getAssay",
+              "plugins": [
+                "circuitBreaker"
+              ],
+              "tyk": {
+                "middleware": {
+                  "circuitBreaker": {
+                    "coolDownPeriod": 60,
+                    "enabled": true,
+                    "halfOpenStateEnabled": true,
+                    "sampleSize": 100,
+                    "threshold": 0.5
+                  }
+                },
+                "provenance": "inferred"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/assays/{assayId}",
+            "key": "GET /assays/{assayId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "One assay",
+                "extras": {},
+                "headers": [],
+                "key": "GET /assays/{assayId}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "Unknown",
+                "extras": {},
+                "headers": [],
+                "key": "GET /assays/{assayId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "getAssay",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /assays/{assayId}#path.assayId",
+                "location": "path",
+                "name": "assayId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "legacyAssay",
+              "plugins": [
+                "urlRewrite"
+              ],
+              "tyk": {
+                "middleware": {
+                  "urlRewrite": {
+                    "enabled": true,
+                    "pattern": "/legacy/(.*)",
+                    "rewriteTo": "/assays/$1"
+                  }
+                },
+                "provenance": "inferred"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/legacy/{assayId}",
+            "key": "GET /legacy/{assayId}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Rewritten to /assays/{assayId}",
+                "extras": {},
+                "headers": [],
+                "key": "GET /legacy/{assayId}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "legacyAssay",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /legacy/{assayId}#path.assayId",
+                "location": "path",
+                "name": "assayId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "createAssay",
+              "plugins": [
+                "transformRequestBody",
+                "validateRequest"
+              ],
+              "tyk": {
+                "middleware": {
+                  "transformRequestBody": {
+                    "body": "eyJwcm90b2NvbCI6ICJ7ey5wcm90b2NvbH19In0=",
+                    "enabled": true,
+                    "format": "json"
+                  },
+                  "validateRequest": {
+                    "enabled": true,
+                    "errorResponseCode": 422
+                  }
+                },
+                "provenance": "inferred"
+              }
+            },
+            "http_method": "POST",
+            "http_path": "/assays",
+            "key": "POST /assays",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /assays#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": {
+                  "properties": {
+                    "protocol": {
+                      "type": "string"
+                    },
+                    "replicates": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "protocol"
+                  ],
+                  "type": "object"
+                },
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": "Created",
+                "extras": {},
+                "headers": [],
+                "key": "POST /assays#response.201",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              }
+            ],
+            "name": "createAssay",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Lab API",
+    "types": [],
+    "version": "3.0.0"
+  },
+  "corpus_path": "tyk/04-stress-oas-extension.json",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:2dba1c5a849a37965dbb351cdd5f24a8558f6cfcf941ad35452c4852b87d68a3",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "8da0d24dce2bf9ad80945420521183d8dc58bbfb4be32e44928bbae156873a19",
+    "score": 84,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

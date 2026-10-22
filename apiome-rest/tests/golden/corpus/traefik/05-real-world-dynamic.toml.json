@@ -1,0 +1,306 @@
+{
+  "adapter": "traefik",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "traefik",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "tls",
+            "count": 1,
+            "reason": "TLS options, stores and certificates configure termination, not routing; they are not read (certificate files are never opened)"
+          }
+        ],
+        "operation_count": 3,
+        "route_count": 3,
+        "schemaless_operation_count": 3,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "compress",
+            "scope": "route"
+          },
+          {
+            "name": "headers",
+            "scope": "route"
+          },
+          {
+            "name": "ipAllowList",
+            "scope": "route"
+          },
+          {
+            "name": "rateLimit",
+            "scope": "route"
+          },
+          {
+            "name": "redirectRegex",
+            "scope": "route"
+          },
+          {
+            "name": "stripPrefix",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "traefik",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "traefik/05-real-world-dynamic.toml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://www.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://api.internal.example.com:8080"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://api.internal.example.com:8080"
+          ]
+        },
+        "key": "api",
+        "name": "api",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "api"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "api",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "api-rate-limit",
+                "strip-v3"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3"
+              },
+              "plugins": [
+                "rateLimit",
+                "stripPrefix"
+              ],
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && PathPrefix(`/v3`)",
+              "tls": {
+                "certResolver": "letsencrypt"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/v3",
+            "key": "ANY /v3",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://prometheus.internal.example.com:9090"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://prometheus.internal.example.com:9090"
+          ]
+        },
+        "key": "prometheus",
+        "name": "prometheus",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "prometheus"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "metrics",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "internal-only"
+              ],
+              "path_match": {
+                "kind": "exact",
+                "raw": "/metrics"
+              },
+              "plugins": [
+                "ipAllowList"
+              ],
+              "priority": 100,
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && Path(`/metrics`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/metrics",
+            "key": "ANY /metrics",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /metrics",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://storefront-1.internal.example.com:3000"
+          },
+          "health_check_path": "/healthz",
+          "provenance": "inferred",
+          "servers": [
+            "http://storefront-1.internal.example.com:3000",
+            "http://storefront-2.internal.example.com:3000"
+          ]
+        },
+        "key": "storefront",
+        "name": "storefront",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "storefront"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "storefront",
+              "hosts": [
+                "example.com",
+                "www.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "canonical-host",
+                "compress",
+                "security-headers"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "compress",
+                "headers",
+                "redirectRegex"
+              ],
+              "priority": 10,
+              "provenance": "inferred",
+              "rule": "Host(`www.example.com`) || Host(`example.com`)",
+              "tls": {
+                "certResolver": "letsencrypt"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "traefik/05-real-world-dynamic.toml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "traefik/05-real-world-dynamic.toml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 3,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "traefik"
+  },
+  "fingerprint": "sha256:9420fac723c9410f9063e273511eaea61453e6ae4f4599d5153813e2d0fdb5d4",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "a3e6be9f58aada2ebfe5b4d17bec123fb336350ddac2b4547c453d001199670a",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

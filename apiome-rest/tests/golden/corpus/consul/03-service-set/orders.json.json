@@ -1,0 +1,304 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "service.connect-upstreams",
+            "count": 1,
+            "reason": "Connect sidecar upstreams name the services this one calls (its dependencies, not its surface); they are kept on the service, not modelled as routes"
+          }
+        ],
+        "operation_count": 5,
+        "route_count": 4,
+        "schemaless_operation_count": 5,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "PrefixRewrite",
+            "scope": "route"
+          },
+          {
+            "name": "RequestTimeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/03-service-set/orders.json",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "port": 8081,
+            "protocol": "http"
+          },
+          "health_checks": [
+            {
+              "target": "http://localhost:8081/healthz",
+              "type": "http"
+            }
+          ],
+          "instances": [
+            {
+              "id": "catalogue-1",
+              "port": 8081
+            }
+          ],
+          "meta": {
+            "protocol": "http",
+            "version": "1.9.4"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v1",
+            "http",
+            "urlprefix-/v2/products"
+          ]
+        },
+        "key": "catalogue",
+        "name": "catalogue",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue",
+                  "port": 8081
+                }
+              ],
+              "gateway_route": "service/catalogue",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "path_source": "urlprefix-tag",
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products#service/catalogue",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "port": 8080,
+            "protocol": "http"
+          },
+          "connect_upstreams": [
+            "catalogue"
+          ],
+          "health_checks": [
+            {
+              "target": "http://localhost:8080/healthz",
+              "type": "http"
+            }
+          ],
+          "instances": [
+            {
+              "id": "orders-1",
+              "port": 8080
+            }
+          ],
+          "meta": {
+            "protocol": "http",
+            "version": "2.3.0"
+          },
+          "provenance": "inferred",
+          "tags": [
+            "v2",
+            "http",
+            "urlprefix-/v2/orders"
+          ]
+        },
+        "key": "orders",
+        "name": "orders",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders"
+                }
+              ],
+              "config_entry": "service-router/orders",
+              "default_route": true,
+              "gateway_route": "service-router/orders#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue"
+                }
+              ],
+              "config_entry": "service-router/orders",
+              "gateway_route": "service-router/orders#route-1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "PrefixRewrite"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders"
+                }
+              ],
+              "config_entry": "service-router/orders",
+              "gateway_route": "service-router/orders#route-0",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "RequestTimeout"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders",
+            "key": "GET /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders"
+                }
+              ],
+              "config_entry": "service-router/orders",
+              "gateway_route": "service-router/orders#route-0",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "RequestTimeout"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "POST",
+            "http_path": "/v2/orders",
+            "key": "POST /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/03-service-set/orders.json",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/03-service-set/orders.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:f76769e3d38820277f1afe3980de00bb59f004199b9c7de963f176a8264b023c",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "4dbdfdf5d834efc58d7671ebcbf010dc4f667592b56f2c90743101bbb1f3b23c",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}
