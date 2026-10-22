@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 75
+- **Formats gated:** 76
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -87,6 +87,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `xmlrpc` | XML-RPC | rpc | 6 | 5 | 2 | 0 | 13 | 5/6 (+1 waived) | 6 | `xmlrpc` |
 | `xregistry` | CNCF xRegistry | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `xsd` | XSD | data_schema | 6 | 5 | 2 | 0 | 13 | 5/6 (+1 waived) | 6 | `xsd` |
+| `zod` | Zod schemas | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `zosconnect` | z/OS Connect | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `zosconnect` |
 
 ## Required artifacts
@@ -169,6 +170,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `xmlrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xregistry` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xsd` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `zod` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `zosconnect` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Gaps
@@ -189,4 +191,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `trpc`, `vsam-idcams`, `zod`
+`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `trpc`, `vsam-idcams`

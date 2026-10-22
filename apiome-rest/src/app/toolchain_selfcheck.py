@@ -79,15 +79,23 @@ __all__ = [
 #: declarations are read by the TypeScript compiler itself, and there is no Python reader of the
 #: language to fall back on.
 #:
+#: ``zod-schema-extractor`` likewise (FMT-8.2, #5463): a Zod schema is a value, and only Zod itself,
+#: running the module, can produce it.
+#:
 #: Every other bundled tool stays optional: ``buf``, ``tsp``, ``smithy``, the linters and the
 #: diff CLIs gate formats or advisory checks that degrade to a stated "unavailable" instead.
-REQUIRED_TOOL_KEYS: Tuple[str, ...] = ("asyncapi-parser", "typescript-types-extractor")
+REQUIRED_TOOL_KEYS: Tuple[str, ...] = (
+    "asyncapi-parser",
+    "typescript-types-extractor",
+    "zod-schema-extractor",
+)
 
 #: Required tool key → the npm package the toolchain manifest pins for it. Only the tools whose
 #: runtime *is* an npm package appear here; a required native binary would have no entry.
 REQUIRED_NPM_PACKAGES: Dict[str, str] = {
     "asyncapi-parser": "@asyncapi/parser",
     "typescript-types-extractor": "typescript",
+    "zod-schema-extractor": "zod",
 }
 
 #: The toolchain manifest: ``apiome-rest/toolchain/package.json``, which pins the exact version

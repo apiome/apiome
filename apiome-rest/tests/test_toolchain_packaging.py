@@ -41,6 +41,7 @@ _EXPECTED_KEYS = {
     "asyncapi",
     "asyncapi-parser",
     "typescript-types-extractor",
+    "zod-schema-extractor",
     "asyncapi-diff",
     "rover",
     "graphql-inspector-diff",

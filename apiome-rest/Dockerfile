@@ -46,8 +46,8 @@ ARG SMITHY_VERSION=1.53.0
 ARG DRAFTER_VERSION=4.0.0
 ARG AMF_VERSION=5.7.1
 ARG ASYNCAPI_VERSION=2.16.0
-# NOTE: @asyncapi/parser and typescript are deliberately absent from this list. They are HARD
-# dependencies (FMT-1.3, #5414; FMT-8.1, #5462) and their exact pins live in
+# NOTE: @asyncapi/parser, typescript and zod are deliberately absent from this list. They are HARD
+# dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463) and their exact pins live in
 # apiome-rest/toolchain/package.json — the toolchain manifest this build installs from — so the
 # versions cannot be overridden per build and drift away from what the startup self-check
 # expects.
@@ -139,10 +139,10 @@ RUN curl -fsSL "https://repository-master.mulesoft.org/nexus/content/repositorie
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently
-# `@asyncapi/parser` and `typescript`) alongside the optional CLIs named on the command line.
-# Vendoring them this way is what makes AsyncAPI and TypeScript types formats the image cannot
-# ship without: the build smoke-tests both a few lines down, and app.toolchain_selfcheck refuses
-# to start without them.
+# `@asyncapi/parser`, `typescript` and `zod`) alongside the optional CLIs named on the command line.
+# Vendoring them this way is what makes AsyncAPI, TypeScript types and Zod formats the image
+# cannot ship without: the build smoke-tests all three a few lines down, and
+# app.toolchain_selfcheck refuses to start without them.
 COPY apiome-rest/toolchain/package.json ${TOOLS_PREFIX}/lib/node/package.json
 
 # tsp (TypeSpec compiler) + asyncapi CLI + @graphql-inspector/core — Node packages installed
@@ -173,18 +173,23 @@ COPY apiome-rest/toolchain/graphql-inspector-diff.mjs ${TOOLS_PREFIX}/lib/node/g
 # TypeScript type-declaration extractor (FMT-8.1, #5462): resolves `typescript` from the
 # manifest's node_modules beside it, exactly like the AsyncAPI parser wrapper.
 COPY apiome-rest/toolchain/typescript-types-extract.mjs ${TOOLS_PREFIX}/lib/node/typescript-types-extract.mjs
+# Zod schema extractor (FMT-8.2, #5463): evaluates user modules, so it re-executes itself under
+# Node's permission model with read access to this directory only (see the script's header).
+COPY apiome-rest/toolchain/zod-extract.mjs ${TOOLS_PREFIX}/lib/node/zod-extract.mjs
 RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi-parser \
     && printf '#!/bin/sh\nexec node %s/lib/node/typescript-types-extract.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/typescript-types-extract \
+    && printf '#!/bin/sh\nexec node %s/lib/node/zod-extract.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/zod-extract \
     && printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-diff.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi-diff \
     && printf '#!/bin/sh\nexec node %s/lib/node/graphql-inspector-diff.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/graphql-inspector-diff \
     && chmod +x ${TOOLS_PREFIX}/bin/asyncapi-parser ${TOOLS_PREFIX}/lib/node/asyncapi-parse.mjs \
        ${TOOLS_PREFIX}/bin/typescript-types-extract ${TOOLS_PREFIX}/lib/node/typescript-types-extract.mjs \
+       ${TOOLS_PREFIX}/bin/zod-extract ${TOOLS_PREFIX}/lib/node/zod-extract.mjs \
        ${TOOLS_PREFIX}/bin/asyncapi-diff ${TOOLS_PREFIX}/lib/node/asyncapi-diff.mjs \
        ${TOOLS_PREFIX}/bin/graphql-inspector-diff ${TOOLS_PREFIX}/lib/node/graphql-inspector-diff.mjs
 
-# Hard-dependency smoke test (FMT-1.3, #5414). The AsyncAPI and TypeScript-types adapters have no
-# fallback reader, so a broken or missing `asyncapi-parser` or `typescript-types-extract` costs
-# the image a shipped format. Prove *at build time*
+# Hard-dependency smoke test (FMT-1.3, #5414). The AsyncAPI, TypeScript-types and Zod adapters
+# have no fallback reader, so a broken or missing `asyncapi-parser`, `typescript-types-extract`
+# or `zod-extract` costs the image a shipped format. Prove *at build time*
 # that the wrapper loads `@asyncapi/parser` and parses a document, instead of discovering it on
 # the first import in production. A failure here fails the build — which is the point.
 RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
@@ -196,7 +201,12 @@ RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"files":{"smoke.d.ts":"export interface Smoke { id: string }"},"root":"smoke.d.ts"}' \
        | ${TOOLS_PREFIX}/bin/typescript-types-extract > /tmp/typescript-smoke.json \
     && grep -q '"ok":true' /tmp/typescript-smoke.json \
-    && rm -f /tmp/typescript-smoke.json
+    && rm -f /tmp/typescript-smoke.json \
+    && ${TOOLS_PREFIX}/bin/zod-extract --version \
+    && echo '{"files":{"smoke.ts":"import { z } from \"zod\"; export const Smoke = z.object({ id: z.string() });"},"root":"smoke.ts"}' \
+       | ${TOOLS_PREFIX}/bin/zod-extract > /tmp/zod-smoke.json \
+    && grep -q '"ok":true' /tmp/zod-smoke.json \
+    && rm -f /tmp/zod-smoke.json
 
 # drafter — API Blueprint parser; no official static binary, so build the pinned tag from
 # source and install just the resulting CLI. The `drafter` CMake target is the static library
@@ -246,7 +256,7 @@ COPY --from=uideps --chown=appuser:appuser /repo/apiome-ui /apiome-ui
 
 # Polyglot toolchain binaries (MFI-5.2, #3751). Copy the whole bundled-tools tree and put its
 # bin/ on PATH so the toolchain runner resolves
-# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/asyncapi-diff/rover/graphql-inspector-diff/
+# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/asyncapi-diff/rover/graphql-inspector-diff/
 # spectral/vacuum/redocly by name. The tree is read-only to the app user (owned by root); the
 # runner never writes to it.
 COPY --from=tools /opt/apiome-tools /opt/apiome-tools
@@ -260,7 +270,7 @@ ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     # Put the bundled toolchain (MFI-5.2) ahead of the system path so the runner resolves
-    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/asyncapi-diff/rover/graphql-inspector-diff/
+    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/asyncapi-diff/rover/graphql-inspector-diff/
     # spectral/vacuum/redocly by bare name. A deployment can still point any
     # APIOME_<TOOL>_BIN at a custom binary; an absent tool degrades that format to
     # "unavailable" (surfaced by GET /v1/ops/toolchain) rather than failing the service.
@@ -275,11 +285,11 @@ ENV PYTHONPATH=/app/src \
     # the worker's relative imports against /apiome-ui and its tsconfig paths.
     SPEC_IMPORT_WORKER_ARGV='["node","--import","tsx","apiome-ui/scripts/rest-spec-import-worker.ts"]' \
     # Hard-dependency enforcement (FMT-1.3, #5414). This image *ships* the required toolchain,
-    # so a container where `asyncapi-parser` or `typescript-types-extract` cannot run is broken,
+    # so a container where `asyncapi-parser`, `typescript-types-extract` or `zod-extract` cannot run is broken,
     # not merely degraded: the startup self-check logs the resolved versions and refuses to
     # start rather than serving with a shipped format silently missing. Set
     # APIOME_REQUIRE_TOOLCHAIN=0 only for a deliberately slimmed deployment that accepts losing
-    # AsyncAPI and TypeScript-types import.
+    # AsyncAPI, TypeScript-types and Zod import.
     APIOME_REQUIRE_TOOLCHAIN=1
 
 EXPOSE 8000

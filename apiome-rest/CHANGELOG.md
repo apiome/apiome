@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.424.0] - 2026-10-22
+
+### Added
+- **Zod schema import (#5463, FMT-8.2)**: a new `zod` import source reads the exported Zod schemas of a
+  TypeScript module (or a module set) — with their validation constraints — as a schemas-only catalog source.
+  - The module is **evaluated**: `toolchain/zod-extract.mjs` transpiles it with the bundled TypeScript, runs it
+    with the bundled Zod 3.25 and serializes every exported schema to JSON Schema from Zod's `_def` tree.
+    `app.zod_normalizer` maps that onto canonical types through the FMT-8.1 projection, so Zod schemas and
+    TypeScript types model the same way.
+  - Constraints become canonical constraints: `min`/`max`/`length`, `regex`/`startsWith`/`endsWith`/`includes`
+    (pattern), `email`/`url`/`uuid`/`datetime`/`date` (format), `int`, `gt`/`gte`/`lt`/`lte`/`positive`,
+    `multipleOf`, array and set bounds; `optional`/`nullable`/`nullish` → nullability; `default` → field default.
+  - `refine`/`superRefine`, `transform`, `preprocess`, `brand`, `pipe` and coercion keep the schema they wrap and
+    are declared limits; `z.custom()`, `z.function()`, `z.promise()` and unrepresentable schemas are declared and
+    left out — `extras['zod']['capability_limits']` and the import preview's coverage ledger.
+  - **Execution boundary:** Node's permission model (read access to the toolchain directory only — no other
+    file, no child process, no worker), no network (in-process, plus the runner's network namespace, now
+    *strict* via `SandboxPolicy.for_untrusted_code()`), an empty environment, and a 5-second evaluation
+    budget covering both the import and the reading of schemas (`z.lazy` getters, `.default()` factories).
+    An endless loop fails with `INPUT_TIME_LIMIT`; a module that throws with `INPUT_SEMANTIC_INVALID`; an
+    import of anything but `zod` and the upload's own modules with `INPUT_REFERENCE_UNRESOLVED`; the Zod 4
+    entry points (`zod/v4`, `zod/mini`) with `FORMAT_VERSION_UNSUPPORTED`.
+  - Reviewed capability seed (registry version 25 -> 26), version coverage, golden snapshots for the 7 valid
+    corpus entries, the round-trip matrix row and the corpus parity row.
+- **Toolchain**: `zod` 3.25.76 is a **required** Node dependency (FMT-1.3) — `zod-schema-extractor` joins
+  `REQUIRED_TOOL_KEYS`, the Dockerfile installs and smoke-tests it, and
+  `./scripts/install_dev_toolchain.sh zod-schema-extractor` installs it for local dev and CI.
+- `app.toolchain_runner.run_tool_blocking` takes a `policy`; `app.typescript_types_parser.LimitRecorder` takes a
+  vocabulary and key aliases, so a sibling code-first reader can reuse the FMT-8.1 model.
+
 ## [1.423.0] - 2026-10-22
 
 ### Added

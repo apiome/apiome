@@ -11,7 +11,7 @@ on:
       - 'apiome-rest/pyproject.toml'
       - 'apiome-rest/README.md'
       # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser,
-      # typescript-types-extractor).
+      # typescript-types-extractor, zod-schema-extractor).
       - 'apiome-rest/toolchain/**'
       - 'apiome-rest/scripts/install_dev_toolchain.sh'
       # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.
@@ -33,7 +33,7 @@ on:
       - 'apiome-rest/pyproject.toml'
       - 'apiome-rest/README.md'
       # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser,
-      # typescript-types-extractor).
+      # typescript-types-extractor, zod-schema-extractor).
       - 'apiome-rest/toolchain/**'
       - 'apiome-rest/scripts/install_dev_toolchain.sh'
       # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.
@@ -153,16 +153,17 @@ jobs:
         working-directory: apiome-mcp
 
       # The AGX-1.4 golden toolset suite compiles every corpus entry, and the protobuf /
-      # connectrpc (buf), asyncapi (asyncapi-parser) and typescript-types
-      # (typescript-types-extractor) entries skip without their bundled tool. Install the pinned toolchain into apiome-rest/.tools, where the editable
+      # connectrpc (buf), asyncapi (asyncapi-parser), typescript-types
+      # (typescript-types-extractor) and zod (zod-schema-extractor) entries skip without their
+      # bundled tool. Install the pinned toolchain into apiome-rest/.tools, where the editable
       # apiome-rest resolves it, so the drift gate covers the whole corpus.
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: 24
 
-      - name: Install the corpus toolchain (buf, asyncapi-parser, typescript-types-extractor)
-        run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser typescript-types-extractor
+      - name: Install the corpus toolchain (buf and the required Node tools)
+        run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser typescript-types-extractor zod-schema-extractor
         working-directory: apiome-rest
 
       - name: Ruff lint

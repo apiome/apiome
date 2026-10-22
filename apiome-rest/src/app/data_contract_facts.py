@@ -120,6 +120,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "tradacoms",
         "typescript-types",
         "xsd",
+        "zod",
     }
 )
 

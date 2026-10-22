@@ -633,7 +633,7 @@
       "marker": "`xs:schema` root element"
     },
     "zod": {
-      "label": "Zod schemas (pending #5463)",
+      "label": "Zod schemas",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`import { z } from 'zod'` + exported `z.object(...)` values"
@@ -32182,7 +32182,7 @@
     {
       "path": "zod/01-minimal-schema.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32190,8 +32190,7 @@
       },
       "features": [
         "object",
-        "primitives",
-        "pending-adapter"
+        "primitives"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32202,7 +32201,7 @@
     {
       "path": "zod/02-typical-order-schemas.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32215,8 +32214,7 @@
         "default",
         "array-cardinality",
         "pick",
-        "infer",
-        "pending-adapter"
+        "infer"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32227,7 +32225,7 @@
     {
       "path": "zod/03-modules-set/index.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32235,8 +32233,7 @@
       },
       "features": [
         "multi-file",
-        "cross-module-schema",
-        "pending-adapter"
+        "cross-module-schema"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32248,7 +32245,7 @@
     {
       "path": "zod/03-modules-set/order-line.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32256,8 +32253,7 @@
       },
       "features": [
         "multi-file",
-        "cross-module-schema",
-        "pending-adapter"
+        "cross-module-schema"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32269,7 +32265,7 @@
     {
       "path": "zod/03-modules-set/shared.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32277,8 +32273,7 @@
       },
       "features": [
         "multi-file",
-        "shared-schemas",
-        "pending-adapter"
+        "shared-schemas"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32290,7 +32285,7 @@
     {
       "path": "zod/04-stress-constraint-coverage.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32315,8 +32310,7 @@
         "brand",
         "pipe",
         "custom",
-        "function-schema",
-        "pending-adapter"
+        "function-schema"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32328,7 +32322,7 @@
     {
       "path": "zod/05-real-world-api-validation.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32339,8 +32333,7 @@
         "response-validation",
         "coerce",
         "discriminatedUnion",
-        "shared-value-schemas",
-        "pending-adapter"
+        "shared-value-schemas"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32351,7 +32344,7 @@
     {
       "path": "zod/06-typical-recursive-and-lazy.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32361,8 +32354,7 @@
         "lazy",
         "recursion",
         "json-value-union",
-        "self-reference",
-        "pending-adapter"
+        "self-reference"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32373,7 +32365,7 @@
     {
       "path": "zod/07-composition-schema-reuse.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "valid",
       "expected_detection": {
         "format": "zod",
@@ -32386,8 +32378,7 @@
         "omit",
         "partial",
         "discriminatedUnion",
-        "schema-factory",
-        "pending-adapter"
+        "schema-factory"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -32398,7 +32389,7 @@
     {
       "path": "zod/negative/01-syntactic-unclosed-call.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32407,8 +32398,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-call",
-        "pending-adapter"
+        "unclosed-call"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -32420,7 +32410,7 @@
     {
       "path": "zod/negative/02-semantic-no-exported-schemas.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32429,8 +32419,7 @@
       "features": [
         "negative",
         "semantic",
-        "private-schemas",
-        "pending-adapter"
+        "private-schemas"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -32442,7 +32431,7 @@
     {
       "path": "zod/negative/03-truncated-mid-schema.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32451,8 +32440,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-chain",
-        "pending-adapter"
+        "mid-chain"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -32464,7 +32452,7 @@
     {
       "path": "zod/negative/04-wrong-format-typescript-types.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32473,8 +32461,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "typescript-types",
-        "pending-adapter"
+        "typescript-types"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -32486,7 +32473,7 @@
     {
       "path": "zod/negative/05-encoding-utf16.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32495,8 +32482,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -32508,7 +32494,7 @@
     {
       "path": "zod/negative/06-semantic-throws-on-import.ts",
       "format": "zod",
-      "adapter_key": null,
+      "adapter_key": "zod",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "zod",
@@ -32518,8 +32504,7 @@
         "negative",
         "semantic",
         "throws-on-import",
-        "sandbox",
-        "pending-adapter"
+        "sandbox"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

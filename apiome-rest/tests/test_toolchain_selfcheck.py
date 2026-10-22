@@ -142,6 +142,12 @@ def test_asyncapi_parser_is_a_hard_dependency():
     assert "asyncapi-parser" in REQUIRED_TOOL_KEYS
 
 
+def test_zod_schema_extractor_is_a_hard_dependency():
+    """FMT-8.2 (#5463): Zod import follows the FMT-1.3 rule too."""
+    assert "zod-schema-extractor" in REQUIRED_TOOL_KEYS
+    assert REQUIRED_NPM_PACKAGES["zod-schema-extractor"] == "zod"
+
+
 def test_typescript_types_extractor_is_a_hard_dependency():
     """FMT-8.1 (#5462): TypeScript types follow the FMT-1.3 rule — no runtime ``available: false``."""
     assert "typescript-types-extractor" in REQUIRED_TOOL_KEYS
@@ -186,12 +192,14 @@ def test_dockerfile_installs_the_hard_dependency_from_the_manifest():
     # The same holds for the TypeScript compiler behind the FMT-8.1 extractor.
     assert "ARG TYPESCRIPT_VERSION" not in dockerfile
     assert '"typescript@' not in dockerfile
+    assert "ARG ZOD_VERSION" not in dockerfile
+    assert '"zod@' not in dockerfile
 
 
 def test_dockerfile_smoke_tests_every_required_node_tool():
     """A hard dependency is proven at build time, not on the first import in production."""
     dockerfile = (_REST_ROOT / "Dockerfile").read_text(encoding="utf-8")
-    for executable in ("asyncapi-parser", "typescript-types-extract"):
+    for executable in ("asyncapi-parser", "typescript-types-extract", "zod-extract"):
         assert f"${{TOOLS_PREFIX}}/bin/{executable} --version" in dockerfile, executable
         assert f"| ${{TOOLS_PREFIX}}/bin/{executable} >" in dockerfile, executable
     # The image ships the toolchain, so it enforces it.

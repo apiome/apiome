@@ -125,7 +125,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `typescript-types/` | TypeScript type declarations | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
 | `vsam-idcams/` | VSAM cluster definitions (pending #5484) | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
 | `xsd/` | XML Schema (XSD) | data_schema | `xs:schema` root element | 13 |
-| `zod/` | Zod schemas (pending #5463) | data_schema | `import { z } from 'zod'` + exported `z.object(...)` values | 15 |
+| `zod/` | Zod schemas | data_schema | `import { z } from 'zod'` + exported `z.object(...)` values | 15 |
 
 ### Industry / domain messaging
 
@@ -2638,25 +2638,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-openapi-document.json` | — | `xsd` (no guarantee) | invalid | `negative`, `wrong-format`, `openapi-document` |
 | `negative/05-encoding-utf16-bom.xsd` | — | `xsd` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bom` |
 
-### `zod/` — Zod schemas (pending #5463)
+### `zod/` — Zod schemas
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-schema.ts` | minimal | `zod` ≥ 0.85 | valid | `object`, `primitives`, `pending-adapter` |
-| `02-typical-order-schemas.ts` | typical | `zod` ≥ 0.85 | valid | `regex`, `bounds`, `enum`, `default`, `array-cardinality`, `pick`, `infer`, `pending-adapter` |
-| `03-modules-set/index.ts` | multi-file (root) | `zod` ≥ 0.85 | valid | `multi-file`, `cross-module-schema`, `pending-adapter` |
-| `03-modules-set/order-line.ts` | multi-file (member) | `zod` (no guarantee) | valid | `multi-file`, `cross-module-schema`, `pending-adapter` |
-| `03-modules-set/shared.ts` | multi-file (member) | `zod` (no guarantee) | valid | `multi-file`, `shared-schemas`, `pending-adapter` |
-| `04-stress-constraint-coverage.ts` ⚠ | stress | `zod` ≥ 0.85 | valid | `string-constraints`, `number-constraints`, `tuple`, `record`, `set`, `map`, `strict`, `passthrough`, `catchall`, `discriminatedUnion`, `nativeEnum`, `refine`, `superRefine`, `transform`, `preprocess`, `brand`, `pipe`, `custom`, `function-schema`, `pending-adapter` |
-| `05-real-world-api-validation.ts` | real-world | `zod` ≥ 0.85 | valid | `request-validation`, `response-validation`, `coerce`, `discriminatedUnion`, `shared-value-schemas`, `pending-adapter` |
-| `06-typical-recursive-and-lazy.ts` | typical | `zod` ≥ 0.85 | valid | `lazy`, `recursion`, `json-value-union`, `self-reference`, `pending-adapter` |
-| `07-composition-schema-reuse.ts` | composition | `zod` ≥ 0.85 | valid | `merge`, `extend`, `pick`, `omit`, `partial`, `discriminatedUnion`, `schema-factory`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-call.ts` | — | `zod` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-call`, `pending-adapter` |
-| `negative/02-semantic-no-exported-schemas.ts` | — | `zod` (no guarantee) | invalid | `negative`, `semantic`, `private-schemas`, `pending-adapter` |
-| `negative/03-truncated-mid-schema.ts` | — | `zod` (no guarantee) | invalid | `negative`, `truncated`, `mid-chain`, `pending-adapter` |
-| `negative/04-wrong-format-typescript-types.ts` | — | `zod` (no guarantee) | invalid | `negative`, `wrong-format`, `typescript-types`, `pending-adapter` |
-| `negative/05-encoding-utf16.ts` | — | `zod` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-throws-on-import.ts` ⚠ | — | `zod` (no guarantee) | invalid | `negative`, `semantic`, `throws-on-import`, `sandbox`, `pending-adapter` |
+| `01-minimal-schema.ts` | minimal | `zod` ≥ 0.85 | valid | `object`, `primitives` |
+| `02-typical-order-schemas.ts` | typical | `zod` ≥ 0.85 | valid | `regex`, `bounds`, `enum`, `default`, `array-cardinality`, `pick`, `infer` |
+| `03-modules-set/index.ts` | multi-file (root) | `zod` ≥ 0.85 | valid | `multi-file`, `cross-module-schema` |
+| `03-modules-set/order-line.ts` | multi-file (member) | `zod` (no guarantee) | valid | `multi-file`, `cross-module-schema` |
+| `03-modules-set/shared.ts` | multi-file (member) | `zod` (no guarantee) | valid | `multi-file`, `shared-schemas` |
+| `04-stress-constraint-coverage.ts` ⚠ | stress | `zod` ≥ 0.85 | valid | `string-constraints`, `number-constraints`, `tuple`, `record`, `set`, `map`, `strict`, `passthrough`, `catchall`, `discriminatedUnion`, `nativeEnum`, `refine`, `superRefine`, `transform`, `preprocess`, `brand`, `pipe`, `custom`, `function-schema` |
+| `05-real-world-api-validation.ts` | real-world | `zod` ≥ 0.85 | valid | `request-validation`, `response-validation`, `coerce`, `discriminatedUnion`, `shared-value-schemas` |
+| `06-typical-recursive-and-lazy.ts` | typical | `zod` ≥ 0.85 | valid | `lazy`, `recursion`, `json-value-union`, `self-reference` |
+| `07-composition-schema-reuse.ts` | composition | `zod` ≥ 0.85 | valid | `merge`, `extend`, `pick`, `omit`, `partial`, `discriminatedUnion`, `schema-factory` |
+| `negative/01-syntactic-unclosed-call.ts` | — | `zod` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-call` |
+| `negative/02-semantic-no-exported-schemas.ts` | — | `zod` (no guarantee) | invalid | `negative`, `semantic`, `private-schemas` |
+| `negative/03-truncated-mid-schema.ts` | — | `zod` (no guarantee) | invalid | `negative`, `truncated`, `mid-chain` |
+| `negative/04-wrong-format-typescript-types.ts` | — | `zod` (no guarantee) | invalid | `negative`, `wrong-format`, `typescript-types` |
+| `negative/05-encoding-utf16.ts` | — | `zod` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-throws-on-import.ts` ⚠ | — | `zod` (no guarantee) | invalid | `negative`, `semantic`, `throws-on-import`, `sandbox` |
 
 > ⚠ **`04-stress-constraint-coverage.ts`** — Split into a modellable half and a declared-limits half; refine/transform/brand/custom must surface as named limits.
 

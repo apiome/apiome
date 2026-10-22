@@ -24,6 +24,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Envoy xDS route configuration and Istio VirtualService import (service-mesh routes, labelled inferred)
     - Traefik, nginx, HAProxy, Consul and Tyk configuration import (reverse-proxy routes, labelled inferred; nginx read through a documented directive subset)
     - TypeScript types import — the exported interfaces, type aliases and enums of a `.ts` / `.d.ts` module or module set, read by the TypeScript compiler; conditional, mapped and template-literal types are listed as parsing limits, never turned into `any`
+    - Zod schemas import — a module's exported Zod schemas with their validation constraints (lengths, patterns, formats, bounds), run in a sandbox with no network and a time limit; `refine`, `transform` and `brand` are listed in the coverage ledger
     - Gateway export to Envoy xDS, Istio, Traefik, AWS API Gateway, Azure API Management and Apigee — six new Export Studio cards under REST & HTTP, each checked against its product's rules; **Push back** now works for AWS, Azure APIM and Apigee gateway configs
     - A2A Agent Card import (skills and tags, live discovery from `/.well-known/agent-card.json`)
     - ACP agent manifest import (agents and capabilities, live discovery from a server's `/agents`)

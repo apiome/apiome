@@ -1,0 +1,21 @@
+---
+slug: zod-schema-import
+title: Import Zod schemas
+description: Catalog a Zod module's schemas, with their validation constraints.
+authors: [apiome]
+---
+
+Zod schemas carry the validation rules an API description needs. Apiome now imports a module's
+exported Zod schemas into the catalog, with those rules as constraints.
+[What gets imported](/bring-in/zod-schema-import).
+
+{/* truncate */}
+
+- **Constraints come with them.** Lengths, patterns, `email` / `uuid` / `datetime` formats,
+  integer and numeric bounds, defaults and optionality land on each field.
+- **Unions, recursion and composition.** Discriminated unions name their variants, `z.lazy`
+  recursion points back at the schema, and `merge`, `extend`, `pick` and `omit` are applied.
+- **Declared, not dropped.** `refine`, `transform`, `brand` and the other rules with no schema
+  equivalent are listed in the coverage ledger.
+- **Run in a sandbox.** The module runs with no network, no file access, an empty environment and a
+  time limit; a module that loops forever fails cleanly.
