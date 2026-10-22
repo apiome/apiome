@@ -1,22 +1,22 @@
 {
   "version": "1",
   "capability_registry_version": "23",
-  "total": 67,
-  "importable": 67,
+  "total": 69,
+  "importable": 69,
   "exportable": 45,
   "round_trip": 45,
-  "import_only": 22,
+  "import_only": 24,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 66,
+  "catalog": 68,
   "toolchain_gated": 3,
   "paradigms": [
     {
       "id": "rest",
       "label": "REST",
-      "total": 18,
-      "importable": 18,
+      "total": 20,
+      "importable": 20,
       "exportable": 14
     },
     {

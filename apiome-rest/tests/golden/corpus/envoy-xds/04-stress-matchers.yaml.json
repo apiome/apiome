@@ -1,0 +1,603 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "envoy-xds",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "match.connect_matcher",
+            "count": 1,
+            "reason": "a CONNECT route tunnels raw bytes; it has no canonical HTTP operation and is not imported as one"
+          },
+          {
+            "construct": "match.grpc",
+            "count": 1,
+            "reason": "the route matches only gRPC requests; content-type gating has no canonical field"
+          },
+          {
+            "construct": "match.headers.invert_match",
+            "count": 1,
+            "reason": "an inverted header match (the route applies when the header does NOT match) has no canonical parameter form"
+          },
+          {
+            "construct": "match.runtime_fraction",
+            "count": 1,
+            "reason": "only a runtime-controlled fraction of requests matches; the canonical operation cannot say it is sampled"
+          }
+        ],
+        "operation_count": 11,
+        "route_count": 11,
+        "schemaless_operation_count": 11,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "cors",
+            "scope": "service"
+          },
+          {
+            "name": "direct_response",
+            "scope": "route"
+          },
+          {
+            "name": "envoy.filters.http.rate_limit",
+            "scope": "route"
+          },
+          {
+            "name": "max_stream_duration",
+            "scope": "route"
+          },
+          {
+            "name": "rate_limits",
+            "scope": "service"
+          },
+          {
+            "name": "redirect",
+            "scope": "route"
+          },
+          {
+            "name": "regex_rewrite",
+            "scope": "route"
+          },
+          {
+            "name": "retry_policy",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/04-stress-matchers.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "everything",
+        "name": "everything",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout_v1",
+                  "weight": 90
+                },
+                {
+                  "name": "checkout_v2",
+                  "weight": 10
+                }
+              ],
+              "gateway_route": "everything#route-5",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/checkout"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/checkout",
+            "key": "ANY /checkout",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /checkout",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "exact_service"
+                }
+              ],
+              "gateway_route": "everything#route-0",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact/resource"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/exact/resource",
+            "key": "ANY /exact/resource",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /exact/resource",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_grpc"
+                }
+              ],
+              "gateway_route": "everything#route-7",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/example.orders.v1.OrderService/"
+              },
+              "plugins": [
+                "cors",
+                "envoy.filters.http.rate_limit",
+                "max_stream_duration",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/example.orders.v1.OrderService/",
+            "key": "ANY /example.orders.v1.OrderService/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /example.orders.v1.OrderService/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "experiment_service"
+                }
+              ],
+              "gateway_route": "everything#route-6",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/experiment"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/experiment",
+            "key": "ANY /experiment",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /experiment",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "legacy_service"
+                }
+              ],
+              "gateway_route": "everything#route-8",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/legacy/"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits",
+                "regex_rewrite"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/legacy/",
+            "key": "ANY /legacy/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /legacy/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "everything#route-10",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/old"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits",
+                "redirect"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/old",
+            "key": "ANY /old",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /old",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_service"
+                }
+              ],
+              "gateway_route": "everything#route-3",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/orders/[0-9]{6}/lines/[0-9]+$"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/orders/{param1}/lines/{param2}",
+            "key": "ANY /orders/{param1}/lines/{param2}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /orders/{param1}/lines/{param2}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/orders/[0-9]{6}/lines/[0-9]+$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /orders/{param1}/lines/{param2}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/orders/[0-9]{6}/lines/[0-9]+$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /orders/{param1}/lines/{param2}#path.param2",
+                "location": "path",
+                "name": "param2",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "prefix_service"
+                }
+              ],
+              "gateway_route": "everything#route-1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/prefix/",
+            "key": "ANY /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "everything#route-9",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/robots.txt"
+              },
+              "plugins": [
+                "cors",
+                "direct_response",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/robots.txt",
+            "key": "ANY /robots.txt",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /robots.txt",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "separated_service"
+                }
+              ],
+              "gateway_route": "everything#route-2",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/seg"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "ANY",
+            "http_path": "/seg",
+            "key": "ANY /seg",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /seg",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "search_service"
+                }
+              ],
+              "case_sensitive": false,
+              "gateway_route": "everything#route-4",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/search"
+              },
+              "plugins": [
+                "cors",
+                "rate_limits",
+                "retry_policy",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "route_config": "matcher_coverage",
+              "virtual_host": "everything"
+            },
+            "http_method": "GET",
+            "http_path": "/search",
+            "key": "GET /search",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /search",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "prefix:acme-"
+                },
+                "key": "GET /search#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:^[0-9]+$"
+                },
+                "key": "GET /search#query.page",
+                "location": "query",
+                "name": "page",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /search#query.q",
+                "location": "query",
+                "name": "q",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/04-stress-matchers.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/04-stress-matchers.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 11,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:45585d8cbfe969dee1b97e58304e1c39941d3a74d3b0dc7f6afba050f8c9e5ff",
+  "lint": {
+    "findings": 12,
+    "grade": "C",
+    "report_fingerprint": "cd263e165cccc8ef0c2d38357253e44c2da1bcc5daed009c4e9905db69b6aeb1",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 11
+    }
+  },
+  "snapshot_version": 1
+}

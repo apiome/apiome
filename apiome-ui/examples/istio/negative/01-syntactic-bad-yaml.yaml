@@ -1,3 +1,5 @@
+# `route:` is indented one column past `match:`, so the http rule's block mapping cannot
+# be parsed.
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -10,6 +12,6 @@ spec:
     - match:
         - uri:
            prefix: /broken
-      route:
+       route:
         - destination:
             host: broken.storefront.svc.cluster.local

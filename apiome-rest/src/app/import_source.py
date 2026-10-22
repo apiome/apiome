@@ -1277,6 +1277,12 @@ def load_builtin_import_sources() -> None:
     # (``apiproxy/`` XML) and loose ProxyEndpoint / TargetEndpoint files.
     from . import apigee_import_source as _apigee  # noqa: F401
 
+    # ``envoy_xds_import_source`` / ``istio_import_source`` (FMT-7.4) self-register the
+    # service-mesh route sources: Envoy bootstraps, route configurations and xDS resources, and
+    # Istio VirtualService streams — both on the shared gateway middle, both labelled inferred.
+    from . import envoy_xds_import_source as _envoy_xds  # noqa: F401
+    from . import istio_import_source as _istio  # noqa: F401
+
 
 # ===========================================================================
 # Shared canonical fingerprint + diff

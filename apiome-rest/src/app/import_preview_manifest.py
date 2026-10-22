@@ -411,6 +411,22 @@ KNOWN_PARSER_LIMITS: Dict[str, Tuple[ParserLimit, ...]] = {
             "its match conditions.",
         ),
     ),
+    "envoy-xds": (
+        ParserLimit(
+            construct="control-plane state (RDS / LDS / ADS)",
+            detail="Routes, listeners and clusters a control plane serves at runtime are not "
+            "fetched; only what the supplied files contain is read, and each dynamic source "
+            "is declared on the ledger instead.",
+        ),
+    ),
+    "istio": (
+        ParserLimit(
+            construct="security.istio.io policies and EnvoyFilter patches",
+            detail="RequestAuthentication / AuthorizationPolicy resources and EnvoyFilter "
+            "patches change what the mesh enforces but are not read; the import reflects the "
+            "VirtualService routing alone.",
+        ),
+    ),
     "gateway-api": (
         ParserLimit(
             construct="ExtensionRef filters and policy attachments",
@@ -1186,6 +1202,8 @@ def _overlay_provenance_rows(api: CanonicalApi) -> List[CoverageEntry]:
 _GATEWAY_FLAVOR_LABELS = {
     "kong": "Kong declarative config",
     "gateway-api": "Gateway API HTTPRoute manifests",
+    "envoy-xds": "Envoy xDS route configuration",
+    "istio": "Istio VirtualService manifests",
 }
 
 

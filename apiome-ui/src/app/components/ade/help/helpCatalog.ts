@@ -663,6 +663,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['apiproxy', 'flow', 'route rule', 'verifyapikey', 'quota', 'spikearrest'],
   },
   {
+    id: 'envoy-istio-route-import',
+    title: 'Import Envoy and Istio routes',
+    summary: 'Import service-mesh routing from Envoy xDS or Istio VirtualService files.',
+    page: 'apiome-docs/docs/bring-in/envoy-istio-route-import.md',
+    section: 'reference',
+    keywords: ['xds', 'virtualservice', 'service mesh', 'route configuration', 'bootstrap', 'destinationrule'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

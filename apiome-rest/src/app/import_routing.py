@@ -60,12 +60,15 @@ PUBLISHABLE_FORMATS = frozenset(
     {"openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0"}
 )
 
-#: Emitted format keys of the gateway-configuration adapters (IXH-7.8). They route to
+#: Emitted format keys of the gateway-configuration adapters (IXH-7.8; Envoy xDS and Istio
+#: since FMT-7.4). They route to
 #: the catalog like every other non-OpenAPI format; the only specialization is the
 #: routing *reason*, which states the partial-fidelity cause (routes without schemas)
 #: and the promotion path, because that is exactly what the catalog's non-publishable
 #: staging exists for.
-GATEWAY_CONFIG_FORMATS = frozenset({"kong", "kong-declarative", "gateway-api", "httproute"})
+GATEWAY_CONFIG_FORMATS = frozenset(
+    {"kong", "kong-declarative", "gateway-api", "httproute", "envoy-xds", "istio"}
+)
 
 #: The explicit ``requested_target`` values (from the JSON Schema disambiguation prompt,
 #: MFI-26.7) that mean "import the schema **as current** into Types/Projects" rather than

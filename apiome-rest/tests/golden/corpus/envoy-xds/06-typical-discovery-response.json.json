@@ -1,0 +1,210 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "envoy-xds",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "retry_policy",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/06-typical-discovery-response.json",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://10.96.14.22",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://10.96.14.22:8080",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://orders",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://orders.storefront.svc.cluster.local",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://orders.storefront.svc.cluster.local:8080",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://orders:8080",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "orders.storefront.svc.cluster.local:8080",
+        "name": "orders.storefront.svc.cluster.local:8080",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "outbound|8080||orders.storefront.svc.cluster.local"
+                }
+              ],
+              "gateway_route": "default",
+              "hosts": [
+                "10.96.14.22",
+                "10.96.14.22:8080",
+                "orders",
+                "orders.storefront.svc.cluster.local",
+                "orders.storefront.svc.cluster.local:8080",
+                "orders:8080"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "route_config": "8080",
+              "virtual_host": "orders.storefront.svc.cluster.local:8080"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "outbound|8080|v2|orders.storefront.svc.cluster.local"
+                }
+              ],
+              "gateway_route": "orders-v2",
+              "hosts": [
+                "10.96.14.22",
+                "10.96.14.22:8080",
+                "orders",
+                "orders.storefront.svc.cluster.local",
+                "orders.storefront.svc.cluster.local:8080",
+                "orders:8080"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "retry_policy",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "route_config": "8080",
+              "virtual_host": "orders.storefront.svc.cluster.local:8080"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/06-typical-discovery-response.json",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/06-typical-discovery-response.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 6,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:41ebcc4ca36282b310a1fc99181075c542fb8f397f9e09b4678f4e687fe2ee11",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "400d8a00bdba9c561d7f1fe0bb718c82f3530cdf99a599ebf57a7535f2d57a8f",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

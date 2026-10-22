@@ -1,0 +1,329 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 1,
+        "flavor": "envoy-xds",
+        "global_plugins": [
+          "internal_only_headers"
+        ],
+        "ignored_constructs": [],
+        "operation_count": 5,
+        "route_count": 5,
+        "schemaless_operation_count": 5,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "direct_response",
+            "scope": "route"
+          },
+          {
+            "name": "idle_timeout",
+            "scope": "route"
+          },
+          {
+            "name": "internal_only_headers",
+            "scope": "global"
+          },
+          {
+            "name": "redirect",
+            "scope": "route"
+          },
+          {
+            "name": "response_headers_to_add",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/03-composition-multi-virtualhost.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://*.partner.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://partner.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "catch_all",
+        "name": "catch_all",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "catch_all#route-0",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "redirect"
+              ],
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "catch_all"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "partner",
+        "name": "partner",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "partner_service"
+                }
+              ],
+              "gateway_route": "partner#route-0",
+              "hosts": [
+                "*.partner.example.com",
+                "partner.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner/v1"
+              },
+              "plugins": [
+                "idle_timeout"
+              ],
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "partner"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner/v1",
+            "key": "ANY /partner/v1",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner/v1",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "ANY /partner/v1#header.x-partner-id",
+                "location": "header",
+                "name": "x-partner-id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "partner#route-1",
+              "hosts": [
+                "*.partner.example.com",
+                "partner.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner/v1"
+              },
+              "plugins": [
+                "direct_response"
+              ],
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "partner"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner/v1",
+            "key": "ANY /partner/v1#partner#route-1",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner/v1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "public",
+        "name": "public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_service"
+                }
+              ],
+              "gateway_route": "public#route-0",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "response_headers_to_add"
+              ],
+              "provenance": "inferred",
+              "require_tls": "ALL",
+              "route_config": "edge_route",
+              "virtual_host": "public"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue_service"
+                }
+              ],
+              "gateway_route": "public#route-1",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "response_headers_to_add"
+              ],
+              "provenance": "inferred",
+              "require_tls": "ALL",
+              "route_config": "edge_route",
+              "virtual_host": "public"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/03-composition-multi-virtualhost.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/03-composition-multi-virtualhost.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 3,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:0e5d0caba2d3a88c6076398c2c52de4767fe3d703b2557927607aa639c2ec5a4",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "13d40da0ed677ea53c2d18fbe70558f1e1dd6bd217ff0e6c6ee17f8f089209d2",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

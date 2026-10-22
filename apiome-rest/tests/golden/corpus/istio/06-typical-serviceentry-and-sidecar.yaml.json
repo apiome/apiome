@@ -1,0 +1,140 @@
+{
+  "adapter": "istio",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "istio",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "ServiceEntry",
+            "count": 1,
+            "reason": "ServiceEntry resources shape the mesh (subsets, gateways, egress, scoping); they are read for references and schemes but describe no HTTP route"
+          },
+          {
+            "construct": "Sidecar",
+            "count": 1,
+            "reason": "Sidecar resources shape the mesh (subsets, gateways, egress, scoping); they are read for references and schemes but describe no HTTP route"
+          }
+        ],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "retries",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "istio",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "istio/06-typical-serviceentry-and-sidecar.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://network.example-acquirer.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "payments/payment-network-egress",
+        "name": "payments/payment-network-egress",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "network.example-acquirer.com",
+                  "namespace": "payments",
+                  "port": 443
+                }
+              ],
+              "gateway_route": "payment-network-egress#http-0",
+              "hosts": [
+                "network.example-acquirer.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "payments",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/authorizations"
+              },
+              "plugins": [
+                "retries",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "payments/payment-network-egress"
+            },
+            "http_method": "ANY",
+            "http_path": "/authorizations",
+            "key": "ANY /authorizations",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /authorizations",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "istio/06-typical-serviceentry-and-sidecar.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "istio/06-typical-serviceentry-and-sidecar.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "istio"
+  },
+  "fingerprint": "sha256:f14925957ae0554957676cc9cdfa6647dd3c911b3f54436ad031d2799808bdbc",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "b8d092bb989d5cf0eea12d68c313268ca6b606567f2dc6fb0af884f517947db2",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 67
+- **Formats gated:** 69
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -37,6 +37,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `dtd` | DTD | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `edix12` | EDI X12 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `edix12` |
+| `envoy-xds` | Envoy xDS routes | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `fhir` | FHIR | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `fhir` |
 | `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 7 | `fix` |
 | `fix-orchestra` | FIX Orchestra | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 14 | — |
@@ -50,6 +51,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
 | `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
+| `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `json-schema` | JSON Schema | data_schema | 12 | 5 | 0 | 0 | 17 | 5/6 (+1 waived) | 12 | `json-schema` |
 | `jtd` | JSON Type Definition | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `jtd` |
 | `k8s-crd` | Kubernetes CRD | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `k8s-crd` |
@@ -111,6 +113,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `dtd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `edifact` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `edix12` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `envoy-xds` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `fhir` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `fix` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `fix-orchestra` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -124,6 +127,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `idoc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `iso20022` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `iso8583` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `istio` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `json-schema` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `jtd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `k8s-crd` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -173,4 +177,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `consul`, `cue`, `dhall`, `envoy-xds`, `haproxy`, `hoppscotch`, `ims`, `istio`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `consul`, `cue`, `dhall`, `haproxy`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
