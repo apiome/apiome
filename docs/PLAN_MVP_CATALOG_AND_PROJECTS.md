@@ -10,10 +10,10 @@ are finished and hardened, nothing else gets new work. Six destinations that are
 
 | Rail item (id) | Route | Why it is held back |
 | --- | --- | --- |
-| Primitives & types (`primitives`) | `/ade/dashboard/primitives` | Not MVP; HIVE-11.8 and the type-registry roadmap still open |
+| Primitives & types (`primitives`) | `/ade/dashboard/primitives` | Not MVP; the type-registry roadmap is still open (HIVE-11.8 done) |
 | MCP servers (`mcp`) — incl. Agent access | `/ade/dashboard/mcp/**` | MCP / agent roadmaps (AGX, AAU, MCP) are post-MVP |
 | Export studio (`export-studio`) | `/ade/dashboard/export/studio` | Multi-format export (MFX) is post-MVP |
-| SDK settings (`sdk-settings`) | `/ade/dashboard/sdk-settings` | SDK roadmaps are post-MVP |
+| SDK settings (`sdk-settings`) | `/ade/dashboard/export/studio?tab=sdk` (old `/ade/dashboard/sdk-settings` redirects) | SDK roadmaps are post-MVP |
 | Style guides (`style-guides`) | `/ade/dashboard/style-guides/**` | Governance roadmap is post-MVP |
 | Access audit (`audit`) | `/ade/dashboard/audit` | Governance roadmap is post-MVP |
 
@@ -207,7 +207,7 @@ Multi-repo merge and PR-back sync.
 
 Roadmap candidates.
 
-- [ ] [#3970](https://github.com/apiome/apiome/issues/3970) MFI-EPIC-18 Agent Descriptor Cataloging (A2A / ACP / agentic-web)
+- [x] [#3970](https://github.com/apiome/apiome/issues/3970) MFI-EPIC-18 Agent Descriptor Cataloging (A2A / ACP / agentic-web)
 - [x] [#3978](https://github.com/apiome/apiome/issues/3978) MFI-18.5 Registry-as-source ingestion mode (crawl a catalog, not a doc)
 - [x] [#3980](https://github.com/apiome/apiome/issues/3980) MFI-19.2 CloudEvents + xRegistry (CNCF event catalog)
 
@@ -250,11 +250,12 @@ Favourites, time tracking, heatmaps, archaeology.
 #### Held-back features’ own tickets
 
 These wait until their feature is next in line, along with the SDK, MFX, AGX and governance
-roadmaps. #5609 re-homes SDK settings and should account for it being gated.
+roadmaps. #5609 re-homed SDK settings as Export studio's **SDK & branding** tab; the tab keeps
+its own `sdk-settings` release gate.
 
-- [ ] [#5604](https://github.com/apiome/apiome/issues/5604) HIVE-11.8 Primitives & types — facts line over the registry
-- [ ] [#5606](https://github.com/apiome/apiome/issues/5606) HIVE-11.10 Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts
-- [ ] [#5609](https://github.com/apiome/apiome/issues/5609) HIVE-12.2 Re-home Tenants, Data browser · Migrations and SDK settings
+- [x] [#5604](https://github.com/apiome/apiome/issues/5604) HIVE-11.8 Primitives & types — facts line over the registry
+- [x] [#5606](https://github.com/apiome/apiome/issues/5606) HIVE-11.10 Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts
+- [x] [#5609](https://github.com/apiome/apiome/issues/5609) HIVE-12.2 Re-home Tenants, Data browser · Migrations and SDK settings
 
 ---
 
