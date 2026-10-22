@@ -903,6 +903,7 @@ def run_tool_blocking(
     *,
     stdin: Optional[str] = None,
     timeout: Optional[float] = None,
+    policy: Optional[SandboxPolicy] = None,
     thread_name: str = "toolchain-run",
 ) -> ToolRunResult:
     """Run a registered tool to completion from synchronous code.
@@ -918,6 +919,7 @@ def run_tool_blocking(
         args: Per-call arguments.
         stdin: Text fed to the tool's standard input.
         timeout: Per-call timeout in seconds; falls back to the tool/service default.
+        policy: The sandbox policy for this call; defaults to the shared runner's.
         thread_name: Name for the worker thread, so a stuck call is identifiable.
 
     Returns:
@@ -935,7 +937,7 @@ def run_tool_blocking(
                 default_timeout_seconds=default_runner.default_timeout_seconds,
                 default_policy=default_runner.default_policy,
             )
-            return await runner.run(key, args, stdin=stdin, timeout=timeout)
+            return await runner.run(key, args, stdin=stdin, timeout=timeout, policy=policy)
 
         try:
             box["value"] = asyncio.run(_drive())

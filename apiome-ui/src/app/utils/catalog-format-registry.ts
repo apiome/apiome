@@ -59,6 +59,7 @@ import {
   Rows3,
   Send,
   ListOrdered,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -339,6 +340,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cddl', label: 'CDDL', icon: Binary, tone: 'stone', dataType: 'schema', origin: 'systems', importable: true, aliases: ['rfc8610'], description: 'CDDL (RFC 8610) — the schema language of CBOR, COSE and WebAuthn.' },
   { id: 'arrow', label: 'Apache Arrow', icon: Binary, tone: 'amber', dataType: 'schema', origin: 'data', importable: true, aliases: ['arrow-ipc', 'flight', 'arrow-flight', 'feather'], description: 'Apache Arrow schema — JSON integration form, IPC bytes, or a live Flight endpoint.' },
   { id: 'sql-ddl', label: 'SQL DDL', icon: Database, tone: 'teal', dataType: 'schema', origin: 'data', importable: true, aliases: ['sql', 'ddl', 'postgres', 'mysql', 'sqlserver', 'oracle'], description: 'SQL DDL — a schema script or a migrations directory, across ANSI plus four vendor dialects.' },
+  { id: 'zod', label: 'Zod schemas', icon: ShieldCheck, tone: 'indigo', dataType: 'schema', origin: 'web', importable: true, aliases: ['zod-schema'], description: 'Zod schemas with their validation constraints — a module evaluated in a sandbox with no network and a time limit.' },
   { id: 'typescript-types', label: 'TypeScript types', icon: FileCode, tone: 'blue', dataType: 'schema', origin: 'web', importable: true, aliases: ['typescript', 'ts', 'dts'], description: 'TypeScript interface, type and enum declarations — a .ts / .d.ts module or a set of modules.' },
   { id: 'dbt', label: 'dbt Project', icon: Database, tone: 'amber', dataType: 'schema', origin: 'data', importable: true, aliases: ['dbt-core', 'dbt-manifest', 'schema.yml'], description: 'dbt project — `schema.yml` model and column definitions, or a compiled `manifest.json`.' },
   { id: 'odcs', label: 'ODCS Data Contract', icon: Database, tone: 'teal', dataType: 'schema', origin: 'data', importable: true, aliases: ['datacontract', 'data-contract', 'bitol'], description: 'Open Data Contract Standard (ODCS v3.x) — the Linux Foundation data-contract YAML.' },

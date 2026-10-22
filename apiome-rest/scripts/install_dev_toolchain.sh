@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install dev toolchain binaries into apiome-rest/.tools/bin (MFI-5.2, FMT-1.3, FMT-8.1).
+# Install dev toolchain binaries into apiome-rest/.tools/bin (MFI-5.2, FMT-1.3, FMT-8.1, FMT-8.2).
 #
 # The production image bundles buf (and other CLIs) under /opt/apiome-tools/bin. Local
 # `yarn dev` / run.sh uses this script so gRPC/Protobuf catalog import can compile .proto
@@ -15,12 +15,15 @@
 #   typescript-types-extractor
 #                    REQUIRED (FMT-8.1, #5462) — TypeScript type declarations are read by the
 #                    TypeScript compiler itself; `typescript` is pinned in the same manifest.
+#   zod-schema-extractor
+#                    REQUIRED (FMT-8.2, #5463) — evaluates a module's Zod schemas with the
+#                    pinned `zod` (and transpiles with the pinned `typescript`).
 #
 # Usage:
 #   ./scripts/install_dev_toolchain.sh [--force] [tool ...]
 #
 # With no tool named, everything above is installed. Name one or more (`buf`,
-# `asyncapi-parser`, `typescript-types-extractor`) to install just those — CI uses that to add
+# `asyncapi-parser`, `typescript-types-extractor`, `zod-schema-extractor`) to install just those — CI uses that to add
 # the required Node tools without re-downloading buf.
 
 set -euo pipefail
@@ -41,17 +44,17 @@ for arg in "$@"; do
       cat <<EOF
 Usage: $(basename "$0") [--force] [tool ...]
 
-Installs the pinned buf binary and the required @asyncapi/parser and typescript toolchain
-into apiome-rest/.tools/ for local gRPC/Protobuf, AsyncAPI and TypeScript-types import.
+Installs the pinned buf binary and the required @asyncapi/parser, typescript and zod toolchain
+into apiome-rest/.tools/ for local gRPC/Protobuf, AsyncAPI, TypeScript-types and Zod import.
 Run from the apiome-rest directory (or via ./run.sh / yarn dev).
 
   --force   Re-install even when a working tool is already present.
   tool      Install only the named tool(s): buf, asyncapi-parser,
-            typescript-types-extractor. Default: all.
+            typescript-types-extractor, zod-schema-extractor. Default: all.
 EOF
       exit 0
       ;;
-    buf|asyncapi-parser|typescript-types-extractor) SELECTED+=("$arg") ;;
+    buf|asyncapi-parser|typescript-types-extractor|zod-schema-extractor) SELECTED+=("$arg") ;;
     *)
       echo "install_dev_toolchain: unknown argument '${arg}' (try --help)" >&2
       exit 1
@@ -268,6 +271,57 @@ install_typescript_types_extractor() {
   echo "install_dev_toolchain: installed ${EXTRACTOR_BIN} ($("$EXTRACTOR_BIN" --version 2>/dev/null | head -1))"
 }
 
+# ---------------------------------------------------------------------------------------
+# zod-schema-extractor — REQUIRED (FMT-8.2, #5463)
+# ---------------------------------------------------------------------------------------
+#
+# `toolchain/zod-extract.mjs` loads `zod` and `typescript` from the shared node_modules beside
+# it, and re-executes itself under Node's permission model with read access to that directory
+# only — which is why it must be *copied* there, not symlinked.
+
+ZOD_BIN="${TOOLS_BIN}/zod-extract"
+
+zod_ok() {
+  [[ -x "$ZOD_BIN" ]] && "$ZOD_BIN" --version >/dev/null 2>&1
+}
+
+install_zod_schema_extractor() {
+  local zod_pin ts_pin
+  zod_pin="$(grep -E '"zod"' toolchain/package.json | sed -E 's/.*"zod"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+  ts_pin="$(grep -E '"typescript"' toolchain/package.json | sed -E 's/.*"typescript"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+  if [[ -z "$zod_pin" || -z "$ts_pin" ]]; then
+    echo "install_dev_toolchain: could not read the zod / typescript pins from toolchain/package.json" >&2
+    exit 1
+  fi
+
+  if zod_ok && [[ "$FORCE" -eq 0 ]] && "$ZOD_BIN" --version 2>/dev/null | grep -qF " ${zod_pin}"; then
+    cp "${ROOT}/toolchain/zod-extract.mjs" "${NODE_PREFIX}/zod-extract.mjs"
+    echo "install_dev_toolchain: zod-extract already installed at ${ZOD_BIN} ($("$ZOD_BIN" --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "install_dev_toolchain: npm is required to install zod@${zod_pin}." >&2
+    echo "install_dev_toolchain: Zod import is a REQUIRED format — without it the service" >&2
+    echo "install_dev_toolchain: refuses to start when APIOME_REQUIRE_TOOLCHAIN is on." >&2
+    exit 1
+  fi
+
+  echo "install_dev_toolchain: installing zod@${zod_pin} and typescript@${ts_pin} into ${NODE_PREFIX}"
+  mkdir -p "$NODE_PREFIX"
+  npm install --prefix "$NODE_PREFIX" --no-audit --no-fund --silent "zod@${zod_pin}" "typescript@${ts_pin}"
+  cp "${ROOT}/toolchain/zod-extract.mjs" "${NODE_PREFIX}/zod-extract.mjs"
+  chmod +x "${NODE_PREFIX}/zod-extract.mjs"
+  printf '#!/bin/sh\nexec node %s/zod-extract.mjs "$@"\n' "$NODE_PREFIX" > "$ZOD_BIN"
+  chmod +x "$ZOD_BIN"
+
+  if ! zod_ok; then
+    echo "install_dev_toolchain: install finished but '${ZOD_BIN} --version' failed" >&2
+    exit 1
+  fi
+  echo "install_dev_toolchain: installed ${ZOD_BIN} ($("$ZOD_BIN" --version 2>/dev/null | head -1))"
+}
+
 if wanted buf; then
   install_buf
 fi
@@ -276,6 +330,9 @@ if wanted asyncapi-parser; then
 fi
 if wanted typescript-types-extractor; then
   install_typescript_types_extractor
+fi
+if wanted zod-schema-extractor; then
+  install_zod_schema_extractor
 fi
 
 echo "install_dev_toolchain: restart the REST API (yarn dev) if it is already running."

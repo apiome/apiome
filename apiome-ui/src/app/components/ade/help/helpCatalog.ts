@@ -695,6 +695,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['ts', 'd.ts', 'interface', 'type alias', 'enum', 'generics', 'declaration file'],
   },
   {
+    id: 'zod-schema-import',
+    title: 'Import Zod schemas',
+    summary: 'Catalog the schemas a Zod module exports, with their validation constraints.',
+    page: 'apiome-docs/docs/bring-in/zod-schema-import.md',
+    section: 'reference',
+    keywords: ['z.object', 'refine', 'transform', 'validation', 'constraints', 'sandbox', 'typescript'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

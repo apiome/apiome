@@ -17,7 +17,7 @@ What lives here:
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
-  ``asyncapi-diff``, ``rover``, ``graphql-inspector-diff``, ``spectral``, ``vacuum``,
+  ``zod-schema-extractor``, ``asyncapi-diff``, ``rover``, ``graphql-inspector-diff``, ``spectral``, ``vacuum``,
   ``redocly``, ``oasdiff``, ``openapi-changes``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
@@ -203,6 +203,15 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         description="TypeScript interface/type/enum declarations → neutral JSON AST "
         "(the `typescript` compiler API, FMT-8.1).",
         env_override_key="APIOME_TYPESCRIPT_TYPES_EXTRACTOR_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="zod-schema-extractor",
+        executable="zod-extract",
+        version="3.25.76",
+        description="Evaluates a module's exported Zod schemas in a permission-locked, "
+        "time-bounded sandbox → JSON Schema (`zod`, FMT-8.2).",
+        env_override_key="APIOME_ZOD_SCHEMA_EXTRACTOR_BIN",
         runtime="node",
     ),
     BundledTool(

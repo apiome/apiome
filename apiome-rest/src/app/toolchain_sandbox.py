@@ -42,7 +42,7 @@ from __future__ import annotations
 import logging
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable, Dict, Optional, Tuple
 
 from .config import settings
@@ -164,6 +164,16 @@ class SandboxPolicy:
             network_enforcement=NETWORK_OFF,
             allow_core_dumps=True,
         )
+
+    def for_untrusted_code(self) -> "SandboxPolicy":
+        """Return a copy for a tool that *executes* user-supplied code (FMT-8.2's Zod reader).
+
+        Every resource and output clamp is kept, and network isolation is forced on and made
+        **strict** whatever the deployment's default: a parser that only reads a document can
+        degrade to best effort when the kernel refuses a network namespace, but a tool running
+        someone else's module must fail closed instead.
+        """
+        return replace(self, no_network=True, network_enforcement=NETWORK_STRICT)
 
     def for_live_discovery(self) -> "SandboxPolicy":
         """Return a copy that opts into the host network for explicit live discovery.

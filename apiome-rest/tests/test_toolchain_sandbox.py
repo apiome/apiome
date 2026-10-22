@@ -384,3 +384,12 @@ def test_ops_toolchain_reports_sandbox_posture(_auth_override):
     assert sandbox["no_network"] is True
     assert sandbox["network_enforcement"] in ("best_effort", "strict", "off")
     assert sandbox["posix_enforcement"] == (os.name == "posix")
+
+
+def test_untrusted_code_policy_forces_strict_network_isolation():
+    """FMT-8.2: a tool that runs user code fails closed, whatever the deployment default."""
+    relaxed = SandboxPolicy(no_network=False, network_enforcement=NETWORK_BEST_EFFORT, cpu_seconds=7.0)
+    hardened = relaxed.for_untrusted_code()
+    assert hardened.no_network is True
+    assert hardened.network_enforcement == NETWORK_STRICT
+    assert hardened.cpu_seconds == 7.0

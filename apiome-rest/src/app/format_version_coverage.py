@@ -1498,6 +1498,22 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "zod": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Zod 3 (evaluated with Zod 3.25)",
+                format_key="zod",
+                support=VersionSupport.PARTIAL,
+                note="Modules written against the Zod 3 API (`import { z } from 'zod'`, or "
+                "`zod/v3`) are evaluated with the bundled Zod 3.25 and read from its `_def` "
+                "tree. The Zod 4 entry points (`zod/v4`, `zod/mini`) are a different runtime "
+                "API and are declined with `FORMAT_VERSION_UNSUPPORTED` rather than evaluated "
+                "against the wrong one.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "typescript-types": VersionCoverage(
         reads=[
             FormatVersion(

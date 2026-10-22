@@ -49,7 +49,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
-from .normalizer import Keys, Normalizer, normalize_ordering
+from .normalizer import Keys, Normalizer, coerce_constraints, normalize_ordering
 from .typescript_types_parser import LimitRecorder, TsDocument, TsLimit
 
 __all__ = ["TYPESCRIPT_EXTRAS_KEY", "TYPESCRIPT_TYPES_FORMAT", "TypeScriptTypesNormalizer"]
@@ -71,6 +71,7 @@ _PRIMITIVE_SCALARS: Dict[str, Tuple[str, Optional[Constraints]]] = {
     "void": ("null", None),
     "any": ("any", None),
     "unknown": ("unknown", None),
+    "integer": ("integer", None),
     "object": ("object", None),
     "date": ("string", Constraints(format="date-time")),
     "bytes": ("bytes", None),
@@ -111,7 +112,13 @@ def _sanitize(name: str) -> str:
 
 
 def _limit_key(construct: Optional[str]) -> str:
-    """The declared limit an AST ``unsupported`` construct belongs to."""
+    """The declared limit an AST ``unsupported`` construct belongs to.
+
+    A construct that is already a full limit key (``zod.function``) is passed through: a sibling
+    reader that reuses this model (FMT-8.2's Zod reader) names its own constructs.
+    """
+    if construct and "." in construct:
+        return construct
     return _UNSUPPORTED_LIMITS.get(construct or "", "typescript.type_query")
 
 
@@ -212,6 +219,22 @@ class _Model:
         #: Generic declarations that were instantiated at least once.
         self._instantiated: Set[str] = set()
         self._declared_merges: Set[str] = set()
+        #: AST nodes whose attached ``limits`` were already recorded (a node is met once as a
+        #: named type and again if it is converted, and must count once). Keyed by ``id`` and
+        #: holding the node itself, so a collected node's id cannot be reused by a new one.
+        self._noted: Dict[int, Any] = {}
+
+    def _note_limits(self, node: Any, location: str) -> None:
+        """Record the declared limits a sibling reader attached to an AST node.
+
+        The TypeScript extractor never attaches any; FMT-8.2's Zod reader marks a ``refine``,
+        ``transform`` or ``brand`` on the node whose shape it still models.
+        """
+        if not isinstance(node, dict) or not node.get("limits") or self._noted.get(id(node)) is node:
+            return
+        self._noted[id(node)] = node
+        for construct in node["limits"]:
+            self.limits.record(_limit_key(construct), location=location)
 
     # --- naming ---------------------------------------------------------------------------
 
@@ -416,6 +439,7 @@ class _Model:
         """
         extras = dict(extras or {})
         kind = node.get("kind") if isinstance(node, dict) else None
+        self._note_limits(node, name)
 
         if kind == "evaluated":
             extras["typescript_evaluated"] = {"via": node.get("via"), "text": node.get("text")}
@@ -505,7 +529,7 @@ class _Model:
     ) -> Optional[str]:
         """An object shape (plus inherited members) as a ``RECORD``, or a ``MAP`` when it is
         nothing but an index signature."""
-        extras = dict(extras or {})
+        extras = {**(node.get("extras") or {}), **(extras or {})}
         properties, signatures, unsupported, parent_names = self._flatten(
             node, parents, location=name
         )
@@ -673,6 +697,7 @@ class _Model:
                     name=prop["name"],
                     type=shape.ref.model_copy(update={"nullable": nullable}),
                     constraints=shape.constraints,
+                    default=prop.get("default"),
                     description=prop.get("doc"),
                     deprecated=bool(prop.get("deprecated")),
                     extras=extras,
@@ -898,6 +923,34 @@ class _Model:
     # --- use sites --------------------------------------------------------------------------
 
     def convert(self, node: Any, *, path: Tuple[str, ...], location: str) -> Optional[_Shape]:
+        """Convert one use-site type node, then apply what a sibling reader attached to it.
+
+        A node may carry declared ``limits`` (recorded here, at ``location``) and JSON-Schema
+        ``constraints`` (merged over the ones the node's kind implies). The TypeScript
+        extractor attaches neither; FMT-8.2's Zod reader attaches both.
+
+        Args:
+            node: The (closed) AST node.
+            path: Name parts for any synthetic type this use site needs.
+            location: Where the use site sits, for limit locations.
+
+        Returns:
+            The converted shape, or ``None`` when the node is outside the subset.
+        """
+        self._note_limits(node, location)
+        shape = self._convert_node(node, path=path, location=location)
+        extra = node.get("constraints") if isinstance(node, dict) else None
+        if shape is not None and extra:
+            attached = coerce_constraints(extra)
+            if attached is not None:
+                merged = shape.constraints.model_dump(exclude_none=True) if shape.constraints else {}
+                merged.update(attached.model_dump(exclude_none=True))
+                shape.constraints = Constraints(**merged)
+        return shape
+
+    def _convert_node(
+        self, node: Any, *, path: Tuple[str, ...], location: str
+    ) -> Optional[_Shape]:
         """Convert one use-site type node into a canonical reference.
 
         Named shapes an inline node needs (an object literal, a union of objects, a map) are

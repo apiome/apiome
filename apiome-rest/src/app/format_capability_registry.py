@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "25"
+REGISTRY_VERSION = "26"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2458,6 +2458,93 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "only, and the two share one type-mapping table (`app.sql_ddl_dialects."
             "SQL_TYPE_SCALARS`) so a round trip cannot disagree with itself about what a "
             "`VARCHAR` is.",
+        ],
+    ),
+    "zod": _Seed(
+        # Zod's payload analysis is the format-blind walk, so the first three fields restate
+        # what derivation produces. The reviewed judgement is the projection statement: FMT-8.2's
+        # acceptance criteria are that constraints become canonical constraints and that
+        # refinements and transforms are *declared limits, not silently dropped* — this is where a
+        # reader is told which Zod constructs model and which are declared.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A Zod schema is a value built at runtime, not a declaration with a line: schemas "
+                "are located by the export that holds them (`Order`, `Order.lines`)."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A module of schemas describes data without containing any: literals, enum "
+                "members and defaults are part of the schema and are modelled, and there are no "
+                "runtime values for the analyzer to observe."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "zod.additional_properties",
+                "zod.brand",
+                "zod.coerce",
+                "zod.custom",
+                "zod.function",
+                "zod.intersection",
+                "zod.pipe",
+                "zod.preprocess",
+                "zod.promise",
+                "zod.refine",
+                "zod.transform",
+                "zod.tuple_positions",
+                "zod.unmodelled_reference",
+                "zod.unnamed_recursion",
+                "zod.unrepresentable",
+            ],
+            note=(
+                "Every exported schema becomes a canonical type, read from Zod's own `_def` tree "
+                "by evaluating the module in a permission-locked, network-free, time-bounded "
+                "sandbox. `z.object` is a `RECORD`; `z.enum`, `z.nativeEnum` and literal unions "
+                "are `ENUM`s; `z.union` and `z.discriminatedUnion` are `UNION`s (inline variants "
+                "named by their discriminant); `z.intersection` of objects is one merged "
+                "`RECORD`; `z.record` and `z.map` are `MAP`s; arrays, sets and tuples are lists. "
+                "Constraints become canonical constraints: `min`/`max`/`length` bound strings and "
+                "arrays, `regex`/`startsWith`/`endsWith`/`includes` become a pattern, "
+                "`email`/`url`/`uuid`/`datetime`/`date` a format, `int` an integer, and "
+                "`gt`/`gte`/`lt`/`lte`/`positive`/`multipleOf` numeric bounds. `optional`, "
+                "`nullable` and `nullish` make the reference nullable and `default` is the "
+                "field's default. A reference to another exported schema, and `z.lazy` recursion, "
+                "point at its named type. The listed constructs are *declared, never dropped "
+                "silently*: a `refine`, `transform`, `preprocess`, `brand`, `pipe` or coercion "
+                "keeps the schema it wraps and is recorded on it; `z.custom()`, `z.function()`, "
+                "`z.promise()` and schemas with no data meaning leave their declaration or member "
+                "out of the model. Every occurrence is counted and located in "
+                "`extras['zod']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "This reader executes the uploaded module, because a Zod schema only exists once the "
+            "code that builds it has run. It runs under Node's permission model (no file outside "
+            "the toolchain, no child process, no worker), with no network and an empty "
+            "environment, inside a time budget: a module that loops forever, or a `z.lazy` getter "
+            "that never returns, fails the import with `INPUT_TIME_LIMIT`.",
+            "Only `zod` and the upload's own modules can be imported; any other import rejects "
+            "the import with `INPUT_REFERENCE_UNRESOLVED`, and a module that throws while it is "
+            "evaluated is rejected with `INPUT_SEMANTIC_INVALID`.",
+            "The Zod 3 API (`import { z } from 'zod'`) is evaluated with the bundled Zod 3.25. A "
+            "module written against the Zod 4 entry points (`zod/v4`, `zod/mini`) is rejected "
+            "with `FORMAT_VERSION_UNSUPPORTED` rather than evaluated against the wrong API.",
+            "Schemas share one projection with TypeScript type declarations (FMT-8.1), so a "
+            "module modelled from Zod and the same shapes written as TypeScript types produce "
+            "the same records, unions and names.",
+            "Zod *output* is not implemented here, so a schema imported through this adapter is "
+            "exported through another target's emitter and is not written back as Zod.",
         ],
     ),
     "typescript-types": _Seed(

@@ -192,9 +192,20 @@ class TsLimit:
 
 
 class LimitRecorder:
-    """Accumulates :class:`TsLimit` records while a document is normalized."""
+    """Accumulates :class:`TsLimit` records while a document is normalized.
 
-    def __init__(self) -> None:
+    The vocabulary defaults to the TypeScript limits. A sibling reader that reuses the
+    TypeScript model (FMT-8.2's Zod reader) passes its own ``details`` and maps the model's
+    built-in ``typescript.*`` keys onto its own names with ``aliases``.
+    """
+
+    def __init__(
+        self,
+        details: Optional[Mapping[str, str]] = None,
+        aliases: Optional[Mapping[str, str]] = None,
+    ) -> None:
+        self._details: Mapping[str, str] = LIMIT_DETAILS if details is None else details
+        self._aliases: Mapping[str, str] = aliases or {}
         self._counts: Dict[str, int] = {}
         self._locations: Dict[str, Set[str]] = {}
 
@@ -202,14 +213,16 @@ class LimitRecorder:
         """Record one occurrence of ``construct``.
 
         Args:
-            construct: The stable limit key; must be a key of :data:`LIMIT_DETAILS`.
+            construct: The stable limit key (or an alias of one); must resolve to a key of
+                the recorder's vocabulary.
             location: The declaration or member the occurrence sits at, when known.
 
         Raises:
             KeyError: If ``construct`` is not part of the declared vocabulary.
         """
-        if construct not in LIMIT_DETAILS:
-            raise KeyError(f"unknown TypeScript limit key: {construct}")
+        construct = self._aliases.get(construct, construct)
+        if construct not in self._details:
+            raise KeyError(f"unknown limit key: {construct}")
         self._counts[construct] = self._counts.get(construct, 0) + 1
         if location:
             self._locations.setdefault(construct, set()).add(location)
@@ -219,7 +232,7 @@ class LimitRecorder:
         return tuple(
             TsLimit(
                 construct=construct,
-                detail=LIMIT_DETAILS[construct],
+                detail=self._details[construct],
                 count=count,
                 locations=tuple(sorted(self._locations.get(construct, ()))),
             )

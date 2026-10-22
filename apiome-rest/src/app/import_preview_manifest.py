@@ -153,6 +153,8 @@ from .proto_editions import (
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
 from .typescript_types_normalizer import TYPESCRIPT_EXTRAS_KEY
+from .zod_normalizer import ZOD_EXTRAS_KEY
+from .zod_parser import PARTIAL_LIMITS as ZOD_PARTIAL_LIMITS
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +237,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # list, declared limits). Our own bookkeeping about the read — the module's own
         # constructs are the declarations it exports.
         TYPESCRIPT_EXTRAS_KEY,
+        # FMT-8.2: the Zod projection record (root module, the module set, the export list,
+        # declared limits). Our own bookkeeping about the read.
+        ZOD_EXTRAS_KEY,
         # FMT-5.3: the Kafka Connect projection record (root schemas, whether the intake
         # was enveloped, the source files, the declared limits). Our own bookkeeping about
         # the read — the schema's own constructs are the structs and fields it declares,
@@ -1173,6 +1178,7 @@ def _document_scope_rows(
     ledger.extend(_cddl_capability_rows(api))
     ledger.extend(_arrow_capability_rows(api))
     ledger.extend(_typescript_capability_rows(api))
+    ledger.extend(_zod_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
     ledger.extend(_dbt_capability_rows(api))
@@ -1866,25 +1872,29 @@ _TYPESCRIPT_PARTIAL_LIMITS = frozenset(
 )
 
 
-def _typescript_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
-    """Render the FMT-8.1 TypeScript declared limits as document-scoped ledger rows.
+def _graded_limit_rows(
+    api: CanonicalApi, *, format_key: str, extras_key: str, partial: frozenset
+) -> List[CoverageEntry]:
+    """Render a code-first reader's declared limits, grading each one honestly.
 
-    Unlike the readers that only ever *approximate*, the TypeScript reader leaves things out:
-    FMT-8.1 forbids flattening a conditional, mapped or template-literal type, an
-    uninstantiated generic or a merged interface to ``any``, so the declaration or member that
-    needs one is not modelled. Those rows are graded ``not-parsed-by-adapter`` — the parser's
-    subset stops there, and the ledger says so per construct and per location. The three
-    limits whose construct *is* modelled (:data:`_TYPESCRIPT_PARTIAL_LIMITS`) are
-    ``partially-mapped``, exactly as :func:`_declared_limit_rows` grades every other reader's.
+    Unlike the readers that only ever *approximate*, the FMT-8 code-first readers leave things
+    out: a construct with no shape (a conditional type, a ``z.function()``) is never widened to
+    ``any``, so the declaration or member that needs one is not modelled. Those rows are graded
+    ``not-parsed-by-adapter``. The limits whose construct *is* modelled, with only a detail lost
+    (``partial``), are ``partially-mapped``, exactly as :func:`_declared_limit_rows` grades every
+    other reader's.
 
     Args:
         api: The normalized model.
+        format_key: The canonical format the rows belong to.
+        extras_key: The root extras key holding the reader's projection record.
+        partial: The limit keys that are partial mappings rather than omissions.
 
     Returns:
         One ledger row per declared limit, or an empty list for a module that met none.
     """
-    report = api.extras.get(TYPESCRIPT_EXTRAS_KEY) if isinstance(api.extras, dict) else None
-    if not isinstance(report, dict) or api.format != "typescript-types":
+    report = api.extras.get(extras_key) if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict) or api.format != format_key:
         return []
     rows: List[CoverageEntry] = []
     for limit in report.get("capability_limits") or []:
@@ -1893,7 +1903,7 @@ def _typescript_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         construct = str(limit.get("construct"))
         coverage = (
             CoverageClass.PARTIALLY_MAPPED
-            if construct in _TYPESCRIPT_PARTIAL_LIMITS
+            if construct in partial
             else CoverageClass.NOT_PARSED_BY_ADAPTER
         )
         status, reason = STATUS_FOR_COVERAGE[coverage]
@@ -1916,6 +1926,42 @@ def _typescript_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
             )
         )
     return rows
+
+
+def _typescript_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-8.1 TypeScript declared limits as document-scoped ledger rows.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api,
+        format_key="typescript-types",
+        extras_key=TYPESCRIPT_EXTRAS_KEY,
+        partial=_TYPESCRIPT_PARTIAL_LIMITS,
+    )
+
+
+def _zod_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-8.2 Zod declared limits as document-scoped ledger rows.
+
+    A ``refine``, ``transform``, ``brand``, ``pipe``, ``preprocess`` or coercion keeps the schema
+    it wraps, so it is ``partially-mapped``; ``z.custom()``, ``z.function()``, ``z.promise()``
+    and the unrepresentable schemas leave their declaration out and are
+    ``not-parsed-by-adapter`` — FMT-8.2's "declared limits, not silently dropped".
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="zod", extras_key=ZOD_EXTRAS_KEY, partial=ZOD_PARTIAL_LIMITS
+    )
 
 
 def _odcs_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

@@ -16,8 +16,9 @@ instead of a crash.
 which tools ship and at what version. The Dockerfile installs exactly these versions via
 build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 
-Two tools are different. `asyncapi-parser` (FMT-1.3, #5414) and `typescript-types-extractor`
-(FMT-8.1, #5462) are **hard dependencies**: their exact pins live in the toolchain manifest
+Three tools are different. `asyncapi-parser` (FMT-1.3, #5414), `typescript-types-extractor`
+(FMT-8.1, #5462) and `zod-schema-extractor` (FMT-8.2, #5463) are **hard dependencies**: their
+exact pins live in the toolchain manifest
 `apiome-rest/toolchain/package.json`, which the container build installs from and CI installs
 from, and they have no build arg — so no build can quietly ship a reader the runtime never
 verified. See
@@ -33,6 +34,7 @@ verified. See
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
+| `zod-schema-extractor` **(required)** | Evaluates a module's exported Zod schemas → JSON Schema (`zod`, FMT-8.2) — permission-locked, network-free, time-bounded | `3.25.76` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/zod-extract.mjs`) |
 | `asyncapi-diff` | AsyncAPI diff → breaking/non-breaking/unclassified (`@asyncapi/diff`, MFI-8.4) | `0.5.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-diff.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 | `graphql-inspector-diff` | GraphQL diff → breaking/dangerous/non-breaking (`@graphql-inspector/core`, MFI-10.5) | `6.2.0` | node | npm into tools prefix + Node wrapper (`toolchain/graphql-inspector-diff.mjs`) |
@@ -87,12 +89,13 @@ sidecar mount, or omit a tool entirely and accept its format degrading to "unava
 ## Required tools & the startup self-check
 
 `REQUIRED_TOOL_KEYS` in `src/app/toolchain_selfcheck.py` names the tools this runtime treats as
-**hard dependencies**. Today that is two:
+**hard dependencies**. Today that is three:
 
 | Key | Why it cannot be optional |
 |-----|---------------------------|
 | `asyncapi-parser` | The AsyncAPI adapter has no fallback parser — there is no pure-Python AsyncAPI 2.x/3.x parser behind it — and AsyncAPI is a shipped, documented, fixture-covered format. Losing it is losing a product surface. |
 | `typescript-types-extractor` | TypeScript type declarations are read by the TypeScript compiler itself (FMT-8.1); there is no Python reader of the language to fall back on, and the FMT-1.3 rule forbids a runtime `available: false` for a shipped format. |
+| `zod-schema-extractor` | A Zod schema is a value, and only Zod running the module can produce it (FMT-8.2). |
 
 At startup `app.main` calls `enforce_toolchain_selfcheck()`, which:
 
@@ -117,8 +120,20 @@ uv run python -m app.toolchain_selfcheck        # exits 1 when a required tool i
 ```
 
 The build proves the same thing before the image is finished: the Dockerfile pipes a tiny
-AsyncAPI document through `asyncapi-parser`, and a one-line TypeScript module through
-`typescript-types-extract`, and fails the build unless both come back `ok`.
+AsyncAPI document through `asyncapi-parser`, a one-line TypeScript module through
+`typescript-types-extract` and a one-line Zod module through `zod-extract`, and fails the build
+unless all three come back `ok`.
+
+### The one tool that runs user code
+
+`zod-extract` *evaluates* the uploaded module, so it is held to more than the sandbox every tool
+gets. It re-executes itself under Node's permission model with read access to its own directory
+only (no other file, no child process, no worker, no addon), disables Node's network APIs before
+any user code runs, starts with an empty environment, and runs both the import and the reading of
+schemas against a time budget. The Python side calls it with
+`SandboxPolicy.for_untrusted_code()`, which forces the runner's network namespace on and *strict*
+— if the kernel cannot isolate the network, the import fails rather than running the module with
+network access.
 
 ### Keeping the hard pin in sync
 
