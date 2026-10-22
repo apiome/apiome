@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 74
+- **Formats gated:** 75
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -79,6 +79,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `tradacoms` | TRADACOMS | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `traefik` |
 | `tyk` | Tyk API definition | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `typescript-types` | TypeScript types | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `typespec` | TypeSpec | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `typespec` |
 | `wadl` | WADL | rest | 6 | 5 | 1 | 0 | 12 | 5/6 (+1 waived) | 6 | `wadl` |
 | `wit` | WIT (WebAssembly) | rpc | 11 | 5 | 0 | 0 | 16 | 6/6 | 9 | `wit` |
@@ -160,6 +161,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `tradacoms` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `traefik` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `tyk` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `typescript-types` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `typespec` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wadl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wit` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -187,4 +189,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `trpc`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `trpc`, `vsam-idcams`, `zod`

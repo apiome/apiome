@@ -1498,6 +1498,23 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "typescript-types": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="TypeScript 6.0 (reads modules written for any earlier release)",
+                format_key="typescript-types",
+                support=VersionSupport.UNGATED,
+                note="A TypeScript module declares no language version, and the reader does not "
+                "branch on one: the bundled TypeScript 6.0 compiler (pinned in the toolchain "
+                "manifest) parses every declaration an earlier release accepted. `.ts`, "
+                "`.d.ts`, `.mts` and `.cts` are one grammar read four ways, not four versions. "
+                "Constructs outside the FMT-8.1 subset are declared parsing limits whatever the "
+                "release that introduced them.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "dtd": VersionCoverage(
         reads=[
             FormatVersion(

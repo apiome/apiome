@@ -158,11 +158,11 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "24"
+REGISTRY_VERSION = "25"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
-REVIEW_DATE = "2026-10-21"
+REVIEW_DATE = "2026-10-22"
 
 #: Accepted shape of a format key. The registry resolves an *arbitrary caller-supplied* string
 #: (a stored ``source_format`` whose adapter may have been retired), so the key is constrained
@@ -2458,6 +2458,95 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "only, and the two share one type-mapping table (`app.sql_ddl_dialects."
             "SQL_TYPE_SCALARS`) so a round trip cannot disagree with itself about what a "
             "`VARCHAR` is.",
+        ],
+    ),
+    "typescript-types": _Seed(
+        # TypeScript's payload analysis is the format-blind walk, so the first three fields
+        # restate what derivation produces. The reviewed judgement is the projection statement:
+        # FMT-8.1's acceptance criterion is that unresolvable generics, conditional and mapped
+        # types are *declared parsing limits and never silently flattened to `any`*, and this is
+        # where a reader is told which constructs model and which are declared.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "Declarations locate by name (`Order`, `Order.lines`) rather than by line: the "
+                "compiler reports positions, but a type reached through a re-export or an "
+                "instantiated generic has no single line of its own, so the model does not "
+                "pretend one."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A module of type declarations describes data without containing any: literal "
+                "types and enum members are part of the schema and are modelled, and there are "
+                "no runtime values for the analyzer to observe."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=[
+                "typescript.conditional_type",
+                "typescript.declaration_merging",
+                "typescript.function_type",
+                "typescript.index_signature",
+                "typescript.intersection",
+                "typescript.lib_type",
+                "typescript.mapped_type",
+                "typescript.symbol_key",
+                "typescript.template_literal_type",
+                "typescript.tuple_positions",
+                "typescript.type_query",
+                "typescript.unmodelled_reference",
+                "typescript.unresolved_generic",
+            ],
+            note=(
+                "Every exported `interface`, `type` and `enum` becomes a canonical type. An "
+                "interface is a `RECORD` with `extends` flattened (parents first, the child's "
+                "members overriding); an object made only of an index signature, `Record<K, V>` "
+                "and `Map<K, V>` are `MAP`s; a union of object shapes or named types is a "
+                "`UNION` (inline variants named by their discriminant), a union of literals is "
+                "an `ENUM`, and an intersection of object shapes is one merged `RECORD`. An "
+                "optional member and a `| null` / `| undefined` both make the reference "
+                "nullable, with the optional and readonly modifiers kept in extras. `Pick`, "
+                "`Omit`, `Partial`, `Required`, `Readonly`, indexed access types and `keyof` "
+                "are evaluated by the compiler and model as the shape they produce. Generics are "
+                "resolved where they are instantiated: `type OrderPage = Page<Order>` is a "
+                "concrete record. The listed constructs are *declared, never guessed*: a "
+                "conditional, mapped or template-literal type, a function type, a symbol key, a "
+                "`typeof` query, a library type with no data shape, an uninstantiated generic "
+                "and a merged interface leave their declaration or member out of the model; a "
+                "tuple's positions and an index signature beside named properties are recorded "
+                "in extras; an intersection with a non-object member keeps its first member. "
+                "Every occurrence is counted and located in "
+                "`extras['typescript']['capability_limits']` — none is widened to `any`."
+            ),
+        ),
+        notes=[
+            "The module is read by the TypeScript compiler itself (the bundled, version-pinned "
+            "`typescript` package), not by a Python approximation of the language: a reference "
+            "resolves to the declaration the compiler resolves it to, across `import type` and "
+            "re-exports, and a utility type is the shape the compiler computes.",
+            "Only what the root module exports defines the model. A non-exported declaration "
+            "appears only when an exported type refers to it, and a reference that resolves to "
+            "nothing in the upload — an import from a module that was not included — rejects "
+            "the import rather than being modelled as `any`.",
+            "The model's identity is the root module's first exported interface (else its first "
+            "export), never the filename, so a module pasted and the same module uploaded "
+            "catalog as one API.",
+            "A module that imports a code-first schema library (`zod`, `yup`, `io-ts`, "
+            "`valibot`, `@sinclair/typebox`, …) declares its schemas as values this reader cannot "
+            "see, and is rejected as a different format rather than imported empty.",
+            "TypeScript *output* is not implemented here, so a schema imported through this "
+            "adapter is exported through another target's emitter and is not written back as "
+            "TypeScript declarations.",
         ],
     ),
     "cddl": _Seed(

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install dev toolchain binaries into apiome-rest/.tools/bin (MFI-5.2, FMT-1.3).
+# Install dev toolchain binaries into apiome-rest/.tools/bin (MFI-5.2, FMT-1.3, FMT-8.1).
 #
 # The production image bundles buf (and other CLIs) under /opt/apiome-tools/bin. Local
 # `yarn dev` / run.sh uses this script so gRPC/Protobuf catalog import can compile .proto
@@ -12,13 +12,16 @@
 #                    so a runtime without it loses a shipped format. Its exact version is
 #                    pinned in toolchain/package.json (the toolchain manifest), which is what
 #                    the container build and CI install from too.
+#   typescript-types-extractor
+#                    REQUIRED (FMT-8.1, #5462) — TypeScript type declarations are read by the
+#                    TypeScript compiler itself; `typescript` is pinned in the same manifest.
 #
 # Usage:
 #   ./scripts/install_dev_toolchain.sh [--force] [tool ...]
 #
 # With no tool named, everything above is installed. Name one or more (`buf`,
-# `asyncapi-parser`) to install just those — CI uses that to add the required parser without
-# re-downloading buf.
+# `asyncapi-parser`, `typescript-types-extractor`) to install just those — CI uses that to add
+# the required Node tools without re-downloading buf.
 
 set -euo pipefail
 
@@ -38,16 +41,17 @@ for arg in "$@"; do
       cat <<EOF
 Usage: $(basename "$0") [--force] [tool ...]
 
-Installs the pinned buf binary and the required @asyncapi/parser toolchain into
-apiome-rest/.tools/ for local gRPC/Protobuf and AsyncAPI import.
+Installs the pinned buf binary and the required @asyncapi/parser and typescript toolchain
+into apiome-rest/.tools/ for local gRPC/Protobuf, AsyncAPI and TypeScript-types import.
 Run from the apiome-rest directory (or via ./run.sh / yarn dev).
 
   --force   Re-install even when a working tool is already present.
-  tool      Install only the named tool(s): buf, asyncapi-parser. Default: all.
+  tool      Install only the named tool(s): buf, asyncapi-parser,
+            typescript-types-extractor. Default: all.
 EOF
       exit 0
       ;;
-    buf|asyncapi-parser) SELECTED+=("$arg") ;;
+    buf|asyncapi-parser|typescript-types-extractor) SELECTED+=("$arg") ;;
     *)
       echo "install_dev_toolchain: unknown argument '${arg}' (try --help)" >&2
       exit 1
@@ -209,11 +213,69 @@ install_asyncapi_parser() {
   echo "install_dev_toolchain: installed ${PARSER_BIN} ($("$PARSER_BIN" --version 2>/dev/null | head -1))"
 }
 
+# ---------------------------------------------------------------------------------------
+# typescript-types-extractor — REQUIRED (FMT-8.1, #5462)
+# ---------------------------------------------------------------------------------------
+#
+# Same layout as the AsyncAPI parser: `toolchain/typescript-types-extract.mjs` imports the
+# `typescript` package by bare specifier, so it is copied beside the shared node_modules and
+# fronted by a wrapper on .tools/bin.
+
+EXTRACTOR_BIN="${TOOLS_BIN}/typescript-types-extract"
+
+extractor_ok() {
+  [[ -x "$EXTRACTOR_BIN" ]] && "$EXTRACTOR_BIN" --version >/dev/null 2>&1
+}
+
+install_typescript_types_extractor() {
+  local pin
+  pin="$(
+    grep -E '"typescript"' toolchain/package.json \
+      | sed -E 's/.*"typescript"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/'
+  )"
+  if [[ -z "$pin" ]]; then
+    echo "install_dev_toolchain: could not read the typescript pin from toolchain/package.json" >&2
+    exit 1
+  fi
+
+  # The script is re-copied even when the package is current, so an edit to the extractor in
+  # the source tree reaches the installed copy on the next run.
+  if extractor_ok && [[ "$FORCE" -eq 0 ]] && "$EXTRACTOR_BIN" --version 2>/dev/null | grep -qF " ${pin}"; then
+    cp "${ROOT}/toolchain/typescript-types-extract.mjs" "${NODE_PREFIX}/typescript-types-extract.mjs"
+    echo "install_dev_toolchain: typescript-types-extract already installed at ${EXTRACTOR_BIN} ($("$EXTRACTOR_BIN" --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "install_dev_toolchain: npm is required to install typescript@${pin}." >&2
+    echo "install_dev_toolchain: TypeScript-types import is a REQUIRED format — without it the" >&2
+    echo "install_dev_toolchain: service refuses to start when APIOME_REQUIRE_TOOLCHAIN is on." >&2
+    exit 1
+  fi
+
+  echo "install_dev_toolchain: installing typescript@${pin} into ${NODE_PREFIX}"
+  mkdir -p "$NODE_PREFIX"
+  npm install --prefix "$NODE_PREFIX" --no-audit --no-fund --silent "typescript@${pin}"
+  cp "${ROOT}/toolchain/typescript-types-extract.mjs" "${NODE_PREFIX}/typescript-types-extract.mjs"
+  chmod +x "${NODE_PREFIX}/typescript-types-extract.mjs"
+  printf '#!/bin/sh\nexec node %s/typescript-types-extract.mjs "$@"\n' "$NODE_PREFIX" > "$EXTRACTOR_BIN"
+  chmod +x "$EXTRACTOR_BIN"
+
+  if ! extractor_ok; then
+    echo "install_dev_toolchain: install finished but '${EXTRACTOR_BIN} --version' failed" >&2
+    exit 1
+  fi
+  echo "install_dev_toolchain: installed ${EXTRACTOR_BIN} ($("$EXTRACTOR_BIN" --version 2>/dev/null | head -1))"
+}
+
 if wanted buf; then
   install_buf
 fi
 if wanted asyncapi-parser; then
   install_asyncapi_parser
+fi
+if wanted typescript-types-extractor; then
+  install_typescript_types_extractor
 fi
 
 echo "install_dev_toolchain: restart the REST API (yarn dev) if it is already running."

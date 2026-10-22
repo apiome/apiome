@@ -132,6 +132,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   odcs: 'ODCS Data Contract',
   'kafka-connect': 'Kafka Connect Schema',
   'sql-ddl': 'SQL DDL',
+  'typescript-types': 'TypeScript types',
   cobolcopybook: 'COBOL Copybook',
   fhir: 'FHIR',
   hl7v2: 'HL7 v2',

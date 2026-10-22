@@ -122,7 +122,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `schematron/` | Schematron rules | data_schema | `schema`/`pattern` root in `http://purl.oclc.org/dsdl/schematron` | 13 |
 | `shacl/` | SHACL shapes (pending #5471) | data_schema | `sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD) | 15 |
 | `sql-ddl/` | SQL DDL schemas and migrations | data_schema | `CREATE TABLE`/`CREATE VIEW`/`ALTER TABLE … ADD CONSTRAINT` | 15 |
-| `typescript-types/` | TypeScript type declarations (pending #5462) | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
+| `typescript-types/` | TypeScript type declarations | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
 | `vsam-idcams/` | VSAM cluster definitions (pending #5484) | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
 | `xsd/` | XML Schema (XSD) | data_schema | `xs:schema` root element | 13 |
 | `zod/` | Zod schemas (pending #5463) | data_schema | `import { z } from 'zod'` + exported `z.object(...)` values | 15 |
@@ -2421,25 +2421,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`07-policies-set/policies.json`** — Fileset member: quotas, rate limits and per-URL access rights keyed by the api_id in the root.
 
-### `typescript-types/` — TypeScript type declarations (pending #5462)
+### `typescript-types/` — TypeScript type declarations
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-model.d.ts` | minimal | `typescript-types` ≥ 0.8 | valid | `interface`, `primitives`, `pending-adapter` |
-| `02-typical-order-model.ts` | typical | `typescript-types` ≥ 0.8 | valid | `literal-union`, `optional`, `nullable`, `array`, `readonly`, `Pick`, `Omit`, `pending-adapter` |
-| `03-modules-set/customer.d.ts` | multi-file (member) | `typescript-types` (no guarantee) | valid | `multi-file`, `interface`, `pending-adapter` |
-| `03-modules-set/index.d.ts` | multi-file (root) | `typescript-types` ≥ 0.8 | valid | `multi-file`, `re-export`, `import-type`, `pending-adapter` |
-| `03-modules-set/order.d.ts` | multi-file (member) | `typescript-types` (no guarantee) | valid | `multi-file`, `cross-module-type`, `pending-adapter` |
-| `04-stress-type-system.ts` ⚠ | stress | `typescript-types` ≥ 0.8 | valid | `tuple`, `index-signature`, `intersection`, `enum`, `const-enum`, `generic-instantiation`, `conditional-type`, `mapped-type`, `template-literal-type`, `declaration-merging`, `unique-symbol`, `function-type`, `pending-adapter` |
-| `05-real-world-api-client-types.d.ts` | real-world | `typescript-types` ≥ 0.8 | valid | `client-package`, `generic-instantiation`, `discriminated-union`, `money`, `pagination`, `pending-adapter` |
-| `06-typical-discriminated-unions.ts` | typical | `typescript-types` ≥ 0.8 | valid | `discriminated-union`, `extends`, `indexed-access`, `nested-object`, `pending-adapter` |
-| `07-composition-inheritance.ts` | composition | `typescript-types` ≥ 0.8 | valid | `multiple-extends`, `intersection`, `generic-instantiation`, `index-signature`, `pending-adapter` |
-| `negative/01-syntactic-missing-brace.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace`, `pending-adapter` |
-| `negative/02-semantic-no-exported-types.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `semantic`, `no-exported-types`, `pending-adapter` |
-| `negative/03-truncated-mid-interface.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `truncated`, `mid-type-reference`, `pending-adapter` |
-| `negative/04-wrong-format-zod.ts` ⚠ | — | `typescript-types` (no guarantee) | invalid | `negative`, `wrong-format`, `zod`, `pending-adapter` |
-| `negative/05-encoding-utf16.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-import.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module`, `pending-adapter` |
+| `01-minimal-model.d.ts` | minimal | `typescript-types` ≥ 0.8 | valid | `interface`, `primitives` |
+| `02-typical-order-model.ts` | typical | `typescript-types` ≥ 0.8 | valid | `literal-union`, `optional`, `nullable`, `array`, `readonly`, `Pick`, `Omit` |
+| `03-modules-set/customer.d.ts` | multi-file (member) | `typescript-types` (no guarantee) | valid | `multi-file`, `interface` |
+| `03-modules-set/index.d.ts` | multi-file (root) | `typescript-types` ≥ 0.8 | valid | `multi-file`, `re-export`, `import-type` |
+| `03-modules-set/order.d.ts` | multi-file (member) | `typescript-types` (no guarantee) | valid | `multi-file`, `cross-module-type` |
+| `04-stress-type-system.ts` ⚠ | stress | `typescript-types` ≥ 0.8 | valid | `tuple`, `index-signature`, `intersection`, `enum`, `const-enum`, `generic-instantiation`, `conditional-type`, `mapped-type`, `template-literal-type`, `declaration-merging`, `unique-symbol`, `function-type` |
+| `05-real-world-api-client-types.d.ts` | real-world | `typescript-types` ≥ 0.8 | valid | `client-package`, `generic-instantiation`, `discriminated-union`, `money`, `pagination` |
+| `06-typical-discriminated-unions.ts` | typical | `typescript-types` ≥ 0.8 | valid | `discriminated-union`, `extends`, `indexed-access`, `nested-object` |
+| `07-composition-inheritance.ts` | composition | `typescript-types` ≥ 0.8 | valid | `multiple-extends`, `intersection`, `generic-instantiation`, `index-signature` |
+| `negative/01-syntactic-missing-brace.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace` |
+| `negative/02-semantic-no-exported-types.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `semantic`, `no-exported-types` |
+| `negative/03-truncated-mid-interface.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `truncated`, `mid-type-reference` |
+| `negative/04-wrong-format-zod.ts` ⚠ | — | `typescript-types` (no guarantee) | invalid | `negative`, `wrong-format`, `zod` |
+| `negative/05-encoding-utf16.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-import.ts` | — | `typescript-types` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-module` |
 
 > ⚠ **`04-stress-type-system.ts`** — Organised as modellable-subset / declared-limits halves; the second half must produce named parsing limits, never `any`.
 

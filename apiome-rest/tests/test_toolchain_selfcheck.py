@@ -142,6 +142,12 @@ def test_asyncapi_parser_is_a_hard_dependency():
     assert "asyncapi-parser" in REQUIRED_TOOL_KEYS
 
 
+def test_typescript_types_extractor_is_a_hard_dependency():
+    """FMT-8.1 (#5462): TypeScript types follow the FMT-1.3 rule — no runtime ``available: false``."""
+    assert "typescript-types-extractor" in REQUIRED_TOOL_KEYS
+    assert REQUIRED_NPM_PACKAGES["typescript-types-extractor"] == "typescript"
+
+
 def test_toolchain_manifest_exists_and_pins_every_required_npm_package():
     """``toolchain/package.json`` is what the image and CI install from."""
     assert TOOLCHAIN_MANIFEST_PATH.is_file(), TOOLCHAIN_MANIFEST_PATH
@@ -177,6 +183,17 @@ def test_dockerfile_installs_the_hard_dependency_from_the_manifest():
     # A build ARG for the parser would be a second, overridable source of truth.
     assert "ARG ASYNCAPI_PARSER_VERSION" not in dockerfile
     assert "@asyncapi/parser@" not in dockerfile
+    # The same holds for the TypeScript compiler behind the FMT-8.1 extractor.
+    assert "ARG TYPESCRIPT_VERSION" not in dockerfile
+    assert '"typescript@' not in dockerfile
+
+
+def test_dockerfile_smoke_tests_every_required_node_tool():
+    """A hard dependency is proven at build time, not on the first import in production."""
+    dockerfile = (_REST_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    for executable in ("asyncapi-parser", "typescript-types-extract"):
+        assert f"${{TOOLS_PREFIX}}/bin/{executable} --version" in dockerfile, executable
+        assert f"| ${{TOOLS_PREFIX}}/bin/{executable} >" in dockerfile, executable
     # The image ships the toolchain, so it enforces it.
     assert "APIOME_REQUIRE_TOOLCHAIN=1" in dockerfile
 
@@ -236,7 +253,7 @@ async def test_missing_required_tool_is_degraded_without_enforcement(monkeypatch
     result = await run_toolchain_selfcheck()
 
     assert result.status == "degraded"
-    assert result.missing_required == ["asyncapi-parser"]
+    assert result.missing_required == list(REQUIRED_TOOL_KEYS)
     assert not result.ok
 
 
@@ -261,7 +278,7 @@ async def test_a_tool_that_resolves_but_cannot_run_is_missing(monkeypatch):
     assert parser is not None
     assert parser.available and parser.invocable is False
     assert not parser.ok
-    assert result.missing_required == ["asyncapi-parser"]
+    assert result.missing_required == list(REQUIRED_TOOL_KEYS)
     assert "version probe failed" in parser.detail
 
 
@@ -429,7 +446,7 @@ def test_health_detail_falls_back_to_a_probe_before_startup(monkeypatch):
     detail = toolchain_health_detail()
 
     assert detail["status"] == "degraded"
-    assert detail["missing"] == ["asyncapi-parser"]
+    assert detail["missing"] == list(REQUIRED_TOOL_KEYS)
 
 
 async def test_health_detail_reports_availability_without_fingerprinting_the_runtime(

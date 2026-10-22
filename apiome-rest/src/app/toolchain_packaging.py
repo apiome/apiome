@@ -16,9 +16,9 @@ What lives here:
   point at a custom binary, default leading args, a version-probe argument, and whether the
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
-  ``amf``, ``asyncapi``, ``asyncapi-parser``, ``asyncapi-diff``, ``rover``,
-  ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``.
+  ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
+  ``asyncapi-diff``, ``rover``, ``graphql-inspector-diff``, ``spectral``, ``vacuum``,
+  ``redocly``, ``oasdiff``, ``openapi-changes``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -194,6 +194,15 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         description="AsyncAPI parse/validate/dereference → canonical JSON (@asyncapi/parser, "
         "MFI-8.1).",
         env_override_key="APIOME_ASYNCAPI_PARSER_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="typescript-types-extractor",
+        executable="typescript-types-extract",
+        version="6.0.3",
+        description="TypeScript interface/type/enum declarations → neutral JSON AST "
+        "(the `typescript` compiler API, FMT-8.1).",
+        env_override_key="APIOME_TYPESCRIPT_TYPES_EXTRACTOR_BIN",
         runtime="node",
     ),
     BundledTool(

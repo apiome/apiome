@@ -40,6 +40,7 @@ _EXPECTED_KEYS = {
     "amf",
     "asyncapi",
     "asyncapi-parser",
+    "typescript-types-extractor",
     "asyncapi-diff",
     "rover",
     "graphql-inspector-diff",

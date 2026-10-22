@@ -75,13 +75,20 @@ __all__ = [
 #: fixture-covered format. Losing it is losing a product surface, so a deployment that cannot
 #: run the parser must say so at boot rather than at the first import.
 #:
+#: ``typescript-types-extractor`` is here for the same reason (FMT-8.1, #5462): TypeScript type
+#: declarations are read by the TypeScript compiler itself, and there is no Python reader of the
+#: language to fall back on.
+#:
 #: Every other bundled tool stays optional: ``buf``, ``tsp``, ``smithy``, the linters and the
 #: diff CLIs gate formats or advisory checks that degrade to a stated "unavailable" instead.
-REQUIRED_TOOL_KEYS: Tuple[str, ...] = ("asyncapi-parser",)
+REQUIRED_TOOL_KEYS: Tuple[str, ...] = ("asyncapi-parser", "typescript-types-extractor")
 
 #: Required tool key → the npm package the toolchain manifest pins for it. Only the tools whose
 #: runtime *is* an npm package appear here; a required native binary would have no entry.
-REQUIRED_NPM_PACKAGES: Dict[str, str] = {"asyncapi-parser": "@asyncapi/parser"}
+REQUIRED_NPM_PACKAGES: Dict[str, str] = {
+    "asyncapi-parser": "@asyncapi/parser",
+    "typescript-types-extractor": "typescript",
+}
 
 #: The toolchain manifest: ``apiome-rest/toolchain/package.json``, which pins the exact version
 #: of every hard Node dependency. It is a **build-and-CI** artifact — the container build and

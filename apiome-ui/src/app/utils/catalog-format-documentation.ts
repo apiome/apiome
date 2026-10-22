@@ -66,6 +66,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   cddl: 'https://www.rfc-editor.org/rfc/rfc8610',
   arrow: 'https://arrow.apache.org/docs/format/Columnar.html',
   'sql-ddl': 'https://www.iso.org/standard/76583.html',
+  'typescript-types': 'https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html',
   dbt: 'https://docs.getdbt.com/reference/configs-and-properties',
   odcs: 'https://bitol-io.github.io/open-data-contract-standard/latest/',
   'kafka-connect': 'https://kafka.apache.org/documentation/#connect_schemas',

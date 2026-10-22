@@ -108,8 +108,9 @@ jobs:
       - name: Install dependencies (incl. dev/test group)
         run: uv sync
 
-      # The AsyncAPI parser is a HARD toolchain dependency (FMT-1.3, #5414): the adapter has no
-      # fallback, so without it every asyncapi corpus/golden/round-trip row silently skips and a
+      # The AsyncAPI parser and the TypeScript-types extractor are HARD toolchain dependencies
+      # (FMT-1.3, #5414; FMT-8.1, #5462): neither adapter has a fallback, so without them every
+      # asyncapi / typescript-types corpus, golden and round-trip row silently skips and a
       # regression in a shipped format never goes red here. Install the exact pin from the
       # toolchain manifest (the same one the container build uses) into apiome-rest/.tools,
       # where app.toolchain_runner resolves bundled tools without touching PATH.
@@ -119,8 +120,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install the required AsyncAPI toolchain
-        run: ./scripts/install_dev_toolchain.sh asyncapi-parser
+      - name: Install the required Node toolchain (AsyncAPI, TypeScript types)
+        run: ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor
 
       # buf is optional at runtime, but the production image bundles it, and the generated
       # supported-formats page describes that image: without buf the gRPC and Connect-RPC rows
