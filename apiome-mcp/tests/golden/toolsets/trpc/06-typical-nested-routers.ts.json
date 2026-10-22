@@ -1,0 +1,88 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "version",
+      "operation": "appRouter.version"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "appRouter.admin.audit.search"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "disable",
+      "operation": "appRouter.admin.users.disable"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "appRouter.admin.users.list"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "bySku",
+      "operation": "appRouter.catalogue.products.bySku"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_2",
+      "operation": "appRouter.catalogue.products.list"
+    }
+  ]
+}

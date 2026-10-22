@@ -16,8 +16,9 @@
 #                    REQUIRED (FMT-8.1, #5462) — TypeScript type declarations are read by the
 #                    TypeScript compiler itself; `typescript` is pinned in the same manifest.
 #   zod-schema-extractor
-#                    REQUIRED (FMT-8.2, #5463) — evaluates a module's Zod schemas with the
-#                    pinned `zod` (and transpiles with the pinned `typescript`).
+#                    REQUIRED (FMT-8.2, #5463; FMT-8.3, #5464) — evaluates a module's Zod schemas
+#                    and tRPC routers with the pinned `zod` and `@trpc/server` (and transpiles
+#                    with the pinned `typescript`).
 #
 # Usage:
 #   ./scripts/install_dev_toolchain.sh [--force] [tool ...]
@@ -286,15 +287,18 @@ zod_ok() {
 }
 
 install_zod_schema_extractor() {
-  local zod_pin ts_pin
+  local zod_pin ts_pin trpc_pin
+  trpc_pin="$(grep -E '"@trpc/server"' toolchain/package.json | sed -E 's/.*"@trpc\/server"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
   zod_pin="$(grep -E '"zod"' toolchain/package.json | sed -E 's/.*"zod"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
   ts_pin="$(grep -E '"typescript"' toolchain/package.json | sed -E 's/.*"typescript"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
-  if [[ -z "$zod_pin" || -z "$ts_pin" ]]; then
-    echo "install_dev_toolchain: could not read the zod / typescript pins from toolchain/package.json" >&2
+  if [[ -z "$zod_pin" || -z "$ts_pin" || -z "$trpc_pin" ]]; then
+    echo "install_dev_toolchain: could not read the zod / typescript / @trpc/server pins from toolchain/package.json" >&2
     exit 1
   fi
 
-  if zod_ok && [[ "$FORCE" -eq 0 ]] && "$ZOD_BIN" --version 2>/dev/null | grep -qF " ${zod_pin}"; then
+  if zod_ok && [[ "$FORCE" -eq 0 ]] && "$ZOD_BIN" --version 2>/dev/null | grep -qF " ${zod_pin}" \
+    && [[ -f "${NODE_PREFIX}/node_modules/@trpc/server/package.json" ]] \
+    && grep -qF "\"version\": \"${trpc_pin}\"" "${NODE_PREFIX}/node_modules/@trpc/server/package.json"; then
     cp "${ROOT}/toolchain/zod-extract.mjs" "${NODE_PREFIX}/zod-extract.mjs"
     echo "install_dev_toolchain: zod-extract already installed at ${ZOD_BIN} ($("$ZOD_BIN" --version 2>/dev/null | head -1))"
     return 0
@@ -307,9 +311,9 @@ install_zod_schema_extractor() {
     exit 1
   fi
 
-  echo "install_dev_toolchain: installing zod@${zod_pin} and typescript@${ts_pin} into ${NODE_PREFIX}"
+  echo "install_dev_toolchain: installing zod@${zod_pin}, @trpc/server@${trpc_pin} and typescript@${ts_pin} into ${NODE_PREFIX}"
   mkdir -p "$NODE_PREFIX"
-  npm install --prefix "$NODE_PREFIX" --no-audit --no-fund --silent "zod@${zod_pin}" "typescript@${ts_pin}"
+  npm install --prefix "$NODE_PREFIX" --no-audit --no-fund --silent "zod@${zod_pin}" "@trpc/server@${trpc_pin}" "typescript@${ts_pin}"
   cp "${ROOT}/toolchain/zod-extract.mjs" "${NODE_PREFIX}/zod-extract.mjs"
   chmod +x "${NODE_PREFIX}/zod-extract.mjs"
   printf '#!/bin/sh\nexec node %s/zod-extract.mjs "$@"\n' "$NODE_PREFIX" > "$ZOD_BIN"

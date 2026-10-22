@@ -1,0 +1,627 @@
+{
+  "adapter": "trpc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "trpc": {
+        "capability_limits": [
+          {
+            "construct": "trpc.non_schema_input",
+            "count": 1,
+            "detail": "A procedure whose `.input()` is a hand-written validator function rather than a Zod schema has no schema to extract. The procedure is modelled; its request payload is not, rather than being presented as an empty body.",
+            "locations": [
+              "stressRouter.handWritten"
+            ]
+          }
+        ],
+        "modules": [
+          "04-stress-procedure-forms.ts"
+        ],
+        "procedures": 7,
+        "root_module": "04-stress-procedure-forms.ts",
+        "routers": [
+          "stressRouter"
+        ]
+      }
+    },
+    "format": "trpc",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "stressRouter",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "trpc",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "trpc_router": ""
+        },
+        "key": "stressRouter",
+        "name": "stressRouter",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "chained"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.chained",
+            "kind": "query",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.chained#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ChainedInput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "chained",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "handWritten"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.handWritten",
+            "kind": "query",
+            "messages": [],
+            "name": "handWritten",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "onUpdate"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.onUpdate",
+            "kind": "subscription",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.onUpdate#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OnUpdateInput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "onUpdate",
+            "parameters": [],
+            "streaming": "server",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "read"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.read",
+            "kind": "query",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.read#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ReadInput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.read#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ReadOutput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "read",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "status"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.status",
+            "kind": "query",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.status#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "StatusOutput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "status",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_meta": {
+                "scope": "lab.write"
+              },
+              "trpc_path": "write"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.write",
+            "kind": "mutation",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.write#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "WriteInput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "write",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "trpc_parent": "stressRouter",
+          "trpc_router": "nested"
+        },
+        "key": "stressRouter.nested",
+        "name": "nested",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "trpc_path": "nested.inner"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "stressRouter.nested.inner",
+            "kind": "query",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "stressRouter.nested.inner#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "NestedInnerInput",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "inner",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "stressRouter",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "intersection"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ChainedInput.a",
+            "name": "a",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ChainedInput.b",
+            "name": "b",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ChainedInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "ChainedInput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "NestedInnerInput.deep",
+            "name": "deep",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NestedInnerInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "NestedInnerInput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "OnUpdateInput.channel",
+            "name": "channel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OnUpdateInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "OnUpdateInput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ReadInput.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ReadInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadInput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ReadOutput.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ReadOutput.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ReadOutput",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadOutput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "StatusOutput.ok",
+            "name": "ok",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "StatusOutput",
+        "key_type": null,
+        "kind": "record",
+        "name": "StatusOutput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "WriteInput.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "WriteInput.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "WriteInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "WriteInput",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "trpc/04-stress-procedure-forms.ts",
+  "counts": {
+    "channels": 0,
+    "operations": 7,
+    "servers": 0,
+    "services": 2,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "trpc"
+  },
+  "fingerprint": "sha256:08f31babe47837104ec5eefa7502e118ae2c0ad65dca2b4cbe450a2298b9f21b",
+  "lint": {
+    "findings": 32,
+    "grade": "F",
+    "report_fingerprint": "11624d71323cbf68e4470cb04fd37edc7c17e81b2d5bdfa4a84524930ca67ade",
+    "score": 42,
+    "severity_counts": {
+      "error": 0,
+      "info": 18,
+      "warning": 14
+    }
+  },
+  "snapshot_version": 1
+}

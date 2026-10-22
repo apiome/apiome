@@ -1199,6 +1199,10 @@ def load_builtin_import_sources() -> None:
     # via its own imports, the normalizer under ``zod``.
     from . import zod_import_source as _zod  # noqa: F401
 
+    # ``trpc_import_source`` (FMT-8.3) self-registers the ``trpc`` adapter — a router module or
+    # router set, evaluated in the same sandboxed extractor as Zod — and its normalizer.
+    from . import trpc_import_source as _trpc  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

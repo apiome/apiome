@@ -1,0 +1,253 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns ByIdOutput.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "byId",
+      "operation": "orderRouter.byId",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "orderId": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "placedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "new",
+                "paid",
+                "shipped",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "total": {
+              "minimum": 0.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "customerId",
+            "orderId",
+            "placedAt",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "ByIdOutput"
+      }
+    },
+    {
+      "description": "Returns CancelOutput.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "cancel",
+      "operation": "orderRouter.cancel",
+      "output": {
+        "schema": {
+          "properties": {
+            "cancelled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "cancelled"
+          ],
+          "type": "object"
+        },
+        "shape": "CancelOutput"
+      }
+    },
+    {
+      "description": "Returns ListOutput.",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "paid",
+              "shipped",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "orderRouter.list",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "orderId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "placedAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "new",
+                      "paid",
+                      "shipped",
+                      "cancelled"
+                    ],
+                    "type": "string"
+                  },
+                  "total": {
+                    "minimum": 0.0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "customerId",
+                  "orderId",
+                  "placedAt",
+                  "status",
+                  "total"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "ListOutput"
+      }
+    },
+    {
+      "description": "Returns PlaceOutput.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "quantity",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "customerId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "place",
+      "operation": "orderRouter.place",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "orderId": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "placedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "new",
+                "paid",
+                "shipped",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "total": {
+              "minimum": 0.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "customerId",
+            "orderId",
+            "placedAt",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "PlaceOutput"
+      }
+    }
+  ]
+}

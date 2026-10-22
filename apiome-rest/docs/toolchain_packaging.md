@@ -34,7 +34,7 @@ verified. See
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
-| `zod-schema-extractor` **(required)** | Evaluates a module's exported Zod schemas → JSON Schema (`zod`, FMT-8.2) — permission-locked, network-free, time-bounded | `3.25.76` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/zod-extract.mjs`) |
+| `zod-schema-extractor` **(required)** | Evaluates a module's exported Zod schemas → JSON Schema (`zod`, FMT-8.2), and in `routers` mode its tRPC routers' procedures (`@trpc/server` 11.19.0, FMT-8.3) — permission-locked, network-free, time-bounded | `3.25.76` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/zod-extract.mjs`) |
 | `asyncapi-diff` | AsyncAPI diff → breaking/non-breaking/unclassified (`@asyncapi/diff`, MFI-8.4) | `0.5.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-diff.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 | `graphql-inspector-diff` | GraphQL diff → breaking/dangerous/non-breaking (`@graphql-inspector/core`, MFI-10.5) | `6.2.0` | node | npm into tools prefix + Node wrapper (`toolchain/graphql-inspector-diff.mjs`) |
@@ -95,7 +95,7 @@ sidecar mount, or omit a tool entirely and accept its format degrading to "unava
 |-----|---------------------------|
 | `asyncapi-parser` | The AsyncAPI adapter has no fallback parser — there is no pure-Python AsyncAPI 2.x/3.x parser behind it — and AsyncAPI is a shipped, documented, fixture-covered format. Losing it is losing a product surface. |
 | `typescript-types-extractor` | TypeScript type declarations are read by the TypeScript compiler itself (FMT-8.1); there is no Python reader of the language to fall back on, and the FMT-1.3 rule forbids a runtime `available: false` for a shipped format. |
-| `zod-schema-extractor` | A Zod schema is a value, and only Zod running the module can produce it (FMT-8.2). |
+| `zod-schema-extractor` | A Zod schema — and a tRPC router — is a value, and only running the module can produce it (FMT-8.2, FMT-8.3). |
 
 At startup `app.main` calls `enforce_toolchain_selfcheck()`, which:
 

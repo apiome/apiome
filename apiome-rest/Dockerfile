@@ -46,11 +46,11 @@ ARG SMITHY_VERSION=1.53.0
 ARG DRAFTER_VERSION=4.0.0
 ARG AMF_VERSION=5.7.1
 ARG ASYNCAPI_VERSION=2.16.0
-# NOTE: @asyncapi/parser, typescript and zod are deliberately absent from this list. They are HARD
-# dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463) and their exact pins live in
-# apiome-rest/toolchain/package.json — the toolchain manifest this build installs from — so the
-# versions cannot be overridden per build and drift away from what the startup self-check
-# expects.
+# NOTE: @asyncapi/parser, typescript, zod and @trpc/server are deliberately absent from this list.
+# They are HARD dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463; FMT-8.3, #5464) and
+# their exact pins live in apiome-rest/toolchain/package.json — the toolchain manifest this build
+# installs from — so the versions cannot be overridden per build and drift away from what the
+# startup self-check expects.
 ARG ASYNCAPI_DIFF_VERSION=0.5.0
 ARG ROVER_VERSION=0.27.0
 ARG GRAPHQL_INSPECTOR_VERSION=6.2.0
@@ -139,7 +139,7 @@ RUN curl -fsSL "https://repository-master.mulesoft.org/nexus/content/repositorie
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently
-# `@asyncapi/parser`, `typescript` and `zod`) alongside the optional CLIs named on the command line.
+# `@asyncapi/parser`, `typescript`, `zod` and `@trpc/server`) alongside the optional CLIs.
 # Vendoring them this way is what makes AsyncAPI, TypeScript types and Zod formats the image
 # cannot ship without: the build smoke-tests all three a few lines down, and
 # app.toolchain_selfcheck refuses to start without them.
@@ -206,7 +206,10 @@ RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"files":{"smoke.ts":"import { z } from \"zod\"; export const Smoke = z.object({ id: z.string() });"},"root":"smoke.ts"}' \
        | ${TOOLS_PREFIX}/bin/zod-extract > /tmp/zod-smoke.json \
     && grep -q '"ok":true' /tmp/zod-smoke.json \
-    && rm -f /tmp/zod-smoke.json
+    && echo '{"files":{"r.ts":"import { initTRPC } from \"@trpc/server\"; import { z } from \"zod\"; const t = initTRPC.create(); export const appRouter = t.router({ ping: t.procedure.input(z.string()).query(() => 1) });"},"root":"r.ts","routers":true}' \
+       | ${TOOLS_PREFIX}/bin/zod-extract > /tmp/trpc-smoke.json \
+    && grep -q '"path":"ping"' /tmp/trpc-smoke.json \
+    && rm -f /tmp/zod-smoke.json /tmp/trpc-smoke.json
 
 # drafter — API Blueprint parser; no official static binary, so build the pinned tag from
 # source and install just the resulting CLI. The `drafter` CMake target is the static library

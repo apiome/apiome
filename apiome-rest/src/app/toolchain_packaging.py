@@ -209,8 +209,9 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         key="zod-schema-extractor",
         executable="zod-extract",
         version="3.25.76",
-        description="Evaluates a module's exported Zod schemas in a permission-locked, "
-        "time-bounded sandbox → JSON Schema (`zod`, FMT-8.2).",
+        description="Evaluates a module's exported Zod schemas (and, in routers mode, its tRPC "
+        "routers) in a permission-locked, time-bounded sandbox → JSON Schema "
+        "(`zod`, FMT-8.2; `@trpc/server`, FMT-8.3).",
         env_override_key="APIOME_ZOD_SCHEMA_EXTRACTOR_BIN",
         runtime="node",
     ),

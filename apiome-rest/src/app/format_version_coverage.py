@@ -1498,6 +1498,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "trpc": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="tRPC 11 (reads routers written for tRPC 10)",
+                format_key="trpc",
+                support=VersionSupport.UNGATED,
+                note="A router module declares no tRPC version the reader branches on: it is "
+                "evaluated with the bundled `@trpc/server` 11 and read from the router's own "
+                "procedure map, which tRPC 10 routers share. Procedure schemas are read with "
+                "Zod 3 (see `zod`).",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "zod": VersionCoverage(
         reads=[
             FormatVersion(

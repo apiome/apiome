@@ -1,0 +1,171 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns CustomerByIdOutput.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "name": "byId",
+      "operation": "appRouter.customer.byId",
+      "output": {
+        "schema": {
+          "properties": {
+            "address": {
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "maxLength": 2,
+                  "minLength": 2,
+                  "type": "string"
+                },
+                "line1": {
+                  "type": "string"
+                },
+                "postalCode": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "countryCode",
+                "line1",
+                "postalCode"
+              ],
+              "type": "object"
+            },
+            "customerId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "customerId"
+          ],
+          "type": "object"
+        },
+        "shape": "CustomerByIdOutput"
+      }
+    },
+    {
+      "description": "Returns OrderListOutput.",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "enum": [
+              "new",
+              "paid"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "appRouter.order.list",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "orderId": {
+                "type": "string"
+              },
+              "total": {
+                "properties": {
+                  "currency": {
+                    "enum": [
+                      "EUR",
+                      "GBP",
+                      "USD"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "value"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "orderId",
+              "total"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "OrderListOutput"
+      }
+    },
+    {
+      "description": "Returns OrderPlaceOutput.",
+      "inputSchema": {
+        "properties": {
+          "quantity": {
+            "exclusiveMinimum": 0.0,
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quantity",
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "place",
+      "operation": "appRouter.order.place",
+      "output": {
+        "schema": {
+          "properties": {
+            "orderId": {
+              "type": "string"
+            },
+            "total": {
+              "properties": {
+                "currency": {
+                  "enum": [
+                    "EUR",
+                    "GBP",
+                    "USD"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "value"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "orderId",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "OrderPlaceOutput"
+      }
+    }
+  ]
+}

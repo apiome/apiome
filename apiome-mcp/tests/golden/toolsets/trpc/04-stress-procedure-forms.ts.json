@@ -1,0 +1,123 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "a": {
+            "type": "string"
+          },
+          "b": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "type": "object"
+      },
+      "name": "chained",
+      "operation": "stressRouter.chained"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "handWritten",
+      "operation": "stressRouter.handWritten"
+    },
+    {
+      "description": "Returns ReadOutput.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read",
+      "operation": "stressRouter.read",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "value"
+          ],
+          "type": "object"
+        },
+        "shape": "ReadOutput"
+      }
+    },
+    {
+      "description": "Returns StatusOutput.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "status",
+      "operation": "stressRouter.status",
+      "output": {
+        "schema": {
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "ok"
+          ],
+          "type": "object"
+        },
+        "shape": "StatusOutput"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "value"
+        ],
+        "type": "object"
+      },
+      "name": "write",
+      "operation": "stressRouter.write"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "deep": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deep"
+        ],
+        "type": "object"
+      },
+      "name": "inner",
+      "operation": "stressRouter.nested.inner"
+    }
+  ]
+}

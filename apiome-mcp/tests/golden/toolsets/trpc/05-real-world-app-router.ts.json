@@ -1,0 +1,385 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns CustomerByIdOutput.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "name": "byId",
+      "operation": "appRouter.customer.byId",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "customerId": {
+              "pattern": "^CUS-[0-9]{6}$",
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "format": "email",
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "customerId",
+            "displayName",
+            "email"
+          ],
+          "type": "object"
+        },
+        "shape": "CustomerByIdOutput"
+      }
+    },
+    {
+      "description": "Returns CustomerCreateOutput.",
+      "inputSchema": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "email"
+        ],
+        "type": "object"
+      },
+      "name": "create",
+      "operation": "appRouter.customer.create",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "customerId": {
+              "pattern": "^CUS-[0-9]{6}$",
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "format": "email",
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "customerId",
+            "displayName",
+            "email"
+          ],
+          "type": "object"
+        },
+        "shape": "CustomerCreateOutput"
+      }
+    },
+    {
+      "description": "Returns CustomerListOutput.",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "query": {
+            "maxLength": 120,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "appRouter.customer.list",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "createdAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "customerId": {
+                    "pattern": "^CUS-[0-9]{6}$",
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "createdAt",
+                  "customerId",
+                  "displayName",
+                  "email"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "CustomerListOutput"
+      }
+    },
+    {
+      "description": "Returns HealthPingOutput.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "appRouter.health.ping",
+      "output": {
+        "schema": {
+          "properties": {
+            "ok": {
+              "enum": [
+                true
+              ],
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "ok"
+          ],
+          "type": "object"
+        },
+        "shape": "HealthPingOutput"
+      }
+    },
+    {
+      "description": "Returns InvoiceIssueOutput.",
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "name": "issue",
+      "operation": "appRouter.invoice.issue",
+      "output": {
+        "schema": {
+          "properties": {
+            "currency": {
+              "enum": [
+                "EUR",
+                "GBP",
+                "USD"
+              ],
+              "type": "string"
+            },
+            "customerId": {
+              "type": "string"
+            },
+            "invoiceId": {
+              "pattern": "^INV-[0-9]{8}$",
+              "type": "string"
+            },
+            "issuedOn": {
+              "format": "date",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "draft",
+                "issued",
+                "paid",
+                "void"
+              ],
+              "type": "string"
+            },
+            "total": {
+              "minimum": 0.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "currency",
+            "customerId",
+            "invoiceId",
+            "issuedOn",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "InvoiceIssueOutput"
+      }
+    },
+    {
+      "description": "Returns InvoiceListOutput.",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "issued",
+              "paid",
+              "void"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_2",
+      "operation": "appRouter.invoice.list",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "currency": {
+                    "enum": [
+                      "EUR",
+                      "GBP",
+                      "USD"
+                    ],
+                    "type": "string"
+                  },
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "invoiceId": {
+                    "pattern": "^INV-[0-9]{8}$",
+                    "type": "string"
+                  },
+                  "issuedOn": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "issued",
+                      "paid",
+                      "void"
+                    ],
+                    "type": "string"
+                  },
+                  "total": {
+                    "minimum": 0.0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "customerId",
+                  "invoiceId",
+                  "issuedOn",
+                  "status",
+                  "total"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "InvoiceListOutput"
+      }
+    },
+    {
+      "description": "Returns InvoiceVoidOutput.",
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "void",
+      "operation": "appRouter.invoice.void",
+      "output": {
+        "schema": {
+          "properties": {
+            "voided": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "voided"
+          ],
+          "type": "object"
+        },
+        "shape": "InvoiceVoidOutput"
+      }
+    }
+  ]
+}

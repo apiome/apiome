@@ -1,0 +1,200 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns RecordsReadByIdOutput.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "pattern": "^[A-Z]{3}-[0-9]{6}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "byId",
+      "operation": "appRouter.records.read.byId",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "pattern": "^[A-Z]{3}-[0-9]{6}$",
+              "type": "string"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "label"
+          ],
+          "type": "object"
+        },
+        "shape": "RecordsReadByIdOutput"
+      }
+    },
+    {
+      "description": "Returns RecordsReadListOutput.",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "appRouter.records.read.list",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "createdAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "id": {
+                    "pattern": "^[A-Z]{3}-[0-9]{6}$",
+                    "type": "string"
+                  },
+                  "label": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "createdAt",
+                  "id",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "RecordsReadListOutput"
+      }
+    },
+    {
+      "description": "Returns RecordsWriteCreateOutput.",
+      "inputSchema": {
+        "properties": {
+          "label": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "create",
+      "operation": "appRouter.records.write.create",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "pattern": "^[A-Z]{3}-[0-9]{6}$",
+              "type": "string"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "label"
+          ],
+          "type": "object"
+        },
+        "shape": "RecordsWriteCreateOutput"
+      }
+    },
+    {
+      "description": "Returns RecordsWritePatchOutput.",
+      "inputSchema": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Z]{3}-[0-9]{6}$",
+            "type": "string"
+          },
+          "label": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "patch",
+      "operation": "appRouter.records.write.patch",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "pattern": "^[A-Z]{3}-[0-9]{6}$",
+              "type": "string"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "label"
+          ],
+          "type": "object"
+        },
+        "shape": "RecordsWritePatchOutput"
+      }
+    }
+  ]
+}

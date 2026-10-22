@@ -561,7 +561,7 @@
       "marker": "`http.routers` + `http.services` (YAML/TOML), or `kind: IngressRoute`"
     },
     "trpc": {
-      "label": "tRPC routers (pending #5464)",
+      "label": "tRPC routers",
       "category": "rpc",
       "paradigm": "rpc",
       "marker": "`initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures"
@@ -28670,7 +28670,7 @@
     {
       "path": "trpc/01-minimal-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28679,8 +28679,7 @@
       "features": [
         "router",
         "query",
-        "zod-input",
-        "pending-adapter"
+        "zod-input"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28691,7 +28690,7 @@
     {
       "path": "trpc/02-typical-order-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28703,8 +28702,7 @@
         "input",
         "output",
         "typed-context",
-        "TRPCError",
-        "pending-adapter"
+        "TRPCError"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28715,7 +28713,7 @@
     {
       "path": "trpc/03-routers-set/customer-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28723,8 +28721,7 @@
       },
       "features": [
         "multi-file",
-        "query",
-        "pending-adapter"
+        "query"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28736,7 +28733,7 @@
     {
       "path": "trpc/03-routers-set/order-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28745,8 +28742,7 @@
       "features": [
         "multi-file",
         "query",
-        "mutation",
-        "pending-adapter"
+        "mutation"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28758,7 +28754,7 @@
     {
       "path": "trpc/03-routers-set/root.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28766,8 +28762,7 @@
       },
       "features": [
         "multi-file",
-        "router-merge",
-        "pending-adapter"
+        "router-merge"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28779,7 +28774,7 @@
     {
       "path": "trpc/03-routers-set/schemas.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28787,8 +28782,7 @@
       },
       "features": [
         "multi-file",
-        "shared-schemas",
-        "pending-adapter"
+        "shared-schemas"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28800,7 +28794,7 @@
     {
       "path": "trpc/04-stress-procedure-forms.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28813,8 +28807,7 @@
         "chained-input",
         "subscription",
         "non-zod-validator",
-        "inline-nested-router",
-        "pending-adapter"
+        "inline-nested-router"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28826,7 +28819,7 @@
     {
       "path": "trpc/05-real-world-app-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28837,8 +28830,7 @@
         "shared-pagination",
         "feature-routers",
         "output-schemas",
-        "error-codes",
-        "pending-adapter"
+        "error-codes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28849,7 +28841,7 @@
     {
       "path": "trpc/06-typical-nested-routers.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28858,8 +28850,7 @@
       "features": [
         "nested-routers",
         "operation-groups",
-        "top-level-procedure",
-        "pending-adapter"
+        "top-level-procedure"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28870,7 +28861,7 @@
     {
       "path": "trpc/07-composition-shared-builders.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "valid",
       "expected_detection": {
         "format": "trpc",
@@ -28880,8 +28871,7 @@
         "shared-schemas",
         "middleware-builders",
         "router-merge",
-        "schema-factory",
-        "pending-adapter"
+        "schema-factory"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28892,7 +28882,7 @@
     {
       "path": "trpc/negative/01-syntactic-unclosed-router.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -28901,8 +28891,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-call",
-        "pending-adapter"
+        "unclosed-call"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28914,7 +28903,7 @@
     {
       "path": "trpc/negative/02-semantic-no-procedures.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -28923,8 +28912,7 @@
       "features": [
         "negative",
         "semantic",
-        "empty-router",
-        "pending-adapter"
+        "empty-router"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28936,7 +28924,7 @@
     {
       "path": "trpc/negative/03-truncated-mid-procedure.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -28945,8 +28933,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-chain",
-        "pending-adapter"
+        "mid-chain"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28958,7 +28945,7 @@
     {
       "path": "trpc/negative/04-wrong-format-zod.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -28967,8 +28954,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "zod",
-        "pending-adapter"
+        "zod"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28981,7 +28967,7 @@
     {
       "path": "trpc/negative/05-encoding-utf16.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -28990,8 +28976,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29003,7 +28988,7 @@
     {
       "path": "trpc/negative/06-semantic-non-zod-input-only.ts",
       "format": "trpc",
-      "adapter_key": null,
+      "adapter_key": "trpc",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "trpc",
@@ -29012,8 +28997,7 @@
       "features": [
         "negative",
         "semantic",
-        "non-zod-validators",
-        "pending-adapter"
+        "non-zod-validators"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

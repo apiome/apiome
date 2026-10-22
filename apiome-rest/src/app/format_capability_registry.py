@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "26"
+REGISTRY_VERSION = "27"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2458,6 +2458,85 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "only, and the two share one type-mapping table (`app.sql_ddl_dialects."
             "SQL_TYPE_SCALARS`) so a round trip cannot disagree with itself about what a "
             "`VARCHAR` is.",
+        ],
+    ),
+    "trpc": _Seed(
+        # tRPC's payload analysis is the format-blind walk; the reviewed judgement is the
+        # projection statement. FMT-8.3's acceptance criteria are that procedures become operations
+        # with the right kinds, nested routers group them, and inputs and outputs resolve through
+        # the FMT-8.2 Zod path — this is where a reader is told how, and what is declared.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A tRPC router is a value built at runtime: procedures are located by their dotted "
+                "path (`invoice.list`), the coordinate a tRPC client calls, not by line."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A router describes procedures without calling them: resolvers are never run, so "
+                "there are no request or response values for the analyzer to observe."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "trpc.lazy_router",
+                    "trpc.non_schema_input",
+                    "trpc.non_schema_output",
+                    "zod.additional_properties",
+                    "zod.brand",
+                    "zod.coerce",
+                    "zod.custom",
+                    "zod.function",
+                    "zod.intersection",
+                    "zod.pipe",
+                    "zod.preprocess",
+                    "zod.promise",
+                    "zod.refine",
+                    "zod.transform",
+                    "zod.tuple_positions",
+                    "zod.unmodelled_reference",
+                    "zod.unnamed_recursion",
+                    "zod.unrepresentable",
+                ]
+            ),
+            note=(
+                "Every procedure becomes an `rpc` operation keyed by its router path: `.query()` "
+                "is a `QUERY`, `.mutation()` a `MUTATION` and `.subscription()` a server-streaming "
+                "`SUBSCRIPTION`. Every router node — the exported router and each nested one — is "
+                "a service whose `trpc_parent` names the router it sits in, so the hierarchy "
+                "survives. A procedure's `.input()` (chained inputs merged, as tRPC merges them) "
+                "is its request payload and `.output()` its response payload, both read through "
+                "the FMT-8.2 Zod path with their constraints; a payload that is a named schema "
+                "references that schema's type, and an inline one becomes a type named after the "
+                "procedure (`InvoiceListInput`). `.meta()` is kept in `trpc_meta`. The listed "
+                "constructs are declared: a hand-written validator function has no schema, so its "
+                "operation is kept without a payload rather than shown with an empty body; a "
+                "`lazy()` router's procedures are not known until it is called; and every Zod "
+                "limit applies to the schemas inside. Each occurrence is counted and located in "
+                "`extras['trpc']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "The router module is evaluated in the same sandbox as Zod import — Node's permission "
+            "model, no network, an empty environment and a time budget — with `@trpc/server` and "
+            "`zod` as the only packages it can import. Resolvers are never called, so a "
+            "procedure's body, the errors it throws and the context its middleware derives are "
+            "not read; middleware context can never appear as a request field.",
+            "A router whose procedures all validate with hand-written functions and declare no "
+            "output schema has nothing to import and is rejected with `INPUT_SEMANTIC_INVALID`.",
+            "tRPC *output* is not implemented here, so a router imported through this adapter is "
+            "exported through another target's emitter and is not written back as tRPC.",
         ],
     ),
     "zod": _Seed(
