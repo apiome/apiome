@@ -1,0 +1,566 @@
+{
+  "adapter": "traefik",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "traefik",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "rule.ClientIP",
+            "count": 1,
+            "reason": "the rule matches on the client address, which has no canonical parameter form"
+          },
+          {
+            "construct": "rule.HostRegexp",
+            "count": 1,
+            "reason": "a host regular expression names no concrete server host; it is kept on the route as a condition"
+          },
+          {
+            "construct": "rule.negation",
+            "count": 1,
+            "reason": "a negated matcher narrows the route by what a request must NOT carry, which has no canonical parameter form; it is kept on the route as a condition"
+          },
+          {
+            "construct": "serversTransports",
+            "count": 1,
+            "reason": "servers transports configure the connection to backends, not the API surface"
+          },
+          {
+            "construct": "tcp",
+            "count": 1,
+            "reason": "TCP routers route by SNI/port, not by HTTP request — there is no canonical HTTP operation for them"
+          },
+          {
+            "construct": "udp",
+            "count": 1,
+            "reason": "UDP routers carry no HTTP request at all"
+          }
+        ],
+        "operation_count": 11,
+        "route_count": 10,
+        "schemaless_operation_count": 11,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "addPrefix",
+            "scope": "route"
+          },
+          {
+            "name": "replacePathRegex",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "traefik",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "traefik/04-stress-rule-grammar.yml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://a.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://api.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://b.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://backend.internal.example.com:8080"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://backend.internal.example.com:8080"
+          ]
+        },
+        "key": "s1",
+        "name": "s1",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "client-ip",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "rule": "ClientIP(`203.0.113.0/24`)",
+              "unmodelled_conditions": [
+                "ClientIP(`203.0.113.0/24`)"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "header-and-query",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "rule": "Header(`X-Tenant`, `acme`) && Query(`mode`, `full`) && QueryRegexp(`page`, `^[0-9]+$`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#header-and-query",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "acme"
+                },
+                "key": "ANY /#header-and-query#header.X-Tenant",
+                "location": "header",
+                "name": "X-Tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "full"
+                },
+                "key": "ANY /#header-and-query#query.mode",
+                "location": "query",
+                "name": "mode",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:^[0-9]+$"
+                },
+                "key": "ANY /#header-and-query#query.page",
+                "location": "query",
+                "name": "page",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "host-regexp",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "rule": "HostRegexp(`^[a-z]+\\.example\\.com$`)",
+              "unmodelled_conditions": [
+                "HostRegexp(`^[a-z]+\\.example\\.com$`)"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#host-regexp",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "exact-path",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact/resource"
+              },
+              "provenance": "inferred",
+              "rule": "Path(`/exact/resource`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/exact/resource",
+            "key": "ANY /exact/resource",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /exact/resource",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "regexp-path",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/orders/[0-9]{6}$"
+              },
+              "provenance": "inferred",
+              "rule": "PathRegexp(`^/orders/[0-9]{6}$`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/orders/{param1}",
+            "key": "ANY /orders/{param1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /orders/{param1}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/orders/[0-9]{6}$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /orders/{param1}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "prefix",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/prefix/"
+              },
+              "provenance": "inferred",
+              "rule": "PathPrefix(`/prefix/`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/prefix/",
+            "key": "ANY /prefix/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /prefix/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "negated",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/public"
+              },
+              "provenance": "inferred",
+              "rule": "PathPrefix(`/public`) && !Header(`X-Internal`, `true`)",
+              "unmodelled_conditions": [
+                "!Header(`X-Internal`, `true`)"
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/public",
+            "key": "ANY /public",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /public",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "grouped",
+              "hosts": [
+                "a.example.com",
+                "b.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "add-prefix",
+                "replace-path-regex"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/shared"
+              },
+              "plugins": [
+                "addPrefix",
+                "replacePathRegex"
+              ],
+              "provenance": "inferred",
+              "rule": "(Host(`a.example.com`) || Host(`b.example.com`)) && PathPrefix(`/shared`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/shared",
+            "key": "ANY /shared",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /shared",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "host-and-method",
+              "hosts": [
+                "api.example.com"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && (Method(`GET`) || Method(`HEAD`))"
+            },
+            "http_method": "GET",
+            "http_path": "/",
+            "key": "GET /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "host-and-method",
+              "hosts": [
+                "api.example.com"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && (Method(`GET`) || Method(`HEAD`))"
+            },
+            "http_method": "HEAD",
+            "http_path": "/",
+            "key": "HEAD /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "HEAD /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "s1"
+                }
+              ],
+              "gateway_route": "method-only",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "priority": 1,
+              "provenance": "inferred",
+              "rule": "Method(`OPTIONS`)"
+            },
+            "http_method": "OPTIONS",
+            "http_path": "/",
+            "key": "OPTIONS /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "OPTIONS /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "traefik/04-stress-rule-grammar.yml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "traefik/04-stress-rule-grammar.yml",
+  "counts": {
+    "channels": 0,
+    "operations": 11,
+    "servers": 3,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "traefik"
+  },
+  "fingerprint": "sha256:f897d54b913f0d815af95b682c04842533979d659565e9ae5516c55f306e103c",
+  "lint": {
+    "findings": 12,
+    "grade": "C",
+    "report_fingerprint": "e8c909a4624ce765fce64bd17e5728036710532c2ca4f12e21b2dd6054bb1d24",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 11
+    }
+  },
+  "snapshot_version": 1
+}

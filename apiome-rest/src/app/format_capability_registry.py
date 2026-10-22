@@ -96,6 +96,11 @@ from .ncpdp_analysis import NCPDP_IMPLEMENTATION_GUIDE_STATEMENT
 from .dicom_dictionary import PIXEL_DATA_BOUNDARY_STATEMENT
 from .dicom_normalizer import DICOM_VALUE_STATEMENT
 from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
+from .consul_parser import CONSUL_DECLARED_CONSTRUCTS
+from .haproxy_parser import HAPROXY_DECLARED_CONSTRUCTS
+from .nginx_parser import NGINX_CARRIED_DIRECTIVES, NGINX_DECLARED_DIRECTIVES, NGINX_READ_DIRECTIVES
+from .traefik_parser import TRAEFIK_DECLARED_CONSTRUCTS
+from .tyk_parser import TYK_DECLARED_CONSTRUCTS
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     # Imported lazily at every call site: :mod:`app.import_source` imports the analysis
@@ -153,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "23"
+REGISTRY_VERSION = "24"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -919,6 +924,89 @@ IMPLEMENTATION_GUIDE_FAMILY: Tuple[str, ...] = (
     "dicom",
     "ncpdp",
     "fix-orchestra",
+)
+
+
+def _proxy_route_seed(
+    *,
+    location_note: str,
+    dropped: Iterable[str],
+    projection_note: str,
+    notes: List[str],
+) -> _Seed:
+    """A reviewed seed for an FMT-7.5 reverse-proxy route source (#5459).
+
+    The five proxy formats share every judgement but the projection: their payload analysis is
+    the format-blind walk, they carry configuration rather than data, and they hold no
+    request/response schemas. What differs per format — which constructs are declared rather
+    than modelled, and why — is passed in, taken from the parser's own tables so the registry
+    names exactly the subset the parser reads.
+
+    Args:
+        location_note: How routes are located in this format's source.
+        dropped: The declared (not modelled) construct keys, already prefixed.
+        projection_note: What the projection keeps, carries and drops.
+        notes: Reviewed notes rendered beneath the entry.
+
+    Returns:
+        The seed.
+    """
+    return _Seed(
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(quality=SourceLocationQuality.PATH_ONLY, note=location_note),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A proxy configuration routes requests; it holds no request or response data, so "
+                "the analyzer observes no payload values at any policy level. Credential material "
+                "the configuration does carry (basic-auth hashes, secret headers, shared secrets) "
+                "is redacted at parse time and only counted."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(set(dropped)),
+            note=projection_note,
+        ),
+        notes=notes,
+    )
+
+
+def _backticked(names: Iterable[str]) -> str:
+    """``a``, ``b`` → "`a`, `b`" for a note."""
+    return ", ".join(f"`{name}`" for name in names)
+
+
+#: The documented nginx subset, directive by directive (FMT-7.5's acceptance criterion), built
+#: from :mod:`app.nginx_parser`'s tables so the registry cannot describe a different subset
+#: from the one the parser reads.
+_NGINX_SUBSET_NOTES: List[str] = [
+    "Read (the routing surface): "
+    + "; ".join(f"`{name}` — {meaning}" for name, meaning in NGINX_READ_DIRECTIVES.items())
+    + ".",
+    "Carried by name as policy on the operations they govern, with nginx inheritance resolved "
+    "(the innermost of http → server → location that sets a directive wins): "
+    + _backticked(NGINX_CARRIED_DIRECTIVES)
+    + ".",
+    "Declared parsing limits — recognized and deliberately not interpreted: "
+    + "; ".join(f"`{name}` — {reason}" for name, reason in NGINX_DECLARED_DIRECTIVES.items())
+    + ".",
+    "Any directive in none of these lists is declared as `directive.<name>` on the coverage "
+    "ledger of the document that uses it. Outside the subset is a declared limit, never a "
+    "silent omission.",
+]
+
+#: Statement shared by every proxy seed's projection note.
+_PROXY_SCHEMALESS = (
+    "There are no request/response schemas in the source, so operations have no messages; the "
+    "ledger states that as a capability limit of the format, and every operation and service "
+    "is labelled inferred."
 )
 
 
@@ -2530,6 +2618,101 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "Level-66 RENAMES and COPY ... REPLACING are not read by the parser. They are "
             "detected by scanning the source, and each one found makes the record partial with a "
             "stated reason rather than presenting a partial layout as a complete one.",
+        ],
+    ),
+    "nginx": _proxy_route_seed(
+        location_note=(
+            "Routes locate by `file:line` of their `location` block. An included file is spliced "
+            "in where its `include` stands, so the line is the member file's own line."
+        ),
+        dropped=[f"nginx.{name}" for name in NGINX_DECLARED_DIRECTIVES],
+        projection_note=(
+            "Each externally reachable `location` becomes one operation: `=` an exact path, no "
+            "modifier or `^~` a prefix, `~` / `~*` a regular expression whose segments become "
+            "inferred path parameters. `server_name` gives the hosts, `listen … ssl` the scheme, "
+            "`proxy_pass` / `grpc_pass` the backend (an `upstream` by name, else a direct "
+            "address), and `limit_except … { deny all; }` the methods. "
+            + _PROXY_SCHEMALESS
+        ),
+        notes=_NGINX_SUBSET_NOTES,
+    ),
+    "traefik": _proxy_route_seed(
+        location_note=(
+            "Routes locate by `file#http.routers.<name>` (file provider) or by the resource and "
+            "route index of an `IngressRoute`."
+        ),
+        dropped=[f"traefik.{name}" for name in TRAEFIK_DECLARED_CONSTRUCTS],
+        projection_note=(
+            "A router's rule is put into disjunctive normal form; each alternative becomes one "
+            "match: `Path` exact, `PathPrefix` prefix, `PathRegexp` regex, `Host` the hosts, "
+            "`Method` the method, `Header` / `Query` (and `…Regexp`) match parameters. Negated "
+            "matchers, `ClientIP` and `HostRegexp` stay on the route as unmodelled conditions. "
+            "Middlewares (chains expanded) ride on the operations as policy. "
+            + _PROXY_SCHEMALESS
+        ),
+        notes=[
+            "A router naming a service or middleware that no supplied file declares is refused "
+            "as `INPUT_REFERENCE_UNRESOLVED`; a reference to another provider (`name@docker`) "
+            "is kept as written. Import a watched directory as a file set so its routers, "
+            "services and middlewares resolve together.",
+        ],
+    ),
+    "haproxy": _proxy_route_seed(
+        location_note="Routes locate by `file:line` of their `use_backend` / `default_backend` line.",
+        dropped=[f"haproxy.{name}" for name in HAPROXY_DECLARED_CONSTRUCTS],
+        projection_note=(
+            "Each `use_backend` rule becomes a route; its condition is put into disjunctive "
+            "normal form and each alternative is one match: `path` exact, `path_beg` / "
+            "`path_dir` prefix, `path_reg` regex, `method` methods, `hdr(host)` hosts, `hdr(x)` "
+            "/ `urlp(x)` match parameters. `default_backend` is a catch-all and `http-request "
+            "return … if <path ACL>` a route HAProxy answers itself. A computed backend is "
+            "resolved through its map file when the file set supplies it. "
+            + _PROXY_SCHEMALESS
+        ),
+        notes=[
+            "A section in TCP mode — set on it or inherited from the nearest preceding "
+            "`defaults` — routes connections, not requests, so it imports with no HTTP "
+            "operation and is declared on the ledger.",
+        ],
+    ),
+    "consul": _proxy_route_seed(
+        location_note="Routes locate by the configuration entry (`service-router/<name>`) and route index.",
+        dropped=[f"consul.{name}" for name in CONSUL_DECLARED_CONSTRUCTS],
+        projection_note=(
+            "Only a `service-router` carries paths: `PathExact` / `PathPrefix` / `PathRegex`, "
+            "`Methods`, `Header` and `QueryParam` become operations, and the router's own "
+            "service takes a fall-through catch-all. An `ingress-gateway` HTTP listener exposes "
+            "a catch-all per service on its hosts. A registered HTTP service no router describes "
+            "becomes one catch-all operation, or one per `urlprefix-` tag — a convention, "
+            "recorded as such. "
+            + _PROXY_SCHEMALESS
+        ),
+        notes=[
+            "A catalog is a registry, not a route table, so most of a Consul import is "
+            "inference. A service's `meta.openapi_url` points at a real specification — import "
+            "that for schemas.",
+        ],
+    ),
+    "tyk": _proxy_route_seed(
+        location_note=(
+            "Classic routes locate by `version_data.versions.<v>.extended_paths.<list>`; Tyk OAS "
+            "operations locate by their OpenAPI path, as the OpenAPI adapter reads them."
+        ),
+        dropped=[f"tyk.{name}" for name in TYK_DECLARED_CONSTRUCTS],
+        projection_note=(
+            "A classic definition's white-listed (and ignored) paths become operations at "
+            "`listen_path` + path, one per `method_actions` method, with `{param}` segments as "
+            "inferred path parameters; per-path rules and auth flags ride as policy. Classic "
+            "definitions carry no response schemas and their `validate_json` request schemas are "
+            "carried as validation policy, so classic operations have no messages and are "
+            "labelled inferred. A Tyk OAS definition is an OpenAPI document: its paths and "
+            "schemas are read by the OpenAPI adapter as declared, and only the "
+            "`x-tyk-api-gateway` middleware is attached as inferred gateway policy."
+        ),
+        notes=[
+            "The adapter claims an OpenAPI document only because it carries "
+            "`x-tyk-api-gateway`; the OpenAPI adapter steps down for such a document so the two "
+            "never tie.",
         ],
     ),
 }

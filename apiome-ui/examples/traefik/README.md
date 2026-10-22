@@ -1,8 +1,8 @@
 # Traefik dynamic configuration — `traefik`
 
 Fixtures for the Traefik sub-format of **FMT-7.5** ([#5459](https://github.com/apiome/apiome/issues/5459)).
-The reverse-proxy config is the only spec many teams have. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+The reverse-proxy config is the only spec many teams have. Entries are read by the `traefik` adapter
+(`apiome-rest/src/app/traefik_import_source.py`).
 
 **Detection markers.** `http.routers` + `http.services` in YAML or TOML; or
 `apiVersion: traefik.io/v1alpha1` with `kind: IngressRoute` for the CRD form.
@@ -21,4 +21,4 @@ rule that does not reduce to a path plus a method is a **declared condition**, n
 | `05-real-world-dynamic.toml` | real-world | The **TOML** form: canonical-host redirect, per-route certificate domains, metrics endpoint restricted by source range, priorities. |
 | `06-typical-ingressroute-crd.yaml` | typical | The Kubernetes CRD form: `IngressRoute` + `Middleware` in one stream. |
 | `07-provider-directory-set/` | multi-file | The file provider watching a directory: routers, services and middlewares in three files. |
-| `negative/` | — | Bad YAML, routers with no rule and services with no servers, truncation, an **nginx** config (the neighbouring sub-format), UTF-16, and a router naming a service and middleware that do not exist. |
+| `negative/` | — | Bad YAML, routers with no rule and services with no servers, truncation (a quoted server URL cut mid-value), an **nginx** config (the neighbouring sub-format), UTF-16, and a router naming a service and middleware that do not exist. |

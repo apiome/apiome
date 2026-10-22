@@ -1,0 +1,442 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "Catalogue API",
+            "detail": {
+              "flag": "enable_jwt",
+              "jwks_url": "https://login.example.com/.well-known/jwks.json",
+              "signing_method": "rsa"
+            },
+            "plugin": "enable_jwt",
+            "scheme": "bearer",
+            "scope": "service"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [
+          "black_list",
+          "custom_middleware",
+          "response_processors",
+          "url_rewrites"
+        ],
+        "ignored_constructs": [
+          {
+            "construct": "custom_middleware.scripts",
+            "count": 1,
+            "reason": "custom middleware runs JavaScript / plugin code on every request; its names are kept, what it does is not knowable from the definition"
+          },
+          {
+            "construct": "validate_json.schema",
+            "count": 1,
+            "reason": "a validate_json request schema is carried as validation policy on its route, not modelled as a message type — Tyk classic definitions carry no response schemas, so the import does not claim schema fidelity"
+          },
+          {
+            "construct": "version_selector",
+            "count": 1,
+            "reason": "the version a request gets is chosen by a header, query parameter or URL segment at runtime; each version's routes carry the version name instead of a path change"
+          }
+        ],
+        "operation_count": 5,
+        "route_count": 5,
+        "schemaless_operation_count": 5,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "black_list",
+            "scope": "service"
+          },
+          {
+            "name": "custom_middleware",
+            "scope": "global"
+          },
+          {
+            "name": "global_headers",
+            "scope": "route"
+          },
+          {
+            "name": "global_headers_remove",
+            "scope": "route"
+          },
+          {
+            "name": "response_processors",
+            "scope": "global"
+          },
+          {
+            "name": "transform",
+            "scope": "route"
+          },
+          {
+            "name": "url_rewrites",
+            "scope": "service"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "bearer"
+      ]
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Catalogue API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "api_id": "catalogue-api",
+          "backend": {
+            "url": "http://catalogue.internal.example.com:8080"
+          },
+          "listen_path": "/catalogue/",
+          "provenance": "inferred",
+          "strip_listen_path": true
+        },
+        "key": "Catalogue API",
+        "name": "Catalogue API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "catalogue-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "catalogue.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "catalogue-api@v2/categories",
+              "listen_path": "/catalogue/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/catalogue/categories"
+              },
+              "plugins": [
+                "global_headers",
+                "global_headers_remove"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Catalogue API",
+                  "detail": {
+                    "flag": "enable_jwt",
+                    "jwks_url": "https://login.example.com/.well-known/jwks.json",
+                    "signing_method": "rsa"
+                  },
+                  "plugin": "enable_jwt",
+                  "scheme": "bearer",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "x-api-version",
+                "location": "header"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/catalogue/categories",
+            "key": "GET /catalogue/categories",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /catalogue/categories",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "catalogue-api",
+              "api_version": "v2",
+              "auth_bypassed": true,
+              "backends": [
+                {
+                  "name": "catalogue.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "catalogue-api@v2/healthz",
+              "listen_path": "/catalogue/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/catalogue/healthz"
+              },
+              "plugins": [
+                "global_headers",
+                "global_headers_remove"
+              ],
+              "provenance": "inferred",
+              "version_selector": {
+                "key": "x-api-version",
+                "location": "header"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/catalogue/healthz",
+            "key": "GET /catalogue/healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /catalogue/healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "catalogue-api",
+              "api_version": "v1",
+              "backends": [
+                {
+                  "name": "catalogue.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "expires": "2026-12-31 23:59",
+              "gateway_route": "catalogue-api@v1/products",
+              "listen_path": "/catalogue/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/catalogue/products"
+              },
+              "plugins": [
+                "transform"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Catalogue API",
+                  "detail": {
+                    "flag": "enable_jwt",
+                    "jwks_url": "https://login.example.com/.well-known/jwks.json",
+                    "signing_method": "rsa"
+                  },
+                  "plugin": "enable_jwt",
+                  "scheme": "bearer",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "x-api-version",
+                "location": "header"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/catalogue/products",
+            "key": "GET /catalogue/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /catalogue/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "catalogue-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "catalogue.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "catalogue-api@v2/products",
+              "listen_path": "/catalogue/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/catalogue/products"
+              },
+              "plugins": [
+                "global_headers",
+                "global_headers_remove"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Catalogue API",
+                  "detail": {
+                    "flag": "enable_jwt",
+                    "jwks_url": "https://login.example.com/.well-known/jwks.json",
+                    "signing_method": "rsa"
+                  },
+                  "plugin": "enable_jwt",
+                  "scheme": "bearer",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "x-api-version",
+                "location": "header"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/catalogue/products",
+            "key": "GET /catalogue/products#catalogue-api@v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /catalogue/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "catalogue-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "catalogue.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "catalogue-api@v2/products/{sku}",
+              "listen_path": "/catalogue/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/catalogue/products/{sku}"
+              },
+              "plugins": [
+                "global_headers",
+                "global_headers_remove"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Catalogue API",
+                  "detail": {
+                    "flag": "enable_jwt",
+                    "jwks_url": "https://login.example.com/.well-known/jwks.json",
+                    "signing_method": "rsa"
+                  },
+                  "plugin": "enable_jwt",
+                  "scheme": "bearer",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "x-api-version",
+                "location": "header"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/catalogue/products/{sku}",
+            "key": "GET /catalogue/products/{sku}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /catalogue/products/{sku}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "/catalogue/products/{sku}",
+                  "provenance": "inferred"
+                },
+                "key": "GET /catalogue/products/{sku}#path.sku",
+                "location": "path",
+                "name": "sku",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Catalogue API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "tyk/03-composition-versions-and-middleware.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:1e5d0448ef90b673c3271ce13f8826f625a1c2b2e091afa4a761b3f04da7f6a5",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "085f34a7d6e93e5a1f6c79a65d210f829492213e5a96db60eb1ca36a401bcded",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,7 +1,8 @@
 # nginx configuration — `nginx`
 
 Fixtures for the nginx sub-format of **FMT-7.5** ([#5459](https://github.com/apiome/apiome/issues/5459)).
-Entries carry `adapter_key: null` and the `pending-adapter` tag.
+Entries are read by the `nginx` adapter
+(`apiome-rest/src/app/nginx_import_source.py`).
 
 > **A bounded subset, by design.** nginx configuration is Turing-adjacent — `map`, `geo`, `if`,
 > variables, named locations, `try_files`, Lua/njs modules. FMT-7.5 explicitly scopes the parser to a

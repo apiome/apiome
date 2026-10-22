@@ -1,0 +1,112 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/01-minimal-service.json",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "host": "10.20.30.40",
+            "port": 8080
+          },
+          "instances": [
+            {
+              "address": "10.20.30.40",
+              "port": 8080
+            }
+          ],
+          "provenance": "inferred"
+        },
+        "key": "ping",
+        "name": "ping",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "ping",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "service/ping",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "path_source": "registered-service",
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/01-minimal-service.json",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/01-minimal-service.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:f51e374fb213bae8a06d6c7bbaa2e99b85163d4e44e7d65fca9b404d5dab8e17",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "560644f42059e8131b328c21bfd67df1c9533c510d0b6e8b57bb65be070a8a44",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

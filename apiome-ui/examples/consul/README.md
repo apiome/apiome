@@ -2,8 +2,8 @@
 
 Fixtures for the Consul sub-format of **FMT-7.5** ([#5459](https://github.com/apiome/apiome/issues/5459)).
 A Consul catalog is a service registry, not a route table — which makes it the *thinnest* member of
-the gateway family and the one whose fidelity claims must be most careful. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+the gateway family and the one whose fidelity claims must be most careful. Entries are read by the `consul` adapter
+(`apiome-rest/src/app/consul_import_source.py`).
 
 **Detection markers.** `{"service": {…}}` / `{"services": [...]}` (JSON) or `services { … }` (HCL) for
 a definition; `Kind: service-router` / `service-resolver` / `service-splitter` / `ingress-gateway` for

@@ -1,0 +1,201 @@
+{
+  "adapter": "traefik",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "traefik",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "rateLimit",
+            "scope": "route"
+          },
+          {
+            "name": "stripPrefix",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "traefik",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "traefik/07-provider-directory-set/routers.yml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://parcels.internal.example.com:8080"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://parcels.internal.example.com:8080"
+          ]
+        },
+        "key": "parcels-service",
+        "name": "parcels-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "parcels-service"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "parcels",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "rate-limit"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/parcels"
+              },
+              "plugins": [
+                "rateLimit"
+              ],
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && PathPrefix(`/v2/parcels`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/parcels",
+            "key": "ANY /v2/parcels",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/parcels",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://shipments-1.internal.example.com:8080"
+          },
+          "health_check_path": "/healthz",
+          "provenance": "inferred",
+          "servers": [
+            "http://shipments-1.internal.example.com:8080",
+            "http://shipments-2.internal.example.com:8080"
+          ]
+        },
+        "key": "shipments-service",
+        "name": "shipments-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shipments-service"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "shipments",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "rate-limit",
+                "strip-v2"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/shipments"
+              },
+              "plugins": [
+                "rateLimit",
+                "stripPrefix"
+              ],
+              "provenance": "inferred",
+              "rule": "Host(`api.example.com`) && PathPrefix(`/v2/shipments`)",
+              "tls": {
+                "certResolver": "letsencrypt"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/shipments",
+            "key": "ANY /v2/shipments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/shipments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "traefik/07-provider-directory-set/routers.yml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "traefik/07-provider-directory-set/routers.yml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "traefik"
+  },
+  "fingerprint": "sha256:beeaa1374fd6488984be58a3503e1313ce25f80d4886c540994d5ca6bbcfe2d0",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "b6a55621e5eb7794aa5e7d82f2782613f65aae1886758fee51712efb9e229815",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

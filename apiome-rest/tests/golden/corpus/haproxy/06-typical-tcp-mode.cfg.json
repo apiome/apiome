@@ -1,0 +1,72 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          },
+          {
+            "construct": "mode.tcp",
+            "count": 2,
+            "reason": "a section in TCP mode routes connections, not HTTP requests — there is no canonical HTTP operation for it"
+          }
+        ],
+        "operation_count": 0,
+        "route_count": 0,
+        "schemaless_operation_count": 0,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/06-typical-tcp-mode.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "haproxy/06-typical-tcp-mode.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/06-typical-tcp-mode.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:55113216b6df380ab3e0af25064afcb96e5316ef540712ed5d5e2ff7051e9dca",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "44bfff6b5dc6f553648079897c1678c98e8b98cf726fec9adc136b89ab1cde5d",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

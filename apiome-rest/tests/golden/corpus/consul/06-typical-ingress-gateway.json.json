@@ -1,0 +1,178 @@
+{
+  "adapter": "consul",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "consul",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "ingress-gateway.grpc-listener",
+            "count": 1,
+            "reason": "a grpc listener exposes services without HTTP routing; there is no canonical HTTP operation for it"
+          },
+          {
+            "construct": "ingress-gateway.tcp-listener",
+            "count": 1,
+            "reason": "a tcp listener exposes services without HTTP routing; there is no canonical HTTP operation for it"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "requestheaders",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "consul",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "consul/06-typical-ingress-gateway.json",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "catalogue",
+        "name": "catalogue",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue",
+                  "port": 8443
+                }
+              ],
+              "config_entry": "ingress-gateway/public-ingress",
+              "gateway_route": "ingress-gateway/public-ingress#8443/catalogue",
+              "hosts": [
+                "api.example.com"
+              ],
+              "listener_port": 8443,
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#ingress-gateway/public-ingress#8443/catalogue",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "orders",
+        "name": "orders",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders",
+                  "port": 8443
+                }
+              ],
+              "config_entry": "ingress-gateway/public-ingress",
+              "gateway_route": "ingress-gateway/public-ingress#8443/orders",
+              "hosts": [
+                "api.example.com"
+              ],
+              "listener_port": 8443,
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "requestheaders"
+              ],
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "consul/06-typical-ingress-gateway.json",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "consul/06-typical-ingress-gateway.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "consul"
+  },
+  "fingerprint": "sha256:263723320e7a0a1c14922375881680b83f7ced0ecafb377d47e2441a484b74ba",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "738664f86a605dd628124f97a8e41be411dac88a181c3e6429129eae4bc00618",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

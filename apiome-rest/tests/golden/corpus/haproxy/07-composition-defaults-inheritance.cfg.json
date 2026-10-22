@@ -1,0 +1,271 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          },
+          {
+            "construct": "mode.tcp",
+            "count": 1,
+            "reason": "a section in TCP mode routes connections, not HTTP requests — there is no canonical HTTP operation for it"
+          }
+        ],
+        "operation_count": 5,
+        "route_count": 5,
+        "schemaless_operation_count": 5,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "timeout",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/07-composition-defaults-inheritance.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend partner_api",
+        "name": "frontend partner_api",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                9443
+              ],
+              "default_route": true,
+              "gateway_route": "partner_api#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "section": "frontend partner_api"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#partner_api#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                9443
+              ],
+              "gateway_route": "partner_api#use_backend-shared_backend-3",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner"
+              },
+              "plugins": [
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "section": "frontend partner_api"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner",
+            "key": "ANY /partner",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend public_api",
+        "name": "frontend public_api",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "public_api#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "section": "frontend public_api"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public_api#use_backend-orders_backend-3",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "section": "frontend public_api"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public_api#use_backend-shared_backend-4",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "provenance": "inferred",
+              "section": "frontend public_api"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/07-composition-defaults-inheritance.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/07-composition-defaults-inheritance.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:0662eb36b9cc290dc507ab8b3ddc4d07dae9baad74651c9ced7fa4498ec2916e",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "b4841c941a557a8c296ee9675d1ab6443ca44ea59347e4baee396ab347c9a0e0",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

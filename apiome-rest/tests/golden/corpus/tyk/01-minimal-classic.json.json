@@ -1,0 +1,110 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Ping API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "api_id": "ping-api",
+          "backend": {
+            "url": "http://ping.internal.example.com:8080"
+          },
+          "listen_path": "/ping/",
+          "provenance": "inferred",
+          "strip_listen_path": true
+        },
+        "key": "Ping API",
+        "name": "Ping API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "ping-api",
+              "api_version": "Default",
+              "backends": [
+                {
+                  "name": "ping.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "ping-api@Default:listen-path",
+              "listen_path": "/ping/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/ping"
+              },
+              "provenance": "inferred"
+            },
+            "http_method": "ANY",
+            "http_path": "/ping",
+            "key": "ANY /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Ping API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "tyk/01-minimal-classic.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:d1cd0c5dbf0c81594dcf548a5765fc0c69583a647502ebcf965b6ff8d7a386e0",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "955cec1a5ca7815eed0e0ffe0ac89b43b937473f43c452b906420045850adccb",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

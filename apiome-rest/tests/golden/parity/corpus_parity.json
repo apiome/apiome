@@ -822,6 +822,49 @@
       "waivers": {}
     },
     {
+      "format_key": "consul",
+      "label": "Consul service definitions",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "consul"
+      ],
+      "corpus_directories": [
+        "consul"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "consul"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "corbaidl",
       "label": "CORBA IDL",
       "paradigm": "rpc",
@@ -1529,6 +1572,49 @@
           "has_reason": true
         }
       ],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "haproxy",
+      "label": "HAProxy configuration",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "haproxy"
+      ],
+      "corpus_directories": [
+        "haproxy"
+      ],
+      "fixtures": {
+        "valid": 10,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 16
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 8,
+      "golden_directories": [
+        "haproxy"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
       "capability_provenance": "reviewed",
       "requirements": {
         "valid-examples": "satisfied",
@@ -2320,6 +2406,49 @@
       "waivers": {}
     },
     {
+      "format_key": "nginx",
+      "label": "nginx configuration",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "nginx"
+      ],
+      "corpus_directories": [
+        "nginx"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "nginx"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "odata",
       "label": "OData",
       "paradigm": "rest",
@@ -2983,6 +3112,92 @@
       "waivers": {}
     },
     {
+      "format_key": "traefik",
+      "label": "Traefik dynamic config",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "traefik"
+      ],
+      "corpus_directories": [
+        "traefik"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "traefik"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "tyk",
+      "label": "Tyk API definition",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "tyk"
+      ],
+      "corpus_directories": [
+        "tyk"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "tyk"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "typespec",
       "label": "TypeSpec",
       "paradigm": "rest",
@@ -3400,17 +3615,14 @@
   "export_only_destinations": [],
   "pending_corpus_directories": [
     "cics-bms",
-    "consul",
     "cue",
     "dhall",
-    "haproxy",
     "hoppscotch",
     "ims",
     "jsonld",
     "lwm2m",
     "matter",
     "natural-ddm",
-    "nginx",
     "opcua-nodeset",
     "owl",
     "pkl",
@@ -3422,9 +3634,7 @@
     "soapui",
     "sparkplug",
     "thunder-client",
-    "traefik",
     "trpc",
-    "tyk",
     "typescript-types",
     "vsam-idcams",
     "zod"

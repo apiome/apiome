@@ -1,0 +1,289 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "Shipments API",
+            "detail": {
+              "header": "Authorization"
+            },
+            "plugin": "auth_token",
+            "scheme": "apiKey",
+            "scope": "service"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [
+          "policy"
+        ],
+        "ignored_constructs": [
+          {
+            "construct": "version_selector",
+            "count": 1,
+            "reason": "the version a request gets is chosen by a header, query parameter or URL segment at runtime; each version's routes carry the version name instead of a path change"
+          }
+        ],
+        "operation_count": 3,
+        "route_count": 2,
+        "schemaless_operation_count": 3,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "policy",
+            "scope": "consumer"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "apiKey"
+      ]
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Shipments API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "api_id": "shipments-api",
+          "backend": {
+            "url": "http://shipments.internal.example.com:8080"
+          },
+          "listen_path": "/v2/shipments/",
+          "provenance": "inferred",
+          "strip_listen_path": true
+        },
+        "key": "Shipments API",
+        "name": "Shipments API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "shipments-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "shipments.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "shipments-api@v2/shipments",
+              "listen_path": "/v2/shipments/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                },
+                "POST": {
+                  "action": "no_action",
+                  "code": 201
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/shipments/shipments"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Shipments API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/shipments/shipments",
+            "key": "GET /v2/shipments/shipments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/shipments/shipments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "shipments-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "shipments.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "shipments-api@v2/shipments/{shipmentId}",
+              "listen_path": "/v2/shipments/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/shipments/shipments/{shipmentId}"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Shipments API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/shipments/shipments/{shipmentId}",
+            "key": "GET /v2/shipments/shipments/{shipmentId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/shipments/shipments/{shipmentId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "/v2/shipments/shipments/{shipmentId}",
+                  "provenance": "inferred"
+                },
+                "key": "GET /v2/shipments/shipments/{shipmentId}#path.shipmentId",
+                "location": "path",
+                "name": "shipmentId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "shipments-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "shipments.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "shipments-api@v2/shipments",
+              "listen_path": "/v2/shipments/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                },
+                "POST": {
+                  "action": "no_action",
+                  "code": 201
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/shipments/shipments"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Shipments API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "POST",
+            "http_path": "/v2/shipments/shipments",
+            "key": "POST /v2/shipments/shipments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /v2/shipments/shipments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Shipments API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "tyk/07-policies-set/api-definition.json",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:d4c99c1ed68bcc7f37158eb3dd7282831d720e342aedf8e2b766c95f2ab7879c",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "c1f79aee424515e1fcbaa8b9674cd3a595ba46094623e5462c7dae8a09a5b451",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,275 @@
+{
+  "adapter": "traefik",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "admin",
+            "detail": {
+              "middleware": "basic-auth"
+            },
+            "plugin": "basicAuth",
+            "scheme": "basic",
+            "scope": "route"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "traefik",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "serversTransports",
+            "count": 1,
+            "reason": "servers transports configure the connection to backends, not the API surface"
+          },
+          {
+            "construct": "tls",
+            "count": 1,
+            "reason": "TLS options, stores and certificates configure termination, not routing; they are not read (certificate files are never opened)"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "circuitBreaker",
+            "scope": "route"
+          },
+          {
+            "name": "headers",
+            "scope": "route"
+          },
+          {
+            "name": "inFlightReq",
+            "scope": "route"
+          },
+          {
+            "name": "ipAllowList",
+            "scope": "route"
+          },
+          {
+            "name": "stripPrefix",
+            "scope": "route"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "basic"
+      ]
+    },
+    "format": "traefik",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "traefik/03-composition-middleware-chains.yml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://partner.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://admin.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "backend": {
+            "url": "http://admin.internal.example.com:8080"
+          },
+          "provenance": "inferred",
+          "servers": [
+            "http://admin.internal.example.com:8080"
+          ]
+        },
+        "key": "admin-service",
+        "name": "admin-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "admin-service"
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "admin",
+              "hosts": [
+                "admin.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "secure-chain"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "headers",
+                "inFlightReq",
+                "ipAllowList"
+              ],
+              "provenance": "inferred",
+              "rule": "Host(`admin.example.com`) && PathPrefix(`/`)",
+              "security": [
+                {
+                  "attached_to": "admin",
+                  "detail": {
+                    "middleware": "basic-auth"
+                  },
+                  "plugin": "basicAuth",
+                  "scheme": "basic",
+                  "scope": "route"
+                }
+              ],
+              "tls": {
+                "options": "modern"
+              }
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "partner-service",
+        "name": "partner-service",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "partner-v1",
+                  "weight": 80
+                },
+                {
+                  "name": "partner-v2",
+                  "weight": 20
+                }
+              ],
+              "entry_points": [
+                "websecure"
+              ],
+              "gateway_route": "partner",
+              "hosts": [
+                "partner.example.com"
+              ],
+              "methods_unrestricted": true,
+              "middlewares": [
+                "partner-chain"
+              ],
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/api"
+              },
+              "plugins": [
+                "circuitBreaker",
+                "ipAllowList",
+                "stripPrefix"
+              ],
+              "provenance": "inferred",
+              "rule": "Host(`partner.example.com`) && PathPrefix(`/api`) && Header(`X-Partner-Id`, `.+`)"
+            },
+            "http_method": "ANY",
+            "http_path": "/api",
+            "key": "ANY /api",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /api",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": ".+"
+                },
+                "key": "ANY /api#header.X-Partner-Id",
+                "location": "header",
+                "name": "X-Partner-Id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "traefik/03-composition-middleware-chains.yml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "traefik/03-composition-middleware-chains.yml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 2,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "traefik"
+  },
+  "fingerprint": "sha256:e5e7a24ce89db22285ac9782903e5a90b339e1ae8ce00a4cc6f843648a5dabc0",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "f6058392869fe7db6fa2f53f8a77bb95393380c8c27306d1c91f67515e761d34",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

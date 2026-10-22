@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 69
+- **Formats gated:** 74
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -30,6 +30,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `cloudevents` | CloudEvents | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 5 | `cloudevents` |
 | `cobolcopybook` | COBOL Copybook | data_schema | 8 | 5 | 0 | 0 | 13 | 5/6 (+1 waived) | 8 | `cobolcopybook` |
 | `connectrpc` | Connect RPC | rpc | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `connectrpc` |
+| `consul` | Consul service definitions | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `corbaidl` | CORBA IDL | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `corbaidl` |
 | `dbt` | dbt Project | data_schema | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
 | `dicom` | DICOM | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
@@ -45,6 +46,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `gateway-api` | Gateway API HTTPRoute | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 6 | `gateway-api` |
 | `graphql` | GraphQL | graph | 18 | 5 | 0 | 0 | 23 | 6/6 | 14 | `graphql` |
 | `grpc` | gRPC / Protobuf | rpc | 18 | 13 | 0 | 0 | 31 | 6/6 | 16 | `protobuf` |
+| `haproxy` | HAProxy configuration | rest | 10 | 6 | 0 | 0 | 16 | 6/6 | 8 | — |
 | `hl7v2` | HL7 v2 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `hl7v2` |
 | `hl7v3` | HL7 v3 / CDA | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `http-file` | HTTP Request File | rest | 10 | 5 | 0 | 0 | 15 | 6/6 | 8 | `http-file` |
@@ -61,6 +63,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `mcp` | MCP Server Manifest | agent | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | — |
 | `nacha` | NACHA ACH | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `ncpdp` | NCPDP SCRIPT / Telecom | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `nginx` | nginx configuration | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `odata` | OData | rest | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `odata` |
 | `odcs` | ODCS Data Contract | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `odcs` |
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
@@ -74,6 +77,8 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `swift-mt` | SWIFT MT | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `thrift` | Thrift | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `thrift` |
 | `tradacoms` | TRADACOMS | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
+| `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `tyk` | Tyk API definition | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `typespec` | TypeSpec | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `typespec` |
 | `wadl` | WADL | rest | 6 | 5 | 1 | 0 | 12 | 5/6 (+1 waived) | 6 | `wadl` |
 | `wit` | WIT (WebAssembly) | rpc | 11 | 5 | 0 | 0 | 16 | 6/6 | 9 | `wit` |
@@ -106,6 +111,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `cloudevents` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cobolcopybook` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `connectrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `consul` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `corbaidl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dbt` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dicom` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -121,6 +127,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `gateway-api` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `graphql` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `grpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `haproxy` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `hl7v2` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `hl7v3` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `http-file` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -137,6 +144,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `mcp` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `nacha` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `ncpdp` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `nginx` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `odata` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `odcs` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `oncrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -150,6 +158,8 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `swift-mt` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `thrift` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `tradacoms` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `traefik` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `tyk` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `typespec` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wadl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wit` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -177,4 +187,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `consul`, `cue`, `dhall`, `haproxy`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `nginx`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `traefik`, `trpc`, `tyk`, `typescript-types`, `vsam-idcams`, `zod`
+`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `pydantic`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `trpc`, `typescript-types`, `vsam-idcams`, `zod`

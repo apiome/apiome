@@ -1,6 +1,6 @@
 {
   "name": "apiome-docs",
-  "version": "0.23.111",
+  "version": "0.23.112",
   "private": true,
   "description": "The Apiome documentation site (Docusaurus).",
   "scripts": {

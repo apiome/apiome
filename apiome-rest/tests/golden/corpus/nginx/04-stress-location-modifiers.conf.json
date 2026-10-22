@@ -1,0 +1,614 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "directive.limit_conn_zone",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.limit_req_zone",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "error_page",
+            "count": 1,
+            "reason": "redirects errors to another URI or a named location at runtime"
+          },
+          {
+            "construct": "geo",
+            "count": 1,
+            "reason": "computes a variable from the client address at runtime"
+          },
+          {
+            "construct": "if",
+            "count": 2,
+            "reason": "conditional logic evaluated per request; the branch a request takes cannot be known statically, so directives inside an `if` are not read"
+          },
+          {
+            "construct": "location.internal",
+            "count": 1,
+            "reason": "an `internal` location is reachable only through internal redirects, never from a client, so it is not an operation"
+          },
+          {
+            "construct": "location.named",
+            "count": 1,
+            "reason": "a named location (`@name`) is reachable only through try_files / error_page, never from a client, so it is not an operation"
+          },
+          {
+            "construct": "location.nested",
+            "count": 1,
+            "reason": "a nested location is read as its own route with the outer location's carried directives inherited; nginx's full nesting rules are not modelled"
+          },
+          {
+            "construct": "map",
+            "count": 1,
+            "reason": "computes a variable from request data at runtime; the value a request gets is not known statically"
+          },
+          {
+            "construct": "proxy_pass.variable",
+            "count": 1,
+            "reason": "the backend is computed from a variable at runtime, so it cannot be resolved statically; the route keeps the raw target"
+          },
+          {
+            "construct": "try_files",
+            "count": 1,
+            "reason": "falls through to files or a named location at runtime; only the location's own path is modelled"
+          }
+        ],
+        "operation_count": 10,
+        "route_count": 10,
+        "schemaless_operation_count": 10,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "limit_conn",
+            "scope": "route"
+          },
+          {
+            "name": "limit_req",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_http_version",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_read_timeout",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_set_header",
+            "scope": "route"
+          },
+          {
+            "name": "rewrite",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/04-stress-location-modifiers.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://lab.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "lab.example.com:443",
+        "name": "lab.example.com:443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "case_insensitive": true,
+              "gateway_route": "lab.example.com:443@~*^/assays/(?<assay_id>[a-f0-9]{8})/results$",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend/internal/assays/$assay_id/results",
+                "upstream_servers": [
+                  "shared.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "~* ^/assays/(?<assay_id>[a-f0-9]{8})/results$",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/assays/(?<assay_id>[a-f0-9]{8})/results$"
+              },
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/assays/{assay_id}/results",
+            "key": "ANY /assays/{assay_id}/results",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /assays/{assay_id}/results",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/assays/(?<assay_id>[a-f0-9]{8})/results$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /assays/{assay_id}/results#path.assay_id",
+                "location": "path",
+                "name": "assay_id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "gateway_route": "lab.example.com:443@=/exact",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend",
+                "upstream_servers": [
+                  "shared.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "= /exact",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact"
+              },
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/exact",
+            "key": "ANY /exact",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /exact",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "gateway_route": "lab.example.com:443@/experiment",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend",
+                "upstream_servers": [
+                  "shared.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/experiment",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/experiment"
+              },
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/experiment",
+            "key": "ANY /experiment",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /experiment",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "lab.example.com:443@/files/",
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/files/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/files/"
+              },
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/files/",
+            "key": "ANY /files/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /files/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "gateway_route": "lab.example.com:443@/legacy/",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend",
+                "upstream_servers": [
+                  "shared.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/legacy/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/legacy/"
+              },
+              "plugins": [
+                "rewrite"
+              ],
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/legacy/",
+            "key": "ANY /legacy/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /legacy/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "lab.example.com:443@/nested/",
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/nested/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/nested/"
+              },
+              "plugins": [
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/nested/",
+            "key": "ANY /nested/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /nested/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "globex_backend"
+                }
+              ],
+              "gateway_route": "lab.example.com:443@/nested/inner",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://globex_backend",
+                "upstream_servers": [
+                  "globex.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/nested/inner",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/nested/inner"
+              },
+              "plugins": [
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/nested/inner",
+            "key": "ANY /nested/inner",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /nested/inner",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "lab.example.com:443@~^/orders/[0-9]{6}$",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://$tenant_backend"
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "~ ^/orders/[0-9]{6}$",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/orders/[0-9]{6}$"
+              },
+              "plugins": [
+                "limit_conn",
+                "limit_req"
+              ],
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/orders/{param1}",
+            "key": "ANY /orders/{param1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /orders/{param1}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/orders/[0-9]{6}$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /orders/{param1}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "lab.example.com:443@^~/static/",
+              "handler": {
+                "directive": "root",
+                "path": "/var/www"
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "^~ /static/",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/static/"
+              },
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443",
+              "stops_regex_evaluation": true
+            },
+            "http_method": "ANY",
+            "http_path": "/static/",
+            "key": "ANY /static/",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /static/",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "websocket_backend"
+                }
+              ],
+              "gateway_route": "lab.example.com:443@/ws",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://websocket_backend",
+                "upstream_servers": [
+                  "ws.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "lab.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/ws",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/ws"
+              },
+              "plugins": [
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "lab.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/ws",
+            "key": "ANY /ws",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ws",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/04-stress-location-modifiers.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/04-stress-location-modifiers.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 10,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:a24a227d7f261c7661fd4c1c92d1383ce4ad4ff24d6ab3c2b9a3663ee88a653d",
+  "lint": {
+    "findings": 11,
+    "grade": "C",
+    "report_fingerprint": "84c3272ce74800234cf6badcc23fff7b73ac91768463e8b7d7547b8a7440c9f8",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}

@@ -123,7 +123,7 @@
       "marker": "Protobuf `service` (Connect)"
     },
     "consul": {
-      "label": "Consul service definitions (pending #5459)",
+      "label": "Consul service definitions",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`service`/`services` definitions, or `Kind: service-router`/`ingress-gateway`"
@@ -225,7 +225,7 @@
       "marker": "root `type Query` / `schema {}`"
     },
     "haproxy": {
-      "label": "HAProxy configuration (pending #5459)",
+      "label": "HAProxy configuration",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend`"
@@ -363,7 +363,7 @@
       "marker": "`Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header"
     },
     "nginx": {
-      "label": "nginx configuration (pending #5459)",
+      "label": "nginx configuration",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`server { listen \u2026 location \u2026 }` / `upstream \u2026 { server \u2026 }` blocks"
@@ -555,7 +555,7 @@
       "marker": "`STX=` transmission header + `END=` trailer"
     },
     "traefik": {
-      "label": "Traefik dynamic config (pending #5459)",
+      "label": "Traefik dynamic config",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`http.routers` + `http.services` (YAML/TOML), or `kind: IngressRoute`"
@@ -567,7 +567,7 @@
       "marker": "`initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures"
     },
     "tyk": {
-      "label": "Tyk API definition (pending #5459)",
+      "label": "Tyk API definition",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`api_id` + `proxy.listen_path`, or an OpenAPI document with `x-tyk-api-gateway`"
@@ -6205,7 +6205,7 @@
     {
       "path": "consul/01-minimal-service.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6213,8 +6213,7 @@
       },
       "features": [
         "service-definition",
-        "port",
-        "pending-adapter"
+        "port"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6225,7 +6224,7 @@
     {
       "path": "consul/02-typical-service-with-checks.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6236,8 +6235,7 @@
         "urlprefix-tag",
         "meta",
         "health-checks",
-        "weights",
-        "pending-adapter"
+        "weights"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6248,7 +6246,7 @@
     {
       "path": "consul/03-service-set/catalogue.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6256,8 +6254,7 @@
       },
       "features": [
         "multi-file",
-        "service-definition",
-        "pending-adapter"
+        "service-definition"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6269,7 +6266,7 @@
     {
       "path": "consul/03-service-set/orders.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6278,8 +6275,7 @@
       "features": [
         "multi-file",
         "service-definition",
-        "connect-sidecar",
-        "pending-adapter"
+        "connect-sidecar"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6291,7 +6287,7 @@
     {
       "path": "consul/03-service-set/service-router.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6301,8 +6297,7 @@
         "multi-file",
         "service-router",
         "path-prefix",
-        "prefix-rewrite",
-        "pending-adapter"
+        "prefix-rewrite"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6315,7 +6310,7 @@
     {
       "path": "consul/04-stress-connect-and-resolvers.hcl",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6333,8 +6328,7 @@
         "header-match",
         "query-match",
         "subset",
-        "retries",
-        "pending-adapter"
+        "retries"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6345,7 +6339,7 @@
     {
       "path": "consul/05-real-world-catalog-export.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6356,8 +6350,7 @@
         "nodes",
         "check-status",
         "service-meta",
-        "datacenter",
-        "pending-adapter"
+        "datacenter"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6368,7 +6361,7 @@
     {
       "path": "consul/06-typical-ingress-gateway.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6379,8 +6372,7 @@
         "listeners",
         "http",
         "grpc",
-        "tcp",
-        "pending-adapter"
+        "tcp"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6391,7 +6383,7 @@
     {
       "path": "consul/07-composition-resolver-and-splitter.hcl",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "valid",
       "expected_detection": {
         "format": "consul",
@@ -6404,8 +6396,7 @@
         "service-router",
         "subsets",
         "failover",
-        "hcl",
-        "pending-adapter"
+        "hcl"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6416,7 +6407,7 @@
     {
       "path": "consul/negative/01-syntactic-trailing-comma.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6425,8 +6416,7 @@
       "features": [
         "negative",
         "syntactic",
-        "trailing-comma",
-        "pending-adapter"
+        "trailing-comma"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -6438,7 +6428,7 @@
     {
       "path": "consul/negative/02-semantic-service-without-port.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6447,8 +6437,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-port",
-        "pending-adapter"
+        "no-port"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -6460,7 +6449,7 @@
     {
       "path": "consul/negative/03-truncated-mid-check.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6469,8 +6458,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-check",
-        "pending-adapter"
+        "mid-check"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -6482,7 +6470,7 @@
     {
       "path": "consul/negative/04-wrong-format-tyk.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6491,8 +6479,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "tyk",
-        "pending-adapter"
+        "tyk"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -6504,7 +6491,7 @@
     {
       "path": "consul/negative/05-encoding-utf16.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6513,8 +6500,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -6526,7 +6512,7 @@
     {
       "path": "consul/negative/06-unresolvable-service-reference.json",
       "format": "consul",
-      "adapter_key": null,
+      "adapter_key": "consul",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "consul",
@@ -6536,8 +6522,7 @@
         "negative",
         "unresolvable-ref",
         "missing-service",
-        "missing-subset",
-        "pending-adapter"
+        "missing-subset"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11431,7 +11416,7 @@
     {
       "path": "haproxy/01-minimal.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11440,8 +11425,7 @@
       "features": [
         "frontend",
         "backend",
-        "default-backend",
-        "pending-adapter"
+        "default-backend"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11452,7 +11436,7 @@
     {
       "path": "haproxy/02-typical-path-acls.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11464,8 +11448,7 @@
         "http-request-return",
         "httpchk",
         "replace-path",
-        "tls-bind",
-        "pending-adapter"
+        "tls-bind"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11476,7 +11459,7 @@
     {
       "path": "haproxy/03-composition-multi-frontend.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11488,8 +11471,7 @@
         "shared-backends",
         "map-file-backend",
         "mtls-bind",
-        "cookie-affinity",
-        "pending-adapter"
+        "cookie-affinity"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11500,7 +11482,7 @@
     {
       "path": "haproxy/04-stress-acl-vocabulary.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11520,8 +11502,7 @@
         "ssl-acl",
         "stick-table",
         "lua-acl",
-        "capture",
-        "pending-adapter"
+        "capture"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11533,7 +11514,7 @@
     {
       "path": "haproxy/05-real-world-edge.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11545,8 +11526,7 @@
         "websocket-tunnel",
         "mtls-backend",
         "hsts",
-        "error-files",
-        "pending-adapter"
+        "error-files"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11557,7 +11537,7 @@
     {
       "path": "haproxy/06-typical-tcp-mode.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11567,8 +11547,7 @@
         "tcp-mode",
         "sni-routing",
         "pgsql-check",
-        "listen-section",
-        "pending-adapter"
+        "listen-section"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11579,7 +11558,7 @@
     {
       "path": "haproxy/07-composition-defaults-inheritance.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11589,8 +11568,7 @@
         "defaults-inheritance",
         "named-defaults",
         "shared-backend",
-        "mode-switch",
-        "pending-adapter"
+        "mode-switch"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11601,7 +11579,7 @@
     {
       "path": "haproxy/08-map-file-set/haproxy.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11610,8 +11588,7 @@
       "features": [
         "map-file-backend",
         "host-allowlist",
-        "runtime-backend-selection",
-        "pending-adapter"
+        "runtime-backend-selection"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11623,7 +11600,7 @@
     {
       "path": "haproxy/08-map-file-set/hosts.map",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11631,8 +11608,7 @@
       },
       "features": [
         "map-file",
-        "allowlist",
-        "pending-adapter"
+        "allowlist"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11645,7 +11621,7 @@
     {
       "path": "haproxy/08-map-file-set/tenants.map",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "valid",
       "expected_detection": {
         "format": "haproxy",
@@ -11653,8 +11629,7 @@
       },
       "features": [
         "map-file",
-        "key-to-backend",
-        "pending-adapter"
+        "key-to-backend"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -11667,7 +11642,7 @@
     {
       "path": "haproxy/negative/01-syntactic-unknown-section.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11676,8 +11651,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unknown-section-keyword",
-        "pending-adapter"
+        "unknown-section-keyword"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11689,7 +11663,7 @@
     {
       "path": "haproxy/negative/02-semantic-no-frontend.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11698,8 +11672,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-frontend",
-        "pending-adapter"
+        "no-frontend"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11711,7 +11684,7 @@
     {
       "path": "haproxy/negative/03-truncated-mid-backend.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11720,8 +11693,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-directive",
-        "pending-adapter"
+        "mid-directive"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11733,7 +11705,7 @@
     {
       "path": "haproxy/negative/04-wrong-format-traefik.yml",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11742,8 +11714,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "traefik",
-        "pending-adapter"
+        "traefik"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11755,7 +11726,7 @@
     {
       "path": "haproxy/negative/05-encoding-utf16.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11764,8 +11735,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -11777,7 +11747,7 @@
     {
       "path": "haproxy/negative/06-unresolvable-backend-reference.cfg",
       "format": "haproxy",
-      "adapter_key": null,
+      "adapter_key": "haproxy",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "haproxy",
@@ -11786,8 +11756,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-backend",
-        "pending-adapter"
+        "missing-backend"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18299,7 +18268,7 @@
     {
       "path": "nginx/01-minimal-server.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18308,8 +18277,7 @@
       "features": [
         "server-block",
         "location",
-        "proxy-pass",
-        "pending-adapter"
+        "proxy-pass"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18320,7 +18288,7 @@
     {
       "path": "nginx/02-typical-reverse-proxy.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18333,8 +18301,7 @@
         "alias",
         "redirect-server",
         "tls",
-        "proxy-headers",
-        "pending-adapter"
+        "proxy-headers"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18345,7 +18312,7 @@
     {
       "path": "nginx/03-includes-set/api.example.com.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18354,8 +18321,7 @@
       "features": [
         "multi-file",
         "server-block",
-        "location",
-        "pending-adapter"
+        "location"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18367,7 +18333,7 @@
     {
       "path": "nginx/03-includes-set/nginx.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18376,8 +18342,7 @@
       "features": [
         "multi-file",
         "include",
-        "http-block",
-        "pending-adapter"
+        "http-block"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18389,7 +18354,7 @@
     {
       "path": "nginx/03-includes-set/upstreams.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18397,8 +18362,7 @@
       },
       "features": [
         "multi-file",
-        "upstream",
-        "pending-adapter"
+        "upstream"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18410,7 +18374,7 @@
     {
       "path": "nginx/04-stress-location-modifiers.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18429,8 +18393,7 @@
         "internal",
         "try-files",
         "nested-location",
-        "websocket",
-        "pending-adapter"
+        "websocket"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18442,7 +18405,7 @@
     {
       "path": "nginx/05-real-world-edge.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18455,8 +18418,7 @@
         "security-headers",
         "allow-deny",
         "gone-response",
-        "least-conn",
-        "pending-adapter"
+        "least-conn"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18467,7 +18429,7 @@
     {
       "path": "nginx/06-typical-grpc-and-stream.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18477,8 +18439,7 @@
         "grpc-pass",
         "stream-block",
         "error-page",
-        "http2",
-        "pending-adapter"
+        "http2"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18489,7 +18450,7 @@
     {
       "path": "nginx/07-composition-shared-snippets.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "valid",
       "expected_detection": {
         "format": "nginx",
@@ -18500,8 +18461,7 @@
         "map",
         "shared-upstreams",
         "server-override",
-        "location-override",
-        "pending-adapter"
+        "location-override"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -18512,7 +18472,7 @@
     {
       "path": "nginx/negative/01-syntactic-missing-brace.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18521,8 +18481,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-brace",
-        "pending-adapter"
+        "missing-brace"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18534,7 +18493,7 @@
     {
       "path": "nginx/negative/02-semantic-no-server-block.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18543,8 +18502,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-server-block",
-        "pending-adapter"
+        "no-server-block"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18556,7 +18514,7 @@
     {
       "path": "nginx/negative/03-truncated-mid-location.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18565,8 +18523,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-directive",
-        "pending-adapter"
+        "mid-directive"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18578,7 +18535,7 @@
     {
       "path": "nginx/negative/04-wrong-format-haproxy.cfg",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18587,8 +18544,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "haproxy",
-        "pending-adapter"
+        "haproxy"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18600,7 +18556,7 @@
     {
       "path": "nginx/negative/05-encoding-utf16.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18609,8 +18565,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -18622,7 +18577,7 @@
     {
       "path": "nginx/negative/06-unresolvable-upstream-reference.conf",
       "format": "nginx",
-      "adapter_key": null,
+      "adapter_key": "nginx",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "nginx",
@@ -18631,8 +18586,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-upstream",
-        "pending-adapter"
+        "missing-upstream"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28380,7 +28334,7 @@
     {
       "path": "traefik/01-minimal-router.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28389,8 +28343,7 @@
       "features": [
         "router",
         "service",
-        "path-rule",
-        "pending-adapter"
+        "path-rule"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28401,7 +28354,7 @@
     {
       "path": "traefik/02-typical-dynamic.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28415,8 +28368,7 @@
         "tls",
         "health-check",
         "sticky-cookie",
-        "rate-limit",
-        "pending-adapter"
+        "rate-limit"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28427,7 +28379,7 @@
     {
       "path": "traefik/03-composition-middleware-chains.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28439,8 +28391,7 @@
         "mirroring-service",
         "serversTransports",
         "tls-options",
-        "basic-auth",
-        "pending-adapter"
+        "basic-auth"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28451,7 +28402,7 @@
     {
       "path": "traefik/04-stress-rule-grammar.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28472,8 +28423,7 @@
         "udp-router",
         "forwardAuth",
         "buffering",
-        "errors",
-        "pending-adapter"
+        "errors"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28484,7 +28434,7 @@
     {
       "path": "traefik/05-real-world-dynamic.toml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28496,8 +28446,7 @@
         "cert-domains",
         "ip-allowlist",
         "priority",
-        "compress",
-        "pending-adapter"
+        "compress"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28508,7 +28457,7 @@
     {
       "path": "traefik/06-typical-ingressroute-crd.yaml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28518,8 +28467,7 @@
         "IngressRoute",
         "crd",
         "Middleware",
-        "multi-document",
-        "pending-adapter"
+        "multi-document"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28530,7 +28478,7 @@
     {
       "path": "traefik/07-provider-directory-set/middlewares.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28539,8 +28487,7 @@
       "features": [
         "middlewares",
         "rate-limit",
-        "stripPrefix",
-        "pending-adapter"
+        "stripPrefix"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28553,7 +28500,7 @@
     {
       "path": "traefik/07-provider-directory-set/routers.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28562,8 +28509,7 @@
       "features": [
         "file-provider-directory",
         "routers",
-        "tls",
-        "pending-adapter"
+        "tls"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28575,7 +28521,7 @@
     {
       "path": "traefik/07-provider-directory-set/services.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "valid",
       "expected_detection": {
         "format": "traefik",
@@ -28583,8 +28529,7 @@
       },
       "features": [
         "services",
-        "health-check",
-        "pending-adapter"
+        "health-check"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -28597,7 +28542,7 @@
     {
       "path": "traefik/negative/01-syntactic-bad-yaml.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28606,8 +28551,7 @@
       "features": [
         "negative",
         "syntactic",
-        "bad-indentation",
-        "pending-adapter"
+        "bad-indentation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28619,7 +28563,7 @@
     {
       "path": "traefik/negative/02-semantic-routers-without-rules.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28629,8 +28573,7 @@
         "negative",
         "semantic",
         "no-rule",
-        "no-servers",
-        "pending-adapter"
+        "no-servers"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28642,7 +28585,7 @@
     {
       "path": "traefik/negative/03-truncated-mid-service.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28651,8 +28594,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-url",
-        "pending-adapter"
+        "mid-url"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28664,7 +28606,7 @@
     {
       "path": "traefik/negative/04-wrong-format-nginx.conf",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28673,8 +28615,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "nginx",
-        "pending-adapter"
+        "nginx"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28686,7 +28627,7 @@
     {
       "path": "traefik/negative/05-encoding-utf16.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28695,8 +28636,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -28708,7 +28648,7 @@
     {
       "path": "traefik/negative/06-unresolvable-service-reference.yml",
       "format": "traefik",
-      "adapter_key": null,
+      "adapter_key": "traefik",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "traefik",
@@ -28718,8 +28658,7 @@
         "negative",
         "unresolvable-ref",
         "missing-service",
-        "missing-middleware",
-        "pending-adapter"
+        "missing-middleware"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29087,7 +29026,7 @@
     {
       "path": "tyk/01-minimal-classic.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29096,8 +29035,7 @@
       "features": [
         "classic",
         "listen-path",
-        "keyless",
-        "pending-adapter"
+        "keyless"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29108,7 +29046,7 @@
     {
       "path": "tyk/02-typical-classic-with-paths.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29120,8 +29058,7 @@
         "method-actions",
         "cache",
         "hard-timeouts",
-        "global-rate-limit",
-        "pending-adapter"
+        "global-rate-limit"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29132,7 +29069,7 @@
     {
       "path": "tyk/03-composition-versions-and-middleware.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29146,8 +29083,7 @@
         "ignored",
         "validate-json",
         "url-rewrites",
-        "custom-middleware",
-        "pending-adapter"
+        "custom-middleware"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29158,7 +29094,7 @@
     {
       "path": "tyk/04-stress-oas-extension.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29173,8 +29109,7 @@
         "cors",
         "per-operation-middleware",
         "circuit-breaker",
-        "mock-response",
-        "pending-adapter"
+        "mock-response"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29186,7 +29121,7 @@
     {
       "path": "tyk/05-real-world-payments-classic.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29200,8 +29135,7 @@
         "validate-json",
         "circuit-breakers",
         "cors",
-        "response-processors",
-        "pending-adapter"
+        "response-processors"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29212,7 +29146,7 @@
     {
       "path": "tyk/06-typical-graphql-proxy.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29222,8 +29156,7 @@
         "graphql",
         "proxyOnly",
         "inline-sdl",
-        "paradigm-switch",
-        "pending-adapter"
+        "paradigm-switch"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29234,7 +29167,7 @@
     {
       "path": "tyk/07-policies-set/api-definition.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29243,8 +29176,7 @@
       "features": [
         "classic",
         "white-list",
-        "versioned",
-        "pending-adapter"
+        "versioned"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29256,7 +29188,7 @@
     {
       "path": "tyk/07-policies-set/policies.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "valid",
       "expected_detection": {
         "format": "tyk",
@@ -29266,8 +29198,7 @@
         "policies",
         "quotas",
         "access-rights",
-        "allowed-urls",
-        "pending-adapter"
+        "allowed-urls"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -29280,7 +29211,7 @@
     {
       "path": "tyk/negative/01-syntactic-missing-comma.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29289,8 +29220,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-comma",
-        "pending-adapter"
+        "missing-comma"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29302,7 +29232,7 @@
     {
       "path": "tyk/negative/02-semantic-no-listen-path.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29311,8 +29241,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-listen-path",
-        "pending-adapter"
+        "no-listen-path"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29324,7 +29253,7 @@
     {
       "path": "tyk/negative/03-truncated-mid-version.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29333,8 +29262,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-value",
-        "pending-adapter"
+        "mid-value"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29346,7 +29274,7 @@
     {
       "path": "tyk/negative/04-wrong-format-kong.yaml",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29355,8 +29283,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "kong",
-        "pending-adapter"
+        "kong"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29368,7 +29295,7 @@
     {
       "path": "tyk/negative/05-encoding-utf16.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29377,8 +29304,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -29390,7 +29316,7 @@
     {
       "path": "tyk/negative/06-semantic-empty-versions.json",
       "format": "tyk",
-      "adapter_key": null,
+      "adapter_key": "tyk",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "tyk",
@@ -29399,8 +29325,7 @@
       "features": [
         "negative",
         "semantic",
-        "empty-versions",
-        "pending-adapter"
+        "empty-versions"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

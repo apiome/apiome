@@ -1,0 +1,341 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "directive.ssl_certificate_key",
+            "count": 2,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "map",
+            "count": 1,
+            "reason": "computes a variable from request data at runtime; the value a request gets is not known statically"
+          },
+          {
+            "construct": "proxy_pass.variable",
+            "count": 1,
+            "reason": "the backend is computed from a variable at runtime, so it cannot be resolved statically; the route keeps the raw target"
+          }
+        ],
+        "operation_count": 4,
+        "route_count": 4,
+        "schemaless_operation_count": 4,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "add_header",
+            "scope": "service"
+          },
+          {
+            "name": "client_max_body_size",
+            "scope": "global"
+          },
+          {
+            "name": "client_max_body_size",
+            "scope": "service"
+          },
+          {
+            "name": "proxy_http_version",
+            "scope": "global"
+          },
+          {
+            "name": "proxy_read_timeout",
+            "scope": "global"
+          },
+          {
+            "name": "proxy_read_timeout",
+            "scope": "route"
+          },
+          {
+            "name": "proxy_read_timeout",
+            "scope": "service"
+          },
+          {
+            "name": "proxy_set_header",
+            "scope": "global"
+          },
+          {
+            "name": "proxy_set_header",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/07-composition-shared-snippets.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://partner.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "(default server):80",
+        "name": "(default server):80",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "(default server):80@return",
+              "handler": {
+                "directive": "return",
+                "status": "308",
+                "value": "https://$host$request_uri"
+              },
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "client_max_body_size",
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "(default server):80",
+              "server_level_return": true
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com:443",
+        "name": "api.example.com:443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "api.example.com:443@/v2/orders",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://$tenant_upstream"
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/orders",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "add_header",
+                "client_max_body_size",
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "gateway_route": "api.example.com:443@/v2/products",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend",
+                "upstream_servers": [
+                  "shared-1.internal.example.com:8080",
+                  "shared-2.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/products",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "add_header",
+                "client_max_body_size",
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "partner.example.com:443",
+        "name": "partner.example.com:443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend"
+                }
+              ],
+              "gateway_route": "partner.example.com:443@/partner/v1",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://shared_backend",
+                "upstream_servers": [
+                  "shared-1.internal.example.com:8080",
+                  "shared-2.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "partner.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/partner/v1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner/v1"
+              },
+              "plugins": [
+                "client_max_body_size",
+                "proxy_http_version",
+                "proxy_read_timeout",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "partner.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner/v1",
+            "key": "ANY /partner/v1",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner/v1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/07-composition-shared-snippets.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/07-composition-shared-snippets.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 2,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:1c9336b8eb50d996fab818dad35fc2ffaf86c90255515ebd6c1206131dfb569c",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "c185b41acc9f44120681b8b5634cacaee2e9ed6e3f955d7c14887114b04f931d",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

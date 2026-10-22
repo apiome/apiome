@@ -150,7 +150,8 @@ def test_declared_gateway_flavors_stay_unstamped() -> None:
     adapter = GatewayApiImportSource()
     model = adapter.normalize(adapter.parse(GATEWAY_API, source_label="t.yaml"))
     assert all("provenance" not in op.extras for op in model.operations())
-    assert INFERRED_ROUTE_FLAVORS == {"envoy-xds", "istio"}
+    # FMT-7.5 adds the reverse-proxy flavors; the declared gateways (kong, gateway-api) stay out.
+    assert INFERRED_ROUTE_FLAVORS == {"envoy-xds", "istio", "traefik", "nginx", "haproxy", "consul", "tyk"}
     assert "gateway-api" not in POLICY_PLUGIN_FLAVORS
 
 

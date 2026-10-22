@@ -26,16 +26,16 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
 | `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
 | `azure-apim/` | Azure API Management | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
-| `consul/` | Consul service definitions (pending #5459) | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
+| `consul/` | Consul service definitions | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
 | `discovery/` | Google API Discovery | rest | `kind: discovery#restDescription` / `discoveryVersion` | 11 |
 | `envoy-xds/` | Envoy xDS routes | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
 | `gateway-api/` | Gateway API HTTPRoute | rest | `apiVersion: gateway.networking.k8s.io/*` + `kind: HTTPRoute` | 13 |
-| `haproxy/` | HAProxy configuration (pending #5459) | rest | `frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend` | 16 |
+| `haproxy/` | HAProxy configuration | rest | `frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend` | 16 |
 | `hoppscotch/` | Hoppscotch collections (pending #5473) | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
 | `http-file/` | HTTP Request File | rest | HTTP request line / `###` separators / `curl` / `.http` `.rest` | 15 |
 | `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
 | `kong/` | Kong Declarative Config | rest | `_format_version` + `services:`/`routes:` declarative sections | 12 |
-| `nginx/` | nginx configuration (pending #5459) | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
+| `nginx/` | nginx configuration | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
 | `odata/` | OData v4 (EDMX) | rest | `<edmx:Edmx>` root | 12 |
 | `odata-v2/` | OData v2 / v3 (CSDL) | rest | `<edmx:Edmx>` with the 2007/06 or 2009/11 EDM namespaces | 14 |
 | `openapi/` | OpenAPI 3.x | rest | top-level `openapi:` version | 44 |
@@ -46,8 +46,8 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `swagger/` | Swagger 2.0 | rest | `swagger: "2.0"` | 1 |
 | `swagger-1.2/` | Swagger 1.2 | rest | `"swaggerVersion": "1.2"` | 14 |
 | `thunder-client/` | Thunder Client collections (pending #5475) | rest | `"clientName": "Thunder Client"` + `requests[]` or environment `data[]` | 14 |
-| `traefik/` | Traefik dynamic config (pending #5459) | rest | `http.routers` + `http.services` (YAML/TOML), or `kind: IngressRoute` | 15 |
-| `tyk/` | Tyk API definition (pending #5459) | rest | `api_id` + `proxy.listen_path`, or an OpenAPI document with `x-tyk-api-gateway` | 14 |
+| `traefik/` | Traefik dynamic config | rest | `http.routers` + `http.services` (YAML/TOML), or `kind: IngressRoute` | 15 |
+| `tyk/` | Tyk API definition | rest | `api_id` + `proxy.listen_path`, or an OpenAPI document with `x-tyk-api-gateway` | 14 |
 | `typespec/` | TypeSpec | rest | `import "@typespec/..."` | 11 |
 | `wadl/` | WADL | rest | `<application>` root (WADL namespace) | 12 |
 | `wsdl/` | WSDL 1.1 (SOAP) | soap | `<wsdl:definitions>` root | 13 |
@@ -616,25 +616,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-user-directory.thrift`** — The connectrpc _CONNECT_MARKER_RE claims any proto-looking text whose comments mention 'Connect-RPC' at 0.98, so the fixture's comment deliberately avoids the phrase to keep detect_matched false.
 
-### `consul/` — Consul service definitions (pending #5459)
+### `consul/` — Consul service definitions
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-service.json` | minimal | `consul` ≥ 0.8 | valid | `service-definition`, `port`, `pending-adapter` |
-| `02-typical-service-with-checks.json` | typical | `consul` ≥ 0.8 | valid | `tags`, `urlprefix-tag`, `meta`, `health-checks`, `weights`, `pending-adapter` |
-| `03-service-set/catalogue.json` | multi-file (member) | `consul` (no guarantee) | valid | `multi-file`, `service-definition`, `pending-adapter` |
-| `03-service-set/orders.json` | multi-file (root) | `consul` ≥ 0.8 | valid | `multi-file`, `service-definition`, `connect-sidecar`, `pending-adapter` |
-| `03-service-set/service-router.json` ⚠ | multi-file (member) | `consul` (no guarantee) | valid | `multi-file`, `service-router`, `path-prefix`, `prefix-rewrite`, `pending-adapter` |
-| `04-stress-connect-and-resolvers.hcl` | stress | `consul` ≥ 0.8 | valid | `hcl`, `connect`, `sidecar-upstreams`, `grpc-check`, `alias-check`, `service-router`, `path-exact`, `path-regex`, `header-match`, `query-match`, `subset`, `retries`, `pending-adapter` |
-| `05-real-world-catalog-export.json` | real-world | `consul` ≥ 0.8 | valid | `catalog-export`, `nodes`, `check-status`, `service-meta`, `datacenter`, `pending-adapter` |
-| `06-typical-ingress-gateway.json` | typical | `consul` ≥ 0.8 | valid | `ingress-gateway`, `listeners`, `http`, `grpc`, `tcp`, `pending-adapter` |
-| `07-composition-resolver-and-splitter.hcl` | composition | `consul` ≥ 0.8 | valid | `service-defaults`, `service-resolver`, `service-splitter`, `service-router`, `subsets`, `failover`, `hcl`, `pending-adapter` |
-| `negative/01-syntactic-trailing-comma.json` | — | `consul` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma`, `pending-adapter` |
-| `negative/02-semantic-service-without-port.json` | — | `consul` (no guarantee) | invalid | `negative`, `semantic`, `no-port`, `pending-adapter` |
-| `negative/03-truncated-mid-check.json` | — | `consul` (no guarantee) | invalid | `negative`, `truncated`, `mid-check`, `pending-adapter` |
-| `negative/04-wrong-format-tyk.json` | — | `consul` (no guarantee) | invalid | `negative`, `wrong-format`, `tyk`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `consul` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-service-reference.json` | — | `consul` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-service`, `missing-subset`, `pending-adapter` |
+| `01-minimal-service.json` | minimal | `consul` ≥ 0.8 | valid | `service-definition`, `port` |
+| `02-typical-service-with-checks.json` | typical | `consul` ≥ 0.8 | valid | `tags`, `urlprefix-tag`, `meta`, `health-checks`, `weights` |
+| `03-service-set/catalogue.json` | multi-file (member) | `consul` (no guarantee) | valid | `multi-file`, `service-definition` |
+| `03-service-set/orders.json` | multi-file (root) | `consul` ≥ 0.8 | valid | `multi-file`, `service-definition`, `connect-sidecar` |
+| `03-service-set/service-router.json` ⚠ | multi-file (member) | `consul` (no guarantee) | valid | `multi-file`, `service-router`, `path-prefix`, `prefix-rewrite` |
+| `04-stress-connect-and-resolvers.hcl` | stress | `consul` ≥ 0.8 | valid | `hcl`, `connect`, `sidecar-upstreams`, `grpc-check`, `alias-check`, `service-router`, `path-exact`, `path-regex`, `header-match`, `query-match`, `subset`, `retries` |
+| `05-real-world-catalog-export.json` | real-world | `consul` ≥ 0.8 | valid | `catalog-export`, `nodes`, `check-status`, `service-meta`, `datacenter` |
+| `06-typical-ingress-gateway.json` | typical | `consul` ≥ 0.8 | valid | `ingress-gateway`, `listeners`, `http`, `grpc`, `tcp` |
+| `07-composition-resolver-and-splitter.hcl` | composition | `consul` ≥ 0.8 | valid | `service-defaults`, `service-resolver`, `service-splitter`, `service-router`, `subsets`, `failover`, `hcl` |
+| `negative/01-syntactic-trailing-comma.json` | — | `consul` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma` |
+| `negative/02-semantic-service-without-port.json` | — | `consul` (no guarantee) | invalid | `negative`, `semantic`, `no-port` |
+| `negative/03-truncated-mid-check.json` | — | `consul` (no guarantee) | invalid | `negative`, `truncated`, `mid-check` |
+| `negative/04-wrong-format-tyk.json` | — | `consul` (no guarantee) | invalid | `negative`, `wrong-format`, `tyk` |
+| `negative/05-encoding-utf16.json` | — | `consul` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-service-reference.json` | — | `consul` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-service`, `missing-subset` |
 
 > ⚠ **`03-service-set/service-router.json`** — Fileset member: the only file in the set that carries paths — the service definitions alone describe no routes.
 
@@ -1029,26 +1029,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`14-federation-supergraph.graphql`** — expected_detection records intent: the greedy flatbuffers sniffer (is_flatbuffers matches the join__Graph enum block) claims this file at 0.96, with smithy/thrift at 0.95, outranking graphql's 0.9 — the same sniffer-ranking bug family recorded for graphql/03-04/07-08 (IXH-1.2).
 
-### `haproxy/` — HAProxy configuration (pending #5459)
+### `haproxy/` — HAProxy configuration
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal.cfg` | minimal | `haproxy` ≥ 0.8 | valid | `frontend`, `backend`, `default-backend`, `pending-adapter` |
-| `02-typical-path-acls.cfg` | typical | `haproxy` ≥ 0.8 | valid | `path-acl`, `use-backend`, `http-request-return`, `httpchk`, `replace-path`, `tls-bind`, `pending-adapter` |
-| `03-composition-multi-frontend.cfg` | composition | `haproxy` ≥ 0.8 | valid | `multi-frontend`, `listen-section`, `shared-backends`, `map-file-backend`, `mtls-bind`, `cookie-affinity`, `pending-adapter` |
-| `04-stress-acl-vocabulary.cfg` ⚠ | stress | `haproxy` ≥ 0.8 | valid | `path`, `path-beg`, `path-end`, `path-sub`, `path-dir`, `path-reg`, `method-acl`, `header-acl`, `urlp`, `src-acl`, `ssl-acl`, `stick-table`, `lua-acl`, `capture`, `pending-adapter` |
-| `05-real-world-edge.cfg` | real-world | `haproxy` ≥ 0.8 | valid | `rate-limiting`, `maintenance-switch`, `websocket-tunnel`, `mtls-backend`, `hsts`, `error-files`, `pending-adapter` |
-| `06-typical-tcp-mode.cfg` | typical | `haproxy` ≥ 0.8 | valid | `tcp-mode`, `sni-routing`, `pgsql-check`, `listen-section`, `pending-adapter` |
-| `07-composition-defaults-inheritance.cfg` | composition | `haproxy` ≥ 0.8 | valid | `defaults-inheritance`, `named-defaults`, `shared-backend`, `mode-switch`, `pending-adapter` |
-| `08-map-file-set/haproxy.cfg` | multi-file (root) | `haproxy` ≥ 0.8 | valid | `map-file-backend`, `host-allowlist`, `runtime-backend-selection`, `pending-adapter` |
-| `08-map-file-set/hosts.map` ⚠ | multi-file (member) | `haproxy` (no guarantee) | valid | `map-file`, `allowlist`, `pending-adapter` |
-| `08-map-file-set/tenants.map` ⚠ | multi-file (member) | `haproxy` (no guarantee) | valid | `map-file`, `key-to-backend`, `pending-adapter` |
-| `negative/01-syntactic-unknown-section.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `syntactic`, `unknown-section-keyword`, `pending-adapter` |
-| `negative/02-semantic-no-frontend.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `semantic`, `no-frontend`, `pending-adapter` |
-| `negative/03-truncated-mid-backend.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `truncated`, `mid-directive`, `pending-adapter` |
-| `negative/04-wrong-format-traefik.yml` | — | `haproxy` (no guarantee) | invalid | `negative`, `wrong-format`, `traefik`, `pending-adapter` |
-| `negative/05-encoding-utf16.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-backend-reference.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-backend`, `pending-adapter` |
+| `01-minimal.cfg` | minimal | `haproxy` ≥ 0.8 | valid | `frontend`, `backend`, `default-backend` |
+| `02-typical-path-acls.cfg` | typical | `haproxy` ≥ 0.8 | valid | `path-acl`, `use-backend`, `http-request-return`, `httpchk`, `replace-path`, `tls-bind` |
+| `03-composition-multi-frontend.cfg` | composition | `haproxy` ≥ 0.8 | valid | `multi-frontend`, `listen-section`, `shared-backends`, `map-file-backend`, `mtls-bind`, `cookie-affinity` |
+| `04-stress-acl-vocabulary.cfg` ⚠ | stress | `haproxy` ≥ 0.8 | valid | `path`, `path-beg`, `path-end`, `path-sub`, `path-dir`, `path-reg`, `method-acl`, `header-acl`, `urlp`, `src-acl`, `ssl-acl`, `stick-table`, `lua-acl`, `capture` |
+| `05-real-world-edge.cfg` | real-world | `haproxy` ≥ 0.8 | valid | `rate-limiting`, `maintenance-switch`, `websocket-tunnel`, `mtls-backend`, `hsts`, `error-files` |
+| `06-typical-tcp-mode.cfg` | typical | `haproxy` ≥ 0.8 | valid | `tcp-mode`, `sni-routing`, `pgsql-check`, `listen-section` |
+| `07-composition-defaults-inheritance.cfg` | composition | `haproxy` ≥ 0.8 | valid | `defaults-inheritance`, `named-defaults`, `shared-backend`, `mode-switch` |
+| `08-map-file-set/haproxy.cfg` | multi-file (root) | `haproxy` ≥ 0.8 | valid | `map-file-backend`, `host-allowlist`, `runtime-backend-selection` |
+| `08-map-file-set/hosts.map` ⚠ | multi-file (member) | `haproxy` (no guarantee) | valid | `map-file`, `allowlist` |
+| `08-map-file-set/tenants.map` ⚠ | multi-file (member) | `haproxy` (no guarantee) | valid | `map-file`, `key-to-backend` |
+| `negative/01-syntactic-unknown-section.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `syntactic`, `unknown-section-keyword` |
+| `negative/02-semantic-no-frontend.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `semantic`, `no-frontend` |
+| `negative/03-truncated-mid-backend.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `truncated`, `mid-directive` |
+| `negative/04-wrong-format-traefik.yml` | — | `haproxy` (no guarantee) | invalid | `negative`, `wrong-format`, `traefik` |
+| `negative/05-encoding-utf16.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-backend-reference.cfg` | — | `haproxy` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-backend` |
 
 > ⚠ **`04-stress-acl-vocabulary.cfg`** — Includes a Lua-backed ACL and stick-table rate conditions: FMT-7.5 requires each declared as outside the documented subset rather than guessed at.
 
@@ -1556,25 +1556,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-hl7v2.hl7`** — An HL7 v2 pharmacy order for the same prescription — the neighbour the shipped hl7v2 adapter owns.
 
-### `nginx/` — nginx configuration (pending #5459)
+### `nginx/` — nginx configuration
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-server.conf` | minimal | `nginx` ≥ 0.8 | valid | `server-block`, `location`, `proxy-pass`, `pending-adapter` |
-| `02-typical-reverse-proxy.conf` | typical | `nginx` ≥ 0.8 | valid | `upstream`, `exact-location`, `prefix-location`, `alias`, `redirect-server`, `tls`, `proxy-headers`, `pending-adapter` |
-| `03-includes-set/api.example.com.conf` | multi-file (member) | `nginx` (no guarantee) | valid | `multi-file`, `server-block`, `location`, `pending-adapter` |
-| `03-includes-set/nginx.conf` | multi-file (root) | `nginx` ≥ 0.8 | valid | `multi-file`, `include`, `http-block`, `pending-adapter` |
-| `03-includes-set/upstreams.conf` | multi-file (member) | `nginx` (no guarantee) | valid | `multi-file`, `upstream`, `pending-adapter` |
-| `04-stress-location-modifiers.conf` ⚠ | stress | `nginx` ≥ 0.8 | valid | `exact-modifier`, `preferential-prefix`, `regex-location`, `case-insensitive-regex`, `named-location`, `map`, `geo`, `limit-req`, `if-in-location`, `internal`, `try-files`, `nested-location`, `websocket`, `pending-adapter` |
-| `05-real-world-edge.conf` | real-world | `nginx` ≥ 0.8 | valid | `canonical-redirect`, `proxy-cache`, `gzip`, `security-headers`, `allow-deny`, `gone-response`, `least-conn`, `pending-adapter` |
-| `06-typical-grpc-and-stream.conf` | typical | `nginx` ≥ 0.8 | valid | `grpc-pass`, `stream-block`, `error-page`, `http2`, `pending-adapter` |
-| `07-composition-shared-snippets.conf` | composition | `nginx` ≥ 0.8 | valid | `directive-inheritance`, `map`, `shared-upstreams`, `server-override`, `location-override`, `pending-adapter` |
-| `negative/01-syntactic-missing-brace.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace`, `pending-adapter` |
-| `negative/02-semantic-no-server-block.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `semantic`, `no-server-block`, `pending-adapter` |
-| `negative/03-truncated-mid-location.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `truncated`, `mid-directive`, `pending-adapter` |
-| `negative/04-wrong-format-haproxy.cfg` | — | `nginx` (no guarantee) | invalid | `negative`, `wrong-format`, `haproxy`, `pending-adapter` |
-| `negative/05-encoding-utf16.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-upstream-reference.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-upstream`, `pending-adapter` |
+| `01-minimal-server.conf` | minimal | `nginx` ≥ 0.8 | valid | `server-block`, `location`, `proxy-pass` |
+| `02-typical-reverse-proxy.conf` | typical | `nginx` ≥ 0.8 | valid | `upstream`, `exact-location`, `prefix-location`, `alias`, `redirect-server`, `tls`, `proxy-headers` |
+| `03-includes-set/api.example.com.conf` | multi-file (member) | `nginx` (no guarantee) | valid | `multi-file`, `server-block`, `location` |
+| `03-includes-set/nginx.conf` | multi-file (root) | `nginx` ≥ 0.8 | valid | `multi-file`, `include`, `http-block` |
+| `03-includes-set/upstreams.conf` | multi-file (member) | `nginx` (no guarantee) | valid | `multi-file`, `upstream` |
+| `04-stress-location-modifiers.conf` ⚠ | stress | `nginx` ≥ 0.8 | valid | `exact-modifier`, `preferential-prefix`, `regex-location`, `case-insensitive-regex`, `named-location`, `map`, `geo`, `limit-req`, `if-in-location`, `internal`, `try-files`, `nested-location`, `websocket` |
+| `05-real-world-edge.conf` | real-world | `nginx` ≥ 0.8 | valid | `canonical-redirect`, `proxy-cache`, `gzip`, `security-headers`, `allow-deny`, `gone-response`, `least-conn` |
+| `06-typical-grpc-and-stream.conf` | typical | `nginx` ≥ 0.8 | valid | `grpc-pass`, `stream-block`, `error-page`, `http2` |
+| `07-composition-shared-snippets.conf` | composition | `nginx` ≥ 0.8 | valid | `directive-inheritance`, `map`, `shared-upstreams`, `server-override`, `location-override` |
+| `negative/01-syntactic-missing-brace.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace` |
+| `negative/02-semantic-no-server-block.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `semantic`, `no-server-block` |
+| `negative/03-truncated-mid-location.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `truncated`, `mid-directive` |
+| `negative/04-wrong-format-haproxy.cfg` | — | `nginx` (no guarantee) | invalid | `negative`, `wrong-format`, `haproxy` |
+| `negative/05-encoding-utf16.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-upstream-reference.conf` | — | `nginx` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-upstream` |
 
 > ⚠ **`04-stress-location-modifiers.conf`** — Deliberately reaches past the documented subset (if, map, geo, nested locations): FMT-7.5 requires each of those declared as a parsing limit rather than guessed at.
 
@@ -2347,25 +2347,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-edifact.edi`** — TRADACOMS must parse as its own structure, not as an EDIFACT interchange — the misroute FMT-6.5 names explicitly.
 
-### `traefik/` — Traefik dynamic config (pending #5459)
+### `traefik/` — Traefik dynamic config
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-router.yml` | minimal | `traefik` ≥ 0.85 | valid | `router`, `service`, `path-rule`, `pending-adapter` |
-| `02-typical-dynamic.yml` | typical | `traefik` ≥ 0.85 | valid | `routers`, `services`, `middlewares`, `entrypoints`, `tls`, `health-check`, `sticky-cookie`, `rate-limit`, `pending-adapter` |
-| `03-composition-middleware-chains.yml` | composition | `traefik` ≥ 0.85 | valid | `chain-middleware`, `weighted-service`, `mirroring-service`, `serversTransports`, `tls-options`, `basic-auth`, `pending-adapter` |
-| `04-stress-rule-grammar.yml` | stress | `traefik` ≥ 0.85 | valid | `Path`, `PathPrefix`, `PathRegexp`, `Host`, `HostRegexp`, `Header`, `Query`, `ClientIP`, `negation`, `grouping`, `tcp-router`, `udp-router`, `forwardAuth`, `buffering`, `errors`, `pending-adapter` |
-| `05-real-world-dynamic.toml` | real-world | `traefik` ≥ 0.85 | valid | `toml`, `redirect-regex`, `cert-domains`, `ip-allowlist`, `priority`, `compress`, `pending-adapter` |
-| `06-typical-ingressroute-crd.yaml` | typical | `traefik` ≥ 0.85 | valid | `IngressRoute`, `crd`, `Middleware`, `multi-document`, `pending-adapter` |
-| `07-provider-directory-set/middlewares.yml` ⚠ | multi-file (member) | `traefik` (no guarantee) | valid | `middlewares`, `rate-limit`, `stripPrefix`, `pending-adapter` |
-| `07-provider-directory-set/routers.yml` | multi-file (root) | `traefik` ≥ 0.85 | valid | `file-provider-directory`, `routers`, `tls`, `pending-adapter` |
-| `07-provider-directory-set/services.yml` ⚠ | multi-file (member) | `traefik` (no guarantee) | valid | `services`, `health-check`, `pending-adapter` |
-| `negative/01-syntactic-bad-yaml.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation`, `pending-adapter` |
-| `negative/02-semantic-routers-without-rules.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `semantic`, `no-rule`, `no-servers`, `pending-adapter` |
-| `negative/03-truncated-mid-service.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `truncated`, `mid-url`, `pending-adapter` |
-| `negative/04-wrong-format-nginx.conf` | — | `traefik` (no guarantee) | invalid | `negative`, `wrong-format`, `nginx`, `pending-adapter` |
-| `negative/05-encoding-utf16.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-service-reference.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-service`, `missing-middleware`, `pending-adapter` |
+| `01-minimal-router.yml` | minimal | `traefik` ≥ 0.85 | valid | `router`, `service`, `path-rule` |
+| `02-typical-dynamic.yml` | typical | `traefik` ≥ 0.85 | valid | `routers`, `services`, `middlewares`, `entrypoints`, `tls`, `health-check`, `sticky-cookie`, `rate-limit` |
+| `03-composition-middleware-chains.yml` | composition | `traefik` ≥ 0.85 | valid | `chain-middleware`, `weighted-service`, `mirroring-service`, `serversTransports`, `tls-options`, `basic-auth` |
+| `04-stress-rule-grammar.yml` | stress | `traefik` ≥ 0.85 | valid | `Path`, `PathPrefix`, `PathRegexp`, `Host`, `HostRegexp`, `Header`, `Query`, `ClientIP`, `negation`, `grouping`, `tcp-router`, `udp-router`, `forwardAuth`, `buffering`, `errors` |
+| `05-real-world-dynamic.toml` | real-world | `traefik` ≥ 0.85 | valid | `toml`, `redirect-regex`, `cert-domains`, `ip-allowlist`, `priority`, `compress` |
+| `06-typical-ingressroute-crd.yaml` | typical | `traefik` ≥ 0.85 | valid | `IngressRoute`, `crd`, `Middleware`, `multi-document` |
+| `07-provider-directory-set/middlewares.yml` ⚠ | multi-file (member) | `traefik` (no guarantee) | valid | `middlewares`, `rate-limit`, `stripPrefix` |
+| `07-provider-directory-set/routers.yml` | multi-file (root) | `traefik` ≥ 0.85 | valid | `file-provider-directory`, `routers`, `tls` |
+| `07-provider-directory-set/services.yml` ⚠ | multi-file (member) | `traefik` (no guarantee) | valid | `services`, `health-check` |
+| `negative/01-syntactic-bad-yaml.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation` |
+| `negative/02-semantic-routers-without-rules.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `semantic`, `no-rule`, `no-servers` |
+| `negative/03-truncated-mid-service.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `truncated`, `mid-url` |
+| `negative/04-wrong-format-nginx.conf` | — | `traefik` (no guarantee) | invalid | `negative`, `wrong-format`, `nginx` |
+| `negative/05-encoding-utf16.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-service-reference.yml` | — | `traefik` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-service`, `missing-middleware` |
 
 > ⚠ **`07-provider-directory-set/middlewares.yml`** — Fileset member: the middlewares the routers reference by name.
 
@@ -2398,24 +2398,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-semantic-non-zod-input-only.ts`** — The FMT-8.3 acceptance case: a router with a non-Zod input must be reported, not turned into an operation with an empty request body.
 
-### `tyk/` — Tyk API definition (pending #5459)
+### `tyk/` — Tyk API definition
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-classic.json` | minimal | `tyk` ≥ 0.85 | valid | `classic`, `listen-path`, `keyless`, `pending-adapter` |
-| `02-typical-classic-with-paths.json` | typical | `tyk` ≥ 0.85 | valid | `classic`, `white-list`, `method-actions`, `cache`, `hard-timeouts`, `global-rate-limit`, `pending-adapter` |
-| `03-composition-versions-and-middleware.json` | composition | `tyk` ≥ 0.85 | valid | `classic`, `two-versions`, `header-versioning`, `black-list`, `ignored`, `validate-json`, `url-rewrites`, `custom-middleware`, `pending-adapter` |
-| `04-stress-oas-extension.json` ⚠ | stress | `tyk` ≥ 0.85 | valid | `tyk-oas`, `x-tyk-api-gateway`, `load-balancing`, `uptime-tests`, `jwt`, `cors`, `per-operation-middleware`, `circuit-breaker`, `mock-response`, `pending-adapter` |
-| `05-real-world-payments-classic.json` | real-world | `tyk` ≥ 0.85 | valid | `classic`, `oauth2`, `target-list`, `uptime-tests`, `validate-json`, `circuit-breakers`, `cors`, `response-processors`, `pending-adapter` |
-| `06-typical-graphql-proxy.json` | typical | `tyk` ≥ 0.85 | valid | `graphql`, `proxyOnly`, `inline-sdl`, `paradigm-switch`, `pending-adapter` |
-| `07-policies-set/api-definition.json` | multi-file (root) | `tyk` ≥ 0.85 | valid | `classic`, `white-list`, `versioned`, `pending-adapter` |
-| `07-policies-set/policies.json` ⚠ | multi-file (member) | `tyk` (no guarantee) | valid | `policies`, `quotas`, `access-rights`, `allowed-urls`, `pending-adapter` |
-| `negative/01-syntactic-missing-comma.json` | — | `tyk` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma`, `pending-adapter` |
-| `negative/02-semantic-no-listen-path.json` | — | `tyk` (no guarantee) | invalid | `negative`, `semantic`, `no-listen-path`, `pending-adapter` |
-| `negative/03-truncated-mid-version.json` | — | `tyk` (no guarantee) | invalid | `negative`, `truncated`, `mid-value`, `pending-adapter` |
-| `negative/04-wrong-format-kong.yaml` | — | `tyk` (no guarantee) | invalid | `negative`, `wrong-format`, `kong`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `tyk` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-empty-versions.json` | — | `tyk` (no guarantee) | invalid | `negative`, `semantic`, `empty-versions`, `pending-adapter` |
+| `01-minimal-classic.json` | minimal | `tyk` ≥ 0.85 | valid | `classic`, `listen-path`, `keyless` |
+| `02-typical-classic-with-paths.json` | typical | `tyk` ≥ 0.85 | valid | `classic`, `white-list`, `method-actions`, `cache`, `hard-timeouts`, `global-rate-limit` |
+| `03-composition-versions-and-middleware.json` | composition | `tyk` ≥ 0.85 | valid | `classic`, `two-versions`, `header-versioning`, `black-list`, `ignored`, `validate-json`, `url-rewrites`, `custom-middleware` |
+| `04-stress-oas-extension.json` ⚠ | stress | `tyk` ≥ 0.85 | valid | `tyk-oas`, `x-tyk-api-gateway`, `load-balancing`, `uptime-tests`, `jwt`, `cors`, `per-operation-middleware`, `circuit-breaker`, `mock-response` |
+| `05-real-world-payments-classic.json` | real-world | `tyk` ≥ 0.85 | valid | `classic`, `oauth2`, `target-list`, `uptime-tests`, `validate-json`, `circuit-breakers`, `cors`, `response-processors` |
+| `06-typical-graphql-proxy.json` | typical | `tyk` ≥ 0.85 | valid | `graphql`, `proxyOnly`, `inline-sdl`, `paradigm-switch` |
+| `07-policies-set/api-definition.json` | multi-file (root) | `tyk` ≥ 0.85 | valid | `classic`, `white-list`, `versioned` |
+| `07-policies-set/policies.json` ⚠ | multi-file (member) | `tyk` (no guarantee) | valid | `policies`, `quotas`, `access-rights`, `allowed-urls` |
+| `negative/01-syntactic-missing-comma.json` | — | `tyk` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma` |
+| `negative/02-semantic-no-listen-path.json` | — | `tyk` (no guarantee) | invalid | `negative`, `semantic`, `no-listen-path` |
+| `negative/03-truncated-mid-version.json` | — | `tyk` (no guarantee) | invalid | `negative`, `truncated`, `mid-value` |
+| `negative/04-wrong-format-kong.yaml` | — | `tyk` (no guarantee) | invalid | `negative`, `wrong-format`, `kong` |
+| `negative/05-encoding-utf16.json` | — | `tyk` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-empty-versions.json` | — | `tyk` (no guarantee) | invalid | `negative`, `semantic`, `empty-versions` |
 
 > ⚠ **`04-stress-oas-extension.json`** — The non-greedy detection case in the positive direction: a real OpenAPI document that this adapter may claim only because of the x-tyk-api-gateway extension.
 

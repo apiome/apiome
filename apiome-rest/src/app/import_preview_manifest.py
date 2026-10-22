@@ -427,6 +427,45 @@ KNOWN_PARSER_LIMITS: Dict[str, Tuple[ParserLimit, ...]] = {
             "VirtualService routing alone.",
         ),
     ),
+    "traefik": (
+        ParserLimit(
+            construct="dynamic providers other than the file provider and Kubernetes CRDs",
+            detail="Routers that Docker labels, Consul Catalog, etcd or other providers create at "
+            "runtime are not part of the input; a reference to one (`name@docker`) is kept as "
+            "written and not resolved.",
+        ),
+    ),
+    "nginx": (
+        ParserLimit(
+            construct="nginx outside the documented directive subset",
+            detail="The parser reads a bounded subset of nginx (see the format's capability "
+            "entry, directive by directive); `if`, `map`, `geo`, `try_files`, named locations, "
+            "scripting modules and every other directive are declared, not interpreted.",
+        ),
+    ),
+    "haproxy": (
+        ParserLimit(
+            construct="runtime-evaluated conditions and Lua",
+            detail="Conditions on the client address, TLS properties, stick-table counters, the "
+            "request body or Lua fetches are kept on the route as unmodelled conditions; the "
+            "parser never evaluates them.",
+        ),
+    ),
+    "consul": (
+        ParserLimit(
+            construct="live catalog and mesh state",
+            detail="Only the supplied definitions, catalog export and configuration entries are "
+            "read; services registered at runtime and intentions or proxy defaults are not "
+            "fetched.",
+        ),
+    ),
+    "tyk": (
+        ParserLimit(
+            construct="custom middleware and plugin code",
+            detail="JavaScript, Go and coprocess middleware is named on the API, but what it "
+            "does to a request is not knowable from the definition.",
+        ),
+    ),
     "gateway-api": (
         ParserLimit(
             construct="ExtensionRef filters and policy attachments",
@@ -1204,6 +1243,11 @@ _GATEWAY_FLAVOR_LABELS = {
     "gateway-api": "Gateway API HTTPRoute manifests",
     "envoy-xds": "Envoy xDS route configuration",
     "istio": "Istio VirtualService manifests",
+    "traefik": "Traefik dynamic configuration",
+    "nginx": "nginx configuration",
+    "haproxy": "HAProxy configuration",
+    "consul": "Consul service definitions",
+    "tyk": "Tyk API definition",
 }
 
 

@@ -1,0 +1,215 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "directive.keepalive_timeout",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.log_format",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.sendfile",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.ssl_certificate_key",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "directive.worker_processes",
+            "count": 1,
+            "reason": "outside the documented nginx subset; recorded, not read"
+          },
+          {
+            "construct": "include.unresolved",
+            "count": 1,
+            "reason": "an included file was not part of the import, so whatever it declares is unknown (supply it in the file set to have it read)"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "default_type",
+            "scope": "global"
+          },
+          {
+            "name": "proxy_set_header",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/03-includes-set/nginx.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com:443",
+        "name": "api.example.com:443",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "orders_backend"
+                }
+              ],
+              "gateway_route": "api.example.com:443@/v2/orders",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://orders_backend",
+                "upstream_servers": [
+                  "orders.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/orders",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "default_type",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "catalogue_backend"
+                }
+              ],
+              "gateway_route": "api.example.com:443@/v2/products",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://catalogue_backend",
+                "upstream_servers": [
+                  "catalogue.internal.example.com:8080"
+                ]
+              },
+              "hosts": [
+                "api.example.com"
+              ],
+              "listen_ports": [
+                443
+              ],
+              "location": "/v2/products",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/products"
+              },
+              "plugins": [
+                "default_type",
+                "proxy_set_header"
+              ],
+              "provenance": "inferred",
+              "server_block": "api.example.com:443"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/products",
+            "key": "ANY /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/03-includes-set/nginx.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/03-includes-set/nginx.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:50af199de418751eada9d555fdb74ec418b5fb5d6d1240afdbcad8f8c60312e8",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "329517e5d1193090a1fecefea2b6fbb1760c41003f6f139bded0d05b844edc1c",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

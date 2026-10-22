@@ -1,0 +1,386 @@
+{
+  "adapter": "tyk",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "Orders API",
+            "detail": {
+              "header": "Authorization"
+            },
+            "plugin": "auth_token",
+            "scheme": "apiKey",
+            "scope": "service"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "tyk",
+        "global_plugins": [
+          "global_rate_limit"
+        ],
+        "ignored_constructs": [
+          {
+            "construct": "version_selector",
+            "count": 1,
+            "reason": "the version a request gets is chosen by a header, query parameter or URL segment at runtime; each version's routes carry the version name instead of a path change"
+          }
+        ],
+        "operation_count": 4,
+        "route_count": 2,
+        "schemaless_operation_count": 4,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "cache",
+            "scope": "route"
+          },
+          {
+            "name": "global_rate_limit",
+            "scope": "global"
+          },
+          {
+            "name": "hard_timeouts",
+            "scope": "route"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "apiKey"
+      ]
+    },
+    "format": "tyk",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "api_id": "orders-api",
+          "backend": {
+            "url": "http://orders.internal.example.com:8080"
+          },
+          "listen_path": "/v2/orders/",
+          "provenance": "inferred",
+          "strip_listen_path": true
+        },
+        "key": "Orders API",
+        "name": "Orders API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "orders-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "orders.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "orders-api@v2/orders/{id}",
+              "listen_path": "/v2/orders/",
+              "method_actions": {
+                "DELETE": {
+                  "action": "no_action",
+                  "code": 204
+                },
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/orders/orders/{id}"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Orders API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "DELETE",
+            "http_path": "/v2/orders/orders/{id}",
+            "key": "DELETE /v2/orders/orders/{id}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "DELETE /v2/orders/orders/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "/v2/orders/orders/{id}",
+                  "provenance": "inferred"
+                },
+                "key": "DELETE /v2/orders/orders/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "orders-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "orders.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "orders-api@v2/orders",
+              "listen_path": "/v2/orders/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                },
+                "POST": {
+                  "action": "no_action",
+                  "code": 201
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/orders/orders"
+              },
+              "plugins": [
+                "cache",
+                "hard_timeouts"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Orders API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders/orders",
+            "key": "GET /v2/orders/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "orders-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "orders.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "orders-api@v2/orders/{id}",
+              "listen_path": "/v2/orders/",
+              "method_actions": {
+                "DELETE": {
+                  "action": "no_action",
+                  "code": 204
+                },
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/orders/orders/{id}"
+              },
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Orders API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders/orders/{id}",
+            "key": "GET /v2/orders/orders/{id}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders/orders/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "/v2/orders/orders/{id}",
+                  "provenance": "inferred"
+                },
+                "key": "GET /v2/orders/orders/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "api_id": "orders-api",
+              "api_version": "v2",
+              "backends": [
+                {
+                  "name": "orders.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "orders-api@v2/orders",
+              "listen_path": "/v2/orders/",
+              "method_actions": {
+                "GET": {
+                  "action": "no_action",
+                  "code": 200
+                },
+                "POST": {
+                  "action": "no_action",
+                  "code": 201
+                }
+              },
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v2/orders/orders"
+              },
+              "plugins": [
+                "cache",
+                "hard_timeouts"
+              ],
+              "provenance": "inferred",
+              "security": [
+                {
+                  "attached_to": "Orders API",
+                  "detail": {
+                    "header": "Authorization"
+                  },
+                  "plugin": "auth_token",
+                  "scheme": "apiKey",
+                  "scope": "service"
+                }
+              ],
+              "version_selector": {
+                "key": "version",
+                "location": "url"
+              }
+            },
+            "http_method": "POST",
+            "http_path": "/v2/orders/orders",
+            "key": "POST /v2/orders/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /v2/orders/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Orders API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "tyk/02-typical-classic-with-paths.json",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "tyk"
+  },
+  "fingerprint": "sha256:84a38e035c5dee6c7ce1ec03db8a99272036f0fc1d13b71b7321a79ca4650dc9",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "c5f2351e7e253d376e57a067d485e88916af988525767a6f9beb06e9b399f31a",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

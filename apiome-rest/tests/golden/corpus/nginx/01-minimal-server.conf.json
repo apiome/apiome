@@ -1,0 +1,122 @@
+{
+  "adapter": "nginx",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "nginx",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "nginx",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "nginx/01-minimal-server.conf",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://ping.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "ping.example.com:80",
+        "name": "ping.example.com:80",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "ping.internal.example.com",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "ping.example.com:80@/ping",
+              "handler": {
+                "directive": "proxy_pass",
+                "target": "http://ping.internal.example.com:8080"
+              },
+              "hosts": [
+                "ping.example.com"
+              ],
+              "listen_ports": [
+                80
+              ],
+              "location": "/ping",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/ping"
+              },
+              "provenance": "inferred",
+              "server_block": "ping.example.com:80"
+            },
+            "http_method": "ANY",
+            "http_path": "/ping",
+            "key": "ANY /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "nginx/01-minimal-server.conf",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "nginx/01-minimal-server.conf",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "nginx"
+  },
+  "fingerprint": "sha256:6728fdce337a338512d43cb783408850f7f08845f61829e528576004629adc2a",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "59a2d3d776eef54bb4aa2401e829811e6ba2721d3c797d235a7e98fdd62f1a2e",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

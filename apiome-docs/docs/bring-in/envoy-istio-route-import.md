@@ -74,6 +74,8 @@ ledger instead of dropping it silently:
 ## Related
 
 - [Supported formats](./supported-formats.md): the versions these importers read.
+- [Import reverse-proxy routes](./reverse-proxy-route-import.md): the same idea for Traefik, nginx,
+  HAProxy, Consul and Tyk configuration.
 - [Import an AWS API Gateway export](./aws-api-gateway-import.md),
   [Import an Azure API Management API](./azure-api-management-import.md) and
   [Import an Apigee proxy bundle](./apigee-proxy-bundle-import.md): the same idea for API gateways.

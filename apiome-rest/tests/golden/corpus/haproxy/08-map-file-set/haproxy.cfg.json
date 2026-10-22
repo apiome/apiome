@@ -1,0 +1,415 @@
+{
+  "adapter": "haproxy",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "haproxy",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "global",
+            "count": 1,
+            "reason": "process-level settings (logging, limits, TLS defaults, the stats socket) configure HAProxy itself, not the routes it serves"
+          }
+        ],
+        "operation_count": 6,
+        "route_count": 6,
+        "schemaless_operation_count": 6,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "http-request deny",
+            "scope": "service"
+          }
+        ]
+      }
+    },
+    "format": "haproxy",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "haproxy/08-map-file-set/haproxy.cfg",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "frontend public",
+        "name": "frontend public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "acme_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public#map-acme",
+              "map_file": "/etc/haproxy/maps/tenants.map",
+              "map_key": "acme",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public",
+              "use_backend": "%[req.hdr(x-tenant),lower,map_str(/etc/haproxy/maps/tenants.map,shared_backend)]"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "acme"
+                },
+                "key": "ANY /#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shared_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "default_route": true,
+              "gateway_route": "public#default",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#public#default",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "acme_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public#map-acme-eu",
+              "map_file": "/etc/haproxy/maps/tenants.map",
+              "map_key": "acme-eu",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public",
+              "use_backend": "%[req.hdr(x-tenant),lower,map_str(/etc/haproxy/maps/tenants.map,shared_backend)]"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#public#map-acme-eu",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "acme-eu"
+                },
+                "key": "ANY /#public#map-acme-eu#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "acme_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public#map-acme-us",
+              "map_file": "/etc/haproxy/maps/tenants.map",
+              "map_key": "acme-us",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public",
+              "use_backend": "%[req.hdr(x-tenant),lower,map_str(/etc/haproxy/maps/tenants.map,shared_backend)]"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#public#map-acme-us",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "acme-us"
+                },
+                "key": "ANY /#public#map-acme-us#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "globex_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public#map-globex",
+              "map_file": "/etc/haproxy/maps/tenants.map",
+              "map_key": "globex",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public",
+              "use_backend": "%[req.hdr(x-tenant),lower,map_str(/etc/haproxy/maps/tenants.map,shared_backend)]"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#public#map-globex",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "globex"
+                },
+                "key": "ANY /#public#map-globex#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "globex_backend",
+                  "port": 8080
+                }
+              ],
+              "bind_ports": [
+                443
+              ],
+              "gateway_route": "public#map-globex-eu",
+              "map_file": "/etc/haproxy/maps/tenants.map",
+              "map_key": "globex-eu",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "plugins": [
+                "http-request deny"
+              ],
+              "provenance": "inferred",
+              "section": "frontend public",
+              "use_backend": "%[req.hdr(x-tenant),lower,map_str(/etc/haproxy/maps/tenants.map,shared_backend)]"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /#public#map-globex-eu",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "globex-eu"
+                },
+                "key": "ANY /#public#map-globex-eu#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "haproxy/08-map-file-set/haproxy.cfg",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "haproxy/08-map-file-set/haproxy.cfg",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "haproxy"
+  },
+  "fingerprint": "sha256:9350dbf327dc18a9fe6eba1f5aead4fca5e48cee8108c2cd6365dd465238a7d2",
+  "lint": {
+    "findings": 7,
+    "grade": "C",
+    "report_fingerprint": "b8a4927592db281a51d1779498bfa048acfdec6fc3f5577bd82090dc32f72b69",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}
