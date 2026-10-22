@@ -134,6 +134,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   'sql-ddl': 'SQL DDL',
   'typescript-types': 'TypeScript types',
   zod: 'Zod schemas',
+  trpc: 'tRPC router',
   cobolcopybook: 'COBOL Copybook',
   fhir: 'FHIR',
   hl7v2: 'HL7 v2',

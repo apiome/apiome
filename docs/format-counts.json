@@ -1,16 +1,16 @@
 {
   "version": "1",
-  "capability_registry_version": "26",
-  "total": 76,
-  "importable": 76,
+  "capability_registry_version": "27",
+  "total": 77,
+  "importable": 77,
   "exportable": 51,
   "round_trip": 51,
-  "import_only": 25,
+  "import_only": 26,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 75,
-  "toolchain_gated": 5,
+  "catalog": 76,
+  "toolchain_gated": 6,
   "paradigms": [
     {
       "id": "rest",
@@ -22,8 +22,8 @@
     {
       "id": "rpc",
       "label": "RPC",
-      "total": 10,
-      "importable": 10,
+      "total": 11,
+      "importable": 11,
       "exportable": 10
     },
     {

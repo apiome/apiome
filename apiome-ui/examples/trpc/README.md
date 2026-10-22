@@ -2,8 +2,10 @@
 
 Fixtures for **FMT-8.3** ([#5464](https://github.com/apiome/apiome/issues/5464)). tRPC is type-safe RPC
 with **no IDL whatsoever** — the contract exists only as TypeScript types across a router definition.
-Its users have literally nothing to hand a catalog, and no competitor reads it. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+Its users have literally nothing to hand a catalog, and no competitor reads it. Owned by the `trpc`
+adapter (`apiome-rest/src/app/trpc_import_source.py`); the router is evaluated in the FMT-8.2 sandbox
+(`zod-extract.mjs`, routers mode) and valid entries are pinned by golden snapshots under
+`apiome-rest/tests/golden/corpus/trpc/`.
 
 **Detection markers.** `initTRPC` from `@trpc/server`, plus an exported `t.router({ … })` whose values
 are `t.procedure…query/mutation/subscription` chains.

@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * Zod schema extractor (FMT-8.2, #5463).
+ * Zod schema and tRPC router extractor (FMT-8.2, #5463; FMT-8.3, #5464).
  *
  * Reads a JSON request from STDIN — one TypeScript module, or a set of modules that import one
  * another — **evaluates** it, and writes the module's exported Zod schemas to STDOUT as one JSON
- * Schema (draft 2020-12) document:
+ * Schema (draft 2020-12) document. With `"routers": true` it also walks every exported tRPC
+ * router and reports each procedure's path, kind, input and output (FMT-8.3):
  *
- *   request:  { "files": { "<name>.ts": "<source>", ... }, "root": "<name>.ts", "budgetMs": 5000 }
+ *   request:  { "files": { "<name>.ts": "<source>", ... }, "root": "<name>.ts", "budgetMs": 5000,
+ *               "routers": false }
  *
  *   response: {
  *     "ok":                boolean,
@@ -16,9 +18,18 @@
  *     "files":             [string],
  *     "exports":           [string],          // the root's exported Zod schemas, in export order
  *     "schema":            { "$schema", "$defs": { "<name>": <JSON Schema> } } | null,
+ *     "routers":           [ { "name", "procedures": [ { "path", "type", "inputs", "output",
+ *                                                     "meta" } ], "lazy": [path] } ],
  *     "diagnostics":       [ { "file", "code", "message", "line", "column", "atEnd" } ],
  *     "error":             { "code", "message", "module"? } | null
  *   }
+ *
+ * A procedure's `inputs` holds one JSON Schema node per `.input()` call (tRPC merges chained
+ * inputs); `output` is the `.output()` schema, or `null`. A validator that is not a Zod schema —
+ * a hand-written function — has no schema to extract and is reported as
+ * `{ "x-trpc-unsupported": "trpc.non_schema_input" }` (or `…_output`). Resolvers are never
+ * called, so a procedure's body, its `TRPCError`s and the context its middleware derives are not
+ * read at all.
  *
  * Each schema is serialized from Zod's introspectable `_def` tree (Zod 3), not from a type
  * checker: a Zod schema is a *value*, and only running the module produces it. A reference to
@@ -79,6 +90,9 @@ const ZOD_V3_SPECIFIERS = new Set(['zod', 'zod/v3']);
 
 /** Zod entry points for a different major API, which this reader declines by name. */
 const ZOD_OTHER_SPECIFIERS = new Set(['zod/v4', 'zod/mini', 'zod/v4-mini', 'zod/v4/core']);
+
+/** tRPC server entry points a router module may import, served only in `routers` mode. */
+const TRPC_SPECIFIERS = new Set(['@trpc/server', '@trpc/server/observable']);
 
 /** An error the extractor raises on purpose, carrying the outcome code the response reports. */
 class ExtractError extends Error {
@@ -233,7 +247,7 @@ function resolveRelative(files, fromName, specifier) {
  *   module's exports, every evaluated module's exports (root first), the Zod they were given, and
  *   a runner that executes a task under a fresh time budget.
  */
-function evaluate(files, compiled, root, budgetMs) {
+function evaluate(files, compiled, root, budgetMs, routers = false) {
   const zod = require('zod');
   const deadline = Date.now() + budgetMs;
   const context = vm.createContext(
@@ -251,6 +265,9 @@ function evaluate(files, compiled, root, budgetMs) {
     const requireFrom = (specifier) => {
       if (ZOD_V3_SPECIFIERS.has(specifier)) {
         return zod;
+      }
+      if (routers && TRPC_SPECIFIERS.has(specifier)) {
+        return require(specifier);
       }
       if (ZOD_OTHER_SPECIFIERS.has(specifier)) {
         throw new ExtractError('ZOD_VERSION', `\`${specifier}\` is the Zod 4 API; this reader evaluates Zod 3 (\`zod\`).`, { module: specifier });
@@ -632,6 +649,53 @@ function safeDefault(factory) {
 }
 
 // ---------------------------------------------------------------------------------------
+// tRPC routers (FMT-8.3)
+// ---------------------------------------------------------------------------------------
+
+/** Whether a value is a tRPC router (v10/v11: `_def.router === true` plus a procedure map). */
+function isRouter(value) {
+  return Boolean(value && value._def && value._def.router === true && value._def.procedures);
+}
+
+/** Meta a procedure declares with `.meta()`, kept only when it is plain JSON. */
+function plainMeta(meta) {
+  if (meta === undefined || meta === null) {
+    return null;
+  }
+  try {
+    return JSON.parse(JSON.stringify(meta));
+  } catch {
+    return null;
+  }
+}
+
+/** Serialize one validator: a Zod schema through the serializer, anything else as a marker. */
+function serializeParser(serializer, zod, parser, construct) {
+  if (parser instanceof zod.ZodType) {
+    return serializer.walk(parser);
+  }
+  const description = typeof parser === 'function' ? 'validator function' : `${typeof parser} validator`;
+  return { 'x-trpc-unsupported': construct, description };
+}
+
+/** Describe one router: every procedure (by its full dotted path) and its lazy sub-routers. */
+function describeRouter(serializer, zod, name, router) {
+  const procedures = Object.entries(router._def.procedures)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([path, procedure]) => {
+      const def = procedure._def ?? {};
+      return {
+        path,
+        type: def.type ?? 'query',
+        inputs: (def.inputs ?? []).map((parser) => serializeParser(serializer, zod, parser, 'trpc.non_schema_input')),
+        output: def.output === undefined ? null : serializeParser(serializer, zod, def.output, 'trpc.non_schema_output'),
+        meta: plainMeta(def.meta),
+      };
+    });
+  return { name, procedures, lazy: Object.keys(router._def.lazy ?? {}).sort() };
+}
+
+// ---------------------------------------------------------------------------------------
 // Request
 // ---------------------------------------------------------------------------------------
 
@@ -642,6 +706,7 @@ function extract(request) {
   const names = Object.keys(files).sort();
   const root = request.root && names.includes(request.root) ? request.root : names[0];
   const budgetMs = Number.isFinite(request.budgetMs) && request.budgetMs > 0 ? request.budgetMs : DEFAULT_BUDGET_MS;
+  const routers = request.routers === true;
   const response = {
     ok: false,
     zodVersion,
@@ -650,6 +715,7 @@ function extract(request) {
     files: names,
     exports: [],
     schema: null,
+    routers: [],
     diagnostics: [],
     error: null,
   };
@@ -662,7 +728,7 @@ function extract(request) {
 
   let evaluated;
   try {
-    evaluated = evaluate(files, compiled, root, budgetMs);
+    evaluated = evaluate(files, compiled, root, budgetMs, routers);
   } catch (err) {
     if (err instanceof ExtractError) {
       response.error = { code: err.code, message: err.message, ...(err.module ? { module: err.module } : {}) };
@@ -700,6 +766,14 @@ function extract(request) {
     const valuesByName = new Map([...namesByValue].map(([value, name]) => [name, value]));
     runBounded(() => {
       const pending = [...rootNames];
+      if (routers) {
+        for (const [name, value] of Object.entries(rootExports ?? {})) {
+          if (isRouter(value)) {
+            response.routers.push(describeRouter(serializer, zod, name, value));
+          }
+        }
+        pending.push(...serializer.drainReferenced());
+      }
       while (pending.length) {
         const name = pending.shift();
         if (name in defs) {
@@ -715,7 +789,7 @@ function extract(request) {
       return response;
     }
     // A `z.lazy` getter or a default factory is user code too, so a throw while reading the
-    // schemas is reported the same way as a throw at import.
+    // schemas (or a router's procedures) is reported the same way as a throw at import.
     const message = err && typeof err.message === 'string' ? err.message : String(err);
     response.error = { code: 'MODULE_THREW', message: `A schema threw while it was being read: ${message}` };
     return response;

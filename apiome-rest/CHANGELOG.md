@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.425.0] - 2026-10-22
+
+### Added
+- **tRPC router import (#5464, FMT-8.3)**: a new `trpc` import source (`rpc` paradigm) reads a tRPC router —
+  type-safe RPC with no IDL — from a router module or a router set.
+  - The module is evaluated in the FMT-8.2 sandbox (`zod-extract.mjs`, new `routers` mode, with `@trpc/server`
+    11.19.0 pinned in the toolchain manifest) and every exported router's procedure map is read; resolvers and
+    middleware are never called.
+  - Procedures become operations: `.query()` → `QUERY`, `.mutation()` → `MUTATION`, `.subscription()` → a
+    server-streaming `SUBSCRIPTION`, keyed by router path (`appRouter.invoice.list`, `trpc_path` `invoice.list`).
+  - Nested routers are a service hierarchy: one service per router node, each naming its parent in `trpc_parent`.
+  - Inputs and outputs resolve through the FMT-8.2 Zod path, with their constraints: a named schema is referenced,
+    an inline one becomes `<Procedure>Input` / `<Procedure>Output`, and chained `.input()` calls merge.
+  - A hand-written validator keeps its operation without a payload (`trpc.non_schema_input` / `_output`), a
+    `lazy()` router is declared (`trpc.lazy_router`); a router where no procedure has a schema is rejected with
+    `INPUT_SEMANTIC_INVALID`.
+  - Reviewed capability seed (registry version 26 -> 27), version coverage, goldens for the 7 valid corpus entries,
+    the round-trip matrix row, the parity row and MCP toolset goldens (each procedure is now an MCP tool).
+- `app.zod_parser.evaluate_modules` — the guard / sandboxed-evaluation / classification path shared by the Zod and
+  tRPC readers.
+
+### Changed
+- The Zod adapter no longer claims a module that imports `@trpc/server` (it is a tRPC router module).
+
 ## [1.424.0] - 2026-10-22
 
 ### Added

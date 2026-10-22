@@ -67,7 +67,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `ros2/` | ROS 2 interfaces (pending #5470) | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
 | `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 11 |
 | `thrift/` | Apache Thrift | rpc | `service` / `struct` shapes | 11 |
-| `trpc/` | tRPC routers (pending #5464) | rpc | `initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures | 16 |
+| `trpc/` | tRPC routers | rpc | `initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures | 16 |
 | `wit/` | WIT (WebAssembly Component Model) | rpc | `package ns:name` + `interface`/`world` blocks | 16 |
 | `xml-rpc/` | XML-RPC | rpc | `<methodCall>` / `<methodResponse>` root | 13 |
 
@@ -2371,26 +2371,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`07-provider-directory-set/services.yml`** — Fileset member: the services the routers target.
 
-### `trpc/` — tRPC routers (pending #5464)
+### `trpc/` — tRPC routers
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-router.ts` | minimal | `trpc` ≥ 0.85 | valid | `router`, `query`, `zod-input`, `pending-adapter` |
-| `02-typical-order-router.ts` | typical | `trpc` ≥ 0.85 | valid | `query`, `mutation`, `input`, `output`, `typed-context`, `TRPCError`, `pending-adapter` |
-| `03-routers-set/customer-router.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `query`, `pending-adapter` |
-| `03-routers-set/order-router.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `query`, `mutation`, `pending-adapter` |
-| `03-routers-set/root.ts` | multi-file (root) | `trpc` ≥ 0.85 | valid | `multi-file`, `router-merge`, `pending-adapter` |
-| `03-routers-set/schemas.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `shared-schemas`, `pending-adapter` |
-| `04-stress-procedure-forms.ts` ⚠ | stress | `trpc` ≥ 0.85 | valid | `no-input-query`, `meta`, `middleware`, `chained-input`, `subscription`, `non-zod-validator`, `inline-nested-router`, `pending-adapter` |
-| `05-real-world-app-router.ts` | real-world | `trpc` ≥ 0.85 | valid | `session-middleware`, `shared-pagination`, `feature-routers`, `output-schemas`, `error-codes`, `pending-adapter` |
-| `06-typical-nested-routers.ts` | typical | `trpc` ≥ 0.85 | valid | `nested-routers`, `operation-groups`, `top-level-procedure`, `pending-adapter` |
-| `07-composition-shared-builders.ts` | composition | `trpc` ≥ 0.85 | valid | `shared-schemas`, `middleware-builders`, `router-merge`, `schema-factory`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-router.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-call`, `pending-adapter` |
-| `negative/02-semantic-no-procedures.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `semantic`, `empty-router`, `pending-adapter` |
-| `negative/03-truncated-mid-procedure.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `truncated`, `mid-chain`, `pending-adapter` |
-| `negative/04-wrong-format-zod.ts` ⚠ | — | `trpc` (no guarantee) | invalid | `negative`, `wrong-format`, `zod`, `pending-adapter` |
-| `negative/05-encoding-utf16.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-non-zod-input-only.ts` ⚠ | — | `trpc` (no guarantee) | invalid | `negative`, `semantic`, `non-zod-validators`, `pending-adapter` |
+| `01-minimal-router.ts` | minimal | `trpc` ≥ 0.85 | valid | `router`, `query`, `zod-input` |
+| `02-typical-order-router.ts` | typical | `trpc` ≥ 0.85 | valid | `query`, `mutation`, `input`, `output`, `typed-context`, `TRPCError` |
+| `03-routers-set/customer-router.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `query` |
+| `03-routers-set/order-router.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `query`, `mutation` |
+| `03-routers-set/root.ts` | multi-file (root) | `trpc` ≥ 0.85 | valid | `multi-file`, `router-merge` |
+| `03-routers-set/schemas.ts` | multi-file (member) | `trpc` (no guarantee) | valid | `multi-file`, `shared-schemas` |
+| `04-stress-procedure-forms.ts` ⚠ | stress | `trpc` ≥ 0.85 | valid | `no-input-query`, `meta`, `middleware`, `chained-input`, `subscription`, `non-zod-validator`, `inline-nested-router` |
+| `05-real-world-app-router.ts` | real-world | `trpc` ≥ 0.85 | valid | `session-middleware`, `shared-pagination`, `feature-routers`, `output-schemas`, `error-codes` |
+| `06-typical-nested-routers.ts` | typical | `trpc` ≥ 0.85 | valid | `nested-routers`, `operation-groups`, `top-level-procedure` |
+| `07-composition-shared-builders.ts` | composition | `trpc` ≥ 0.85 | valid | `shared-schemas`, `middleware-builders`, `router-merge`, `schema-factory` |
+| `negative/01-syntactic-unclosed-router.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-call` |
+| `negative/02-semantic-no-procedures.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `semantic`, `empty-router` |
+| `negative/03-truncated-mid-procedure.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `truncated`, `mid-chain` |
+| `negative/04-wrong-format-zod.ts` ⚠ | — | `trpc` (no guarantee) | invalid | `negative`, `wrong-format`, `zod` |
+| `negative/05-encoding-utf16.ts` | — | `trpc` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-non-zod-input-only.ts` ⚠ | — | `trpc` (no guarantee) | invalid | `negative`, `semantic`, `non-zod-validators` |
 
 > ⚠ **`04-stress-procedure-forms.ts`** — The non-Zod validator and the subscription are the two constructs FMT-8.3 must declare rather than invent a schema for.
 

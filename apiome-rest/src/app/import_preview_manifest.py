@@ -152,6 +152,8 @@ from .proto_editions import (
 )
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
+from .trpc_normalizer import TRPC_EXTRAS_KEY
+from .trpc_parser import PARTIAL_LIMITS as TRPC_PARTIAL_LIMITS
 from .typescript_types_normalizer import TYPESCRIPT_EXTRAS_KEY
 from .zod_normalizer import ZOD_EXTRAS_KEY
 from .zod_parser import PARTIAL_LIMITS as ZOD_PARTIAL_LIMITS
@@ -240,6 +242,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-8.2: the Zod projection record (root module, the module set, the export list,
         # declared limits). Our own bookkeeping about the read.
         ZOD_EXTRAS_KEY,
+        # FMT-8.3: the tRPC projection record (root module, routers, procedure count, declared
+        # limits). Our own bookkeeping about the read.
+        TRPC_EXTRAS_KEY,
         # FMT-5.3: the Kafka Connect projection record (root schemas, whether the intake
         # was enveloped, the source files, the declared limits). Our own bookkeeping about
         # the read — the schema's own constructs are the structs and fields it declares,
@@ -1179,6 +1184,7 @@ def _document_scope_rows(
     ledger.extend(_arrow_capability_rows(api))
     ledger.extend(_typescript_capability_rows(api))
     ledger.extend(_zod_capability_rows(api))
+    ledger.extend(_trpc_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
     ledger.extend(_dbt_capability_rows(api))
@@ -1961,6 +1967,24 @@ def _zod_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     """
     return _graded_limit_rows(
         api, format_key="zod", extras_key=ZOD_EXTRAS_KEY, partial=ZOD_PARTIAL_LIMITS
+    )
+
+
+def _trpc_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-8.3 tRPC declared limits as document-scoped ledger rows.
+
+    A hand-written validator keeps its *operation* (only the payload is missing), so it is
+    ``partially-mapped``, as are the Zod limits that keep their schema; a lazy router's
+    procedures and the shapeless Zod constructs are ``not-parsed-by-adapter``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="trpc", extras_key=TRPC_EXTRAS_KEY, partial=TRPC_PARTIAL_LIMITS
     )
 
 

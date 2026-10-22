@@ -34,7 +34,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .toolchain_runner import (
     ToolchainError,
@@ -53,6 +53,7 @@ __all__ = [
     "ZOD_SCHEMA_TOOL_KEY",
     "ZodDocument",
     "ZodParseError",
+    "evaluate_modules",
     "imports_zod",
     "imports_other_zod_api",
     "is_zod_module",
@@ -280,7 +281,8 @@ def is_zod_module(text: str) -> bool:
     """Whether ``text`` reads as a module of exported Zod schemas.
 
     The evidence is an import of ``zod`` (or a Zod 4 entry point, which is claimed so it can be
-    declined by name) together with an exported ``z.…`` value or a re-export.
+    declined by name) together with an exported ``z.…`` value or a re-export. A module that also
+    imports ``@trpc/server`` is a tRPC router module and is left to the tRPC adapter.
 
     Args:
         text: The candidate source.
@@ -289,6 +291,9 @@ def is_zod_module(text: str) -> bool:
         ``True`` when the text is claimable by this reader.
     """
     if not (imports_zod(text) or imports_other_zod_api(text)):
+        return False
+    if "@trpc/server" in _specifiers(text):
+        # A tRPC router module imports Zod for its procedures' inputs; it belongs to FMT-8.3.
         return False
     return bool(
         _EXPORTED_SCHEMA_RE.search(text) or re.search(r"^\s*export\s+\*\s+from", text, re.M)
@@ -306,11 +311,24 @@ def _module_name(source_label: Optional[str]) -> str:
     return name if name.lower().endswith(TYPESCRIPT_SUFFIXES) else "module.ts"
 
 
-def _guard_input(files: Mapping[str, str], root: str, *, where: str) -> None:
+def _guard_input(
+    files: Mapping[str, str],
+    root: str,
+    *,
+    where: str,
+    mismatch: Callable[[Mapping[str, str], str, str], Optional[str]],
+) -> None:
     """Reject input that must never be evaluated, with the taxonomy code it deserves.
 
+    Args:
+        files: Module name → source.
+        root: The root module's name.
+        where: The `` (label)`` suffix for messages.
+        mismatch: The reader's own format check — a message when the set is not this reader's
+            format (``FORMAT_MISMATCH``), ``None`` when it is.
+
     Raises:
-        ZodParseError: For an empty, oversized, non-UTF-8 or non-Zod module set.
+        ZodParseError: For an empty, oversized, non-UTF-8, Zod 4 or wrong-format module set.
     """
     if not any(text.strip() for text in files.values()):
         raise ZodParseError(f"The Zod module is empty{where}.", code="INPUT_EMPTY")
@@ -334,12 +352,19 @@ def _guard_input(files: Mapping[str, str], root: str, *, where: str) -> None:
                 "schemas (`import { z } from 'zod'` with Zod 3.x).",
                 code="FORMAT_VERSION_UNSUPPORTED",
             )
-    if not any(imports_zod(text) for text in files.values()):
-        raise ZodParseError(
-            f"{root} does not import `zod`, so it defines no Zod schemas{where}. A module of "
-            "TypeScript `interface` / `type` declarations is imported as TypeScript types.",
-            code="FORMAT_MISMATCH",
-        )
+    message = mismatch(files, root, where)
+    if message is not None:
+        raise ZodParseError(message, code="FORMAT_MISMATCH")
+
+
+def _zod_mismatch(files: Mapping[str, str], root: str, where: str) -> Optional[str]:
+    """A Zod module set imports ``zod`` somewhere; anything else is a different format."""
+    if any(imports_zod(text) for text in files.values()):
+        return None
+    return (
+        f"{root} does not import `zod`, so it defines no Zod schemas{where}. A module of "
+        "TypeScript `interface` / `type` declarations is imported as TypeScript types."
+    )
 
 
 #: The extractor's outcome codes → intake taxonomy codes.
@@ -351,13 +376,17 @@ _OUTCOME_CODES: Dict[str, str] = {
 }
 
 
-def _run_extractor(files: Mapping[str, str], root: str, *, where: str) -> Dict[str, Any]:
+def _run_extractor(
+    files: Mapping[str, str], root: str, *, where: str, routers: bool = False
+) -> Dict[str, Any]:
     """Run the bundled extractor under the untrusted-code sandbox and return its response.
 
     Raises:
         ZodParseError: When the tool is unavailable, times out, fails, or breaks its contract.
     """
-    request = json.dumps({"files": dict(files), "root": root, "budgetMs": EVALUATION_BUDGET_MS})
+    request = json.dumps(
+        {"files": dict(files), "root": root, "budgetMs": EVALUATION_BUDGET_MS, "routers": routers}
+    )
     try:
         result = run_tool_blocking(
             ZOD_SCHEMA_TOOL_KEY,
@@ -408,16 +437,41 @@ def _raise_for_diagnostics(diagnostics: Sequence[Mapping[str, Any]], *, where: s
         message += f" (and {len(diagnostics) - 1} more syntax error(s))"
     if all(diagnostic.get("atEnd") for diagnostic in diagnostics):
         raise ZodParseError(
-            f"The module ends in the middle of a schema{where} — {message}", code="INPUT_TRUNCATED"
+            f"The module ends in the middle of a declaration{where} — {message}", code="INPUT_TRUNCATED"
         )
     raise ZodParseError(f"TypeScript syntax error{where} — {message}", code="INPUT_MALFORMED")
 
 
-def _read(files: Mapping[str, str], root: str, *, source_label: Optional[str]) -> ZodDocument:
-    """Evaluate a module set through the extractor and validate the result."""
+def evaluate_modules(
+    files: Mapping[str, str],
+    root: str,
+    *,
+    source_label: Optional[str],
+    mismatch: Callable[[Mapping[str, str], str, str], Optional[str]],
+    routers: bool = False,
+) -> Dict[str, Any]:
+    """Guard, evaluate and classify a module set — the path every code-first reader shares.
+
+    Runs the intake guards, evaluates the set in the sandboxed extractor, and turns syntax
+    errors and evaluation failures into taxonomy-coded :class:`ZodParseError`\\s. FMT-8.3's tRPC
+    reader calls this with ``routers=True``.
+
+    Args:
+        files: Module name → source.
+        root: The root module's name.
+        source_label: The label for messages.
+        mismatch: The reader's own format check (see :func:`_guard_input`).
+        routers: Whether the extractor should also walk exported tRPC routers.
+
+    Returns:
+        The extractor's response object, for a set that evaluated cleanly.
+
+    Raises:
+        ZodParseError: With the intake taxonomy code the failure belongs to.
+    """
     where = f" ({source_label})" if source_label else ""
-    _guard_input(files, root, where=where)
-    payload = _run_extractor(files, root, where=where)
+    _guard_input(files, root, where=where, mismatch=mismatch)
+    payload = _run_extractor(files, root, where=where, routers=routers)
 
     diagnostics = [d for d in payload.get("diagnostics") or [] if isinstance(d, dict)]
     _raise_for_diagnostics(diagnostics, where=where)
@@ -426,6 +480,13 @@ def _read(files: Mapping[str, str], root: str, *, source_label: Optional[str]) -
     if isinstance(error, dict):
         code = _OUTCOME_CODES.get(str(error.get("code")), "INPUT_SEMANTIC_INVALID")
         raise ZodParseError(f"{error.get('message')}{where}", code=code)
+    return payload
+
+
+def _read(files: Mapping[str, str], root: str, *, source_label: Optional[str]) -> ZodDocument:
+    """Evaluate a module set through the extractor and validate the result."""
+    where = f" ({source_label})" if source_label else ""
+    payload = evaluate_modules(files, root, source_label=source_label, mismatch=_zod_mismatch)
 
     schema = payload.get("schema")
     exports = tuple(str(name) for name in payload.get("exports") or [])

@@ -703,6 +703,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['z.object', 'refine', 'transform', 'validation', 'constraints', 'sandbox', 'typescript'],
   },
   {
+    id: 'trpc-router-import',
+    title: 'Import a tRPC router',
+    summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',
+    page: 'apiome-docs/docs/bring-in/trpc-router-import.md',
+    section: 'reference',
+    keywords: ['procedure', 'query', 'mutation', 'subscription', 'approuter', 'zod', 'remote procedure call'],
+  },
+  {
     id: 'a2a-agent-card-import',
     title: 'Import an A2A Agent Card',
     summary: "Catalog an A2A agent's skills, tags, modes and security from its Agent Card.",

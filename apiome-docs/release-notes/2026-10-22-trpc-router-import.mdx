@@ -1,0 +1,20 @@
+---
+slug: trpc-router-import
+title: Import tRPC routers
+description: Catalog a tRPC router's procedures as operations, with Zod inputs and outputs.
+authors: [apiome]
+---
+
+tRPC APIs have no spec file to hand a catalog — until now. Apiome imports a tRPC router and catalogs
+every procedure as an operation. [What gets imported](/bring-in/trpc-router-import).
+
+{/* truncate */}
+
+- **Queries, mutations and subscriptions** become operations of the same kind, keyed by their
+  procedure path.
+- **Nested routers** become nested operation groups.
+- **Inputs and outputs** are read through Zod import, with their constraints; chained `.input()`
+  calls merge, and a schema shared by several procedures is one type.
+- **Declared, not guessed.** A hand-written validator keeps its operation without a payload, and a
+  lazily loaded router is listed in the coverage ledger.
+- **Run in the same sandbox as Zod import**, and procedures are never called.
