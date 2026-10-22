@@ -224,8 +224,8 @@ MCP is held back.
 More import formats.
 
 - [x] [#5406](https://github.com/apiome/apiome/issues/5406) FMT-EPIC-6 B2B / EDI / vertical depth
-- [ ] [#5407](https://github.com/apiome/apiome/issues/5407) FMT-EPIC-7 Gateway & infrastructure route sources
-- [ ] [#5408](https://github.com/apiome/apiome/issues/5408) FMT-EPIC-8 Code-first & type-system sources
+- [x] [#5407](https://github.com/apiome/apiome/issues/5407) FMT-EPIC-7 Gateway & infrastructure route sources
+- [x] [#5408](https://github.com/apiome/apiome/issues/5408) FMT-EPIC-8 Code-first & type-system sources
 - [ ] [#5409](https://github.com/apiome/apiome/issues/5409) FMT-EPIC-9 Industrial, IoT & semantic web
 - [ ] [#5410](https://github.com/apiome/apiome/issues/5410) FMT-EPIC-10 Client workspace long tail
 - [ ] [#5411](https://github.com/apiome/apiome/issues/5411) FMT-EPIC-11 Mainframe long tail
