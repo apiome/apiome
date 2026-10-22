@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.285.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.286.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `gateway-configs` · 2 operations
 
@@ -44,9 +44,8 @@ Operation id: `list_tenant_gateway_configs_v1_tenants__tenant_slug__gateway_conf
 
 One gateway config, by slug or id, with the APIs its environment serves (`imports:view`).
 
-`pushBack.target` is the export target that writes this gateway's format (`kong`), or `null` with
-`pushBack.reason` — `fmt-7.7` for AWS API Gateway, Azure APIM and Apigee, whose emit modes are
-still to come (#5461).
+`pushBack.target` is the export target that writes this gateway's format (`kong`,
+`aws-apigateway`, `azure-apim`, `apigee`), or `null` with `pushBack.reason` `unsupported`.
 
 Operation id: `read_tenant_gateway_config_v1_tenants__tenant_slug__gateway_configs__ref__get`
 

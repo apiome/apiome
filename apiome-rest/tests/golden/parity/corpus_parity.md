@@ -17,14 +17,14 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `acp` | ACP Agent Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `agents-manifest` | Agentic-web Site Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `apiblueprint` | API Blueprint | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `apiblueprint` |
-| `apigee` | Apigee proxy bundle | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `apigee` | Apigee proxy bundle | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `apigee` |
 | `arazzo` | Arazzo | rest | 14 | 11 | 0 | 0 | 25 | 6/6 | 13 | `arazzo` |
 | `arrow` | Apache Arrow | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `asn1` | ASN.1 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 6 | `asn1` |
 | `asyncapi` | AsyncAPI | event | 9 | 5 | 0 | 0 | 14 | 6/6 | 7 | `asyncapi` |
 | `avro` | Avro | data_schema | 14 | 11 | 0 | 0 | 25 | 6/6 | 12 | `avro` |
-| `aws-apigateway` | AWS API Gateway | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 7 | — |
-| `azure-apim` | Azure API Management | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `aws-apigateway` | AWS API Gateway | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 7 | `aws-apigateway` |
+| `azure-apim` | Azure API Management | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `azure-apim` |
 | `capnproto` | Cap'n Proto | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `capnproto` |
 | `cddl` | CDDL | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `cddl` |
 | `cloudevents` | CloudEvents | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 5 | `cloudevents` |
@@ -38,7 +38,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `dtd` | DTD | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `edix12` | EDI X12 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `edix12` |
-| `envoy-xds` | Envoy xDS routes | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `envoy-xds` | Envoy xDS routes | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `envoy-xds` |
 | `fhir` | FHIR | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `fhir` |
 | `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 7 | `fix` |
 | `fix-orchestra` | FIX Orchestra | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 14 | — |
@@ -53,7 +53,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
 | `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
-| `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `istio` |
 | `json-schema` | JSON Schema | data_schema | 12 | 5 | 0 | 0 | 17 | 5/6 (+1 waived) | 12 | `json-schema` |
 | `jtd` | JSON Type Definition | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `jtd` |
 | `k8s-crd` | Kubernetes CRD | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `k8s-crd` |
@@ -77,7 +77,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `swift-mt` | SWIFT MT | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `thrift` | Thrift | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `thrift` |
 | `tradacoms` | TRADACOMS | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
-| `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `traefik` |
 | `tyk` | Tyk API definition | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `typespec` | TypeSpec | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `typespec` |
 | `wadl` | WADL | rest | 6 | 5 | 1 | 0 | 12 | 5/6 (+1 waived) | 6 | `wadl` |

@@ -1113,7 +1113,8 @@ def test_an_unknown_flavor_gets_the_conservative_default() -> None:
 
 
 def test_every_flavor_the_parsers_produce_has_rules() -> None:
-    assert set(GATEWAY_FLAVOR_RULES) == {"kong", "gateway-api"}
+    # FMT-7.7 adds the projection rows of the family's new emit modes.
+    assert set(GATEWAY_FLAVOR_RULES) == {"kong", "gateway-api", "envoy-xds", "istio", "traefik", "apigee"}
 
 
 def test_the_projection_keeps_a_namespaced_service_name_intact() -> None:

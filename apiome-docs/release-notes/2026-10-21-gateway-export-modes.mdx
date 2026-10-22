@@ -1,0 +1,23 @@
+---
+slug: gateway-export-modes
+title: Export to Envoy, Istio, Traefik, AWS, Azure and Apigee
+description: Six new gateway export targets, with push back for the cloud gateways.
+authors: [apiome]
+---
+
+Apiome now exports an API into six more gateways' own configuration formats, so "import your
+gateway config, govern it, push it back" works across the whole gateway family — and moving an API
+from one gateway to another is one export. [What each target writes](/ship/export-to-a-gateway).
+
+{/* truncate */}
+
+- **Envoy xDS** — a v3 `RouteConfiguration`; **Istio** — `VirtualService` manifests; **Traefik** — file
+  provider dynamic configuration with each router's rule rebuilt from its matches.
+- **AWS API Gateway** — OpenAPI 3.0 with an integration on every operation; **Azure API Management** —
+  the definition with its policy XML; **Apigee** — an `apiproxy/` bundle.
+- **Push back** on an AWS API Gateway, Azure API Management or Apigee gateway config now exports to
+  that gateway's format, fidelity report first.
+- **Honest about the move.** What a target cannot hold — a policy recorded by name only,
+  authentication a route table cannot declare, path parameter names Apigee does not keep — is listed
+  in the fidelity report before you export, and every artifact is checked against its product's
+  rules before you download it.

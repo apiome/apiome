@@ -17,9 +17,8 @@ until FMT-7.6 (#5460) gives every gateway one shared shape:
 Only names and schemes are kept — never a credential (they are redacted when the configuration is
 parsed, and this module copies no ``config`` values).
 
-**Push-back** exports a governed catalog item back to the gateway's format. Emitters exist for Kong
-(FMT-2.2) and Gateway API (FMT-2.3); AWS API Gateway, Azure APIM and Apigee emit modes are FMT-7.7
-(#5461), still to come, so their gateway configs say so instead of offering a target.
+**Push-back** exports a governed catalog item back to the gateway's format: Kong (FMT-2.2), and since
+FMT-7.7 (#5461) AWS API Gateway, Azure APIM and Apigee, each through its own emit mode.
 """
 
 from __future__ import annotations
@@ -56,10 +55,14 @@ GATEWAY_DECLARED_LOSSES: Tuple[Dict[str, str], ...] = (
 _RATE_LIMIT_NAME = re.compile(r"rate|quota|spike|throttl|limit", re.IGNORECASE)
 
 #: Connector kind → the export target that writes the gateway's own format.
-_PUSH_BACK_TARGETS = {"kong-konnect": "kong", "kong-admin": "kong"}
-
-#: Connector kinds whose emit mode is FMT-7.7 (#5461).
-_FMT_7_7_KINDS = frozenset({"aws-apigateway", "azure-apim", "apigee"})
+_PUSH_BACK_TARGETS = {
+    "kong-konnect": "kong",
+    "kong-admin": "kong",
+    # FMT-7.7 (#5461): each cloud gateway's own emit mode.
+    "aws-apigateway": "aws-apigateway",
+    "azure-apim": "azure-apim",
+    "apigee": "apigee",
+}
 
 
 def empty_posture() -> Dict[str, Any]:
@@ -194,13 +197,11 @@ def push_back(connector_kind: str) -> Dict[str, Optional[str]]:
 
     Returns:
         ``{target, reason}``: the export target key (``kong``) and ``None``, or ``None`` and why —
-        ``fmt-7.7`` for AWS API Gateway, Azure APIM and Apigee, ``unsupported`` otherwise.
+        ``unsupported`` for a connector whose gateway has no emit mode.
     """
     target = _PUSH_BACK_TARGETS.get(connector_kind)
     if target:
         return {"target": target, "reason": None}
-    if connector_kind in _FMT_7_7_KINDS:
-        return {"target": None, "reason": "fmt-7.7"}
     return {"target": None, "reason": "unsupported"}
 
 
@@ -258,7 +259,7 @@ class GatewayPushBack(_CamelModel):
 
     target: Optional[str] = Field(default=None, description="The export target (`kong`), or `null`.")
     reason: Optional[str] = Field(
-        default=None, description="Why not: `fmt-7.7` (emit mode still to come, #5461) or `unsupported`."
+        default=None, description="Why not: `unsupported` (the gateway has no emit mode)."
     )
 
 

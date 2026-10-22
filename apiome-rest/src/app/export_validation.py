@@ -57,6 +57,7 @@ thread and the toolchain-backed ones are awaited.
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -833,6 +834,75 @@ async def _validate_odcs(
     return await _run_text_validator(target, emit_result, validate_odcs_document)
 
 
+# --- FMT-7.7 (#5461): the gateway family's new emit modes ----------------------
+#
+# Each gate re-imports the artifact through the matching adapter and applies the product's own
+# structural rules (Envoy's RouteConfiguration proto, Istio's VirtualService schema, Traefik's
+# dynamic-configuration rules, API Gateway's import rules, APIM's policy schema, an Apigee
+# bundle's references). The two multi-file targets are checked as one file set.
+
+
+async def _validate_envoy_xds(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate an emitted Envoy RouteConfiguration (re-import + the proto's structural rules)."""
+    from .envoy_xds_emitter import validate_route_configuration_document
+
+    return await _run_text_validator(target, emit_result, validate_route_configuration_document)
+
+
+async def _validate_istio(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate an emitted VirtualService stream (re-import + the VirtualService schema)."""
+    from .istio_emitter import validate_virtualservice_stream
+
+    return await _run_text_validator(target, emit_result, validate_virtualservice_stream)
+
+
+async def _validate_traefik(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate emitted Traefik dynamic configuration (re-import + router / service rules)."""
+    from .traefik_emitter import validate_traefik_dynamic_config
+
+    return await _run_text_validator(target, emit_result, validate_traefik_dynamic_config)
+
+
+async def _validate_aws_apigateway(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted API Gateway definition (re-import + API Gateway's import rules)."""
+    from .aws_apigateway_emitter import validate_aws_apigateway_document
+
+    return await _run_text_validator(target, emit_result, validate_aws_apigateway_document)
+
+
+async def _run_fileset_validator(
+    target: str, emit_result: EmitResult, validator: Callable[[Dict[str, str]], None]
+) -> EmittedArtifactValidation:
+    """Run a raise-on-invalid checker over the whole emitted file set (in a worker thread)."""
+    import asyncio
+
+    members = {
+        emitted.path: emitted.content if isinstance(emitted.content, str) else json.dumps(emitted.content)
+        for emitted in emit_result.files
+    }
+    try:
+        await asyncio.to_thread(validator, members)
+    except Exception as exc:  # noqa: BLE001 - any failure is a rejection, not a crash
+        return _rejected(target, [_finding_from_message(str(exc))])
+    return _passed(target)
+
+
+async def _validate_azure_apim(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate an emitted APIM definition + policy set (re-import + the policy schema)."""
+    from .azure_apim_emitter import validate_azure_apim_bundle
+
+    return await _run_fileset_validator(target, emit_result, validate_azure_apim_bundle)
+
+
+async def _validate_apigee(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate an emitted Apigee proxy bundle (re-import + the bundle's references)."""
+    from .apigee_emitter import validate_apigee_bundle
+
+    return await _run_fileset_validator(target, emit_result, validate_apigee_bundle)
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -867,6 +937,13 @@ _VALIDATORS: Dict[str, _Validator] = {
     "cddl": _validate_cddl,
     # FMT-5.2 (#5440)
     "odcs": _validate_odcs,
+    # FMT-7.7 (#5461)
+    "envoy-xds": _validate_envoy_xds,
+    "istio": _validate_istio,
+    "traefik": _validate_traefik,
+    "aws-apigateway": _validate_aws_apigateway,
+    "azure-apim": _validate_azure_apim,
+    "apigee": _validate_apigee,
 }
 
 

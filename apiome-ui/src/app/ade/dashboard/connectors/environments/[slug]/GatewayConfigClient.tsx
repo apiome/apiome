@@ -9,8 +9,8 @@
  * auth and rate-limit posture read from their imported gateway configuration (names and schemes
  * only — credentials are redacted at import), what a gateway configuration cannot carry, and the
  * owner team. **Push back** exports a governed catalog item back to the gateway's own format, with
- * the fidelity report shown before anything is exported — Kong today; AWS API Gateway, Azure APIM
- * and Apigee wait on FMT-7.7 (#5461). **Graph**: the APIs `deployed_on` this environment.
+ * the fidelity report shown before anything is exported — Kong, AWS API Gateway, Azure APIM and
+ * Apigee, each to its own format (FMT-7.7). **Graph**: the APIs `deployed_on` this environment.
  */
 
 import * as React from 'react';
