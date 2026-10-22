@@ -16,15 +16,20 @@ import {
   DEFAULT_PLATFORM_NAV_ICON,
   PLATFORM_NAV_GROUPS,
   PLATFORM_NAV_GROUP_IDS,
+  PLATFORM_NAV_LEGACY_SDK_SETTINGS_HREF,
+  PLATFORM_NAV_SDK_SETTINGS_HREF,
   PLATFORM_NAV_SUNSET_TIMELINE_HREF,
   PLATFORM_NAV_VERSIONS_HREF,
+  PLATFORM_OFF_RAIL_ITEMS,
   PLATFORM_USER_MENU_ITEMS,
   findPlatformNavItem,
   getPlatformNavGroups,
+  getPlatformOffRailItems,
   getPlatformUserMenuItems,
   isPlatformNavHrefActive,
   isPlatformNavItemActive,
   platformNavGatedReason,
+  platformNavSectionLabel,
   toPlatformNavInjections,
   type PlatformNavItem,
 } from '../../lib/platform-nav';
@@ -35,10 +40,11 @@ import {
   parsePreviewFeatures,
 } from '../../lib/feature-release';
 
-/** Every modelled destination — rail groups plus the user menu. */
+/** Every modelled destination — rail groups, the user menu and the off-rail destinations. */
 const ALL_ITEMS: PlatformNavItem[] = [
   ...PLATFORM_NAV_GROUPS.flatMap((group) => group.items),
   ...PLATFORM_USER_MENU_ITEMS,
+  ...PLATFORM_OFF_RAIL_ITEMS,
 ];
 
 /** Look a destination up by id, failing loudly rather than returning undefined. */
@@ -83,9 +89,9 @@ describe('platform-nav model — shape', () => {
       home: ['home'],
       build: ['projects', 'primitives'],
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
-      ship: ['published', 'sunset-timeline', 'export-studio', 'sdk-settings'],
+      ship: ['published', 'sunset-timeline', 'export-studio'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
-      workspace: ['members', 'roles', 'teams', 'api-keys', 'schema-registry', 'tenants'],
+      workspace: ['members', 'roles', 'teams', 'api-keys', 'schema-registry'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
       'profile',
@@ -105,7 +111,6 @@ describe('platform-nav model — shape', () => {
       'Published',
       'Sunset timeline',
       'Export studio',
-      'SDK settings',
       'Style guides',
       'Lint posture',
       'Shadow APIs',
@@ -116,9 +121,12 @@ describe('platform-nav model — shape', () => {
       'Teams',
       'API keys',
       'Schema registry',
-      'Tenants',
       'Profile',
       'Linked accounts',
+      'Tenants',
+      'SDK settings',
+      'Data browser',
+      'Migrations',
     ]);
   });
 
@@ -153,20 +161,24 @@ describe('platform-nav model — shape', () => {
   });
 });
 
-describe('platform-nav model — nothing deferred or commercial is hard-coded', () => {
-  const forbidden = ['/ade/studio', '/ade/database', '/ade/migration'];
+describe('platform-nav model — nothing commercial is hard-coded', () => {
+  /** The Tools routes, which HIVE-12.2 gave an off-rail home (the user menu). */
+  const TOOLS = ['/ade/database', '/ade/migration'];
 
-  it('contains no Tools route and no studio route', () => {
+  it('contains no studio route, and the Tools only off the rail', () => {
     for (const navItem of ALL_ITEMS) {
-      for (const prefix of forbidden) {
-        expect(navItem.href.startsWith(prefix)).toBe(false);
-      }
+      expect(navItem.href.startsWith('/ade/studio')).toBe(false);
+    }
+    const railHrefs = PLATFORM_NAV_GROUPS.flatMap((group) => group.items).map((navItem) => navItem.href);
+    for (const prefix of TOOLS) {
+      expect(railHrefs.some((href) => href.startsWith(prefix))).toBe(false);
     }
   });
 
-  it('routes every destination through /ade/dashboard', () => {
+  it('routes every rail and account destination through /ade/dashboard', () => {
     for (const navItem of ALL_ITEMS) {
-      expect(navItem.href.startsWith('/ade/dashboard')).toBe(true);
+      const isTool = TOOLS.some((prefix) => navItem.href.startsWith(prefix));
+      expect(isTool || navItem.href.startsWith('/ade/dashboard')).toBe(true);
       expect(navItem.external).toBeUndefined();
     }
   });
@@ -214,6 +226,9 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/tenants', 'tenants'],
     ['/ade/dashboard/profile', 'profile'],
     ['/ade/dashboard/linked-accounts', 'linked-accounts'],
+    ['/ade/database', 'data-browser'],
+    ['/ade/database/tables', 'data-browser'],
+    ['/ade/migration', 'migrations'],
   ];
 
   it.each(ROUTES)('%s activates exactly one destination', (pathname, ownerId) => {
@@ -282,7 +297,6 @@ describe('platform-nav model — workspace gating', () => {
     'published',
     'sunset-timeline',
     'export-studio',
-    'sdk-settings',
     'style-guides',
     'lint-workspace',
     'shadow-apis',
@@ -304,13 +318,18 @@ describe('platform-nav model — workspace gating', () => {
     expect(disabled.sort()).toEqual(GATED.filter((id) => isFeatureReleased(id)).sort());
   });
 
-  it('leaves Home, Tenants and the account destinations reachable without a tenant', () => {
+  it('leaves Home, Tenants, the Tools and the account destinations reachable without a tenant', () => {
     const enabled = getPlatformNavGroups({ currentTenantId: undefined })
       .flatMap((group) => group.items)
       .filter((navItem) => !navItem.disabled)
       .map((navItem) => navItem.id);
 
-    expect(enabled).toEqual(['home', 'tenants']);
+    expect(enabled).toEqual(['home']);
+    expect(
+      getPlatformOffRailItems({ currentTenantId: undefined })
+        .filter((navItem) => !navItem.disabled)
+        .map((navItem) => navItem.id)
+    ).toEqual(['tenants', 'data-browser', 'migrations']);
     expect(
       getPlatformUserMenuItems({ currentTenantId: undefined }).every((navItem) => !navItem.disabled)
     ).toBe(true);
@@ -438,12 +457,13 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
         .flatMap((group) => group.items)
         .map((navItem) => navItem.id)
     );
-    return PLATFORM_NAV_GROUPS.flatMap((group) => group.items)
+    for (const navItem of getPlatformOffRailItems({ currentTenantId: TENANT })) shown.add(navItem.id);
+    return [...PLATFORM_NAV_GROUPS.flatMap((group) => group.items), ...PLATFORM_OFF_RAIL_ITEMS]
       .map((navItem) => navItem.id)
       .filter((id) => !shown.has(id));
   }
 
-  it('holds back exactly the unreleased features, and every one of them is a rail destination', () => {
+  it('holds back exactly the unreleased features, and every one of them is a modelled destination', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
       'audit',
@@ -491,5 +511,87 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
   it('never gates an id it does not list, whatever the override says', () => {
     expect(isFeatureReleased('members', '')).toBe(true);
     expect(isFeatureReleased('some-commercial-item', null)).toBe(true);
+  });
+});
+
+describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
+  const releasedRailCount = () =>
+    getPlatformNavGroups({ currentTenantId: TENANT }).flatMap((group) => group.items).length;
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+
+  it('leaves 15 released destinations in the rail, 20 with every feature previewed', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect(releasedRailCount()).toBe(15);
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    expect(releasedRailCount()).toBe(20);
+  });
+
+  it('takes Tenants and SDK settings out of the rail and gives every off-rail item a home', () => {
+    const railIds = PLATFORM_NAV_GROUPS.flatMap((group) => group.items).map((navItem) => navItem.id);
+    expect(railIds).not.toContain('tenants');
+    expect(railIds).not.toContain('sdk-settings');
+    expect(PLATFORM_OFF_RAIL_ITEMS.map((navItem) => [navItem.id, navItem.home, navItem.section])).toEqual([
+      ['tenants', 'workspace-switcher', 'Workspace'],
+      ['sdk-settings', 'export-studio-tab', 'Ship'],
+      ['data-browser', 'user-menu', 'Tools'],
+      ['migrations', 'user-menu', 'Tools'],
+    ]);
+  });
+
+  it('points SDK settings at the Export studio tab, and keeps the old route as its redirect', () => {
+    expect(item('sdk-settings').href).toBe(PLATFORM_NAV_SDK_SETTINGS_HREF);
+    expect(PLATFORM_NAV_SDK_SETTINGS_HREF).toBe('/ade/dashboard/export/studio?tab=sdk');
+    expect(PLATFORM_NAV_LEGACY_SDK_SETTINGS_HREF).toBe('/ade/dashboard/sdk-settings');
+    // The tab's address is not a second owner of the Export studio route.
+    expect(isPlatformNavItemActive(item('sdk-settings'), '/ade/dashboard/export/studio')).toBe(false);
+    expect(isPlatformNavItemActive(item('export-studio'), '/ade/dashboard/export/studio')).toBe(true);
+  });
+
+  it('keeps Tenants and the Tools ungated and SDK settings workspace-scoped', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    const byId = new Map(
+      getPlatformOffRailItems({ currentTenantId: null }).map((navItem) => [navItem.id, navItem])
+    );
+    expect(byId.get('tenants')?.disabled).toBe(false);
+    expect(byId.get('data-browser')?.disabled).toBe(false);
+    expect(byId.get('migrations')?.disabled).toBe(false);
+    expect(byId.get('sdk-settings')).toMatchObject({
+      disabled: true,
+      disabledReason: platformNavGatedReason('SDK settings'),
+    });
+  });
+
+  it('drops an unreleased off-rail destination and filters by home', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect(getPlatformOffRailItems({ currentTenantId: TENANT }).map((navItem) => navItem.id)).toEqual([
+      'tenants',
+      'data-browser',
+      'migrations',
+    ]);
+    expect(getPlatformOffRailItems({}, 'user-menu').map((navItem) => navItem.label)).toEqual([
+      'Data browser',
+      'Migrations',
+    ]);
+    expect(getPlatformOffRailItems({}, 'workspace-switcher').map((navItem) => navItem.id)).toEqual([
+      'tenants',
+    ]);
+  });
+
+  it('names each destination\'s section — rail group or off-rail section', () => {
+    expect(platformNavSectionLabel('catalog')).toBe('Bring in');
+    expect(platformNavSectionLabel('sdk-settings')).toBe('Ship');
+    expect(platformNavSectionLabel('tenants')).toBe('Workspace');
+    expect(platformNavSectionLabel('data-browser')).toBe('Tools');
+    expect(platformNavSectionLabel('home')).toBeUndefined();
+    expect(platformNavSectionLabel('nope')).toBeUndefined();
+  });
+
+  it('resolves an icon for every off-rail destination', () => {
+    for (const navItem of PLATFORM_OFF_RAIL_ITEMS) {
+      expect(PLATFORM_NAV_ICONS[navItem.icon]).toBeDefined();
+    }
   });
 });

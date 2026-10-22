@@ -11,6 +11,14 @@ import { ExportStudio } from '../../../../components/ade/dashboard/export/Export
 import type { ExportedArtifactSummary } from '../../../../components/ade/dashboard/export/ExportDialog';
 import { recordRecentExport } from '../../../../components/ade/dashboard/export/recentExports';
 import { parseExportStudioUrlState } from '../../../../components/ade/dashboard/export/exportStudioUrlState';
+import {
+  ExportStudioTabs,
+  exportStudioTabFromParams,
+} from '../../../../components/ade/export-studio';
+import PageHeader from '../../../../components/shell/PageHeader';
+import { Page, PageBody } from '../../../../components/shell/pageChrome';
+import UnreleasedFeatureGate from '../../../../components/shell/UnreleasedFeatureGate';
+import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -24,6 +32,13 @@ import { parseExportStudioUrlState } from '../../../../components/ade/dashboard/
  * to resume on. Every param is validated before the Studio sees it, and whatever cannot be honoured
  * (unreadable options, credential-shaped keys, an unknown target) arrives as a notice the Studio
  * renders instead of failing.
+ *
+ * ### Two tabs (HIVE-12.2, #5609)
+ *
+ * `?tab=sdk` selects **SDK & branding** — the SDK settings screen, which left the rail for here
+ * because both decide how a version leaves the platform (`/ade/dashboard/sdk-settings` redirects
+ * to it). That tab needs no source, so it renders before the source check; it keeps its own
+ * release gate. Every header on this route draws the same {@link ExportStudioTabs} strip.
  */
 function ExportStudioRouteContent() {
   const { data: session, status } = useAuthSession();
@@ -53,27 +68,51 @@ function ExportStudioRouteContent() {
     );
   }
 
+  const tabs = <ExportStudioTabs />;
+
+  if (exportStudioTabFromParams(searchParams) === 'sdk') {
+    return (
+      <UnreleasedFeatureGate feature="sdk-settings">
+        <SdkSettingsClient tabs={tabs} />
+      </UnreleasedFeatureGate>
+    );
+  }
+
   // The Studio is always scoped to a source — never a bare global screen. Without an `artifact`
-  // there is nothing to export, so point the user at the entry points that open it scoped.
+  // there is nothing to export, so point the user at the entry points that open it scoped. It
+  // still draws the standard header, so the SDK & branding tab is one click away from here.
   if (!artifact) {
     return (
-      <main className="mx-auto max-w-3xl p-6">
-        <div className="flex gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-800 dark:bg-indigo-950/30">
-          <PanelsTopLeft className="h-8 w-8 flex-shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
-          <div>
-            <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-              Open the Export Studio from a source
-            </h2>
-            <p className="mt-1 text-sm text-indigo-800 dark:text-indigo-200">
-              The Studio exports a specific version. Open it from a version’s export dialog (via
-              “Open in Export Studio”) or a catalog item, and it will arrive scoped to that source.
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/ade/dashboard/versions">Go to Versions</Link>
-            </Button>
+      <Page data-testid="export-studio-unscoped">
+        <PageHeader
+          breadcrumb={[
+            { label: 'Home', href: '/ade/dashboard' },
+            { label: 'Ship' },
+            { label: 'Export studio' },
+          ]}
+          title="Export studio"
+          tabs={tabs}
+        />
+        <PageBody>
+          <div className="mx-auto w-full max-w-3xl">
+            <div className="flex gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-800 dark:bg-indigo-950/30">
+              <PanelsTopLeft className="h-8 w-8 flex-shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
+              <div>
+                <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                  Open the Export Studio from a source
+                </h2>
+                <p className="mt-1 text-sm text-indigo-800 dark:text-indigo-200">
+                  The Studio exports a specific version. Open it from a version’s export dialog (via
+                  “Open in Export Studio”) or a catalog item, and it will arrive scoped to that source.
+                </p>
+                <Button asChild className="mt-4">
+                  <Link href="/ade/dashboard/versions">Go to Versions</Link>
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </PageBody>
+      </Page>
     );
   }
 
@@ -93,6 +132,7 @@ function ExportStudioRouteContent() {
       onGenerated={(summary: ExportedArtifactSummary) =>
         recordRecentExport(artifact, version || null, summary)
       }
+      tabs={tabs}
     />
   );
 }

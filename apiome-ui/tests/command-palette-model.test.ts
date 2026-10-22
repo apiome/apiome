@@ -30,6 +30,7 @@ import {
 } from '../src/app/components/shell/openActions';
 import {
   PLATFORM_NAV_GROUPS,
+  PLATFORM_OFF_RAIL_ITEMS,
   PLATFORM_USER_MENU_ITEMS,
   getPlatformNavGroups,
   platformNavGatedReason,
@@ -42,9 +43,10 @@ import type { PinnedProject } from '../lib/db/dashboard-home-model';
 /** A session with a workspace. */
 const TENANT = 't-1';
 
-/** Every released first-party destination the model describes, flattened. */
+/** Every released first-party destination the model describes, flattened — rail, off-rail, account. */
 const MODEL_ITEMS = [
   ...PLATFORM_NAV_GROUPS.flatMap((group) => group.items),
+  ...PLATFORM_OFF_RAIL_ITEMS,
   ...PLATFORM_USER_MENU_ITEMS,
 ].filter((item) => isFeatureReleased(item.id));
 
@@ -62,7 +64,7 @@ const RECENTS: CommandPaletteRecent[] = [
 ];
 
 describe('Jump to — the navigation model, and only it', () => {
-  it('offers every destination the model describes, rail groups and user menu alike', () => {
+  it('offers every destination the model describes, rail, off-rail and user menu alike', () => {
     const commands = buildJumpCommands(getPlatformNavGroups({ currentTenantId: TENANT }), TENANT);
 
     expect(commands.map((command) => command.label).sort()).toEqual(
@@ -89,6 +91,45 @@ describe('Jump to — the navigation model, and only it', () => {
     // destinations, because a reader typing "profile" does not know which menu owns it.
     const profile = commands.find((command) => command.label === 'Profile')!;
     expect(profile.meta).toBe('Account');
+  });
+
+  it('keeps the destinations that left the rail, under the section they belong with (HIVE-12.2)', () => {
+    const commands = buildJumpCommands(getPlatformNavGroups({ currentTenantId: TENANT }), TENANT);
+    const meta = (label: string) => commands.find((command) => command.label === label)?.meta;
+
+    expect(meta('Tenants')).toBe('Workspace');
+    expect(meta('Data browser')).toBe('Tools');
+    expect(meta('Migrations')).toBe('Tools');
+    expect(commands.find((command) => command.label === 'Tenants')?.href).toBe('/ade/dashboard/tenants');
+    // Off-rail rows follow the rail rows and precede the account rows.
+    const labels = commands.map((command) => command.label);
+    expect(labels.indexOf('Tenants')).toBeGreaterThan(labels.indexOf('Schema registry'));
+    expect(labels.indexOf('Migrations')).toBeLessThan(labels.indexOf('Profile'));
+  });
+
+  it('lists SDK settings at its Export studio tab once the feature is previewed', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'sdk-settings';
+    try {
+      const commands = buildJumpCommands(getPlatformNavGroups({ currentTenantId: TENANT }), TENANT);
+      const sdk = commands.find((command) => command.label === 'SDK settings');
+      expect(sdk).toMatchObject({ meta: 'Ship', href: '/ade/dashboard/export/studio?tab=sdk' });
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
+  });
+
+  it('never lists an off-rail destination twice when a host already put it in the rail', () => {
+    const groups = getPlatformNavGroups({
+      currentTenantId: TENANT,
+      injected: [
+        {
+          group: 'workspace',
+          item: { id: 'tenants', label: 'Tenants', href: '/ade/dashboard/tenants', icon: 'building-2' },
+        },
+      ],
+    });
+    const commands = buildJumpCommands(groups, TENANT);
+    expect(commands.filter((command) => command.label === 'Tenants')).toHaveLength(1);
   });
 
   it('names an icon the shared resolver knows, for every row it draws', () => {

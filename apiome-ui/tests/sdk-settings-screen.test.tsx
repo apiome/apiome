@@ -12,7 +12,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
+
+// The screen is Export studio's SDK & branding tab (HIVE-12.2); its tab strip reads the route.
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/ade/dashboard/export/studio',
+  useSearchParams: () => new URLSearchParams('tab=sdk'),
+}));
 import SdkSettingsClient from '@/app/ade/dashboard/sdk-settings/SdkSettingsClient';
+import { ExportStudioTabs } from '@/app/components/ade/export-studio';
 import {
   SDK_FIELD_KEYS,
   type SdkSettingsResponse,
@@ -391,9 +398,19 @@ describe('the docs fixture', () => {
         },
       }),
     });
-    render(<SdkSettingsClient />);
-    await screen.findByTestId('sdk-settings-preview');
-    expect(screen.getByLabelText('npm package name')).toHaveValue('@acme/{project}-sdk');
-    writeA11yFixture('sdk-settings', (document.querySelector('.page') as HTMLElement).outerHTML);
+    const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    try {
+      render(<SdkSettingsClient tabs={<ExportStudioTabs />} />);
+      await screen.findByTestId('sdk-settings-preview');
+      expect(screen.getByLabelText('npm package name')).toHaveValue('@acme/{project}-sdk');
+      // Drawn as Export studio's SDK & branding tab, the way the route mounts it.
+      expect(screen.getByRole('heading', { level: 1, name: 'Export studio' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute('aria-current', 'page');
+      writeA11yFixture('sdk-settings', (document.querySelector('.page') as HTMLElement).outerHTML);
+    } finally {
+      if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
+    }
   });
 });

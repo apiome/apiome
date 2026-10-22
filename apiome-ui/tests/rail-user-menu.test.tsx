@@ -173,6 +173,26 @@ describe('what the menu offers', () => {
     expect(screen.getByTestId('user-menu-all-apps')).toHaveAttribute('href', LAUNCHER_ROUTE);
   });
 
+  it('gives the Tools a home beside Admin console (HIVE-12.2)', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await openMenu(user);
+
+    expect(screen.getByTestId('user-menu-data-browser')).toHaveAttribute('href', '/ade/database');
+    expect(screen.getByTestId('user-menu-migrations')).toHaveAttribute('href', '/ade/migration');
+    expect(screen.getByTestId('user-menu-data-browser')).toHaveTextContent('Data browser');
+    expect(screen.getByTestId('user-menu-migrations')).toHaveTextContent('Migrations');
+
+    // In the second group, in the mockup's order: Data browser · Migrations · Admin console · All apps.
+    const ids = menuRows().map((row) => row.getAttribute('data-testid'));
+    const at = (id: string) => ids.indexOf(`user-menu-${id}`);
+    expect(at('shortcuts')).toBeLessThan(at('data-browser'));
+    expect(at('data-browser') + 1).toBe(at('migrations'));
+    expect(at('migrations') + 1).toBe(at('admin-console'));
+    // Neither needs a workspace, so neither is ever disabled.
+    expect(screen.getByTestId('user-menu-data-browser')).not.toHaveAttribute('aria-disabled');
+  });
+
   it('reads the account destinations out of the navigation model', async () => {
     const user = userEvent.setup();
     renderMenu();
@@ -431,7 +451,7 @@ describe('the collapsed rail', () => {
 
     // The labels the rail hides are CSS on `.rail-label`; the menu never carried that
     // class, so a collapsed rail changes nothing about what is inside the popup.
-    expect(menuRows()).toHaveLength(8);
+    expect(menuRows()).toHaveLength(10);
     expect(screen.getByTestId('user-menu-profile')).toBeVisible();
   });
 });

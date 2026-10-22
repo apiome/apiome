@@ -235,8 +235,9 @@ export const DEFAULT_PLATFORM_NAV_ICON = 'box';
  *
  * Deliberately absent, and not an oversight:
  *
- * - **Tools** (`/ade/database`, `/ade/migration`) — deferred; the data browser
- *   and migration surfaces are reached from the pages that need them.
+ * - **Tenants, SDK settings and the Tools** (Data browser, Migrations) — they
+ *   live off the rail, in the menus beside the things they configure; see
+ *   {@link PLATFORM_OFF_RAIL_ITEMS} (HIVE-12.2).
  * - **`/ade/studio*`** — a commercial product in another repository. It
  *   arrives (or does not) through {@link PlatformNavOptions.injected}.
  * - **Profile / Linked accounts** — user-menu destinations, not rail items;
@@ -337,16 +338,6 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         icon: 'package-open',
         requiresTenant: true,
       },
-      {
-        // Beside Export studio rather than under Govern: both decide the shape of what leaves
-        // the platform, and SDK branding is read on the way out, not enforced on the way in
-        // (SDK-3.4, #4494).
-        id: 'sdk-settings',
-        label: 'SDK settings',
-        href: `${DASHBOARD_HREF}/sdk-settings`,
-        icon: 'package',
-        requiresTenant: true,
-      },
     ],
   },
   {
@@ -437,13 +428,6 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         icon: 'file-json-2',
         requiresTenant: true,
       },
-      {
-        // Not tenant-gated: choosing a workspace is how you *stop* having none.
-        id: 'tenants',
-        label: 'Tenants',
-        href: `${DASHBOARD_HREF}/tenants`,
-        icon: 'building-2',
-      },
     ],
   },
 ];
@@ -464,6 +448,79 @@ export const PLATFORM_USER_MENU_ITEMS: readonly PlatformNavItem[] = [
   },
 ];
 
+/** Where an off-rail destination is reached from, besides the command palette. */
+export type PlatformOffRailHome = 'workspace-switcher' | 'user-menu' | 'export-studio-tab';
+
+/** A destination that has a home outside the rail's groups (HIVE-12.2). */
+export interface PlatformOffRailItem extends PlatformNavItem {
+  /** The section the command palette lists it under — the rail group it belongs with. */
+  section: string;
+  /** The menu row or tab that reaches it. */
+  home: PlatformOffRailHome;
+}
+
+/** The SDK & branding tab of Export studio — where `/ade/dashboard/sdk-settings` now lands. */
+export const PLATFORM_NAV_SDK_SETTINGS_HREF = `${DASHBOARD_HREF}/export/studio?tab=sdk`;
+
+/** The pre-HIVE-12.2 SDK settings route, kept as a redirect to {@link PLATFORM_NAV_SDK_SETTINGS_HREF}. */
+export const PLATFORM_NAV_LEGACY_SDK_SETTINGS_HREF = `${DASHBOARD_HREF}/sdk-settings`;
+
+/**
+ * Destinations that left the rail, or never had a row in it (HIVE-12.2, #5609).
+ *
+ * `docs/mockups/proposals/rail-compact.html` callouts 2–4: each has a natural home next to the
+ * thing it configures, which keeps the rail short enough to fit 900 px without hiding anything.
+ *
+ * - **Tenants** — the last row of the workspace switcher menu (“Manage workspaces…”), where
+ *   switching already happens. Not tenant-gated: choosing a workspace is how you *stop* having
+ *   none.
+ * - **SDK settings** — the **SDK & branding** tab of Export studio; both decide how a version
+ *   leaves the platform (SDK-3.4, #4494). Gated with its own feature id.
+ * - **Data browser** and **Migrations** — the Tools, rows of the user menu beside Admin
+ *   console. Like their routes, they need only a signed-in user.
+ *
+ * Every one stays in the command palette's **Jump to** (under {@link PlatformOffRailItem.section})
+ * and in the active-state and lookup tables below, so a route, a `G`-jump or a gate that names
+ * one of these ids resolves exactly as it did when it was a rail row.
+ */
+export const PLATFORM_OFF_RAIL_ITEMS: readonly PlatformOffRailItem[] = [
+  {
+    id: 'tenants',
+    label: 'Tenants',
+    href: `${DASHBOARD_HREF}/tenants`,
+    icon: 'building-2',
+    section: 'Workspace',
+    home: 'workspace-switcher',
+  },
+  {
+    id: 'sdk-settings',
+    label: 'SDK settings',
+    href: PLATFORM_NAV_SDK_SETTINGS_HREF,
+    icon: 'package',
+    requiresTenant: true,
+    section: 'Ship',
+    home: 'export-studio-tab',
+  },
+  {
+    id: 'data-browser',
+    label: 'Data browser',
+    href: '/ade/database',
+    icon: 'database',
+    match: 'subtree',
+    section: 'Tools',
+    home: 'user-menu',
+  },
+  {
+    id: 'migrations',
+    label: 'Migrations',
+    href: '/ade/migration',
+    icon: 'git-compare-arrows',
+    match: 'subtree',
+    section: 'Tools',
+    home: 'user-menu',
+  },
+];
+
 /* -------------------------------------------------------------------------
    Active state — the single resolver
    ------------------------------------------------------------------------- */
@@ -472,6 +529,7 @@ export const PLATFORM_USER_MENU_ITEMS: readonly PlatformNavItem[] = [
 const ALL_MODEL_ITEMS: readonly PlatformNavItem[] = [
   ...PLATFORM_NAV_GROUPS.flatMap((group) => group.items),
   ...PLATFORM_USER_MENU_ITEMS,
+  ...PLATFORM_OFF_RAIL_ITEMS,
 ];
 
 /** The shadow-API report, which lives under the Connectors path but is a Govern destination. */
@@ -626,8 +684,44 @@ export function getPlatformUserMenuItems(
   );
 }
 
+/** An off-rail destination with its gating decided for the current session. */
+export type ResolvedPlatformOffRailItem = ResolvedPlatformNavItem & Pick<PlatformOffRailItem, 'section' | 'home'>;
+
 /**
- * Look a destination up by id, across the rail groups and the user menu.
+ * The off-rail destinations for the current session (HIVE-12.2).
+ *
+ * Unreleased destinations are left out, exactly as {@link getPlatformNavGroups} leaves them
+ * out of the rail; the rest carry the rail's `disabled` gating.
+ *
+ * @param options - Session tenant.
+ * @param home - Keep only the destinations reached from this menu or tab; all when omitted.
+ * @returns The destinations, in model order.
+ */
+export function getPlatformOffRailItems(
+  options: Pick<PlatformNavOptions, 'currentTenantId'> = {},
+  home?: PlatformOffRailHome
+): ResolvedPlatformOffRailItem[] {
+  return PLATFORM_OFF_RAIL_ITEMS.filter(
+    (item) => (home === undefined || item.home === home) && isFeatureReleased(item.id)
+  ).map((item) => ({ ...item, ...resolveItem(item, options.currentTenantId) }));
+}
+
+/**
+ * The heading a destination sits under: its rail group's label, or an off-rail item's section.
+ *
+ * @param id - {@link PlatformNavItem.id} to place.
+ * @returns The heading, or `undefined` for an unlabelled group (Home), a user-menu row or an
+ *   unknown id.
+ */
+export function platformNavSectionLabel(id: string): string | undefined {
+  const group = PLATFORM_NAV_GROUPS.find((candidate) => candidate.items.some((item) => item.id === id));
+  if (group) return group.label;
+  return PLATFORM_OFF_RAIL_ITEMS.find((item) => item.id === id)?.section;
+}
+
+/**
+ * Look a destination up by id, across the rail groups, the user menu and the
+ * off-rail destinations.
  *
  * @param id - {@link PlatformNavItem.id} to find.
  * @returns The destination, or `undefined` when nothing owns that id.

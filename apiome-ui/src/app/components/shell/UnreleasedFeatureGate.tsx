@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { isFeatureReleased, type UnreleasedFeatureId } from '@lib/feature-release';
-import { PLATFORM_NAV_GROUPS } from '@lib/platform-nav';
+import { findPlatformNavItem, platformNavSectionLabel } from '@lib/platform-nav';
 import { GatedState } from '@/app/components/ui/EmptyState';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -30,17 +30,16 @@ export interface UnreleasedFeatureGateProps {
 export default function UnreleasedFeatureGate({ feature, children }: UnreleasedFeatureGateProps) {
   if (isFeatureReleased(feature)) return <>{children}</>;
 
-  const group = PLATFORM_NAV_GROUPS.find((candidate) =>
-    candidate.items.some((navItem) => navItem.id === feature)
-  );
-  const label = group?.items.find((navItem) => navItem.id === feature)?.label ?? 'This page';
+  // Off-rail destinations (HIVE-12.2) name their section the way a rail item names its group.
+  const section = platformNavSectionLabel(feature);
+  const label = findPlatformNavItem(feature)?.label ?? 'This page';
 
   return (
     <Page>
       <PageHeader
         breadcrumb={[
           { label: 'Home', href: '/ade/dashboard' },
-          ...(group?.label ? [{ label: group.label }] : []),
+          ...(section ? [{ label: section }] : []),
           { label },
         ]}
         title={label}

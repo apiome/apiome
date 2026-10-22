@@ -423,7 +423,7 @@ describe('WorkspaceSwitcher — filtering', () => {
     expect(screen.getByTestId(`workspace-option-${CURRENT_ID}`)).toBeInTheDocument();
   });
 
-  it('says when nothing matches, and owns no empty menu while it does', async () => {
+  it('says when nothing matches, and keeps only Manage workspaces… in the menu', async () => {
     const user = userEvent.setup();
     await renderSwitcher({ context: membershipContext({ createTenant: null }) });
     await openMenu(user);
@@ -431,8 +431,13 @@ describe('WorkspaceSwitcher — filtering', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Filter workspaces' }), 'zzz');
 
     expect(screen.getByText('No matching workspaces')).toBeInTheDocument();
-    // An empty `role="menu"` is itself an `aria-required-children` violation.
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    // The menu is never empty (an empty `role="menu"` is an `aria-required-children`
+    // violation): Manage workspaces… stays, because it is not a workspace the query filters.
+    const menu = screen.getByRole('menu');
+    expect(within(menu).queryAllByRole('menuitemradio')).toHaveLength(0);
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'Manage workspaces…',
+    ]);
   });
 
   it('forgets the query between openings', async () => {
@@ -598,9 +603,15 @@ describe('WorkspaceSwitcher — the keyboard', () => {
     await user.keyboard('{ArrowDown}');
     expect(screen.getByTestId('workspace-option-t-globex')).toHaveFocus();
 
-    // Wraps at both ends rather than dead-ending.
+    // Past the last workspace comes Manage workspaces…, then it wraps rather than dead-ending.
     await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(screen.getByTestId('manage-workspaces-entry')).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
     expect(screen.getByTestId(`workspace-option-${CURRENT_ID}`)).toHaveFocus();
+
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getByTestId('manage-workspaces-entry')).toHaveFocus();
 
     await user.keyboard('{ArrowUp}');
     expect(screen.getByTestId('workspace-option-t-initech')).toHaveFocus();
@@ -609,27 +620,57 @@ describe('WorkspaceSwitcher — the keyboard', () => {
     expect(screen.getByTestId(`workspace-option-${CURRENT_ID}`)).toHaveFocus();
 
     await user.keyboard('{End}');
-    expect(screen.getByTestId('workspace-option-t-initech')).toHaveFocus();
+    expect(screen.getByTestId('manage-workspaces-entry')).toHaveFocus();
   });
 
-  it('walks up from the filter field into the last item', async () => {
+  it('walks up from the filter field into the last item, Manage workspaces…', async () => {
     const user = userEvent.setup();
     await renderSwitcher({ context: membershipContext({ createTenant: null }) });
     await openMenu(user);
 
     await user.keyboard('{ArrowUp}');
 
-    expect(screen.getByTestId('workspace-option-t-initech')).toHaveFocus();
+    expect(screen.getByTestId('manage-workspaces-entry')).toHaveFocus();
   });
 
-  it('reaches the create entry with the arrows too', async () => {
+  it('reaches the create entry with the arrows too, just above Manage workspaces…', async () => {
     const user = userEvent.setup();
     await renderSwitcher();
     await openMenu(user);
 
     await user.keyboard('{ArrowDown}{End}');
+    expect(screen.getByTestId('manage-workspaces-entry')).toHaveFocus();
 
+    await user.keyboard('{ArrowUp}');
     expect(screen.getByTestId('create-tenant-entry')).toHaveFocus();
+  });
+
+  it('ends the menu with Manage workspaces…, a link to the Tenants page that closes the menu', async () => {
+    const user = userEvent.setup();
+    await renderSwitcher();
+    const menu = await openMenu(user);
+
+    const items = [
+      ...menu.querySelectorAll('[role="menuitem"], [role="menuitemradio"]'),
+    ];
+    const manage = screen.getByTestId('manage-workspaces-entry');
+    expect(items.at(-1)).toBe(manage);
+    expect(manage).toHaveAttribute('role', 'menuitem');
+    expect(manage).toHaveAttribute('href', '/ade/dashboard/tenants');
+    expect(manage).toHaveTextContent('Manage workspaces…');
+    // Behind the same separator as Create workspace, below it.
+    expect(manage.parentElement).toBe(screen.getByTestId('create-tenant-entry').parentElement);
+
+    await user.click(manage);
+    expect(screen.queryByTestId('workspace-menu')).not.toBeInTheDocument();
+  });
+
+  it('offers Manage workspaces… even when the plan offers no create entry', async () => {
+    const user = userEvent.setup();
+    await renderSwitcher({ context: membershipContext({ createTenant: null }) });
+    await openMenu(user);
+    expect(screen.queryByTestId('create-tenant-entry')).not.toBeInTheDocument();
+    expect(screen.getByTestId('manage-workspaces-entry')).toBeInTheDocument();
   });
 
   it('keeps exactly one item in the tab order, and moves it with the caret', async () => {

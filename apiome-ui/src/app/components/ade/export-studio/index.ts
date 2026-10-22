@@ -32,3 +32,14 @@ export {
   validationToneName,
   type StudioStageStatus,
 } from './exportStudioView';
+
+export {
+  EXPORT_STUDIO_TABS,
+  EXPORT_STUDIO_TAB_PARAM,
+  exportStudioTabFromParams,
+  exportStudioTabHref,
+  type ExportStudioTab,
+  type ExportStudioTabId,
+} from './exportStudioTabs';
+
+export { ExportStudioTabs, type ExportStudioTabsProps } from './ExportStudioTabs';

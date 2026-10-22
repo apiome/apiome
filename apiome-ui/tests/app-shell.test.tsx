@@ -779,6 +779,41 @@ describe('the docs fixtures', () => {
   });
 
   /**
+   * The two rail menus that gained rows in HIVE-12.2: the workspace switcher's Manage
+   * workspaces… and the user menu's Data browser · Migrations. Folded groups keep the footer —
+   * and the user menu that opens above it — inside a 900 px capture.
+   */
+  it('renders the workspace and user menus open (HIVE-12.2)', async () => {
+    const now = Date.now();
+    for (const [trigger, menuId, name] of [
+      ['rail-workspace', 'workspace-menu', 'workspace-menu'],
+      ['rail-user', 'user-menu', 'user-menu'],
+    ] as const) {
+      installInbox(docsInbox(now));
+      window.localStorage.setItem(
+        NAV_COLLAPSED_STORAGE_KEY,
+        JSON.stringify(PLATFORM_NAV_GROUPS.map((group) => group.id))
+      );
+      const { container, unmount } = await renderShell({
+        pathname: '/ade/dashboard/notifications',
+        children: <NotificationsClient now={now} />,
+      });
+      await screen.findByText('Marcus Lee mentioned you in a comment');
+      fireEvent.click(screen.getByTestId(trigger));
+      const menu = await screen.findByTestId(menuId);
+      if (menuId === 'workspace-menu') {
+        expect(within(menu).getByTestId('manage-workspaces-entry')).toBeInTheDocument();
+      } else {
+        expect(within(menu).getByTestId('user-menu-data-browser')).toBeInTheDocument();
+        expect(within(menu).getByTestId('user-menu-migrations')).toBeInTheDocument();
+      }
+      writeA11yFixture(name, container.innerHTML);
+      window.localStorage.removeItem(NAV_COLLAPSED_STORAGE_KEY);
+      unmount();
+    }
+  });
+
+  /**
    * Mount the shell around the notification centre, open an overlay, and dump the whole body —
    * the overlays portal out of the shell's container.
    *

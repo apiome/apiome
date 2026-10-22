@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { toast } from '../../../ui/toast';
 import {
   ArrowLeft,
@@ -132,6 +132,8 @@ interface ExportStudioProps {
   sourceFormat?: string | null;
   /** Called after a successful generate, so an entry point can record it as a recent export. */
   onGenerated?: (summary: ExportedArtifactSummary) => void;
+  /** The Export · SDK & branding tab strip, drawn under the header (HIVE-12.2). */
+  tabs?: ReactNode;
 }
 
 /**
@@ -206,6 +208,7 @@ export function ExportStudio({
   origin = null,
   sourceFormat = null,
   onGenerated,
+  tabs,
 }: ExportStudioProps) {
   const [step, setStep] = useState<StudioStep>('source');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -1024,6 +1027,7 @@ export function ExportStudio({
         }
         /* MFX-41.4: "look at this export config" as a URL. */
         actions={<CopyStudioLinkButton scope={shareScope} />}
+        tabs={tabs}
       />
       <PageBody>
         {/* The numbered stepper (MFX-41.1) — the ImportDialog/ExportDialog pill pattern, full width.

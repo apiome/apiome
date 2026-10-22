@@ -1,13 +1,16 @@
-import SdkSettingsClient from './SdkSettingsClient';
+import { redirect } from 'next/navigation';
+
+import { PLATFORM_NAV_SDK_SETTINGS_HREF } from '@lib/platform-nav';
 
 /**
- * SDK settings — `/ade/dashboard/sdk-settings` (SDK-3.4, #4494).
+ * `/ade/dashboard/sdk-settings` — kept so old links and bookmarks still resolve (HIVE-12.2, #5609).
  *
- * A thin server shell, like every other dashboard screen: all state, loading and permission
- * gating live in the client component.
+ * SDK settings left the rail and became the **SDK & branding** tab of Export studio
+ * (`/ade/dashboard/export/studio?tab=sdk`), which mounts `SdkSettingsClient` from this folder
+ * and carries the release gate. This route only sends the reader there.
  *
- * @returns The SDK settings screen.
+ * @returns Never — `redirect()` ends the render.
  */
-export default function SdkSettingsPage() {
-  return <SdkSettingsClient />;
+export default function SdkSettingsPage(): never {
+  redirect(PLATFORM_NAV_SDK_SETTINGS_HREF);
 }

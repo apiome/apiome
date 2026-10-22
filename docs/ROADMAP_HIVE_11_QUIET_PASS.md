@@ -390,7 +390,7 @@ Milestone: **RC6** (all epics and issues).
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 12.1 | #5608 | Nav model — default-collapsed groups with counts | `lib/platform-nav.ts` groups gain `defaultCollapsed`; Workspace starts collapsed; collapsed labels show their item count | `ui`, `redesign`, `mvp` | Y | Y | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx`, `src/app/components/shell/navGroupCollapse.ts`, `e2e/fixtures/hive-a11y/shell.html` |
-| 12.2 | #5609 | Re-home Tenants, Data browser · Migrations and SDK settings | Tenants → workspace switcher menu (“Manage workspaces…”); Tools → user menu; SDK settings → Export studio tab | `ui`, `redesign`, `mvp` | N | Y | M | `lib/platform-nav.ts`, `src/app/components/shell/WorkspaceSwitcher.tsx`, `src/app/components/shell/UserMenu.tsx`, `src/app/ade/dashboard/export/studio/*`, `src/app/ade/dashboard/sdk-settings/*` |
+| 12.2 | #5609 | Re-home Tenants, Data browser · Migrations and SDK settings ✅ | Tenants → workspace switcher menu (“Manage workspaces…”); Tools → user menu; SDK settings → Export studio tab | `ui`, `redesign`, `mvp` | N | Y | M | `lib/platform-nav.ts`, `src/app/components/shell/WorkspaceSwitcher.tsx`, `src/app/components/shell/UserMenu.tsx`, `src/app/ade/dashboard/export/studio/*`, `src/app/ade/dashboard/sdk-settings/*` |
 | 12.3 | #5610 | Rail footer — Notifications count and order | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
 | 12.4 | #5611 | “Preview” rail pill → honey dot | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
 | 12.5 | #5612 | Launcher — only openable tiles; `ComingNext` line | Applications shows Control Panel (emphasised), Browser and host-injected tiles; three “coming soon” surfaces collapse into one `ComingNext` text line | `ui`, `dashboard`, `redesign` | Y | N | M | `src/app/components/ade/AdeHome.tsx`, `src/app/components/ade/launcher/*`, `src/app/components/ui/ComingNext.tsx (new)`, `e2e/fixtures/hive-a11y/launcher.html` |
@@ -416,7 +416,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-12.2] Re-home Tenants, Data browser · Migrations and SDK settings` — [#5609](https://github.com/apiome/apiome/issues/5609)
+### `apiome: [HIVE-12.2] Re-home Tenants, Data browser · Migrations and SDK settings` ✅ — [#5609](https://github.com/apiome/apiome/issues/5609)
 **Problem statement.** Two rail rows duplicate destinations that already have a natural home (Tenants beside the switcher that switches them; SDK settings beside Export studio, which configures how a version leaves the system), and the Tools pages have no navigation entry at all since the Tools group was deferred.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/rail-compact.html` (callouts 2, 3, 4); rationale: `docs/mockups/PROPOSALS.md`.
@@ -426,9 +426,9 @@ Milestone: **RC6** (all epics and issues).
 - Command palette “Jump to” keeps all three destinations.
 
 **Acceptance criteria.**
-- [ ] Rail has 15 items; every removed destination reachable in ≤ 2 clicks and via ⌘K
-- [ ] Old URLs still resolve (redirect covered by a test)
-- [ ] Shell fixture re-dumped; parity + a11y gates green
+- [x] Rail has 15 items; every removed destination reachable in ≤ 2 clicks and via ⌘K
+- [x] Old URLs still resolve (redirect covered by a test)
+- [x] Shell fixture re-dumped; parity + a11y gates green
 
 **Parallelism / dependencies.** Depends on HIVE-12.1.
 

@@ -21,7 +21,7 @@ import {
   openPreferences,
   type PreferencesTabId,
 } from '@/app/components/ade/preferences/preferencesDrawerBus';
-import { PLATFORM_USER_MENU_ITEMS } from '@lib/platform-nav';
+import { PLATFORM_USER_MENU_ITEMS, getPlatformOffRailItems } from '@lib/platform-nav';
 import { resolvePlatformNavIcon } from '@lib/platform-nav-icons';
 import { PREFERENCES_SHORTCUT, SHORTCUT_SHEET_SHORTCUT, formatShortcutKeys } from '@lib/shortcuts';
 import { APP_VERSION_BADGE } from '@lib/app-version';
@@ -53,7 +53,9 @@ import { useWhatsNewUnread } from './whatsNewSeen';
  *
  * ### Where the rows come from
  *
- * Profile and Linked accounts are read from {@link PLATFORM_USER_MENU_ITEMS} — HIVE-3.2's
+ * Profile and Linked accounts are read from {@link PLATFORM_USER_MENU_ITEMS}, and since
+ * HIVE-12.2 the Tools rows (Data browser, Migrations) from the model's off-rail destinations
+ * that name this menu as their home — HIVE-3.2's
  * navigation model already reserves them for exactly this menu, so the destinations are
  * declared once and the command palette (HIVE-3.6) will find them there too. The rest are
  * shell affordances rather than modelled destinations: two of them open something in
@@ -268,6 +270,14 @@ export default function UserMenu({
         },
       ],
       [
+        // The Tools (HIVE-12.2, #5609): the rail never carried them, so until now they were
+        // reachable only from deep links. Neither route needs a workspace, so neither row does.
+        ...getPlatformOffRailItems({}, 'user-menu').map((item) => ({
+          id: item.id,
+          label: item.label,
+          icon: resolvePlatformNavIcon(item.icon),
+          href: item.href,
+        })),
         {
           id: 'admin-console',
           label: 'Admin console',

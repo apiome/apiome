@@ -32396,6 +32396,15 @@ tr:focus-within .pub-url__glyph {
   overflow-y: auto;
 }
 
+/* ---- The tab strip (HIVE-12.2, #5609) -----------------------------------
+   Export · SDK & branding, a route strip on the shared tab classes. The
+   glyph follows the font scale, like `.repo-tab__glyph`. */
+.xstd-tab__glyph {
+  inline-size: var(--fs-md);
+  block-size: var(--fs-md);
+  flex-shrink: 0;
+}
+
 /* ==========================================================================
    CONSUMER CONTRACT REGISTRY  (CTG-4.1, #4479)
    --------------------------------------------------------------------------
