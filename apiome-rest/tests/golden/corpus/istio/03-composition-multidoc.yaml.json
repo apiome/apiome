@@ -1,0 +1,198 @@
+{
+  "adapter": "istio",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "istio",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "DestinationRule",
+            "count": 1,
+            "reason": "DestinationRule resources shape the mesh (subsets, gateways, egress, scoping); they are read for references and schemes but describe no HTTP route"
+          },
+          {
+            "construct": "Gateway",
+            "count": 1,
+            "reason": "Gateway resources shape the mesh (subsets, gateways, egress, scoping); they are read for references and schemes but describe no HTTP route"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "istio",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "istio/03-composition-multidoc.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "storefront/checkout",
+        "name": "storefront/checkout",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout.storefront.svc.cluster.local",
+                  "namespace": "storefront",
+                  "port": 8080,
+                  "subset": "v2"
+                }
+              ],
+              "gateway_route": "canary",
+              "gateways": [
+                "storefront/public-gateway"
+              ],
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "storefront",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/checkout"
+              },
+              "provenance": "inferred",
+              "virtual_service": "storefront/checkout"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/checkout",
+            "key": "ANY /v2/checkout",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/checkout",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "true"
+                },
+                "key": "ANY /v2/checkout#header.x-canary",
+                "location": "header",
+                "name": "x-canary",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "checkout.storefront.svc.cluster.local",
+                  "namespace": "storefront",
+                  "port": 8080,
+                  "subset": "v1",
+                  "weight": 90
+                },
+                {
+                  "name": "checkout.storefront.svc.cluster.local",
+                  "namespace": "storefront",
+                  "port": 8080,
+                  "subset": "v2",
+                  "weight": 10
+                }
+              ],
+              "gateway_route": "split",
+              "gateways": [
+                "storefront/public-gateway"
+              ],
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "storefront",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/checkout"
+              },
+              "provenance": "inferred",
+              "virtual_service": "storefront/checkout"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/checkout",
+            "key": "ANY /v2/checkout#split",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/checkout",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "istio/03-composition-multidoc.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "istio/03-composition-multidoc.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "istio"
+  },
+  "fingerprint": "sha256:5f8864b5d76abd99a1807259bbff3182f2de85b7b834540d269a719b640daa79",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "ed7b89e45a1880f4be72847d89b8384a1cf93697938aa9ac898db038bc683198",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

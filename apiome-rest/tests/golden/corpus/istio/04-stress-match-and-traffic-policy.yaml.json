@@ -1,0 +1,581 @@
+{
+  "adapter": "istio",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "istio",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "delegate",
+            "count": 1,
+            "reason": "a delegate rule hands routing to another VirtualService; its routes are not part of this resource and are not flattened into it"
+          },
+          {
+            "construct": "match.sourceLabels",
+            "count": 1,
+            "reason": "the rule matches on the calling workload's labels, which has no canonical parameter form"
+          },
+          {
+            "construct": "match.withoutHeaders",
+            "count": 1,
+            "reason": "an inverted header match (the rule applies when the header does NOT match) has no canonical parameter form"
+          },
+          {
+            "construct": "tcp",
+            "count": 1,
+            "reason": "tcp route blocks route by SNI/port, not by HTTP request — there is no canonical HTTP operation for them"
+          },
+          {
+            "construct": "tls",
+            "count": 1,
+            "reason": "tls route blocks route by SNI/port, not by HTTP request — there is no canonical HTTP operation for them"
+          }
+        ],
+        "operation_count": 6,
+        "route_count": 5,
+        "schemaless_operation_count": 6,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "corsPolicy",
+            "scope": "route"
+          },
+          {
+            "name": "fault",
+            "scope": "route"
+          },
+          {
+            "name": "headers",
+            "scope": "route"
+          },
+          {
+            "name": "mirror",
+            "scope": "route"
+          },
+          {
+            "name": "mirrorPercentage",
+            "scope": "route"
+          },
+          {
+            "name": "redirect",
+            "scope": "route"
+          },
+          {
+            "name": "retries",
+            "scope": "route"
+          },
+          {
+            "name": "rewrite",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "istio",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "istio/04-stress-match-and-traffic-policy.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://lab.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://lab.lab.svc.cluster.local",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "lab/matcher-coverage",
+        "name": "lab/matcher-coverage",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "assays.lab.svc.cluster.local",
+                  "namespace": "lab"
+                }
+              ],
+              "gateway_route": "regex-and-fault",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "lab",
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/assays/[a-f0-9]{8}/results$"
+              },
+              "plugins": [
+                "fault",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "ANY",
+            "http_path": "/assays/{param1}/results",
+            "key": "ANY /assays/{param1}/results",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /assays/{param1}/results",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/assays/[a-f0-9]{8}/results$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /assays/{param1}/results#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "ingest.lab.svc.cluster.local",
+                  "namespace": "lab",
+                  "subset": "v2"
+                }
+              ],
+              "gateway_route": "mirror-and-retry",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "lab",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/ingest"
+              },
+              "plugins": [
+                "mirror",
+                "mirrorPercentage",
+                "retries"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "ANY",
+            "http_path": "/ingest",
+            "key": "ANY /ingest",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ingest",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "redirect",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "lab",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/old"
+              },
+              "plugins": [
+                "redirect"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "ANY",
+            "http_path": "/old",
+            "key": "ANY /old",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /old",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "partner-backend.lab.svc.cluster.local",
+                  "namespace": "lab"
+                }
+              ],
+              "gateway_route": "rewrite-authority",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "lab",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/partner"
+              },
+              "plugins": [
+                "rewrite"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "ANY",
+            "http_path": "/partner",
+            "key": "ANY /partner",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /partner",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "exact.lab.svc.cluster.local",
+                  "namespace": "lab",
+                  "subset": "stable"
+                }
+              ],
+              "gateway_route": "exact-and-headers",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "match_qualifiers": {
+                "authority": [
+                  {
+                    "prefix": "lab."
+                  }
+                ],
+                "gateways": [
+                  [
+                    "lab/public-gateway"
+                  ]
+                ],
+                "port": [
+                  443
+                ],
+                "scheme": [
+                  {
+                    "exact": "https"
+                  }
+                ]
+              },
+              "namespace": "lab",
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact"
+              },
+              "plugins": [
+                "corsPolicy",
+                "headers"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "GET",
+            "http_path": "/exact",
+            "key": "GET /exact",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /exact",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:^(1|true)$"
+                },
+                "key": "GET /exact#header.x-debug",
+                "location": "header",
+                "name": "x-debug",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "prefix:acme-"
+                },
+                "key": "GET /exact#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:.+"
+                },
+                "key": "GET /exact#query.q",
+                "location": "query",
+                "name": "q",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "exact.lab.svc.cluster.local",
+                  "namespace": "lab",
+                  "subset": "stable"
+                }
+              ],
+              "gateway_route": "exact-and-headers",
+              "gateways": [
+                "lab/public-gateway",
+                "mesh"
+              ],
+              "hosts": [
+                "lab.example.com",
+                "lab.lab.svc.cluster.local"
+              ],
+              "match_qualifiers": {
+                "authority": [
+                  {
+                    "prefix": "lab."
+                  }
+                ],
+                "gateways": [
+                  [
+                    "lab/public-gateway"
+                  ]
+                ],
+                "port": [
+                  443
+                ],
+                "scheme": [
+                  {
+                    "exact": "https"
+                  }
+                ]
+              },
+              "namespace": "lab",
+              "path_match": {
+                "kind": "exact",
+                "raw": "/exact"
+              },
+              "plugins": [
+                "corsPolicy",
+                "headers"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "lab/matcher-coverage"
+            },
+            "http_method": "HEAD",
+            "http_path": "/exact",
+            "key": "HEAD /exact",
+            "kind": "request_response",
+            "messages": [],
+            "name": "HEAD /exact",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:^(1|true)$"
+                },
+                "key": "HEAD /exact#header.x-debug",
+                "location": "header",
+                "name": "x-debug",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "prefix:acme-"
+                },
+                "key": "HEAD /exact#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "regex:.+"
+                },
+                "key": "HEAD /exact#query.q",
+                "location": "query",
+                "name": "q",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "istio/04-stress-match-and-traffic-policy.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "istio/04-stress-match-and-traffic-policy.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "istio"
+  },
+  "fingerprint": "sha256:beeafb9371d203574f5124c1729dabb6f527d0aa52a0bebab781bee201eaa640",
+  "lint": {
+    "findings": 7,
+    "grade": "C",
+    "report_fingerprint": "a8775e2ee97fe483830aab9e4e68c858e2214e6fbe1cd5c0570fea0675c4f3cb",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

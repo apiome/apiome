@@ -3,8 +3,8 @@
 Fixtures for the Istio half of **FMT-7.4** ([#5458](https://github.com/apiome/apiome/issues/5458)).
 `VirtualService` `http` rules are the only machine-readable description of what paths exist in many
 mesh platforms; `DestinationRule` supplies the subsets those rules name, and `Gateway` supplies the
-hosts and TLS. The Envoy half lives in `envoy-xds/`. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+hosts and TLS. The Envoy half lives in `envoy-xds/`. Entries are read by the `istio` adapter
+(`apiome-rest/src/app/istio_import_source.py`).
 
 **Detection marker.** `apiVersion: networking.istio.io/*` with `kind: VirtualService` (or
 `DestinationRule`, `Gateway`, `ServiceEntry`, `Sidecar`). **Multi-document YAML streams are the norm**

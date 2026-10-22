@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.419.0] - 2026-10-21
+
+### Added
+- **Envoy xDS and Istio VirtualService import (#5458, FMT-7.4)**: two new import sources on the shared
+  gateway middle, so a service mesh's route table can be catalogued as an API surface.
+  - `envoy-xds` reads a static bootstrap, a bare `RouteConfiguration`, an xDS `DiscoveryResponse`, or a
+    filesystem-xDS set (bootstrap plus the `rds`/`cds` files it loads); xDS v3 and v2 typed resources.
+    `RouteConfiguration → VirtualHost → Route` becomes one operation per route, grouped by virtual host.
+  - `istio` reads `VirtualService` `http` rules from a single manifest, a multi-document stream or a GitOps
+    directory, using `DestinationRule` subsets and `Gateway` servers from the same input.
+  - Path matchers map through the Gateway API path-type table (`path`/`exact` → `Exact`, `prefix` and
+    `path_separated_prefix` → `PathPrefix`, `safe_regex`/`regex` → `RegularExpression`), so the three
+    formats normalize identically. Header, query-parameter and method matches become match conditions.
+  - Every operation and service is stamped `provenance: inferred`; there are no request/response schemas,
+    so imports land in the catalog as non-publishable (same routing reason as Kong and Gateway API).
+  - Constructs with no canonical HTTP operation are declared on the coverage ledger, never flattened:
+    Envoy `connect_matcher`, `runtime_fraction`/`grpc` qualifiers, inverted header matches, RDS/LDS/ADS
+    sources; Istio `delegate`, `tls`/`tcp` blocks, `sourceLabels`/`withoutHeaders`, non-routing kinds.
+  - A route naming an undefined cluster, or a destination naming a subset its `DestinationRule` does not
+    define, is `INPUT_REFERENCE_UNRESOLVED`.
+  - `GatewayBackend` gains an optional `subset`. OpenAPI version 1.283.0.
+
 ## [1.418.0] - 2026-10-21
 
 ### Added

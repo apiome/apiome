@@ -60709,6 +60709,2081 @@
       "unexplained": []
     },
     {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 7,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'ANY /', changed operation 'ANY /health', changed operation 'ANY /v2/orders', changed operation 'ANY /v2/products', changed root '', added service 'envoy-xds/02-typical-bootstrap.yaml', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "envoy-xds/02-typical-bootstrap.yaml"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 10,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'storefront#ANY /', added operation 'storefront#ANY /health', added operation 'storefront#ANY /v2/orders', added operation 'storefront#ANY /v2/products', changed root '', changed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront#ANY /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront#ANY /health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront#ANY /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront#ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<envoyxds02typicalbootstrapyaml DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulerefe... (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<envoyxds02typicalbootstrapyaml DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference.)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Property \"backends\" is not expected to be here (observed: Re-import failed: Property \"backends\" is not expected to be here)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: EmitResult has no files (observed: Re-import failed: EmitResult has no files)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 9,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'storefront.health', added operation 'storefront.orders', added operation 'storefront.products', changed root '', changed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: the CDDL document declares no rules (envoy-xds->cddl), so it describes no data (observed: Re-import failed: the CDDL document declares no rules (envoy-xds->cddl), so it describes no data)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: type object 'LossKind' has no attribute 'DROP' (observed: Emit failed: type object 'LossKind' has no attribute 'DROP')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 10,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'storefront.ANY__', added operation 'storefront.ANY__health', added operation 'storefront.ANY__v2_orders', added operation 'storefront.ANY__v2_products', changed root '', changed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__v2_products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 11,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'Exported.storefront./', added operation 'Exported.storefront./health', added operation 'Exported.storefront./v2/orders', added operation 'Exported.storefront./v2/products', changed root '', added service 'Exported.storefront', removed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.storefront./"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.storefront./health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.storefront./v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.storefront./v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Exported.storefront"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 11,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /storefront', added operation 'GET /storefront/{id}', added operation 'POST /storefront', changed root '', removed service 'storefront', added service 'storefront.storefront', added type 'storefront.storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /storefront"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront.storefront"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "storefront.storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 6,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 13,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'Mutation.ANY__', added operation 'Mutation.ANY__health', added operation 'Mutation.ANY__v2_orders', added operation 'Mutation.ANY__v2_products', added operation 'Query._', changed root '', added service 'Mutation', added service 'Query', removed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Mutation"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No HTTP requests could be parsed from the document (observed: Re-import failed: No HTTP requests could be parsed from the document)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 7,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'storefront', added type 'envoy-xds/02-typical-bootstrap.yaml')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "envoy-xds/02-typical-bootstrap.yaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 7,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'storefront', added type 'envoy-xds/02-typical-bootstrap.yaml')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "envoy-xds/02-typical-bootstrap.yaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 8,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'envoyxds02typicalbootstrapyamls.example.com', removed service 'storefront', added type 'example.com/v1.EnvoyXds02TypicalBootstrapYaml')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "envoyxds02typicalbootstrapyamls.example.com"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.EnvoyXds02TypicalBootstrapYaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none. (observed: Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none.)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 6,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'ANY /', changed operation 'ANY /health', changed operation 'ANY /v2/orders', changed operation 'ANY /v2/products', changed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 15,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'envoy-xds->llm-tools.ANY', added operation 'envoy-xds->llm-tools.ANY_health', added operation 'envoy-xds->llm-tools.ANY_v2_orders', added operation 'envoy-xds->llm-tools.ANY_v2_products', added service 'envoy-xds->llm-tools', removed service 'storefront', added type 'ANYParams', added type 'ANY_healthParams', added type 'ANY_v2_ordersParams', added type 'ANY_v2_productsParams'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "envoy-xds->llm-tools.ANY"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "envoy-xds->llm-tools.ANY_health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "envoy-xds->llm-tools.ANY_v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "envoy-xds->llm-tools.ANY_v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "envoy-xds->llm-tools"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANYParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANY_healthParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANY_v2_ordersParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANY_v2_productsParams"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 10,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /storefront', added operation 'GET /storefront({key})', added operation 'POST /storefront', changed root '', added service 'envoy-xds/02-typical-bootstrap.yaml.storefront', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront({key})"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /storefront"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "envoy-xds/02-typical-bootstrap.yaml.storefront"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 7,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none (observed: Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 7,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', changed root '', removed service 'storefront', added service 'storefront.storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront.storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 6,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', changed root '', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No OpenRPC methods or component schemas found (envoy-xds->openrpc) (observed: Re-import failed: No OpenRPC methods or component schemas found (envoy-xds->openrpc))",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 11,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /health', added operation 'GET /v2/orders', added operation 'GET /v2/products', changed root '', added service 'envoy-xds/02-typical-bootstrap.yaml', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "envoy-xds/02-typical-bootstrap.yaml"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 10,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'storefront.ANY__', added operation 'storefront.ANY__health', added operation 'storefront.ANY__v2_orders', added operation 'storefront.ANY__v2_products', changed root '', changed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront.ANY__v2_products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No RAML types or resources found (envoy-xds->raml) (observed: Re-import failed: No RAML types or resources found (envoy-xds->raml))",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 6,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', changed root '', changed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 10,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'storefront./', added operation 'storefront./health', added operation 'storefront./v2/orders', added operation 'storefront./v2/products', changed root '', changed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront./"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront./health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront./v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront./v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 7,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', changed root '', added service 'Exported.storefront', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Exported.storefront"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 12,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any', added operation 'apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-health', added operation 'apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-v2-orders', added operation 'apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-v2-products', changed root '', added service 'apiome:envoy-xds-02-typical-bootstrap-yaml.envoy-xds-02-typical-bootstrap-yaml', added service 'apiome:envoy-xds-02-typical-bootstrap-yaml.storefront', removed service 'storefront')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-v2-orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.storefront.any-v2-products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.envoy-xds-02-typical-bootstrap-yaml"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:envoy-xds-02-typical-bootstrap-yaml.storefront"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 11,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /health",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'http://example.com/service.storefront.ANY /', added operation 'http://example.com/service.storefront.ANY /health', added operation 'http://example.com/service.storefront.ANY /v2/orders', added operation 'http://example.com/service.storefront.ANY /v2/products', changed root '', added service 'http://example.com/service.storefront', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /health"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront.ANY /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront.ANY /health"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront.ANY /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront.ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.storefront"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront"
+        }
+      ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No XSD types or elements found (envoy-xds->xsd) (observed: Re-import failed: No XSD types or elements found (envoy-xds->xsd))",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "envoy-xds",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "fhir/01-patient.json",
       "diff_count": 10,
       "emit_format": "apiblueprint",
@@ -103022,6 +105097,2056 @@
       "overclaims": [],
       "reason": "z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
       "source_format": "iso8583",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'ANY /', changed operation 'ANY /healthz', changed operation 'ANY /v2/products', changed operation 'GET /v2/orders', changed operation 'POST /v2/orders', changed root '', added service 'istio/02-typical-virtualservice.yaml', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio/02-typical-virtualservice.yaml"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 12,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'storefront/orders#ANY /', added operation 'storefront/orders#ANY /healthz', added operation 'storefront/orders#ANY /v2/products', added operation 'storefront/orders#GET /v2/orders', added operation 'storefront/orders#POST /v2/orders', changed root '', changed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront/orders#ANY /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront/orders#ANY /healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront/orders#ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront/orders#GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront/orders#POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<istio02typicalvirtualserviceyaml DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulere... (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<istio02typicalvirtualserviceyaml DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference.)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Property \"backends\" is not expected to be here (observed: Re-import failed: Property \"backends\" is not expected to be here)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: EmitResult has no files (observed: Re-import failed: EmitResult has no files)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a Cap'n Proto .capnp schema (observed: Re-import failed: Content does not appear to be a Cap'n Proto .capnp schema)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: the CDDL document declares no rules (istio->cddl), so it describes no data (observed: Re-import failed: the CDDL document declares no rules (istio->cddl), so it describes no data)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: type object 'LossKind' has no attribute 'DROP' (observed: Emit failed: type object 'LossKind' has no attribute 'DROP')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 13,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'storefront_orders.ANY__', added operation 'storefront_orders.ANY__healthz', added operation 'storefront_orders.ANY__v2_products', added operation 'storefront_orders.GET__v2_orders', added operation 'storefront_orders.POST__v2_orders', changed root '', removed service 'storefront/orders', added service 'storefront_orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.GET__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.POST__v2_orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront_orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No struct, exception, enum, or interface definitions found in the CORBA IDL file (istio->corbaidl) (observed: Re-import failed: No struct, exception, enum, or interface definitions found in the CORBA IDL file (istio->corbaidl))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 12,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', added operation 'GET /storefront/orders', added operation 'GET /storefront/orders/{id}', removed operation 'GET /v2/orders', added operation 'POST /storefront/orders', removed operation 'POST /v2/orders', changed root '', removed service 'storefront/orders', added service 'storefront/orders.storefront/orders', added type 'storefront/orders.storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront/orders/{id}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /storefront/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront/orders.storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "storefront/orders.storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 7,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders', changed operation 'POST /v2/orders', changed service 'storefront/orders'; overclaim: OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 14,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', added operation 'Mutation.ANY__', added operation 'Mutation.ANY__healthz', added operation 'Mutation.ANY__v2_products', added operation 'Mutation.POST__v2_orders', removed operation 'POST /v2/orders', added operation 'Query.GET__v2_orders', changed root '', added service 'Mutation', added service 'Query', removed service 'storefront/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.ANY__v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.POST__v2_orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query.GET__v2_orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Mutation"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', changed operation 'GET /v2/orders', changed operation 'POST /v2/orders', added service 'istio->http-file', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio->http-file"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'storefront/orders', added type 'istio/02-typical-virtualservice.yaml')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "istio/02-typical-virtualservice.yaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'storefront/orders', added type 'istio/02-typical-virtualservice.yaml')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "istio/02-typical-virtualservice.yaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 9,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'istio02typicalvirtualserviceyamls.example.com', removed service 'storefront/orders', added type 'example.com/v1.Istio02TypicalVirtualserviceYaml')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio02typicalvirtualserviceyamls.example.com"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.Istio02TypicalVirtualserviceYaml"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none. (observed: Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none.)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'ANY /', changed operation 'ANY /healthz', changed operation 'ANY /v2/products', changed operation 'GET /v2/orders', changed operation 'POST /v2/orders', added service 'storefront-orders', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront-orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 18,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'istio->llm-tools.ANY', added operation 'istio->llm-tools.ANY_healthz', added operation 'istio->llm-tools.ANY_v2_products', added operation 'istio->llm-tools.GET_v2_orders', added operation 'istio->llm-tools.POST_v2_orders', added service 'istio->llm-tools', removed service 'storefront/orders', added type 'ANYParams', added type 'ANY_healthzParams', added type 'ANY_v2_productsParams', added type 'GET_v2_ordersParams', added type 'POST_v2_ordersParams'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "istio->llm-tools.ANY"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "istio->llm-tools.ANY_healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "istio->llm-tools.ANY_v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "istio->llm-tools.GET_v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "istio->llm-tools.POST_v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio->llm-tools"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANYParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANY_healthzParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ANY_v2_productsParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "GET_v2_ordersParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "POST_v2_ordersParams"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 11,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', added operation 'GET /storefront/orders', added operation 'GET /storefront/orders({key})', removed operation 'GET /v2/orders', added operation 'POST /storefront/orders', removed operation 'POST /v2/orders', changed root '', added service 'istio/02-typical-virtualservice.yaml.storefront/orders', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /storefront/orders({key})"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /storefront/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio/02-typical-virtualservice.yaml.storefront/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 7,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none (observed: Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (istio->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (istio->oncrpc))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 8,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', changed operation 'GET /v2/orders', changed operation 'POST /v2/orders', changed root '', added service 'default', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No OpenRPC methods or component schemas found (istio->openrpc) (observed: Re-import failed: No OpenRPC methods or component schemas found (istio->openrpc))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 11,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', changed operation 'GET /v2/orders', added operation 'GET /v2/products', changed operation 'POST /v2/orders', changed root '', added service 'istio/02-typical-virtualservice.yaml', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /healthz"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/products"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "istio/02-typical-virtualservice.yaml"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 13,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'storefront_orders.ANY__', added operation 'storefront_orders.ANY__healthz', added operation 'storefront_orders.ANY__v2_products', added operation 'storefront_orders.GET__v2_orders', added operation 'storefront_orders.POST__v2_orders', changed root '', removed service 'storefront/orders', added service 'storefront_orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.ANY__v2_products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.GET__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "storefront_orders.POST__v2_orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "storefront_orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No RAML types or resources found (istio->raml) (observed: Re-import failed: No RAML types or resources found (istio->raml))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Smithy shapes found in model (istio->smithy) (observed: Re-import failed: No Smithy shapes found in model (istio->smithy))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a Thrift IDL definition (observed: Re-import failed: Content does not appear to be a Thrift IDL definition)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (istio->typespec) (observed: Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (istio->typespec))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 14,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any', added operation 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any-healthz', added operation 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any-v2-products', added operation 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders.get-v2-orders', added operation 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders.post-v2-orders', changed root '', added service 'apiome:istio-02-typical-virtualservice-yaml.istio-02-typical-virtualservice-yaml', added service 'apiome:istio-02-typical-virtualservice-yaml.storefront-orders', removed service 'storefront/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any-healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders.any-v2-products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders.get-v2-orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders.post-v2-orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.istio-02-typical-virtualservice-yaml"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:istio-02-typical-virtualservice-yaml.storefront-orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 13,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "ANY /",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /healthz",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ANY /v2/products",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', removed operation 'GET /v2/orders', removed operation 'POST /v2/orders', added operation 'http://example.com/service.storefront/orders.ANY /', added operation 'http://example.com/service.storefront/orders.ANY /healthz', added operation 'http://example.com/service.storefront/orders.ANY /v2/products', added operation 'http://example.com/service.storefront/orders.GET /v2/orders', added operation 'http://example.com/service.storefront/orders.POST /v2/orders', changed root '', added service 'http://example.com/service.storefront/orders', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /healthz"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "ANY /v2/products"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront/orders.ANY /"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront/orders.ANY /healthz"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront/orders.ANY /v2/products"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront/orders.GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.storefront/orders.POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.storefront/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "storefront/orders"
+        }
+      ]
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 5,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No XSD types or elements found (istio->xsd) (observed: Re-import failed: No XSD types or elements found (istio->xsd))",
+      "source_format": "istio",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "istio",
       "status": "xfail",
       "unexplained": []
     },
@@ -218342,6 +222467,7 @@
     "dtd",
     "edifact",
     "edix12",
+    "envoy-xds",
     "fhir",
     "fix",
     "fix-orchestra",
@@ -218354,6 +222480,7 @@
     "idoc",
     "iso20022",
     "iso8583",
+    "istio",
     "json-schema",
     "jtd",
     "k8s-crd",

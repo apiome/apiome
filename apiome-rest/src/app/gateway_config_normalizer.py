@@ -1,8 +1,9 @@
 """Gateway configuration → canonical model normalizer — IXH-7.8 (#5133).
 
-One projection for both flavors: a flavor-neutral
+One projection for every flavor: a flavor-neutral
 :class:`~app.gateway_config_model.GatewayConfigDocument` (from
-:mod:`app.kong_parser` or :mod:`app.gateway_api_parser`) becomes a canonical
+:mod:`app.kong_parser`, :mod:`app.gateway_api_parser`, and since FMT-7.4
+:mod:`app.envoy_xds_parser` and :mod:`app.istio_parser`) becomes a canonical
 REST surface — services grouped by gateway service / HTTPRoute resource, one
 operation per flattened match condition, servers from the declared hostnames.
 
@@ -14,6 +15,9 @@ Provenance discipline (this is what makes the import honest):
 * Path parameters recovered from regex patterns and auth schemes recovered from
   plugins are **inferred** — stamped ``provenance = "inferred"`` so the ledger
   never presents them as declared (same convention as IXH-7.4).
+* Service-mesh route tables (Envoy xDS, Istio — :data:`INFERRED_ROUTE_FLAVORS`) are
+  read as evidence of an API rather than a declaration of one, so *every* operation
+  and service they produce is stamped ``inferred`` (FMT-7.4).
 * The formats carry **no request/response schemas**, so operations have no
   messages. That absence is recorded on ``CanonicalApi.extras["gateway"]``
   (``schemaless_operation_count``) and rendered by the preview manifest as a
@@ -48,13 +52,33 @@ from .normalizer import Keys, Normalizer, normalize_ordering
 __all__ = [
     "KONG_FORMAT_KEY",
     "GATEWAY_API_FORMAT_KEY",
+    "ENVOY_XDS_FORMAT_KEY",
+    "ISTIO_FORMAT_KEY",
+    "INFERRED_ROUTE_FLAVORS",
+    "POLICY_PLUGIN_FLAVORS",
     "KongNormalizer",
     "GatewayApiNormalizer",
+    "EnvoyXdsNormalizer",
+    "IstioNormalizer",
     "normalize_gateway_config",
 ]
 
 KONG_FORMAT_KEY = "kong"
 GATEWAY_API_FORMAT_KEY = "gateway-api"
+ENVOY_XDS_FORMAT_KEY = "envoy-xds"
+ISTIO_FORMAT_KEY = "istio"
+
+#: Flavors whose routes are stamped ``provenance = "inferred"`` (FMT-7.4). Kong and Gateway API
+#: *declare* an API surface to a gateway; a service mesh's route table is runtime plumbing the
+#: surface is reconstructed from — the import infers an API from where traffic goes, so every
+#: operation and service it builds says so on the ledger.
+INFERRED_ROUTE_FLAVORS = frozenset({ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY})
+
+#: Flavors whose non-auth plugins are gateway policy the canonical model does not represent
+#: (CDG-1.2 for Kong; FMT-7.4's retries, timeouts, rewrites, CORS for Envoy and Istio) and are
+#: therefore listed on the report so the ledger shows them kept, not dropped. Gateway API
+#: filters stay out: IXH-7.8 reports them through the route extras only.
+POLICY_PLUGIN_FLAVORS = frozenset({KONG_FORMAT_KEY, ENVOY_XDS_FORMAT_KEY, ISTIO_FORMAT_KEY})
 
 #: Method placeholder for a route that matches any HTTP method. Kept explicit
 #: (rather than a fabricated verb) so diffs and keys stay stable and honest.
@@ -72,6 +96,7 @@ def _operation_for_match(
     match: GatewayMatch,
     *,
     used_keys: Set[str],
+    inferred: bool = False,
 ) -> Operation:
     """Build one canonical operation from one flattened match condition.
 
@@ -81,6 +106,8 @@ def _operation_for_match(
         used_keys: Keys already assigned — a collision (same method + template on
             two routes, e.g. two hosts) appends ``#<route name>`` so keys stay
             unique while the base coordinate stays diff-stable.
+        inferred: Stamp the operation ``provenance = "inferred"`` (a flavor in
+            :data:`INFERRED_ROUTE_FLAVORS`).
 
     Returns:
         The operation, message-less by construction (the formats carry no
@@ -132,6 +159,8 @@ def _operation_for_match(
         )
 
     extras: Dict[str, Any] = {"gateway_route": route.name}
+    if inferred:
+        extras["provenance"] = "inferred"
     if route.hosts:
         extras["hosts"] = sorted(route.hosts)
     if match.path is not None:
@@ -183,6 +212,7 @@ def normalize_gateway_config(
     operations_by_service: Dict[str, List[Operation]] = {}
     service_order: List[str] = []
     schemaless_operations = 0
+    inferred = document.flavor in INFERRED_ROUTE_FLAVORS
 
     for route in document.routes:
         group = route.service_name or "(unattached routes)"
@@ -190,7 +220,7 @@ def normalize_gateway_config(
             operations_by_service[group] = []
             service_order.append(group)
         for match in route.matches:
-            operation = _operation_for_match(route, match, used_keys=used_keys)
+            operation = _operation_for_match(route, match, used_keys=used_keys, inferred=inferred)
             operations_by_service[group].append(operation)
             schemaless_operations += 1
 
@@ -199,7 +229,7 @@ def normalize_gateway_config(
     }
     services: List[Service] = []
     for group in service_order:
-        extras: Dict[str, Any] = {}
+        extras: Dict[str, Any] = {"provenance": "inferred"} if inferred else {}
         definition = service_extras_by_name.get(group)
         if definition is not None:
             backend: Dict[str, Any] = {}
@@ -270,11 +300,12 @@ def normalize_gateway_config(
         ],
         "global_plugins": sorted({plugin.name for plugin in document.global_plugins}),
     }
-    if document.flavor == "kong":
+    if document.flavor in POLICY_PLUGIN_FLAVORS:
         # CDG-1.2: every non-auth plugin is gateway policy the canonical model does not
-        # represent (rate limits, transforms, CORS). Its name rides on the operations it
-        # applies to and its config stays in the captured source; the ledger lists it so it
-        # is visibly kept, never silently dropped.
+        # represent (rate limits, transforms, CORS; FMT-7.4 adds Envoy/Istio retries,
+        # timeouts and rewrites). Its name rides on the operations it applies to and its
+        # config stays in the captured source; the ledger lists it so it is visibly kept,
+        # never silently dropped.
         gateway_report["unmodeled_plugins"] = [
             {"name": name, "scope": scope}
             for name, scope in sorted(
@@ -340,4 +371,38 @@ class GatewayApiNormalizer(Normalizer, register=True):
             )
         return normalize_gateway_config(
             source, format_key=GATEWAY_API_FORMAT_KEY, include_raw=include_raw
+        )
+
+
+class EnvoyXdsNormalizer(Normalizer, register=True):
+    """Normalize a parsed Envoy xDS route configuration (format key ``envoy-xds``, FMT-7.4)."""
+
+    format = ENVOY_XDS_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        if not isinstance(source, GatewayConfigDocument) or source.flavor != ENVOY_XDS_FORMAT_KEY:
+            raise ValueError(
+                "Envoy xDS source must be a GatewayConfigDocument with flavor='envoy-xds' "
+                "(see app.envoy_xds_parser.parse_envoy_xds)"
+            )
+        return normalize_gateway_config(
+            source, format_key=ENVOY_XDS_FORMAT_KEY, include_raw=include_raw
+        )
+
+
+class IstioNormalizer(Normalizer, register=True):
+    """Normalize parsed Istio traffic resources (format key ``istio``, FMT-7.4)."""
+
+    format = ISTIO_FORMAT_KEY
+    paradigm = ApiParadigm.REST
+
+    def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        if not isinstance(source, GatewayConfigDocument) or source.flavor != ISTIO_FORMAT_KEY:
+            raise ValueError(
+                "Istio source must be a GatewayConfigDocument with flavor='istio' "
+                "(see app.istio_parser.parse_istio)"
+            )
+        return normalize_gateway_config(
+            source, format_key=ISTIO_FORMAT_KEY, include_raw=include_raw
         )

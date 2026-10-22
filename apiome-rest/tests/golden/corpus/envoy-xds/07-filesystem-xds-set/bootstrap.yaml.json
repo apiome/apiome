@@ -1,0 +1,250 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "envoy-xds",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "dynamic_resources.lds_config",
+            "count": 1,
+            "reason": "listeners delivered at runtime by xDS are not part of this input; only the routes the input itself carries are imported"
+          }
+        ],
+        "operation_count": 4,
+        "route_count": 4,
+        "schemaless_operation_count": 4,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "direct_response",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/07-filesystem-xds-set/bootstrap.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "edge",
+        "name": "edge",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "legacy_service"
+                }
+              ],
+              "gateway_route": "edge#route-3",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/"
+              },
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/",
+            "key": "ANY /",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "edge#route-0",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "exact",
+                "raw": "/healthz"
+              },
+              "plugins": [
+                "direct_response"
+              ],
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/healthz",
+            "key": "ANY /healthz",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /healthz",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "parcels_service"
+                }
+              ],
+              "gateway_route": "edge#route-2",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "regex",
+                "raw": "^/v2/parcels/[A-Z0-9-]+$"
+              },
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/parcels/{param1}",
+            "key": "ANY /v2/parcels/{param1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/parcels/{param1}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "pattern": "^/v2/parcels/[A-Z0-9-]+$",
+                  "provenance": "inferred"
+                },
+                "key": "ANY /v2/parcels/{param1}#path.param1",
+                "location": "path",
+                "name": "param1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "shipments_service"
+                }
+              ],
+              "gateway_route": "edge#route-1",
+              "hosts": [
+                "api.example.com"
+              ],
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/shipments"
+              },
+              "plugins": [
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "route_config": "edge_route",
+              "virtual_host": "edge"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/shipments",
+            "key": "ANY /v2/shipments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/shipments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/07-filesystem-xds-set/bootstrap.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/07-filesystem-xds-set/bootstrap.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:af19f4834706342e6cced9e886a2d9ba1ad9e32a4d728c4cec6fdfbffd22964c",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "3f6bb5f019cd7e08c3bfa049547695d63207f842cc9d7a30a0179962d2051f58",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

@@ -223,16 +223,18 @@ class GatewayBackend:
     """One backend a route forwards to (Gateway API ``backendRefs`` / Kong service).
 
     Attributes:
-        name: Backend service name.
+        name: Backend service name (an Envoy cluster, an Istio destination host).
         namespace: Kubernetes namespace, when the flavor has one.
         port: Backend port, when declared.
         weight: Traffic weight, when declared.
+        subset: Named subset of the backend (Istio ``destination.subset``), when declared.
     """
 
     name: str
     namespace: Optional[str] = None
     port: Optional[int] = None
     weight: Optional[int] = None
+    subset: Optional[str] = None
 
     def as_dict(self) -> Dict[str, Any]:
         """Serialize for extras bags."""
@@ -243,6 +245,8 @@ class GatewayBackend:
             out["port"] = self.port
         if self.weight is not None:
             out["weight"] = self.weight
+        if self.subset is not None:
+            out["subset"] = self.subset
         return out
 
 
@@ -308,7 +312,7 @@ class GatewayConfigDocument:
     """A parsed gateway configuration, flavor-neutral and credential-free.
 
     Attributes:
-        flavor: ``kong`` or ``gateway-api``.
+        flavor: ``kong``, ``gateway-api``, ``envoy-xds`` or ``istio``.
         title: Human title for the resulting artifact.
         services: Declared upstream services (may be empty for Gateway API).
         routes: The routing surface.

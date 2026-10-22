@@ -183,7 +183,7 @@
       "marker": "`UNB`/`UNH` envelopes, optional `UNA` service string advice"
     },
     "envoy-xds": {
-      "label": "Envoy xDS routes (pending #5458)",
+      "label": "Envoy xDS routes",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config"
@@ -279,7 +279,7 @@
       "marker": "`mti` + numbered `dataElements`"
     },
     "istio": {
-      "label": "Istio traffic resources (pending #5458)",
+      "label": "Istio traffic resources",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`apiVersion: networking.istio.io/*` + `kind: VirtualService`"
@@ -9295,7 +9295,7 @@
     {
       "path": "envoy-xds/01-minimal-route-config.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9304,8 +9304,7 @@
       "features": [
         "route-config",
         "virtual-host",
-        "prefix-match",
-        "pending-adapter"
+        "prefix-match"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9316,7 +9315,7 @@
     {
       "path": "envoy-xds/02-typical-bootstrap.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9328,8 +9327,7 @@
         "http-connection-manager",
         "clusters",
         "direct-response",
-        "prefix-rewrite",
-        "pending-adapter"
+        "prefix-rewrite"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9340,7 +9338,7 @@
     {
       "path": "envoy-xds/03-composition-multi-virtualhost.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9352,8 +9350,7 @@
         "require-tls",
         "header-match",
         "redirect",
-        "response-headers",
-        "pending-adapter"
+        "response-headers"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9364,7 +9361,7 @@
     {
       "path": "envoy-xds/04-stress-matchers.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9385,8 +9382,7 @@
         "regex-rewrite",
         "typed-per-filter-config",
         "cors",
-        "rate-limits",
-        "pending-adapter"
+        "rate-limits"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9397,7 +9393,7 @@
     {
       "path": "envoy-xds/05-real-world-mesh-bootstrap.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9408,8 +9404,7 @@
         "node-metadata",
         "ads",
         "jwt-authn",
-        "inbound-listener",
-        "pending-adapter"
+        "inbound-listener"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9420,7 +9415,7 @@
     {
       "path": "envoy-xds/06-typical-discovery-response.json",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9430,8 +9425,7 @@
         "discovery-response",
         "type-url",
         "route-config",
-        "retry-policy",
-        "pending-adapter"
+        "retry-policy"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9442,7 +9436,7 @@
     {
       "path": "envoy-xds/07-filesystem-xds-set/bootstrap.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9451,8 +9445,7 @@
       "features": [
         "filesystem-xds",
         "rds",
-        "path-config-source",
-        "pending-adapter"
+        "path-config-source"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9464,7 +9457,7 @@
     {
       "path": "envoy-xds/07-filesystem-xds-set/cds.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9472,8 +9465,7 @@
       },
       "features": [
         "clusters",
-        "discovery-resources",
-        "pending-adapter"
+        "discovery-resources"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9486,7 +9478,7 @@
     {
       "path": "envoy-xds/07-filesystem-xds-set/rds.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "valid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9494,8 +9486,7 @@
       },
       "features": [
         "route-configuration",
-        "discovery-resources",
-        "pending-adapter"
+        "discovery-resources"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -9508,7 +9499,7 @@
     {
       "path": "envoy-xds/negative/01-syntactic-bad-yaml.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9517,8 +9508,7 @@
       "features": [
         "negative",
         "syntactic",
-        "bad-indentation",
-        "pending-adapter"
+        "bad-indentation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9530,7 +9520,7 @@
     {
       "path": "envoy-xds/negative/02-semantic-no-virtual-hosts.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9539,8 +9529,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-virtual-hosts",
-        "pending-adapter"
+        "no-virtual-hosts"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9552,7 +9541,7 @@
     {
       "path": "envoy-xds/negative/03-truncated-mid-route.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9561,8 +9550,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-value",
-        "pending-adapter"
+        "mid-value"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9574,7 +9562,7 @@
     {
       "path": "envoy-xds/negative/04-wrong-format-istio-virtualservice.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9583,8 +9571,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "istio",
-        "pending-adapter"
+        "istio"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9597,7 +9584,7 @@
     {
       "path": "envoy-xds/negative/05-encoding-utf16.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9606,8 +9593,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -9619,7 +9605,7 @@
     {
       "path": "envoy-xds/negative/06-unresolvable-cluster-reference.yaml",
       "format": "envoy-xds",
-      "adapter_key": null,
+      "adapter_key": "envoy-xds",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "envoy-xds",
@@ -9628,8 +9614,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-cluster",
-        "pending-adapter"
+        "missing-cluster"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14083,7 +14068,7 @@
     {
       "path": "istio/01-minimal-virtualservice.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14091,8 +14076,7 @@
       },
       "features": [
         "VirtualService",
-        "single-route",
-        "pending-adapter"
+        "single-route"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14103,7 +14087,7 @@
     {
       "path": "istio/02-typical-virtualservice.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14117,8 +14101,7 @@
         "directResponse",
         "rewrite",
         "retries",
-        "timeout",
-        "pending-adapter"
+        "timeout"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14129,7 +14112,7 @@
     {
       "path": "istio/03-composition-multidoc.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14141,8 +14124,7 @@
         "DestinationRule",
         "subsets",
         "weighted-routes",
-        "header-match",
-        "pending-adapter"
+        "header-match"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14153,7 +14135,7 @@
     {
       "path": "istio/04-stress-match-and-traffic-policy.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14171,8 +14153,7 @@
         "delegate",
         "header-mutation",
         "tls-routes",
-        "tcp-routes",
-        "pending-adapter"
+        "tcp-routes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14183,7 +14164,7 @@
     {
       "path": "istio/05-real-world-canary-rollout.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14195,8 +14176,7 @@
         "consistentHash",
         "outlierDetection",
         "gone-response",
-        "multi-document",
-        "pending-adapter"
+        "multi-document"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14207,7 +14187,7 @@
     {
       "path": "istio/06-typical-serviceentry-and-sidecar.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14218,8 +14198,7 @@
         "Sidecar",
         "egress",
         "REGISTRY-ONLY",
-        "multi-document",
-        "pending-adapter"
+        "multi-document"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14230,7 +14209,7 @@
     {
       "path": "istio/07-gitops-set/destinationrule.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14239,8 +14218,7 @@
       "features": [
         "destinationrule",
         "subsets",
-        "outlierDetection",
-        "pending-adapter"
+        "outlierDetection"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14253,7 +14231,7 @@
     {
       "path": "istio/07-gitops-set/gateway.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14261,8 +14239,7 @@
       },
       "features": [
         "gateway",
-        "tls-credential",
-        "pending-adapter"
+        "tls-credential"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14275,7 +14252,7 @@
     {
       "path": "istio/07-gitops-set/virtualservice.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "valid",
       "expected_detection": {
         "format": "istio",
@@ -14284,8 +14261,7 @@
       "features": [
         "gitops-layout",
         "canary",
-        "subset-reference",
-        "pending-adapter"
+        "subset-reference"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14297,7 +14273,7 @@
     {
       "path": "istio/negative/01-syntactic-bad-yaml.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14306,8 +14282,7 @@
       "features": [
         "negative",
         "syntactic",
-        "bad-indentation",
-        "pending-adapter"
+        "bad-indentation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14319,7 +14294,7 @@
     {
       "path": "istio/negative/02-semantic-no-routes.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14328,8 +14303,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-route-blocks",
-        "pending-adapter"
+        "no-route-blocks"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14341,7 +14315,7 @@
     {
       "path": "istio/negative/03-truncated-mid-route.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14350,8 +14324,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-value",
-        "pending-adapter"
+        "mid-value"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14363,7 +14336,7 @@
     {
       "path": "istio/negative/04-wrong-format-envoy-route.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14372,8 +14345,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "envoy-xds",
-        "pending-adapter"
+        "envoy-xds"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14385,7 +14357,7 @@
     {
       "path": "istio/negative/05-encoding-utf16.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14394,8 +14366,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14407,7 +14378,7 @@
     {
       "path": "istio/negative/06-unresolvable-subset-reference.yaml",
       "format": "istio",
-      "adapter_key": null,
+      "adapter_key": "istio",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "istio",
@@ -14416,8 +14387,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-subset",
-        "pending-adapter"
+        "missing-subset"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

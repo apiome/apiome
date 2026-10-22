@@ -1,0 +1,102 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "envoy-xds",
+        "global_plugins": [],
+        "ignored_constructs": [],
+        "operation_count": 1,
+        "route_count": 1,
+        "schemaless_operation_count": 1,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
+      }
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/01-minimal-route-config.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "ping",
+        "name": "ping",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "ping_service"
+                }
+              ],
+              "gateway_route": "ping#route-0",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/ping"
+              },
+              "provenance": "inferred",
+              "route_config": "local_route",
+              "virtual_host": "ping"
+            },
+            "http_method": "ANY",
+            "http_path": "/ping",
+            "key": "ANY /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/01-minimal-route-config.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/01-minimal-route-config.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:3285517c57dac6054a6d088d1f01d5824bedc438bf771af9ab82797457c86112",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "019cdd45cf8efdde60941cdc56d349975024ab6f1aa913129030505396591d58",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

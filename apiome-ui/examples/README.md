@@ -28,12 +28,12 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `azure-apim/` | Azure API Management | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
 | `consul/` | Consul service definitions (pending #5459) | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
 | `discovery/` | Google API Discovery | rest | `kind: discovery#restDescription` / `discoveryVersion` | 11 |
-| `envoy-xds/` | Envoy xDS routes (pending #5458) | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
+| `envoy-xds/` | Envoy xDS routes | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
 | `gateway-api/` | Gateway API HTTPRoute | rest | `apiVersion: gateway.networking.k8s.io/*` + `kind: HTTPRoute` | 13 |
 | `haproxy/` | HAProxy configuration (pending #5459) | rest | `frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend` | 16 |
 | `hoppscotch/` | Hoppscotch collections (pending #5473) | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
 | `http-file/` | HTTP Request File | rest | HTTP request line / `###` separators / `curl` / `.http` `.rest` | 15 |
-| `istio/` | Istio traffic resources (pending #5458) | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
+| `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
 | `kong/` | Kong Declarative Config | rest | `_format_version` + `services:`/`routes:` declarative sections | 12 |
 | `nginx/` | nginx configuration (pending #5459) | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
 | `odata/` | OData v4 (EDMX) | rest | `<edmx:Edmx>` root | 12 |
@@ -853,25 +853,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/07-wrong-format-tradacoms.edi`** — A TRADACOMS STX transmission sent to the EDIFACT importer: the same segment syntax inside a different envelope — the misroute FMT-6.5 names, refused as FORMAT_MISMATCH rather than read as an interchange.
 
-### `envoy-xds/` — Envoy xDS routes (pending #5458)
+### `envoy-xds/` — Envoy xDS routes
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-route-config.yaml` | minimal | `envoy-xds` ≥ 0.85 | valid | `route-config`, `virtual-host`, `prefix-match`, `pending-adapter` |
-| `02-typical-bootstrap.yaml` | typical | `envoy-xds` ≥ 0.85 | valid | `bootstrap`, `listener`, `http-connection-manager`, `clusters`, `direct-response`, `prefix-rewrite`, `pending-adapter` |
-| `03-composition-multi-virtualhost.yaml` | composition | `envoy-xds` ≥ 0.85 | valid | `multi-virtual-host`, `wildcard-domain`, `require-tls`, `header-match`, `redirect`, `response-headers`, `pending-adapter` |
-| `04-stress-matchers.yaml` | stress | `envoy-xds` ≥ 0.85 | valid | `path-match`, `prefix-match`, `path-separated-prefix`, `safe-regex`, `header-match`, `query-parameter-match`, `runtime-fraction`, `grpc-match`, `connect-matcher`, `weighted-clusters`, `retry-policy`, `regex-rewrite`, `typed-per-filter-config`, `cors`, `rate-limits`, `pending-adapter` |
-| `05-real-world-mesh-bootstrap.yaml` | real-world | `envoy-xds` ≥ 0.85 | valid | `sidecar-bootstrap`, `node-metadata`, `ads`, `jwt-authn`, `inbound-listener`, `pending-adapter` |
-| `06-typical-discovery-response.json` | typical | `envoy-xds` ≥ 0.85 | valid | `discovery-response`, `type-url`, `route-config`, `retry-policy`, `pending-adapter` |
-| `07-filesystem-xds-set/bootstrap.yaml` | multi-file (root) | `envoy-xds` ≥ 0.85 | valid | `filesystem-xds`, `rds`, `path-config-source`, `pending-adapter` |
-| `07-filesystem-xds-set/cds.yaml` ⚠ | multi-file (member) | `envoy-xds` (no guarantee) | valid | `clusters`, `discovery-resources`, `pending-adapter` |
-| `07-filesystem-xds-set/rds.yaml` ⚠ | multi-file (member) | `envoy-xds` (no guarantee) | valid | `route-configuration`, `discovery-resources`, `pending-adapter` |
-| `negative/01-syntactic-bad-yaml.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation`, `pending-adapter` |
-| `negative/02-semantic-no-virtual-hosts.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `semantic`, `no-virtual-hosts`, `pending-adapter` |
-| `negative/03-truncated-mid-route.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `truncated`, `mid-value`, `pending-adapter` |
-| `negative/04-wrong-format-istio-virtualservice.yaml` ⚠ | — | `envoy-xds` (no guarantee) | invalid | `negative`, `wrong-format`, `istio`, `pending-adapter` |
-| `negative/05-encoding-utf16.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-cluster-reference.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-cluster`, `pending-adapter` |
+| `01-minimal-route-config.yaml` | minimal | `envoy-xds` ≥ 0.85 | valid | `route-config`, `virtual-host`, `prefix-match` |
+| `02-typical-bootstrap.yaml` | typical | `envoy-xds` ≥ 0.85 | valid | `bootstrap`, `listener`, `http-connection-manager`, `clusters`, `direct-response`, `prefix-rewrite` |
+| `03-composition-multi-virtualhost.yaml` | composition | `envoy-xds` ≥ 0.85 | valid | `multi-virtual-host`, `wildcard-domain`, `require-tls`, `header-match`, `redirect`, `response-headers` |
+| `04-stress-matchers.yaml` | stress | `envoy-xds` ≥ 0.85 | valid | `path-match`, `prefix-match`, `path-separated-prefix`, `safe-regex`, `header-match`, `query-parameter-match`, `runtime-fraction`, `grpc-match`, `connect-matcher`, `weighted-clusters`, `retry-policy`, `regex-rewrite`, `typed-per-filter-config`, `cors`, `rate-limits` |
+| `05-real-world-mesh-bootstrap.yaml` | real-world | `envoy-xds` ≥ 0.85 | valid | `sidecar-bootstrap`, `node-metadata`, `ads`, `jwt-authn`, `inbound-listener` |
+| `06-typical-discovery-response.json` | typical | `envoy-xds` ≥ 0.85 | valid | `discovery-response`, `type-url`, `route-config`, `retry-policy` |
+| `07-filesystem-xds-set/bootstrap.yaml` | multi-file (root) | `envoy-xds` ≥ 0.85 | valid | `filesystem-xds`, `rds`, `path-config-source` |
+| `07-filesystem-xds-set/cds.yaml` ⚠ | multi-file (member) | `envoy-xds` (no guarantee) | valid | `clusters`, `discovery-resources` |
+| `07-filesystem-xds-set/rds.yaml` ⚠ | multi-file (member) | `envoy-xds` (no guarantee) | valid | `route-configuration`, `discovery-resources` |
+| `negative/01-syntactic-bad-yaml.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation` |
+| `negative/02-semantic-no-virtual-hosts.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `semantic`, `no-virtual-hosts` |
+| `negative/03-truncated-mid-route.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `truncated`, `mid-value` |
+| `negative/04-wrong-format-istio-virtualservice.yaml` ⚠ | — | `envoy-xds` (no guarantee) | invalid | `negative`, `wrong-format`, `istio` |
+| `negative/05-encoding-utf16.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-cluster-reference.yaml` | — | `envoy-xds` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-cluster` |
 
 > ⚠ **`07-filesystem-xds-set/cds.yaml`** — Fileset member: the clusters the routes target.
 
@@ -1231,25 +1231,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/03-truncated-mid-element.json`** — Grounded FORMAT_MISMATCH rather than INPUT_MALFORMED: the greedy graphql sniffer claims the truncated JSON at 0.9 (`type` keyword match) and grpc claims it at 0.7, while iso8583's own detect cannot claim broken JSON.
 
-### `istio/` — Istio traffic resources (pending #5458)
+### `istio/` — Istio traffic resources
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-virtualservice.yaml` | minimal | `istio` ≥ 0.9 | valid | `VirtualService`, `single-route`, `pending-adapter` |
-| `02-typical-virtualservice.yaml` | typical | `istio` ≥ 0.9 | valid | `VirtualService`, `uri-exact`, `uri-prefix`, `method-match`, `directResponse`, `rewrite`, `retries`, `timeout`, `pending-adapter` |
-| `03-composition-multidoc.yaml` | composition | `istio` ≥ 0.9 | valid | `multi-document`, `Gateway`, `DestinationRule`, `subsets`, `weighted-routes`, `header-match`, `pending-adapter` |
-| `04-stress-match-and-traffic-policy.yaml` | stress | `istio` ≥ 0.9 | valid | `withoutHeaders`, `queryParams`, `scheme`, `authority`, `sourceLabels`, `corsPolicy`, `fault-injection`, `mirror`, `delegate`, `header-mutation`, `tls-routes`, `tcp-routes`, `pending-adapter` |
-| `05-real-world-canary-rollout.yaml` | real-world | `istio` ≥ 0.9 | valid | `canary`, `weighted-routes`, `consistentHash`, `outlierDetection`, `gone-response`, `multi-document`, `pending-adapter` |
-| `06-typical-serviceentry-and-sidecar.yaml` | typical | `istio` ≥ 0.9 | valid | `ServiceEntry`, `Sidecar`, `egress`, `REGISTRY-ONLY`, `multi-document`, `pending-adapter` |
-| `07-gitops-set/destinationrule.yaml` ⚠ | multi-file (member) | `istio` (no guarantee) | valid | `destinationrule`, `subsets`, `outlierDetection`, `pending-adapter` |
-| `07-gitops-set/gateway.yaml` ⚠ | multi-file (member) | `istio` (no guarantee) | valid | `gateway`, `tls-credential`, `pending-adapter` |
-| `07-gitops-set/virtualservice.yaml` | multi-file (root) | `istio` ≥ 0.9 | valid | `gitops-layout`, `canary`, `subset-reference`, `pending-adapter` |
-| `negative/01-syntactic-bad-yaml.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation`, `pending-adapter` |
-| `negative/02-semantic-no-routes.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `semantic`, `no-route-blocks`, `pending-adapter` |
-| `negative/03-truncated-mid-route.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `truncated`, `mid-value`, `pending-adapter` |
-| `negative/04-wrong-format-envoy-route.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `wrong-format`, `envoy-xds`, `pending-adapter` |
-| `negative/05-encoding-utf16.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-subset-reference.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-subset`, `pending-adapter` |
+| `01-minimal-virtualservice.yaml` | minimal | `istio` ≥ 0.9 | valid | `VirtualService`, `single-route` |
+| `02-typical-virtualservice.yaml` | typical | `istio` ≥ 0.9 | valid | `VirtualService`, `uri-exact`, `uri-prefix`, `method-match`, `directResponse`, `rewrite`, `retries`, `timeout` |
+| `03-composition-multidoc.yaml` | composition | `istio` ≥ 0.9 | valid | `multi-document`, `Gateway`, `DestinationRule`, `subsets`, `weighted-routes`, `header-match` |
+| `04-stress-match-and-traffic-policy.yaml` | stress | `istio` ≥ 0.9 | valid | `withoutHeaders`, `queryParams`, `scheme`, `authority`, `sourceLabels`, `corsPolicy`, `fault-injection`, `mirror`, `delegate`, `header-mutation`, `tls-routes`, `tcp-routes` |
+| `05-real-world-canary-rollout.yaml` | real-world | `istio` ≥ 0.9 | valid | `canary`, `weighted-routes`, `consistentHash`, `outlierDetection`, `gone-response`, `multi-document` |
+| `06-typical-serviceentry-and-sidecar.yaml` | typical | `istio` ≥ 0.9 | valid | `ServiceEntry`, `Sidecar`, `egress`, `REGISTRY-ONLY`, `multi-document` |
+| `07-gitops-set/destinationrule.yaml` ⚠ | multi-file (member) | `istio` (no guarantee) | valid | `destinationrule`, `subsets`, `outlierDetection` |
+| `07-gitops-set/gateway.yaml` ⚠ | multi-file (member) | `istio` (no guarantee) | valid | `gateway`, `tls-credential` |
+| `07-gitops-set/virtualservice.yaml` | multi-file (root) | `istio` ≥ 0.9 | valid | `gitops-layout`, `canary`, `subset-reference` |
+| `negative/01-syntactic-bad-yaml.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `syntactic`, `bad-indentation` |
+| `negative/02-semantic-no-routes.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `semantic`, `no-route-blocks` |
+| `negative/03-truncated-mid-route.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `truncated`, `mid-value` |
+| `negative/04-wrong-format-envoy-route.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `wrong-format`, `envoy-xds` |
+| `negative/05-encoding-utf16.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-subset-reference.yaml` | — | `istio` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-subset` |
 
 > ⚠ **`07-gitops-set/destinationrule.yaml`** — Fileset member: defines the subsets the routes name.
 

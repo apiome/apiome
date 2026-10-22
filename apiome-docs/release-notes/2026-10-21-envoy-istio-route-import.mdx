@@ -1,0 +1,22 @@
+---
+slug: envoy-istio-route-import
+title: Import Envoy and Istio routes
+description: Catalog a service mesh's routing from Envoy xDS or Istio VirtualService files.
+authors: [apiome]
+---
+
+In a service mesh the route table is often the only record of which paths exist. Apiome now imports it
+from **Envoy** route configuration and **Istio** `VirtualService` manifests.
+[What gets imported](/bring-in/envoy-istio-route-import).
+
+{/* truncate */}
+
+- **Envoy:** a static bootstrap, a `RouteConfiguration`, an xDS `DiscoveryResponse`, or a bootstrap with
+  the `rds` and `cds` files it loads.
+- **Istio:** a `VirtualService` on its own, in a multi-document stream with its `Gateway` and
+  `DestinationRule`, or as a GitOps directory.
+- **One way to read paths.** Exact, prefix and regex matches map the same way they do for Gateway API
+  `HTTPRoute`s, so the same route imports the same operation whichever format it came from.
+- **Honest about what it is.** Every operation is marked inferred and lands in the Catalog without
+  schemas. Routing with no HTTP equivalent — CONNECT routes, `delegate` rules, `tcp` blocks — is listed
+  in the coverage ledger instead of being dropped.

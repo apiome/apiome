@@ -2,8 +2,8 @@
 
 Fixtures for the Envoy half of **FMT-7.4** ([#5458](https://github.com/apiome/apiome/issues/5458)). In
 mesh-based platforms the routing truth lives in Envoy xDS resources — often the only machine-readable
-description of what paths exist. The Istio half lives in `istio/`. Entries carry `adapter_key: null`
-and the `pending-adapter` tag.
+description of what paths exist. The Istio half lives in `istio/`. Entries are read by the `envoy-xds`
+adapter (`apiome-rest/src/app/envoy_xds_import_source.py`).
 
 **Detection markers.** A `static_resources.listeners[].filter_chains[].filters[].typed_config` whose
 `@type` is an `HttpConnectionManager`; a bare `RouteConfiguration` (`name` + `virtual_hosts[]`); or a

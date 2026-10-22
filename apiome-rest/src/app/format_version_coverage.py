@@ -725,6 +725,45 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="v1",
     ),
+    "envoy-xds": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="xDS v3 (envoy.config.*.v3)",
+                format_key="envoy-xds",
+                support=VersionSupport.FULL,
+                note="A static bootstrap, a RouteConfiguration, a DiscoveryResponse, or a "
+                "filesystem-xDS resource file; routes delivered at runtime (RDS, LDS, ADS) are "
+                "declared as not part of the input.",
+            ),
+            FormatVersion(
+                version="xDS v2 (envoy.api.v2)",
+                format_key="envoy-xds",
+                support=VersionSupport.PARTIAL,
+                note="Read through the same route grammar: the legacy header matchers "
+                "(`exact_match`, `prefix_match`, …) and the untyped `config` filter block are "
+                "accepted; v2-only fields with no v3 equivalent are ignored.",
+            ),
+        ],
+        writes=[],
+    ),
+    "istio": VersionCoverage(
+        reads=[
+            FormatVersion(version="networking.istio.io/v1", format_key="istio", support=VersionSupport.FULL),
+            FormatVersion(
+                version="networking.istio.io/v1beta1",
+                format_key="istio",
+                support=VersionSupport.FULL,
+                note="Identical traffic-management schema to v1; read the same way.",
+            ),
+            FormatVersion(
+                version="networking.istio.io/v1alpha3",
+                format_key="istio",
+                support=VersionSupport.FULL,
+                note="Identical traffic-management schema to v1; read the same way.",
+            ),
+        ],
+        writes=[],
+    ),
     "graphql": VersionCoverage(
         reads=[
             FormatVersion(

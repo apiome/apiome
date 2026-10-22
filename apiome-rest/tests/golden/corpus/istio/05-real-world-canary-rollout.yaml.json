@@ -1,0 +1,292 @@
+{
+  "adapter": "istio",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [],
+        "credential_redactions": 0,
+        "flavor": "istio",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "DestinationRule",
+            "count": 1,
+            "reason": "DestinationRule resources shape the mesh (subsets, gateways, egress, scoping); they are read for references and schemes but describe no HTTP route"
+          }
+        ],
+        "operation_count": 4,
+        "route_count": 4,
+        "schemaless_operation_count": 4,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "directResponse",
+            "scope": "route"
+          },
+          {
+            "name": "headers",
+            "scope": "route"
+          },
+          {
+            "name": "retries",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      }
+    },
+    "format": "istio",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "istio/05-real-world-canary-rollout.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://payments.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "payments/payments",
+        "name": "payments/payments",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "deprecated-v2",
+              "gateways": [
+                "istio-system/public-gateway"
+              ],
+              "hosts": [
+                "payments.example.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "payments",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2"
+              },
+              "plugins": [
+                "directResponse"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "payments/payments"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2",
+            "key": "ANY /v2",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments.payments.svc.cluster.local",
+                  "namespace": "payments",
+                  "port": 8443,
+                  "subset": "canary"
+                }
+              ],
+              "gateway_route": "internal-canary",
+              "gateways": [
+                "istio-system/public-gateway"
+              ],
+              "hosts": [
+                "payments.example.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "payments",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3"
+              },
+              "plugins": [
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "payments/payments"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3",
+            "key": "ANY /v3",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "match_value": "true"
+                },
+                "key": "ANY /v3#header.x-employee",
+                "location": "header",
+                "name": "x-employee",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments.payments.svc.cluster.local",
+                  "namespace": "payments",
+                  "port": 8443,
+                  "subset": "stable",
+                  "weight": 95
+                },
+                {
+                  "name": "payments.payments.svc.cluster.local",
+                  "namespace": "payments",
+                  "port": 8443,
+                  "subset": "canary",
+                  "weight": 5
+                }
+              ],
+              "gateway_route": "public-split",
+              "gateways": [
+                "istio-system/public-gateway"
+              ],
+              "hosts": [
+                "payments.example.com"
+              ],
+              "methods_unrestricted": true,
+              "namespace": "payments",
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v3"
+              },
+              "plugins": [
+                "headers",
+                "retries",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "payments/payments"
+            },
+            "http_method": "ANY",
+            "http_path": "/v3",
+            "key": "ANY /v3#public-split",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v3",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "payments-webhooks.payments.svc.cluster.local",
+                  "namespace": "payments",
+                  "port": 8080
+                }
+              ],
+              "gateway_route": "webhooks",
+              "gateways": [
+                "istio-system/public-gateway"
+              ],
+              "hosts": [
+                "payments.example.com"
+              ],
+              "namespace": "payments",
+              "path_match": {
+                "kind": "exact",
+                "raw": "/v3/webhooks"
+              },
+              "plugins": [
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "virtual_service": "payments/payments"
+            },
+            "http_method": "POST",
+            "http_path": "/v3/webhooks",
+            "key": "POST /v3/webhooks",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /v3/webhooks",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "istio/05-real-world-canary-rollout.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "istio/05-real-world-canary-rollout.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "istio"
+  },
+  "fingerprint": "sha256:292387f340eb06d6defb88100e5b9bd1b4beeac491cb459ee186cffadd058d4e",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "2ebb38c8d563beb12c8dfb83a1f3639b6c91a272033745c81c609ddb395c687f",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

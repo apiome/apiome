@@ -1140,6 +1140,49 @@
       "waivers": {}
     },
     {
+      "format_key": "envoy-xds",
+      "label": "Envoy xDS routes",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "envoy-xds"
+      ],
+      "corpus_directories": [
+        "envoy-xds"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "envoy-xds"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "fhir",
       "label": "FHIR",
       "paradigm": "rest",
@@ -1790,6 +1833,49 @@
           "has_reason": false
         }
       ],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "istio",
+      "label": "Istio VirtualService",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "istio"
+      ],
+      "corpus_directories": [
+        "istio"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "istio"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -3317,11 +3403,9 @@
     "consul",
     "cue",
     "dhall",
-    "envoy-xds",
     "haproxy",
     "hoppscotch",
     "ims",
-    "istio",
     "jsonld",
     "lwm2m",
     "matter",

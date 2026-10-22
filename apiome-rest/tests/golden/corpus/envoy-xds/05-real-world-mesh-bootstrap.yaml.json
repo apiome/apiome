@@ -1,0 +1,203 @@
+{
+  "adapter": "envoy-xds",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "gateway": {
+        "auth": [
+          {
+            "attached_to": "virtualInbound",
+            "detail": {
+              "issuers": [
+                "https://login.example.com/"
+              ],
+              "providers": [
+                "example-issuer"
+              ]
+            },
+            "plugin": "envoy.filters.http.jwt_authn",
+            "scheme": "bearer",
+            "scope": "global"
+          }
+        ],
+        "credential_redactions": 0,
+        "flavor": "envoy-xds",
+        "global_plugins": [],
+        "ignored_constructs": [
+          {
+            "construct": "dynamic_resources.lds_config",
+            "count": 1,
+            "reason": "listeners delivered at runtime by xDS are not part of this input; only the routes the input itself carries are imported"
+          }
+        ],
+        "operation_count": 2,
+        "route_count": 2,
+        "schemaless_operation_count": 2,
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "direct_response",
+            "scope": "route"
+          },
+          {
+            "name": "max_stream_duration",
+            "scope": "route"
+          },
+          {
+            "name": "timeout",
+            "scope": "route"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "bearer"
+      ]
+    },
+    "format": "envoy-xds",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "envoy-xds/05-real-world-mesh-bootstrap.yaml",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "inbound|http|8080",
+        "name": "inbound|http|8080",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "gateway_route": "inbound|http|8080#route-1",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/healthz/ready"
+              },
+              "plugins": [
+                "direct_response"
+              ],
+              "provenance": "inferred",
+              "route_config": "inbound|8080||",
+              "security": [
+                {
+                  "attached_to": "virtualInbound",
+                  "detail": {
+                    "issuers": [
+                      "https://login.example.com/"
+                    ],
+                    "providers": [
+                      "example-issuer"
+                    ]
+                  },
+                  "plugin": "envoy.filters.http.jwt_authn",
+                  "scheme": "bearer",
+                  "scope": "global"
+                }
+              ],
+              "virtual_host": "inbound|http|8080"
+            },
+            "http_method": "ANY",
+            "http_path": "/healthz/ready",
+            "key": "ANY /healthz/ready",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /healthz/ready",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "backends": [
+                {
+                  "name": "inbound|8080||"
+                }
+              ],
+              "gateway_route": "inbound|http|8080#route-0",
+              "methods_unrestricted": true,
+              "path_match": {
+                "kind": "prefix",
+                "raw": "/v2/orders"
+              },
+              "plugins": [
+                "max_stream_duration",
+                "timeout"
+              ],
+              "provenance": "inferred",
+              "route_config": "inbound|8080||",
+              "security": [
+                {
+                  "attached_to": "virtualInbound",
+                  "detail": {
+                    "issuers": [
+                      "https://login.example.com/"
+                    ],
+                    "providers": [
+                      "example-issuer"
+                    ]
+                  },
+                  "plugin": "envoy.filters.http.jwt_authn",
+                  "scheme": "bearer",
+                  "scope": "global"
+                }
+              ],
+              "virtual_host": "inbound|http|8080"
+            },
+            "http_method": "ANY",
+            "http_path": "/v2/orders",
+            "key": "ANY /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ANY /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "envoy-xds/05-real-world-mesh-bootstrap.yaml",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "envoy-xds/05-real-world-mesh-bootstrap.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "envoy-xds"
+  },
+  "fingerprint": "sha256:1712dc36c58028a3ff762a19bff079aa5e4ee1199dc94f132c12785aab7a92d8",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "749f913048f090ef722e5b75b1ec0bb56050746e2fac60a87df4cb3114eae3ad",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

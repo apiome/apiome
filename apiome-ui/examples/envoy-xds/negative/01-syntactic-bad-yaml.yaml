@@ -1,3 +1,5 @@
+# `route:` is indented one column short of `match:`, so the block mapping under the
+# route list cannot be parsed.
 name: broken_route
 virtual_hosts:
   - name: broken
@@ -5,5 +7,5 @@ virtual_hosts:
     routes:
       - match:
          prefix: /broken
-        route:
+       route:
           cluster: broken_service
