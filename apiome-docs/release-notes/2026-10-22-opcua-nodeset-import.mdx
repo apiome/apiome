@@ -1,0 +1,22 @@
+---
+slug: opcua-nodeset-import
+title: Import OPC UA NodeSet2 models
+description: Catalog an OPC UA information model's types, methods and references.
+authors: [apiome]
+---
+
+OPC UA NodeSet2 files describe what a factory's machines expose: object types, variables, data
+types and methods. Apiome now imports them into the catalog.
+[What gets imported](/bring-in/opcua-nodeset-import).
+
+{/* truncate */}
+
+- **Types and methods.** Object types become records of the variables they declare, data types
+  become records, enums or aliases, and methods become operations with their input and output
+  arguments.
+- **Companion models.** Upload a model together with the companion specification it requires, and
+  subtypes and data types from that specification resolve.
+- **Provenance.** Every namespace, model URI, version and publication date is recorded.
+- **The address space stays separate.** Objects and variables of the address space appear under
+  **Format details** with the full reference graph, never as types. A very large model keeps every
+  node and is marked partial.

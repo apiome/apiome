@@ -1,0 +1,128 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Boolean": "i=1",
+          "HasComponent": "i=47",
+          "HasSubtype": "i=45",
+          "String": "i=12"
+        },
+        "capability_limits": [],
+        "instance_count": 0,
+        "models": [],
+        "namespace_uris": [
+          "http://example.com/UA/Beacon/"
+        ],
+        "node_counts": {
+          "UAObjectType": 1,
+          "UAVariable": 1
+        },
+        "reference_types": []
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Beacon",
+      "namespace": "http://example.com/UA/Beacon/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Beacon",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The smallest useful object type.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1001",
+          "opcua_browse_name": "1:BeaconType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=58",
+              "targetName": "BaseObjectType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6001",
+              "targetName": "Identifier"
+            }
+          ],
+          "opcua_supertype": "BaseObjectType",
+          "source_location": "14:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6001",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "23:1"
+            },
+            "field_number": null,
+            "key": "BeaconType.Identifier",
+            "name": "Identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BeaconType",
+        "key_type": null,
+        "kind": "record",
+        "name": "BeaconType",
+        "namespace": "http://example.com/UA/Beacon/",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "opcua-nodeset/01-minimal-nodeset.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:4b9f2b52823a210dd937a5e893493f8c8b72dd8d470c95d2ce9e8824d373fab0",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "35810f58f200db09bbf019590be3539640663b47600c2a26684b2e6edd7f21a4",
+    "score": 98,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

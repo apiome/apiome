@@ -1676,20 +1676,20 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-nodeset.xml` | minimal | `opcua-nodeset` ≥ 0.9 | valid | `UAObjectType`, `UAVariable`, `aliases`, `references`, `pending-adapter` |
-| `02-typical-machine-type.xml` | typical | `opcua-nodeset` ≥ 0.9 | valid | `UADataType`, `enum-definition`, `UAMethod`, `InputArguments`, `Models`, `RequiredModel`, `modelling-rule`, `pending-adapter` |
-| `03-composition-subtypes.xml` | composition | `opcua-nodeset` ≥ 0.9 | valid | `abstract-type`, `subtypes`, `UAReferenceType`, `inverse-name`, `UAVariableType`, `optional-modelling-rule`, `pending-adapter` |
-| `04-stress-datatypes-and-methods.xml` | stress | `opcua-nodeset` ≥ 0.9 | valid | `option-set`, `structured-datatype`, `optional-fields`, `union-datatype`, `array-dimensions`, `AccessLevel`, `Historizing`, `output-arguments`, `encoding-object`, `multi-namespace`, `pending-adapter` |
-| `05-real-world-companion-nodeset.xml` | real-world | `opcua-nodeset` ≥ 0.9 | valid | `companion-spec`, `state-enum`, `counters-structure`, `identification`, `analog-item`, `engineering-units`, `methods`, `pending-adapter` |
-| `06-typical-instance-address-space.xml` ⚠ | typical | `opcua-nodeset` ≥ 0.9 | valid | `instances`, `address-space`, `hierarchy`, `live-value`, `pending-adapter` |
-| `07-companion-set/companion.xml` ⚠ | multi-file (member) | `opcua-nodeset` (no guarantee) | valid | `companion-model`, `base-type`, `enum-datatype`, `pending-adapter` |
-| `07-companion-set/model.xml` | multi-file (root) | `opcua-nodeset` ≥ 0.9 | valid | `RequiredModel`, `cross-namespace-subtype`, `cross-namespace-datatype`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-node.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-nodes.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `semantic`, `no-nodes`, `pending-adapter` |
-| `negative/03-truncated-mid-definition.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-xsd.xsd` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `wrong-format`, `xsd`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-node-reference.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-node-id`, `missing-datatype`, `pending-adapter` |
+| `01-minimal-nodeset.xml` | minimal | `opcua-nodeset` ≥ 0.9 | valid | `UAObjectType`, `UAVariable`, `aliases`, `references` |
+| `02-typical-machine-type.xml` | typical | `opcua-nodeset` ≥ 0.9 | valid | `UADataType`, `enum-definition`, `UAMethod`, `InputArguments`, `Models`, `RequiredModel`, `modelling-rule` |
+| `03-composition-subtypes.xml` | composition | `opcua-nodeset` ≥ 0.9 | valid | `abstract-type`, `subtypes`, `UAReferenceType`, `inverse-name`, `UAVariableType`, `optional-modelling-rule` |
+| `04-stress-datatypes-and-methods.xml` | stress | `opcua-nodeset` ≥ 0.9 | valid | `option-set`, `structured-datatype`, `optional-fields`, `union-datatype`, `array-dimensions`, `AccessLevel`, `Historizing`, `output-arguments`, `encoding-object`, `multi-namespace` |
+| `05-real-world-companion-nodeset.xml` | real-world | `opcua-nodeset` ≥ 0.9 | valid | `companion-spec`, `state-enum`, `counters-structure`, `identification`, `analog-item`, `engineering-units`, `methods` |
+| `06-typical-instance-address-space.xml` ⚠ | typical | `opcua-nodeset` ≥ 0.9 | valid | `instances`, `address-space`, `hierarchy`, `live-value` |
+| `07-companion-set/companion.xml` ⚠ | multi-file (member) | `opcua-nodeset` (no guarantee) | valid | `companion-model`, `base-type`, `enum-datatype` |
+| `07-companion-set/model.xml` | multi-file (root) | `opcua-nodeset` ≥ 0.9 | valid | `RequiredModel`, `cross-namespace-subtype`, `cross-namespace-datatype` |
+| `negative/01-syntactic-unclosed-node.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-nodes.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `semantic`, `no-nodes` |
+| `negative/03-truncated-mid-definition.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-xsd.xsd` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `wrong-format`, `xsd` |
+| `negative/05-encoding-utf16.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-node-reference.xml` | — | `opcua-nodeset` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-node-id`, `missing-datatype` |
 
 > ⚠ **`06-typical-instance-address-space.xml`** — Instances are described in the payload analysis but must not be promoted to canonical types — the FMT-9.1 boundary rule.
 

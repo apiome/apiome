@@ -3,8 +3,8 @@
 Fixtures for **FMT-9.1** ([#5468](https://github.com/apiome/apiome/issues/5468)) — the information
 model of industrial automation: object types, variable types, data types, methods and the reference
 graph a factory's machines expose. It is a genuine, formal interface description, its owners are large
-manufacturers, and no API catalog on the market reads it. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+manufacturers, and no API catalog on the market reads it. Entries import with the `opcua-nodeset`
+adapter.
 
 **Detection marker.** Root element `UANodeSet` in
 `http://opcfoundation.org/UA/2011/03/UANodeSet.xsd`.
@@ -16,7 +16,7 @@ manufacturers, and no API catalog on the market reads it. Entries carry `adapter
 | `UAObjectType` / `UAVariableType` | type |
 | `UADataType` with `<Definition>` fields | record, or enum when the fields carry `Value` |
 | `UAMethod` + its `InputArguments` / `OutputArguments` properties | `rpc` operation with request/response |
-| `References` graph | relationships |
+| `References` graph | kept on each type (`extras.opcua_references`) and, in full, in the payload analysis |
 | `NamespaceUris`, `Models`/`RequiredModel` | provenance |
 | `UAObject` / `UAVariable` **instances** | payload analysis only — **never promoted to canonical types** |
 
@@ -33,4 +33,11 @@ manufacturers, and no API catalog on the market reads it. Entries carry `adapter
 
 **Bounded by design.** The reference graph is preserved in the payload analysis and **bounded by the
 analyzer's node budget**; a nodeset that exceeds it must report `partial` / `bounds_exceeded` rather
-than truncating silently. That over-budget case is generated at test time, not committed here.
+than truncating silently. That over-budget case is generated at test time, not committed here
+(`apiome-rest/tests/test_opcua_nodeset_import_source.py`): references are the deepest level of the
+tree, so the budget keeps every node and drops references first.
+
+**Own namespace vs. a required model.** A reference to a missing node in the nodeset's own namespace
+(`negative/06`) is refused; a reference into another model's namespace that is not in the upload
+(`06-typical-instance-address-space.xml` names `ns=2` types) is declared unresolved and the import
+continues. `07-companion-set/` resolves its `RequiredModel` from the member beside it.

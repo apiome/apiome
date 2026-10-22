@@ -1,0 +1,848 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Boolean": "i=1",
+          "Byte": "i=3",
+          "ByteString": "i=15",
+          "DateTime": "i=13",
+          "Double": "i=11",
+          "Float": "i=10",
+          "Guid": "i=14",
+          "HasComponent": "i=47",
+          "HasModellingRule": "i=37",
+          "HasProperty": "i=46",
+          "HasSubtype": "i=45",
+          "HasTypeDefinition": "i=40",
+          "Int16": "i=4",
+          "Int32": "i=6",
+          "Int64": "i=8",
+          "LocalizedText": "i=21",
+          "String": "i=12",
+          "Structure": "i=22",
+          "UInt32": "i=7"
+        },
+        "capability_limits": [
+          {
+            "construct": "opcua.multi_dimensional_array",
+            "count": 1,
+            "detail": "A value rank above 1 is modelled as nested lists; the per-dimension bounds are kept in extras.",
+            "locations": [
+              "BatchMachineType.RecentReadings"
+            ]
+          },
+          {
+            "construct": "opcua.option_set",
+            "count": 1,
+            "detail": "An OptionSet data type is modelled as an enumeration of its bits; that the bits combine is recorded in extras.",
+            "locations": [
+              "AlarmFlags"
+            ]
+          },
+          {
+            "construct": "opcua.union",
+            "count": 1,
+            "detail": "A union data type is modelled as a record whose fields are all optional; that exactly one is present is recorded in extras.",
+            "locations": [
+              "Measurement"
+            ]
+          }
+        ],
+        "instance_count": 0,
+        "models": [
+          {
+            "model_uri": "http://example.com/UA/Stress/",
+            "publication_date": "2026-08-19T00:00:00Z",
+            "required_models": [
+              {
+                "model_uri": "http://opcfoundation.org/UA/",
+                "publication_date": null,
+                "version": "1.05.03"
+              },
+              {
+                "model_uri": "http://example.com/UA/Shared/",
+                "publication_date": null,
+                "version": "1.0.0"
+              }
+            ],
+            "version": "0.9.0"
+          }
+        ],
+        "namespace_uris": [
+          "http://example.com/UA/Stress/",
+          "http://example.com/UA/Shared/"
+        ],
+        "node_counts": {
+          "UADataType": 4,
+          "UAMethod": 2,
+          "UAObject": 1,
+          "UAObjectType": 1,
+          "UAVariable": 3
+        },
+        "reference_types": []
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Stress",
+      "namespace": "http://example.com/UA/Stress/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "native_id": "ns=1;i=1020",
+          "opcua_node_class": "ObjectType"
+        },
+        "key": "BatchMachineType",
+        "name": "BatchMachineType",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=7011",
+              "opcua_modelling_rule": "Mandatory",
+              "source_location": "194:1"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BatchMachineType.AbortBatch",
+            "kind": "request_response",
+            "messages": [],
+            "name": "AbortBatch",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=7010",
+              "opcua_modelling_rule": "Mandatory",
+              "source_location": "127:1"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BatchMachineType.StartBatch",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BatchMachineType.StartBatch#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BatchMachineType_StartBatch_Request",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BatchMachineType.StartBatch#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BatchMachineType_StartBatch_Response",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "StartBatch",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Stress",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AlarmFlags.Acknowledged",
+            "name": "Acknowledged",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AlarmFlags.Suppressed",
+            "name": "Suppressed",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AlarmFlags.Shelved",
+            "name": "Shelved",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AlarmFlags.Latched",
+            "name": "Latched",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "native_id": "ns=1;i=3011",
+          "opcua_browse_name": "1:AlarmFlags",
+          "opcua_node_class": "DataType",
+          "opcua_option_set": true,
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=12756",
+              "targetName": "Union"
+            }
+          ],
+          "opcua_supertype": "Union",
+          "source_location": "53:1"
+        },
+        "fields": [],
+        "key": "AlarmFlags",
+        "key_type": null,
+        "kind": "enum",
+        "name": "AlarmFlags",
+        "namespace": "http://example.com/UA/Stress/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1020",
+          "opcua_browse_name": "1:BatchMachineType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=58",
+              "targetName": "BaseObjectType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6200",
+              "targetName": "RecentReadings"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=7010",
+              "targetName": "StartBatch"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=7011",
+              "targetName": "AbortBatch"
+            }
+          ],
+          "opcua_supertype": "BaseObjectType",
+          "source_location": "104:1"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6200",
+              "opcua_array_dimensions": [
+                8,
+                4
+              ],
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "115:1"
+            },
+            "field_number": null,
+            "key": "BatchMachineType.RecentReadings",
+            "name": "RecentReadings",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": {
+                  "extras": {},
+                  "item": null,
+                  "name": "number",
+                  "nullable": false
+                },
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BatchMachineType",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchMachineType",
+        "namespace": "http://example.com/UA/Stress/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "opcua_method": "ns=1;i=7010",
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome for the input arguments of method BatchMachineType.StartBatch."
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "uint32",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchMachineType_StartBatch_Request.Quantity",
+            "name": "Quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchMachineType_StartBatch_Request.Recipe",
+            "name": "Recipe",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BatchMachineType_StartBatch_Request",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchMachineType_StartBatch_Request",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "opcua_method": "ns=1;i=7010",
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome for the output arguments of method BatchMachineType.StartBatch."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchMachineType_StartBatch_Response.BatchId",
+            "name": "BatchId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BatchMachineType_StartBatch_Response",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchMachineType_StartBatch_Response",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=3012",
+          "opcua_browse_name": "1:BatchRecord",
+          "opcua_node_class": "DataType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=22",
+              "targetName": "Structure"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasEncoding",
+              "target": "ns=1;i=5012",
+              "targetName": "Default Binary"
+            }
+          ],
+          "opcua_supertype": "Structure",
+          "source_location": "67:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.BatchId",
+            "name": "BatchId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.Fault",
+            "name": "Fault",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "FaultCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "opcua-localized-text",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.Notes",
+            "name": "Notes",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.Operator",
+            "name": "Operator",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.Readings",
+            "name": "Readings",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "number",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "BatchRecord.StartedAt",
+            "name": "StartedAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BatchRecord",
+        "key_type": null,
+        "kind": "record",
+        "name": "BatchRecord",
+        "namespace": "http://example.com/UA/Stress/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "FaultCode.None",
+            "name": "None",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": "Measured temperature exceeded the configured limit.",
+            "extras": {},
+            "key": "FaultCode.OverTemperature",
+            "name": "OverTemperature",
+            "value": 10
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "FaultCode.UnderPressure",
+            "name": "UnderPressure",
+            "value": 20
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "FaultCode.EmergencyStop",
+            "name": "EmergencyStop",
+            "value": 99
+          }
+        ],
+        "extras": {
+          "native_id": "ns=1;i=3010",
+          "opcua_browse_name": "1:FaultCode",
+          "opcua_node_class": "DataType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=29",
+              "targetName": "Enumeration"
+            }
+          ],
+          "opcua_supertype": "Enumeration",
+          "source_location": "37:1"
+        },
+        "fields": [],
+        "key": "FaultCode",
+        "key_type": null,
+        "kind": "enum",
+        "name": "FaultCode",
+        "namespace": "http://example.com/UA/Stress/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=3013",
+          "opcua_browse_name": "1:Measurement",
+          "opcua_node_class": "DataType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=12756",
+              "targetName": "Union"
+            }
+          ],
+          "opcua_supertype": "Union",
+          "opcua_union": true,
+          "source_location": "84:1"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Measurement.Scalar",
+            "name": "Scalar",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Measurement.Series",
+            "name": "Series",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "number",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Measurement.Text",
+            "name": "Text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Measurement",
+        "key_type": null,
+        "kind": "record",
+        "name": "Measurement",
+        "namespace": "http://example.com/UA/Stress/",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "0.9.0"
+  },
+  "corpus_path": "opcua-nodeset/04-stress-datatypes-and-methods.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:264963632bc4ef03281f5567c703eb0c4e347db8f6e7a4d3d89904763eb369dd",
+  "lint": {
+    "findings": 25,
+    "grade": "F",
+    "report_fingerprint": "a5ed7d31440297fa62e8f05b7fb766aa045d157d27cbfa879e5dd8832f5a5d36",
+    "score": 56,
+    "severity_counts": {
+      "error": 0,
+      "info": 16,
+      "warning": 9
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,15 +1,15 @@
 {
   "version": "1",
-  "capability_registry_version": "29",
-  "total": 81,
-  "importable": 81,
+  "capability_registry_version": "30",
+  "total": 82,
+  "importable": 82,
   "exportable": 51,
   "round_trip": 51,
-  "import_only": 30,
+  "import_only": 31,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 80,
+  "catalog": 81,
   "toolchain_gated": 9,
   "paradigms": [
     {
@@ -22,8 +22,8 @@
     {
       "id": "rpc",
       "label": "RPC",
-      "total": 11,
-      "importable": 11,
+      "total": 12,
+      "importable": 12,
       "exportable": 10
     },
     {

@@ -135,6 +135,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   'typescript-types': 'TypeScript types',
   zod: 'Zod schemas',
   trpc: 'tRPC router',
+  'opcua-nodeset': 'OPC UA NodeSet2',
   pydantic: 'Pydantic models',
   cue: 'CUE',
   pkl: 'Pkl',

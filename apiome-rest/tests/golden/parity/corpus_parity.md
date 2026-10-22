@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 81
+- **Formats gated:** 82
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -69,6 +69,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `odata` | OData | rest | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `odata` |
 | `odcs` | ODCS Data Contract | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `odcs` |
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
+| `opcua-nodeset` | OPC UA NodeSet2 | rpc | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `openapi` | OpenAPI / Swagger | rest | 47 | 12 | 0 | 0 | 59 | 6/6 | 42 | `openapi` |
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
 | `pkl` | Pkl | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
@@ -157,6 +158,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `odata` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `odcs` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `oncrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `opcua-nodeset` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openapi` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pkl` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -201,4 +203,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `owl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`

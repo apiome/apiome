@@ -1211,6 +1211,10 @@ def load_builtin_import_sources() -> None:
     # adapters — typed configuration schemas read by each language's own tool in the sandbox.
     from . import typed_config_import_source as _typed_config  # noqa: F401
 
+    # ``opcua_nodeset_import_source`` (FMT-9.1) self-registers the ``opcua-nodeset`` adapter — an
+    # OPC UA NodeSet2 information model, with a native analyzer for its address space.
+    from . import opcua_nodeset_import_source as _opcua_nodeset  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

@@ -1,0 +1,1698 @@
+{
+  "adapter": "opcua-nodeset",
+  "corpus_path": "opcua-nodeset/04-stress-datatypes-and-methods.xml",
+  "document": {
+    "analyzer": {
+      "key": "opcua-nodeset",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "opcua.address_space_instances",
+        "opcua.aliases",
+        "opcua.data_type_definitions",
+        "opcua.instance_declarations",
+        "opcua.models",
+        "opcua.namespaces",
+        "opcua.node_classes",
+        "opcua.references",
+        "opcua.source_locations"
+      ],
+      "unsupported": [
+        "opcua.access_levels",
+        "opcua.extensions",
+        "opcua.role_permissions",
+        "opcua.variable_values"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "alias": 19,
+        "field": 17,
+        "group": 8,
+        "model": 1,
+        "namespace": 2,
+        "node": 11,
+        "nodeset": 1,
+        "reference": 24,
+        "requiredModel": 2
+      },
+      "maxDepth": 4,
+      "nodeCount": 85,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "opcua-nodeset",
+    "sourceHash": "sha256:517d30ce39bc4c2e1404f959de570bc06ba7aeb9491c0b9821cb9dcac046e5d0",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "modelUris": [
+            "http://example.com/UA/Stress/"
+          ],
+          "nodeCount": 11
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 2
+            },
+            "children": [
+              {
+                "attributes": {
+                  "index": 1,
+                  "uri": "http://example.com/UA/Stress/"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Stress/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "index": 2,
+                  "uri": "http://example.com/UA/Shared/"
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Shared/",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "namespaces",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "modelUri": "http://example.com/UA/Stress/",
+                  "publicationDate": "2026-08-19T00:00:00Z",
+                  "version": "0.9.0"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "modelUri": "http://opcfoundation.org/UA/",
+                      "version": "1.05.03"
+                    },
+                    "children": [],
+                    "id": "0.1.0.0",
+                    "kind": "requiredModel",
+                    "label": null,
+                    "location": null,
+                    "name": "http://opcfoundation.org/UA/",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "modelUri": "http://example.com/UA/Shared/",
+                      "version": "1.0.0"
+                    },
+                    "children": [],
+                    "id": "0.1.0.1",
+                    "kind": "requiredModel",
+                    "label": null,
+                    "location": null,
+                    "name": "http://example.com/UA/Shared/",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.1.0",
+                "kind": "model",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Stress/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "models",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 19
+            },
+            "children": [
+              {
+                "attributes": {
+                  "nodeId": "i=1"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Boolean",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=3"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Byte",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=4"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Int16",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=6"
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Int32",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=7"
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "UInt32",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=8"
+                },
+                "children": [],
+                "id": "0.2.5",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Int64",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=10"
+                },
+                "children": [],
+                "id": "0.2.6",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Float",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=11"
+                },
+                "children": [],
+                "id": "0.2.7",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Double",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=12"
+                },
+                "children": [],
+                "id": "0.2.8",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "String",
+                "ordinal": 8,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=13"
+                },
+                "children": [],
+                "id": "0.2.9",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "DateTime",
+                "ordinal": 9,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=14"
+                },
+                "children": [],
+                "id": "0.2.10",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Guid",
+                "ordinal": 10,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=15"
+                },
+                "children": [],
+                "id": "0.2.11",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "ByteString",
+                "ordinal": 11,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=21"
+                },
+                "children": [],
+                "id": "0.2.12",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "LocalizedText",
+                "ordinal": 12,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=22"
+                },
+                "children": [],
+                "id": "0.2.13",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Structure",
+                "ordinal": 13,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=45"
+                },
+                "children": [],
+                "id": "0.2.14",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasSubtype",
+                "ordinal": 14,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=46"
+                },
+                "children": [],
+                "id": "0.2.15",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasProperty",
+                "ordinal": 15,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=47"
+                },
+                "children": [],
+                "id": "0.2.16",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasComponent",
+                "ordinal": 16,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=40"
+                },
+                "children": [],
+                "id": "0.2.17",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasTypeDefinition",
+                "ordinal": 17,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=37"
+                },
+                "children": [],
+                "id": "0.2.18",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasModellingRule",
+                "ordinal": 18,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "aliases",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "ObjectType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:BatchMachineType",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1020",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=58"
+                    },
+                    "children": [],
+                    "id": "0.3.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6200",
+                      "targetBrowseName": "1:RecentReadings"
+                    },
+                    "children": [],
+                    "id": "0.3.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=7010",
+                      "targetBrowseName": "1:StartBatch"
+                    },
+                    "children": [],
+                    "id": "0.3.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=7011",
+                      "targetBrowseName": "1:AbortBatch"
+                    },
+                    "children": [],
+                    "id": "0.3.0.3",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "node",
+                "label": "BatchMachineType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 104,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1020"
+                },
+                "name": "BatchMachineType",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "objectTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 4,
+              "nodeClass": "DataType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:FaultCode",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "DataType",
+                  "nodeId": "ns=1;i=3010",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "value": 0,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "None",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 10,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "OverTemperature",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 20,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "UnderPressure",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 99,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.0.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "EmergencyStop",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=29"
+                    },
+                    "children": [],
+                    "id": "0.4.0.4",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.0",
+                "kind": "node",
+                "label": "FaultCode",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 37,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=3010"
+                },
+                "name": "FaultCode",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:AlarmFlags",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "DataType",
+                  "nodeId": "ns=1;i=3011",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "value": 0,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.1.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Acknowledged",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 1,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.1.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Suppressed",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 2,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.1.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Shelved",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "value": 3,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.1.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Latched",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=12756"
+                    },
+                    "children": [],
+                    "id": "0.4.1.4",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.1",
+                "kind": "node",
+                "label": "AlarmFlags",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 53,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=3011"
+                },
+                "name": "AlarmFlags",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:BatchRecord",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "DataType",
+                  "nodeId": "ns=1;i=3012",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "dataType": "i=12",
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.2.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "BatchId",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=13",
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.2.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "StartedAt",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=11",
+                      "valueRank": 1
+                    },
+                    "children": [],
+                    "id": "0.4.2.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Readings",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "ns=1;i=3010",
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.2.3",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Fault",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=12",
+                      "isOptional": true,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.2.4",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Operator",
+                    "ordinal": 4,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=21",
+                      "isOptional": true,
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.2.5",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Notes",
+                    "ordinal": 5,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=22"
+                    },
+                    "children": [],
+                    "id": "0.4.2.6",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasEncoding",
+                      "target": "ns=1;i=5012",
+                      "targetBrowseName": "Default Binary"
+                    },
+                    "children": [],
+                    "id": "0.4.2.7",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasEncoding",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.2",
+                "kind": "node",
+                "label": "BatchRecord",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 67,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=3012"
+                },
+                "name": "BatchRecord",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:Measurement",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "DataType",
+                  "nodeId": "ns=1;i=3013",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "dataType": "i=11",
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.3.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Scalar",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=11",
+                      "valueRank": 1
+                    },
+                    "children": [],
+                    "id": "0.4.3.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Series",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "dataType": "i=12",
+                      "valueRank": -1
+                    },
+                    "children": [],
+                    "id": "0.4.3.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": null,
+                    "name": "Text",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=12756"
+                    },
+                    "children": [],
+                    "id": "0.4.3.3",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.3",
+                "kind": "node",
+                "label": "Measurement",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 84,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=3013"
+                },
+                "name": "Measurement",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.4",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "dataTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 2,
+              "nodeClass": "Method"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:StartBatch",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Method",
+                  "nodeId": "ns=1;i=7010",
+                  "role": "declaration"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1020",
+                      "targetBrowseName": "1:BatchMachineType"
+                    },
+                    "children": [],
+                    "id": "0.5.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=6201",
+                      "targetBrowseName": "InputArguments"
+                    },
+                    "children": [],
+                    "id": "0.5.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=6202",
+                      "targetBrowseName": "OutputArguments"
+                    },
+                    "children": [],
+                    "id": "0.5.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.5.0.3",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 3,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.0",
+                "kind": "node",
+                "label": "StartBatch",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 127,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=7010"
+                },
+                "name": "StartBatch",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:AbortBatch",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Method",
+                  "nodeId": "ns=1;i=7011",
+                  "role": "declaration"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1020",
+                      "targetBrowseName": "1:BatchMachineType"
+                    },
+                    "children": [],
+                    "id": "0.5.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.5.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.1",
+                "kind": "node",
+                "label": "AbortBatch",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 194,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=7011"
+                },
+                "name": "AbortBatch",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.5",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "methods",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "Object"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "Default Binary",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Object",
+                  "nodeId": "ns=1;i=5012",
+                  "role": "declaration"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasEncoding",
+                      "target": "ns=1;i=3012",
+                      "targetBrowseName": "1:BatchRecord"
+                    },
+                    "children": [],
+                    "id": "0.6.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasEncoding",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=76"
+                    },
+                    "children": [],
+                    "id": "0.6.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.6.0",
+                "kind": "node",
+                "label": "Default Binary",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 96,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=5012"
+                },
+                "name": "Default Binary",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.6",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "objects",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 3,
+              "nodeClass": "Variable"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "arrayDimensions": [
+                    8,
+                    4
+                  ],
+                  "browseName": "1:RecentReadings",
+                  "dataType": "i=11",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6200",
+                  "role": "declaration",
+                  "valueRank": 2
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1020",
+                      "targetBrowseName": "1:BatchMachineType"
+                    },
+                    "children": [],
+                    "id": "0.7.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.7.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.7.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.7.0",
+                "kind": "node",
+                "label": "RecentReadings",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 115,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6200"
+                },
+                "name": "RecentReadings",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "arguments": [
+                    "Recipe",
+                    "Quantity"
+                  ],
+                  "arrayDimensions": [
+                    2
+                  ],
+                  "browseName": "InputArguments",
+                  "dataType": "i=296",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6201",
+                  "role": "signature",
+                  "valueRank": 1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=7010",
+                      "targetBrowseName": "1:StartBatch"
+                    },
+                    "children": [],
+                    "id": "0.7.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=68"
+                    },
+                    "children": [],
+                    "id": "0.7.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.7.1",
+                "kind": "node",
+                "label": "InputArguments",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 137,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6201"
+                },
+                "name": "InputArguments",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "arguments": [
+                    "BatchId"
+                  ],
+                  "arrayDimensions": [
+                    1
+                  ],
+                  "browseName": "OutputArguments",
+                  "dataType": "i=296",
+                  "namespaceUri": "http://example.com/UA/Stress/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6202",
+                  "role": "signature",
+                  "valueRank": 1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=7010",
+                      "targetBrowseName": "1:StartBatch"
+                    },
+                    "children": [],
+                    "id": "0.7.2.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=68"
+                    },
+                    "children": [],
+                    "id": "0.7.2.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.7.2",
+                "kind": "node",
+                "label": "OutputArguments",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 170,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6202"
+                },
+                "name": "OutputArguments",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.7",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "variables",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "nodeset",
+        "label": null,
+        "location": null,
+        "name": "opcua-nodeset/04-stress-datatypes-and-methods.xml",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

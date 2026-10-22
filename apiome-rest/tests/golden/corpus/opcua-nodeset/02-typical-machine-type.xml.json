@@ -1,0 +1,377 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Boolean": "i=1",
+          "DateTime": "i=13",
+          "Double": "i=11",
+          "HasComponent": "i=47",
+          "HasModellingRule": "i=37",
+          "HasProperty": "i=46",
+          "HasSubtype": "i=45",
+          "HasTypeDefinition": "i=40",
+          "Int32": "i=6",
+          "String": "i=12"
+        },
+        "capability_limits": [],
+        "instance_count": 0,
+        "models": [
+          {
+            "model_uri": "http://example.com/UA/Machine/",
+            "publication_date": "2026-08-19T00:00:00Z",
+            "required_models": [
+              {
+                "model_uri": "http://opcfoundation.org/UA/",
+                "publication_date": "2025-06-01T00:00:00Z",
+                "version": "1.05.03"
+              }
+            ],
+            "version": "1.2.0"
+          }
+        ],
+        "namespace_uris": [
+          "http://example.com/UA/Machine/"
+        ],
+        "node_counts": {
+          "UADataType": 1,
+          "UAMethod": 1,
+          "UAObjectType": 1,
+          "UAVariable": 4
+        },
+        "reference_types": []
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Machine",
+      "namespace": "http://example.com/UA/Machine/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "native_id": "ns=1;i=1002",
+          "opcua_node_class": "ObjectType"
+        },
+        "key": "MachineType",
+        "name": "MachineType",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Start the machine with a named programme.",
+            "extras": {
+              "native_id": "ns=1;i=7001",
+              "opcua_modelling_rule": "Mandatory",
+              "source_location": "82:1"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "MachineType.Start",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "MachineType.Start#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "MachineType_Start_Request",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "Start",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Machine",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MachineState.Idle",
+            "name": "Idle",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MachineState.Running",
+            "name": "Running",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MachineState.Faulted",
+            "name": "Faulted",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MachineState.Maintenance",
+            "name": "Maintenance",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "native_id": "ns=1;i=3001",
+          "opcua_browse_name": "1:MachineState",
+          "opcua_node_class": "DataType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=29",
+              "targetName": "Enumeration"
+            }
+          ],
+          "opcua_supertype": "Enumeration",
+          "source_location": "27:1"
+        },
+        "fields": [],
+        "key": "MachineState",
+        "key_type": null,
+        "kind": "enum",
+        "name": "MachineState",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A production machine with identification and live measurements.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1002",
+          "opcua_browse_name": "1:MachineType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=58",
+              "targetName": "BaseObjectType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6010",
+              "targetName": "State"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6011",
+              "targetName": "Temperature"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasProperty",
+              "target": "ns=1;i=6012",
+              "targetName": "SerialNumber"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=7001",
+              "targetName": "Start"
+            }
+          ],
+          "opcua_supertype": "BaseObjectType",
+          "source_location": "40:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6012",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_property": true,
+              "opcua_type_definition": "PropertyType",
+              "source_location": "72:1"
+            },
+            "field_number": null,
+            "key": "MachineType.SerialNumber",
+            "name": "SerialNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6010",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "52:1"
+            },
+            "field_number": null,
+            "key": "MachineType.State",
+            "name": "State",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "MachineState",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6011",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "PropertyType",
+              "source_location": "62:1"
+            },
+            "field_number": null,
+            "key": "MachineType.Temperature",
+            "name": "Temperature",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MachineType",
+        "key_type": null,
+        "kind": "record",
+        "name": "MachineType",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "opcua_method": "ns=1;i=7001",
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome for the input arguments of method MachineType.Start."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Programme to run.",
+            "extras": {},
+            "field_number": null,
+            "key": "MachineType_Start_Request.ProgrammeName",
+            "name": "ProgrammeName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MachineType_Start_Request",
+        "key_type": null,
+        "kind": "record",
+        "name": "MachineType_Start_Request",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.2.0"
+  },
+  "corpus_path": "opcua-nodeset/02-typical-machine-type.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:18c2109ef5e36ab50d046dc8090df67601fec1936631f61d2f86d1aee15487f1",
+  "lint": {
+    "findings": 7,
+    "grade": "B",
+    "report_fingerprint": "54417eaac1d2038ff48a69b782b0166448e7e409b3b4ec06d5799f95783ec9eb",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 5,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

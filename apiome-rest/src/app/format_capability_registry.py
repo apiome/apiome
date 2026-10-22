@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "29"
+REGISTRY_VERSION = "30"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2458,6 +2458,71 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "only, and the two share one type-mapping table (`app.sql_ddl_dialects."
             "SQL_TYPE_SCALARS`) so a round trip cannot disagree with itself about what a "
             "`VARCHAR` is.",
+        ],
+    ),
+    "opcua-nodeset": _Seed(
+        # FMT-9.1: a native analyzer describes the whole nodeset — address-space instances and the
+        # reference graph included — while the canonical model holds the types and methods.
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "nodeset → namespaces · models · aliases · one group per node class → node (nodeId, "
+            "browseName, role) → definition fields and references. Every node carries a role: "
+            "type, a type's instance declaration, a method signature, or an address-space "
+            "instance. References are the bottom level, so a model larger than the budget keeps "
+            "every node and drops references first."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.LINE_NUMBERS,
+            note=(
+                "Each node element is located by the line it opens on and addressed by its "
+                "NodeId; a fileset member's nodes also name the member they came from."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A nodeset describes an information model; variable values in it are defaults and "
+                "sample data, and the analyzer never reads them."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "opcua.access_levels",
+                    "opcua.address_space_instances",
+                    "opcua.base_type_not_modelled",
+                    "opcua.definition_missing",
+                    "opcua.multi_dimensional_array",
+                    "opcua.option_set",
+                    "opcua.union",
+                    "opcua.unresolved_reference",
+                    "opcua.variable_values",
+                ]
+            ),
+            note=(
+                "`UAObjectType` → a `RECORD` of its instance declarations (Mandatory → required, "
+                "Optional → nullable, the placeholder rules → lists; a supertype in the file "
+                "contributes its fields); `UAVariableType` → an `ALIAS` of its data type; "
+                "`UADataType` → `RECORD` (structure), `ENUM` (enumeration or OptionSet bits) or "
+                "`ALIAS` (a subtype of a scalar); `UAMethod` → an RPC operation whose arguments "
+                "become synthesized request / response records. `ValueRank` and `ArrayDimensions` "
+                "become lists and `maxItems`; built-in types become scalars with a `format`. Each "
+                "type keeps its references, and the namespaces, models and aliases are recorded in "
+                "`extras['opcua']`. Address-space instances stay in the analysis. Declared limits "
+                "are counted and located in `extras['opcua']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A fileset — a model and the companion models it requires — is merged, each member's "
+            "namespace indexes re-numbered by URI, so a `RequiredModel` shipped beside the model "
+            "resolves.",
+            "A reference to a missing node in one of the nodeset's own namespaces rejects the "
+            "import with `INPUT_REFERENCE_UNRESOLVED`; a reference into another model's namespace "
+            "is declared unresolved and the import continues.",
+            "OPC UA *output* is not implemented; a NodeSet2 import is exported through another "
+            "target's emitter.",
         ],
     ),
     "pydantic": _Seed(

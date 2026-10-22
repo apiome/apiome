@@ -1,0 +1,33 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Switch the machine to a different product recipe.",
+      "inputSchema": {
+        "properties": {
+          "ProductCode": {
+            "type": "string"
+          },
+          "StartImmediately": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ProductCode",
+          "StartImmediately"
+        ],
+        "type": "object"
+      },
+      "name": "ChangeProduct",
+      "operation": "PackagingMachineType.ChangeProduct"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ResetCounters",
+      "operation": "PackagingMachineType.ResetCounters"
+    }
+  ]
+}

@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `ncpdp@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `ncpdp@1.0.0`, `opcua-nodeset@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -401,6 +401,27 @@ The repository is read **as declared**. Nothing is compared with the FIX Latest 
 extends or restricts, and a rule's `when` or `assign` expression is recorded verbatim, never
 evaluated. Its leaf values are specification text — names, tags, code values — and still follow
 the value-visibility policy.
+
+## The OPC UA NodeSet2 analysis
+
+For OPC UA NodeSet2 models ([how to import one](./opcua-nodeset-import.md)) the tab renders the
+whole nodeset, address space included:
+
+- **nodeset**, the root. It lists the model URIs and the node count.
+- **namespaces**, **models** (each with its required models) and **aliases**.
+- One group per node class (**objectTypes**, **variableTypes**, **dataTypes**,
+  **referenceTypes**, **methods**, **objects**, **variables**, **views**), each listing its nodes
+  with their `nodeId`, `browseName` and **role**:
+  - `type`: a type node;
+  - `declaration`: a type's instance declaration;
+  - `signature`: a method's argument list;
+  - `instance`: the address space, which the item's types never include.
+- Under each node, its data type's definition fields, then its **references** (`referenceType`,
+  `target`, `isForward`).
+
+Each node is located by the line it opens on. Variable values are never read. Because references
+are the deepest level, a nodeset larger than the budget keeps every node and loses references
+first, and the record is `partial`.
 
 ## The COBOL copybook inspector
 

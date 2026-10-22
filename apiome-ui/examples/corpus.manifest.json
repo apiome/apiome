@@ -19697,7 +19697,7 @@
     {
       "path": "opcua-nodeset/01-minimal-nodeset.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19707,8 +19707,7 @@
         "UAObjectType",
         "UAVariable",
         "aliases",
-        "references",
-        "pending-adapter"
+        "references"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19719,7 +19718,7 @@
     {
       "path": "opcua-nodeset/02-typical-machine-type.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19732,8 +19731,7 @@
         "InputArguments",
         "Models",
         "RequiredModel",
-        "modelling-rule",
-        "pending-adapter"
+        "modelling-rule"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19744,7 +19742,7 @@
     {
       "path": "opcua-nodeset/03-composition-subtypes.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19756,8 +19754,7 @@
         "UAReferenceType",
         "inverse-name",
         "UAVariableType",
-        "optional-modelling-rule",
-        "pending-adapter"
+        "optional-modelling-rule"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19768,7 +19765,7 @@
     {
       "path": "opcua-nodeset/04-stress-datatypes-and-methods.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19784,8 +19781,7 @@
         "Historizing",
         "output-arguments",
         "encoding-object",
-        "multi-namespace",
-        "pending-adapter"
+        "multi-namespace"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19796,7 +19792,7 @@
     {
       "path": "opcua-nodeset/05-real-world-companion-nodeset.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19809,8 +19805,7 @@
         "identification",
         "analog-item",
         "engineering-units",
-        "methods",
-        "pending-adapter"
+        "methods"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19821,7 +19816,7 @@
     {
       "path": "opcua-nodeset/06-typical-instance-address-space.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19831,8 +19826,7 @@
         "instances",
         "address-space",
         "hierarchy",
-        "live-value",
-        "pending-adapter"
+        "live-value"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -19844,7 +19838,7 @@
     {
       "path": "opcua-nodeset/07-companion-set/companion.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19853,8 +19847,7 @@
       "features": [
         "companion-model",
         "base-type",
-        "enum-datatype",
-        "pending-adapter"
+        "enum-datatype"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19867,7 +19860,7 @@
     {
       "path": "opcua-nodeset/07-companion-set/model.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "valid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19876,8 +19869,7 @@
       "features": [
         "RequiredModel",
         "cross-namespace-subtype",
-        "cross-namespace-datatype",
-        "pending-adapter"
+        "cross-namespace-datatype"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -19889,7 +19881,7 @@
     {
       "path": "opcua-nodeset/negative/01-syntactic-unclosed-node.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19898,8 +19890,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -19911,7 +19902,7 @@
     {
       "path": "opcua-nodeset/negative/02-semantic-no-nodes.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19920,8 +19911,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-nodes",
-        "pending-adapter"
+        "no-nodes"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -19933,7 +19923,7 @@
     {
       "path": "opcua-nodeset/negative/03-truncated-mid-definition.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19942,8 +19932,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -19955,7 +19944,7 @@
     {
       "path": "opcua-nodeset/negative/04-wrong-format-xsd.xsd",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19964,8 +19953,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "xsd",
-        "pending-adapter"
+        "xsd"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -19977,7 +19965,7 @@
     {
       "path": "opcua-nodeset/negative/05-encoding-utf16.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -19986,8 +19974,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -19999,7 +19986,7 @@
     {
       "path": "opcua-nodeset/negative/06-unresolvable-node-reference.xml",
       "format": "opcua-nodeset",
-      "adapter_key": null,
+      "adapter_key": "opcua-nodeset",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "opcua-nodeset",
@@ -20009,8 +19996,7 @@
         "negative",
         "unresolvable-ref",
         "missing-node-id",
-        "missing-datatype",
-        "pending-adapter"
+        "missing-datatype"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

@@ -61,6 +61,7 @@ import {
   ListOrdered,
   ShieldCheck,
   type LucideIcon,
+  Factory,
 } from 'lucide-react';
 
 /**
@@ -343,6 +344,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cue', label: 'CUE', icon: Braces, tone: 'sky', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['cuelang'], description: 'CUE definitions with their constraints — evaluated by cue export in a sandbox with no network.' },
   { id: 'pkl', label: 'Pkl', icon: Braces, tone: 'violet', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['pkl-lang'], description: 'Pkl classes and type aliases with their type constraints — reflected by pkl eval in a sandbox.' },
   { id: 'dhall', label: 'Dhall', icon: Braces, tone: 'teal', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['dhall-lang'], description: 'Dhall record and union types and schema records — normalized by the Dhall interpreter in a sandbox.' },
+  { id: 'opcua-nodeset', label: 'OPC UA NodeSet2', icon: Factory, tone: 'cyan', dataType: 'rpc', origin: 'systems', importable: true, aliases: ['nodeset2', 'opcua'], description: 'OPC UA NodeSet2 information model — object, variable and data types, methods and the reference graph, with namespaces and model versions.' },
   { id: 'pydantic', label: 'Pydantic models', icon: FileCode, tone: 'indigo', dataType: 'schema', origin: 'web', importable: true, aliases: ['pydantic-models'], description: 'Pydantic models read statically — fields, Field constraints, enums and unions; the module is never run.' },
   { id: 'trpc', label: 'tRPC router', icon: Network, tone: 'emerald', dataType: 'rpc', origin: 'web', importable: true, aliases: ['trpc-router'], description: 'tRPC routers — procedures as query, mutation and subscription operations, with Zod inputs and outputs.' },
   { id: 'zod', label: 'Zod schemas', icon: ShieldCheck, tone: 'indigo', dataType: 'schema', origin: 'web', importable: true, aliases: ['zod-schema'], description: 'Zod schemas with their validation constraints — a module evaluated in a sandbox with no network and a time limit.' },

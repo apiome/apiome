@@ -1,0 +1,77 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Double": "i=11",
+          "HasComponent": "i=47",
+          "HasTypeDefinition": "i=40",
+          "Organizes": "i=35",
+          "String": "i=12"
+        },
+        "capability_limits": [
+          {
+            "construct": "opcua.instances_not_promoted",
+            "count": 7,
+            "detail": "Address-space instances (UAObject, UAVariable, UAView and UAMethod nodes that are not a type's instance declarations) are described in the payload analysis and not promoted to canonical types.",
+            "locations": []
+          }
+        ],
+        "instance_count": 7,
+        "models": [],
+        "namespace_uris": [
+          "http://example.com/UA/Plant/",
+          "http://example.com/UA/Machine/"
+        ],
+        "node_counts": {
+          "UAObject": 6,
+          "UAVariable": 1
+        },
+        "reference_types": []
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Plant",
+      "namespace": "http://example.com/UA/Plant/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Plant",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "opcua-nodeset/06-typical-instance-address-space.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:72c76926fe89159e514f4e4131caf05adbf392d192d82c4d5a3d9814b3a784a2",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "fd9f9ad219a05ca74add1e9de66497ee1d67665833d19638e2e04d01a0bee935",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

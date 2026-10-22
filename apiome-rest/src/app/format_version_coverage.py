@@ -1541,6 +1541,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "opcua-nodeset": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="NodeSet2 (UANodeSet.xsd, OPC UA 1.04 and 1.05)",
+                format_key="opcua-nodeset",
+                support=VersionSupport.UNGATED,
+                note="A NodeSet2 file names the schema namespace, not a version the reader "
+                "branches on; the 1.04 and 1.05 schemas share every element the reader uses. Each "
+                "model's own `Version` and `PublicationDate` are recorded as provenance.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pydantic": VersionCoverage(
         reads=[
             FormatVersion(

@@ -1,0 +1,1010 @@
+{
+  "adapter": "opcua-nodeset",
+  "corpus_path": "opcua-nodeset/03-composition-subtypes.xml",
+  "document": {
+    "analyzer": {
+      "key": "opcua-nodeset",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "opcua.address_space_instances",
+        "opcua.aliases",
+        "opcua.data_type_definitions",
+        "opcua.instance_declarations",
+        "opcua.models",
+        "opcua.namespaces",
+        "opcua.node_classes",
+        "opcua.references",
+        "opcua.source_locations"
+      ],
+      "unsupported": [
+        "opcua.access_levels",
+        "opcua.extensions",
+        "opcua.role_permissions",
+        "opcua.variable_values"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "alias": 8,
+        "group": 7,
+        "namespace": 1,
+        "node": 9,
+        "nodeset": 1,
+        "reference": 21
+      },
+      "maxDepth": 4,
+      "nodeCount": 47,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "opcua-nodeset",
+    "sourceHash": "sha256:34a09c2134c5cbbfad757585119d4ebad24a8cbf3941f32ee52f83f929c46343",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "nodeCount": 9
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 1
+            },
+            "children": [
+              {
+                "attributes": {
+                  "index": 1,
+                  "uri": "http://example.com/UA/Machine/"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "namespace",
+                "label": null,
+                "location": null,
+                "name": "http://example.com/UA/Machine/",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "namespaces",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 0
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "models",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 8
+            },
+            "children": [
+              {
+                "attributes": {
+                  "nodeId": "i=11"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Double",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=12"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "String",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=45"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasSubtype",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=47"
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasComponent",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=46"
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasProperty",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=40"
+                },
+                "children": [],
+                "id": "0.2.5",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasTypeDefinition",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=37"
+                },
+                "children": [],
+                "id": "0.2.6",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "HasModellingRule",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "nodeId": "i=35"
+                },
+                "children": [],
+                "id": "0.2.7",
+                "kind": "alias",
+                "label": null,
+                "location": null,
+                "name": "Organizes",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "aliases",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 3,
+              "nodeClass": "ObjectType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:EquipmentType",
+                  "isAbstract": true,
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1010",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=58"
+                    },
+                    "children": [],
+                    "id": "0.3.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=6100",
+                      "targetBrowseName": "1:AssetTag"
+                    },
+                    "children": [],
+                    "id": "0.3.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.0",
+                "kind": "node",
+                "label": "EquipmentType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 18,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1010"
+                },
+                "name": "EquipmentType",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:PumpType",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1011",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "ns=1;i=1010",
+                      "targetBrowseName": "1:EquipmentType"
+                    },
+                    "children": [],
+                    "id": "0.3.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6101",
+                      "targetBrowseName": "1:FlowRate"
+                    },
+                    "children": [],
+                    "id": "0.3.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.1",
+                "kind": "node",
+                "label": "PumpType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 27,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1011"
+                },
+                "name": "PumpType",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:ValveType",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "ObjectType",
+                  "nodeId": "ns=1;i=1012",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "ns=1;i=1010",
+                      "targetBrowseName": "1:EquipmentType"
+                    },
+                    "children": [],
+                    "id": "0.3.2.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=6102",
+                      "targetBrowseName": "1:Position"
+                    },
+                    "children": [],
+                    "id": "0.3.2.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.3.2",
+                "kind": "node",
+                "label": "ValveType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 35,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=1012"
+                },
+                "name": "ValveType",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "objectTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "VariableType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:MeasurementType",
+                  "dataType": "i=11",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "VariableType",
+                  "nodeId": "ns=1;i=2001",
+                  "role": "type",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.4.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=6103",
+                      "targetBrowseName": "1:EngineeringUnits"
+                    },
+                    "children": [],
+                    "id": "0.4.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.4.0",
+                "kind": "node",
+                "label": "MeasurementType",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 83,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=2001"
+                },
+                "name": "MeasurementType",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.4",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "variableTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 1,
+              "nodeClass": "ReferenceType"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:FeedsInto",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "ReferenceType",
+                  "nodeId": "ns=1;i=4001",
+                  "role": "type"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasSubtype",
+                      "target": "i=33"
+                    },
+                    "children": [],
+                    "id": "0.5.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasSubtype",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.5.0",
+                "kind": "node",
+                "label": "FeedsInto",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 74,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=4001"
+                },
+                "name": "FeedsInto",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.5",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "referenceTypes",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "count": 4,
+              "nodeClass": "Variable"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "browseName": "1:AssetTag",
+                  "dataType": "i=12",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6100",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=1010",
+                      "targetBrowseName": "1:EquipmentType"
+                    },
+                    "children": [],
+                    "id": "0.6.0.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=68"
+                    },
+                    "children": [],
+                    "id": "0.6.0.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.6.0.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.6.0",
+                "kind": "node",
+                "label": "AssetTag",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 43,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6100"
+                },
+                "name": "AssetTag",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:FlowRate",
+                  "dataType": "i=11",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6101",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1011",
+                      "targetBrowseName": "1:PumpType"
+                    },
+                    "children": [],
+                    "id": "0.6.1.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.6.1.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=78"
+                    },
+                    "children": [],
+                    "id": "0.6.1.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.6.1",
+                "kind": "node",
+                "label": "FlowRate",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 53,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6101"
+                },
+                "name": "FlowRate",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:Position",
+                  "dataType": "i=11",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6102",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasComponent",
+                      "target": "ns=1;i=1012",
+                      "targetBrowseName": "1:ValveType"
+                    },
+                    "children": [],
+                    "id": "0.6.2.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasComponent",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=63"
+                    },
+                    "children": [],
+                    "id": "0.6.2.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=80"
+                    },
+                    "children": [],
+                    "id": "0.6.2.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.6.2",
+                "kind": "node",
+                "label": "Position",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 63,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6102"
+                },
+                "name": "Position",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "browseName": "1:EngineeringUnits",
+                  "dataType": "i=887",
+                  "namespaceUri": "http://example.com/UA/Machine/",
+                  "nodeClass": "Variable",
+                  "nodeId": "ns=1;i=6103",
+                  "role": "declaration",
+                  "valueRank": -1
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "isForward": false,
+                      "referenceType": "HasProperty",
+                      "target": "ns=1;i=2001",
+                      "targetBrowseName": "1:MeasurementType"
+                    },
+                    "children": [],
+                    "id": "0.6.3.0",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasProperty",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasTypeDefinition",
+                      "target": "i=68"
+                    },
+                    "children": [],
+                    "id": "0.6.3.1",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasTypeDefinition",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "isForward": true,
+                      "referenceType": "HasModellingRule",
+                      "target": "i=80"
+                    },
+                    "children": [],
+                    "id": "0.6.3.2",
+                    "kind": "reference",
+                    "label": null,
+                    "location": null,
+                    "name": "HasModellingRule",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.6.3",
+                "kind": "node",
+                "label": "EngineeringUnits",
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": 92,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "ns=1;i=6103"
+                },
+                "name": "EngineeringUnits",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.6",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "variables",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "nodeset",
+        "label": null,
+        "location": null,
+        "name": "opcua-nodeset/03-composition-subtypes.xml",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

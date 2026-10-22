@@ -1,0 +1,400 @@
+{
+  "adapter": "opcua-nodeset",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "opcua": {
+        "aliases": {
+          "Double": "i=11",
+          "HasComponent": "i=47",
+          "HasModellingRule": "i=37",
+          "HasProperty": "i=46",
+          "HasSubtype": "i=45",
+          "HasTypeDefinition": "i=40",
+          "Organizes": "i=35",
+          "String": "i=12"
+        },
+        "capability_limits": [],
+        "instance_count": 0,
+        "models": [],
+        "namespace_uris": [
+          "http://example.com/UA/Machine/"
+        ],
+        "node_counts": {
+          "UAObjectType": 3,
+          "UAReferenceType": 1,
+          "UAVariable": 4,
+          "UAVariableType": 1
+        },
+        "reference_types": [
+          {
+            "abstract": false,
+            "inverse_name": "FedFrom",
+            "name": "FeedsInto",
+            "native_id": "ns=1;i=4001",
+            "supertype": "HierarchicalReferences",
+            "symmetric": false
+          }
+        ]
+      }
+    },
+    "format": "opcua-nodeset",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Machine",
+      "namespace": "http://example.com/UA/Machine/"
+    },
+    "paradigm": "rpc",
+    "protocol": "opcua",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Machine",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1010",
+          "opcua_abstract": true,
+          "opcua_browse_name": "1:EquipmentType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=58",
+              "targetName": "BaseObjectType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasProperty",
+              "target": "ns=1;i=6100",
+              "targetName": "AssetTag"
+            }
+          ],
+          "opcua_supertype": "BaseObjectType",
+          "source_location": "18:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6100",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_property": true,
+              "opcua_type_definition": "PropertyType",
+              "source_location": "43:1"
+            },
+            "field_number": null,
+            "key": "EquipmentType.AssetTag",
+            "name": "AssetTag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "EquipmentType",
+        "key_type": null,
+        "kind": "record",
+        "name": "EquipmentType",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "number",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": "double",
+          "max_items": null,
+          "max_length": null,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=2001",
+          "opcua_browse_name": "1:MeasurementType",
+          "opcua_declarations": [
+            "EngineeringUnits"
+          ],
+          "opcua_node_class": "VariableType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "i=63",
+              "targetName": "BaseDataVariableType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasProperty",
+              "target": "ns=1;i=6103",
+              "targetName": "EngineeringUnits"
+            }
+          ],
+          "opcua_supertype": "BaseDataVariableType",
+          "source_location": "83:1"
+        },
+        "fields": [],
+        "key": "MeasurementType",
+        "key_type": null,
+        "kind": "alias",
+        "name": "MeasurementType",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1011",
+          "opcua_browse_name": "1:PumpType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "ns=1;i=1010",
+              "targetName": "EquipmentType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6101",
+              "targetName": "FlowRate"
+            }
+          ],
+          "opcua_supertype": "EquipmentType",
+          "source_location": "27:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6100",
+              "opcua_inherited_from": "EquipmentType",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_property": true,
+              "opcua_type_definition": "PropertyType",
+              "source_location": "43:1"
+            },
+            "field_number": null,
+            "key": "PumpType.AssetTag",
+            "name": "AssetTag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6101",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "53:1"
+            },
+            "field_number": null,
+            "key": "PumpType.FlowRate",
+            "name": "FlowRate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PumpType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PumpType",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "ns=1;i=1012",
+          "opcua_browse_name": "1:ValveType",
+          "opcua_node_class": "ObjectType",
+          "opcua_references": [
+            {
+              "isForward": false,
+              "referenceType": "HasSubtype",
+              "target": "ns=1;i=1010",
+              "targetName": "EquipmentType"
+            },
+            {
+              "isForward": true,
+              "referenceType": "HasComponent",
+              "target": "ns=1;i=6102",
+              "targetName": "Position"
+            }
+          ],
+          "opcua_supertype": "EquipmentType",
+          "source_location": "35:1"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6100",
+              "opcua_inherited_from": "EquipmentType",
+              "opcua_modelling_rule": "Mandatory",
+              "opcua_node_class": "Variable",
+              "opcua_property": true,
+              "opcua_type_definition": "PropertyType",
+              "source_location": "43:1"
+            },
+            "field_number": null,
+            "key": "ValveType.AssetTag",
+            "name": "AssetTag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "double",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "ns=1;i=6102",
+              "opcua_modelling_rule": "Optional",
+              "opcua_node_class": "Variable",
+              "opcua_type_definition": "BaseDataVariableType",
+              "source_location": "63:1"
+            },
+            "field_number": null,
+            "key": "ValveType.Position",
+            "name": "Position",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ValveType",
+        "key_type": null,
+        "kind": "record",
+        "name": "ValveType",
+        "namespace": "http://example.com/UA/Machine/",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "opcua-nodeset/03-composition-subtypes.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "opcua-nodeset"
+  },
+  "fingerprint": "sha256:e1ef1aefcd8a1a7fe7247b3caea4d392e2c3d8b3eb3b7d61230182d6022edfc0",
+  "lint": {
+    "findings": 10,
+    "grade": "C",
+    "report_fingerprint": "580b0dd68abc089cced938920d47972aecd6818ac4287596a3152187cb05842b",
+    "score": 78,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

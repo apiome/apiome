@@ -214,7 +214,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 93 | 4 | C5 | [#5470](https://github.com/apiome/apiome/issues/5470) | FMT-9.3 | ROS 2 interface import (`.msg` / `.srv` / `.action`) | — | Stretch |
 | 94 | 4 | C5 | [#5471](https://github.com/apiome/apiome/issues/5471) | FMT-9.4 | SHACL, JSON-LD and OWL/RDFS import | — | Stretch |
 | 95 | 4 | C5 | [#5472](https://github.com/apiome/apiome/issues/5472) | FMT-9.5 | LwM2M / IPSO and Matter device-model import | — | Stretch |
-| 96 | 4 | C5 | [#5468](https://github.com/apiome/apiome/issues/5468) | FMT-9.1 | OPC UA NodeSet2 import | — | Stretch |
 | 97 | 4 | C5 | [#5409](https://github.com/apiome/apiome/issues/5409) | FMT-EPIC-9 | Industrial, IoT & semantic web | close after FMT-9.1…9.5 | Stretch |
 | 98 | 4 | C6 | [#5484](https://github.com/apiome/apiome/issues/5484) | FMT-11.3 | VSAM catalog and CICS BMS map import | — | Stretch |
 | 99 | 4 | C6 | [#5486](https://github.com/apiome/apiome/issues/5486) | FMT-11.4 | Natural / ADABAS DDM import | — | Stretch |
