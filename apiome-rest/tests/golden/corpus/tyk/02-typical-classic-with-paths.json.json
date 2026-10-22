@@ -372,13 +372,13 @@
   },
   "fingerprint": "sha256:84a38e035c5dee6c7ce1ec03db8a99272036f0fc1d13b71b7321a79ca4650dc9",
   "lint": {
-    "findings": 5,
+    "findings": 6,
     "grade": "B",
-    "report_fingerprint": "c5f2351e7e253d376e57a067d485e88916af988525767a6f9beb06e9b399f31a",
-    "score": 83,
+    "report_fingerprint": "71e4106a0140140a154fe1b7b6a891b3e17e8650d6013ddb4d57250265fdee07",
+    "score": 82,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 4
     }
   },

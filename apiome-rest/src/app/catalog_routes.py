@@ -46,7 +46,7 @@ from .catalog_detail import (
     derive_catalog_summary,
     resolve_source_payload,
 )
-from .catalog_parsed_model import derive_catalog_parsed_model
+from .catalog_parsed_model import derive_catalog_parsed_view
 from .conversion_evidence import (
     current_source_digest,
     evidence_response,
@@ -76,6 +76,7 @@ from .models import (
     CatalogItemDetailSchema,
     CatalogItemSchema,
     CatalogNormalizedSummary,
+    CatalogProvenanceSummary,
     CatalogProjectionRequest,
     CatalogProjectionResponse,
     CatalogSourceDescriptor,
@@ -425,7 +426,7 @@ async def get_catalog_item(
 
     summary = derive_catalog_summary(item.get("format_metadata"))
     source = derive_catalog_source(item.get("format_metadata"), item.get("metadata"))
-    parsed = derive_catalog_parsed_model(item)
+    parsed, provenance_summary = derive_catalog_parsed_view(item)
     tenant_id = auth_data["tenant_id"]
 
     tags = db.get_artifact_tags_for_projects(tenant_id, [item_id]).get(item_id, [])
@@ -438,6 +439,7 @@ async def get_catalog_item(
         summary=CatalogNormalizedSummary(**summary),
         source=CatalogSourceDescriptor(**source),
         parsed=parsed,
+        provenance_summary=CatalogProvenanceSummary(**provenance_summary),
         analysis=analysis_summary_for_item(tenant_id, item),
     )
 

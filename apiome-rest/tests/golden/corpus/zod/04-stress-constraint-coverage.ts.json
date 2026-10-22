@@ -414,7 +414,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.literalUnion."
+        },
         "fields": [],
         "key": "Collections_literalUnion",
         "key_type": null,
@@ -458,6 +461,8 @@
           }
         ],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections_literalUnion.literal.",
           "typescript_kind": "literal_union"
         },
         "fields": [],
@@ -476,6 +481,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.map.",
           "typescript_kind": "Map"
         },
         "fields": [],
@@ -504,6 +511,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.record.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -531,7 +540,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.tuple.item."
+        },
         "fields": [],
         "key": "Collections_tuple_item",
         "key_type": null,
@@ -551,7 +563,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Collections.variadic.item."
+        },
         "fields": [],
         "key": "Collections_variadic_item",
         "key_type": null,
@@ -590,7 +605,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Discriminated.circle."
+        },
         "fields": [
           {
             "constraints": {
@@ -671,7 +689,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Discriminated.rect."
+        },
         "fields": [
           {
             "constraints": null,
@@ -753,7 +774,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Discriminated.square."
+        },
         "fields": [
           {
             "constraints": {
@@ -1396,6 +1420,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.catchAll.",
           "typescript_index": [
             {
               "key_name": "key",
@@ -1447,7 +1473,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.extended."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1497,6 +1526,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.intersection.",
           "typescript_kind": "intersection"
         },
         "fields": [
@@ -1547,7 +1578,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.merged."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1596,7 +1630,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.nested."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1629,7 +1666,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape_nested.inner."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1662,7 +1702,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.partial."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1716,6 +1759,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.passthrough.",
           "zod_unknown_keys": "passthrough"
         },
         "fields": [
@@ -1750,7 +1795,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.required."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1784,6 +1832,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.strict.",
           "zod_unknown_keys": "strict"
         },
         "fields": [
@@ -2271,7 +2321,7 @@
     "confidence": 0.95,
     "format": "zod"
   },
-  "fingerprint": "sha256:f288d78c9f9a2485ff87c12df75eef80b3e3943cd41190eb1f8294840ed0fb74",
+  "fingerprint": "sha256:8fab5cfaedea466bbf3bd638b6ccb96a16034b68f2f3408f76a250ba167215e1",
   "lint": {
     "findings": 96,
     "grade": "F",

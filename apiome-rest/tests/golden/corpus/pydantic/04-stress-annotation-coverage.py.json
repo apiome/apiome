@@ -403,6 +403,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Containers.lookup.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -431,6 +433,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Containers.nested.item.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -463,7 +467,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Containers.pair.item."
+        },
         "fields": [],
         "key": "Containers_pair_item",
         "key_type": null,
@@ -734,7 +741,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Pet.animal."
+        },
         "fields": [],
         "key": "Pet_animal",
         "key_type": null,
@@ -1237,6 +1247,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Scalars.raw.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -1610,7 +1622,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.modern_union."
+        },
         "fields": [],
         "key": "Shape_modern_union",
         "key_type": null,
@@ -1629,7 +1644,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Shape.union."
+        },
         "fields": [],
         "key": "Shape_union",
         "key_type": null,
@@ -1690,7 +1708,7 @@
     "confidence": 0.95,
     "format": "pydantic"
   },
-  "fingerprint": "sha256:008e3306156689a2b1310aa6beae08cb5f96df4765da8ece563532a4251a3432",
+  "fingerprint": "sha256:060f1d2a8fbbece01cbe06f5691f56b1a889604b195873af29c25b78ce433088",
   "lint": {
     "findings": 64,
     "grade": "F",

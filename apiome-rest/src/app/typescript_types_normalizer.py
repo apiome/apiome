@@ -49,6 +49,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .inference_provenance import SYNTHESIZED, provenance_extras
 from .normalizer import Keys, Normalizer, coerce_constraints, normalize_ordering
 from .typescript_types_parser import LimitRecorder, TsDocument, TsLimit
 
@@ -224,6 +225,9 @@ class _Model:
         #: named type and again if it is converted, and must count once). Keyed by ``id`` and
         #: holding the node itself, so a collected node's id cannot be reused by a new one.
         self._noted: Dict[int, Any] = {}
+        #: Type name -> evidence for every type Apiome named rather than the source (FMT-8.6):
+        #: an anonymous object, union or map at a use site, or a generic instantiation.
+        self.synthesized: Dict[str, str] = {}
 
     def _note_limits(self, node: Any, location: str) -> None:
         """Record the declared limits a sibling reader attached to an AST node.
@@ -243,8 +247,19 @@ class _Model:
         """Claim a declared type's own name before any synthetic name can take it."""
         self._claimed.add(name)
 
-    def claim(self, parts: Sequence[str]) -> str:
-        """Reserve a unique name for a synthetic type built from a path of name parts."""
+    def claim(self, parts: Sequence[str], *, evidence: Optional[str] = None) -> str:
+        """Reserve a unique name for a synthetic type built from a path of name parts.
+
+        The name is recorded as :data:`~app.inference_provenance.SYNTHESIZED` (FMT-8.6): the
+        source wrote the shape, but Apiome made it a named type.
+
+        Args:
+            parts: The name parts — the use site's path (``Order``, ``address``).
+            evidence: What produced the type; defaults to naming the use site.
+
+        Returns:
+            The unique type name.
+        """
         base = "_".join(_sanitize(part) for part in parts if part) or "Value"
         name = base
         suffix = 2
@@ -252,7 +267,37 @@ class _Model:
             name = f"{base}_{suffix}"
             suffix += 1
         self._claimed.add(name)
+        site = ".".join(part for part in parts if part)
+        self.synthesized[name] = evidence or f"Named by Apiome after the place it is written: {site}."
         return name
+
+    def mark_synthesized(self, name: str, evidence: str) -> None:
+        """Record a type a sibling reader minted under a name the source never wrote.
+
+        Args:
+            name: The type name (a tRPC procedure's ``InvoiceListInput``).
+            evidence: What produced the type.
+        """
+        self.synthesized[name] = evidence
+
+    def stamped_types(self) -> List[Type]:
+        """Every built type, each Apiome-named one stamped ``synthesized`` with its evidence.
+
+        A type the source declared under its own name is left unstamped — declared is the
+        vocabulary's default (:mod:`app.inference_provenance`).
+
+        Returns:
+            The types in build order.
+        """
+        stamped: List[Type] = []
+        for type_ in self.types.values():
+            evidence = self.synthesized.get(type_.name)
+            if evidence is not None:
+                type_ = type_.model_copy(
+                    update={"extras": {**type_.extras, **provenance_extras(SYNTHESIZED, evidence)}}
+                )
+            stamped.append(type_)
+        return stamped
 
     def add(self, type_: Type) -> str:
         """Record a completed type and return its key."""
@@ -306,11 +351,13 @@ class _Model:
 
         if env:
             self._instantiated.add(declaration_id)
+            labels = [_label(env[p["name"]]) for p in declaration["typeParameters"]]
             name = self.claim(
-                [
-                    declaration["name"],
-                    *(_label(env[p["name"]]) for p in declaration["typeParameters"]),
-                ]
+                [declaration["name"], *labels],
+                evidence=(
+                    f"Instantiation of the generic {declaration['name']}<{', '.join(labels)}>; "
+                    "the source declares the generic, not this type."
+                ),
             )
         else:
             name = declaration["name"]
@@ -1229,7 +1276,7 @@ class TypeScriptTypesNormalizer(Normalizer, register=True):
             format=self.format,
             identity=ApiIdentity(name=name),
             title=name,
-            types=list(model.types.values()),
+            types=model.stamped_types(),
             raw={"typescript": dict(source.sources)} if include_raw else None,
             extras={TYPESCRIPT_EXTRAS_KEY: typescript},
         )

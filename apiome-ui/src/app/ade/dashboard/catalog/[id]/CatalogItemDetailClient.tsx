@@ -125,6 +125,7 @@ import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportSt
 import { CATALOG_EXPORT_VS_CONVERT_COPY, type CatalogConversion } from '@/app/utils/catalog-conversion';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
 import { resolveCatalogSource } from '@/app/utils/catalog-format-registry';
+import type { CatalogProvenanceSummary } from '@/app/utils/catalog-provenance';
 import { getProjectQualityHistory } from '@/app/utils/project-quality-score-history';
 import type { AnalysisSummary } from '@/app/utils/catalog-payload-analysis';
 import type { RelatedArtifact } from '@/app/utils/catalog-related-artifacts';
@@ -157,6 +158,8 @@ interface CatalogItemDetail {
   summary?: CatalogNormalizedSummary;
   /** The normalized, paradigm-tagged parsed entity groups (MFI-25.2); `[]`/absent when unavailable. */
   parsed?: CatalogParsedGroup[] | null;
+  /** FMT-8.6: per-class construct counts (declared / inferred / synthesized) and the inferred ratio. */
+  provenanceSummary?: CatalogProvenanceSummary | null;
   /** The tree-free native-payload-analysis summary (CPDO-1.1, #4794). */
   analysis?: AnalysisSummary | null;
   source?: CatalogSourceDescriptor;
@@ -744,6 +747,7 @@ export function CatalogItemDetailClient({
             qualityScore={orbs?.quality ?? null}
             qualityGrade={item.qualityGrade ?? null}
             highlightedAnchor={highlightedAnchor}
+            provenanceSummary={item.provenanceSummary ?? null}
             onOpenLint={() => selectTab('lint')}
             onOpenSource={showSourceTab}
           />

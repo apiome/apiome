@@ -308,6 +308,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: JsonValue.6.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -345,7 +347,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: JsonValue.JsonValueList."
+        },
         "fields": [],
         "key": "JsonValue_JsonValueList",
         "key_type": null,
@@ -370,7 +375,7 @@
     "confidence": 0.95,
     "format": "zod"
   },
-  "fingerprint": "sha256:5ec78af6698fe9f79d96199d76a865d1aed075fc78e22f57f5487183cf0f7825",
+  "fingerprint": "sha256:e5240fa69446116757072542aa9b757026742a39ef9a379c296014a5181b5d3b",
   "lint": {
     "findings": 13,
     "grade": "C",

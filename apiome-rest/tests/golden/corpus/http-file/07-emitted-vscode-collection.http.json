@@ -709,13 +709,13 @@
   },
   "fingerprint": "sha256:c4414f4bc7f291a5b70d5f4d7c0b8776d32f47803724a228fa1c8e278a2dfe0d",
   "lint": {
-    "findings": 14,
+    "findings": 15,
     "grade": "D",
-    "report_fingerprint": "62d1c0f4b10702a9fa8b75556d6f48a2e1c5a1fba0a73660ff4682bb04b7adac",
-    "score": 66,
+    "report_fingerprint": "886d48406ffd6729fe97bbabeb725306da10afe95573f6211ad4fae8bc3a8d84",
+    "score": 65,
     "severity_counts": {
       "error": 0,
-      "info": 6,
+      "info": 7,
       "warning": 8
     }
   },

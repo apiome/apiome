@@ -85,6 +85,12 @@ ledger instead of dropping it silently:
 | `FORMAT_MISMATCH` | The file is not Envoy or Istio configuration. |
 | `INPUT_MALFORMED`, `INPUT_ENCODING_INVALID` | The YAML is not valid, or the file is not UTF-8. |
 
+## What is inferred
+
+On the catalog item, every service, route and parameter is **inferred**: a route table is evidence of an API, not a declaration of one. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Supported formats](./supported-formats.md): the versions these importers read.

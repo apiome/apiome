@@ -28,9 +28,13 @@ fingerprint-hasher (:mod:`app.fingerprint`) and breaking-change-classifier
   IXH-5.4) is the second **unconditional** pack. It checks that every ``example``/``examples``
   in the artifact's *retained source document* satisfies the schema it sits next to — a
   cross-format defect wearing different syntax in OpenAPI, AsyncAPI, and JSON Schema — and
-  self-gates to nothing when the artifact retained no walkable document. Both unconditional
-  packs are published by :func:`unconditional_rule_packs`, which is what the rule catalogue
-  enumerates, so "what always runs" has exactly one definition.
+  self-gates to nothing when the artifact retained no walkable document.
+
+* **The "provenance" pack** (:class:`app.provenance_lint.ProvenanceRulePack`, FMT-8.6) is the
+  third. It reports the share of constructs Apiome *inferred* rather than read from a
+  declaration (:mod:`app.inference_provenance`), and fires only when there is one. Every
+  unconditional pack is published by :func:`unconditional_rule_packs`, which is what the rule
+  catalogue enumerates, so "what always runs" has exactly one definition.
 
 * **Format packs** register under a format key via the same ``register=True`` SPI the sibling
   registries use, and add the specifics their ecosystem cares about (a GraphQL pack, an
@@ -692,15 +696,31 @@ def _example_conformance_pack() -> RulePack:
     return _EXAMPLES_PACK
 
 
+# The inference-provenance pack (FMT-8.6) is the third unconditional pack: whether a construct
+# was declared or inferred is a property of the model, not of one syntax. Instantiated lazily
+# for the same one-directional-import reason as the examples pack.
+_PROVENANCE_PACK: Optional[RulePack] = None
+
+
+def _provenance_pack() -> RulePack:
+    """Return the shared, unconditional inference-provenance pack (stateless and pure)."""
+    global _PROVENANCE_PACK
+    if _PROVENANCE_PACK is None:
+        from .provenance_lint import ProvenanceRulePack
+
+        _PROVENANCE_PACK = ProvenanceRulePack()
+    return _PROVENANCE_PACK
+
+
 def unconditional_rule_packs() -> List[RulePack]:
     """Return every pack that runs for **all** formats, in execution order.
 
-    The two packs that carry no ``format`` key and are therefore never in the registry: the
-    cross-format hygiene pack and the example-conformance pack. Exposed so the rule catalogue
-    (:mod:`app.lint_rule_registry`) enumerates exactly what the engine runs, instead of keeping
-    its own list that could fall behind.
+    The packs that carry no ``format`` key and are therefore never in the registry: the
+    cross-format hygiene pack, the example-conformance pack and the inference-provenance pack.
+    Exposed so the rule catalogue (:mod:`app.lint_rule_registry`) enumerates exactly what the
+    engine runs, instead of keeping its own list that could fall behind.
     """
-    return [_COMMON, _example_conformance_pack()]
+    return [_COMMON, _example_conformance_pack(), _provenance_pack()]
 
 
 # ===========================================================================
@@ -732,6 +752,7 @@ def lint_canonical_model(
     findings: List[LintFinding] = list(extra_findings or [])
     findings.extend(_COMMON.lint(api))
     findings.extend(_example_conformance_pack().lint(api))
+    findings.extend(_provenance_pack().lint(api))
 
     base_categories: Tuple[str, ...] = ()
     paradigm_cls = get_paradigm_rule_pack(api.paradigm)

@@ -327,13 +327,13 @@
   },
   "fingerprint": "sha256:1c9336b8eb50d996fab818dad35fc2ffaf86c90255515ebd6c1206131dfb569c",
   "lint": {
-    "findings": 5,
+    "findings": 6,
     "grade": "B",
-    "report_fingerprint": "c185b41acc9f44120681b8b5634cacaee2e9ed6e3f955d7c14887114b04f931d",
-    "score": 83,
+    "report_fingerprint": "339a4f8c0e73f4014356d6022e138f6d8aa61a967c4d0a333589f94ce386743b",
+    "score": 82,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 4
     }
   },

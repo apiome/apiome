@@ -125,6 +125,19 @@ item's gate on upgrade. A tenant that wants a data contract **required before pu
 enables the `data-contract.*` ids in a style guide at `error`, and assigns that guide to the
 project — re-scoring under the guide is what makes the requirement binding.
 
+### Inferred sources can block publish
+
+The `provenance` pack has one rule, `provenance.inferred-construct-ratio`. It reports what share
+of an item's constructs Apiome **inferred** rather than read from a declaration — a schema read from
+an example body, a route read from a gateway's configuration — for example *62% of this item's
+constructs are inferred (13 of 21).* It fires only when something is inferred, and ships at `info`.
+
+A tenant that wants published APIs to come from declared sources sets the rule to `error` in a
+style guide and assigns the guide to the project. Publishing a Project converted from a catalog
+item with any inferred part is then refused with a style-guide error naming the source item, until
+a declared source is imported or the publish is forced with a reason. See
+[Declared, inferred and synthesized](../bring-in/inference-provenance.mdx).
+
 Multi-axis evaluations display algorithm `clx-axis-v1` — see [Axis score algorithm](./axis-score.md).
 Scanner-evaluation corpus and adapter deprecation policy:
 [scanner_evaluation.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md).

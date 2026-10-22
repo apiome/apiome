@@ -35,6 +35,7 @@ from .canonical_model import (
     StreamingMode,
     TypeRef,
 )
+from .inference_provenance import INFERRED
 from .normalizer import Keys, SchemaCoercer, normalize_ordering
 
 __all__ = [
@@ -46,7 +47,8 @@ __all__ = [
     "template_path",
 ]
 
-_PROVENANCE = "inferred"
+#: The shared FMT-8.6 class every construct this engine emits is stamped with.
+_PROVENANCE = INFERRED
 _REF_PREFIX = "#/components/schemas/"
 
 _UUID_RE = re.compile(

@@ -634,6 +634,8 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Service.envVars.",
           "typescript_kind": "Record"
         },
         "fields": [],
@@ -670,7 +672,7 @@
     "confidence": 0.95,
     "format": "dhall"
   },
-  "fingerprint": "sha256:a27e32083b763eceb851d259891821fd4e22fb2fdb08d54e10ebe73e82acb3a8",
+  "fingerprint": "sha256:90588c3f7520f25b94cb66154d809e8eb3c688c2abe535bf08573572f330cbd0",
   "lint": {
     "findings": 28,
     "grade": "F",

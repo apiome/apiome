@@ -1309,7 +1309,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Problem.rate_limit."
+        },
         "fields": [
           {
             "constraints": {
@@ -1390,7 +1393,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Problem.upstream."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1472,7 +1478,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Problem.validation."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1563,7 +1572,7 @@
     "confidence": 0.95,
     "format": "zod"
   },
-  "fingerprint": "sha256:133d6170070f2f0e226b9818f2de632a95c12b61fe5196e94db2c3dbee74bb39",
+  "fingerprint": "sha256:7fbf550ab5aff1c69f44da07a782b0c1494a800a6d1df44598afe674e9df8067",
   "lint": {
     "findings": 62,
     "grade": "F",

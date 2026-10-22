@@ -98,13 +98,13 @@
   },
   "fingerprint": "sha256:f51e374fb213bae8a06d6c7bbaa2e99b85163d4e44e7d65fca9b404d5dab8e17",
   "lint": {
-    "findings": 2,
+    "findings": 3,
     "grade": "A",
-    "report_fingerprint": "560644f42059e8131b328c21bfd67df1c9533c510d0b6e8b57bb65be070a8a44",
-    "score": 95,
+    "report_fingerprint": "5d2fa44b88961ca75ac0f84eb05ee7d95e5bf9849fc1a6196c92c03c5ce8550e",
+    "score": 94,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 1
     }
   },

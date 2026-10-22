@@ -88,6 +88,12 @@ Apiome lists these in the import's coverage ledger instead of guessing:
 | `FORMAT_MISMATCH` | The module does not import pydantic — standard dataclasses, for example. |
 | `INPUT_ENCODING_INVALID` | The file is not UTF-8 (for example, it was saved as UTF-16). |
 
+## What is inferred
+
+On the catalog item, a type Apiome names (an anonymous type or a generic instantiation) is **synthesized**. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Import Zod schemas](./zod-schema-import.md) and [Import TypeScript types](./typescript-types-import.md):

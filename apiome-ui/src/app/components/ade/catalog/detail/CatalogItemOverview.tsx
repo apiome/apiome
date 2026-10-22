@@ -49,6 +49,7 @@ import {
   type SurfaceKey,
 } from '@/app/utils/catalog-detail-insights';
 import { cn } from '@lib/utils';
+import type { CatalogProvenanceSummary } from '@/app/utils/catalog-provenance';
 
 import {
   CATALOG_SURFACE_TILES,
@@ -99,6 +100,8 @@ export interface CatalogItemOverviewProps {
   qualityGrade: string | null;
   /** An entity anchor a just-followed lint deep-link is highlighting. */
   highlightedAnchor?: string | null;
+  /** The per-class construct counts (FMT-8.6) behind the Provenance filter's ratio line. */
+  provenanceSummary?: CatalogProvenanceSummary | null;
   /** Open the Lint & score pane. */
   onOpenLint: () => void;
   /** Open the Source & code pane. */
@@ -118,6 +121,7 @@ export function CatalogItemOverview({
   qualityScore,
   qualityGrade,
   highlightedAnchor,
+  provenanceSummary = null,
   onOpenLint,
   onOpenSource,
 }: CatalogItemOverviewProps) {
@@ -207,7 +211,11 @@ export function CatalogItemOverview({
 
           {/* The actual normalized model. A lint finding deep-link (MFI-28.2) highlights its
               target entity here. */}
-          <CatalogParsedGroups parsed={parsed} highlightedAnchor={highlightedAnchor} />
+          <CatalogParsedGroups
+            parsed={parsed}
+            highlightedAnchor={highlightedAnchor}
+            provenanceSummary={provenanceSummary}
+          />
         </div>
 
         <aside className="cid-overview__aside">

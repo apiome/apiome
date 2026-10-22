@@ -1,0 +1,98 @@
+---
+title: "Declared, inferred and synthesized"
+description: "See which parts of a catalog item Apiome read and which it inferred."
+sidebar_position: 4.5
+tags: [catalog, import, provenance, lint, style-guides]
+---
+
+Some sources state an API outright. Others only show one: an `.http` file is a list of requests, a
+Postman collection has example bodies rather than schemas, and an Envoy route table is evidence of
+an API rather than a description of it. When Apiome imports one of these, part of what you see was
+**inferred**. Every catalog item labels each part, so you can tell what the source said from what
+Apiome worked out.
+
+## The three labels
+
+| Label | Meaning | Example |
+| --- | --- | --- |
+| **Declared** | The source states it. This is the default and carries no badge. | A request in a Postman collection; an `interface` in a TypeScript module |
+| **Inferred** | Apiome deduced it from an example, a sample or code. | A schema read from an example response body; a path template generalized from sample URLs |
+| **Synthesized** | Apiome supplied it. The shape may come from the source, but the source never named it. | `Order_lines_item`, the name Apiome gives an anonymous object inside `Order.lines` |
+
+Each inferred or synthesized part also records its **evidence**: one sentence saying what produced
+it, such as *Schema inferred from the example request body of POST /orders.*
+
+## Which imports infer
+
+| Import | What is inferred or synthesized |
+| --- | --- |
+| HTTP request files (`.http`, cURL) | Everything is inferred from the requests in the file. |
+| Postman collections | Request and response schemas are inferred from example bodies. A raw body that is not JSON is synthesized as a string. Requests, paths and parameters are declared. |
+| Envoy, Istio, Traefik, NGINX, HAProxy, Consul, Tyk Classic | Every route is inferred from the gateway configuration. A Tyk OAS document is declared. |
+| Kong, Gateway API | Routes are declared. A path recovered from a regex pattern is inferred. |
+| TypeScript, Zod, tRPC, Pydantic, CUE, Pkl, Dhall | Types are declared. An anonymous type or a generic instantiation that Apiome names is synthesized, and so is the type that holds a tRPC procedure's inline input or output. |
+
+Every other import, such as OpenAPI, AsyncAPI, protobuf or GraphQL, is declared throughout.
+
+## See it on a catalog item
+
+1. **Open** the catalog item from **Bring in → Catalog**.
+2. On the **Overview** tab, scroll to the parsed entities. An inferred entity carries an
+   **Inferred** badge and a synthesized one a **Synthesized** badge.
+3. **Hover** a badge to read its evidence.
+4. To see one kind only, choose **Declared**, **Inferred** or **Synthesized** in the
+   **Provenance** filter above the entities. Each option shows how many entities it holds, and
+   the line beside it states the inferred share of the whole item, for example *33% of this
+   item's constructs are inferred (4 of 12) · 1 synthesized*. Choose **All** to see everything
+   again.
+
+The **Provenance** filter appears only when the item has at least one inferred or synthesized
+entity.
+
+<Screenshot id="catalog-item-inference-provenance" alt="A Postman catalog item's Overview: the Provenance filter with All 5, Declared 3, Inferred 1 and Synthesized 1 and the inferred-share line, three declared operations, and the Order type marked Inferred and Order_lines_item marked Synthesized" />
+
+The share counts every service, operation, parameter, message, type and channel of the item, so
+it can differ from the entity counts in the filter. A parameter or message of an inferred
+operation counts as inferred too.
+
+## The inferred-share lint rule
+
+The `provenance.inferred-construct-ratio` rule reports the same share as a lint finding on the
+item's **Lint & score** tab, for example *62% of this item's constructs are inferred (13 of 21).*
+It appears only when at least one part is inferred, and it ships at `info`, so it costs a score
+one point at most.
+
+## Keep inferred APIs from being published
+
+A catalog item is not published itself: you
+[convert it to an OpenAPI Project](./convert-to-openapi.md) and publish the Project. To refuse
+publishing a Project whose catalog source was partly inferred:
+
+1. **Duplicate** the *Apiome Recommended* style guide (built-in guides are read-only).
+2. In the copy, set `provenance.inferred-construct-ratio` to **error**.
+3. **Assign** the guide to the Project, or to the whole workspace.
+
+From then on, publishing a Project converted from a catalog item with any inferred part is
+refused with a style-guide error that names the source item and its inferred share. Import a
+declared source instead (for example an OpenAPI document for the same API), or force-publish
+with a reason. See [Lint and quality](../build/lint-and-quality.md#inferred-sources-can-block-publish).
+
+## With the API
+
+`GET /v1/catalog/{tenant_slug}/{item_id}` returns the labels:
+
+- each entity in `parsed` carries `provenance` (`declared`, `inferred` or `synthesized`) and
+  `provenanceEvidence`;
+- `provenanceSummary` carries the `declared`, `inferred`, `synthesized` and `total` counts and the
+  `inferredRatio`.
+
+See the [catalog REST reference](../reference/rest/catalog.md).
+
+## Related
+
+- [Catalog](./catalog.mdx): the catalog item page and its tabs.
+- [Built-in lint rules](../build/lint-rules.md#provenance-inferred-construct-ratio): the rule's
+  id, category and severity.
+- [Import Zod schemas](./zod-schema-import.md), [Import a tRPC router](./trpc-router-import.md) and
+  [Envoy and Istio route import](./envoy-istio-route-import.md): imports that label what they
+  infer.

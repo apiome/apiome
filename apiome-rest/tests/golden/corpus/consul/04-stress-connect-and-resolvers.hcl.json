@@ -304,13 +304,13 @@
   },
   "fingerprint": "sha256:f58b1f066a819305f276a057a9ba91d96046f7294a148856eb953f2c02395847",
   "lint": {
-    "findings": 5,
+    "findings": 6,
     "grade": "B",
-    "report_fingerprint": "e5371c72b001ca0ab01bddc78bc0e58c9b03f41e67629d38b30c6b9f5f9b0c06",
-    "score": 83,
+    "report_fingerprint": "3d88b02e885f40bac07d102cb6e330c4943ecc8aca8f42c584b3e270f3962b7d",
+    "score": 82,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 4
     }
   },

@@ -195,7 +195,9 @@
                   "postman_body_raw": "{\n  \"customerId\": \"c-77\",\n  \"items\": [\n    { \"sku\": \"SKU-1\", \"quantity\": 2 }\n  ]\n}",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Order"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /orders."
                 },
                 "headers": [],
                 "key": "POST /orders#request",
@@ -228,7 +230,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /orders."
+        },
         "fields": [
           {
             "constraints": null,
@@ -291,15 +296,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:1361326e3d35cd346899f01736601c72e831e5d75d059f824e2ba42bd06ed1c5",
+  "fingerprint": "sha256:725dd5315033584cc61aad89db8069b4015a61acb9f0a894c5ff324c1572ff55",
   "lint": {
-    "findings": 4,
+    "findings": 5,
     "grade": "A",
-    "report_fingerprint": "615a1a2b5c0d2d2402fc3e497c9e942e720c3b173834ad4b26c8877fa4c3aa9b",
-    "score": 93,
+    "report_fingerprint": "47338c92cb302a636fc87f724605a5d9cf5fdab77350a61678a91aea6f801588",
+    "score": 92,
     "severity_counts": {
       "error": 0,
-      "info": 3,
+      "info": 4,
       "warning": 1
     }
   },

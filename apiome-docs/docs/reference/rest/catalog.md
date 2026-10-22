@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.291.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.292.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -731,6 +731,7 @@ analysed reports a declared ``unavailable`` status with a reason code, never a f
 | `summary` | `CatalogNormalizedSummary` | no | Short summary suitable for navigation and reference docs. |
 | `source` | `CatalogSourceDescriptor` | no | Provenance source for the record (for example human or imported). |
 | `parsed` | array of `CatalogParsedGroup` | no | Parsed. |
+| `provenanceSummary` | `CatalogProvenanceSummary` | no | FMT-8.6: per-class counts of the item's constructs (declared / inferred / synthesized) and the inferred ratio, from the same reconstructed model as parsed. |
 | `analysis` | `PayloadAnalysisSummary` | no | Summary of the revision-scoped native payload analysis: status, reason code, analyzer identity and node counts. Carries no payload material; fetch the native tree from GET /v1/catalog/{tenant_slug}/{item_id}/analysis, which requires imports:view. |
 
 ### `CatalogItemSchema` {#schema-catalogitemschema}

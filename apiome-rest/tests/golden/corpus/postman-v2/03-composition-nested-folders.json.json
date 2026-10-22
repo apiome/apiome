@@ -194,7 +194,9 @@
                   "postman_body_raw": "{ \"sku\": \"WID-0001\", \"quantity\": 1 }",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Item"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /carts/{cartId}/items."
                 },
                 "headers": [],
                 "key": "POST /carts/{cartId}/items#request",
@@ -247,7 +249,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /carts/{cartId}/items."
+        },
         "fields": [
           {
             "constraints": null,
@@ -305,15 +310,15 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:2666acd86773105f0f2ad2df5080b16f98e55478c6b08c07dceb50538f6b590f",
+  "fingerprint": "sha256:90b37e14519b4bb8f7f12e1e1b472aa43fd0cd9f3f90027163709eed12c5429b",
   "lint": {
-    "findings": 9,
+    "findings": 10,
     "grade": "C",
-    "report_fingerprint": "82daf1f7c9936ede63507c0a32e6fc915f27f87ab82a5ab6f953a6b91b1ecf82",
-    "score": 73,
+    "report_fingerprint": "347a40d60e02eebeb9044282b9dcb75394e91a51ff199f541b78a0b005267f8a",
+    "score": 72,
     "severity_counts": {
       "error": 0,
-      "info": 3,
+      "info": 4,
       "warning": 6
     }
   },

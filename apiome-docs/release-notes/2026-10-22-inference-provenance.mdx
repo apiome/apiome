@@ -1,0 +1,24 @@
+---
+slug: inference-provenance
+title: Declared, inferred and synthesized
+description: Every catalog item now labels what its source stated and what Apiome inferred.
+authors: [apiome]
+---
+
+A Postman collection has example bodies, not schemas; a route table is evidence of an API, not a
+description of one. Every catalog item now labels each part **declared**, **inferred** or
+**synthesized**, so an inferred fact never looks like a declared one.
+[How it works](/bring-in/inference-provenance).
+
+{/* truncate */}
+
+- **Badges with evidence.** On the **Overview** tab, an inferred or synthesized entity carries a
+  badge; hover it to read what produced it, such as *Schema inferred from the example request body
+  of POST /orders*.
+- **A Provenance filter.** Narrow the parsed entities to one kind, and read the inferred share of
+  the whole item beside it.
+- **A lint rule.** `provenance.inferred-construct-ratio` reports the inferred share on **Lint &
+  score**. Set it to `error` in a style guide to keep Projects converted from inferred sources from
+  being published.
+- **One vocabulary everywhere.** HTTP request files, Postman collections, the gateway importers and
+  the TypeScript, Zod, tRPC, Pydantic, CUE, Pkl and Dhall importers all use the same three labels.

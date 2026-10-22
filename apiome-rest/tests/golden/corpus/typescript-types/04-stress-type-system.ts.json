@@ -165,7 +165,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: ArrayForms.Array_Number."
+        },
         "fields": [],
         "key": "ArrayForms_Array_Number",
         "key_type": null,
@@ -191,7 +194,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: ArrayForms.ReadonlyArray_Boolean."
+        },
         "fields": [],
         "key": "ArrayForms_ReadonlyArray_Boolean",
         "key_type": null,
@@ -217,7 +223,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: ArrayForms.StringList."
+        },
         "fields": [],
         "key": "ArrayForms_StringList",
         "key_type": null,
@@ -557,7 +566,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: NestedGenericInstantiation.value.item."
+        },
         "fields": [
           {
             "constraints": null,
@@ -590,7 +602,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Nested.inner."
+        },
         "fields": [
           {
             "constraints": null,
@@ -623,7 +638,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Nested_inner.deep."
+        },
         "fields": [
           {
             "constraints": null,
@@ -889,7 +907,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: OrderPage.items.item."
+        },
         "fields": [
           {
             "constraints": null,
@@ -1092,7 +1113,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Tuple.item."
+        },
         "fields": [],
         "key": "Tuple_item",
         "key_type": null,
@@ -1131,7 +1155,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Union.circle."
+        },
         "fields": [
           {
             "constraints": {
@@ -1197,7 +1224,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: Union.square."
+        },
         "fields": [
           {
             "constraints": {
@@ -1319,7 +1349,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: VariadicTuple.item."
+        },
         "fields": [],
         "key": "VariadicTuple_item",
         "key_type": null,
@@ -1390,7 +1423,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: WithIndexSignature.additional."
+        },
         "fields": [],
         "key": "WithIndexSignature_additional",
         "key_type": null,
@@ -1418,7 +1454,7 @@
     "confidence": 0.95,
     "format": "typescript-types"
   },
-  "fingerprint": "sha256:5878e467f1f7604ae071053d3128a406cd1923960da121533292a47a6a34d7df",
+  "fingerprint": "sha256:70fcd59d9376db6810ca1a3a78fc3307a7622db9024fab2e07ad3ce412c52c48",
   "lint": {
     "findings": 57,
     "grade": "F",

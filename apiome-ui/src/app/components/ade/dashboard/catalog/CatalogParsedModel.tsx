@@ -18,6 +18,12 @@
  *   - a per-group **raw-model toggle** renders the group's normalized JSON in the shared read-only
  *     Monaco viewer (`JsonViewer` from `ui/code`, promoted out of `ui/mcp` by MFI-28.7).
  *
+ * FMT-8.6 (#5467) adds **inference provenance**: an entity Apiome inferred or synthesized carries a
+ * badge naming its class (its evidence in the tooltip), and — when the item has any such entity —
+ * a **Provenance** filter above the groups narrows every group to one class and states the
+ * inferred ratio. Declared is the default and carries no badge, so a declarative item looks as it
+ * did. The vocabulary and the pure helpers live in `utils/catalog-provenance`.
+ *
  * The `parsed` shape is intentionally presentation-agnostic (no colors, ordering hints, or markup);
  * all styling lives here: `parsedTagToneClass` maps each entity tag to a Tailwind tone, and
  * `deriveParsedSummaryNote` folds the groups into the mockup's `summaryNote` sub-line
@@ -35,6 +41,19 @@ import { Input } from '@/app/components/ui/Input';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
 import { JsonViewer } from '@/app/components/ui/code';
 import { STATUS_TONE_SOFT_CLASS } from '@/app/components/ui/statusVocabulary';
+import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
+import {
+  PROVENANCE_CLASSES,
+  PROVENANCE_PRESENTATION,
+  countEntitiesByProvenance,
+  hasNonDeclaredEntities,
+  matchesProvenanceFilter,
+  provenanceClassOf,
+  provenanceDescription,
+  provenanceRatioLine,
+  type CatalogProvenanceSummary,
+  type ProvenanceFilter,
+} from '@/app/utils/catalog-provenance';
 
 /** One field row on a parsed entity (mockup `.frow`): name / rendered type / description. */
 export interface CatalogParsedField {
@@ -54,6 +73,10 @@ export interface CatalogParsedEntity {
   /** Short human hint shown after the name (e.g. `→ [Order]`, `6 fields`). */
   meta?: string | null;
   fields: CatalogParsedField[];
+  /** FMT-8.6: `declared` (the default), `inferred` or `synthesized`. */
+  provenance?: 'declared' | 'inferred' | 'synthesized' | null;
+  /** What produced an inferred or synthesized entity; `null` when declared. */
+  provenanceEvidence?: string | null;
 }
 
 /** A group of parsed entities (mockup `entHTML` card): a titled, optionally-subtitled block. */
@@ -265,7 +288,79 @@ function ParsedEntityHeading({ entity }: { entity: CatalogParsedEntity }) {
       </span>
       <span className="cid-entity__name mono">{entity.name}</span>
       {entity.meta ? <span className="cid-entity__meta">{entity.meta}</span> : null}
+      <ParsedProvenanceBadge entity={entity} />
     </>
+  );
+}
+
+/**
+ * The provenance badge (FMT-8.6): drawn only for an entity Apiome inferred or synthesized, so a
+ * declared entity — the default — stays unmarked. The evidence rides in the tooltip and the
+ * accessible name, so the reason is one hover (or one screen-reader stop) away.
+ */
+function ParsedProvenanceBadge({ entity }: { entity: CatalogParsedEntity }) {
+  const provenance = provenanceClassOf(entity);
+  if (provenance === 'declared') return null;
+  const { label, toneClass } = PROVENANCE_PRESENTATION[provenance];
+  const description = provenanceDescription(entity);
+  return (
+    <span
+      data-testid="catalog-detail-parsed-provenance"
+      data-provenance={provenance}
+      className={cn('cid-prov-badge', toneClass)}
+      title={description}
+      aria-label={`${label}: ${description}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+/**
+ * The Provenance filter strip (FMT-8.6): one option per class with its entity count, and the
+ * inferred-ratio line the `provenance.inferred-construct-ratio` lint finding also reports.
+ */
+function ParsedProvenanceFilter({
+  value,
+  onChange,
+  counts,
+  ratioLine,
+}: {
+  value: ProvenanceFilter;
+  onChange: (value: ProvenanceFilter) => void;
+  counts: Record<ProvenanceFilter, number>;
+  ratioLine: string | null;
+}) {
+  return (
+    <Card data-testid="catalog-detail-provenance-filter" className="cid-panel cid-prov-filter">
+      <span className="cid-prov-filter__label">Provenance</span>
+      <Segmented
+        size="sm"
+        value={value}
+        onValueChange={(next) => onChange(next as ProvenanceFilter)}
+        aria-label="Filter entities by provenance"
+      >
+        <SegmentedItem value="all" data-testid="catalog-detail-provenance-option-all">
+          All <span className="cid-quiet mono">{counts.all}</span>
+        </SegmentedItem>
+        {PROVENANCE_CLASSES.map((provenance) => (
+          <SegmentedItem
+            key={provenance}
+            value={provenance}
+            data-testid={`catalog-detail-provenance-option-${provenance}`}
+            title={PROVENANCE_PRESENTATION[provenance].meaning}
+          >
+            {PROVENANCE_PRESENTATION[provenance].label}{' '}
+            <span className="cid-quiet mono">{counts[provenance]}</span>
+          </SegmentedItem>
+        ))}
+      </Segmented>
+      {ratioLine ? (
+        <span data-testid="catalog-detail-provenance-ratio" className="cid-note">
+          {ratioLine}
+        </span>
+      ) : null}
+    </Card>
   );
 }
 
@@ -356,9 +451,12 @@ function ParsedEntityDisclosure({
 function ParsedGroupCard({
   group,
   highlightedAnchor,
+  provenanceFilter,
 }: {
   group: CatalogParsedGroup;
   highlightedAnchor: string | null;
+  /** The Provenance filter's selection (FMT-8.6); `all` shows every entity. */
+  provenanceFilter: ProvenanceFilter;
 }) {
   const [query, setQuery] = useState('');
   const [rawOpen, setRawOpen] = useState(false);
@@ -367,7 +465,9 @@ function ParsedGroupCard({
   // The entities to render: filter matches, plus the deep-linked entity even when the filter would
   // hide it, so a lint finding always resolves to a visible, highlightable anchor.
   const visible = useMemo(() => {
-    const matched = filterParsedEntities(group.entities, query);
+    const matched = filterParsedEntities(group.entities, query).filter((entity) =>
+      matchesProvenanceFilter(entity, provenanceFilter),
+    );
     if (!highlightedAnchor) return matched;
     const alreadyShown = matched.some(
       (entity) => catalogEntityAnchorId(entity.name) === highlightedAnchor,
@@ -377,9 +477,9 @@ function ParsedGroupCard({
       (entity) => catalogEntityAnchorId(entity.name) === highlightedAnchor,
     );
     return pinned ? [...matched, pinned] : matched;
-  }, [group.entities, query, highlightedAnchor]);
+  }, [group.entities, query, highlightedAnchor, provenanceFilter]);
 
-  const filtering = query.trim() !== '';
+  const filtering = query.trim() !== '' || provenanceFilter !== 'all';
 
   return (
     <Card data-testid="catalog-detail-parsed-group" className="cid-panel">
@@ -463,7 +563,9 @@ function ParsedGroupCard({
             })
           ) : (
             <p data-testid="catalog-detail-parsed-no-matches" className="cid-empty">
-              No entities match “{query.trim()}”.
+              {query.trim()
+                ? `No entities match “${query.trim()}”.`
+                : `No ${PROVENANCE_PRESENTATION[provenanceFilter === 'all' ? 'declared' : provenanceFilter].label.toLowerCase()} entities in this group.`}
             </p>
           )}
         </div>
@@ -481,11 +583,17 @@ function ParsedGroupCard({
 export function CatalogParsedGroups({
   parsed,
   highlightedAnchor = null,
+  provenanceSummary = null,
 }: {
   parsed: CatalogParsedGroup[] | null | undefined;
   /** Anchor id of the entity a just-followed lint deep-link is highlighting, if any (MFI-28.2). */
   highlightedAnchor?: string | null;
+  /** The read's per-class construct counts (FMT-8.6), for the inferred-ratio line. */
+  provenanceSummary?: CatalogProvenanceSummary | null;
 }) {
+  const [provenanceFilter, setProvenanceFilter] = useState<ProvenanceFilter>('all');
+  const counts = useMemo(() => countEntitiesByProvenance(parsed), [parsed]);
+
   if (!parsed || parsed.length === 0) {
     return (
       <Card data-testid="catalog-detail-parsed-empty" className="cid-panel">
@@ -499,11 +607,20 @@ export function CatalogParsedGroups({
 
   return (
     <>
+      {hasNonDeclaredEntities(counts) ? (
+        <ParsedProvenanceFilter
+          value={provenanceFilter}
+          onChange={setProvenanceFilter}
+          counts={counts}
+          ratioLine={provenanceRatioLine(provenanceSummary)}
+        />
+      ) : null}
       {parsed.map((group, gi) => (
         <ParsedGroupCard
           key={`${group.title}-${gi}`}
           group={group}
           highlightedAnchor={highlightedAnchor}
+          provenanceFilter={provenanceFilter}
         />
       ))}
     </>

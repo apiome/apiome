@@ -320,7 +320,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "Named by Apiome after the place it is written: ApiError.problem."
+        },
         "fields": [],
         "key": "ApiError_problem",
         "key_type": null,
@@ -1604,7 +1607,7 @@
     "confidence": 0.95,
     "format": "pydantic"
   },
-  "fingerprint": "sha256:ecfca83e24a76a18176f924dd2aecfb0072fc43cb8dac02e6b3921438ef4e8ca",
+  "fingerprint": "sha256:4ac76373c2557f0e7b7a8bf3c919ebee172cf6d4f8e0426ab9ba6df162f29bf2",
   "lint": {
     "findings": 63,
     "grade": "F",

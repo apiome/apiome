@@ -136,7 +136,9 @@
                   "postman_body_raw": "{\n  \"title\": \"Buy milk\",\n  \"dueDate\": \"2026-01-31\",\n  \"done\": false\n}",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Task"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /tasks."
                 },
                 "headers": [],
                 "key": "POST /tasks#request",
@@ -169,7 +171,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /tasks."
+        },
         "fields": [
           {
             "constraints": null,
@@ -243,15 +248,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:a9fd9c35bd05be4f4e7ed13e12641f609e3549545ea6d063678fbcb73804cff0",
+  "fingerprint": "sha256:5e0dc9adf2fbbdc691d962a9ea746c2d1a40d09311189f28bbd26f70f8f06d3a",
   "lint": {
-    "findings": 8,
-    "grade": "B",
-    "report_fingerprint": "81a5f7d044529f1e3684f651ee1c31234d7ace1ca63ae17255f73438edcc1013",
-    "score": 80,
+    "findings": 9,
+    "grade": "C",
+    "report_fingerprint": "295c7276f6a3784c9149bc09084155b3b6de3e35706350bccc52aacb8a3adacc",
+    "score": 79,
     "severity_counts": {
       "error": 0,
-      "info": 4,
+      "info": 5,
       "warning": 4
     }
   },

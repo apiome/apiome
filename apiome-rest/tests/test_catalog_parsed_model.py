@@ -63,7 +63,8 @@ def _assert_stable_shape(parsed):
         assert isinstance(group["title"], str) and group["title"]
         assert group["entities"], "empty groups must be dropped, never emitted"
         for entity in group["entities"]:
-            assert set(entity) == {"name", "tag", "meta", "fields"}
+            assert set(entity) == {"name", "tag", "meta", "fields", "provenance", "provenance_evidence"}
+            assert entity["provenance"] in ("declared", "inferred", "synthesized")
             assert isinstance(entity["name"], str)
             assert isinstance(entity["tag"], str) and entity["tag"]
             for field in entity["fields"]:

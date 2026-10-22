@@ -140,7 +140,9 @@
                   "postman_body_raw": "{ \"sku\": \"WID-0001\", \"quantity\": 1 }",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Reservation"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /reservations."
                 },
                 "headers": [],
                 "key": "POST /reservations#request",
@@ -173,7 +175,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /reservations."
+        },
         "fields": [
           {
             "constraints": null,
@@ -231,15 +236,15 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:49494818b247112d6519edfc9818d34341cfd5bbbea18a5178414b38afc4267f",
+  "fingerprint": "sha256:2548280c5958593b30fff4f2af91224ce775aaeab9378b7ba2334fdb7110d844",
   "lint": {
-    "findings": 6,
+    "findings": 7,
     "grade": "B",
-    "report_fingerprint": "5336a3bd12e289535c69124030e9182fe20f42d41fef8267acbe7cf5e7c18ad4",
-    "score": 85,
+    "report_fingerprint": "e5f07906c153029c9df9f26a208d89474b869a9242a88aa411d560ae0e2ab9b9",
+    "score": 84,
     "severity_counts": {
       "error": 0,
-      "info": 3,
+      "info": 4,
       "warning": 3
     }
   },

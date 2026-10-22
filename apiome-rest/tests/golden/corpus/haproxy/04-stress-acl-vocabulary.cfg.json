@@ -735,13 +735,13 @@
   },
   "fingerprint": "sha256:9b5f67d2aaaf5b05cda756819d1ae30933a142942a467be814833f58acecfd74",
   "lint": {
-    "findings": 15,
+    "findings": 16,
     "grade": "C",
-    "report_fingerprint": "71c7e25d33af81c9004ef75e162ef14a64be190626d64f83e60c136e5d823579",
-    "score": 79,
+    "report_fingerprint": "4b51b602f02459caa2fd7896849d16dfa67d7af7a32916025c66c73a2f7e6d36",
+    "score": 78,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 14
     }
   },

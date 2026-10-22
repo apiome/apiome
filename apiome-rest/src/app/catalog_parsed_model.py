@@ -29,7 +29,7 @@ needs the canonical model types and the reconstruction needs the import-source a
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .canonical_model import (
     ApiParadigm,
@@ -46,10 +46,18 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .inference_provenance import (
+    DECLARED,
+    INFERENCE_BASED_ADAPTERS,
+    provenance_evidence,
+    provenance_of,
+    summarize_provenance,
+)
 
 __all__ = [
     "derive_parsed_model",
     "derive_catalog_parsed_model",
+    "derive_catalog_parsed_view",
     "reconstruct_catalog_api",
 ]
 
@@ -172,9 +180,35 @@ def _enum_value_row(value: EnumValue) -> Dict[str, Any]:
     }
 
 
-def _entity(name: str, tag: str, meta: Optional[str], fields: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Assemble one entity dict in the stable ``{name, tag, meta, fields}`` shape."""
-    return {"name": name, "tag": tag, "meta": meta, "fields": fields}
+def _entity(
+    name: str,
+    tag: str,
+    meta: Optional[str],
+    fields: List[Dict[str, Any]],
+    extras: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Assemble one entity dict in the stable ``{name, tag, meta, fields, provenance, …}`` shape.
+
+    Args:
+        name: The entity's display name.
+        tag: Its paradigm-specific kind.
+        meta: A short human hint, or ``None``.
+        fields: Its field rows.
+        extras: The ``extras`` of the canonical construct the entity renders, so the entity
+            carries that construct's FMT-8.6 provenance class and evidence. ``None`` (a
+            descriptive entity with no single construct behind it) reads as declared.
+
+    Returns:
+        The entity dict.
+    """
+    return {
+        "name": name,
+        "tag": tag,
+        "meta": meta,
+        "fields": fields,
+        "provenance": provenance_of(extras),
+        "provenance_evidence": provenance_evidence(extras),
+    }
 
 
 def _group(title: str, subtitle: Optional[str], entities: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -222,6 +256,7 @@ def _type_entity(type_: Type, *, tag_override: Optional[str] = None) -> Dict[str
         tag=tag_override or _type_tag(type_),
         meta=_type_meta(type_),
         fields=_type_fields(type_),
+        extras=type_.extras,
     )
 
 
@@ -274,6 +309,7 @@ def _graph_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
                 tag=operation.kind.value.upper(),
                 meta=f"→ {return_type}" if return_type else None,
                 fields=[_param_row(p) for p in operation.parameters],
+                extras=operation.extras,
             )
         )
     groups = [
@@ -301,6 +337,7 @@ def _rpc_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
                     }
                     for op in service.operations
                 ],
+                extras=service.extras,
             )
         )
     groups = [
@@ -317,6 +354,7 @@ def _channel_entity(channel: Channel) -> Dict[str, Any]:
         tag="CHANNEL",
         meta=channel.protocol,
         fields=[_field_row(p) for p in channel.parameters],
+        extras=channel.extras,
     )
 
 
@@ -341,6 +379,7 @@ def _event_message_entities(api: CanonicalApi) -> List[Dict[str, Any]]:
                     tag="MESSAGE",
                     meta=f"{len(fields)} fields" if fields else None,
                     fields=fields,
+                    extras=message.extras,
                 )
             )
     return entities
@@ -356,6 +395,7 @@ def _event_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
                 tag=_EVENT_OP_TAG.get(operation.kind, operation.kind.value.upper()),
                 meta=f"channel: {operation.channel_ref}" if operation.channel_ref else None,
                 fields=[_param_row(p) for p in operation.parameters],
+                extras=operation.extras,
             )
         )
     groups = [
@@ -384,6 +424,7 @@ def _generic_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
                 tag=tag,
                 meta=meta,
                 fields=[_param_row(p) for p in operation.parameters],
+                extras=operation.extras,
             )
         )
     groups = [
@@ -424,6 +465,7 @@ def _skill_entity(operation: Operation) -> Dict[str, Any]:
         tag="SKILL",
         meta=f"tags: {', '.join(operation.tags)}" if operation.tags else None,
         fields=[row for row in rows if row is not None],
+        extras=operation.extras,
     )
 
 
@@ -449,6 +491,7 @@ def _acp_agent_entity(service: Service) -> Dict[str, Any]:
         tag="AGENT",
         meta=f"tags: {', '.join(labels)}" if labels else None,
         fields=[row for row in rows if row is not None],
+        extras=service.extras,
     )
 
 
@@ -479,6 +522,7 @@ def _manifest_operation_entity(operation: Operation) -> Dict[str, Any]:
         tag="ACTION" if is_action else "ENDPOINT",
         meta=f"protocol: {protocol}" if protocol else None,
         fields=[row for row in rows if row is not None],
+        extras=operation.extras,
     )
 
 
@@ -576,7 +620,15 @@ def derive_parsed_model(api: Optional[CanonicalApi]) -> List[Dict[str, Any]]:
     if api is None:
         return []
     builder = _PARADIGM_BUILDERS.get(api.paradigm, _generic_groups)
-    return builder(api)
+    groups = builder(api)
+    # FMT-8.6: a non-declared entity whose construct recorded no evidence of its own falls back
+    # to the adapter's description of what it infers ("Every route is inferred from …").
+    fallback = INFERENCE_BASED_ADAPTERS.get(api.format)
+    for group in groups:
+        for entity in group["entities"]:
+            if entity["provenance"] != DECLARED and not entity["provenance_evidence"]:
+                entity["provenance_evidence"] = fallback
+    return groups
 
 
 def reconstruct_catalog_api(item: Dict[str, Any]) -> Optional[CanonicalApi]:
@@ -620,3 +672,21 @@ def derive_catalog_parsed_model(item: Dict[str, Any]) -> List[Dict[str, Any]]:
         The parsed entity-group list, or ``[]`` when no model could be reconstructed.
     """
     return derive_parsed_model(reconstruct_catalog_api(item))
+
+
+def derive_catalog_parsed_view(item: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Reconstruct a catalog item's model once and project both the parsed groups and its provenance.
+
+    The detail read needs the ``parsed`` entity groups (MFI-25.2) and, from FMT-8.6, the per-class
+    construct counts the provenance filter and the inferred-ratio line show. Both come from the same
+    reconstructed model, so it is rebuilt once.
+
+    Args:
+        item: The catalog item row.
+
+    Returns:
+        ``(parsed, provenance_summary)`` — the groups (``[]`` without a model) and the
+        :meth:`~app.inference_provenance.ProvenanceSummary.as_dict` counts (all zero without one).
+    """
+    api = reconstruct_catalog_api(item)
+    return derive_parsed_model(api), summarize_provenance(api).as_dict()

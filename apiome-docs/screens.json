@@ -313,6 +313,17 @@
       "data": "fixture:hive-catalog-item/overview.html"
     },
     {
+      "id": "catalog-item-inference-provenance",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/overview-provenance.html",
+      "scrollTo": "[data-provenance=\"synthesized\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogParsedModel.tsx",
+        "apiome-ui/src/app/utils/catalog-provenance.ts"
+      ]
+    },
+    {
       "id": "catalog-item-provenance",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",

@@ -76,7 +76,7 @@ RESEED_MIGRATION = (
     Path(__file__).resolve().parents[2]
     / "apiome-db"
     / "scripts"
-    / "V305__style_guide_builtin_reseed_site_manifest_pack_3976.sql"
+    / "V311__style_guide_builtin_reseed_provenance_pack_5467.sql"
 )
 
 

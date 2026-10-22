@@ -104,6 +104,12 @@ ledger rather than approximating them:
 | `FORMAT_MISMATCH` | The file is another language — for example HCL, CUE uploaded as Pkl, or Nickel. |
 | `INPUT_ENCODING_INVALID` | The file is not UTF-8 (for example, it was saved as UTF-16). |
 
+## What is inferred
+
+On the catalog item, a type Apiome names (an anonymous record or list item) is **synthesized**. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Supported formats](./supported-formats.md#format-cue): what these importers read, with

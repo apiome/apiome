@@ -401,13 +401,13 @@
   },
   "fingerprint": "sha256:9350dbf327dc18a9fe6eba1f5aead4fca5e48cee8108c2cd6365dd465238a7d2",
   "lint": {
-    "findings": 7,
+    "findings": 8,
     "grade": "C",
-    "report_fingerprint": "b8a4927592db281a51d1779498bfa048acfdec6fc3f5577bd82090dc32f72b69",
-    "score": 79,
+    "report_fingerprint": "1fc4b201296ac6049c3401fb827972157057e6b3707dc16b6a7fb6aad2899a01",
+    "score": 78,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 6
     }
   },

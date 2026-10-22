@@ -108,7 +108,9 @@
                   "postman_body_raw": "{ \"status\": \"complete\" }",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Statu"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of PATCH /samples/{sampleId}/status."
                 },
                 "headers": [],
                 "key": "PATCH /samples/{sampleId}/status#request",
@@ -202,7 +204,9 @@
                   "postman_body_raw": "{ \"label\": \"sample-a\", \"assay\": \"pcr\" }",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Sample"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /samples."
                 },
                 "headers": [],
                 "key": "POST /samples#request",
@@ -277,7 +281,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /samples."
+        },
         "fields": [
           {
             "constraints": null,
@@ -326,7 +333,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of PATCH /samples/{sampleId}/status."
+        },
         "fields": [
           {
             "constraints": null,
@@ -368,15 +378,15 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:9bf443d4171485141a9451e835027a88c2b45d457358eadbc961752d6c077d70",
+  "fingerprint": "sha256:ec82148ec01f7d0c678619b6cc9c6261af1cd41d9200d91588012df890dea1f4",
   "lint": {
-    "findings": 13,
+    "findings": 14,
     "grade": "D",
-    "report_fingerprint": "5ea5f5fc3be022799e3a19d451c740393bc602447d2d0f6341464577510414eb",
-    "score": 67,
+    "report_fingerprint": "07d138cccf3b80ce2bd0b82ffdd01ccc6b89e32b233e4c1c7cb81ca90e873333",
+    "score": 66,
     "severity_counts": {
       "error": 0,
-      "info": 5,
+      "info": 6,
       "warning": 8
     }
   },

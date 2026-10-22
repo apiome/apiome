@@ -99,6 +99,12 @@ ledger, under the schema's name, instead of dropping it silently:
 | `FORMAT_VERSION_UNSUPPORTED` | The module imports the Zod 4 API (`zod/v4`, `zod/mini`). |
 | `INPUT_ENCODING_INVALID` | The file is not UTF-8 (for example, it was saved as UTF-16). |
 
+## What is inferred
+
+On the catalog item, a schema Apiome names (an anonymous object or a generic instantiation) is **synthesized**. Those entities carry a badge with the evidence, and the
+**Provenance** filter on the **Overview** tab narrows to them — see
+[Declared, inferred and synthesized](./inference-provenance.mdx).
+
 ## Related
 
 - [Import TypeScript types](./typescript-types-import.md): the same shapes, written as types.

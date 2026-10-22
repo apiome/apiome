@@ -152,7 +152,9 @@
                   "postman_body_raw": "{\n  \"merchantId\": \"{{merchantId}}\",\n  \"amount\": { \"value\": 2599, \"currency\": \"EUR\" },\n  \"card\": { \"networkToken\": \"tok_test_4242\", \"expiryMonth\": 12, \"expiryYear\": 2030 },\n  \"captureMode\": \"AUTOMATIC\"\n}",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Authorization"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /authorizations."
                 },
                 "headers": [],
                 "key": "POST /authorizations#request",
@@ -234,7 +236,9 @@
                   "postman_body_raw": "{ \"amount\": { \"value\": 2599, \"currency\": \"EUR\" }, \"finalCapture\": true }",
                   "postman_body_schema": {
                     "$ref": "#/components/schemas/Capture"
-                  }
+                  },
+                  "provenance": "inferred",
+                  "provenance_evidence": "Schema inferred from the example request body of POST /authorizations/{authorizationId}/captures."
                 },
                 "headers": [],
                 "key": "POST /authorizations/{authorizationId}/captures#request",
@@ -353,7 +357,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /authorizations."
+        },
         "fields": [
           {
             "constraints": null,
@@ -434,7 +441,10 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Schema inferred from the example request body of POST /authorizations/{authorizationId}/captures."
+        },
         "fields": [
           {
             "constraints": null,
@@ -492,15 +502,15 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:8edf2362ad1e02e225a7f3d3e3c554f63e4420f5c70ebff7f18701dd0c8a4cd9",
+  "fingerprint": "sha256:15ce9f7e2f8ac6fb5cd9195238e16634b43e7221b0a2555f4a3f76956436a07f",
   "lint": {
-    "findings": 17,
+    "findings": 18,
     "grade": "D",
-    "report_fingerprint": "9d8970eeabd090e469929f663295ce5ac759e9358e33ab8d5fa848c871ef8652",
-    "score": 62,
+    "report_fingerprint": "00d6dbc2e9608df556bb0921c72ab870843c541bb91e6767baa70bc8fb50d36a",
+    "score": 61,
     "severity_counts": {
       "error": 0,
-      "info": 10,
+      "info": 11,
       "warning": 7
     }
   },
