@@ -1,0 +1,21 @@
+---
+slug: pydantic-model-import
+title: Import Pydantic models
+description: Catalog the Pydantic models in a Python module, read without running it.
+authors: [apiome]
+---
+
+Apiome now imports Pydantic models — the data layer of most FastAPI services — into the catalog,
+with their validation rules. [What gets imported](/bring-in/pydantic-model-import).
+
+{/* truncate */}
+
+- **Read, never run.** The Python source is parsed as text; your module is never imported, so its
+  top-level code never executes.
+- **Constraints come with them.** `Field(gt, le, max_length, pattern …)` and `Annotated` constraints
+  land on each field, along with defaults, descriptions and formats for `datetime`, `UUID`,
+  `EmailStr` and more.
+- **Models as you wrote them.** Inheritance, generic models, enums, `Optional` and unions, nested and
+  self-referencing models, and aliases (including `to_camel`).
+- **Declared, not guessed.** Models built with `create_model`, validators and computed fields are
+  listed in the coverage ledger.

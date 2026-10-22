@@ -1498,6 +1498,22 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "pydantic": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Pydantic 2 (and the v1 `validator` / `Config` spellings it recognizes)",
+                format_key="pydantic",
+                support=VersionSupport.UNGATED,
+                note="The source is read statically, and a model module declares no pydantic "
+                "version the reader branches on: the pydantic 2 vocabulary (`Field`, "
+                "`ConfigDict`, `Annotated` constraints, `field_validator`) is read, and the v1 "
+                "decorators are recognized as declared limits. Nothing is imported, so the "
+                "installed pydantic version never matters.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "trpc": VersionCoverage(
         reads=[
             FormatVersion(

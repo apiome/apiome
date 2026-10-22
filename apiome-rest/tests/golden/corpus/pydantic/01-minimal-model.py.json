@@ -1,0 +1,110 @@
+{
+  "adapter": "pydantic",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pydantic": {
+        "capability_limits": [],
+        "exports": [
+          "Beacon"
+        ],
+        "modules": [
+          "01-minimal-model.py"
+        ],
+        "root_module": "01-minimal-model.py",
+        "root_type": "Beacon"
+      }
+    },
+    "format": "pydantic",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Beacon",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Beacon",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Beacon.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Beacon.seen_at",
+            "name": "seen_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Beacon",
+        "key_type": null,
+        "kind": "record",
+        "name": "Beacon",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pydantic/01-minimal-model.py",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pydantic"
+  },
+  "fingerprint": "sha256:b474e351836eea6cb3b28b212f04f765d8d2cca031bc30a75825be7e6a98b289",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "237bf1a2281ec6856dfb192df9e89828d9b5748964cd7e2134f6884c18526c0c",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

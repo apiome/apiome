@@ -1,0 +1,1620 @@
+{
+  "adapter": "pydantic",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "pydantic": {
+        "capability_limits": [
+          {
+            "construct": "pydantic.decimal_precision",
+            "count": 1,
+            "detail": "`max_digits` / `decimal_places` have no canonical constraint. The field keeps the `decimal` scalar and both are recorded in `pydantic_decimal`.",
+            "locations": [
+              "SettlementRow.settledAmount"
+            ]
+          }
+        ],
+        "exports": [
+          "Currency",
+          "CaptureMode",
+          "AuthorizationResult",
+          "Money",
+          "Address",
+          "Customer",
+          "CardReference",
+          "AuthorizationRequest",
+          "Authorization",
+          "CaptureRequest",
+          "SettlementRow",
+          "ValidationProblem",
+          "RateLimitProblem",
+          "UpstreamProblem",
+          "ApiError",
+          "AuthorizationPage"
+        ],
+        "modules": [
+          "05-real-world-api-models.py"
+        ],
+        "root_module": "05-real-world-api-models.py",
+        "root_type": "Money"
+      }
+    },
+    "format": "pydantic",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Money",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Money",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "country_code"
+            },
+            "field_number": null,
+            "key": "Address.countryCode",
+            "name": "countryCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Address.line1",
+            "name": "line1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Address.line2",
+            "name": "line2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 3,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "postal_code"
+            },
+            "field_number": null,
+            "key": "Address.postalCode",
+            "name": "postalCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Address",
+        "key_type": null,
+        "kind": "record",
+        "name": "Address",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ApiError.problem",
+            "name": "problem",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ApiError_problem",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "request_id"
+            },
+            "field_number": null,
+            "key": "ApiError.requestId",
+            "name": "requestId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 599.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 400.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ApiError.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ApiError",
+        "key_type": null,
+        "kind": "record",
+        "name": "ApiError",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "ApiError_problem",
+        "key_type": null,
+        "kind": "union",
+        "name": "ApiError_problem",
+        "namespace": null,
+        "union_members": [
+          "ValidationProblem",
+          "RateLimitProblem",
+          "UpstreamProblem"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Authorization.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Money",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "authorization_id"
+            },
+            "field_number": null,
+            "key": "Authorization.authorizationId",
+            "name": "authorizationId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "authorized_amount",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Authorization.authorizedAmount",
+            "name": "authorizedAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Money",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "decided_at"
+            },
+            "field_number": null,
+            "key": "Authorization.decidedAt",
+            "name": "decidedAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "network_code",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Authorization.networkCode",
+            "name": "networkCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Authorization.result",
+            "name": "result",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "AuthorizationResult",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Authorization",
+        "key_type": null,
+        "kind": "record",
+        "name": "Authorization",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "has_more"
+            },
+            "field_number": null,
+            "key": "AuthorizationPage.hasMore",
+            "name": "hasMore",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationPage.items",
+            "name": "items",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Authorization",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "next_cursor",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "AuthorizationPage.nextCursor",
+            "name": "nextCursor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "AuthorizationPage",
+        "key_type": null,
+        "kind": "record",
+        "name": "AuthorizationPage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "pydantic_extra": "forbid"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Money",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "AUTOMATIC",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "capture_mode",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "AuthorizationRequest.captureMode",
+            "name": "captureMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "CaptureMode",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "AuthorizationRequest.card",
+            "name": "card",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "CardReference",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "idempotency_key"
+            },
+            "field_number": null,
+            "key": "AuthorizationRequest.idempotencyKey",
+            "name": "idempotencyKey",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^MER-[0-9]{6}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "merchant_id"
+            },
+            "field_number": null,
+            "key": "AuthorizationRequest.merchantId",
+            "name": "merchantId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "AuthorizationRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "AuthorizationRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AuthorizationResult.APPROVED",
+            "name": "APPROVED",
+            "value": "APPROVED"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AuthorizationResult.DECLINED",
+            "name": "DECLINED",
+            "value": "DECLINED"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AuthorizationResult.REFERRAL",
+            "name": "REFERRAL",
+            "value": "REFERRAL"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AuthorizationResult.EXPIRED_CARD",
+            "name": "EXPIRED_CARD",
+            "value": "EXPIRED_CARD"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "AuthorizationResult.INSUFFICIENT_FUNDS",
+            "name": "INSUFFICIENT_FUNDS",
+            "value": "INSUFFICIENT_FUNDS"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "AuthorizationResult",
+        "key_type": null,
+        "kind": "enum",
+        "name": "AuthorizationResult",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "CaptureMode.AUTOMATIC",
+            "name": "AUTOMATIC",
+            "value": "AUTOMATIC"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "CaptureMode.MANUAL",
+            "name": "MANUAL",
+            "value": "MANUAL"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "CaptureMode",
+        "key_type": null,
+        "kind": "enum",
+        "name": "CaptureMode",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "CaptureRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Money",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": true,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "final_capture",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "CaptureRequest.finalCapture",
+            "name": "finalCapture",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "CaptureRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "CaptureRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 80,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "cardholder_name_hint",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "CardReference.cardholderNameHint",
+            "name": "cardholderNameHint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 12.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "expiry_month"
+            },
+            "field_number": null,
+            "key": "CardReference.expiryMonth",
+            "name": "expiryMonth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 2099.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 2026.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "expiry_year"
+            },
+            "field_number": null,
+            "key": "CardReference.expiryYear",
+            "name": "expiryYear",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 16,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "network_token"
+            },
+            "field_number": null,
+            "key": "CardReference.networkToken",
+            "name": "networkToken",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CardReference",
+        "key_type": null,
+        "kind": "record",
+        "name": "CardReference",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.EUR",
+            "name": "EUR",
+            "value": "EUR"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.GBP",
+            "name": "GBP",
+            "value": "GBP"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Currency.USD",
+            "name": "USD",
+            "value": "USD"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "enum"
+        },
+        "fields": [],
+        "key": "Currency",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Currency",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "billing_address",
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Customer.billingAddress",
+            "name": "billingAddress",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Address",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "created_at"
+            },
+            "field_number": null,
+            "key": "Customer.createdAt",
+            "name": "createdAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^CUS-[0-9]{6}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "customer_id"
+            },
+            "field_number": null,
+            "key": "Customer.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 120,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "display_name"
+            },
+            "field_number": null,
+            "key": "Customer.displayName",
+            "name": "displayName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "email",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Customer.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Customer",
+        "key_type": null,
+        "kind": "record",
+        "name": "Customer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Money.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Currency",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Minor units; 1250 is EUR 12.50.",
+            "extras": {},
+            "field_number": null,
+            "key": "Money.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Money",
+        "key_type": null,
+        "kind": "record",
+        "name": "Money",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "retry_after_seconds"
+            },
+            "field_number": null,
+            "key": "RateLimitProblem.retryAfterSeconds",
+            "name": "retryAfterSeconds",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "rate_limit"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "RateLimitProblem.type",
+            "name": "type",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "RateLimitProblem",
+        "key_type": null,
+        "kind": "record",
+        "name": "RateLimitProblem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "authorization_id"
+            },
+            "field_number": null,
+            "key": "SettlementRow.authorizationId",
+            "name": "authorizationId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_decimal": {
+                "decimal_places": 2,
+                "max_digits": 15
+              },
+              "pydantic_name": "settled_amount"
+            },
+            "field_number": null,
+            "key": "SettlementRow.settledAmount",
+            "name": "settledAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "pydantic_name": "settlement_date"
+            },
+            "field_number": null,
+            "key": "SettlementRow.settlementDate",
+            "name": "settlementDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SettlementRow",
+        "key_type": null,
+        "kind": "record",
+        "name": "SettlementRow",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "UpstreamProblem.component",
+            "name": "component",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "UpstreamProblem.transient",
+            "name": "transient",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "upstream"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "UpstreamProblem.type",
+            "name": "type",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "UpstreamProblem",
+        "key_type": null,
+        "kind": "record",
+        "name": "UpstreamProblem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ValidationProblem.field",
+            "name": "field",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ValidationProblem.message",
+            "name": "message",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "validation"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "ValidationProblem.type",
+            "name": "type",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ValidationProblem",
+        "key_type": null,
+        "kind": "record",
+        "name": "ValidationProblem",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pydantic/05-real-world-api-models.py",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 17
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pydantic"
+  },
+  "fingerprint": "sha256:ecfca83e24a76a18176f924dd2aecfb0072fc43cb8dac02e6b3921438ef4e8ca",
+  "lint": {
+    "findings": 63,
+    "grade": "F",
+    "report_fingerprint": "c6038869a2dc602cc43b88619d374bac72b72820a7dfc1f61781202c7e550181",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 46,
+      "warning": 17
+    }
+  },
+  "snapshot_version": 1
+}

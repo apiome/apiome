@@ -2,7 +2,8 @@
 
 Fixtures for **FMT-8.4** ([#5465](https://github.com/apiome/apiome/issues/5465)). Pydantic is Python's
 equivalent of Zod and — unusually — needs no external toolchain, because the REST service is itself
-Python. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+Python. Owned by the `pydantic` adapter (`apiome-rest/src/app/pydantic_import_source.py`); valid
+entries are pinned by golden snapshots under `apiome-rest/tests/golden/corpus/pydantic/`.
 
 > **No user module is ever executed.** FMT-8.4 parses source with `ast`, because importing arbitrary
 > user Python is an unacceptable execution risk in a multi-tenant service. That decision is what makes
