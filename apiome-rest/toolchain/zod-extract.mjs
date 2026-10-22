@@ -126,6 +126,23 @@ function readStdin() {
 }
 
 /**
+ * The flag that turns on Node's permission model for this runtime. It is `--permission` from Node
+ * 22.13 / 23.5 and `--experimental-permission` on Node 20 (the image's runtime); older Nodes have
+ * no permission model, so the extractor refuses to evaluate user code there rather than run it
+ * unsandboxed.
+ */
+function permissionFlag() {
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  if (major > 22 || (major === 22 && minor >= 13)) {
+    return '--permission';
+  }
+  if (major >= 20) {
+    return '--experimental-permission';
+  }
+  throw new Error(`Node ${process.versions.node} has no permission model; Node 20 or newer is required`);
+}
+
+/**
  * Re-run this script under Node's permission model, feeding it the same request. Only the
  * toolchain directory is readable; nothing is writable; child processes, workers, addons and WASI
  * are denied. The parent never evaluates user code itself.
@@ -133,7 +150,7 @@ function readStdin() {
 function reexecUnderPermission(input) {
   const result = spawnSync(
     process.execPath,
-    ['--permission', `--allow-fs-read=${SCRIPT_DIR}`, SCRIPT_PATH],
+    [permissionFlag(), `--allow-fs-read=${SCRIPT_DIR}`, SCRIPT_PATH],
     // An empty environment: nothing the service was started with is visible to user code.
     { input, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: {} },
   );
