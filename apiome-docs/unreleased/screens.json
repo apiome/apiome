@@ -21,6 +21,15 @@
       "fallback": "fixture:hive-primitives/registry.html"
     },
     {
+      "id": "primitives-how-resolution-works",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/resolution.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/primitives/RefResolutionDialog.tsx"
+      ]
+    },
+    {
       "id": "mcp-servers",
       "route": "/ade/dashboard/mcp",
       "waitFor": "[data-testid=\"page-header\"]",

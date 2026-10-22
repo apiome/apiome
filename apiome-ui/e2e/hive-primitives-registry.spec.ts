@@ -22,6 +22,8 @@ import AxeBuilder from '@axe-core/playwright';
  *     whether it works is a question about line breaking, which jsdom does not do.
  *   • **The alert tile is marked rather than washed** — the `--warn` hairline is really inset
  *     on it, and its label is really the page's own quiet ink rather than a tone's.
+ *   • **The quiet pass (HIVE-11.8)** — the types table's first row is within 560 px of the top
+ *     at 1440 × 900 now the strip is a facts line, and the unresolved chip is a real button.
  *   • **"axe: zero serious/critical violations"** on all four panes and both dialogs, in every
  *     theme.
  *
@@ -71,10 +73,20 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1100, 1024, 900, 768, 640, 420];
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-primitives');
 
 /** The surfaces the jsdom suite dumps. */
-type Fixture = 'registry' | 'namespaces' | 'resolver' | 'settings' | 'editor' | 'import';
+type Fixture =
+  | 'registry'
+  | 'namespaces'
+  | 'resolver'
+  | 'settings'
+  | 'resolution'
+  | 'editor'
+  | 'import';
 
-/** The four panes — mounted inside a page column. */
-const PANE_FIXTURES: Fixture[] = ['registry', 'namespaces', 'resolver', 'settings'];
+/**
+ * The four panes — mounted inside a page column — and the registry pane with the
+ * "How resolution works" dialog open over it (HIVE-11.8), which carries its own portal.
+ */
+const PANE_FIXTURES: Fixture[] = ['registry', 'namespaces', 'resolver', 'settings', 'resolution'];
 
 /** The two overlays — mounted over an empty canvas, the way Radix portals them. */
 const DIALOG_FIXTURES: Fixture[] = ['editor', 'import'];
@@ -306,13 +318,80 @@ test.describe('the grids collapse rather than overflow', () => {
 });
 
 /* -------------------------------------------------------------------------
-   The alert tile is marked, not washed
+   The facts line (HIVE-11.8, #5604), and the strip behind Show stats
    ------------------------------------------------------------------------- */
 
-test.describe('the KPI strip', () => {
+/**
+ * Reveal the KPI strip the fixture holds behind **Show stats**. The fixture is static markup,
+ * so the toggle cannot run; the region's `hidden` is lifted the way the toggle would.
+ *
+ * @param page The Playwright page.
+ */
+async function revealStats(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.querySelectorAll('.facts-line__stats[hidden]').forEach((node) => {
+      node.removeAttribute('hidden');
+    });
+  });
+}
+
+test.describe('the facts line', () => {
+  /** The top edge of the types table's first row, in CSS pixels from the top of the document. */
+  async function firstTypeRowTop(page: Page): Promise<number> {
+    return page
+      .locator('.prm-types tbody tr')
+      .first()
+      .evaluate((row) => (row as Element).getBoundingClientRect().top + window.scrollY);
+  }
+
+  test('puts the first type row within 560px of the top at 1440 × 900', async ({ page }) => {
+    // It was ≈ 815 px behind the five-tile strip and the two-card rail.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await mount(page, 'registry');
+    expect(await firstTypeRowTop(page)).toBeLessThanOrEqual(560);
+  });
+
+  test('draws the facts line as one line at 1440px', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await mount(page, 'registry');
+    const height = await page
+      .locator('.facts')
+      .first()
+      .evaluate((node) => (node as Element).getBoundingClientRect().height);
+    expect(height).toBeLessThan(48);
+  });
+
+  test('makes the unresolved count a danger chip the keyboard can reach', async ({ page }) => {
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, 'registry');
+
+    const chip = page.locator('[data-testid="primitives-fact-unresolved"]');
+    await expect(chip).toHaveJSProperty('tagName', 'BUTTON');
+    const [fill, soft] = await Promise.all([
+      chip.evaluate((node) => getComputedStyle(node).backgroundColor),
+      page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.style.background = 'var(--danger-soft)';
+        document.body.appendChild(probe);
+        const colour = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return colour;
+      }),
+    ]);
+    expect(fill).toBe(soft);
+
+    await chip.focus();
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-testid'))).toBe(
+      'primitives-fact-unresolved'
+    );
+  });
+});
+
+test.describe('the KPI strip behind Show stats', () => {
   test('marks the unresolved tile with a hairline and leaves its ground alone', async ({ page }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
     await mount(page, 'registry');
+    await revealStats(page);
 
     const tile = page.locator('[data-testid="primitives-kpi-unresolved"]');
     const plain = page.locator('[data-testid="primitives-kpi-core"]');
@@ -327,6 +406,7 @@ test.describe('the KPI strip', () => {
   test('is a real button, so the keyboard can reach the resolver', async ({ page }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
     await mount(page, 'registry');
+    await revealStats(page);
 
     const tile = page.locator('[data-testid="primitives-kpi-unresolved"]');
     await expect(tile).toHaveJSProperty('tagName', 'BUTTON');

@@ -3,8 +3,12 @@
 /**
  * The registry tab's right rail (HIVE-6.5, #5316).
  *
- * Authority: `docs/mockups/build/primitives.html` §Registry → *Right rail* — the relative
- * `$ref` explainer with its worked example, and the last eight imports.
+ * Authority: `docs/mockups/build/primitives.html` §Registry → *Right rail* — the last eight
+ * imports.
+ *
+ * HIVE-11.8 (#5604) moved the rail's other card, the relative `$ref` explainer with its worked
+ * example, into `RefResolutionDialog`, opened from the **How resolution works** ghost link in the
+ * page description; "Recent activity" stays.
  *
  * ### What this replaces
  *
@@ -13,16 +17,11 @@
  * `text-emerald-300` and `text-indigo-300` spans, and three `bg-*-400` dots chosen in a helper
  * that returned Tailwind palette classes. None of those could follow a theme; the sample was
  * literally a dark box in Whiteboard.
- *
- * The example is data now ({@link REF_RESOLUTION_EXAMPLE}) rather than four hand-written lines
- * with `<br />` between them, so what is a comment and what is code is a property of the line
- * rather than of the markup around it.
  */
 
 import * as React from 'react';
-import { Activity, Waypoints } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
-import { Button } from '@/app/components/ui/Button';
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/Card';
 import { STATUS_TONE_DOT_CLASS } from '@/app/components/ui/statusVocabulary';
 import { cn } from '@lib/utils';
@@ -32,61 +31,23 @@ import {
   type PrimitiveImportActivity,
 } from '@/app/ade/dashboard/primitives/primitivesRegistryTypes';
 
-import {
-  REF_RESOLUTION_EXAMPLE,
-  importActivityTitle,
-  importActivityTone,
-} from './primitivesModel';
+import { importActivityTitle, importActivityTone } from './primitivesModel';
 
 export interface RegistryRailProps {
   /** The last few imports, newest first. */
   imports: readonly PrimitiveImportActivity[];
   /** True while the registry overview is being read. */
   loading: boolean;
-  /** Switch the screen to the Resolver tab. */
-  onOpenResolver: () => void;
 }
 
 /**
  * Render the rail. See {@link RegistryRailProps}.
  *
- * @returns The `$ref` explainer card and the recent-activity card, stacked.
+ * @returns The recent-activity card.
  */
-export default function RegistryRail({ imports, loading, onOpenResolver }: RegistryRailProps) {
+export default function RegistryRail({ imports, loading }: RegistryRailProps) {
   return (
     <aside className="prm-rail" aria-label="Registry reference">
-      <Card className="prm-rail__card">
-        <div className="prm-rail__head">
-          <Waypoints aria-hidden />
-          <span>
-            Relative <span className="mono">$ref</span> resolution
-          </span>
-        </div>
-        <p className="prm-rail__desc">
-          References resolve against the type’s import-source base URL in the API server.
-        </p>
-        <pre className="prm-code" data-testid="primitives-ref-example">
-          {REF_RESOLUTION_EXAMPLE.map((line) => (
-            <span
-              key={line.text}
-              className={line.comment ? 'prm-code__comment' : undefined}
-              data-comment={line.comment ? 'true' : undefined}
-            >
-              {line.text}
-            </span>
-          ))}
-        </pre>
-        <Button
-          variant="link"
-          size="sm"
-          className="prm-rail__link"
-          onClick={onOpenResolver}
-          data-testid="primitives-open-resolver-rail"
-        >
-          Open reference resolver →
-        </Button>
-      </Card>
-
       <Card className="prm-rail__card prm-rail__card--flush">
         <CardHeader className="prm-rail__activity-head">
           <CardTitle className="prm-rail__title">

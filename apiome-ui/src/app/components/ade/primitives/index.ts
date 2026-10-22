@@ -10,6 +10,8 @@
  */
 
 export { default as PrimitivesKpiStrip } from './PrimitivesKpiStrip';
+export { default as PrimitivesFactsLine } from './PrimitivesFactsLine';
+export { default as RefResolutionDialog } from './RefResolutionDialog';
 export { default as TypeCollectionsPanel } from './TypeCollectionsPanel';
 export { default as RegistryRail } from './RegistryRail';
 export { default as PrimitiveTypesTable } from './PrimitiveTypesTable';
@@ -21,6 +23,8 @@ export { default as RegistrySettingsPanel } from './RegistrySettingsPanel';
 export type { NamespaceSelectOptions, TypeCollectionsPanelProps } from './TypeCollectionsPanel';
 export type { PrimitiveRow, PrimitiveTypesTableProps } from './PrimitiveTypesTable';
 export type { PrimitivesKpiStripProps } from './PrimitivesKpiStrip';
+export type { PrimitivesFactsLineProps } from './PrimitivesFactsLine';
+export type { RefResolutionDialogProps } from './RefResolutionDialog';
 export type { RegistryRailProps } from './RegistryRail';
 export type { NamespacesPanelProps } from './NamespacesPanel';
 export type { NamespaceEditorDialogProps } from './NamespaceEditorDialog';

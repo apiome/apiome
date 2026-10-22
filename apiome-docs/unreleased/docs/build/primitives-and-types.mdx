@@ -16,12 +16,25 @@ Types come from two scopes: **core system types** every tenant can use (read-onl
 
 ## Registry
 
-<Screenshot id="primitives" alt="Primitives & types, Registry tab: counts of core and tenant types, type collections and the types table" />
+<Screenshot id="primitives" alt="Primitives & types, Registry tab: the facts line under the header, then type collections, Recent activity and the types table" />
 
-The tiles count **Core system types**, **Tenant types**, **Imported schemas**, **Properties bound**
-and **Unresolved $ref** (click it to jump to the resolver). The table lists each type's **Name**,
-**Namespace**, **Category**, **Description**, **Usage** and **Type**; search it, pick a category, and
-tick **Show system** to include the core types.
+Under the header, one line sums up the registry: how many **core system types**, **tenant types**,
+**imported schemas** and **properties bound**, and how many **unresolved $ref** there are. When any
+reference is unresolved, that count is a red chip — **click it** to open the **Resolver** tab.
+**Click “Show stats”** to open the full statistics in place; Apiome remembers the choice in this
+browser.
+
+Beside the type collections, **Recent activity** lists the last eight imports. The table lists each
+type's **Name**, **Namespace**, **Category**, **Description**, **Usage** and **Type**; search it,
+pick a category, and tick **Show system** to include the core types.
+
+### How resolution works
+
+**Click “How resolution works”** in the page description to see how a relative `$ref` is resolved:
+against the type's import-source base URL, with a worked example. **Click “Open reference
+resolver”** to go to the **Resolver** tab, or **“Got it”** to close it.
+
+<Screenshot id="primitives-how-resolution-works" alt="The How resolution works dialog: how a relative $ref resolves against the type's base URL, with a worked example" />
 
 **Click a type** to open its page:
 

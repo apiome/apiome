@@ -167,6 +167,60 @@ export function registryKpis(stats: RegistryCoverageStats | null): RegistryKpi[]
   ];
 }
 
+/** One fact on the registry's facts line (HIVE-11.8, #5604). */
+export interface RegistryFact {
+  /** Stable id — the same as the matching {@link RegistryKpi}'s, and the `data-testid` suffix. */
+  id: RegistryKpi['id'];
+  /** The figure, already formatted for the reader's locale. */
+  value: string;
+  /** The words after the figure, singular or plural to agree with it. */
+  label: string;
+  /**
+   * True when the fact is asking to be acted on — the unresolved-`$ref` count above zero. The
+   * line draws it as a `danger` chip that opens the Resolver tab.
+   */
+  alert?: boolean;
+}
+
+/**
+ * The registry's five numbers, folded into one line (HIVE-11.8, #5604).
+ *
+ * The same five counts as {@link registryKpis} — core, tenant, imported, bound, unresolved —
+ * from the same `GET /api/primitives/stats` read, so nothing the strip says is lost; the strip
+ * itself stays one **Show stats** click away. Only the unresolved count can be an alert, and only
+ * when it is above zero: a chip that opens a resolver with nothing to resolve is a promise the
+ * Resolver tab cannot keep.
+ *
+ * @param stats The coverage stats, or `null` before the first read lands.
+ * @returns The five facts in the strip's order, or an empty array when there is nothing to draw.
+ */
+export function registryFacts(stats: RegistryCoverageStats | null): RegistryFact[] {
+  if (!stats) return [];
+
+  /** `1 tenant type`, `3 tenant types`. */
+  const count = (n: number, singular: string, plural: string) => ({
+    value: n.toLocaleString(),
+    label: n === 1 ? singular : plural,
+  });
+  const unresolved = stats.unresolved_ref_count;
+
+  return [
+    { id: 'core', ...count(stats.core_type_count, 'core system type', 'core system types') },
+    { id: 'tenant', ...count(stats.tenant_type_count, 'tenant type', 'tenant types') },
+    { id: 'imported', ...count(stats.imported_count, 'imported schema', 'imported schemas') },
+    {
+      id: 'bound',
+      ...count(stats.properties_bound_count, 'property bound', 'properties bound'),
+    },
+    {
+      id: 'unresolved',
+      value: unresolved.toLocaleString(),
+      label: 'unresolved $ref',
+      alert: unresolved > 0,
+    },
+  ];
+}
+
 // ---------------------------------------------------------------------------------------
 // Scopes, namespaces and their pills
 // ---------------------------------------------------------------------------------------

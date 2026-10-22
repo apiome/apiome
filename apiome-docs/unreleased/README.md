@@ -47,7 +47,7 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 
 | Rail item id | Screenshot ids |
 | --- | --- |
-| `primitives` | `primitives`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing` |
+| `primitives` | `primitives`, `primitives-how-resolution-works`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing` |
 | `mcp` | `mcp-servers`, `mcp-servers-grid`, `mcp-endpoint-versions`, `mcp-endpoint-capabilities`, `mcp-endpoint-lint`, `mcp-endpoint-settings`, `mcp-analytics`, `mcp-capabilities`, `mcp-compare`, `import-wizard-mcp`, `agent-access`, `agent-access-keys`, `agent-access-usage` |
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |

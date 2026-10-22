@@ -96,6 +96,10 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     roadmapRef: 'HIVE-6.2',
   },
   {
+    // HIVE-11.8 (#5604) re-dumped `registry.html` with the quiet pass applied: the five-tile
+    // strip folded into a facts line (the strip is behind Show stats) and the rail's `$ref`
+    // card moved into a dialog. There is no primitives proposal mockup, so the pairing stays on
+    // `build/primitives.html`; the facts line follows `proposals/catalog-quiet.html`.
     id: 'primitives',
     mockup: 'build/primitives.html',
     route: '/ade/dashboard/primitives',
