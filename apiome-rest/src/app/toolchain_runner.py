@@ -905,6 +905,8 @@ def run_tool_blocking(
     timeout: Optional[float] = None,
     policy: Optional[SandboxPolicy] = None,
     thread_name: str = "toolchain-run",
+    cwd: Optional[str] = None,
+    extra_env: Optional[Dict[str, str]] = None,
 ) -> ToolRunResult:
     """Run a registered tool to completion from synchronous code.
 
@@ -921,6 +923,10 @@ def run_tool_blocking(
         timeout: Per-call timeout in seconds; falls back to the tool/service default.
         policy: The sandbox policy for this call; defaults to the shared runner's.
         thread_name: Name for the worker thread, so a stuck call is identifiable.
+        cwd: Working directory for the subprocess — a reader that lays a file set out on disk
+            (FMT-8.5's CUE, Pkl and Dhall readers) runs the tool inside it.
+        extra_env: Environment overrides merged onto the sanitized environment (e.g. a
+            ``HOME`` inside that directory, so a tool's cache never touches the service's).
 
     Returns:
         The tool's :class:`ToolRunResult`.
@@ -937,7 +943,15 @@ def run_tool_blocking(
                 default_timeout_seconds=default_runner.default_timeout_seconds,
                 default_policy=default_runner.default_policy,
             )
-            return await runner.run(key, args, stdin=stdin, timeout=timeout, policy=policy)
+            return await runner.run(
+                key,
+                args,
+                stdin=stdin,
+                timeout=timeout,
+                cwd=cwd,
+                extra_env=extra_env,
+                policy=policy,
+            )
 
         try:
             box["value"] = asyncio.run(_drive())

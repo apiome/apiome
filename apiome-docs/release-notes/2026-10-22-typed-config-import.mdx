@@ -1,0 +1,22 @@
+---
+slug: typed-config-import
+title: Import CUE, Pkl and Dhall schemas
+description: Catalog typed configuration schemas, evaluated by each language's own tool.
+authors: [apiome]
+---
+
+Apiome now imports the schemas of three typed configuration languages — CUE, Pkl and Dhall — into
+the catalog, with their constraints. [What gets imported](/bring-in/typed-config-import).
+
+{/* truncate */}
+
+- **Read by the language itself.** `cue`, `pkl` and `dhall` ship with Apiome and evaluate each
+  upload in a sandbox with no network and a time limit; a type error or a broken constraint fails
+  the import with the tool's own message.
+- **Constraints come with them.** CUE bounds and regular expressions, Pkl `isBetween`, `matches`,
+  `length` and `!isEmpty`, and Dhall `Natural` land on each field, with defaults.
+- **Types as you wrote them.** Definitions, classes and record types; embedding, inheritance and
+  record merges; enums, unions, optional fields, lists and maps; modules and packages that import
+  one another.
+- **Declared, not guessed.** CUE comprehensions and conditional fields, Pkl late binding and
+  resource reads, and Dhall functions are listed in the coverage ledger.

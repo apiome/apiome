@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 78<!--format-count:importable--> formats**, spanning all
+**Apiome imports 81<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 51<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -240,6 +240,7 @@ check is server-side, so a client cannot grant itself one.
 - [Import Zod schemas](./zod-schema-import.md) — a Zod module's exported schemas, with their validation constraints
 - [Import a tRPC router](./trpc-router-import.md) — a router's procedures as query, mutation and subscription operations
 - [Import Pydantic models](./pydantic-model-import.md) — a Python module's models and their constraints, read without running it
+- [Import CUE, Pkl and Dhall schemas](./typed-config-import.md) — typed configuration schemas with their constraints, evaluated by each language's own tool
 - [Import an A2A Agent Card](./a2a-agent-card-import.md) — catalog an agent's skills, tags and security, from a file or its well-known URI
 - [Import ACP agent manifests](./acp-agent-manifest-import.md) — catalog an ACP server's agents and capabilities, from a file or its `/agents` listing
 - [Import agentic-web site manifests](./agents-manifest-import.md) — catalog a site's agents.json, agent.json, agents.txt or llms.txt and the agent descriptors it points at

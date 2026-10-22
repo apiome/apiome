@@ -14,7 +14,7 @@ class OrderLine {
   sku: Sku
   quantity: Int(isPositive, isBetween(1, 9999))
   unitPrice: Money
-  discount: Float?(isBetween(0.0, 1.0))
+  discount: Float(isBetween(0.0, 1.0))?
 }
 
 class Order {
@@ -24,7 +24,7 @@ class Order {
   placedAt: String
   lines: Listing<OrderLine>(!isEmpty)
   total: Money
-  note: String?(length <= 500)
+  note: String(length <= 500)?
 }
 
 order: Order

@@ -135,7 +135,7 @@
       "marker": "`module` + `interface`"
     },
     "cue": {
-      "label": "CUE (pending #5466)",
+      "label": "CUE",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`package \u2026` + `#Definition: {\u2026}` with `&`/`|`/`=~` constraints"
@@ -147,7 +147,7 @@
       "marker": "`version: 2` + `models:`/`sources:`, or `metadata.dbt_schema_version` in a manifest"
     },
     "dhall": {
-      "label": "Dhall (pending #5466)",
+      "label": "Dhall",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`let \u2026 in \u2026` with type annotations, union types and `::` completion"
@@ -417,7 +417,7 @@
       "marker": "`owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML)"
     },
     "pkl": {
-      "label": "Pkl (pending #5466)",
+      "label": "Pkl",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`module \u2026` + `class`/`typealias` with member constraints and `Listing<\u2026>` types"
@@ -6774,7 +6774,7 @@
     {
       "path": "cue/01-minimal-schema.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6782,8 +6782,7 @@
       },
       "features": [
         "definition",
-        "scalars",
-        "pending-adapter"
+        "scalars"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6794,7 +6793,7 @@
     {
       "path": "cue/02-typical-order-schema.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6806,8 +6805,7 @@
         "range-constraint",
         "list-type",
         "optional-field",
-        "default-branch",
-        "pending-adapter"
+        "default-branch"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6818,7 +6816,7 @@
     {
       "path": "cue/03-imports-set/cue.mod",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6826,8 +6824,7 @@
       },
       "features": [
         "multi-file",
-        "module-file",
-        "pending-adapter"
+        "module-file"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6840,7 +6837,7 @@
     {
       "path": "cue/03-imports-set/schema.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6849,8 +6846,7 @@
       "features": [
         "multi-file",
         "import",
-        "package",
-        "pending-adapter"
+        "package"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6862,7 +6858,7 @@
     {
       "path": "cue/03-imports-set/shared.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6871,8 +6867,7 @@
       "features": [
         "multi-file",
         "package",
-        "definitions",
-        "pending-adapter"
+        "definitions"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6884,7 +6879,7 @@
     {
       "path": "cue/04-stress-lattice.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6901,8 +6896,7 @@
         "let-binding",
         "recursion",
         "interpolation",
-        "pattern-constraint",
-        "pending-adapter"
+        "pattern-constraint"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6914,7 +6908,7 @@
     {
       "path": "cue/05-real-world-service-config.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6924,8 +6918,7 @@
         "defaults",
         "cross-field-constraint",
         "pattern-keyed-map",
-        "schema-plus-instance",
-        "pending-adapter"
+        "schema-plus-instance"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6936,7 +6929,7 @@
     {
       "path": "cue/06-typical-schema-and-data.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6945,8 +6938,7 @@
       "features": [
         "schema-plus-data",
         "unification",
-        "defaults",
-        "pending-adapter"
+        "defaults"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6957,7 +6949,7 @@
     {
       "path": "cue/07-composition-embedding.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "valid",
       "expected_detection": {
         "format": "cue",
@@ -6967,8 +6959,7 @@
         "embedding",
         "unification",
         "disjunction",
-        "pattern-constraint",
-        "pending-adapter"
+        "pattern-constraint"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -6979,7 +6970,7 @@
     {
       "path": "cue/negative/01-syntactic-unclosed-struct.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -6988,8 +6979,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-struct",
-        "pending-adapter"
+        "unclosed-struct"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7001,7 +6991,7 @@
     {
       "path": "cue/negative/02-semantic-conflicting-unification.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -7011,8 +7001,7 @@
         "negative",
         "semantic",
         "bottom-value",
-        "conflicting-constraints",
-        "pending-adapter"
+        "conflicting-constraints"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7024,7 +7013,7 @@
     {
       "path": "cue/negative/03-truncated-mid-constraint.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -7033,8 +7022,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-constraint",
-        "pending-adapter"
+        "mid-constraint"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7046,7 +7034,7 @@
     {
       "path": "cue/negative/04-wrong-format-hcl.hcl",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -7055,8 +7043,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "hcl",
-        "pending-adapter"
+        "hcl"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7068,7 +7055,7 @@
     {
       "path": "cue/negative/05-encoding-utf16.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -7077,8 +7064,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7090,7 +7076,7 @@
     {
       "path": "cue/negative/06-semantic-incomplete-value.cue",
       "format": "cue",
-      "adapter_key": null,
+      "adapter_key": "cue",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "cue",
@@ -7099,8 +7085,7 @@
       "features": [
         "negative",
         "semantic",
-        "incomplete-value",
-        "pending-adapter"
+        "incomplete-value"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7461,7 +7446,7 @@
     {
       "path": "dhall/01-minimal-schema.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7469,8 +7454,7 @@
       },
       "features": [
         "schema-record",
-        "default",
-        "pending-adapter"
+        "default"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7481,7 +7465,7 @@
     {
       "path": "dhall/02-typical-order-schema.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7492,8 +7476,7 @@
         "union-type",
         "Optional",
         "List",
-        "typed-default",
-        "pending-adapter"
+        "typed-default"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7504,7 +7487,7 @@
     {
       "path": "dhall/03-imports-set/package.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7513,8 +7496,7 @@
       "features": [
         "multi-file",
         "package-file",
-        "import",
-        "pending-adapter"
+        "import"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7526,7 +7508,7 @@
     {
       "path": "dhall/03-imports-set/shared.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7534,8 +7516,7 @@
       },
       "features": [
         "multi-file",
-        "shared-types",
-        "pending-adapter"
+        "shared-types"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7547,7 +7528,7 @@
     {
       "path": "dhall/04-stress-type-system.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7561,8 +7542,7 @@
         "type-function",
         "generic-record",
         "fold",
-        "hash-pinned-import",
-        "pending-adapter"
+        "hash-pinned-import"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7574,7 +7554,7 @@
     {
       "path": "dhall/05-real-world-service-config.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7584,8 +7564,7 @@
         "nested-schema-records",
         "completion-operator",
         "defaults",
-        "enumerated-environment",
-        "pending-adapter"
+        "enumerated-environment"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7596,7 +7575,7 @@
     {
       "path": "dhall/06-typical-union-and-defaults.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7605,8 +7584,7 @@
       "features": [
         "union-constructors",
         "completion-operator",
-        "defaults",
-        "pending-adapter"
+        "defaults"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7617,7 +7595,7 @@
     {
       "path": "dhall/07-composition-record-merge.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "valid",
       "expected_detection": {
         "format": "dhall",
@@ -7627,8 +7605,7 @@
         "record-type-merge",
         "record-prefer",
         "schema-record-reuse",
-        "union-of-composed",
-        "pending-adapter"
+        "union-of-composed"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -7639,7 +7616,7 @@
     {
       "path": "dhall/negative/01-syntactic-missing-in.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7648,8 +7625,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-in",
-        "pending-adapter"
+        "missing-in"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7661,7 +7637,7 @@
     {
       "path": "dhall/negative/02-semantic-type-mismatch.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7670,8 +7646,7 @@
       "features": [
         "negative",
         "semantic",
-        "type-mismatch",
-        "pending-adapter"
+        "type-mismatch"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7683,7 +7658,7 @@
     {
       "path": "dhall/negative/03-truncated-mid-record.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7692,8 +7667,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-union",
-        "pending-adapter"
+        "mid-union"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7705,7 +7679,7 @@
     {
       "path": "dhall/negative/04-wrong-format-nickel.ncl",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7714,8 +7688,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "nickel",
-        "pending-adapter"
+        "nickel"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7727,7 +7700,7 @@
     {
       "path": "dhall/negative/05-encoding-utf16.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7736,8 +7709,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -7749,7 +7721,7 @@
     {
       "path": "dhall/negative/06-unresolvable-import.dhall",
       "format": "dhall",
-      "adapter_key": null,
+      "adapter_key": "dhall",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "dhall",
@@ -7758,8 +7730,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-import",
-        "pending-adapter"
+        "missing-import"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21538,7 +21509,7 @@
     {
       "path": "pkl/01-minimal-schema.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21546,8 +21517,7 @@
       },
       "features": [
         "module-properties",
-        "scalars",
-        "pending-adapter"
+        "scalars"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21558,7 +21528,7 @@
     {
       "path": "pkl/02-typical-order-schema.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21571,8 +21541,7 @@
         "range-constraint",
         "listing",
         "nullable",
-        "default",
-        "pending-adapter"
+        "default"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21583,7 +21552,7 @@
     {
       "path": "pkl/03-modules-set/shared.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21591,8 +21560,7 @@
       },
       "features": [
         "multi-file",
-        "classes",
-        "pending-adapter"
+        "classes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21604,7 +21572,7 @@
     {
       "path": "pkl/03-modules-set/shipping.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21613,8 +21581,7 @@
       "features": [
         "multi-file",
         "import",
-        "cross-module-class",
-        "pending-adapter"
+        "cross-module-class"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21626,7 +21593,7 @@
     {
       "path": "pkl/04-stress-type-system.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21647,8 +21614,7 @@
         "conditional",
         "read-env",
         "output-renderer",
-        "function",
-        "pending-adapter"
+        "function"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21660,7 +21626,7 @@
     {
       "path": "pkl/05-real-world-service-config.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21671,8 +21637,7 @@
         "amending",
         "subclass-tightening",
         "defaults",
-        "mapping-of-services",
-        "pending-adapter"
+        "mapping-of-services"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21683,7 +21648,7 @@
     {
       "path": "pkl/06-typical-template-and-instance.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21692,8 +21657,7 @@
       "features": [
         "template-plus-instance",
         "listing-of-objects",
-        "defaults",
-        "pending-adapter"
+        "defaults"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21704,7 +21668,7 @@
     {
       "path": "pkl/07-composition-mixins.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pkl",
@@ -21714,8 +21678,7 @@
         "open-class",
         "inheritance-chain",
         "amending",
-        "listing-of-classes",
-        "pending-adapter"
+        "listing-of-classes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21726,7 +21689,7 @@
     {
       "path": "pkl/negative/01-syntactic-unclosed-class.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21735,8 +21698,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-class",
-        "pending-adapter"
+        "unclosed-class"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21748,7 +21710,7 @@
     {
       "path": "pkl/negative/02-semantic-type-constraint-violation.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21757,8 +21719,7 @@
       "features": [
         "negative",
         "semantic",
-        "constraint-violation",
-        "pending-adapter"
+        "constraint-violation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21770,7 +21731,7 @@
     {
       "path": "pkl/negative/03-truncated-mid-property.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21779,8 +21740,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-constraint",
-        "pending-adapter"
+        "mid-constraint"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21792,7 +21752,7 @@
     {
       "path": "pkl/negative/04-wrong-format-cue.cue",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21801,8 +21761,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "cue",
-        "pending-adapter"
+        "cue"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21814,7 +21773,7 @@
     {
       "path": "pkl/negative/05-encoding-utf16.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21823,8 +21782,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21836,7 +21794,7 @@
     {
       "path": "pkl/negative/06-unresolvable-import.pkl",
       "format": "pkl",
-      "adapter_key": null,
+      "adapter_key": "pkl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pkl",
@@ -21845,8 +21803,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-module",
-        "pending-adapter"
+        "missing-module"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

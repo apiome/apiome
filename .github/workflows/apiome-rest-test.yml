@@ -123,6 +123,9 @@ jobs:
       - name: Install the required Node toolchain (AsyncAPI, TypeScript types, Zod)
         run: ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor
 
+      - name: Install the required typed-configuration evaluators (CUE, Pkl, Dhall)
+        run: ./scripts/install_dev_toolchain.sh cue pkl dhall
+
       # buf is optional at runtime, but the production image bundles it, and the generated
       # supported-formats page describes that image: without buf the gRPC and Connect-RPC rows
       # render as "Needs toolchain" and the page check below fails.

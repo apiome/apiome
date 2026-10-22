@@ -148,7 +148,7 @@ up the `∥` rows in parallel.**
 | 2 ∥ | ✅ [FMT-8.4 Pydantic #5465](https://github.com/apiome/apiome/issues/5465) · ✅ [FMT-8.2 Zod #5463](https://github.com/apiome/apiome/issues/5463) | 8.6 |
 | 3 ✅ | [FMT-8.1 TypeScript declarations #5462](https://github.com/apiome/apiome/issues/5462) | 8.6 |
 | 4 ✅ | [FMT-8.3 tRPC routers #5464](https://github.com/apiome/apiome/issues/5464) | 8.1, 8.2 (router inputs are TS / Zod types) |
-| 5 | [FMT-8.5 CUE, Pkl, Dhall #5466](https://github.com/apiome/apiome/issues/5466) | 8.6 |
+| 5 ✅ | [FMT-8.5 CUE, Pkl, Dhall #5466](https://github.com/apiome/apiome/issues/5466) | 8.6 |
 
 ### C3 — Client workspaces ([FMT-EPIC-10 #5410](https://github.com/apiome/apiome/issues/5410)) ∥ data-platform emitters
 

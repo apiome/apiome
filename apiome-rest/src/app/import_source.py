@@ -1207,6 +1207,10 @@ def load_builtin_import_sources() -> None:
     # package of Pydantic models, read statically with ``ast`` and never executed.
     from . import pydantic_import_source as _pydantic  # noqa: F401
 
+    # ``typed_config_import_source`` (FMT-8.5) self-registers the ``cue``, ``pkl`` and ``dhall``
+    # adapters — typed configuration schemas read by each language's own tool in the sandbox.
+    from . import typed_config_import_source as _typed_config  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

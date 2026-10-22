@@ -711,6 +711,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['procedure', 'query', 'mutation', 'subscription', 'approuter', 'zod', 'remote procedure call'],
   },
   {
+    id: 'typed-config-import',
+    title: 'Import CUE, Pkl and Dhall schemas',
+    summary: 'Catalog typed configuration schemas, evaluated by each language\'s own tool.',
+    page: 'apiome-docs/docs/bring-in/typed-config-import.md',
+    section: 'reference',
+    keywords: ['typed configuration', 'cue export', 'pkl eval', 'dhall-to-json', 'constraints', 'sandbox', 'platform config'],
+  },
+  {
     id: 'pydantic-model-import',
     title: 'Import Pydantic models',
     summary: 'Catalog the Pydantic models in a Python module, read without running it.',

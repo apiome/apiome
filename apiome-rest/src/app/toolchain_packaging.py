@@ -17,8 +17,9 @@ What lives here:
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
-  ``zod-schema-extractor``, ``asyncapi-diff``, ``rover``, ``graphql-inspector-diff``, ``spectral``, ``vacuum``,
-  ``redocly``, ``oasdiff``, ``openapi-changes``.
+  ``zod-schema-extractor``, ``cue``, ``pkl``, ``dhall``, ``asyncapi-diff``, ``rover``,
+  ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
+  ``openapi-changes``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -214,6 +215,37 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         "(`zod`, FMT-8.2; `@trpc/server`, FMT-8.3).",
         env_override_key="APIOME_ZOD_SCHEMA_EXTRACTOR_BIN",
         runtime="node",
+    ),
+    BundledTool(
+        key="cue",
+        executable="cue",
+        version="0.17.1",
+        description="CUE evaluator: `cue export` validates a CUE package and its JSON Schema "
+        "generator projects its definitions (cue-lang/cue, FMT-8.5).",
+        env_override_key="APIOME_CUE_BIN",
+        version_probe_args=("version",),
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="pkl",
+        executable="pkl",
+        version="0.32.2",
+        description="Pkl evaluator: `pkl eval` reflects a module's classes and type aliases and "
+        "evaluates its values (apple/pkl, FMT-8.5).",
+        env_override_key="APIOME_PKL_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="dhall",
+        executable="dhall",
+        version="1.42.2",
+        description="Dhall interpreter: resolves, type-checks and normalizes an expression and "
+        "encodes it as JSON (dhall-lang/dhall-haskell, FMT-8.5).",
+        env_override_key="APIOME_DHALL_BIN",
+        parses_json=False,
+        runtime="native",
     ),
     BundledTool(
         key="asyncapi-diff",

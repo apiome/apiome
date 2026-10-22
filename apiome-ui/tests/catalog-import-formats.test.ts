@@ -83,6 +83,10 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('trpc')?.sourceKind).toBe('trpc');
     // FMT-8.4: Pydantic models.
     expect(catalogAdapterForFormat('pydantic')?.sourceKind).toBe('pydantic');
+    // FMT-8.5: CUE, Pkl and Dhall.
+    expect(catalogAdapterForFormat('cue')?.sourceKind).toBe('cue');
+    expect(catalogAdapterForFormat('pkl')?.sourceKind).toBe('pkl');
+    expect(catalogAdapterForFormat('dhall')?.sourceKind).toBe('dhall');
     expect(catalogAdapterForFormat('edmx')?.sourceKind).toBe('odata');
     expect(catalogAdapterForFormat('fhir')?.sourceKind).toBe('fhir');
     expect(catalogAdapterForFormat('fhirr4')?.sourceKind).toBe('fhir');
@@ -134,7 +138,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'dbt', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'postman', 'pydantic', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'openrpc', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {

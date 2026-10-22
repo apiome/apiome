@@ -937,6 +937,49 @@
       "waivers": {}
     },
     {
+      "format_key": "cue",
+      "label": "CUE",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "cue"
+      ],
+      "corpus_directories": [
+        "cue"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "cue"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "dbt",
       "label": "dbt Project",
       "paradigm": "data_schema",
@@ -965,6 +1008,49 @@
       "goldens": 7,
       "golden_directories": [
         "dbt"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "dhall",
+      "label": "Dhall",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "dhall"
+      ],
+      "corpus_directories": [
+        "dhall"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "dhall"
       ],
       "emit_key": null,
       "roundtrip_row": true,
@@ -2763,6 +2849,49 @@
       "waivers": {}
     },
     {
+      "format_key": "pkl",
+      "label": "Pkl",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "pkl"
+      ],
+      "corpus_directories": [
+        "pkl"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "pkl"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "postman",
       "label": "Postman",
       "paradigm": "rest",
@@ -3829,8 +3958,6 @@
   "export_only_destinations": [],
   "pending_corpus_directories": [
     "cics-bms",
-    "cue",
-    "dhall",
     "hoppscotch",
     "ims",
     "jsonld",
@@ -3839,7 +3966,6 @@
     "natural-ddm",
     "opcua-nodeset",
     "owl",
-    "pkl",
     "pli",
     "ros2",
     "schematron",

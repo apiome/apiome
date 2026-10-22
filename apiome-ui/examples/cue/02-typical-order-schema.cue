@@ -1,5 +1,7 @@
 package orders
 
+import "strings"
+
 #OrderStatus: "new" | "paid" | "shipped" | "cancelled"
 
 #Money: {
@@ -23,5 +25,3 @@ package orders
 	total: #Money
 	note?: string & strings.MaxRunes(500)
 }
-
-import "strings"

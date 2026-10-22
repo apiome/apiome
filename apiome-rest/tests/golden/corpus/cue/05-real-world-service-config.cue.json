@@ -1,0 +1,751 @@
+{
+  "adapter": "cue",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "cue": {
+        "capability_limits": [
+          {
+            "construct": "cue.conditional_field",
+            "count": 1,
+            "detail": "A conditional field (`if tier == \"paid\" { seats: … }`) exists only when another field has a given value. The definition's unconditional fields are modelled; the conditional ones, and the condition, are not. A definition that is nothing but its conditions is left out.",
+            "locations": [
+              "Service"
+            ]
+          },
+          {
+            "construct": "cue.default",
+            "count": 11,
+            "detail": "A default (`*\"new\"`) is applied by CUE's evaluation; the JSON Schema CUE generates does not carry it, so the field is modelled with its type and without the default.",
+            "locations": [
+              "Ingress.enabled",
+              "Ingress.paths",
+              "Ingress.tls",
+              "Probe.failureThreshold",
+              "Probe.initialDelaySeconds",
+              "Probe.path",
+              "Probe.periodSeconds",
+              "Resources.cpu",
+              "Resources.memory",
+              "Service.port",
+              "Service.replicas"
+            ]
+          },
+          {
+            "construct": "cue.label_reference",
+            "count": 1,
+            "detail": "A pattern constraint that refers to the label it matches (`[Name=string]: {name: Name}`) ties a value to its key. The map and its value type are modelled; the tie is not.",
+            "locations": [
+              "Platform.services"
+            ]
+          }
+        ],
+        "exports": [
+          "Environment",
+          "Resources",
+          "Probe",
+          "Ingress",
+          "Service",
+          "Platform"
+        ],
+        "files": [
+          "05-real-world-service-config.cue"
+        ],
+        "instances": [
+          "platform"
+        ],
+        "root_file": "05-real-world-service-config.cue",
+        "root_type": "Resources"
+      }
+    },
+    "format": "cue",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Resources",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Resources",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Environment.dev",
+            "name": "dev",
+            "value": "dev"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Environment.staging",
+            "name": "staging",
+            "value": "staging"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Environment.production",
+            "name": "production",
+            "value": "production"
+          }
+        ],
+        "extras": {
+          "typescript_kind": "literal_union"
+        },
+        "fields": [],
+        "key": "Environment",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Environment",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Ingress.enabled",
+            "name": "enabled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z0-9.-]+$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Ingress.host",
+            "name": "host",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Ingress.paths",
+            "name": "paths",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Ingress.tls",
+            "name": "tls",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Ingress",
+        "key_type": null,
+        "kind": "record",
+        "name": "Ingress",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Platform.defaults",
+            "name": "defaults",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Resources",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Platform.services",
+            "name": "services",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Platform_services",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Platform",
+        "key_type": null,
+        "kind": "record",
+        "name": "Platform",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Platform_services",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Platform_services",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "Service",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Probe.failureThreshold",
+            "name": "failureThreshold",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Probe.initialDelaySeconds",
+            "name": "initialDelaySeconds",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Probe.path",
+            "name": "path",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Probe.periodSeconds",
+            "name": "periodSeconds",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Probe",
+        "key_type": null,
+        "kind": "record",
+        "name": "Probe",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Resources.cpu",
+            "name": "cpu",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Resources.memory",
+            "name": "memory",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Resources",
+        "key_type": null,
+        "kind": "record",
+        "name": "Resources",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Service.env",
+            "name": "env",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Environment",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.envVars",
+            "name": "envVars",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Service_envVars",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z0-9./-]+:[a-zA-Z0-9._-]+$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Service.image",
+            "name": "image",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.ingress",
+            "name": "ingress",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Ingress",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.liveness",
+            "name": "liveness",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Probe",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 3,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Service.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.port",
+            "name": "port",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.readiness",
+            "name": "readiness",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Probe",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.replicas",
+            "name": "replicas",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.resources",
+            "name": "resources",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Resources",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typescript_optional": true
+            },
+            "field_number": null,
+            "key": "Service.secrets",
+            "name": "secrets",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Service",
+        "key_type": null,
+        "kind": "record",
+        "name": "Service",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "typescript_kind": "Record"
+        },
+        "fields": [],
+        "key": "Service_envVars",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "Service_envVars",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        }
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cue/05-real-world-service-config.cue",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 8
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cue"
+  },
+  "fingerprint": "sha256:044b4496e84cb7cb4153a48ec2ac750d16290e48a5a7fd6a2072e66d7276a736",
+  "lint": {
+    "findings": 32,
+    "grade": "F",
+    "report_fingerprint": "d86d390f4b745b82874ab9c3094741932a87467fbbe99c3b3ccd8151dfbe15d0",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 24,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

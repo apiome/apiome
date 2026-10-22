@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.427.0] - 2026-10-22
+
+### Added
+- **CUE, Pkl and Dhall import (#5466, FMT-8.5)**: three new import sources — `cue`, `pkl` and `dhall` — read typed
+  configuration schemas as schemas-only catalog sources, each **evaluated by its own tool** in the sandboxed toolchain
+  runner (network isolation forced on and strict, a private home and cache, a 20 s limit), projected to JSON Schema and
+  modelled by the shared JSON Schema translator (`app.zod_normalizer.translate_schema`, now dialect-aware) and the
+  FMT-8.1 model.
+  - **CUE**: `cue export` validates the package (conflicts, incomplete values, unresolved imports reject the import);
+    `cue export --out jsonschema` projects every `#Definition`. Embedding and unification become records that extend
+    their base; bounds, regexes, `int` and rune / item-count validators become constraints. A flat module upload (a
+    `cue.mod` file beside the package files) is laid out as `cue.mod/module.cue` + one directory per package.
+    Declared: comprehensions and interpolations (field left out), conditional fields, `let`, hidden fields, defaults,
+    other stdlib validators, `bytes`, label references.
+  - **Pkl**: `pkl eval` runs a reflection program (`pkl:reflect`) over the upload with `--root-dir`, modules only from
+    the upload and `pkl:`, and no resources; constraints are read from each property's annotation (`isBetween`,
+    `isPositive`, `this <op> n`, `length`, `!isEmpty`, `isDistinct`, `matches(Regex)`, `startsWith`, `endsWith`,
+    `Int8`…`UInt`). A module value that breaks its own constraint → `INPUT_SEMANTIC_INVALID`. Declared: other
+    predicates, late binding, computed / generated defaults, refused `read(…)`, `output` blocks, methods,
+    `Duration` / `DataSize`, non-string map keys.
+  - **Dhall**: `dhall` resolves, type-checks and normalizes; `dhall encode --json` gives the normal form the reader
+    projects (record and union types, `{ Type, default }` schema records with defaults, `List { mapKey, mapValue }`
+    maps, structural naming of nested types). URL, `env:`, absolute, home and out-of-upload imports are refused before
+    Dhall runs (`INPUT_REFERENCE_UNRESOLVED`). Declared: functions (incl. type-level), integrity-hash pins.
+  - **Toolchain (FMT-1.3 rule)**: `cue` 0.17.1, `pkl` 0.32.2 and `dhall` 1.42.2 are `BUNDLED_TOOLS` and **required**
+    (`REQUIRED_TOOL_KEYS`); the Dockerfile installs and smoke-tests them (dhall is x86_64-only, so an arm64 build fails
+    loudly) and adds `libgmp10`; `scripts/install_dev_toolchain.sh cue pkl dhall` installs them for dev and CI. The
+    self-check reads a version banner that does not end with its version (`Pkl 0.32.2 (…)`).
+  - `run_tool_blocking` accepts `cwd` and `extra_env`.
+  - Corpus fixtures corrected where the language itself rejected them (CUE 02/03/04/05/07 and negative 03, Pkl 02/04/05,
+    Dhall 04); corpus live with goldens for the 21 valid entries, the round-trip matrix rows, the parity rows and MCP
+    toolset goldens; reviewed capability seeds (registry version 28 -> 29) and version coverage.
+
 ## [1.426.0] - 2026-10-22
 
 ### Added

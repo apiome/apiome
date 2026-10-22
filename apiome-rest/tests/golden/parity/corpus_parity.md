@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 78
+- **Formats gated:** 81
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -32,7 +32,9 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `connectrpc` | Connect RPC | rpc | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `connectrpc` |
 | `consul` | Consul service definitions | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `corbaidl` | CORBA IDL | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `corbaidl` |
+| `cue` | CUE | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `dbt` | dbt Project | data_schema | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
+| `dhall` | Dhall | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `dicom` | DICOM | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `discovery` | Google API Discovery | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `dtd` | DTD | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
@@ -69,6 +71,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
 | `openapi` | OpenAPI / Swagger | rest | 47 | 12 | 0 | 0 | 59 | 6/6 | 42 | `openapi` |
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
+| `pkl` | Pkl | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `postman` | Postman | rest | 13 | 11 | 0 | 0 | 24 | 6/6 | 12 | `postman` |
 | `pydantic` | Pydantic models | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `raml` | RAML | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `raml` |
@@ -117,7 +120,9 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `connectrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `consul` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `corbaidl` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `cue` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dbt` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `dhall` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dicom` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `discovery` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `dtd` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -154,6 +159,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `oncrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openapi` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `pkl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `postman` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pydantic` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `raml` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -195,4 +201,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `cue`, `dhall`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pkl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `opcua-nodeset`, `owl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`
