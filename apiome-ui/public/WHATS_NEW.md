@@ -123,6 +123,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Home: a **Time spent** panel shows your own active time per project over the last 7 or 30 days — counted while a project is open on Versions and you are using the page, and visible only to you
   - Versions: **New version** asks whether to **Copy paths** when you copy from a version — classes are always copied, and paths come too unless you untick it
   - Navigation: **Tenants** moves from the rail to the workspace switcher's last row, **Manage workspaces…**, and the **Data browser** and **Migrations** tools get rows in your user menu — all three are still in ⌘K
+  - Navigation: the **Workspace** group in the rail starts folded, showing how many pages it holds, so the rail fits a laptop screen without scrolling — click its heading to open it, and the rail remembers your choice
   - Lint posture and Sunset timeline open closer to the data: Lint posture's four tiles and grades card fold into one summary line with grade chips (**Show stats** opens them), and the Sunset timeline's warning banner becomes a **Where these warnings come from** link
   - Versions: **Heatmap** in a version's **Actions** menu shows its classes as tiles colored by complexity, recent change, how many classes reference them, or documentation completeness
   - Favorite projects: your pinned projects are listed in a **Favorite projects** card on Profile and lead the command palette (⌘K) under **Favorites**

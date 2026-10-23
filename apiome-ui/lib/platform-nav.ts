@@ -173,6 +173,13 @@ export interface PlatformNavGroup {
   id: PlatformNavGroupId;
   /** Group heading. Omitted for the leading, unlabelled group (Home). */
   label?: string;
+  /**
+   * True when the group starts folded for a reader who has never folded or unfolded a
+   * group (HIVE-12.1). Once they have, their stored choice under `hive.navCollapsed` wins;
+   * see `readCollapsedNavGroups()`. Only meaningful on a labelled group: an unlabelled one
+   * has no heading to unfold it with.
+   */
+  defaultCollapsed?: boolean;
   items: PlatformNavItem[];
 }
 
@@ -388,6 +395,9 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
   {
     id: 'workspace',
     label: 'Workspace',
+    // Admin chores rather than daily work: folded on first run so the rail fits a 900 px
+    // tall window, its heading showing how many rows it holds (HIVE-12.1).
+    defaultCollapsed: true,
     items: [
       {
         id: 'members',

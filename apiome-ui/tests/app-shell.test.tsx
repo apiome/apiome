@@ -89,6 +89,7 @@ import { isCommandPaletteMounted, openCommandPalette } from '../src/app/componen
 import { openShortcutSheet } from '../src/app/components/shell/shortcutSheetBus';
 import { ThemeProvider } from '../src/app/providers/ThemeProvider';
 import { NAV_COLLAPSED_STORAGE_KEY } from '../src/app/components/shell/navGroupCollapse';
+import { railGroupCountLabel } from '../src/app/components/shell/RailNav';
 import { RAIL_ICON_BREAKPOINT_PX } from '../src/app/components/shell/useIconRail';
 import {
   isPreferencesDrawerMounted,
@@ -257,7 +258,8 @@ describe('AppShell — navigation from the model', () => {
       expect(row).toHaveTextContent(item.label);
       expect(row).toHaveAttribute('href', item.href);
     }
-    expect(within(nav).getAllByRole('link')).toHaveLength(RELEASED_ITEMS.length);
+    // `hidden: true` counts the rows of a folded group too (Workspace starts folded).
+    expect(within(nav).getAllByRole('link', { hidden: true })).toHaveLength(RELEASED_ITEMS.length);
   });
 
   it('leaves an unreleased destination out of the rail entirely', async () => {
@@ -426,7 +428,11 @@ describe('AppShell — folding a nav group', () => {
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(document.getElementById('rail-group-build')).not.toBeVisible();
-    expect(JSON.parse(window.localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)!)).toEqual(['build']);
+    // The first click stores the whole picture, so the default Workspace fold is kept too.
+    expect(JSON.parse(window.localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)!)).toEqual([
+      'workspace',
+      'build',
+    ]);
   });
 
   it('restores a fold stored by an earlier visit', async () => {
@@ -455,6 +461,97 @@ describe('AppShell — folding a nav group', () => {
     await renderShell();
 
     expect(screen.getByTestId('rail-group-toggle-build')).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
+describe('AppShell — groups folded by default (HIVE-12.1)', () => {
+  /** The Workspace group as the rail renders it for a session with a workspace. */
+  const workspaceGroup = () => getPlatformNavGroups({ currentTenantId: 't-1' }).find((g) => g.id === 'workspace')!;
+
+  it('folds Workspace on a fresh profile, with its count on the heading', async () => {
+    await renderShell();
+
+    const toggle = screen.getByTestId('rail-group-toggle-workspace');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById('rail-group-workspace')).not.toBeVisible();
+    const count = screen.getByTestId('rail-group-count-workspace');
+    expect(count).toHaveTextContent(String(workspaceGroup().items.length));
+    // The count says what it counts to a screen reader.
+    expect(toggle.textContent).toContain(railGroupCountLabel(workspaceGroup().items.length));
+    expect(toggle).toHaveAccessibleName(
+      new RegExp(`^Workspace\\s+${railGroupCountLabel(workspaceGroup().items.length)}$`)
+    );
+    // Nothing is stored until the reader makes a choice.
+    expect(window.localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('leaves Build, Bring in, Ship and Govern open, with no count', async () => {
+    await renderShell();
+
+    for (const id of ['build', 'bring-in', 'ship', 'govern']) {
+      expect(screen.getByTestId(`rail-group-toggle-${id}`)).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.queryByTestId(`rail-group-count-${id}`)).toBeNull();
+    }
+  });
+
+  it('keeps an existing profile\'s stored choice, even one with nothing folded', async () => {
+    window.localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, JSON.stringify([]));
+    await renderShell();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('rail-group-toggle-workspace')).toHaveAttribute('aria-expanded', 'true')
+    );
+    expect(screen.queryByTestId('rail-group-count-workspace')).toBeNull();
+  });
+
+  it('opens Workspace with one click and remembers it', async () => {
+    await renderShell();
+
+    const toggle = screen.getByTestId('rail-group-toggle-workspace');
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById('rail-group-workspace')).toBeVisible();
+    expect(screen.queryByTestId('rail-group-count-workspace')).toBeNull();
+    expect(JSON.parse(window.localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)!)).toEqual([]);
+  });
+
+  it('toggles from the keyboard exactly as before', async () => {
+    await renderShell();
+
+    const toggle = screen.getByTestId('rail-group-toggle-workspace');
+    // A native <button>: Enter and Space arrive as a click; it stays in the tab order.
+    expect(toggle.tagName).toBe('BUTTON');
+    expect(toggle).toHaveAttribute('aria-controls', 'rail-group-workspace');
+    toggle.focus();
+    expect(toggle).toHaveFocus();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('shows the count on a gated Workspace too', async () => {
+    await renderShell({ tenant: false });
+
+    expect(screen.getByTestId('rail-group-count-workspace')).toHaveTextContent(
+      String(workspaceGroup().items.length)
+    );
+  });
+
+  it('hides the count in the icon rail, where Workspace is unfolded', async () => {
+    window.localStorage.setItem('hive.rail', 'collapsed');
+    await renderShell();
+
+    expect(document.getElementById('rail-group-workspace')).toBeVisible();
+    expect(screen.queryByTestId('rail-group-count-workspace')).toBeNull();
+  });
+
+  it('has no axe violations with Workspace folded', async () => {
+    const { container } = await renderShell();
+
+    expect(screen.getByTestId('rail-group-toggle-workspace')).toHaveAttribute('aria-expanded', 'false');
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
 
