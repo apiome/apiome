@@ -4003,6 +4003,22 @@ button.auth-divider:disabled {
   letter-spacing: 0.42em;
 }
 
+/* ---- `apiome login` approve page (#5501) ---------------------------------
+   The code the reader compares with their terminal: the same mono display
+   face as `.auth-code`, read-only, in a quiet box so it reads as "check this"
+   rather than as a field to type into. */
+.cli-login-code {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
 /* ---- The second step's recovery path and trust box (OLO-9.14, #5006) ----
    A backup code is an identifier the reader copies character by character, so
    it is set in the mono face like the slug below — but not at the display size

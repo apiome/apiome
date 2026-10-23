@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.445.0] - 2026-10-23
+
+### Added
+- **`apiome login` — browser-approved CLI sign-in (#5501)**: the CLI gets a short-lived API key without anyone
+  copying a key out of the app (shape of the RFC 8628 device authorization grant; apiome-db V315).
+  - `POST /v1/cli/login` (anonymous, per-IP budget) starts a login: a secret `device_code`, a `user_code` such as
+    `KTXR-MWDB`, and `verification_uri` / `verification_uri_complete` — `<APIOME_UI_PUBLIC_URL>/cli/login`. Ten-minute
+    expiry; only the device code's SHA-256 is stored.
+  - `POST /v1/cli/login/token` (anonymous, per-IP budget) is the CLI's poll: `400` with `detail.error` =
+    `authorization_pending`, `slow_down`, `access_denied`, `expired_token` or `invalid_grant` until approved; then
+    `200` with a new full-access workspace key (`sk_…`, created by the approver, `api_keys.cli_login = true`,
+    14-day expiry), returned once. The claim and the key insert are one statement, so a login yields one key.
+  - `GET /v1/cli/login/requests/{user_code}`, `POST …/approve` (`{tenant_slug}`), `POST …/deny` — for the apiome-ui
+    approve page; a session JWT is required (API keys are refused). Approving needs `api_keys:create` in the
+    workspace and is audited as `cli_login.approve`.
+  - `DELETE /v1/cli/login/key` — `apiome logout`: the `X-API-Key` revokes itself if it is a CLI login key (`409`
+    otherwise); audited as `cli_login.key_revoke`.
+  - New setting `APIOME_UI_PUBLIC_URL` (default `http://localhost:3000`).
+  - OpenAPI 1.309.0.
+
 ## [1.444.0] - 2026-10-23
 
 ### Added

@@ -69,6 +69,8 @@ services:
       # Surface backup freshness on the ops dashboard (RC1-3.2 reads RC1-1.3 manifests).
       APIOME_BACKUP_DIR: /var/backups/apiome
       APIOME_MOCK_PUBLIC_BASE_URL: https://${DEPLOY_MOCK_DOMAIN:?set DEPLOY_MOCK_DOMAIN in your .env}
+      # `apiome login` (#5501) sends people to <this>/cli/login to approve a CLI sign-in.
+      APIOME_UI_PUBLIC_URL: https://${DEPLOY_APP_DOMAIN:-app.apiome.dev}
       # Dry-run mock preview (#5528, MSC-1.2). The base compose ships a well-known dev token so a
       # local stack works out of the box; production must not inherit it, so it is overridden to
       # empty here. Preview then fails closed with 503 until an operator sets

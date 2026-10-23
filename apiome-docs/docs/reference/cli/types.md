@@ -1,7 +1,7 @@
 ---
 title: "apiome types"
 description: "Browse tenant JSON Schema primitive types."
-sidebar_position: 34
+sidebar_position: 36
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

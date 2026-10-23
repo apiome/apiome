@@ -107,6 +107,13 @@ curl -X POST \
   -H "Accept: application/json"
 ```
 
+### Keys created by `apiome login`
+
+When someone [signs the CLI in](../reference/sign-in-the-cli.mdx) with `apiome login`, the key it
+receives appears in this list as **CLI login · apiome-cli on &lt;machine&gt; · …**, created by them,
+with a 14-day expiry. Disable or delete it here like any other key; `apiome logout` deletes it from
+the CLI side.
+
 ## Rotate a key before it expires
 
 When a key expires within 14 days, a banner names it — *“Terraform plan checks” expires on October

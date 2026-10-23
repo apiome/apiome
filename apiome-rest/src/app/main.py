@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .access_routes import platform_router as access_platform_router
 from .access_routes import router as access_router
 from .agent_key_routes import router as agent_key_router
+from .cli_login_routes import router as cli_login_router
 from .agent_toolset_routes import router as agent_toolset_router
 from .agent_usage_routes import router as agent_usage_router
 from .api_check_suite_routes import router as api_check_suite_router
@@ -190,7 +191,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.308.0",
+    version="1.309.0",
 )
 
 
@@ -393,6 +394,8 @@ app.include_router(upstream_credential_router)
 # agent_key_router: AGX-3.1 agent keys (kind=agent api_keys bound to a toolset + tool allowlist)
 # under /v1/tenants/{t}/agent-keys (#4537).
 app.include_router(agent_key_router)
+# cli_login_router: `apiome login` browser-approved CLI sign-in (#5501) at /v1/cli/login/*.
+app.include_router(cli_login_router)
 # agent_toolset_router: AGX-1.2 tool selection & curation (safe-by-default toolsets per published
 # version) under /v1/tenants/{t}/agent-toolsets (#4530).
 app.include_router(agent_toolset_router)

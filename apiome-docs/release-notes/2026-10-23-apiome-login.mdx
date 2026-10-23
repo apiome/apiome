@@ -1,0 +1,22 @@
+---
+slug: apiome-login
+title: Sign the CLI in with apiome login
+description: apiome login signs the CLI in through your browser and saves a 14-day key.
+authors: [apiome]
+---
+
+The command line signs in the way the app does: **`apiome login`** opens Apiome in your browser,
+you approve, and the CLI gets an API key for the workspace you choose — no copying a key out of the
+API Keys page. [Sign in the CLI](/reference/sign-in-the-cli).
+
+{/* truncate */}
+
+- **Any way you sign in works.** The approval happens in the browser, so a password, a sign-in
+  provider, single sign-on and two-factor all work. Check the code on the page matches the terminal,
+  choose a workspace and click **Approve**.
+- **Short-lived by design.** The key lasts 14 days, belongs to you, and shows on the workspace's API
+  Keys page as *CLI login · apiome-cli on &lt;machine&gt;*. `apiome logout` revokes it. For CI, keep
+  using a permanent key in `APIOME_API_KEY`.
+- **Same permission as the API Keys page.** Approving needs permission to create API keys in the
+  workspace; the page offers only the workspaces where you have it.
+- **Works over SSH.** `apiome login --no-browser` prints the link to open anywhere.

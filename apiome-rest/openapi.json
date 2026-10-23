@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.308.0",
+    "version": "1.309.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -23634,6 +23634,367 @@
         }
       }
     },
+    "/v1/cli/login": {
+      "post": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Start a CLI login",
+        "description": "Starts `apiome login`. Returns a secret `device_code` for the CLI to poll with, a `user_code` to show the person, and the apiome-ui page where they approve it. The login expires after 10 minutes. No authentication; rate-limited per client IP.",
+        "operationId": "start_cli_login_v1_cli_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CliLoginStartRequest"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for starta cliloginrequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for start a cli login."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for start a cli login.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginStarted",
+                  "description": "Response payload for starta cliloginresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for starta cliloginresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cli/login/token": {
+      "post": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Collect a CLI login key",
+        "description": "Polled by `apiome login` with its `device_code`. Until the login is approved this answers `400` with `detail.error` set to `authorization_pending` (keep polling), `slow_down` (polling faster than `interval`), `access_denied`, `expired_token` or `invalid_grant`. Once approved it mints a workspace API key for the approving user, valid for 14 days, and returns it **once**; the login is then used up.",
+        "operationId": "collect_cli_login_key_v1_cli_login_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliLoginTokenRequest",
+                "description": "Request body for collecta cliloginkeyrequest."
+              }
+            }
+          },
+          "required": true,
+          "description": "Request body for collect a cli login key."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for collect a cli login key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginKeyIssued",
+                  "description": "Response payload for collecta cliloginkeyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for collecta cliloginkeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cli/login/requests/{user_code}": {
+      "get": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Read a pending CLI login",
+        "description": "For the apiome-ui approve page: the pending login with this user code, and the signed-in person's workspaces with whether they may approve it there (`api_keys:create`). Requires a session token; 404 when no such login is waiting.",
+        "operationId": "read_cli_login_v1_cli_login_requests__user_code__get",
+        "parameters": [
+          {
+            "name": "user_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Code",
+              "description": "User Code schema."
+            },
+            "description": "Path parameter identifying the user code segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readapending Cliloginauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readapending Cliloginauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a pending cli login.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginRequestView",
+                  "description": "Response payload for readapending cliloginresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readapending cliloginresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cli/login/requests/{user_code}/approve": {
+      "post": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Approve a CLI login",
+        "description": "Approves the pending login for one workspace. The CLI's next poll then receives a 14-day API key for that workspace, created by you. Requires a session token and `api_keys:create` in the workspace. 404 when the login is no longer waiting.",
+        "operationId": "approve_cli_login_v1_cli_login_requests__user_code__approve_post",
+        "parameters": [
+          {
+            "name": "user_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Code",
+              "description": "User Code schema."
+            },
+            "description": "Path parameter identifying the user code segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Approvea Cliloginauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Approvea Cliloginauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliLoginApproveRequest",
+                "description": "Request body for approvea cliloginrequest."
+              }
+            }
+          },
+          "description": "Request body for approve a cli login."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for approve a cli login.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginApproved",
+                  "description": "Response payload for approvea cliloginresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for approvea cliloginresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cli/login/requests/{user_code}/deny": {
+      "post": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Deny a CLI login",
+        "description": "Refuses the pending login; the CLI stops with `access_denied`. Requires a session token. 404 when the login is no longer waiting.",
+        "operationId": "deny_cli_login_v1_cli_login_requests__user_code__deny_post",
+        "parameters": [
+          {
+            "name": "user_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Code",
+              "description": "User Code schema."
+            },
+            "description": "Path parameter identifying the user code segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Denya Cliloginauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Denya Cliloginauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for deny a cli login.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginApproved",
+                  "description": "Response payload for denya cliloginresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for denya cliloginresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cli/login/key": {
+      "delete": {
+        "tags": [
+          "cli-login"
+        ],
+        "summary": "Revoke this CLI login key",
+        "description": "Used by `apiome logout`: revokes the API key presented in `X-API-Key`, if `apiome login` created it. Any other key is refused with 409 \u2014 revoke it from the API Keys page.",
+        "operationId": "revoke_cli_login_key_v1_cli_login_key_delete",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Revokethis Cliloginkey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Revokethis Cliloginkey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for revoke this cli login key."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for revokethis cliloginkeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{tenant_slug}/agent-toolsets": {
       "get": {
         "tags": [
@@ -31538,7 +31899,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-23T19:12:05Z"
+                          "example": "2026-10-23T23:01:53Z"
                         },
                         "method": {
                           "type": "string",
@@ -114634,7 +114995,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "completed_at": {
             "anyOf": [
@@ -116131,6 +116492,307 @@
         "title": "CleanupResponse",
         "description": "CleanupResponse schema."
       },
+      "CliLoginApproveRequest": {
+        "properties": {
+          "tenant_slug": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Tenant Slug",
+            "description": "URL-safe tenant slug used in path parameters.",
+            "example": "acme"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tenant_slug"
+        ],
+        "title": "CliLoginApproveRequest",
+        "description": "Body of ``POST /v1/cli/login/requests/{user_code}/approve``."
+      },
+      "CliLoginApproved": {
+        "properties": {
+          "user_code": {
+            "type": "string",
+            "title": "User Code",
+            "description": "User Code.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "tenant_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Cli Login Approved schema."
+              },
+              {
+                "type": "null",
+                "description": "Cli Login Approved schema."
+              }
+            ],
+            "title": "Tenant Slug",
+            "description": "URL-safe tenant slug used in path parameters."
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_code",
+          "status"
+        ],
+        "title": "CliLoginApproved",
+        "description": "The outcome of approving or denying a login."
+      },
+      "CliLoginKeyIssued": {
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "title": "Api Key",
+            "description": "The secret. Send it as `X-API-Key`; it is never shown again.",
+            "example": "example"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id",
+            "description": "Key ID.",
+            "example": "key_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "key_prefix": {
+            "type": "string",
+            "title": "Key Prefix",
+            "description": "Key Prefix.",
+            "example": "example"
+          },
+          "key_name": {
+            "type": "string",
+            "title": "Key Name",
+            "description": "Key Name.",
+            "example": "Example"
+          },
+          "tenant_slug": {
+            "type": "string",
+            "title": "Tenant Slug",
+            "description": "URL-safe tenant slug used in path parameters.",
+            "example": "acme"
+          },
+          "tenant_name": {
+            "type": "string",
+            "title": "Tenant Name",
+            "description": "Tenant Name.",
+            "example": "Example"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "Expires At timestamp (ISO 8601).",
+            "example": "2026-10-23T23:01:53Z"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_key",
+          "key_id",
+          "key_prefix",
+          "key_name",
+          "tenant_slug",
+          "tenant_name",
+          "expires_at"
+        ],
+        "title": "CliLoginKeyIssued",
+        "description": "The key an approved login hands to the CLI \u2014 shown once."
+      },
+      "CliLoginRequestView": {
+        "properties": {
+          "user_code": {
+            "type": "string",
+            "title": "User Code",
+            "description": "User Code.",
+            "example": "example"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for cli login request view."
+              },
+              {
+                "type": "null",
+                "description": "Request body for cli login request view."
+              }
+            ],
+            "title": "Client Name",
+            "description": "Client Name."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "Expires At timestamp (ISO 8601).",
+            "example": "2026-10-23T23:01:53Z"
+          },
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/CliLoginWorkspace"
+            },
+            "type": "array",
+            "title": "Workspaces",
+            "description": "Workspaces.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_code",
+          "status",
+          "created_at",
+          "expires_at",
+          "workspaces"
+        ],
+        "title": "CliLoginRequestView",
+        "description": "What the approve page shows about a pending login."
+      },
+      "CliLoginStartRequest": {
+        "properties": {
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Request body for cli login start."
+              },
+              {
+                "type": "null",
+                "description": "Request body for cli login start."
+              }
+            ],
+            "title": "Client Name",
+            "description": "How the CLI names itself on the approve page, e.g. `apiome-cli on build-box`."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CliLoginStartRequest",
+        "description": "Body of ``POST /v1/cli/login``."
+      },
+      "CliLoginStarted": {
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "title": "Device Code",
+            "description": "Secret the CLI polls with. Never show it to the person.",
+            "example": "example"
+          },
+          "user_code": {
+            "type": "string",
+            "title": "User Code",
+            "description": "Code the person compares in the browser, e.g. `KTXR-MWDB`.",
+            "example": "example"
+          },
+          "verification_uri": {
+            "type": "string",
+            "title": "Verification Uri",
+            "description": "The approve page in apiome-ui.",
+            "example": "https://example.com/resource"
+          },
+          "verification_uri_complete": {
+            "type": "string",
+            "title": "Verification Uri Complete",
+            "description": "The approve page with the code filled in.",
+            "example": "example"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Seconds until the login expires.",
+            "example": 1
+          },
+          "interval": {
+            "type": "integer",
+            "title": "Interval",
+            "description": "Seconds to wait between polls.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_code",
+          "user_code",
+          "verification_uri",
+          "verification_uri_complete",
+          "expires_in",
+          "interval"
+        ],
+        "title": "CliLoginStarted",
+        "description": "A started login (RFC 8628 \u00a73.2 device authorization response)."
+      },
+      "CliLoginTokenRequest": {
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Device Code",
+            "description": "Device Code.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "device_code"
+        ],
+        "title": "CliLoginTokenRequest",
+        "description": "Body of ``POST /v1/cli/login/token``."
+      },
+      "CliLoginWorkspace": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "can_approve": {
+            "type": "boolean",
+            "title": "Can Approve",
+            "description": "Whether the person holds `api_keys:create` there.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "can_approve"
+        ],
+        "title": "CliLoginWorkspace",
+        "description": "A workspace the signed-in person could approve the login for."
+      },
       "CloseTailResponse": {
         "properties": {
           "closed": {
@@ -116589,7 +117251,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "comment_count": {
             "type": "integer",
@@ -116817,7 +117479,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "comment_count": {
             "type": "integer",
@@ -117584,14 +118246,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -120877,7 +121539,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "735b26fc-b3c1-40db-98ca-dd48da4bf2cb"
+            "example": "6a04f649-ce5a-463f-a809-fcc9486e0f5c"
           },
           "method": {
             "type": "string",
@@ -123404,7 +124066,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -125300,7 +125962,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "browse_url": {
             "anyOf": [
@@ -171820,7 +172482,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           }
         },
         "additionalProperties": false,
@@ -184190,13 +184852,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           }
         },
         "additionalProperties": false,
@@ -185700,7 +186362,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "detected_by": {
             "anyOf": [
@@ -193906,14 +194568,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-23T19:12:05Z"
+            "example": "2026-10-23T23:01:53Z"
           },
           "outcome": {
             "anyOf": [

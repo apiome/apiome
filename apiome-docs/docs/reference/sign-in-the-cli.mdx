@@ -1,0 +1,115 @@
+---
+title: "Sign in the CLI"
+description: "Sign the apiome command in through your browser with apiome login."
+sidebar_position: 3.5
+tags: [cli]
+---
+
+<Route path="/cli/login" />
+
+`apiome login` signs the command line in to Apiome without copying an API key out of the app. You
+approve the sign-in in your browser, and the CLI gets an API key for one workspace that lasts
+**14 days**. Every command that needs an API key then works.
+
+For a key that does not expire — on a CI runner, say — create one on the
+[API Keys page](../workspace/api-keys.mdx) and set it as `APIOME_API_KEY` instead.
+
+## Sign in
+
+1. **Point the CLI at your Apiome server**, if it is not on your machine:
+
+   ```bash
+   apiome config set base-url https://api.apiome.example
+   ```
+
+2. **Run `apiome login`.** It prints a code and opens the approve page in your browser:
+
+   ```text
+   $ apiome login
+   Your code: KTXR-MWDB
+   Approve this login at https://app.apiome.example/cli/login?code=KTXR-MWDB
+   Waiting for approval… (Ctrl+C to cancel)
+   ```
+
+   Over SSH or in a container, add `--no-browser` and open the link on any machine where you can
+   sign in.
+
+3. **Sign in to Apiome** in the browser if you are not already — with your password, a sign-in
+   provider or single sign-on, and two-factor if you use it.
+4. **Check the code** on the page matches the one in your terminal. If it does not, click **“Deny”**:
+   someone else started that sign-in.
+5. **Choose the workspace** the CLI should work in. The list shows only workspaces where you can
+   create API keys.
+6. **Click “Approve”.**
+
+<Screenshot id="cli-login" alt="Sign in the Apiome CLI?: the code KTXR-MWDB, the Northwind workspace chosen, and the Approve and Deny buttons" />
+
+The page says **CLI signed in**, and the terminal finishes:
+
+```text
+Signed in to Northwind (northwind). The key expires 2026-11-06T17:00:00Z; it is saved in ~/.config/apiome/config.toml.
+```
+
+<Screenshot id="cli-login-approved" alt="CLI signed in: return to your terminal; the key lasts 14 days" />
+
+The code works for **10 minutes**. If it runs out, or you click **Deny**, the CLI stops and saves
+nothing; run `apiome login` again.
+
+## What is saved
+
+`apiome login` writes two settings to `~/.config/apiome/config.toml`, replacing what was there:
+
+| Setting | Value |
+| --- | --- |
+| `api_key` | The new key. It is shown nowhere else, and Apiome keeps only a hash of it. |
+| `tenant_id` | The workspace you approved, by its slug. |
+
+The key belongs to you and the workspace you chose. It appears on that workspace's
+[API Keys page](../workspace/api-keys.mdx) as **CLI login · apiome-cli on &lt;your machine&gt; · …**,
+where any administrator can disable or delete it. It has full access, like a key created there, and
+stops working after 14 days — run `apiome login` again then.
+
+`APIOME_API_KEY` in your environment still wins over the saved key. `apiome login` warns you when it
+is set.
+
+## Sign out
+
+```bash
+apiome logout
+```
+
+This revokes the saved key in Apiome and removes it from the config file. A key you saved yourself
+with `apiome config set api-key` is left alone — revoke it on the API Keys page, or remove it with
+`apiome config unset api-key`.
+
+## Who can approve
+
+You need permission to **create API keys** in the workspace, the same permission the API Keys page
+asks for. The built-in Owner, Admin and Editor roles have it; Viewer does not. With no such
+workspace, the page says so and offers only **Deny**.
+
+## Troubleshooting
+
+| You see | What to do |
+| --- | --- |
+| *This code does not work* in the browser | The code expired, was used, or was typed wrong. Run `apiome login` again. |
+| `The login was denied in the browser` | Someone clicked **Deny**. Run `apiome login` again if it was a mistake. |
+| `The login expired before it was approved` | Approve within 10 minutes of running `apiome login`. |
+| `Could not open a browser` | Open the printed link yourself. |
+| The link points at the wrong address | Your administrator sets it with `APIOME_UI_PUBLIC_URL` on the REST service. |
+| Commands still use another key | `APIOME_API_KEY` is set in your environment; unset it. |
+
+## With the API
+
+`apiome login` uses four REST routes; see the [API reference](./api-reference.md):
+
+- `POST /v1/cli/login` — start a sign-in: a secret device code, the user code and the approve link.
+- `POST /v1/cli/login/token` — poll with the device code; returns the key once approved.
+- `GET /v1/cli/login/requests/{code}`, `POST …/approve`, `POST …/deny` — the approve page (signed in).
+- `DELETE /v1/cli/login/key` — `apiome logout`.
+
+## Where next
+
+- [CLI quick-start](./cli-quickstart.md)
+- [`apiome login` reference](./cli/login.md)
+- [API keys](../workspace/api-keys.mdx)

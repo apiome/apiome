@@ -1,7 +1,7 @@
 ---
 title: "Exit codes"
 description: "What each apiome exit code means, for scripts and CI pipelines."
-sidebar_position: 37
+sidebar_position: 39
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

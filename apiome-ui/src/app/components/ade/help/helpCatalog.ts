@@ -959,6 +959,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['apiome command', 'curl', 'upgrade', 'uninstall'],
   },
   {
+    id: 'sign-in-the-cli',
+    title: 'Sign in the CLI',
+    summary: 'Sign the apiome command in through your browser with apiome login.',
+    page: 'apiome-docs/docs/reference/sign-in-the-cli.mdx',
+    section: 'reference',
+    keywords: ['apiome login', 'apiome logout', 'cli login', 'approve', 'code'],
+  },
+  {
     id: 'runtime-usage',
     title: 'Runtime usage',
     summary: 'What the usage index records about live traffic, and how long it keeps it.',

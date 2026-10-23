@@ -44,6 +44,19 @@ Convenience runner (loads `.env`, ensures the venv):
 ./run.sh                 # interactive prompt (TTY) or one-command-per-line (piped)
 ```
 
+## Sign in
+
+Point the CLI at your server, then sign in through your browser — it saves a 14-day API key and the
+workspace you choose. See [Sign in the CLI](./sign-in-the-cli.mdx):
+
+```bash
+apiome config set base-url https://api.apiome.example   # skip for a local server
+apiome login
+```
+
+`apiome logout` revokes the key. For a key that does not expire (CI), create one on the API Keys page
+and set `APIOME_API_KEY`, as below.
+
 ## Configure
 
 Resolution order is **flags > env vars > dotenv > config file > defaults**.
@@ -64,7 +77,8 @@ apiome config set api-key  obj_your_key_here
 apiome config show          # secrets masked
 ```
 
-Get an API key from the UI: **Dashboard → API keys** (`/ade/dashboard/api-keys`).
+Get a permanent API key from the UI: **Dashboard → API keys** (`/ade/dashboard/api-keys`), or let
+`apiome login` save a 14-day one.
 
 ## First commands
 
@@ -72,6 +86,7 @@ Get an API key from the UI: **Dashboard → API keys** (`/ade/dashboard/api-keys
 apiome doctor                      # connectivity check (no auth)
 apiome health                      # REST health JSON
 apiome formats                     # every supported format, direction and version coverage
+apiome login                       # sign in through the browser (saves tenant + API key)
 apiome projects list               # needs tenant + API key
 apiome projects update payments-api --domain finance --dry-run   # preview a change
 apiome projects export payments-api -o payments-api.json        # whole-project backup

@@ -95,6 +95,8 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-apiome}
       APIOME_MOCK_PUBLIC_BASE_URL: ${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
+      # `apiome login` (#5501): where people open /cli/login to approve a CLI sign-in.
+      APIOME_UI_PUBLIC_URL: ${APIOME_UI_PUBLIC_URL:-http://localhost:3000}
       # ── Dry-run mock preview (#5528, MSC-1.2) ───────────────────────────────────────────────
       # POST …/mock/preview renders a synthetic request through apiome-mock's *own* serving path
       # rather than re-implementing it here, so REST needs the mock service's INTERNAL address
