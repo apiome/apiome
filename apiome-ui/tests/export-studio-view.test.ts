@@ -17,6 +17,7 @@ import {
   EXPORT_TARGET_FAMILIES,
   OTHER_FAMILY,
   familyForParadigm,
+  familyForTarget,
   groupTargetsByFamily,
 } from '../src/app/components/ade/export-studio/exportTargetFamilies';
 import {
@@ -43,6 +44,7 @@ describe('familyForParadigm', () => {
   it('names the headings the mockup prints, in its order', () => {
     expect(EXPORT_TARGET_FAMILIES.map((family) => family.label)).toEqual([
       'REST & HTTP',
+      'API clients & collections',
       'RPC',
       'Events',
       'Data schema & graph',
@@ -81,6 +83,27 @@ describe('familyForParadigm', () => {
     expect(familyForParadigm('')).toEqual(OTHER_FAMILY);
     expect(familyForParadigm(null)).toEqual(OTHER_FAMILY);
     expect(familyForParadigm(undefined)).toEqual(OTHER_FAMILY);
+  });
+});
+
+describe('familyForTarget', () => {
+  it('files every API-client collection target under its own heading (FMT-10.4)', () => {
+    for (const key of ['postman', 'hoppscotch', 'thunder-client', 'http-file']) {
+      expect({ key, family: familyForTarget('rest', key).key }).toEqual({ key, family: 'client' });
+    }
+    expect(familyForTarget('rest', 'postman').label).toBe('API clients & collections');
+  });
+
+  it('matches the target key in any case and with surrounding space', () => {
+    expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
+  });
+
+  it('falls back to the paradigm for every other key, and with no key at all', () => {
+    expect(familyForTarget('rest', 'openapi').key).toBe('rest');
+    expect(familyForTarget('rpc', 'proto3').key).toBe('rpc');
+    expect(familyForTarget('rest').key).toBe('rest');
+    expect(familyForTarget('rest', null).key).toBe('rest');
+    expect(familyForTarget('quantum', 'unknown')).toEqual(OTHER_FAMILY);
   });
 });
 
@@ -132,6 +155,25 @@ describe('groupTargetsByFamily', () => {
 
   it('returns nothing at all for an empty grid', () => {
     expect(groupTargetsByFamily([], () => 'rest')).toEqual([]);
+  });
+
+  it('moves the client collections out of REST & HTTP when the key is read', () => {
+    const cards = [
+      card('openapi', 'rest'),
+      card('postman', 'rest'),
+      card('hoppscotch', 'rest'),
+      card('thunder-client', 'rest'),
+      card('proto', 'rpc'),
+    ];
+    const groups = groupTargetsByFamily(cards, (c) => c.paradigm, (c) => c.key);
+    expect(groups.map((group) => group.key)).toEqual(['rest', 'client', 'rpc']);
+    expect(groups[0].items.map((c) => c.key)).toEqual(['openapi']);
+    expect(groups[1].items.map((c) => c.key)).toEqual(['postman', 'hoppscotch', 'thunder-client']);
+  });
+
+  it('groups by paradigm alone when no key reader is given', () => {
+    const groups = groupTargetsByFamily([card('postman', 'rest')], (c) => c.paradigm);
+    expect(groups.map((group) => group.key)).toEqual(['rest']);
   });
 });
 

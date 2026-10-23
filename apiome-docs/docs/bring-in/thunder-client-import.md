@@ -8,7 +8,8 @@ tags: [import, thunder-client, collection, requests, environment]
 **Thunder Client** is the API client built into VS Code. The **Thunder Client collection** importer
 (`thunder-client`) reads a collection export, together with the environment exports its variables
 come from, into the [Catalog](./catalog.mdx) as one **REST** API. You can then search, version, diff
-and convert it like any other catalog item.
+and convert it like any other catalog item, and
+[export it back to Thunder Client](../ship/export-to-an-api-client.md) (or to Hoppscotch).
 
 A collection lists the requests you saved. It is not a specification, so Apiome **infers** the API
 from those requests: path templates, parameters and body schemas. It uses the same engine as
@@ -111,3 +112,5 @@ Apiome records these in the import's coverage ledger instead of guessing:
 - [Declared, inferred and synthesized](./inference-provenance.mdx): why everything a collection
   import builds is labelled inferred.
 - [Import a specification](./import-a-spec.md): the import job and its options.
+- [Export to an API client](../ship/export-to-an-api-client.md): export any HTTP API as a
+  Thunder Client collection and environment.

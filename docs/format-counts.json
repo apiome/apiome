@@ -3,9 +3,9 @@
   "capability_registry_version": "34",
   "total": 92,
   "importable": 92,
-  "exportable": 51,
-  "round_trip": 51,
-  "import_only": 41,
+  "exportable": 53,
+  "round_trip": 53,
+  "import_only": 39,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
@@ -17,7 +17,7 @@
       "label": "REST",
       "total": 28,
       "importable": 28,
-      "exportable": 20
+      "exportable": 22
     },
     {
       "id": "rpc",

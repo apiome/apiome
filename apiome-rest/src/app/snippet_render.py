@@ -338,8 +338,12 @@ def pick_content_type(message: Message) -> str:
     return "application/json"
 
 
-def _synthesize_body(api: CanonicalApi, message: Message) -> Optional[Any]:
+def synthesize_body(api: CanonicalApi, message: Message) -> Optional[Any]:
     """Produce the minimal valid instance for a request message's payload schema.
+
+    Public because the client-collection emitters (FMT-10.4, #5479) write a saved request's body
+    from the same instance a snippet sends — including for form bodies, which a snippet omits but a
+    Hoppscotch or Thunder Client request can carry as fields.
 
     Returns ``None`` when no schema is available or the synthesizer cannot produce a
     minimal instance (the snippet degrades to body-less rather than failing).
@@ -460,7 +464,7 @@ def synthesize_request(
     if message is not None and (message.payload_schema is not None or message.payload is not None):
         content_type = pick_content_type(message)
         if "json" in content_type.lower():
-            instance = _synthesize_body(api, message)
+            instance = synthesize_body(api, message)
             if instance is not None:
                 body_json = instance
                 body = json.dumps(instance, indent=2)

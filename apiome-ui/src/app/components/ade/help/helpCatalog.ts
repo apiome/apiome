@@ -160,6 +160,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['push back', 'envoy', 'istio', 'traefik', 'aws api gateway', 'azure apim', 'apigee', 'migrate'],
   },
   {
+    id: 'export-to-an-api-client',
+    title: 'Export to an API client',
+    summary: 'Export an API as a Hoppscotch or Thunder Client collection with its environment.',
+    page: 'apiome-docs/docs/ship/export-to-an-api-client.md',
+    section: 'spine',
+    keywords: ['hoppscotch', 'thunder client', 'vs code', 'collection', 'environment', 'saved requests', 'migrate'],
+  },
+  {
     id: 'export-fidelity',
     title: 'Understand export fidelity',
     summary:

@@ -3,7 +3,8 @@
  *
  * Authority: `docs/mockups/ship/export-studio.html`, Step 2, whose target grid carries the
  * headings *REST & HTTP*, *RPC*, *Events* and *Data schema & graph* over what was one flat
- * list of thirty-six cards.
+ * list of thirty-six cards. *Agents & tools* (FMT-2.7) and *API clients & collections*
+ * (FMT-10.4) were added since.
  *
  * ### Why a family rather than a longer list
  *
@@ -28,6 +29,16 @@
  * FMT-2.7 (#5425) gave that paradigm its own heading, so a reader looking for "what can I
  * hand an agent?" finds it under a name instead of under *Other*.
  *
+ * ### The one family that is not a paradigm
+ *
+ * *API clients & collections* (FMT-10.4, #5479) is chosen by **target key**, not paradigm: a
+ * Postman, Hoppscotch or Thunder Client collection and an `.http` request file all describe REST
+ * calls, so by paradigm they would sit among the specification formats under *REST & HTTP*. But a
+ * reader exporting "to the client my team uses" is asking a different question from one exporting
+ * a specification, and the answer is a set of saved requests rather than a contract — so those
+ * targets get a heading of their own, placed straight after *REST & HTTP*. A target key the table
+ * does not list falls back to its paradigm, so a new emitter still lands somewhere.
+ *
  * Everything here is pure — no React, no fetch — so the partition is unit-tested directly.
  */
 
@@ -50,6 +61,7 @@ export interface ExportTargetFamily {
  */
 export const EXPORT_TARGET_FAMILIES: readonly ExportTargetFamily[] = [
   { key: 'rest', label: 'REST & HTTP' },
+  { key: 'client', label: 'API clients & collections' },
   { key: 'rpc', label: 'RPC' },
   { key: 'event', label: 'Events' },
   { key: 'data', label: 'Data schema & graph' },
@@ -83,6 +95,19 @@ const PARADIGM_FAMILY: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Target key → family, for the targets whose family is not their paradigm's.
+ *
+ * The keys are emitter registry keys (`descriptor.key`). Every member is an API-client
+ * collection or request file: a set of saved calls a developer opens in their client.
+ */
+const TARGET_FAMILY: Readonly<Record<string, string>> = {
+  postman: 'client',
+  hoppscotch: 'client',
+  'thunder-client': 'client',
+  'http-file': 'client',
+};
+
+/**
  * The family a paradigm belongs to.
  *
  * @param paradigm The emitter descriptor's `paradigm`, in any case and with either spelling
@@ -93,6 +118,24 @@ export function familyForParadigm(paradigm: string | null | undefined): ExportTa
   const normalized = (paradigm ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
   const key = PARADIGM_FAMILY[normalized];
   return EXPORT_TARGET_FAMILIES.find((family) => family.key === key) ?? OTHER_FAMILY;
+}
+
+/**
+ * The family a target belongs to: its key's family when the key has one, else its paradigm's.
+ *
+ * @param paradigm The emitter descriptor's `paradigm` (see {@link familyForParadigm}).
+ * @param key The emitter descriptor's registry `key`, when known.
+ * @returns The matching family, or {@link OTHER_FAMILY} when neither is known.
+ */
+export function familyForTarget(
+  paradigm: string | null | undefined,
+  key?: string | null,
+): ExportTargetFamily {
+  const byKey = TARGET_FAMILY[(key ?? '').trim().toLowerCase()];
+  if (byKey) {
+    return EXPORT_TARGET_FAMILIES.find((family) => family.key === byKey) ?? OTHER_FAMILY;
+  }
+  return familyForParadigm(paradigm);
 }
 
 /** One family together with the cards that fell into it. */
@@ -109,19 +152,22 @@ export interface ExportTargetFamilyGroup<T> extends ExportTargetFamily {
  *
  * @param items The cards to group, already ordered by `orderTargetCards`.
  * @param paradigmOf Reads a card's paradigm — the caller keeps the card shape to itself.
+ * @param keyOf Reads a card's registry key, so key-chosen families ({@link familyForTarget})
+ *   apply; omitted, every card is grouped by paradigm alone.
  * @returns The non-empty groups, in {@link EXPORT_TARGET_FAMILIES} order with
  *   {@link OTHER_FAMILY} last.
  */
 export function groupTargetsByFamily<T>(
   items: readonly T[],
   paradigmOf: (item: T) => string | null | undefined,
+  keyOf?: (item: T) => string | null | undefined,
 ): ExportTargetFamilyGroup<T>[] {
   const order = [...EXPORT_TARGET_FAMILIES, OTHER_FAMILY];
   const groups = new Map<string, ExportTargetFamilyGroup<T>>(
     order.map((family) => [family.key, { ...family, items: [] }]),
   );
   for (const item of items) {
-    groups.get(familyForParadigm(paradigmOf(item)).key)?.items.push(item);
+    groups.get(familyForTarget(paradigmOf(item), keyOf?.(item)).key)?.items.push(item);
   }
   return order
     .map((family) => groups.get(family.key)!)

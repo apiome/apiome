@@ -138,6 +138,9 @@ const TARGETS: ExportTargetsResponse = {
   targets: [
     entry('openapi', 'OpenAPI 3.1', 'rest'),
     entry('raml', 'RAML', 'rest', LOSSY),
+    // REST by paradigm, but filed under the client-collection heading by key (FMT-10.4).
+    entry('hoppscotch', 'Hoppscotch', 'rest', LOSSY),
+    entry('thunder-client', 'Thunder Client', 'rest', LOSSY),
     entry('proto', 'Protocol Buffers (proto3)', 'rpc', LOSSY),
     entry('asyncapi', 'AsyncAPI 3', 'event', LOSSY),
     entry('avro', 'Apache Avro', 'data_schema', LOSSY),
@@ -366,6 +369,18 @@ describe('the target grid keeps every target reachable, under a family heading',
     );
     const rest = screen.getByRole('heading', { level: 4, name: /REST & HTTP/ });
     expect(rest).toHaveTextContent('2');
+  });
+
+  it('files the client-collection targets under their own heading, not REST & HTTP', () => {
+    const { container } = render(
+      <ExportTargetGrid cards={cards} selectedKey={null} onSelect={jest.fn()} groupByFamily />,
+    );
+    const clients = container.querySelector('[data-family="client"]') as HTMLElement;
+    expect(clients).toHaveAttribute('aria-label', 'API clients & collections');
+    expect(within(clients).getByTestId('export-target-hoppscotch')).toBeInTheDocument();
+    expect(within(clients).getByTestId('export-target-thunder-client')).toBeInTheDocument();
+    const rest = container.querySelector('[data-family="rest"]') as HTMLElement;
+    expect(within(rest).queryByTestId('export-target-hoppscotch')).not.toBeInTheDocument();
   });
 
   it('shows fidelity before selection, on every card', () => {

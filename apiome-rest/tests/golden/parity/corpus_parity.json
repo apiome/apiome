@@ -1863,9 +1863,16 @@
       "golden_directories": [
         "hoppscotch"
       ],
-      "emit_key": null,
+      "emit_key": "hoppscotch",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "hoppscotch",
+          "emit_key": "hoppscotch",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -3735,9 +3742,16 @@
       "golden_directories": [
         "thunder-client"
       ],
-      "emit_key": null,
+      "emit_key": "thunder-client",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "thunder-client",
+          "emit_key": "thunder-client",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
