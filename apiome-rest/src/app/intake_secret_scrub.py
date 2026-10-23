@@ -16,7 +16,8 @@ record *what* and *where* (secret type, line number), never the value itself.
 Detection is two-layered (MFI-29.6):
 
 * **named patterns** — provider key shapes, authorization headers, cookie jars,
-  URL userinfo, and secret-*named* assignments. Always on: each one is a shape
+  URL userinfo, secret-*named* assignments, and the ``{"key": <secret name>, "value": …}``
+  pair lists client exports use (FMT-10.1). Always on: each one is a shape
   that is a credential and nothing else.
 * **entropy** — a value the patterns cannot name (a bespoke opaque token under a
   neutral key such as ``value`` or ``X-Custom-Auth``) is caught by its randomness.
@@ -118,6 +119,32 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
         r"[A-Za-z0-9_\-]*(?:\"|')?\s*[:=]\s*(?:\"|')?([^\"'\s,}\]&]{4,})",
         re.IGNORECASE,
     )),
+    # A key named exactly ``token`` — where a Hoppscotch bearer / OAuth 2 auth block keeps its
+    # credential (FMT-10.1). Not folded into the alternation above, which also matches names that
+    # merely *contain* a secret word: ``token`` inside ``tokenUrl`` or ``nextPageToken`` is not one.
+    ("secret-assignment", _p(
+        r"(?:\"|')?(?<![A-Za-z0-9_\-])token(?:\"|')?\s*:\s*(?:\"|')([^\"'\s,}\]&]{4,})",
+        re.IGNORECASE,
+    )),
+    # --- name/value pair lists (Hoppscotch / Postman exports) --------------------
+    # Client exports store variables, auth parameters and API keys as ``{"key": <name>,
+    # "value": <value>}`` objects, so the secret's *name* is a value and the assignment pattern
+    # cannot see it. A ``key`` naming a secret marks the ``value`` / ``initialValue`` /
+    # ``currentValue`` member of the same object (scalar members may sit between them). One
+    # pattern per value member, so an environment variable carrying both an initial and a
+    # current value has both redacted.
+    *(
+        ("secret-key-value-pair", _p(
+            r"\"key\"\s*:\s*\"[^\"\n]*"
+            r"(?:password|passwd|secret|api[-_]?key|apikey|token|credential|passphrase"
+            r"|session|private[-_]?key)"
+            r"[^\"\n]*\"\s*,"
+            r"(?:\s*\"[A-Za-z_]+\"\s*:\s*(?:\"[^\"\n]*\"|true|false|null|-?\d+)\s*,)*?"
+            rf"\s*\"{member}\"\s*:\s*\"((?:[^\"\\\n]|\\.){{4,}})\"",
+            re.IGNORECASE,
+        ))
+        for member in ("value", "initialValue", "currentValue")
+    ),
 )
 
 

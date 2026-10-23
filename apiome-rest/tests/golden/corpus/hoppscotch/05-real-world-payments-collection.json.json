@@ -1,0 +1,914 @@
+{
+  "adapter": "hoppscotch",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "hoppscotch": {
+        "capability_limits": [
+          {
+            "construct": "hoppscotch.script",
+            "count": 2,
+            "locations": [
+              "Authorize a payment",
+              "Get access token"
+            ],
+            "note": "Pre-request and test scripts are JavaScript run by the client; they are not modelled."
+          },
+          {
+            "construct": "hoppscotch.auth_credential",
+            "count": 4,
+            "locations": [
+              "Authorize a payment",
+              "Capture an authorization",
+              "Settlement report",
+              "Void an authorization"
+            ],
+            "note": "The auth scheme and its parameter names are kept; saved credentials are never read."
+          }
+        ],
+        "collection_versions": [
+          "6"
+        ],
+        "environments": [],
+        "folders": [
+          "Authentication",
+          "Authorizations",
+          "Reporting"
+        ],
+        "requests": 5,
+        "variables": []
+      },
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "authorizations"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "authorizationId"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "captures"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/authorizations/{authorizationId}/captures"
+          ],
+          "template": "/authorizations/{authorizationId}/captures"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "authorizations"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "authorizationId"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "void"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/authorizations/{authorizationId}/void"
+          ],
+          "template": "/authorizations/{authorizationId}/void"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /reports/settlement": 1,
+        "POST /authorizations": 1,
+        "POST /authorizations/{authorizationId}/captures": 1,
+        "POST /authorizations/{authorizationId}/void": 1,
+        "POST /oauth/token": 1
+      }
+    },
+    "format": "hoppscotch",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Payments sandbox",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "hoppscotch/05-real-world-payments-collection.json"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://auth.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": null,
+            "description": "Hoppscotch variable `<<baseUrl>>`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Payments sandbox",
+        "name": "Payments sandbox",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hoppscotch_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "reports"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "settlement"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/reports/settlement"
+                ],
+                "template": "/reports/settlement"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "hoppscotch/05-real-world-payments-collection.json"
+              ],
+              "source_label": "Settlement report",
+              "source_location": "folders/2/requests/0"
+            },
+            "http_method": "GET",
+            "http_path": "/reports/settlement",
+            "key": "GET /reports/settlement",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /reports/settlement",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /reports/settlement#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "2026-08-01"
+                  ]
+                },
+                "key": "GET /reports/settlement#query.date",
+                "location": "query",
+                "name": "date",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "<<merchantId>>"
+                  ]
+                },
+                "key": "GET /reports/settlement#query.merchantId",
+                "location": "query",
+                "name": "merchantId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Reporting"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hoppscotch_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "authorizations"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/authorizations"
+                ],
+                "template": "/authorizations"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "hoppscotch/05-real-world-payments-collection.json"
+              ],
+              "source_label": "Authorize a payment",
+              "source_location": "folders/1/requests/0"
+            },
+            "http_method": "POST",
+            "http_path": "/authorizations",
+            "key": "POST /authorizations",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /authorizations#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostAuthorizationRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /authorizations",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /authorizations#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /authorizations#header.idempotency-key",
+                "location": "header",
+                "name": "idempotency-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Authorizations"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hoppscotch_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "authorizations"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "authorizationId"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "captures"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/authorizations/{authorizationId}/captures"
+                ],
+                "template": "/authorizations/{authorizationId}/captures"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "hoppscotch/05-real-world-payments-collection.json"
+              ],
+              "source_label": "Capture an authorization",
+              "source_location": "folders/1/requests/1"
+            },
+            "http_method": "POST",
+            "http_path": "/authorizations/{authorizationId}/captures",
+            "key": "POST /authorizations/{authorizationId}/captures",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /authorizations/{authorizationId}/captures#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostCaptureRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /authorizations/{authorizationId}/captures",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /authorizations/{authorizationId}/captures#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /authorizations/{authorizationId}/captures#path.authorizationId",
+                "location": "path",
+                "name": "authorizationId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Authorizations"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "hoppscotch_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "authorizations"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "authorizationId"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "void"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/authorizations/{authorizationId}/void"
+                ],
+                "template": "/authorizations/{authorizationId}/void"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "hoppscotch/05-real-world-payments-collection.json"
+              ],
+              "source_label": "Void an authorization",
+              "source_location": "folders/1/requests/2"
+            },
+            "http_method": "POST",
+            "http_path": "/authorizations/{authorizationId}/void",
+            "key": "POST /authorizations/{authorizationId}/void",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /authorizations/{authorizationId}/void",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /authorizations/{authorizationId}/void#path.authorizationId",
+                "location": "path",
+                "name": "authorizationId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Authorizations"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "oauth"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "token"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://auth.example.com/oauth/token"
+                ],
+                "template": "/oauth/token"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "hoppscotch/05-real-world-payments-collection.json"
+              ],
+              "source_label": "Get access token",
+              "source_location": "folders/0/requests/0"
+            },
+            "http_method": "POST",
+            "http_path": "/oauth/token",
+            "key": "POST /oauth/token",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/x-www-form-urlencoded"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /oauth/token#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostTokenRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /oauth/token",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /oauth/token#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Authentication"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Payments sandbox",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAuthorizationRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAuthorizationRequest.captureMode",
+            "name": "captureMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAuthorizationRequest.card",
+            "name": "card",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAuthorizationRequest.merchantId",
+            "name": "merchantId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostAuthorizationRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostAuthorizationRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostCaptureRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostCaptureRequest.finalCapture",
+            "name": "finalCapture",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostCaptureRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostCaptureRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.client_id",
+            "name": "client_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.client_secret",
+            "name": "client_secret",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.grant_type",
+            "name": "grant_type",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostTokenRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostTokenRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "hoppscotch/05-real-world-payments-collection.json",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 2,
+    "services": 1,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "hoppscotch"
+  },
+  "fingerprint": "sha256:74ebd822527c2c2be7d4fead5021260ec8dd2fe622b47199872e9a2a88b2c4b8",
+  "lint": {
+    "findings": 22,
+    "grade": "F",
+    "report_fingerprint": "7d340f08794d4cb8c5e4f98f46808ed9fd237a15dc66403c3234ff6a09225bec",
+    "score": 54,
+    "severity_counts": {
+      "error": 0,
+      "info": 14,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

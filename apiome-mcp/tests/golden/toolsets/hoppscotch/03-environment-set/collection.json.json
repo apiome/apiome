@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "warehouse": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku",
+          "warehouse"
+        ],
+        "type": "object"
+      },
+      "name": "GET_stock_sku",
+      "operation": "GET /stock/{sku}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "quantity",
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "POST_reservations",
+      "operation": "POST /reservations"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "x-collection": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-collection"
+        ],
+        "type": "object"
+      },
+      "name": "GET_root",
+      "operation": "GET /root"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-collection": {
+            "type": "string"
+          },
+          "x-scope": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-collection",
+          "x-scope",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_tenant-a_read",
+      "operation": "GET /tenant-a/read"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-collection": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-collection",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_tenant-b_read",
+      "operation": "GET /tenant-b/read"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer"
+          },
+          "x-collection": {
+            "type": "string"
+          },
+          "x-scope": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "x-collection",
+          "x-scope",
+          "x-tenant",
+          "value"
+        ],
+        "type": "object"
+      },
+      "name": "POST_tenant-a_write",
+      "operation": "POST /tenant-a/write"
+    }
+  ]
+}

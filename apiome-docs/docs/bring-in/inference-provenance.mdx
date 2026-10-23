@@ -27,6 +27,7 @@ it, such as *Schema inferred from the example request body of POST /orders.*
 | Import | What is inferred or synthesized |
 | --- | --- |
 | HTTP request files (`.http`, cURL) | Everything is inferred from the requests in the file. |
+| Hoppscotch collections | Everything is inferred from the saved requests in the collection: path templates, parameters and body schemas. |
 | Postman collections | Request and response schemas are inferred from example bodies. A raw body that is not JSON is synthesized as a string. Requests, paths and parameters are declared. |
 | Envoy, Istio, Traefik, NGINX, HAProxy, Consul, Tyk Classic | Every route is inferred from the gateway configuration. A Tyk OAS document is declared. |
 | Kong, Gateway API | Routes are declared. A path recovered from a regex pattern is inferred. |

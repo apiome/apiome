@@ -386,3 +386,48 @@ def test_a_boolean_xml_attribute_under_a_secret_named_name_is_kept(text):
 )
 def test_strings_and_real_attribute_secrets_are_still_redacted(text):
     assert scrub_document_text(text).scrubbed
+
+
+# --- FMT-10.1: client-export shapes (Hoppscotch / Postman) ---------------------
+
+
+def test_a_key_named_exactly_token_is_redacted():
+    """A Hoppscotch bearer / OAuth 2 auth block keeps its credential under ``token``."""
+    text = json.dumps({"authType": "bearer", "token": "plain-bearer-value-123"})
+    outcome = scrub_document_text(text)
+    assert "plain-bearer-value-123" not in outcome.text
+    assert json.loads(outcome.text)["token"] == REDACTION_MARKER
+
+
+@pytest.mark.parametrize("key", ["tokenUrl", "nextPageToken", "tokenEndpoint"])
+def test_a_key_merely_containing_token_is_not_caught_by_the_exact_rule(key):
+    text = json.dumps({key: "https://auth.example.com/oauth/token"})
+    assert scrub_document_text(text, entropy_detection=False).text == text
+
+
+@pytest.mark.parametrize("member", ["value", "initialValue", "currentValue"])
+def test_a_secret_named_key_value_pair_has_its_value_redacted(member):
+    """``{"key": "apiKey", "value": …}`` — the secret's *name* is itself a value."""
+    text = json.dumps({"variables": [{"key": "apiKey", "secret": True, member: "pair-value-0042"}]})
+    outcome = scrub_document_text(text)
+    assert "pair-value-0042" not in outcome.text
+    assert json.loads(outcome.text)["variables"][0][member] == REDACTION_MARKER
+    assert {finding.secret_type for finding in outcome.findings} == {"secret-key-value-pair"}
+
+
+def test_both_values_of_an_environment_variable_are_redacted():
+    text = json.dumps({"key": "client_secret", "initialValue": "initial-0042", "currentValue": "current-0042"})
+    outcome = scrub_document_text(text)
+    assert "initial-0042" not in outcome.text and "current-0042" not in outcome.text
+
+
+def test_a_postman_bearer_parameter_is_redacted():
+    bearer = [{"key": "token", "value": "pm-bearer-0042", "type": "string"}]
+    text = json.dumps({"auth": {"type": "bearer", "bearer": bearer}})
+    assert "pm-bearer-0042" not in scrub_document_text(text).text
+
+
+def test_a_non_secret_key_value_pair_is_kept():
+    text = json.dumps({"variables": [{"key": "baseUrl", "value": "https://api.example.com"}]})
+    outcome = scrub_document_text(text)
+    assert outcome.text == text and not outcome.scrubbed

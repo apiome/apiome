@@ -735,6 +735,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['ipso', 'iot', 'cluster', 'device type', 'smart object', 'zap', 'oma', 'resource', 'smart home'],
   },
   {
+    id: 'hoppscotch-import',
+    title: 'Import a Hoppscotch collection',
+    summary: 'Catalog a Hoppscotch collection and its environments as one inferred REST API.',
+    page: 'apiome-docs/docs/bring-in/hoppscotch-import.md',
+    section: 'reference',
+    keywords: ['postman alternative', 'client', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
+  },
+  {
     id: 'linked-data-import',
     title: 'Import SHACL, OWL and JSON-LD',
     summary: 'Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.',

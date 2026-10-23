@@ -1,0 +1,102 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "reason",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v2_orders_orderId",
+      "operation": "DELETE /v2/orders/{orderId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "status",
+          "accept",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_orders",
+      "operation": "GET /v2/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_orders_orderId",
+      "operation": "GET /v2/orders/{orderId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {},
+            "type": "array"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "x-tenant",
+          "customerId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v2_orders",
+      "operation": "POST /v2/orders"
+    }
+  ]
+}

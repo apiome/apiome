@@ -5,6 +5,38 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.434.0] - 2026-10-22
+
+### Added
+- **Hoppscotch collection import (#5473, FMT-10.1)**: a `hoppscotch` import source (alias `hoppscotch-collection`;
+  file, URL, paste and fileset) on the **rest** paradigm, read by `app.hoppscotch_parser` and normalized through the
+  shared inferred-spec engine (`app.inferred_spec`) — no per-format inference.
+  - A collection export, or an export of several collections, becomes one API. Every saved request (and saved example
+    response) is an observation; folders become operation `tags` (`Catalogue / Products`); `<<variables>>` inside a
+    path become path parameters; active params and headers (collection and folder headers inherited) become
+    parameters; JSON, URL-encoded and multipart bodies get inferred request schemas and keep their media types.
+  - An endpoint written `<<baseUrl>>/…` becomes a `{baseUrl}` server whose `ServerVariable.default` comes from the
+    environment exports uploaded beside the collection (request variable > environment > collection variable); a
+    secret variable never gets a default.
+  - Auth is resolved through `inherit` per request and recorded as `operation.extras["security"]` (canonical scheme:
+    `bearer`, `basic`, `digest`, `apiKey`, `oauth2`, `authorization`) and `extras["hoppscotch_auth"]` (scheme,
+    API-key name and location, OAuth 2 grant type, token URL, scopes). Credential fields are never read; every other
+    value passes the secret-scrub gate, and a secret-named header, parameter or form field is redacted outright.
+  - Declared limits (`hoppscotch.script`, `hoppscotch.auth_credential`, `hoppscotch.secret_variable`) ride in
+    `extras.hoppscotch.capability_limits` and become coverage-ledger rows; version coverage, inference-provenance
+    entry, MCP toolset goldens and the round-trip matrix row (import-only) are added, and the staged corpus is activated.
+  - Refusals: `INPUT_MALFORMED`, `INPUT_TRUNCATED`, `INPUT_SEMANTIC_INVALID` (no requests, an empty endpoint or one
+    written only as an undefined variable, an environment without a collection), `INPUT_ENCODING_INVALID`,
+    `FORMAT_MISMATCH` (a Postman collection, OpenAPI, Insomnia or HAR).
+
+### Changed
+- **Secret scrubbing (`app.intake_secret_scrub`)** also redacts a key named exactly `token` and the value members
+  (`value`, `initialValue`, `currentValue`) of `{"key": <secret name>, …}` pair objects — the shapes Hoppscotch and
+  Postman exports store auth parameters and environment variables in. The stored source of such an upload no longer
+  keeps those credentials.
+
+The OpenAPI version moves to 1.298.0.
+
 ## [1.433.0] - 2026-10-22
 
 ### Added

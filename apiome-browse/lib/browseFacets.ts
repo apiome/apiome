@@ -111,6 +111,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   typespec: 'TypeSpec',
   raml: 'RAML',
   postman: 'Postman',
+  hoppscotch: 'Hoppscotch',
   'http-file': 'HTTP Request File',
   kong: 'Kong Declarative Config',
   'gateway-api': 'Gateway API HTTPRoute',

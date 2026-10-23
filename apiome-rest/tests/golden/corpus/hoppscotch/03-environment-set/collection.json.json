@@ -1,0 +1,383 @@
+{
+  "adapter": "hoppscotch",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "hoppscotch": {
+        "capability_limits": [
+          {
+            "construct": "hoppscotch.secret_variable",
+            "count": 1,
+            "locations": [
+              "apiKey"
+            ],
+            "note": "A secret variable is listed by name; its value is withheld."
+          }
+        ],
+        "collection_versions": [
+          "6"
+        ],
+        "environments": [
+          "Inventory · staging"
+        ],
+        "folders": [],
+        "requests": 2,
+        "variables": [
+          {
+            "name": "apiKey",
+            "secret": true,
+            "source": "environment:Inventory · staging"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:Inventory · staging"
+          },
+          {
+            "name": "warehouse",
+            "secret": false,
+            "source": "environment:Inventory · staging"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "apiKey"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "stock"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "sku"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/stock/{sku}"
+          ],
+          "template": "/stock/{sku}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /stock/{sku}": 1,
+        "POST /reservations": 1
+      }
+    },
+    "format": "hoppscotch",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Inventory (set root)",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": "https://staging.example.com/inventory",
+            "description": "Hoppscotch variable `<<baseUrl>>`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Inventory (set root)",
+        "name": "Inventory (set root)",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "stock"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "sku"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/stock/{sku}"
+                ],
+                "template": "/stock/{sku}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "hoppscotch/03-environment-set/collection.json"
+              ],
+              "source_label": "Check stock",
+              "source_location": "requests/0"
+            },
+            "http_method": "GET",
+            "http_path": "/stock/{sku}",
+            "key": "GET /stock/{sku}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /stock/{sku}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /stock/{sku}#header.x-api-key",
+                "location": "header",
+                "name": "x-api-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /stock/{sku}#path.sku",
+                "location": "path",
+                "name": "sku",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "<<warehouse>>"
+                  ]
+                },
+                "key": "GET /stock/{sku}#query.warehouse",
+                "location": "query",
+                "name": "warehouse",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "reservations"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/reservations"
+                ],
+                "template": "/reservations"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "hoppscotch/03-environment-set/collection.json"
+              ],
+              "source_label": "Reserve stock",
+              "source_location": "requests/1"
+            },
+            "http_method": "POST",
+            "http_path": "/reservations",
+            "key": "POST /reservations",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /reservations#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostReservationRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /reservations",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /reservations#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Inventory (set root)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostReservationRequest.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostReservationRequest.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostReservationRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostReservationRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "hoppscotch/03-environment-set/collection.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "hoppscotch"
+  },
+  "fingerprint": "sha256:5c90100a0e1c2a57c26f31212b40a41156865decaaec76f83549eb59b61d13cd",
+  "lint": {
+    "findings": 8,
+    "grade": "B",
+    "report_fingerprint": "84cab6d44c1436c2457659a62de005a4252edf03e36a3c347d16c5d86fd48325",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 5,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

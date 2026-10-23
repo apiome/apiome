@@ -31,7 +31,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `envoy-xds/` | Envoy xDS routes | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
 | `gateway-api/` | Gateway API HTTPRoute | rest | `apiVersion: gateway.networking.k8s.io/*` + `kind: HTTPRoute` | 13 |
 | `haproxy/` | HAProxy configuration | rest | `frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend` | 16 |
-| `hoppscotch/` | Hoppscotch collections (pending #5473) | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
+| `hoppscotch/` | Hoppscotch collections | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
 | `http-file/` | HTTP Request File | rest | HTTP request line / `###` separators / `curl` / `.http` `.rest` | 15 |
 | `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
 | `kong/` | Kong Declarative Config | rest | `_format_version` + `services:`/`routes:` declarative sections | 12 |
@@ -1097,24 +1097,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-fhir.json`** — A FHIR Composition describing the same discharge summary — the neighbour the shipped fhir adapter owns.
 
-### `hoppscotch/` — Hoppscotch collections (pending #5473)
+### `hoppscotch/` — Hoppscotch collections
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-collection.json` | minimal | `hoppscotch` ≥ 0.85 | valid | `single-request`, `no-auth`, `pending-adapter` |
-| `02-typical-orders-collection.json` | typical | `hoppscotch` ≥ 0.85 | valid | `inherited-auth`, `inactive-params`, `request-variables`, `test-script`, `collection-headers`, `pending-adapter` |
-| `03-environment-set/collection.json` | multi-file (root) | `hoppscotch` ≥ 0.85 | valid | `multi-file`, `environment-variables`, `pending-adapter` |
-| `03-environment-set/environment.json` | multi-file (member) | `hoppscotch` (no guarantee) | valid | `multi-file`, `environment-file`, `secret-flag`, `pending-adapter` |
-| `04-stress-auth-and-bodies.json` | stress | `hoppscotch` ≥ 0.85 | valid | `raw-body`, `urlencoded-body`, `multipart-body`, `graphql-body`, `basic-auth`, `api-key-auth`, `oauth2-auth`, `nested-folders`, `disabled-headers`, `scripts`, `pending-adapter` |
-| `05-real-world-payments-collection.json` | real-world | `hoppscotch` ≥ 0.85 | valid | `token-capture`, `idempotency-key`, `feature-folders`, `inherited-auth`, `pending-adapter` |
-| `06-typical-nested-folders.json` | typical | `hoppscotch` ≥ 0.85 | valid | `nested-folders`, `operation-groups`, `request-variables`, `pending-adapter` |
-| `07-composition-inherited-auth.json` | composition | `hoppscotch` ≥ 0.85 | valid | `auth-inheritance`, `nested-folders`, `folder-headers`, `request-override`, `pending-adapter` |
-| `negative/01-syntactic-missing-brace.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace`, `pending-adapter` |
-| `negative/02-semantic-no-requests.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `semantic`, `no-requests`, `pending-adapter` |
-| `negative/03-truncated-mid-request.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `truncated`, `mid-endpoint`, `pending-adapter` |
-| `negative/04-wrong-format-postman.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `wrong-format`, `postman`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-request-without-endpoint.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `semantic`, `empty-endpoint`, `unresolvable-variable`, `pending-adapter` |
+| `01-minimal-collection.json` | minimal | `hoppscotch` ≥ 0.85 | valid | `single-request`, `no-auth` |
+| `02-typical-orders-collection.json` | typical | `hoppscotch` ≥ 0.85 | valid | `inherited-auth`, `inactive-params`, `request-variables`, `test-script`, `collection-headers` |
+| `03-environment-set/collection.json` | multi-file (root) | `hoppscotch` ≥ 0.85 | valid | `multi-file`, `environment-variables` |
+| `03-environment-set/environment.json` | multi-file (member) | `hoppscotch` (no guarantee) | valid | `multi-file`, `environment-file`, `secret-flag` |
+| `04-stress-auth-and-bodies.json` | stress | `hoppscotch` ≥ 0.85 | valid | `raw-body`, `urlencoded-body`, `multipart-body`, `graphql-body`, `basic-auth`, `api-key-auth`, `oauth2-auth`, `nested-folders`, `disabled-headers`, `scripts` |
+| `05-real-world-payments-collection.json` | real-world | `hoppscotch` ≥ 0.85 | valid | `token-capture`, `idempotency-key`, `feature-folders`, `inherited-auth` |
+| `06-typical-nested-folders.json` | typical | `hoppscotch` ≥ 0.85 | valid | `nested-folders`, `operation-groups`, `request-variables` |
+| `07-composition-inherited-auth.json` | composition | `hoppscotch` ≥ 0.85 | valid | `auth-inheritance`, `nested-folders`, `folder-headers`, `request-override` |
+| `negative/01-syntactic-missing-brace.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `syntactic`, `missing-brace` |
+| `negative/02-semantic-no-requests.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `semantic`, `no-requests` |
+| `negative/03-truncated-mid-request.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `truncated`, `mid-endpoint` |
+| `negative/04-wrong-format-postman.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `wrong-format`, `postman` |
+| `negative/05-encoding-utf16.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-request-without-endpoint.json` | — | `hoppscotch` (no guarantee) | invalid | `negative`, `semantic`, `empty-endpoint`, `unresolvable-variable` |
 
 ### `http-file/` — HTTP Request File
 

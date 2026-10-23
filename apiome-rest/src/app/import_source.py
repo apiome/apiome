@@ -1236,6 +1236,10 @@ def load_builtin_import_sources() -> None:
     from . import lwm2m_import_source as _lwm2m  # noqa: F401
     from . import matter_import_source as _matter  # noqa: F401
 
+    # ``hoppscotch_import_source`` (FMT-10.1) self-registers the ``hoppscotch`` adapter — Hoppscotch
+    # collection exports and their environments, through the shared inferred-spec engine.
+    from . import hoppscotch_import_source as _hoppscotch  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

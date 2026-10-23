@@ -1834,6 +1834,49 @@
       "waivers": {}
     },
     {
+      "format_key": "hoppscotch",
+      "label": "Hoppscotch collection",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "hoppscotch"
+      ],
+      "corpus_directories": [
+        "hoppscotch"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "hoppscotch"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "http-file",
       "label": "HTTP Request File",
       "paradigm": "rest",
@@ -4302,7 +4345,6 @@
   "export_only_destinations": [],
   "pending_corpus_directories": [
     "cics-bms",
-    "hoppscotch",
     "ims",
     "natural-ddm",
     "pli",

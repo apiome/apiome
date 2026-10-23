@@ -997,6 +997,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="`.http` / `.rest` request file and cURL snippet",
     ),
+    "hoppscotch": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Hoppscotch collection export (schema `v` 1 and later) and environment export",
+                format_key="hoppscotch",
+                support=VersionSupport.UNGATED,
+                note="Every collection schema version keeps the same tree — `folders[]`, `requests[]`, "
+                "inherited `auth` and `headers` — and is read by one reader that never branches on `v`; "
+                "fields a newer version added (request variables, saved responses) are read when present. "
+                "Environments are read in both the `value` and the `initialValue` / `currentValue` spelling.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "iso20022": VersionCoverage(
         reads=[
             FormatVersion(
