@@ -101,6 +101,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome browse open <tenant>/<project>/<version>` opens that page of the browse app in your browser — a tenant, a project, a version or a compare page; `--print-url` prints the link instead, for CI or SSH
   - `apiome connectors shadow-report` prints the shadow-API report; `--fail-on shadow,drift` fails a CI job (exit 6) only for the categories you name
 - Sign-up:
+  - Create an account with your email address and a password: Apiome emails a confirmation link that works once and expires in 24 hours, then signs you in and starts setting up your first organization
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules

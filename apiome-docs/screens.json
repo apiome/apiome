@@ -16,6 +16,37 @@
       ]
     },
     {
+      "id": "signup-form",
+      "route": "/login",
+      "waitFor": "[data-testid=\"email-signup-form\"]",
+      "data": "fixture:hive-a11y/signup-form.html",
+      "sources": [
+        "apiome-ui/src/app/login/EmailSignupForm.tsx",
+        "apiome-ui/src/app/login/LoginClient.tsx"
+      ]
+    },
+    {
+      "id": "signup-check-email",
+      "route": "/login",
+      "waitFor": "[data-testid=\"signup-check-email\"]",
+      "data": "fixture:hive-a11y/signup-check-email.html",
+      "sources": [
+        "apiome-ui/src/app/login/SignupCheckEmail.tsx"
+      ]
+    },
+    {
+      "id": "signup-verified",
+      "route": "/signup/verify",
+      "waitFor": "[data-testid=\"signup-verified\"]",
+      "data": "fixture:hive-a11y/signup-verified.html"
+    },
+    {
+      "id": "signup-verify-expired",
+      "route": "/signup/verify",
+      "waitFor": "[data-testid=\"signup-verify-expired\"]",
+      "data": "fixture:hive-a11y/signup-verify-expired.html"
+    },
+    {
       "id": "onboarding-welcome",
       "route": "/onboarding",
       "waitFor": "[data-testid=\"first-tenant-onboarding-wizard\"]",

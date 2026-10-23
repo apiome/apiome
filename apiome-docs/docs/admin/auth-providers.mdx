@@ -72,6 +72,33 @@ policy before and after it.
 If the database cannot be read, Apiome keeps using the last policy it read; with none to fall back
 on, it refuses new accounts until the database is back.
 
+## Email sign-up
+
+People can create an account with an email address and a password
+([Create an account](../getting-started/create-an-account.mdx#with-an-email-address)) when the
+installation can send them a confirmation link. Set all three in `apiome-ui/.env`:
+
+| Variable | What it is |
+| --- | --- |
+| `SENDGRID_API_KEY` | The SendGrid key Apiome sends email with (two-factor email codes use it too) |
+| `EMAIL_FROM` | The sender address, for example `Apiome <no-reply@apiome.example>` |
+| `BETTER_AUTH_URL` | The public address of Apiome, which the confirmation link points at, for example `https://apiome.example` |
+
+With any of them missing, **Create one** offers only the providers and says that email sign-up is
+not available. Restart apiome-ui after changing them.
+
+The sign-up policy above applies to email sign-up exactly as it does to providers. Other rules:
+
+- **No account can be used before its email is confirmed.** The confirmation link works once and
+  expires after 24 hours; each new email replaces the previous link.
+- **The form never says whether an address is registered.** Someone who signs up with an address
+  that already has an account sees the same *Check your email* page; the owner of the address gets
+  an email saying the account exists, with a sign-in link.
+- **Email is rate-limited.** One address gets at most 3 sign-up emails an hour, and one network at
+  most 20 sign-up requests an hour.
+
+Confirmation links are stored only as a hash, in the `apiome.email_verification_token` table.
+
 ## The providers
 
 | Provider | Id | Required to enable | Extra settings |

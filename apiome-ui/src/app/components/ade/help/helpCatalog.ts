@@ -460,7 +460,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Sign in with single sign-on or email, pass two-factor checks, or create an account.',
     page: 'apiome-docs/docs/getting-started/sign-in.mdx',
     section: 'spine',
-    keywords: ['login', 'sso', '2fa', 'two-factor', 'password', 'signup', 'register'],
+    keywords: ['login', 'sso', '2fa', 'two-factor', 'password'],
+  },
+  {
+    id: 'create-an-account',
+    title: 'Create an account',
+    summary: 'Sign up with a provider or an email address and password, and confirm the email.',
+    page: 'apiome-docs/docs/getting-started/create-an-account.mdx',
+    section: 'spine',
+    keywords: ['signup', 'sign up', 'register', 'verify email', 'confirmation link', 'resend'],
   },
   {
     id: 'onboarding',

@@ -1,0 +1,103 @@
+---
+title: Create an account
+description: Sign up with a provider or an email address, confirm it, and start.
+sidebar_position: 3.5
+tags: [sign-in, accounts, onboarding]
+---
+
+<Route path="/login" />
+
+You can create an Apiome account with a sign-in provider (GitHub, GitLab, Microsoft or Google, when
+your installation offers them) or with an email address and a password. Either way, you then name
+your first organization and land in the app.
+
+## With a provider
+
+On the sign-in page, **click “Create one”**, then click your provider's button. The first time,
+Apiome asks you to **finish setting up your account**:
+
+1. Enter **Your name**, **Organization name** and **Organization URL slug** — the slug is
+   suggested from the name.
+2. **Click “Create account”.** Your organization is created on the Free plan and you land on the
+   launcher.
+
+## With an email address
+
+1. On the sign-in page, **click “Create one”**. If provider buttons are shown, **click “or use your
+   email”** under them.
+2. Fill in **Full name**, **Email address** and **Password**. The password needs at least 8
+   characters, an uppercase and a lowercase letter, and a number or special character — the hint
+   under the field lists them.
+3. **Click “Create account”.**
+
+<Screenshot id="signup-form" alt="Create your account: the Full name, Email address and Password fields filled in for Ada Lovelace, with the password rules under the password field and the Create account button" />
+
+Apiome shows **Check your email** and sends a message to the address you entered.
+
+<Screenshot id="signup-check-email" alt="Check your email: we sent a link to ada@example.com, with Resend email and Use a different email buttons" />
+
+4. Open the email **Confirm your email for Apiome** and **click “Confirm email”**.
+
+The page says **Email confirmed** and signs you in.
+
+<Screenshot id="signup-verified" alt="Email confirmed: your account is ready, signing you in" />
+
+5. Apiome then walks you through [setting up your first organization](./onboarding.mdx).
+
+You cannot sign in with the new account until you confirm the email address.
+
+### If the email does not arrive
+
+- Check your spam folder.
+- On **Check your email**, **click “Resend email”** for a new link. Each new email replaces the
+  link in the previous one, so use the newest. You can ask for a few emails an hour; after that,
+  wait and try again.
+- **Click “Use a different email”** if you mistyped the address.
+
+### If the link does not work
+
+A confirmation link works **once** and expires after **24 hours**. Opening it again, or after it
+expires, shows why instead of signing you in:
+
+| Page title | What it means |
+| --- | --- |
+| **This link has expired** | More than 24 hours passed. Ask for a new link |
+| **This link was already used** | You already confirmed your address. **Click “Sign in”**, or ask for a new link if you did not |
+| **This link does not work** | The link is incomplete, or a newer email replaced it. Use the newest email, or ask for a new link |
+
+To get a new link, enter your **Email address** and **click “Resend email”**.
+
+<Screenshot id="signup-verify-expired" alt="This link has expired: an Email address field, the Resend email button and a Sign in link" />
+
+### If the address already has an account
+
+Apiome shows **Check your email** as usual — the page never says whether an address is already
+registered. The email that arrives says **You already have an Apiome account** and links to the
+sign-in page. Sign in with your password or the provider you used before.
+
+### If email sign-up is not offered
+
+If **Create one** shows *Sign-up with an email address is not available on this server*, your
+installation has no email sender set up. Create your account with a provider, or ask your
+administrator. Administrators turn email sign-up on in
+[Authentication providers](../admin/auth-providers.mdx#email-sign-up).
+
+## When you cannot create an account
+
+Your administrator decides who may sign up. If the installation does not accept your sign-up,
+the page says why instead of creating an account:
+
+| Message | What it means | What to do |
+| --- | --- | --- |
+| *New account sign-ups are currently disabled on this server.* | Sign-up is closed | Ask your administrator for an account |
+| *New accounts on this server are by invitation only.* | Only invited people get in | Ask a workspace administrator to set up your account and invite you |
+| *New accounts on this server are limited to approved email domains…* | Your email domain is not on the list | Sign up with your work email address |
+| *Too many sign-up attempts.* | Too many tries from your network or for your address in the last hour | Wait an hour, then try again |
+
+None of this affects an account you already have — sign in as usual. Administrators set this on
+[System settings](../admin/auth-providers.mdx#sign-up-policy).
+
+## Where next
+
+- [Set up your first organization](./onboarding.mdx)
+- [Sign in and pass two-factor checks](./sign-in.mdx)

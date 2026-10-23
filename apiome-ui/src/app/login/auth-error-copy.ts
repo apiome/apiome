@@ -71,6 +71,19 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'info',
     text: 'New accounts on this server are limited to approved email domains, and yours is not one of them. Sign up with your work email address, or contact your administrator.',
   },
+  // --- Email sign-up (SGN-1.1, #5650; `lib/auth/email-signup.ts` EMAIL_SIGNUP_CODES) ---
+  'email-signup-unavailable': {
+    type: 'info',
+    text: 'Sign-up with an email address is not available on this server. Use one of the sign-in providers above, or contact your administrator.',
+  },
+  'email-signup-rate-limited': {
+    type: 'error',
+    text: 'Too many sign-up attempts. Wait an hour, then try again.',
+  },
+  'email-signup-send-failed': {
+    type: 'error',
+    text: 'We could not send the confirmation email. Try again in a few minutes.',
+  },
   'sign-in-failed': {
     type: 'error',
     text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',
