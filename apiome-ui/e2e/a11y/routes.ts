@@ -74,7 +74,7 @@ const ADDITIONAL: A11yRoute[] = [
   {
     id: 'onboarding',
     mockup: 'auth/onboarding.html',
-    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['onboarding-welcome.html', 'onboarding-organization.html'] },
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['onboarding-welcome.html', 'onboarding-organization.html', 'onboarding-two-factor.html'] },
   },
   { id: 'admin-login', mockup: 'admin/login.html', subject: { kind: 'route', path: '/admin/dashboard' } },
   { id: 'launcher', mockup: 'home/launcher.html', subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['launcher.html'] } },

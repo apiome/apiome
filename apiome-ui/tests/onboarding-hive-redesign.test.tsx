@@ -18,6 +18,8 @@
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axe } from 'jest-axe';
+import 'jest-axe/extend-expect';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -60,6 +62,16 @@ jest.mock('@lib/auth/onboarding-wizard-state-actions', () => ({
   loadOnboardingWizardState: () => mockLoadState(),
   saveOnboardingWizardStep: jest.fn(async () => undefined),
   completeOnboardingWizard: jest.fn(async () => undefined),
+}));
+
+// The security step (TFA-1.4 #5658) draws the shared enrolment dialog; keep the Better Auth
+// client and the server actions out of the test.
+jest.mock('@lib/auth/two-factor-profile-actions', () => ({
+  getTwoFactorReauthStatus: jest.fn(async () => ({ hasPassword: true, fresh: true, providers: [] })),
+  dismissTwoFactorResetNotice: jest.fn(async () => undefined),
+}));
+jest.mock('@lib/auth/auth-client', () => ({
+  authClient: { twoFactor: { enable: jest.fn(), verifyTotp: jest.fn() } },
 }));
 
 import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
@@ -173,10 +185,10 @@ describe('onboarding wizard — the shared Stepper', () => {
     render(<FirstTenantOnboardingWizard />);
 
     const list = screen.getByRole('list', { name: 'Setup progress' });
-    expect(within(list).getByText('Step 1 of 3')).toBeInTheDocument();
+    expect(within(list).getByText('Step 1 of 4')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
-    await waitFor(() => expect(within(list).getByText('Step 2 of 3')).toBeInTheDocument());
+    await waitFor(() => expect(within(list).getByText('Step 2 of 4')).toBeInTheDocument());
     expect(
       within(list).getAllByRole('listitem').filter((item) => item.dataset.status === 'done')
     ).toHaveLength(1);
@@ -188,12 +200,13 @@ describe('onboarding wizard — the shared Stepper', () => {
     openOrganizationStep();
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
     fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /skip for now/i }));
     await screen.findByTestId('onboarding-step-done');
 
     const items = within(screen.getByRole('list', { name: 'Setup progress' })).getAllByRole(
       'listitem'
     );
-    expect(items.map((item) => item.dataset.status)).toEqual(['done', 'done', 'done']);
+    expect(items.map((item) => item.dataset.status)).toEqual(['done', 'done', 'done', 'done']);
     expect(items.some((item) => item.hasAttribute('aria-current'))).toBe(false);
   });
 });
@@ -377,12 +390,13 @@ describe('onboarding wizard — the review step', () => {
 // =========================================================================================
 
 describe('onboarding wizard — the done step', () => {
-  /** Provisions the tenant and lands on the terminal step. */
+  /** Provisions the tenant, skips the security step and lands on the terminal step. */
   const openDone = async () => {
     render(<FirstTenantOnboardingWizard />);
     openOrganizationStep();
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
     fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /skip for now/i }));
     return screen.findByTestId('onboarding-step-done');
   };
 
@@ -423,11 +437,12 @@ describe('onboarding wizard — no named colour survives', () => {
   /** Every source file the ticket re-skinned. */
   const files = readdirSync(ONBOARDING_DIR).filter((entry) => entry.endsWith('.tsx'));
 
-  it('finds the four steps and the shell to scan', () => {
+  it('finds the five steps and the shell to scan', () => {
     expect(files.sort()).toEqual([
       'DoneStep.tsx',
       'FirstTenantOnboardingWizard.tsx',
       'OrganizationStep.tsx',
+      'SecurityStep.tsx',
       'SummaryStep.tsx',
       'WelcomeStep.tsx',
     ]);
@@ -460,5 +475,15 @@ describe('onboarding wizard — the a11y gate fixture (HIVE-10.2)', () => {
     writeA11yFixture('onboarding-welcome', container.innerHTML);
     openOrganizationStep();
     writeA11yFixture('onboarding-organization', container.innerHTML);
+  });
+
+  it('renders the security step (and writes its fixture on request)', async () => {
+    const { container } = render(<FirstTenantOnboardingWizard />);
+    openOrganizationStep();
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    await screen.findByTestId('onboarding-step-security');
+    expect(await axe(container)).toHaveNoViolations();
+    writeA11yFixture('onboarding-two-factor', container.innerHTML);
   });
 });
