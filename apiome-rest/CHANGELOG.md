@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.442.0] - 2026-10-23
+
+### Added
+- **Revision DAG queries (#2593)**: three read routes over the revision history graph
+  (`parent_version_id` / `merge_parent_version_id`, V072), all requiring `versions:view`:
+  - `GET /v1/versions/{tenant_slug}/{project_id}/{revision_id}/ancestors?depth=&limit=` — `ancestors(rev, depth)`:
+    the revision and its ancestors through both parents of a merge, each with its `distance` from the start.
+  - `GET /v1/versions/{tenant_slug}/{project_id}/revision-graph/history?tip=…&depth=&limit=` — the bulk history
+    window behind the history graph (#743): the same walk from several tips at once, every branch tip by default.
+  - `GET /v1/versions/{tenant_slug}/{project_id}/revision-graph/merge-base?a=&b=` — `mergeBase(revA, revB)`: the
+    best common ancestor, every candidate (more than one in a criss-cross history), and `disjoint: true` with
+    `mergeBase: null` when the histories share no revision.
+  - Limits: `depth` 50 (max 1,000), `limit` 500 (max 5,000), at most 50 tips; a window reports `truncated` when
+    either cut it short. Errors: `REVISION_NOT_FOUND` (404), `REVISION_PROJECT_MISMATCH`, `TIPS_REQUIRED`,
+    `TOO_MANY_TIPS` (400).
+- `app.revision_dag`: pure `ancestors`, `merge_base`, `merge_base_candidates` and `history_window` over
+  `RevisionNode`s, with direct tests for linear, diamond, criss-cross, ancestor-of-the-other and disjoint histories.
+
+### Changed
+- `Database.collect_revision_ancestors` and `Database.compute_merge_base_revision_id` read the ancestor closure in
+  **one** recursive query (`Database.fetch_revision_closure`) instead of one revision lookup per ancestor (and, for
+  the merge base, a further walk per common ancestor). Results are unchanged: merge preview / apply, branch
+  divergence, schema pull deltas and change-report baselines see the same revisions.
+- A revision with no parent stays a root: no backfill was added for revisions created before V072, since versions
+  created on their own still start a new root today (documented on the new Revision history page).
+
 ## [1.441.0] - 2026-10-23
 
 ### Added

@@ -3998,6 +3998,70 @@ class VersionBranchDivergenceSampleOut(BaseModel):
     )
 
 
+class RevisionGraphNodeOut(BaseModel):
+    """One revision in a history window: its parent links and distance from the tips (#2593)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    revision_id: str = Field(serialization_alias="revisionId")
+    version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
+    parent_revision_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="parentRevisionId",
+        description="First parent (parent_version_id); null for a root.",
+    )
+    merge_parent_revision_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="mergeParentRevisionId",
+        description="Second parent of a merge revision (merge_parent_version_id).",
+    )
+    created_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="createdAt")
+    distance: int = Field(description="Fewest parent steps from the nearest tip (tips are 0).")
+
+
+class RevisionHistoryWindowResponse(BaseModel):
+    """A bounded window of the revision DAG reachable from one or more tips (#2593)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tips: List[str] = Field(description="The revisions the window starts from.")
+    depth: int = Field(description="The parent steps walked (after clamping).")
+    limit: int = Field(description="The most revisions returned (after clamping).")
+    truncated: bool = Field(description="True when the depth or the limit cut the history short.")
+    nodes: List[RevisionGraphNodeOut] = Field(
+        default_factory=list, description="Nearest the tips first, then newest first."
+    )
+
+
+class RevisionMergeBaseOut(BaseModel):
+    """A merge-base revision (#2593)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    revision_id: str = Field(serialization_alias="revisionId")
+    version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
+    created_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="createdAt")
+
+
+class RevisionMergeBaseResponse(BaseModel):
+    """``mergeBase(revA, revB)`` — the best common ancestor of two revisions (#2593)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    a: str = Field(description="The first revision.")
+    b: str = Field(description="The second revision.")
+    merge_base: Optional[RevisionMergeBaseOut] = Field(
+        default=None,
+        serialization_alias="mergeBase",
+        description="Null when the two histories share no revision (disjoint).",
+    )
+    candidates: List[str] = Field(
+        default_factory=list,
+        description="Every best common ancestor, newest first; more than one in a criss-cross history.",
+    )
+    disjoint: bool = Field(description="True when the two revisions have no common ancestor.")
+
+
 class VersionBranchDivergenceResponse(BaseModel):
     """Branch-vs-branch divergence metrics and commit samples (#2721)."""
 
