@@ -9,16 +9,26 @@ tags: [admin, legacy, sign-in, sign-up, oauth]
 
 <Legacy />
 
-**System settings** holds two things for the whole installation: the **sign-up policy** — who may
-create an account — and the **sign-in providers** — the OAuth and OpenID Connect identity providers
-people can use on the sign-in page and link on [Linked accounts](../workspace/linked-accounts.mdx).
+**System settings** holds three things for the whole installation: the **sign-up policy** — who
+may create an account — the **sign-in providers** — the OAuth and OpenID Connect identity providers
+people can use on the sign-in page and link on [Linked accounts](../workspace/linked-accounts.mdx) —
+and **single sign-on**, a workspace's own SAML or OIDC identity provider for the email domains it
+owns (see [Single sign-on](./single-sign-on.mdx)).
 Both can be set in the **database**, from this screen, or in **`.env`**; a value stored here
 overrides the environment, and a blank field falls back to it. **Sign in to the admin console and
 choose System settings** in the sidebar.
 
 <Screenshot id="admin-auth-providers" alt="System settings scrolled past the Sign-up card to the GitHub card: enabled from the database, its secret set, and a successful Validate" />
 
-The **Sign-up** card comes first, then one card per provider. The list shows only providers that
+The **Sign-up** card comes first, then **Single sign-on**, then one card per provider.
+
+:::tip Sign-in providers or single sign-on?
+A **sign-in provider** here is one app registration for the whole installation — anyone with a
+GitHub or Okta account can use it. **Single sign-on** connects *one company's* identity provider,
+only for the email domains that company owns, and is set up on the
+[Single sign-on](./single-sign-on.mdx) card. Use single sign-on when a customer wants their people
+to sign in with their own Okta, Entra ID or other IdP.
+::: The list shows only providers that
 are **configured** — anything stored in the database for them, or a row that once existed. A
 provider set up purely in `.env` does not appear until you add it.
 

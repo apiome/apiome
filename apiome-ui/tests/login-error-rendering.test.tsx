@@ -133,6 +133,13 @@ describe('retry affordance (OLO-3.2)', () => {
         AUTH_ERROR_CODES.PROFILE_INCOMPLETE,
         AUTH_ERROR_CODES.SIGN_IN_FAILED,
         'SignupSessionExpired',
+        // Enterprise SSO (EID-1.1): a fresh attempt can succeed.
+        'sso-token-invalid',
+        'sso-assertion-invalid',
+        'sso-assertion-replayed',
+        'sso-discovery-failed',
+        'sso-state-invalid',
+        'sso-provider-not-found',
       ].sort()
     );
     expect(terminal).toContain(AUTH_ERROR_CODES.ACCOUNT_DISABLED);

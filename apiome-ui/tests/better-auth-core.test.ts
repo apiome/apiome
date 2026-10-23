@@ -116,16 +116,34 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(config.baseURL).toBe('https://app.example.test');
     expect(config.basePath).toBe('/api/auth');
     expect(config.database).toBeDefined();
-    // Five plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
-    // plugin, the OLO-10.13 one-time-code sign-in plugin, the OLO-10.12 customSession (session shaping),
-    // then nextCookies — which must stay LAST so Better Auth can set cookies from Next.js server actions.
+    // Six plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
+    // plugin, the OLO-10.13 one-time-code sign-in plugin, the EID-1.1 enterprise SSO plugin, the
+    // OLO-10.12 customSession (session shaping), then nextCookies — which must stay LAST so Better Auth
+    // can set cookies from Next.js server actions.
     expect(mockGenericOAuth).toHaveBeenCalledTimes(1);
     expect(mockTwoFactor).toHaveBeenCalledTimes(1);
     expect(mockOneTimeCodePlugin).toHaveBeenCalledTimes(1);
     expect(mockCustomSession).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(5);
+    expect(config.plugins).toHaveLength(6);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
+    // Enterprise SSO (EID-1.1 #5011): providers only from `defaultSSO` (none without a service
+    // token), the plugin's own model an always-empty view, no user-registered providers, strict SAML.
+    const ssoPlugin = config.plugins.find((plugin: { id: string }) => plugin.id === 'sso');
+    expect(ssoPlugin.options).toEqual(
+      expect.objectContaining({
+        defaultSSO: [],
+        modelName: 'sso_provider_plugin_stub',
+        providersLimit: 0,
+        trustEmailVerified: true,
+        domainVerification: { enabled: true },
+        saml: { requireTimestamps: true, allowIdpInitiated: false, algorithms: { onDeprecated: 'reject' } },
+      })
+    );
+    expect(config.disabledPaths).toEqual(
+      expect.arrayContaining(['/sso/register', '/sso/update-provider', '/sso/delete-provider', '/sso/verify-domain'])
+    );
+    expect(Object.keys(config.databaseHooks).sort()).toEqual(['account', 'session', 'user']);
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
     expect(config.account.accountLinking.enabled).toBe(true);
@@ -347,7 +365,7 @@ describe('lib/auth/auth-client.ts (Better Auth browser client)', () => {
     jest.resetModules();
   });
 
-  it('creates the client on the /api/auth base path with the twoFactor, customSession & genericOAuth client plugins', async () => {
+  it('creates the client on the /api/auth base path with the twoFactor, customSession, genericOAuth & SSO client plugins', async () => {
     const { authClient } = await import('@lib/auth/auth-client');
 
     // Base path unchanged; the client mirrors the server plugins: twoFactorClient (OLO-10.10),
@@ -359,6 +377,7 @@ describe('lib/auth/auth-client.ts (Better Auth browser client)', () => {
         { id: 'two-factor-client' },
         { id: 'custom-session-client' },
         { id: 'generic-oauth-client' },
+        { id: 'sso-client' },
       ],
     });
     expect(mockTwoFactorClient).toHaveBeenCalledTimes(1);

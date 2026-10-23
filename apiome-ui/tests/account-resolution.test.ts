@@ -18,6 +18,7 @@ import {
   AUTH_ERROR_CODES,
   AUTO_LINK_TRUSTED_PROVIDERS,
   canonicalizeEmail,
+  isAutoLinkTrustedProvider,
   resolveAccountDecision,
   resolveOAuthSignIn,
   type ResolutionInput,
@@ -415,5 +416,40 @@ describe('resolveOAuthSignIn — orchestration', () => {
     expect(await resolveOAuthSignIn('github', payload, null, store)).toBe(
       '/login?error=OAuthProfileIncomplete'
     );
+  });
+});
+
+describe('enterprise SSO identities (EID-1.1, #5011)', () => {
+  const ssoInput = (overrides: Partial<ResolutionInput> = {}): ResolutionInput => ({
+    provider: 'sso:acme-okta',
+    providerUserId: 'sub-1',
+    email: 'ada@acme.test',
+    emailVerified: true,
+    linkToUserId: null,
+    identity: { found: false, user: null },
+    emailUser: { id: 'u-1', enabled: true, verified: true, email: 'ada@acme.test' },
+    ...overrides,
+  });
+
+  test('an sso:<slug> identity is trusted to auto-link a verified email', () => {
+    expect(isAutoLinkTrustedProvider('sso:acme-okta')).toBe(true);
+    expect(resolveAccountDecision(ssoInput())).toEqual({
+      action: 'auto-link',
+      user: expect.objectContaining({ id: 'u-1' }),
+    });
+  });
+
+  test('an unverified SSO email is still refused', () => {
+    expect(resolveAccountDecision(ssoInput({ emailVerified: false }))).toEqual({
+      action: 'reject',
+      code: AUTH_ERROR_CODES.UNVERIFIED_EMAIL,
+    });
+  });
+
+  test('only the sso:<slug> shape is trusted, not anything prefixed sso', () => {
+    for (const kind of ['sso:', 'sso:UPPER', 'sso:a', 'ssox:acme', `sso:${'a'.repeat(29)}`, 'saml']) {
+      expect(isAutoLinkTrustedProvider(kind)).toBe(false);
+    }
+    expect(isAutoLinkTrustedProvider('github')).toBe(true);
   });
 });

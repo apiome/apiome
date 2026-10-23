@@ -4,6 +4,8 @@ import {
   customSessionClient,
   genericOAuthClient,
 } from 'better-auth/client/plugins';
+// Enterprise SSO (EID-1.1 #5011): adds `authClient.signIn.sso({ email, callbackURL })`.
+import { ssoClient } from '@better-auth/sso/client';
 // Type-only import: erased at compile time, so the server instance (and its Postgres pool) is never
 // bundled into the browser client. It exists purely so `customSessionClient` can infer the extra
 // session fields (`user_id`/`current_tenant_id`) the server `customSession` plugin injects (OLO-10.12).
@@ -49,5 +51,6 @@ export const authClient = createAuthClient({
     }),
     customSessionClient<BetterAuthInstance>(),
     genericOAuthClient(),
+    ssoClient(),
   ],
 });

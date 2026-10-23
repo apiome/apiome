@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.307.0
+  version: 1.308.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23464,7 +23464,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-23T17:25:40Z'
+                        example: '2026-10-23T19:12:05Z'
                       method:
                         type: string
                         example: GET
@@ -74777,6 +74777,597 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get resolved auth providersresponse422.
+  /v1/admin/sso/providers:
+    get:
+      tags:
+      - sso
+      summary: List Sso Providers
+      description: List every SSO provider with its domains, newest first. Secrets
+        are never included.
+      operationId: list_sso_providers_v1_admin_sso_providers_get
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List SSO Providers Xadmin Session schema.
+          - type: 'null'
+            description: List SSO Providers Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List SSO Providersadminsession schema.
+          - type: 'null'
+            description: List SSO Providersadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for list sso providers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderListResponse'
+                description: Response payload for list sso providersresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+    post:
+      tags:
+      - sso
+      summary: Create Sso Provider
+      description: "Register an SSO provider, disabled until it has a verified domain\
+        \ and is enabled.\n\nOIDC: the issuer's discovery document is fetched and\
+        \ checked (issuer match, HTTPS authorize /\ntoken / JWKS endpoints) and the\
+        \ endpoints are stored. SAML: the IdP metadata is parsed safely;\nan IdP offering\
+        \ only an unsupported binding is refused with ``sso-binding-unsupported``.\n\
+        \nRaises:\n    HTTPException: ``422`` with a stable ``sso-*`` code; ``503``\
+        \ when a secret is given but\n        encryption is unconfigured."
+      operationId: create_sso_provider_v1_admin_sso_providers_post
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create SSO Provider Xadmin Session schema.
+          - type: 'null'
+            description: Create SSO Provider Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create SSO Provideradminsession schema.
+          - type: 'null'
+            description: Create SSO Provideradminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoProviderCreateRequest'
+              description: Request body for create sso providerrequest.
+        description: Request body for create sso provider.
+      responses:
+        '201':
+          description: Successful response for create sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for create sso providerresponse201.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '503':
+          description: Secret encryption not configured.
+  /v1/admin/sso/providers/{provider_id}:
+    get:
+      tags:
+      - sso
+      summary: Get Sso Provider
+      description: One SSO provider with its domains. Secrets are never included.
+      operationId: get_sso_provider_v1_admin_sso_providers__provider_id__get
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get SSO Provider Xadmin Session schema.
+          - type: 'null'
+            description: Get SSO Provider Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get SSO Provideradminsession schema.
+          - type: 'null'
+            description: Get SSO Provideradminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for get sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for get sso providerresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider.
+    patch:
+      tags:
+      - sso
+      summary: Update Sso Provider
+      description: 'Partially update an SSO provider.
+
+
+        Enabling requires a complete provider: an OIDC provider must hold a client
+        secret
+
+        (``sso-enable-incomplete`` otherwise). A provider with no verified domain
+        may be enabled but is
+
+        not ``routable`` until a domain is verified.'
+      operationId: update_sso_provider_v1_admin_sso_providers__provider_id__patch
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update SSO Provider Xadmin Session schema.
+          - type: 'null'
+            description: Update SSO Provider Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update SSO Provideradminsession schema.
+          - type: 'null'
+            description: Update SSO Provideradminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoProviderUpdateRequest'
+              description: Request body for update sso providerrequest.
+        description: Request body for update sso provider.
+      responses:
+        '200':
+          description: Successful response for update sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for update sso providerresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider.
+        '503':
+          description: Secret encryption not configured.
+    delete:
+      tags:
+      - sso
+      summary: Delete Sso Provider
+      description: 'Remove an SSO provider and its domains. Its sealed secrets are
+        destroyed with it.
+
+
+        Identities already linked through it (``external_auth_providers`` rows ``sso:<slug>``)
+        are kept,
+
+        so those users can still sign in another way; the provider simply stops routing.'
+      operationId: delete_sso_provider_v1_admin_sso_providers__provider_id__delete
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Delete SSO Provider Xadmin Session schema.
+          - type: 'null'
+            description: Delete SSO Provider Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Delete SSO Provideradminsession schema.
+          - type: 'null'
+            description: Delete SSO Provideradminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for delete sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for delete sso providerresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider.
+  /v1/admin/sso/providers/{provider_id}/domains:
+    post:
+      tags:
+      - sso
+      summary: Add Sso Domain
+      description: Attach an email domain, unverified. A domain belongs to one provider
+        installation-wide.
+      operationId: add_sso_domain_v1_admin_sso_providers__provider_id__domains_post
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Add SSO Domain Xadmin Session schema.
+          - type: 'null'
+            description: Add SSO Domain Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Add SSO Domainadminsession schema.
+          - type: 'null'
+            description: Add SSO Domainadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoDomainCreateRequest'
+              description: Request body for add sso domainrequest.
+        description: Request body for add sso domain.
+      responses:
+        '201':
+          description: Successful response for add sso domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for add sso domainresponse201.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider.
+        '409':
+          description: '`sso-domain-claimed`.'
+  /v1/admin/sso/providers/{provider_id}/domains/{domain}/verify:
+    post:
+      tags:
+      - sso
+      summary: Verify Sso Domain
+      description: Mark a domain verified on the admin's word (DNS verification arrives
+        in EID-1.2).
+      operationId: verify_sso_domain_v1_admin_sso_providers__provider_id__domains__domain__verify_post
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Domain
+          description: Domain schema.
+        description: Path parameter identifying the domain segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verify SSO Domain Xadmin Session schema.
+          - type: 'null'
+            description: Verify SSO Domain Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verify SSO Domainadminsession schema.
+          - type: 'null'
+            description: Verify SSO Domainadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for verify sso domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for verify sso domainresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider or domain.
+  /v1/admin/sso/providers/{provider_id}/domains/{domain}:
+    delete:
+      tags:
+      - sso
+      summary: Remove Sso Domain
+      description: Detach a domain. Sign-ins from it stop routing to this IdP at once.
+      operationId: remove_sso_domain_v1_admin_sso_providers__provider_id__domains__domain__delete
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Domain
+          description: Domain schema.
+        description: Path parameter identifying the domain segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Remove SSO Domain Xadmin Session schema.
+          - type: 'null'
+            description: Remove SSO Domain Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Remove SSO Domainadminsession schema.
+          - type: 'null'
+            description: Remove SSO Domainadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for remove sso domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProviderView'
+                description: Response payload for remove sso domainresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider or domain.
+  /v1/internal/sso/providers/resolved:
+    get:
+      tags:
+      - internal-sso
+      summary: Get Resolved Sso Providers
+      description: 'Every enabled provider with a verified domain, secrets decrypted,
+        for the sign-in resolver.
+
+
+        A provider whose secret cannot be decrypted (rotated-away key, corrupt blob)
+        is omitted and
+
+        logged secret-free, so one bad row cannot take sign-in down for every other
+        provider.'
+      operationId: get_resolved_sso_providers_v1_internal_sso_providers_resolved_get
+      parameters:
+      - name: X-Internal-Service-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Resolved SSO Providers Xinternal Service Toke schema.
+          - type: 'null'
+            description: Get Resolved SSO Providers Xinternal Service Toke schema.
+          title: X-Internal-Service-Token
+          description: X-Internal-Service-Token schema.
+        description: 'Header parameter: X Internal Service Token.'
+      responses:
+        '200':
+          description: Successful response for get resolved sso providers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedSsoProviderResponse'
+                description: Response payload for get resolved sso providersresponse200.
+        '401':
+          description: No internal service token presented.
+        '403':
+          description: Internal service token invalid.
+        '503':
+          description: Internal read path disabled (no INTERNAL_SERVICE_TOKEN), or
+            the database is unavailable.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get resolved sso providersresponse422.
+  /v1/internal/auth-events:
+    post:
+      tags:
+      - internal-auth-events
+      summary: Record Auth Event
+      description: Append one sign-in outcome to ``auth_events`` (best-effort; hashes
+        the IP and User-Agent).
+      operationId: record_auth_event_v1_internal_auth_events_post
+      parameters:
+      - name: X-Internal-Service-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Record Auth Event Xinternal Service Toke schema.
+          - type: 'null'
+            description: Record Auth Event Xinternal Service Toke schema.
+          title: X-Internal-Service-Token
+          description: X-Internal-Service-Token schema.
+        description: 'Header parameter: X Internal Service Token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthEventCreateRequest'
+              description: Request body for record auth eventrequest.
+        description: Request body for record auth event.
+      responses:
+        '202':
+          description: Successful response for record auth event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthEventAccepted'
+                description: Response payload for record auth eventresponse202.
+        '401':
+          description: No internal service token presented.
+        '403':
+          description: Internal service token invalid.
+        '422':
+          description: The event is outside the accepted vocabulary or limits.
+        '503':
+          description: 'Disabled: no INTERNAL_SERVICE_TOKEN configured.'
   /v1/admin/signup-policy:
     get:
       tags:
@@ -78486,6 +79077,96 @@ components:
       - projectId
       title: AttachRequest
       description: An existing catalog item to back an empty subject.
+    AuthEventAccepted:
+      properties:
+        accepted:
+          type: boolean
+          title: Accepted
+          default: true
+          description: Accepted.
+          example: false
+      type: object
+      title: AuthEventAccepted
+      description: Payload of a recorded event.
+    AuthEventCreateRequest:
+      properties:
+        event_type:
+          type: string
+          title: Event Type
+          description: '`sign_in`, `sign_up` or `link`.'
+          example: example
+        outcome:
+          type: string
+          title: Outcome
+          description: '`success` or `failure`.'
+          example: example
+        provider:
+          anyOf:
+          - type: string
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: Provider
+          description: '`sso:<slug>` or an OAuth provider slug.'
+        user_id:
+          anyOf:
+          - type: string
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: User Id
+          description: The resolved user, when there is one.
+        user_label:
+          anyOf:
+          - type: string
+            maxLength: 320
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: User Label
+          description: The email the attempt carried.
+        error_code:
+          anyOf:
+          - type: string
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: Error Code
+          description: Stable error code on failure.
+        ip:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: Ip
+          description: Client IP; hashed, never stored.
+        user_agent:
+          anyOf:
+          - type: string
+            maxLength: 1024
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: User Agent
+          description: Client User-Agent; hashed, never stored.
+        detail:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for auth event create.
+          - type: 'null'
+            description: Request body for auth event create.
+          title: Detail
+          description: Small structured context, no secrets.
+      additionalProperties: false
+      type: object
+      required:
+      - event_type
+      - outcome
+      title: AuthEventCreateRequest
+      description: Body of ``POST /v1/internal/auth-events``.
     AuthorizeResponse:
       properties:
         domain:
@@ -84255,7 +84936,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         completed_at:
           anyOf:
           - type: string
@@ -85742,7 +86423,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -85915,7 +86596,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -86520,13 +87201,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -89045,7 +89726,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 0260eb4d-9d64-4be8-9247-a08a71e94aad
+          example: 735b26fc-b3c1-40db-98ca-dd48da4bf2cb
         method:
           type: string
           title: Method
@@ -91188,7 +91869,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         envelope:
           additionalProperties: true
           type: object
@@ -92679,7 +93360,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         browse_url:
           anyOf:
           - type: string
@@ -128867,6 +129548,124 @@ components:
         target ``$id`` within the caller''s read scope); they are ``None`` for an
 
         ``unresolved`` edge whose target does not yet exist.'
+    ResolvedSsoProvider:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        plugin_provider_id:
+          type: string
+          title: Plugin Provider Id
+          description: Plugin Provider ID.
+          example: plugin_01h2xcejqtf3fz5y5j0v8k9m2p
+        identity_kind:
+          type: string
+          title: Identity Kind
+          description: Identity Kind.
+          example: example
+        protocol:
+          type: string
+          title: Protocol
+          description: Protocol.
+          example: example
+        display_name:
+          type: string
+          title: Display Name
+          description: Display Name.
+          example: Example
+        issuer:
+          type: string
+          title: Issuer
+          description: Issuer.
+          example: example
+        tenant_id:
+          anyOf:
+          - type: string
+            description: Resolved SSO Provider schema.
+          - type: 'null'
+            description: Resolved SSO Provider schema.
+          title: Tenant Id
+          description: Tenant that owns the resource.
+        domains:
+          items:
+            type: string
+          type: array
+          title: Domains
+          description: Verified domains only.
+          maxItems: 1000
+        oidc_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Resolved SSO Provider schema.
+          - type: 'null'
+            description: Resolved SSO Provider schema.
+          title: Oidc Config
+          description: Oidc Config.
+        saml_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Resolved SSO Provider schema.
+          - type: 'null'
+            description: Resolved SSO Provider schema.
+          title: Saml Config
+          description: Saml Config.
+        client_secret:
+          anyOf:
+          - type: string
+            description: Resolved SSO Provider schema.
+          - type: 'null'
+            description: Resolved SSO Provider schema.
+          title: Client Secret
+          description: Decrypted. Server-to-server only.
+        sp_private_key:
+          anyOf:
+          - type: string
+            description: Resolved SSO Provider schema.
+          - type: 'null'
+            description: Resolved SSO Provider schema.
+          title: Sp Private Key
+          description: Decrypted. Server-to-server only.
+      type: object
+      required:
+      - id
+      - slug
+      - plugin_provider_id
+      - identity_kind
+      - protocol
+      - display_name
+      - issuer
+      title: ResolvedSsoProvider
+      description: One routable provider for apiome-ui's sign-in resolver. Carries
+        decrypted secrets.
+    ResolvedSsoProviderResponse:
+      properties:
+        providers:
+          items:
+            $ref: '#/components/schemas/ResolvedSsoProvider'
+          type: array
+          title: Providers
+          description: Providers.
+          maxItems: 1000
+        fingerprint:
+          type: string
+          title: Fingerprint
+          description: Changes whenever any routable provider changes; secret-free
+            hash.
+          example: a1b2c3d4e5f6789012345678901234ab
+      type: object
+      required:
+      - fingerprint
+      title: ResolvedSsoProviderResponse
+      description: Payload of ``GET /v1/internal/sso/providers/resolved``.
     ResolvedTarget:
       properties:
         target_id:
@@ -128913,7 +129712,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
       additionalProperties: false
       type: object
       required:
@@ -136556,6 +137355,489 @@ components:
         by the
 
         import call itself.'
+    SsoDomainCreateRequest:
+      properties:
+        domain:
+          type: string
+          title: Domain
+          description: An email domain such as acme.com (an address is accepted).
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - domain
+      title: SsoDomainCreateRequest
+      description: Body of ``POST /v1/admin/sso/providers/{id}/domains``.
+    SsoDomainView:
+      properties:
+        domain:
+          type: string
+          title: Domain
+          description: Domain.
+          example: example
+        verified:
+          type: boolean
+          title: Verified
+          description: Whether sign-ins from this domain may route to the IdP.
+          example: false
+        verified_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: SSO Domain View schema.
+          - type: 'null'
+            description: SSO Domain View schema.
+          title: Verified At
+          description: Verified At timestamp (ISO 8601).
+        verified_by:
+          anyOf:
+          - type: string
+            description: SSO Domain View schema.
+          - type: 'null'
+            description: SSO Domain View schema.
+          title: Verified By
+          description: Verified By.
+        verification_token:
+          type: string
+          title: Verification Token
+          description: The value EID-1.2's DNS TXT check looks for. Not a secret.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: SSO Domain View schema.
+          - type: 'null'
+            description: SSO Domain View schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+      type: object
+      required:
+      - domain
+      - verified
+      - verification_token
+      title: SsoDomainView
+      description: One email domain of a provider.
+    SsoProviderCreateRequest:
+      properties:
+        protocol:
+          type: string
+          title: Protocol
+          description: '`oidc` or `saml`.'
+          example: example
+        slug:
+          type: string
+          title: Slug
+          description: 2–28 lower-case letters, digits and hyphens.
+          example: pet-store
+        display_name:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Display Name
+          description: Display Name.
+          example: Example
+        tenant_id:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Tenant Id
+          description: The workspace this IdP signs in to.
+        preset:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Default Role Slug
+          description: Default Role Slug.
+        issuer:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Issuer
+          description: OIDC issuer URL (https).
+        client_id:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Client Id
+          description: Client ID.
+        client_secret:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Client Secret
+          description: Write-only; sealed at rest. Never returned.
+        metadata_url:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Metadata Url
+          description: SAML IdP metadata URL (https).
+        metadata_xml:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Metadata Xml
+          description: SAML IdP metadata XML, pasted.
+        email_source:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Email Source
+          description: 'SAML: `nameid` or `attribute`.'
+        email_attribute:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Email Attribute
+          description: Email Attribute.
+        sp_private_key:
+          anyOf:
+          - type: string
+            description: Request body for sso provider create.
+          - type: 'null'
+            description: Request body for sso provider create.
+          title: Sp Private Key
+          description: SAML SP signing key (PEM). Write-only; sealed at rest.
+      additionalProperties: false
+      type: object
+      required:
+      - protocol
+      - slug
+      - display_name
+      title: SsoProviderCreateRequest
+      description: 'Body of ``POST /v1/admin/sso/providers``.
+
+
+        OIDC needs ``issuer`` + ``client_id`` + ``client_secret``; SAML needs ``metadata_url``
+        or
+
+        ``metadata_xml`` plus ``email_source`` (and ``email_attribute`` when that
+        is ``attribute``).
+
+        Secrets are write-only.'
+    SsoProviderListResponse:
+      properties:
+        providers:
+          items:
+            $ref: '#/components/schemas/SsoProviderView'
+          type: array
+          title: Providers
+          description: Providers.
+          maxItems: 1000
+      type: object
+      title: SsoProviderListResponse
+      description: Payload of ``GET /v1/admin/sso/providers``.
+    SsoProviderUpdateRequest:
+      properties:
+        display_name:
+          anyOf:
+          - type: string
+            maxLength: 120
+            minLength: 1
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Display Name
+          description: Display Name.
+        tenant_id:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Tenant Id
+          description: Tenant that owns the resource.
+        enabled:
+          anyOf:
+          - type: boolean
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Enabled
+          description: Whether the resource is active.
+        preset:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Default Role Slug
+          description: Default Role Slug.
+        client_id:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Client Id
+          description: Client ID.
+        client_secret:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Client Secret
+          description: Client Secret.
+        metadata_url:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Metadata Url
+          description: Metadata URL.
+        metadata_xml:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Metadata Xml
+          description: Metadata Xml.
+        email_source:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Email Source
+          description: Email Source.
+        email_attribute:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Email Attribute
+          description: Email Attribute.
+        sp_private_key:
+          anyOf:
+          - type: string
+            description: Request body for sso provider update.
+          - type: 'null'
+            description: Request body for sso provider update.
+          title: Sp Private Key
+          description: Sp Private Key.
+      additionalProperties: false
+      type: object
+      title: SsoProviderUpdateRequest
+      description: 'Body of ``PATCH /v1/admin/sso/providers/{id}`` — a partial update,
+        by field presence.
+
+
+        An omitted field is left as stored. ``client_secret`` / ``sp_private_key``
+        are write-only: a
+
+        value replaces the sealed secret, ``null`` clears it. Sending ``metadata_url``
+        or
+
+        ``metadata_xml`` re-reads the SAML metadata; sending ``client_id`` re-runs
+        OIDC discovery.'
+    SsoProviderView:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        plugin_provider_id:
+          type: string
+          title: Plugin Provider Id
+          description: '`sso-<slug>`: the id in sign-in URLs.'
+          example: plugin_01h2xcejqtf3fz5y5j0v8k9m2p
+        identity_kind:
+          type: string
+          title: Identity Kind
+          description: '`sso:<slug>`: the provider recorded on identities and auth
+            events.'
+          example: example
+        protocol:
+          type: string
+          title: Protocol
+          description: '`oidc` or `saml`.'
+          example: example
+        display_name:
+          type: string
+          title: Display Name
+          description: Display Name.
+          example: Example
+        issuer:
+          type: string
+          title: Issuer
+          description: OIDC issuer, or the SAML IdP entity id.
+          example: example
+        tenant_id:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Tenant Id
+          description: Tenant that owns the resource.
+        tenant_name:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Tenant Name
+          description: Tenant Name.
+        oidc_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Oidc Config
+          description: Client id and discovered endpoints; no secret.
+        saml_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Saml Config
+          description: IdP entity id, SSO URL, binding, certificates and email source.
+        has_client_secret:
+          type: boolean
+          title: Has Client Secret
+          description: Whether client secret.
+          example: true
+        has_sp_private_key:
+          type: boolean
+          title: Has Sp Private Key
+          description: Whether sp private key.
+          example: true
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        routable:
+          type: boolean
+          title: Routable
+          description: 'Enabled and at least one verified domain: sign-ins reach the
+            IdP.'
+          example: false
+        preset:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Default Role Slug
+          description: Default Role Slug.
+        domains:
+          items:
+            $ref: '#/components/schemas/SsoDomainView'
+          type: array
+          title: Domains
+          description: Domains.
+          maxItems: 1000
+        created_by:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Created By
+          description: Created By.
+        updated_by:
+          anyOf:
+          - type: string
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Updated By
+          description: Updated By.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: SSO Provider View schema.
+          - type: 'null'
+            description: SSO Provider View schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+      type: object
+      required:
+      - id
+      - slug
+      - plugin_provider_id
+      - identity_kind
+      - protocol
+      - display_name
+      - issuer
+      - has_client_secret
+      - has_sp_private_key
+      - enabled
+      - routable
+      title: SsoProviderView
+      description: A provider as admins see it. Never carries a secret.
     StagedTypeCandidate:
       properties:
         name:
@@ -137950,12 +139232,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
       additionalProperties: false
       type: object
       required:
@@ -139084,7 +140366,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         detected_by:
           anyOf:
           - type: string
@@ -145382,13 +146664,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T17:25:40Z'
+          example: '2026-10-23T19:12:05Z'
         outcome:
           anyOf:
           - type: string

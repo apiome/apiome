@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.444.0] - 2026-10-23
+
+### Added
+- **Enterprise SSO providers (#5011, EID-1.1)**: a workspace's own SAML 2.0 / OIDC identity provider, registered by an
+  installation admin and signed in through Better Auth's SSO plugin in apiome-ui.
+  - `GET|POST /v1/admin/sso/providers`, `GET|PATCH|DELETE /v1/admin/sso/providers/{id}`,
+    `POST /v1/admin/sso/providers/{id}/domains`, `DELETE …/domains/{domain}`, `POST …/domains/{domain}/verify` —
+    gated by the super-admin session, like `/v1/admin/auth-providers`.
+  - OIDC is registered by issuer: the discovery document is fetched through the SSRF guard and must name the same
+    issuer and HTTPS authorize / token / JWKS endpoints. SAML is registered by metadata URL or pasted XML, parsed
+    with `defusedxml` (no DTDs or entities, 100 KB cap); a signing certificate and an HTTP-Redirect single sign-on
+    service are required — an Artifact- or POST-only IdP is refused with `sso-binding-unsupported`.
+  - The OIDC client secret and the optional SAML SP signing key are write-only and sealed with the OLO-8.3
+    envelope; responses carry only `has_client_secret` / `has_sp_private_key`. A domain belongs to one provider
+    installation-wide (`409 sso-domain-claimed`). Every refusal carries a stable `sso-*` code.
+  - `GET /v1/internal/sso/providers/resolved` (service token): enabled providers with their **verified** domains,
+    secrets decrypted, and a secret-free fingerprint — the sign-in resolver's only source. A provider whose secret
+    cannot be decrypted is left out.
+  - `POST /v1/internal/auth-events` (service token): appends a sign-in outcome (`sign_in` / `sign_up` / `link`) to
+    `auth_events`; the client IP and User-Agent are hashed before storage. apiome-ui records every SSO attempt with
+    `provider = sso:<slug>`.
+  - New `auth_events` event type `sso_provider` for every admin change (`created`, `updated`, `deleted`,
+    `domain_added`, `domain_verified`, `domain_removed`), secret-free.
+- apiome-db V312: `sso_provider`, `sso_provider_domain`, the always-empty `sso_provider_plugin_stub` view, and
+  `external_auth_providers.provider` widened to accept `sso:<slug>`.
+
 ## [1.443.0] - 2026-10-23
 
 ### Added

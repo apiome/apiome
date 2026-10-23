@@ -20,6 +20,9 @@ from .api_check_suite_routes import router as api_check_suite_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
+from .internal_auth_event_routes import router as internal_auth_event_router
+from .sso_provider_routes import admin_router as sso_provider_admin_router
+from .sso_provider_routes import internal_router as sso_provider_internal_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
@@ -187,7 +190,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.307.0",
+    version="1.308.0",
 )
 
 
@@ -560,6 +563,11 @@ app.include_router(auth_provider_config_router)
 # Internal resolved provider config (OLO-8.5, #4971): GET /v1/internal/auth-providers/resolved,
 # service-token-gated, returns DECRYPTED secrets for the login-time DB-over-env merge resolver.
 app.include_router(auth_provider_resolved_router)
+# Enterprise SSO providers (EID-1.1, #5011): admin CRUD + the login-time resolved read path, and
+# the server-to-server auth_events write path apiome-ui records SSO sign-in outcomes through.
+app.include_router(sso_provider_admin_router)
+app.include_router(sso_provider_internal_router)
+app.include_router(internal_auth_event_router)
 # Super-admin installation sign-up policy (SGN-1.4, #5653): GET/PUT /v1/admin/signup-policy —
 # open / invite_only / closed + allowed email domains, DB-first with AUTH_SIGNUP_DISABLED fallback.
 app.include_router(signup_policy_router)

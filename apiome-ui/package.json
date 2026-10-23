@@ -1,6 +1,6 @@
 {
   "name": "apiome-ui",
-  "version": "0.451.0",
+  "version": "0.452.0",
   "private": true,
   "scripts": {
     "dev": "./scripts/run.sh dev",
@@ -41,6 +41,7 @@
     "docker:remove": "docker stop apiome-ui 2>/dev/null || true && docker rm apiome-ui"
   },
   "dependencies": {
+    "@better-auth/sso": "1.6.25",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -77,6 +78,7 @@
     "dompurify": "^3.4.0",
     "handlebars": "^4.7.9",
     "html-to-image": "^1.11.13",
+    "jose": "6.2.4",
     "json-schema-faker": "^0.5.9",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",

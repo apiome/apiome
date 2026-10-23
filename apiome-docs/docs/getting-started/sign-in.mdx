@@ -26,10 +26,32 @@ administrator has enabled has its own button, and the email form sits underneath
 A wrong password shows **“Incorrect email or password.”** under the field — check both and try
 again.
 
+## Sign in with your company's single sign-on
+
+If your workspace uses its own identity provider (Okta, Microsoft Entra ID, Google Workspace and
+others, over SAML or OIDC), the sign-in page shows **“Sign in with SSO”**.
+
+<Screenshot id="login-sso" alt="The sign-in page with Sign in with SSO open: a Work email field holding ada@northwind.io and a Continue with SSO button" />
+
+1. **Click “Sign in with SSO”.**
+2. Enter your work email in **Work email** — for example `ada@northwind.io` — and **click
+   “Continue with SSO”**.
+3. Sign in on your company's page. You come back to Apiome signed in.
+
+The first time you sign in this way, Apiome asks you to finish setting up your account, as it does
+for any new sign-in. If you already have an Apiome account with the same email, single sign-on is
+added to it.
+
+**“No single sign-on is set up for this email domain.”** means your domain has no identity
+provider connected — sign in another way, or ask your administrator. If your company's provider
+refuses or Apiome cannot verify its answer, you land back here with a message saying so; see
+[Single sign-on](../admin/single-sign-on.mdx#when-sign-in-fails) for what each one means.
+
 ## Pass the two-factor check
 
 If your account has two-factor authentication, Apiome asks for a code before it lets you in —
-after your password, and after you sign in with a provider such as GitHub or Google.
+after your password, and after you sign in with a provider such as GitHub or Google or through
+single sign-on.
 
 1. With an authenticator app, enter the six-digit code from the app in **Authentication code**.
 2. With email, **click “Send email code”**, then enter the code from your inbox in **Email code**.

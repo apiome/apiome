@@ -1,0 +1,125 @@
+---
+title: Single sign-on
+description: Connect a workspace's own SAML or OIDC identity provider for its email domains.
+sidebar_position: 8.5
+tags: [admin, legacy, sign-in, sso, saml, oidc]
+---
+
+<Route path="/admin/dashboard/settings" />
+
+<Legacy />
+
+**Single sign-on** lets the people of one company sign in to Apiome with their work account, through
+that company's own identity provider (IdP) — Okta, Microsoft Entra ID, Google Workspace, Keycloak,
+Auth0 or any other that speaks **SAML 2.0** or **OpenID Connect (OIDC)**. You connect the IdP once,
+give it the email domains the company owns, and from then on anyone with an address at those domains
+can choose **“Sign in with SSO”** on the [sign-in page](../getting-started/sign-in.mdx).
+
+It is set up by an installation administrator: **sign in to the admin console, choose System
+settings** in the sidebar and find the **Single sign-on** card.
+
+<Screenshot id="admin-sso-providers" alt="System settings: the Single sign-on card with Northwind Okta (OIDC, Live, northwind.io verified) and Contoso Entra ID (SAML 2.0, needs a verified domain)" />
+
+## SAML or OIDC?
+
+Use whichever your IdP offers — most offer both.
+
+| | OIDC | SAML 2.0 |
+| --- | --- | --- |
+| **You give Apiome** | The issuer URL, a client ID and a client secret | The IdP's metadata URL, or its metadata XML pasted in |
+| **You give the IdP** | The **Redirect URI** Apiome shows | The **ACS URL** and the **SP entity ID** Apiome shows |
+| **Where the email comes from** | The ID token's `email` — the IdP must mark it verified | The NameID, or an attribute you name |
+
+The client secret, and a SAML signing key if you add one, are stored encrypted and never shown
+again.
+
+## Connect an identity provider
+
+1. **Click “Add identity provider”** on the **Single sign-on** card.
+2. Choose **OIDC** or **SAML 2.0**, and give it a **Name** (for example `Northwind Okta`). The **ID**
+   fills in from the name; it appears in sign-in URLs and in the audit trail as `sso:<id>`.
+3. Optionally enter the **Workspace ID** the IdP's people belong to.
+4. For **OIDC**, enter the **Issuer URL** (for example `https://northwind.okta.com`), the **Client
+   ID** and the **Client secret** from the app you registered at the IdP. Apiome reads the issuer's
+   discovery document and checks it before saving.
+
+   For **SAML 2.0**, enter the **IdP metadata URL** or paste the **IdP metadata XML**, then choose
+   where the email address comes from: **The NameID** (when the IdP sends the email as NameID) or
+   **An attribute** and its name (for example `email`).
+5. **Click “Add provider”.** The provider is added **disabled**.
+6. Copy the values the card now shows into your IdP's app settings: the **Redirect URI** for OIDC, or
+   the **ACS URL (reply URL)** and **SP entity ID (audience)** for SAML.
+
+Apiome refuses an IdP it could never sign anyone in through, and says why — for example
+*“The IdP offers single sign-on only over HTTP-Artifact”* (Apiome sends sign-in requests over
+HTTP-Redirect), or a discovery document that names a different issuer.
+
+## Add the company's email domains
+
+1. In the provider's row, type a domain in the domain box — for example `northwind.io` — and **click
+   “Add domain”**.
+2. **Click “Mark verified”** once you have confirmed the company owns the domain.
+
+Only verified domains are used for sign-in, and a domain can belong to only one identity provider
+on the installation. Automatic verification by DNS record is coming with the workspace owner's
+single sign-on page.
+
+:::caution Verify only domains the company owns
+An identity provider signs in *anyone* at its verified domains. Marking a domain you have not
+confirmed would let that IdP sign in people at a company it does not represent.
+:::
+
+## Turn it on
+
+**Click “Enable”.** The provider shows **Live** once it is enabled and has at least one verified
+domain — from the next sign-in, people at those domains can use **“Sign in with SSO”**.
+**Needs a verified domain** means it is enabled but nothing routes to it yet. **“Disable”** stops
+new sign-ins through it at once; **“Remove…”** deletes it, with its secrets.
+
+## What happens when someone signs in
+
+Apiome applies the same rules to a single sign-on as to any other sign-in:
+
+- **Only verified domains.** An IdP can sign in only addresses at its own verified domains. An
+  address anywhere else is refused, whatever the IdP says.
+- **A verified email.** For OIDC, the IdP must mark the email verified in the ID token; an
+  unverified email is refused, never linked to an account.
+- **One email, one account.** If an Apiome account with that email already exists, single sign-on is
+  added to it, and the person keeps everything they had. A first-time person is sent to finish
+  setting up their account, under your [sign-up policy](./auth-providers.mdx#sign-up-policy).
+- **Disabled and suspended accounts stay out**, and an account with two-factor authentication still
+  asks for its code.
+- **Every attempt is recorded** in the sign-in audit trail as `sso:<id>`, and so is every change on
+  this card.
+
+Each sign-in must answer a request Apiome sent, within five minutes; a SAML response can be used
+once, must be signed, and must carry valid timestamps. A sign-in started from the IdP's own
+dashboard (IdP-initiated) is refused — start from Apiome's sign-in page.
+
+## When sign-in fails
+
+The sign-in page explains each refusal. The codes appear in the address bar and the audit trail:
+
+| Code | What it means | What to do |
+| --- | --- | --- |
+| `sso-provider-not-found` | No live provider covers the email's domain | Check the domain is added, verified and the provider enabled |
+| `sso-email-domain-mismatch` | The IdP returned an email outside the provider's domains | Check the IdP sends the work email, or add the domain |
+| `unverified-email` | The OIDC IdP did not mark the email verified | Verify the email in the IdP |
+| `sso-token-invalid` | Apiome could not verify the OIDC ID token | Check the client ID and the issuer |
+| `sso-assertion-invalid` | Apiome could not verify the SAML response | Check the ACS URL, SP entity ID and the IdP's signing certificate |
+| `sso-assertion-replayed` | The SAML response was used before | Start again from the sign-in page |
+| `sso-state-invalid` | The sign-in took too long or was started elsewhere | Start again from the sign-in page |
+| `sso-binding-unsupported` | The IdP answered over HTTP-Artifact | Have the IdP send responses over HTTP-POST |
+| `sso-discovery-failed` | Apiome could not read the OIDC discovery document | Check the issuer is reachable |
+| `sso-account-not-linked` | An account with the email exists but could not be linked | Ask the person to sign in another way |
+
+## For operators
+
+- The card needs `AUTH_CONFIG_ENC_KEY` set (the same key that seals sign-in provider secrets) and
+  `INTERNAL_SERVICE_TOKEN` shared between apiome-ui and apiome-rest; without the token, no single
+  sign-on is offered.
+- Apiome fetches discovery documents and metadata only from public `https://` addresses. To test
+  against an IdP on your own network, set `APIOME_SSRF_ALLOW_PRIVATE=true` on apiome-rest — never in
+  production.
+- The same operations are available over the REST API:
+  [`/v1/admin/sso/providers`](../reference/rest/sso.md).

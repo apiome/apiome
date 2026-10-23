@@ -143,7 +143,10 @@ describe('resolveRequestAuthInstance — DB config lands without env', () => {
     await resolveRequestAuthInstance({ ...TOKEN_ENV }, nextNow());
 
     expect(latestProviderIds()).toEqual(['gitlab']);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    // One provider-config read. (The routable SSO providers — EID-1.1 — are read from their own
+    // endpoint on the same request.)
+    const providerReads = mockFetch.mock.calls.filter(([url]) => String(url).includes('/internal/auth-providers/'));
+    expect(providerReads).toHaveLength(1);
   });
 
   it('pins an env-configured provider off when the DB sets enabled=false', async () => {

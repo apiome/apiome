@@ -7,6 +7,15 @@
       "data": "signed-out"
     },
     {
+      "id": "login-sso",
+      "route": "/login",
+      "waitFor": "[data-testid=\"enterprise-sso-form\"]",
+      "data": "fixture:hive-a11y/login-sso.html",
+      "sources": [
+        "apiome-ui/src/app/login/EnterpriseSsoSignIn.tsx"
+      ]
+    },
+    {
       "id": "onboarding-welcome",
       "route": "/onboarding",
       "waitFor": "[data-testid=\"first-tenant-onboarding-wizard\"]",
@@ -1340,6 +1349,16 @@
       "waitFor": "[aria-label=\"Confirm removing Microsoft\"]",
       "scrollTo": "[aria-label=\"Confirm removing Microsoft\"]",
       "data": "fixture:hive-a11y/admin-auth-provider-remove.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-sso-providers",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[aria-label=\"Single sign-on\"]",
+      "scrollTo": "[aria-label=\"Single sign-on\"]",
+      "data": "fixture:hive-a11y/admin-sso-providers.html",
       "tags": [
         "legacy"
       ]

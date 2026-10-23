@@ -148,7 +148,7 @@ do. Lane C rows are in pick-up order within their wave.
 | 14 | 1 | E | [#5598](https://github.com/apiome/apiome/issues/5598) | HIVE-11.2 | Versions — status strip replaces the three stacked banners **MVP** | HIVE-11.1 | Core | ✅ |
 | 15 | 1 | E | [#5599](https://github.com/apiome/apiome/issues/5599) | HIVE-11.3 | Versions header — ⋯ overflow menu and breadcrumb project switcher **MVP** | — | Core | ✅ |
 | 16 | 1 | E | [#5600](https://github.com/apiome/apiome/issues/5600) | HIVE-11.4 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | — | Core | ✅ |
-| 17 | 1 | F | [#5011](https://github.com/apiome/apiome/issues/5011) | EID-1.1 | SAML 2.0 / OIDC SSO plugin foundation (was OLO-9.10) **MVP** | — | Core |  |
+| 17 | 1 | F | [#5011](https://github.com/apiome/apiome/issues/5011) | EID-1.1 | SAML 2.0 / OIDC SSO plugin foundation (was OLO-9.10) **MVP** | — | Core | ✅ |
 | 18 | 1 | F | [#5674](https://github.com/apiome/apiome/issues/5674) | EID-3.1 | Unified audit read model & export endpoint **MVP** | — | Core |  |
 | 19 | 1 | G | [#5714](https://github.com/apiome/apiome/issues/5714) | AAU-4.1 | Protocol version matrix, SDK posture decision and self-conformance gate **MVP** | — | Core |  |
 | 20 | 1 | G | [#5695](https://github.com/apiome/apiome/issues/5695) | AAU-1.1 | Protected Resource Metadata and bearer-token verification on `/agent/mcp` **MVP** | — | Core |  |

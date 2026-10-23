@@ -300,7 +300,9 @@ describe('the docs fixtures', () => {
       json: async () =>
         String(input) === '/api/admin/signup-policy'
           ? { ...STORED, allowed_email_domains: ['northwind.io', 'contoso.example'] }
-          : DOCS_PROVIDERS,
+          : String(input) === '/api/admin/sso/providers'
+            ? { providers: [] } // the Single sign-on card (EID-1.1), empty here
+            : DOCS_PROVIDERS,
     })) as unknown as typeof fetch;
 
     render(

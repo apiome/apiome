@@ -1,6 +1,6 @@
 {
   "name": "apiome-db",
-  "version": "0.156.0",
+  "version": "0.157.0",
   "description": "Apiome database migrations and the direct-to-database admin CLI (apiome-db).",
   "author": "Apiome",
   "type": "module",

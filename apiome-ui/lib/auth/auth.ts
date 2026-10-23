@@ -4,6 +4,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { genericOAuth } from 'better-auth/plugins/generic-oauth';
 import { twoFactor } from 'better-auth/plugins/two-factor';
 import { customSession } from 'better-auth/plugins';
+import { sso } from '@better-auth/sso';
 import { augmentBetterAuthUser } from './better-auth-session-shape';
 import {
   buildBetterAuthAdvancedOptions,
@@ -38,6 +39,20 @@ import {
 } from './two-factor-policy';
 import { oauthTwoFactorChallengeHandler } from './two-factor-oauth-challenge';
 import { twoFactorReauthHandler } from './two-factor-reauth';
+import {
+  buildDefaultSsoEntries,
+  NO_SSO_PROVIDERS,
+  resolveSsoProviders,
+  type ResolvedSsoProviders,
+} from './sso-provider-resolver';
+import {
+  runWithSsoRequest,
+  ssoAccountCreateBefore,
+  ssoArtifactBeforeHandler,
+  ssoCallbackAfterHandler,
+  ssoSessionCreateBefore,
+  ssoUserCreateBefore,
+} from './sso-resolution';
 import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
@@ -66,6 +81,32 @@ const APP_NAME = 'apiome';
 const TWO_FACTOR_TABLE = 'two_factor';
 
 /**
+ * The Better Auth SSO plugin's model, pointed at an always-empty view (V312, EID-1.1 #5011).
+ *
+ * Providers reach the plugin only as `defaultSSO` entries built from apiome's own `sso_provider`
+ * tables (enabled providers, verified domains). The plugin falls back to its model for an id or
+ * domain it was not given; this view returns no rows, so a disabled or unverified provider can
+ * never be found that way, and nothing can be written there.
+ */
+const SSO_PLUGIN_MODEL = 'sso_provider_plugin_stub';
+
+/**
+ * Better Auth routes switched off (EID-1.1 #5011): the SSO plugin's own provider-management and
+ * domain-verification endpoints. Providers are registered by an installation admin through
+ * apiome-rest (`/v1/admin/sso/providers`), never by a signed-in user through Better Auth — which is
+ * what makes the plugin's `trustEmailVerified` safe (see its docs).
+ */
+export const DISABLED_AUTH_PATHS = [
+  '/sso/register',
+  '/sso/update-provider',
+  '/sso/delete-provider',
+  '/sso/get-provider',
+  '/sso/providers',
+  '/sso/request-domain-verification',
+  '/sso/verify-domain',
+] as const;
+
+/**
  * Assemble the Better Auth configuration (OLO-10.2, extended through 10.7/10.8) for a given
  * generic-OAuth provider list.
  *
@@ -91,13 +132,18 @@ const TWO_FACTOR_TABLE = 'two_factor';
  * @param oauthConfigs The generic-OAuth provider configs to register (from {@link buildGenericOAuthConfigs}).
  * @returns The complete Better Auth options object for this deployment.
  */
-function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
+function buildBetterAuthConfig(
+  oauthConfigs: GenericOAuthConfig[],
+  ssoProviders: ResolvedSsoProviders = NO_SSO_PROVIDERS
+) {
+  const baseURL = resolveBetterAuthBaseUrl();
   return {
   appName: APP_NAME,
   database: connectionPool,
   secret: resolveBetterAuthSecret(),
   baseURL: resolveBetterAuthBaseUrl(),
   basePath: '/api/auth',
+  disabledPaths: [...DISABLED_AUTH_PATHS],
   trustedOrigins: buildBetterAuthTrustedOrigins(),
   session: buildBetterAuthSessionOptions(),
   advanced: buildBetterAuthAdvancedOptions(),
@@ -208,6 +254,25 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
         : {}),
     }),
     oneTimeCodePlugin(),
+    // Enterprise SSO (EID-1.1 #5011): a workspace's own SAML 2.0 / OIDC IdP. Providers come only from
+    // `defaultSSO` — apiome's enabled providers × verified domains (`sso-provider-resolver.ts`) — so
+    // `domainVerification` marks each verified, the plugin's own model is an empty view, and its
+    // management routes are in `disabledPaths`. The account-resolution engine runs in the
+    // `databaseHooks` below (`sso-resolution.ts`). SAML: timestamps required, deprecated algorithms
+    // refused, every response must answer an AuthnRequest this server sent (no IdP-initiated).
+    sso({
+      defaultSSO: buildDefaultSsoEntries(ssoProviders, `${baseURL}/api/auth`) as never,
+      modelName: SSO_PLUGIN_MODEL,
+      providersLimit: 0,
+      trustEmailVerified: true,
+      domainVerification: { enabled: true },
+      organizationProvisioning: { disabled: true },
+      saml: {
+        requireTimestamps: true,
+        allowIdpInitiated: false,
+        algorithms: { onDeprecated: 'reject' },
+      },
+    }),
     customSession(async ({ user, session }) => ({
       session,
       user: await augmentBetterAuthUser(user),
@@ -228,18 +293,48 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // generic-OAuth callback that has the fetched profile + tokens *before* any user is created. The
   // hook is retained (inert) as defense-in-depth so the resolution gate remains composed on the
   // instance even if a future callback path surfaces `ctx.oauth`.
+  //
+  // Enterprise SSO (EID-1.1 #5011): an HTTP-Artifact SAML response is refused before the plugin
+  // parses it (`ssoArtifactBeforeHandler`), and a failure the plugin redirected with is mapped to a
+  // stable `sso-*` code and recorded (`ssoCallbackAfterHandler`). Both no-op outside SSO callbacks.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       await credentialRateLimitBeforeHandler(ctx);
       await oauthResolutionHandler(ctx);
       await twoFactorReauthHandler(ctx);
+      await ssoArtifactBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {
       await credentialRateLimitAfterHandler(ctx);
+      await ssoCallbackAfterHandler(ctx);
       // Second factor after a provider sign-in (TFA-1.1 #5655): the plugin only challenges password
       // sign-ins, so the OAuth callback is challenged here. Throws the redirect to `/login/2fa`.
       await oauthTwoFactorChallengeHandler(ctx);
     }),
+  },
+  // The account-resolution engine for enterprise SSO sign-ins (EID-1.1 #5011). The SSO plugin hands
+  // its verified identity straight to Better Auth core, so the engine runs where core creates rows:
+  // each handler is gated to the SSO callback routes and a no-op for everything else. See
+  // `sso-resolution.ts` for which decision runs at which step.
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user: Record<string, unknown>, ctx?: unknown) =>
+          ssoUserCreateBefore(user, ctx as never),
+      },
+    },
+    account: {
+      create: {
+        before: async (account: Record<string, unknown>, ctx?: unknown) =>
+          ssoAccountCreateBefore(account, ctx as never),
+      },
+    },
+    session: {
+      create: {
+        before: async (session: Record<string, unknown>, ctx?: unknown) =>
+          ssoSessionCreateBefore(session, ctx as never),
+      },
+    },
   },
   };
 }
@@ -251,8 +346,11 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
  *   per-request build; `process.env` for the static instance). Defaults to `process.env`.
  * @returns A Better Auth server instance configured for `providerEnv`'s enabled provider set.
  */
-export function buildBetterAuthInstance(providerEnv: EnvMap = process.env) {
-  return betterAuth(buildBetterAuthConfig(buildGenericOAuthConfigs(providerEnv)));
+export function buildBetterAuthInstance(
+  providerEnv: EnvMap = process.env,
+  ssoProviders: ResolvedSsoProviders = NO_SSO_PROVIDERS
+) {
+  return betterAuth(buildBetterAuthConfig(buildGenericOAuthConfigs(providerEnv), ssoProviders));
 }
 
 /** A Better Auth server instance, as returned by {@link buildBetterAuthInstance}. */
@@ -284,9 +382,15 @@ export const auth = buildBetterAuthInstance(process.env);
  * env instance so a deployment with no DB overrides reuses {@link auth} and never rebuilds.
  */
 let instanceCache: { signature: string; instance: BetterAuthInstance } = {
-  signature: providerConfigSignature(buildGenericOAuthConfigs(process.env)),
+  signature: `${providerConfigSignature(buildGenericOAuthConfigs(process.env))}|sso:${NO_SSO_PROVIDERS.fingerprint}`,
   instance: auth,
 };
+
+/** A request's Better Auth instance and the routable SSO providers it was built from. */
+interface RequestAuth {
+  instance: BetterAuthInstance;
+  ssoProviders: ResolvedSsoProviders;
+}
 
 /**
  * Resolve the Better Auth instance for a single request from the DB-over-env merged provider config
@@ -305,26 +409,45 @@ export async function resolveRequestAuthInstance(
   baseEnv: EnvMap = process.env,
   now: number = Date.now()
 ): Promise<BetterAuthInstance> {
+  return (await resolveRequestAuth(baseEnv, now)).instance;
+}
+
+/**
+ * {@link resolveRequestAuthInstance}, plus the routable SSO providers the instance was built from
+ * (EID-1.1 #5011) — the SSO database hooks consult the same set the plugin's `defaultSSO` holds.
+ *
+ * The cache fingerprint covers both the OAuth provider config and the SSO set (whose fingerprint
+ * changes with any provider, domain or secret change), so enabling an IdP or verifying a domain
+ * rebuilds the instance on the next sign-in.
+ *
+ * @param baseEnv Base environment (injectable for tests).
+ * @param now Current epoch ms (injectable for tests).
+ * @returns The instance and its SSO set; the static env instance with no SSO on any failure.
+ */
+async function resolveRequestAuth(baseEnv: EnvMap = process.env, now: number = Date.now()): Promise<RequestAuth> {
   try {
-    const mergedEnv = await resolveProviderEnv(baseEnv, now);
+    const [mergedEnv, ssoProviders] = await Promise.all([
+      resolveProviderEnv(baseEnv, now),
+      resolveSsoProviders(baseEnv, now),
+    ]);
     const oauthConfigs = buildGenericOAuthConfigs(mergedEnv);
-    const signature = providerConfigSignature(oauthConfigs);
+    const signature = `${providerConfigSignature(oauthConfigs)}|sso:${ssoProviders.fingerprint}`;
     // The check-build-assign-return below is a single synchronous block (no `await`), so concurrent
     // requests cannot interleave within it: each resolves its own instance and updates the shared
     // cache last-writer-wins, which is safe because every built instance is valid for its own config.
     if (signature === instanceCache.signature) {
-      return instanceCache.instance;
+      return { instance: instanceCache.instance, ssoProviders };
     }
-    const instance = betterAuth(buildBetterAuthConfig(oauthConfigs));
+    const instance = betterAuth(buildBetterAuthConfig(oauthConfigs, ssoProviders));
     instanceCache = { signature, instance };
-    return instance;
+    return { instance, ssoProviders };
   } catch (error) {
     // Never let provider resolution break sign-in: fall back to the static env instance.
     console.error(
       '[betterAuth] per-request provider resolution failed; using static env instance',
       error instanceof Error ? error.name : 'unknown'
     );
-    return auth;
+    return { instance: auth, ssoProviders: NO_SSO_PROVIDERS };
   }
 }
 
@@ -348,8 +471,9 @@ export async function resolveRequestAuthInstance(
  */
 export function betterAuthHandler(request: Request): Promise<Response> {
   return runWithOauthRedirectOverride(async () => {
-    const instance = await resolveRequestAuthInstance();
-    const response = await instance.handler(request);
+    const { instance, ssoProviders } = await resolveRequestAuth();
+    // The SSO hooks read this request's routable set (EID-1.1 #5011) from the scope.
+    const response = await runWithSsoRequest(ssoProviders, () => instance.handler(request));
     return applyOauthRedirectOverride(response);
   });
 }

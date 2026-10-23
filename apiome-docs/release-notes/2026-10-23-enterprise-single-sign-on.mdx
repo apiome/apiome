@@ -1,0 +1,25 @@
+---
+slug: enterprise-single-sign-on
+title: Single sign-on with your own SAML or OIDC identity provider
+description: Connect a company's Okta, Entra ID or other IdP; its people sign in with work accounts.
+authors: [apiome]
+---
+
+A company can now sign in to Apiome through its own identity provider. An administrator connects
+the IdP — over SAML 2.0 or OpenID Connect — gives it the email domains the company owns, and
+people at those domains choose **Sign in with SSO** on the sign-in page.
+[Single sign-on](/admin/single-sign-on).
+
+{/* truncate */}
+
+- **Any SAML or OIDC IdP.** Okta, Microsoft Entra ID, Google Workspace, Keycloak, Auth0 and others.
+  OIDC is set up from the issuer URL; SAML from the IdP's metadata URL or XML. Apiome checks both
+  before saving, and shows the redirect URI or ACS URL to give the IdP.
+- **Only the company's own domains.** An IdP signs in only addresses at the domains verified for it,
+  and a domain belongs to one IdP. OIDC emails must be marked verified by the IdP.
+- **Same rules as every sign-in.** Someone who already has an account keeps it and gains single
+  sign-on; a first-time person finishes setting up their account; two-factor still applies.
+- **Secrets stay secret.** Client secrets and signing keys are stored encrypted and never shown
+  again. Every sign-in through an IdP, and every change to one, is in the audit trail.
+- **For administrators** on the admin console's **System settings**, and over the REST API.
+  Owners setting up their own workspace's IdP, with DNS domain verification, comes next.

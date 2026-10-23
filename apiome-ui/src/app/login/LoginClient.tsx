@@ -11,6 +11,7 @@ import { AuthShell } from '../components/auth/AuthShell';
 import { AuthField } from '../components/auth/AuthField';
 import { BetaBadge } from '../components/auth/BetaBadge';
 import LoginBrandPanel from './LoginBrandPanel';
+import EnterpriseSsoSignIn from './EnterpriseSsoSignIn';
 import { getAuthErrorCopy } from './auth-error-copy';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
@@ -93,9 +94,22 @@ interface LoginClientProps {
    * and renders expanded.
    */
   ssoProviders?: ProviderSummary[];
+  /**
+   * Whether at least one enterprise SSO provider (a workspace's own SAML / OIDC IdP, EID-1.1) is
+   * enabled with a verified domain. Adds "Sign in with SSO" beside the provider buttons, and like
+   * them makes the credentials form start collapsed.
+   */
+  enterpriseSso?: boolean;
 }
 
-const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', ssoProviders = [] }) => {
+const LoginClient: React.FC<LoginClientProps> = ({
+  error,
+  callbackUrl = '/ade',
+  ssoProviders = [],
+  enterpriseSso = false,
+}) => {
+  // Any non-credentials path — provider buttons or enterprise SSO — is the primary path (OLO-3.1).
+  const hasPrimaryPath = ssoProviders.length > 0 || enterpriseSso;
   const [isSignUp, setIsSignUp] = useState(false);
   const [payload, setPayload] = useState<Record<string, string>>({
     email: '',
@@ -109,7 +123,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
   // (no enabled providers) or when the user just failed a credentials attempt and needs the
   // form back to retry. Expansion is one-way — the form never re-collapses.
   const [showCredentials, setShowCredentials] = useState(
-    ssoProviders.length === 0 || error === 'CredentialsSignin'
+    !hasPrimaryPath || error === 'CredentialsSignin'
   );
   // The rejected pair is marked on the fields themselves until the user edits either one —
   // an error the reader has already started fixing should stop shouting.
@@ -292,9 +306,16 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
           )
         )}
 
+        {/* Enterprise SSO (EID-1.1): the workspace's own IdP, found from the work email. */}
+        {enterpriseSso && !isSSOLoading && (
+          <div className={ssoProviders.length > 0 ? 'mt-2' : 'mt-5'}>
+            <EnterpriseSsoSignIn callbackUrl={callbackUrl} disabled={!signInEnabled} />
+          </div>
+        )}
+
         {/* Divider (only when SSO renders above the email form). While the credentials
             form is collapsed it doubles as the expand control. */}
-        {ssoProviders.length > 0 && (
+        {hasPrimaryPath && (
           showCredentials ? (
             <div className="auth-divider mt-5">or use your email</div>
           ) : (

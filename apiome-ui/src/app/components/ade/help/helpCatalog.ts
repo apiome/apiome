@@ -1143,6 +1143,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['system settings', 'client secret', 'callback url', 'redirect uri', 'issuer', 'keycloak', 'auth0'],
   },
   {
+    id: 'single-sign-on',
+    title: 'Single sign-on (SAML and OIDC)',
+    summary: 'Connect a workspace’s own identity provider so its people sign in with their work account.',
+    page: 'apiome-docs/docs/admin/single-sign-on.mdx',
+    section: 'reference',
+    keywords: ['sso', 'okta', 'entra id', 'identity provider', 'idp', 'acs url', 'work email', 'domain'],
+  },
+  {
     id: 'property-templates',
     title: 'Property templates',
     summary: 'Manage the reusable property definitions offered across every tenant.',

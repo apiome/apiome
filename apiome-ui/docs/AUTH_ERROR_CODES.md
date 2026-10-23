@@ -40,6 +40,25 @@ auth failure.
 | `last-sign-in-method` | Unlink refused: the identity is the user's last remaining sign-in method — no other linked identity and no usable password (`users.password` empty) — so removing it would lock them out (OLO-2.4). | `unlinkExternalAccount` (`lib/db/helper.ts`) |
 | `sign-in-failed` | Generic sign-in failure with no user-actionable detail; the `signIn` callback's defensive fallback when a provider yields no resolvable user. Kept generic so the redirect leaks no account existence signal (OLO-7.3). Renders the generic banner. | NextAuth `signIn` callback (`src/app/api/auth/[...nextauth]/route.ts`) |
 
+## Enterprise SSO codes (EID-1.1, #5011)
+
+Emitted by the SSO sign-in hooks (`lib/auth/sso-resolution.ts`, `SSO_ERROR_CODES`) for refusals the
+resolution engine does not own; the engine's own codes above (`unverified-email`, `account-disabled`,
+`identity-linked-elsewhere`, the sign-up policy codes …) apply to SSO sign-ins unchanged. Every
+refusal is also written to `auth_events` with `provider = sso:<slug>`.
+
+| Code | Meaning | Emitted by |
+| --- | --- | --- |
+| `sso-token-invalid` | The OIDC id token failed verification (signature, issuer, audience), was missing, or named another email. | `ssoAccountCreateBefore`; plugin failures on an OIDC provider |
+| `sso-assertion-invalid` | The SAML response failed validation (signature, audience, timestamps, shape). | Plugin failures on a SAML provider (`ssoCallbackAfterHandler`) |
+| `sso-assertion-replayed` | The SAML assertion had already been used. | Plugin `replay_detected` |
+| `sso-binding-unsupported` | The IdP answered over HTTP-Artifact (`SAMLart`). | `ssoArtifactBeforeHandler` |
+| `sso-discovery-failed` | The OIDC discovery document could not be read at sign-in. | Plugin `discovery_failed` |
+| `sso-state-invalid` | The sign-in state was missing, expired or did not match. | Plugin `invalid_state` |
+| `sso-provider-not-found` | No enabled provider with a verified domain covers the request. | SSO hooks; plugin `invalid_provider` |
+| `sso-email-domain-mismatch` | The IdP asserted an email outside the domains verified for it. | `ssoUserCreateBefore`, `ssoAccountCreateBefore` |
+| `sso-account-not-linked` | An account with the email exists but Better Auth could not link it. | Plugin `account_not_linked` |
+
 ## Pre-contract stable copy keys
 
 These predate the kebab-case convention and keep their original values under the stability rule:

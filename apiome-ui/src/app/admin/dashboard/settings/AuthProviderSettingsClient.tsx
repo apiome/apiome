@@ -53,6 +53,7 @@ import {
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 import SignupPolicyCard from './SignupPolicyCard';
+import SsoProvidersCard from './SsoProvidersCard';
 import { INPUT_CLASSES, SECONDARY_BUTTON_CLASSES } from './settingsStyles';
 
 /** The three admin-selectable enablement states (mirrors `enabled: true | false | null`). */
@@ -1321,8 +1322,8 @@ export default function AuthProviderSettingsClient() {
               System settings
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Sign-up policy and sign-in providers — database values override .env; blank
-              fields fall back to .env.
+              Sign-up policy, single sign-on and sign-in providers — database values override
+              .env; blank fields fall back to .env.
             </p>
           </div>
           <AddProviderModal
@@ -1336,6 +1337,9 @@ export default function AuthProviderSettingsClient() {
       <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           <SignupPolicyCard />
+
+          {/* Enterprise SSO (EID-1.1): a workspace's own SAML / OIDC identity provider. */}
+          <SsoProvidersCard />
 
           {loading && (
             <div className="flex items-center gap-2 py-10 text-sm text-slate-500 dark:text-slate-400">

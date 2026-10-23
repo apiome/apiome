@@ -150,6 +150,12 @@ const signupPolicyBody: AdminSignupPolicyView = {
  * Install a fetch mock; `putHandler` decides PUT responses, `listBodies` queues GET bodies,
  * `deleteHandler` decides DELETE responses (removal — omit it to leave DELETE unhandled).
  */
+/** What the Single sign-on card's list call answers (EID-1.1); reset before every test. */
+let ssoListBody: { providers: unknown[] } = { providers: [] };
+beforeEach(() => {
+  ssoListBody = { providers: [] };
+});
+
 function mockFetch(
   putHandler?: (url: string, body: Record<string, unknown>) => { status: number; body: unknown },
   listBodies: unknown[] = [DEFAULT_LIST],
@@ -162,6 +168,10 @@ function mockFetch(
     // The Sign-up card (SGN-1.4) shares the screen and loads its own policy.
     if (url === '/api/admin/signup-policy' && method === 'GET') {
       return { ok: true, status: 200, json: async () => signupPolicyBody } as unknown as Response;
+    }
+    // So does the Single sign-on card (EID-1.1) — no providers, unless a docs fixture sets some.
+    if (url === '/api/admin/sso/providers' && method === 'GET') {
+      return { ok: true, status: 200, json: async () => ssoListBody } as unknown as Response;
     }
     if (method === 'GET') {
       const body = listBodies[Math.min(listCall, listBodies.length - 1)];
@@ -994,6 +1004,62 @@ describe('the docs fixtures', () => {
 
   /** Everything rendered, portals included, without the `<body>` tag. */
   const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
+
+  it('renders the Single sign-on card with a live OIDC and a waiting SAML provider (EID-1.1)', async () => {
+    ssoListBody = {
+      providers: [
+        {
+          id: '3f2b8c1e-0d4a-4b7e-9c11-2a6f5e8d9b01',
+          slug: 'northwind-okta',
+          plugin_provider_id: 'sso-northwind-okta',
+          identity_kind: 'sso:northwind-okta',
+          protocol: 'oidc',
+          display_name: 'Northwind Okta',
+          issuer: 'https://northwind.okta.example',
+          tenant_id: null,
+          tenant_name: 'Northwind',
+          oidc_config: { client_id: '0oa-example-docs-id' },
+          saml_config: null,
+          has_client_secret: true,
+          has_sp_private_key: false,
+          enabled: true,
+          routable: true,
+          domains: [
+            { domain: 'northwind.io', verified: true, verified_at: '2026-10-20T10:00:00Z', verified_by: 'admin', verification_token: 'example-token' },
+          ],
+        },
+        {
+          id: '7a1d2e3f-4b5c-4d6e-8f70-9a8b7c6d5e4f',
+          slug: 'contoso-entra',
+          plugin_provider_id: 'sso-contoso-entra',
+          identity_kind: 'sso:contoso-entra',
+          protocol: 'saml',
+          display_name: 'Contoso Entra ID',
+          issuer: 'https://sts.windows.example/contoso/',
+          tenant_id: null,
+          tenant_name: 'Contoso',
+          oidc_config: null,
+          saml_config: { email_source: 'nameid' },
+          has_client_secret: false,
+          has_sp_private_key: false,
+          enabled: true,
+          routable: false,
+          domains: [
+            { domain: 'contoso.example', verified: false, verified_at: null, verified_by: null, verification_token: 'example-token' },
+          ],
+        },
+      ],
+    };
+    mockFetch(undefined, [DOCS_LIST]);
+    render(
+      <AdminFrame>
+        <AuthProviderSettingsClient />
+      </AdminFrame>
+    );
+    await screen.findByTestId('sso-provider-northwind-okta');
+    expect(screen.getByTestId('sso-provider-contoso-entra')).toHaveTextContent('Needs a verified domain');
+    writeA11yFixture('admin-sso-providers', bodyMarkup());
+  });
 
   it('renders the provider list after Validate, Add Provider and its configure step', async () => {
     mockFetch(undefined, [DOCS_LIST]);

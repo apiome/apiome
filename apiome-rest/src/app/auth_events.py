@@ -39,9 +39,23 @@ EVENT_UNLINK = "unlink"
 #: who did it (``actor_kind`` / ``actor_id``) and why (``reason``).
 EVENT_TWO_FACTOR_RESET = "two_factor_reset"
 
+#: An installation admin created, changed or removed an SSO provider or one of its domains
+#: (EID-1.1, #5011). Like ``two_factor_reset`` this is not an authentication attempt: ``provider``
+#: is the ``sso:<slug>`` acted on, ``user_id`` is empty, and ``detail`` carries the ``action``
+#: (``created`` | ``updated`` | ``deleted`` | ``domain_added`` | ``domain_verified`` |
+#: ``domain_removed``) and who did it (``actor_kind`` / ``actor_id``). Never a secret.
+EVENT_SSO_PROVIDER = "sso_provider"
+
 #: Every event type, for consumers that validate or enumerate them.
 AUTH_EVENT_TYPES: FrozenSet[str] = frozenset(
-    {EVENT_SIGN_IN, EVENT_SIGN_UP, EVENT_LINK, EVENT_UNLINK, EVENT_TWO_FACTOR_RESET}
+    {
+        EVENT_SIGN_IN,
+        EVENT_SIGN_UP,
+        EVENT_LINK,
+        EVENT_UNLINK,
+        EVENT_TWO_FACTOR_RESET,
+        EVENT_SSO_PROVIDER,
+    }
 )
 
 #: The attempt admitted the actor.
