@@ -117,9 +117,9 @@ Start these on day one; none depends on another.
 2. [#4960](https://github.com/apiome/apiome/issues/4960) encrypt OAuth tokens and PATs at rest (`sev:high`) ✅
 3. [#5006](https://github.com/apiome/apiome/issues/5006) backup-code redemption at login ✅
 4. [#5655](https://github.com/apiome/apiome/issues/5655) TFA-1.1 two-factor for OAuth-only accounts ✅
-5. [#5460](https://github.com/apiome/apiome/issues/5460) FMT-7.6 shared gateway middle
-6. [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip
-7. [#5601](https://github.com/apiome/apiome/issues/5601) HIVE-11.5 FactsLine and DismissibleCallout
+5. [#5460](https://github.com/apiome/apiome/issues/5460) FMT-7.6 shared gateway middle ✅
+6. [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip ✅
+7. [#5601](https://github.com/apiome/apiome/issues/5601) HIVE-11.5 FactsLine and DismissibleCallout ✅
 8. [#5011](https://github.com/apiome/apiome/issues/5011) EID-1.1 SSO plugin foundation
 9. [#5714](https://github.com/apiome/apiome/issues/5714) AAU-4.1 protocol version matrix and SDK decision
 10. [#5500](https://github.com/apiome/apiome/issues/5500) `get.apiome.dev` installer
@@ -132,15 +132,9 @@ do. Lane C rows are in pick-up order within their wave.
 
 | # | Wave | Lane | Issue | ID | Title | Depends on | Tier |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 8 | 1 | C1 | [#5460](https://github.com/apiome/apiome/issues/5460) | FMT-7.6 | Shared GatewayConfigDocument middle for the whole family | — | Core |
 | 9 | 1 | D | [#5500](https://github.com/apiome/apiome/issues/5500) | CLI | `get.apiome.dev` install script **MVP** | — | Core |
-| 10 | 1 | E | [#5597](https://github.com/apiome/apiome/issues/5597) | HIVE-11.1 | StatusStrip component — one row of status chips, one open detail **MVP** | — | Core |
-| 11 | 1 | E | [#5601](https://github.com/apiome/apiome/issues/5601) | HIVE-11.5 | FactsLine and DismissibleCallout primitives (+ hive.seen.* persistence) **MVP** | — | Core |
 | 12 | 1 | E | [#5608](https://github.com/apiome/apiome/issues/5608) | HIVE-12.1 | Nav model — default-collapsed groups with counts **MVP** | — | Core |
 | 13 | 1 | E | [#5612](https://github.com/apiome/apiome/issues/5612) | HIVE-12.5 | Launcher — only openable tiles; ComingNext line | — | Core |
-| 14 | 1 | E | [#5598](https://github.com/apiome/apiome/issues/5598) | HIVE-11.2 | Versions — status strip replaces the three stacked banners **MVP** | HIVE-11.1 | Core |
-| 15 | 1 | E | [#5599](https://github.com/apiome/apiome/issues/5599) | HIVE-11.3 | Versions header — ⋯ overflow menu and breadcrumb project switcher **MVP** | — | Core |
-| 16 | 1 | E | [#5600](https://github.com/apiome/apiome/issues/5600) | HIVE-11.4 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | — | Core |
 | 17 | 1 | F | [#5011](https://github.com/apiome/apiome/issues/5011) | EID-1.1 | SAML 2.0 / OIDC SSO plugin foundation (was OLO-9.10) **MVP** | — | Core |
 | 18 | 1 | F | [#5674](https://github.com/apiome/apiome/issues/5674) | EID-3.1 | Unified audit read model & export endpoint **MVP** | — | Core |
 | 19 | 1 | G | [#5714](https://github.com/apiome/apiome/issues/5714) | AAU-4.1 | Protocol version matrix, SDK posture decision and self-conformance gate **MVP** | — | Core |
@@ -149,21 +143,11 @@ do. Lane C rows are in pick-up order within their wave.
 | 22 | 2 | A | [#5651](https://github.com/apiome/apiome/issues/5651) | SGN-1.2 | Sign-up page — every enabled provider plus the email form **MVP** | SGN-1.1 | Core |
 | 23 | 2 | A | [#5652](https://github.com/apiome/apiome/issues/5652) | SGN-1.3 | Retire the legacy sign-up request queue **MVP** | SGN-1.1 | Core |
 | 24 | 2 | A | [#4962](https://github.com/apiome/apiome/issues/4962) | OLO-7.3 follow-up | Close account enumeration on legacy self-sign-up | closed by SGN-1.3 | Core |
-| 25 | 2 | C1 | [#5455](https://github.com/apiome/apiome/issues/5455) | FMT-7.1 | AWS API Gateway import (REST and HTTP APIs) **MVP** | FMT-7.6 | Core |
-| 26 | 2 | C1 | [#5456](https://github.com/apiome/apiome/issues/5456) | FMT-7.2 | Azure API Management import (definitions and policies) | FMT-7.6 | Core |
-| 27 | 2 | C1 | [#5457](https://github.com/apiome/apiome/issues/5457) | FMT-7.3 | Apigee proxy bundle import | FMT-7.6 | Core |
-| 28 | 2 | C1 | [#5458](https://github.com/apiome/apiome/issues/5458) | FMT-7.4 | Envoy xDS and Istio VirtualService import | FMT-7.6 | Core |
-| 29 | 2 | C1 | [#5459](https://github.com/apiome/apiome/issues/5459) | FMT-7.5 | Traefik, NGINX, HAProxy, Consul and Tyk import | FMT-7.6 | Core |
-| 30 | 2 | C1 | [#5461](https://github.com/apiome/apiome/issues/5461) | FMT-7.7 | Gateway emit modes for the new sources | FMT-7.1–7.5 | Core |
 | 31 | 2 | D | [#5501](https://github.com/apiome/apiome/issues/5501) | CLI | `apiome login` **MVP** | #5500, SGN-1.1 | Core |
-| 32 | 2 | E | [#5602](https://github.com/apiome/apiome/issues/5602) | HIVE-11.6 | Catalog — quiet list page **MVP** | HIVE-11.5 | Core |
-| 33 | 2 | E | [#5609](https://github.com/apiome/apiome/issues/5609) | HIVE-12.2 | Re-home Tenants, Data browser · Migrations and SDK settings **MVP** | HIVE-12.1 | Core |
 | 34 | 2 | E | [#5610](https://github.com/apiome/apiome/issues/5610) | HIVE-12.3 | Rail footer — Notifications count and order | — | Core |
 | 35 | 2 | E | [#5611](https://github.com/apiome/apiome/issues/5611) | HIVE-12.4 | “Preview” rail pill → honey dot | — | Core |
 | 36 | 2 | E | [#5603](https://github.com/apiome/apiome/issues/5603) | HIVE-11.7 | Repositories and repository detail — facts line, activity chip | HIVE-11.5 | Core |
-| 37 | 2 | E | [#5604](https://github.com/apiome/apiome/issues/5604) | HIVE-11.8 | Primitives & types — facts line over the registry | HIVE-11.5 | Core |
 | 38 | 2 | E | [#5605](https://github.com/apiome/apiome/issues/5605) | HIVE-11.9 | Members — seat facts line; Identity provider cards → “Coming next” line | HIVE-11.5, HIVE-12.5 | Core |
-| 39 | 2 | E | [#5606](https://github.com/apiome/apiome/issues/5606) | HIVE-11.10 | Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts | HIVE-11.5 | Core |
 | 40 | 2 | E | [#5607](https://github.com/apiome/apiome/issues/5607) | HIVE-11.11 | Small chrome fixes — Export studio header, Import wizard height, profile hero | — | Core |
 | 41 | 2 | E | [#5613](https://github.com/apiome/apiome/issues/5613) | HIVE-12.6 | Launcher — “Recently shipped” from What’s new; build string to the footer | HIVE-12.5 | Core |
 | 42 | 2 | F | [#5012](https://github.com/apiome/apiome/issues/5012) | EID-1.2 | Per-tenant IdP registration & domain verification (was OLO-9.11) **MVP** | EID-1.1 | Core |
@@ -177,13 +161,8 @@ do. Lane C rows are in pick-up order within their wave.
 | 50 | 3 | B | [#5658](https://github.com/apiome/apiome/issues/5658) | TFA-1.4 | Offer Authy enrolment after sign-up — skippable, re-enable from the profile **MVP** | SGN-1.1, TFA-1.1 | Core |
 | 51 | 3 | B | [#5657](https://github.com/apiome/apiome/issues/5657) | TFA-1.3 | Tenant policy — require two-factor for members | TFA-1.1, HIVE-11.9 | Core |
 | 52 | 3 | B | [#2553](https://github.com/apiome/apiome/issues/2553) | TFA umbrella | Add Authy application as 2FA option | close after TFA-1.1…1.4 | Core |
-| 53 | 3 | C1 | [#5407](https://github.com/apiome/apiome/issues/5407) | FMT-EPIC-7 | Gateway & infrastructure route sources | close after FMT-7.1…7.7 | Core |
-| 60 | 3 | C2 | [#5408](https://github.com/apiome/apiome/issues/5408) | FMT-EPIC-8 | Code-first & type-system sources | close after FMT-8.1…8.6 | Core |
-| 64 | 3 | C3 | [#5479](https://github.com/apiome/apiome/issues/5479) | FMT-10.4 | Client-workspace emit modes | FMT-10.1–10.3 | Core |
-| 65 | 3 | C3 | [#5410](https://github.com/apiome/apiome/issues/5410) | FMT-EPIC-10 | Client workspace long tail | close after FMT-10.1…10.4 | Core |
 | 66 | 3 | C3 | [#4311](https://github.com/apiome/apiome/issues/4311) | MFX-35.1 | SQL DDL emitter (ANSI + PostgreSQL/MySQL dialects) | — | Core |
 | 67 | 3 | C3 | [#4312](https://github.com/apiome/apiome/issues/4312) | MFX-35.2 | DBML + Prisma output modes | MFX-35.1 | Core |
-| 68 | 3 | C4 | [#5445](https://github.com/apiome/apiome/issues/5445) | FMT-6.1 | UN/EDIFACT import adapter **MVP** | — | Core |
 | 69 | 3 | E | [#5614](https://github.com/apiome/apiome/issues/5614) | HIVE-13.1 | Honey audit — saved-search chip, gitlike flags, token gate | — | Core |
 | 70 | 3 | E | [#5615](https://github.com/apiome/apiome/issues/5615) | HIVE-13.2 | Gates — header action cap, single banner, no dead controls | HIVE-11.2, 11.3, 11.9, 12.5 | Core |
 | 71 | 3 | E | [#5616](https://github.com/apiome/apiome/issues/5616) | HIVE-13.3 | Parity harness — first-row-of-data budget per list page | HIVE-11.6 | Core |
@@ -197,18 +176,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 79 | 3 | G | [#5716](https://github.com/apiome/apiome/issues/5716) | AAU-4.3 | `Mcp-Method` / `Mcp-Name` header plane for quotas, rails and audit **MVP** | AAU-1.1, AAU-4.2 | Core |
 | 80 | 3 | G | [#5700](https://github.com/apiome/apiome/issues/5700) | AAU-1.6 | Abuse controls and security sweep for the authorization surface **MVP** | AAU-1.3, AAU-1.4 | Core |
 | 81 | 3 | G | [#5694](https://github.com/apiome/apiome/issues/5694) | AAU-EPIC-1 | Inbound OAuth 2.1 for the agent runtime | close after AAU-1.1…1.6 | Core |
-| 82 | 4 | C4 | [#5449](https://github.com/apiome/apiome/issues/5449) | FMT-6.5 | TRADACOMS, ODETTE/VDA and EANCOM dialect profiles | FMT-6.1 | Stretch |
-| 83 | 4 | C4 | [#5446](https://github.com/apiome/apiome/issues/5446) | FMT-6.2 | SAP IDoc import and emit | — | Stretch |
-| 84 | 4 | C4 | [#5447](https://github.com/apiome/apiome/issues/5447) | FMT-6.3 | SWIFT MT import with MT↔MX projection notes | — | Stretch |
-| 85 | 4 | C4 | [#5450](https://github.com/apiome/apiome/issues/5450) | FMT-6.6 | NACHA ACH and SEPA payment-file import | — | Stretch |
-| 86 | 4 | C4 | [#5453](https://github.com/apiome/apiome/issues/5453) | FMT-6.9 | FIX Orchestra import | — | Stretch |
-| 87 | 4 | C4 | [#5448](https://github.com/apiome/apiome/issues/5448) | FMT-6.4 | HL7 v3 / CDA import | — | Stretch |
-| 88 | 4 | C4 | [#5452](https://github.com/apiome/apiome/issues/5452) | FMT-6.8 | NCPDP SCRIPT and Telecom import | — | Stretch |
-| 89 | 4 | C4 | [#5451](https://github.com/apiome/apiome/issues/5451) | FMT-6.7 | DICOM SOP class and structured-report import | — | Stretch |
-| 90 | 4 | C4 | [#5454](https://github.com/apiome/apiome/issues/5454) | FMT-6.10 | Implementation-guide capability statements for every EDI family | FMT-6.1…6.9 | Stretch |
-| 91 | 4 | C4 | [#5406](https://github.com/apiome/apiome/issues/5406) | FMT-EPIC-6 | B2B / EDI / vertical depth | close after FMT-6.1…6.10 | Stretch |
-| 97 | 4 | C5 | [#5409](https://github.com/apiome/apiome/issues/5409) | FMT-EPIC-9 | Industrial, IoT & semantic web | close after FMT-9.1…9.5 | Stretch |
-| 102 | 4 | C6 | [#5411](https://github.com/apiome/apiome/issues/5411) | FMT-EPIC-11 | Mainframe long tail | close after FMT-11.1…11.4 | Stretch |
 
 **Notes on the table**
 
@@ -231,7 +198,7 @@ do. Lane C rows are in pick-up order within their wave.
 | A | A stranger on a clean stack signs up with email and password, verifies, and onboards into their own workspace with no admin involved; `closed` stops every path |
 | B | A new user is offered Authy during onboarding, an OAuth-only user can enrol, a lost phone is recoverable by backup code or admin reset, a tenant can require 2FA, and #2553 is closed |
 | C (core) | FMT-EPIC-7, 8 and 10 are closed, FMT-6.1 and MFX-35.1/35.2 are merged, and the Supported formats page and format counts are regenerated |
-| C (stretch) | Each of C4, C5 and C6 is either fully merged or moved to RC7 whole — no half waves |
+| C (stretch) ✅ | Each of C4, C5 and C6 is either fully merged or moved to RC7 whole — no half waves |
 | D | `curl … get.apiome.dev \| sh` installs the CLI and `apiome login` signs a new account in |
 | E | HIVE-EPIC-11, 12 and 13 are closed and the HIVE-13 gates run without allow-listed exceptions |
 | F | An owner registers an OIDC and a SAML IdP from presets, verifies a domain by DNS TXT, a new user in that domain signs in and is provisioned with the default role, and the audit export returns those events under the retention policy |
@@ -250,7 +217,7 @@ do. Lane C rows are in pick-up order within their wave.
 | [ATQ — Agent tool quality #5823](https://github.com/apiome/apiome/issues/5823) | 29 | Starts after AAU-4.2 | After lane G |
 | [PCX — Portal consumer experience #5887](https://github.com/apiome/apiome/issues/5887) | 30 | Reader access needs EID-EPIC-5 | After EID-5 |
 | [ASP — API security posture #5917](https://github.com/apiome/apiome/issues/5917) | 33 | Security score is a GVM ladder dimension | After GVM-1 |
-| [CDG — Catalog discovery graph #5950](https://github.com/apiome/apiome/issues/5950) | 34 | Needs RDG-1 and XPC-4. Its Kong and AWS connectors reuse FMT-7 from lane C1 | After RDG-1 |
+| [CDG — Catalog discovery graph #5950](https://github.com/apiome/apiome/issues/5950) ✅ | 34 | Needs RDG-1 and XPC-4. Its Kong and AWS connectors reuse FMT-7 from lane C1 | After RDG-1 |
 
 Also out:
 
